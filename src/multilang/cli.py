@@ -15,6 +15,7 @@ app = typer.Typer(help="Multilang operator CLI.")
 
 ConflictChecker = Callable[[GenerationRequest], bool]
 GenerateExecutor = Callable[[GenerationRequest], Any]
+RequestedItemKeysLoader = Callable[[GenerationRequest], list[str]]
 
 
 def default_conflict_checker(_: GenerationRequest) -> bool:
@@ -33,9 +34,27 @@ def build_generate_executor(service: GenerateJobService) -> GenerateExecutor:
     """Create a CLI executor backed by the orchestration service."""
 
     def execute(request: GenerationRequest) -> Any:
-        return service.orchestrate(request, requested_item_keys=[])
+        return service.orchestrate(request, requested_item_keys=load_requested_item_keys(request))
 
     return execute
+
+
+def load_requested_item_keys(request: GenerationRequest) -> list[str]:
+    """Resolve deterministic item keys for the current orchestration phase."""
+
+    if request.source_type == "frequency":
+        if request.level is None:
+            raise ValueError("frequency requests require a level")
+        return [f"level-{request.level}-rank-{index:04d}" for index in range(1, 1001)]
+
+    if request.input_file is None:
+        raise ValueError("word-list requests require an input file")
+
+    return [
+        line.strip()
+        for line in request.input_file.read_text(encoding="utf-8").splitlines()
+        if line.strip()
+    ]
 
 
 def _validate_request(request: GenerationRequest) -> None:
@@ -74,10 +93,12 @@ def create_app(
     *,
     conflict_checker: ConflictChecker = default_conflict_checker,
     generate_executor: GenerateExecutor = default_generate_executor,
+    service: GenerateJobService | None = None,
 ) -> typer.Typer:
     """Build the CLI application with injectable collaborators for tests."""
 
     cli = typer.Typer(help="Multilang operator CLI.")
+    executor = build_generate_executor(service) if service is not None else generate_executor
 
     @cli.callback()
     def main() -> None:
@@ -133,7 +154,7 @@ def create_app(
         )
         _validate_request(request)
         _confirm_overwrite(request, conflict_checker)
-        generate_executor(request)
+        executor(request)
 
     return cli
 
