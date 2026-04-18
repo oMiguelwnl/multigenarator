@@ -9,6 +9,7 @@ from typing import Annotated, Any
 import typer
 
 from multilang.domain.jobs import GenerationRequest, SupportedLanguage
+from multilang.services.generate_job import GenerateJobService
 
 app = typer.Typer(help="Multilang operator CLI.")
 
@@ -26,6 +27,15 @@ def default_generate_executor(request: GenerationRequest) -> GenerationRequest:
     """Default command behavior until a service is wired in."""
 
     return request
+
+
+def build_generate_executor(service: GenerateJobService) -> GenerateExecutor:
+    """Create a CLI executor backed by the orchestration service."""
+
+    def execute(request: GenerationRequest) -> Any:
+        return service.orchestrate(request, requested_item_keys=[])
+
+    return execute
 
 
 def _validate_request(request: GenerationRequest) -> None:
