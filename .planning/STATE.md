@@ -3,15 +3,15 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: executing
-stopped_at: Completed 01-job-orchestration-recovery-02-PLAN.md
-last_updated: "2026-04-18T21:36:25Z"
-last_activity: 2026-04-18 -- Completed plan 01-02 and advanced to the next Phase 01 plan.
+stopped_at: Completed 01-job-orchestration-recovery-03-PLAN.md
+last_updated: "2026-04-18T21:50:09Z"
+last_activity: 2026-04-18 -- Completed plan 01-03 and advanced to the final Phase 01 plan.
 progress:
   total_phases: 5
   completed_phases: 0
   total_plans: 4
-  completed_plans: 2
-  percent: 50
+  completed_plans: 3
+  percent: 75
 ---
 
 # Project State
@@ -26,30 +26,30 @@ See: .planning/PROJECT.md (updated 2026-04-18)
 ## Current Position
 
 Phase: 01 (job-orchestration-recovery) — EXECUTING
-Plan: 3 of 4
+Plan: 4 of 4
 Status: Executing Phase 01
-Last activity: 2026-04-18 -- Completed plan 01-02 and advanced to the next Phase 01 plan.
+Last activity: 2026-04-18 -- Completed plan 01-03 and advanced to the final Phase 01 plan.
 
-Progress: [█████░░░░░] 50%
+Progress: [███████░░░] 75%
 
 ## Performance Metrics
 
 **Velocity:**
 
-- Total plans completed: 2
-- Average duration: 2.5 min
-- Total execution time: 0.1 hours
+- Total plans completed: 3
+- Average duration: 4 min
+- Total execution time: 0.2 hours
 
 **By Phase:**
 
 | Phase | Plans | Total | Avg/Plan |
 |-------|-------|-------|----------|
-| 01-job-orchestration-recovery | 2 | 5 min | 2.5 min |
+| 01-job-orchestration-recovery | 3 | 12 min | 4 min |
 
 **Recent Trend:**
 
-- Last 5 plans: 01-01 (2 min), 01-02 (3 min)
-- Trend: Stable
+- Last 5 plans: 01-01 (2 min), 01-02 (3 min), 01-03 (7 min)
+- Trend: Increasing
 
 ## Accumulated Context
 
@@ -65,6 +65,8 @@ Recent decisions affecting current work:
 - [Plan 01-01]: Use a uv-managed src-layout Python package with typed settings and explicit resume diagnostics as the foundation for Phase 1.
 - [Plan 01-02]: Store run-level and item-level state separately so resume validation can compare stage pointers against item rows.
 - [Plan 01-02]: Treat repeated successful item writes for the same run_key/item_key as duplicate reuse and count them in skipped_duplicates.
+- [Plan 01-03]: Keep the operator surface to one `multilang generate` command with source-specific validation and explicit overwrite confirmation.
+- [Plan 01-03]: Build run keys from normalized requested items so resume and rerun decisions remain deterministic across repeated requests.
 
 ### Pending Todos
 
@@ -86,6 +88,6 @@ Items acknowledged and carried forward from previous milestone close:
 
 ## Session Continuity
 
-Last session: 2026-04-18T21:36:25Z
-Stopped at: Completed 01-job-orchestration-recovery-02-PLAN.md
-Resume file: .planning/phases/01-job-orchestration-recovery/01-03-PLAN.md
+Last session: 2026-04-18T21:50:09Z
+Stopped at: Completed 01-job-orchestration-recovery-03-PLAN.md
+Resume file: .planning/phases/01-job-orchestration-recovery/01-04-PLAN.md
