@@ -29,7 +29,13 @@ Decimal phases appear between their surrounding integers in numeric order.
   2. User can see batch-level progress and failures while generation is running.
   3. User can resume an interrupted generation run without losing cards that already completed.
   4. User can rerun the same input without silent duplicate card creation.
-**Plans**: TBD
+**Plans**: 4 plans
+
+Plans:
+- [ ] 01-01-PLAN.md — Bootstrap the Python project shell and typed job contracts.
+- [ ] 01-02-PLAN.md — Add persisted job/item state and duplicate-safe repository rules.
+- [ ] 01-03-PLAN.md — Implement the single-command CLI with start, resume, and rerun orchestration.
+- [ ] 01-04-PLAN.md — Add progress rendering, bounded retry behavior, and lifecycle smoke coverage.
 
 ### Phase 2: Input Decks & Lexical Grounding
 **Goal**: Users can generate grounded card candidates from either built-in frequency decks or their own word lists.
@@ -84,7 +90,7 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
-| 1. Job Orchestration & Recovery | 0/TBD | Not started | - |
+| 1. Job Orchestration & Recovery | 0/4 | Planned | - |
 | 2. Input Decks & Lexical Grounding | 0/TBD | Not started | - |
 | 3. Sentence Quality & Review Loop | 0/TBD | Not started | - |
 | 4. Audio Synthesis | 0/TBD | Not started | - |
