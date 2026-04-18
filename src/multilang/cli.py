@@ -3,19 +3,36 @@
 from __future__ import annotations
 
 from collections.abc import Callable
+from dataclasses import dataclass
 from pathlib import Path
 from typing import Annotated, Any
 
 import typer
 
-from multilang.domain.jobs import GenerationRequest, SupportedLanguage
-from multilang.services.generate_job import GenerateJobService
+from multilang.domain.jobs import GenerationRequest, JobProgressSnapshot, SupportedLanguage
+from multilang.progress import ProgressRenderer
+from multilang.services.generate_job import GenerateJobResult, GenerateJobService
+from multilang.settings import Settings
 
 app = typer.Typer(help="Multilang operator CLI.")
 
 ConflictChecker = Callable[[GenerationRequest], bool]
 GenerateExecutor = Callable[[GenerationRequest], Any]
 RequestedItemKeysLoader = Callable[[GenerationRequest], list[str]]
+ItemProcessor = Callable[[str], None]
+ProgressSink = Callable[[str], None]
+
+
+@dataclass(slots=True)
+class JobExecutionReport:
+    """Execution details returned by the default CLI runner."""
+
+    orchestration: GenerateJobResult
+    progress_updates: list[str]
+
+    @property
+    def job_id(self) -> str:
+        return self.orchestration.job_id
 
 
 def default_conflict_checker(_: GenerationRequest) -> bool:
@@ -30,13 +47,174 @@ def default_generate_executor(request: GenerationRequest) -> GenerationRequest:
     return request
 
 
-def build_generate_executor(service: GenerateJobService) -> GenerateExecutor:
+def default_item_processor(_: str) -> None:
+    """Default stub processor until downstream phases add real work."""
+
+    return None
+
+
+def default_progress_sink(line: str) -> None:
+    """Write progress lines to the terminal."""
+
+    typer.echo(line)
+
+
+def build_generate_executor(
+    service: GenerateJobService,
+    *,
+    settings: Settings | None = None,
+    item_processor: ItemProcessor = default_item_processor,
+    progress_renderer: ProgressRenderer | None = None,
+    progress_sink: ProgressSink = default_progress_sink,
+) -> GenerateExecutor:
     """Create a CLI executor backed by the orchestration service."""
 
-    def execute(request: GenerationRequest) -> Any:
-        return service.orchestrate(request, requested_item_keys=load_requested_item_keys(request))
+    runtime_settings = settings or Settings()
+    renderer = progress_renderer or ProgressRenderer()
+
+    def execute(request: GenerationRequest) -> JobExecutionReport:
+        orchestration = service.orchestrate(
+            request,
+            requested_item_keys=load_requested_item_keys(request),
+        )
+        progress_updates = _execute_with_progress(
+            service,
+            orchestration,
+            max_attempts=runtime_settings.default_retry_attempts,
+            item_processor=item_processor,
+            progress_renderer=renderer,
+            progress_sink=progress_sink,
+        )
+        return JobExecutionReport(orchestration=orchestration, progress_updates=progress_updates)
 
     return execute
+
+
+def _build_snapshot(
+    *,
+    stage: Any,
+    completed_items: int,
+    failed_items: int,
+    retrying_items: int,
+    skipped_duplicates: int,
+) -> JobProgressSnapshot:
+    return JobProgressSnapshot(
+        stage=stage,
+        completed_items=completed_items,
+        failed_items=failed_items,
+        retrying_items=retrying_items,
+        skipped_duplicates=skipped_duplicates,
+    )
+
+
+def _emit_progress(
+    snapshot: JobProgressSnapshot,
+    *,
+    total_items: int,
+    progress_renderer: ProgressRenderer,
+    progress_sink: ProgressSink,
+    progress_updates: list[str],
+) -> None:
+    line = progress_renderer.render_snapshot(snapshot, total_items=total_items)
+    progress_sink(line)
+    progress_updates.append(line)
+
+
+def _execute_with_progress(
+    service: GenerateJobService,
+    orchestration: GenerateJobResult,
+    *,
+    max_attempts: int,
+    item_processor: ItemProcessor,
+    progress_renderer: ProgressRenderer,
+    progress_sink: ProgressSink,
+) -> list[str]:
+    total_items = len(orchestration.pending_item_keys) + len(orchestration.skipped_item_keys)
+    completed_items = 0
+    failed_items = 0
+    skipped_duplicates = len(orchestration.skipped_item_keys)
+    progress_updates: list[str] = []
+
+    _emit_progress(
+        _build_snapshot(
+            stage=orchestration.resume_from_stage,
+            completed_items=completed_items,
+            failed_items=failed_items,
+            retrying_items=0,
+            skipped_duplicates=skipped_duplicates,
+        ),
+        total_items=total_items,
+        progress_renderer=progress_renderer,
+        progress_sink=progress_sink,
+        progress_updates=progress_updates,
+    )
+
+    for item_key in orchestration.pending_item_keys:
+        for attempt in range(1, max_attempts + 1):
+            try:
+                item_processor(item_key)
+            except Exception as exc:
+                if attempt < max_attempts:
+                    _emit_progress(
+                        _build_snapshot(
+                            stage=orchestration.resume_from_stage,
+                            completed_items=completed_items,
+                            failed_items=failed_items,
+                            retrying_items=1,
+                            skipped_duplicates=skipped_duplicates,
+                        ),
+                        total_items=total_items,
+                        progress_renderer=progress_renderer,
+                        progress_sink=progress_sink,
+                        progress_updates=progress_updates,
+                    )
+                    continue
+
+                failed_items += 1
+                service.repository.record_item_failure(
+                    orchestration.job_id,
+                    item_key=item_key,
+                    failed_stage=orchestration.resume_from_stage,
+                    error=str(exc),
+                    retry_count=attempt,
+                )
+                _emit_progress(
+                    _build_snapshot(
+                        stage=orchestration.resume_from_stage,
+                        completed_items=completed_items,
+                        failed_items=failed_items,
+                        retrying_items=0,
+                        skipped_duplicates=skipped_duplicates,
+                    ),
+                    total_items=total_items,
+                    progress_renderer=progress_renderer,
+                    progress_sink=progress_sink,
+                    progress_updates=progress_updates,
+                )
+                break
+
+            completed_items += 1
+            service.repository.record_item_success(
+                orchestration.job_id,
+                item_key=item_key,
+                completed_stage=orchestration.resume_from_stage,
+            )
+            _emit_progress(
+                _build_snapshot(
+                    stage=orchestration.resume_from_stage,
+                    completed_items=completed_items,
+                    failed_items=failed_items,
+                    retrying_items=0,
+                    skipped_duplicates=skipped_duplicates,
+                ),
+                total_items=total_items,
+                progress_renderer=progress_renderer,
+                progress_sink=progress_sink,
+                progress_updates=progress_updates,
+            )
+            break
+
+    return progress_updates
 
 
 def load_requested_item_keys(request: GenerationRequest) -> list[str]:
