@@ -76,12 +76,32 @@ Which phases cover which requirements. Updated during roadmap creation.
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
+| DECK-01 | Phase 1 | Pending |
+| JOB-01 | Phase 1 | Pending |
+| JOB-02 | Phase 1 | Pending |
+| JOB-03 | Phase 1 | Pending |
+| DECK-02 | Phase 2 | Pending |
+| DECK-03 | Phase 2 | Pending |
+| LEX-01 | Phase 2 | Pending |
+| LEX-02 | Phase 2 | Pending |
+| LEX-03 | Phase 2 | Pending |
+| TEXT-01 | Phase 3 | Pending |
+| TEXT-02 | Phase 3 | Pending |
+| TEXT-03 | Phase 3 | Pending |
+| TEXT-04 | Phase 3 | Pending |
+| TEXT-05 | Phase 3 | Pending |
+| AUDI-01 | Phase 4 | Pending |
+| AUDI-02 | Phase 4 | Pending |
+| CARD-01 | Phase 5 | Pending |
+| CARD-02 | Phase 5 | Pending |
+| EXPT-01 | Phase 5 | Pending |
+| EXPT-02 | Phase 5 | Pending |
 
 **Coverage:**
 - v1 requirements: 20 total
-- Mapped to phases: 0
-- Unmapped: 20 ⚠️
+- Mapped to phases: 20
+- Unmapped: 0 ✓
 
 ---
 *Requirements defined: 2026-04-18*
-*Last updated: 2026-04-18 after initial definition*
+*Last updated: 2026-04-18 after roadmap creation*
