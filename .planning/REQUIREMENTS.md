@@ -7,7 +7,7 @@
 
 ### Deck Scope
 
-- [ ] **DECK-01**: User can choose one of these target languages before generation starts: Portuguese, Spanish, English, French, German, Russian, or Dutch.
+- [x] **DECK-01**: User can choose one of these target languages before generation starts: Portuguese, Spanish, English, French, German, Russian, or Dutch. _(Plan 01-01 foundation)_
 - [ ] **DECK-02**: User can generate a frequency deck for the selected language with 3 levels of 1000 cards each.
 - [ ] **DECK-03**: User can generate cards from a custom user-provided word list instead of the built-in frequency deck.
 
@@ -42,7 +42,7 @@
 - [ ] **EXPT-01**: User can export generated cards as an `.apkg` deck that imports into Anki without manual field remapping.
 - [ ] **EXPT-02**: User can export the same generated cards as a UTF-8-safe CSV or TSV fallback.
 - [ ] **EXPT-03**: User receives Anki-compatible audio references for `word_audio` and `sentence_audio`, with bundled media files that play correctly after import.
-- [ ] **JOB-01**: User can resume an interrupted generation job without losing already completed cards.
+- [x] **JOB-01**: User can resume an interrupted generation job without losing already completed cards. _(Plan 01-01 foundation)_
 - [ ] **JOB-02**: User can see per-batch progress and failures while generation is running.
 - [ ] **JOB-03**: User can rerun the same deck or custom word list without silent duplicate card creation.
 
@@ -79,8 +79,8 @@ Which phases cover which requirements. Updated during roadmap creation.
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| DECK-01 | Phase 1 | Pending |
-| JOB-01 | Phase 1 | Pending |
+| DECK-01 | Phase 1 | Completed in Plan 01-01 |
+| JOB-01 | Phase 1 | Completed in Plan 01-01 |
 | JOB-02 | Phase 1 | Pending |
 | JOB-03 | Phase 1 | Pending |
 | DECK-02 | Phase 2 | Pending |
