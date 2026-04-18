@@ -16,7 +16,7 @@ Decimal phases appear between their surrounding integers in numeric order.
 - [ ] **Phase 2: Input Decks & Lexical Grounding** - Turn frequency sources or custom word lists into normalized lexical card records.
 - [ ] **Phase 3: Sentence Quality & Review Loop** - Produce trustworthy example sentences and translations with reviewable regeneration.
 - [ ] **Phase 4: Audio Synthesis** - Add reliable word and sentence audio with Azure-first fallback handling.
-- [ ] **Phase 5: Anki-Safe Export Contract** - Freeze the card schema and export clean decks that import into Anki without repair.
+- [ ] **Phase 5: Anki-Safe Export Contract** - Freeze the card schema, template behavior, and export clean decks that import into Anki without repair.
 
 ## Phase Details
 
@@ -65,14 +65,16 @@ Decimal phases appear between their surrounding integers in numeric order.
 **Plans**: TBD
 
 ### Phase 5: Anki-Safe Export Contract
-**Goal**: Users receive complete cards in a fixed schema and can export them into Anki safely.
+**Goal**: Users receive complete cards in a fixed schema with the expected template behavior and can export them into Anki safely.
 **Depends on**: Phase 4
-**Requirements**: CARD-01, CARD-02, EXPT-01, EXPT-02
+**Requirements**: CARD-01, CARD-02, CARD-03, CARD-04, EXPT-01, EXPT-02, EXPT-03
 **Success Criteria** (what must be TRUE):
   1. User receives every generated card in the fixed schema with the requested fields in a consistent order and format.
-  2. User receives `Image` as an empty field on every exported card.
-  3. User can export an `.apkg` deck that imports into Anki without manual field remapping.
-  4. User can export the same cards as a UTF-8-safe CSV or TSV fallback.
+  2. User receives `Image` as an empty field on every exported card, and `Translation` stays hidden on the front and is revealed on the back according to the provided template.
+  3. User receives `Definitions` as one template-compatible field value, with multiple senses rendered inside the same field using `<br>` separators instead of nested list markup.
+  4. User can export an `.apkg` deck that imports into Anki without manual field remapping.
+  5. User can export the same cards as a UTF-8-safe CSV or TSV fallback.
+  6. User receives packaged audio media and Anki-compatible sound references that play correctly after import.
 **Plans**: TBD
 
 ## Progress
