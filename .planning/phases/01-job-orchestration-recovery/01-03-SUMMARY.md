@@ -55,7 +55,7 @@ Each task was committed atomically:
 3. **Task 2: Orchestrate start, resume, and duplicate-safe rerun behavior — GREEN** - `0cf6a8c` (feat)
 4. **Task 2 support: Load deterministic CLI item keys** - `650f4a9` (fix)
 
-**Plan metadata:** pending
+**Plan metadata:** `71dadc3` (docs: complete plan)
 
 ## Files Created/Modified
 - `src/multilang/cli.py` - Defines the `generate` command, overwrite confirmation, and service-facing item key loading.
