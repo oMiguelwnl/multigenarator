@@ -43,7 +43,7 @@ def test_completed_items_are_reused_on_rerun() -> None:
 
 
 def test_corrupted_resume_state_returns_diagnostic() -> None:
-    repository, _session = build_repository()
+    repository, session = build_repository()
     job = repository.create_job(
         request=make_request(),
         run_key="en-frequency-level-1",
@@ -54,6 +54,10 @@ def test_corrupted_resume_state_returns_diagnostic() -> None:
         status=JobStatus.RUNNING,
     )
     repository.record_item_success(job.id, item_key="hola", completed_stage=JobStage.INGEST)
+    job.current_stage = JobStage.GENERATE_TEXT.value
+    job.last_completed_stage = JobStage.GENERATE_TEXT.value
+    session.add(job)
+    session.commit()
 
     diagnostic = repository.validate_resume_state(job.id)
 
