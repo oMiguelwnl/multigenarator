@@ -44,7 +44,7 @@
 - [ ] **EXPT-03**: User receives Anki-compatible audio references for `word_audio` and `sentence_audio`, with bundled media files that play correctly after import.
 - [x] **JOB-01**: User can resume an interrupted generation job without losing already completed cards. _(Plan 01-01 foundation)_
 - [ ] **JOB-02**: User can see per-batch progress and failures while generation is running.
-- [ ] **JOB-03**: User can rerun the same deck or custom word list without silent duplicate card creation.
+- [x] **JOB-03**: User can rerun the same deck or custom word list without silent duplicate card creation. _(Plan 01-02 persistence rules)_
 
 ## v2 Requirements
 
@@ -82,7 +82,7 @@ Which phases cover which requirements. Updated during roadmap creation.
 | DECK-01 | Phase 1 | Completed in Plan 01-01 |
 | JOB-01 | Phase 1 | Completed in Plan 01-01 |
 | JOB-02 | Phase 1 | Pending |
-| JOB-03 | Phase 1 | Pending |
+| JOB-03 | Phase 1 | Completed in Plan 01-02 |
 | DECK-02 | Phase 2 | Pending |
 | DECK-03 | Phase 2 | Pending |
 | LEX-01 | Phase 2 | Pending |
@@ -110,4 +110,4 @@ Which phases cover which requirements. Updated during roadmap creation.
 
 ---
 *Requirements defined: 2026-04-18*
-*Last updated: 2026-04-18 after reconciling CARD_TEMPLATE.md*
+*Last updated: 2026-04-18 after Plan 01-02 persistence tracking*
