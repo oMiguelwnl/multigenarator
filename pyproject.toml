@@ -1,0 +1,33 @@
+[build-system]
+requires = ["hatchling>=1.25"]
+build-backend = "hatchling.build"
+
+[project]
+name = "multilang"
+version = "0.1.0"
+description = "Multilingual Anki card generator"
+readme = "AGENTS.md"
+requires-python = ">=3.12"
+dependencies = [
+  "typer>=0.12,<1.0",
+  "rich>=13.9,<14.0",
+  "pydantic>=2.11,<3.0",
+  "pydantic-settings>=2.8,<3.0",
+  "sqlalchemy>=2.0,<3.0",
+  "alembic>=1.16,<2.0",
+  "psycopg[binary]>=3.2,<4.0",
+]
+
+[project.optional-dependencies]
+dev = [
+  "pytest>=8.3,<9.0",
+  "pytest-asyncio>=0.25,<1.0",
+]
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/multilang"]
+
+[tool.pytest.ini_options]
+pythonpath = ["src"]
+testpaths = ["tests"]
+asyncio_mode = "auto"
