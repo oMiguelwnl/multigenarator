@@ -151,7 +151,7 @@ def test_build_frequency_level_scans_past_rank_3000_for_backfill(monkeypatch) ->
         frequency_decks,
         "iter_curated_frequency_candidates",
         lambda language, scan_limit=6000: (
-            (rank, f"word-{rank}") for rank in range(1, 3006)
+            (rank, f"word-{rank}") for rank in range(2996, 3006)
         ),
     )
 
