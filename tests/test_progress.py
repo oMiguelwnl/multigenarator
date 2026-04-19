@@ -33,7 +33,7 @@ def test_progress_renderer_shows_stage_counters() -> None:
     renderer = ProgressRenderer()
 
     line = renderer.render_line(
-        stage=JobStage.ENRICH,
+        stage=JobStage.GENERATE_TEXT,
         completed_items=3,
         total_items=10,
         retrying_items=1,
@@ -41,7 +41,8 @@ def test_progress_renderer_shows_stage_counters() -> None:
         skipped_duplicates=4,
     )
 
-    assert "enrich" in line
+    assert "generate text" in line.lower()
+    assert "generate_text" not in line
     assert "3/10" in line
     assert "retrying=1" in line
     assert "failed=2" in line
