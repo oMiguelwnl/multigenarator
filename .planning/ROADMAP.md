@@ -50,7 +50,15 @@ Plans:
   2. User can submit a custom word list and receive generated card candidates for those words instead of the built-in frequency deck.
   3. User receives every candidate card with a normalized base word and frequency rank where applicable.
   4. User receives IPA and definitions in one consistent deck-wide format.
-**Plans**: TBD
+**Plans**: 4 plans
+
+Plans:
+- [x] 02-01-PLAN.md — Define lexical candidate contracts, persistence, and the Phase 2 schema migration.
+- [ ] 02-02-PLAN.md — Build the deterministic `wordfreq`-based frequency deck curation and level selector.
+- [ ] 02-03-PLAN.md — Implement plain-text word-list parsing, cached Kaikki lookup, and trust-first lexical grounding.
+- [ ] 02-04-PLAN.md — Wire the lexical ingestion pipeline into the shipped CLI/runtime path with integration coverage.
+
+**Verification:** Plan 02-01 passed on 2026-04-19 with lexical contract tests, repository persistence tests, and a disposable SQLite schema migration check.
 
 ### Phase 3: Sentence Quality & Review Loop
 **Goal**: Users can trust the meaning-bearing text on each card and repair weak cards without rerunning the full batch.
@@ -95,7 +103,7 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
 | 1. Job Orchestration & Recovery | 6/6 | Complete | 2026-04-19 |
-| 2. Input Decks & Lexical Grounding | 0/TBD | Not started | - |
+| 2. Input Decks & Lexical Grounding | 1/4 | In progress | - |
 | 3. Sentence Quality & Review Loop | 0/TBD | Not started | - |
 | 4. Audio Synthesis | 0/TBD | Not started | - |
 | 5. Anki-Safe Export Contract | 0/TBD | Not started | - |

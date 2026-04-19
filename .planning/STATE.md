@@ -2,16 +2,16 @@
 gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
-status: ready_for_next_phase
-stopped_at: Completed 01-06-PLAN.md; Phase 1 gap closure verified
-last_updated: "2026-04-19T14:56:57Z"
-last_activity: 2026-04-19 -- Completed Phase 1 gap closure and verified the shipped CLI runtime path.
+status: in_progress
+stopped_at: Completed 02-01-PLAN.md
+last_updated: "2026-04-19T16:09:32Z"
+last_activity: 2026-04-19 -- Completed Plan 02-01 lexical contracts, persistence, and schema verification.
 progress:
   total_phases: 5
   completed_phases: 1
-  total_plans: 6
-  completed_plans: 6
-  percent: 100
+  total_plans: 10
+  completed_plans: 7
+  percent: 70
 ---
 
 # Project State
@@ -25,18 +25,18 @@ See: .planning/PROJECT.md (updated 2026-04-18)
 
 ## Current Position
 
-Phase: 02 (input-decks-lexical-grounding) — READY
-Plan: 0 of TBD
-Status: Phase 01 completed after shipped CLI gap closure in Plans 01-05 and 01-06
-Last activity: 2026-04-19 -- Completed Phase 1 gap closure and verified the shipped CLI runtime path.
+Phase: 02 (input-decks-lexical-grounding) — IN PROGRESS
+Plan: 1 of 4
+Status: Plan 02-01 completed; continue with frequency deck curation
+Last activity: 2026-04-19 -- Completed Plan 02-01 lexical contracts, persistence, and schema verification.
 
-Progress: [██████████] 100%
+Progress: [███████---] 70%
 
 ## Performance Metrics
 
 **Velocity:**
 
-- Total plans completed: 4
+- Total plans completed: 5
 - Average duration: 6 min
 - Total execution time: 0.6 hours
 
@@ -45,11 +45,12 @@ Progress: [██████████] 100%
 | Phase | Plans | Total | Avg/Plan |
 |-------|-------|-------|----------|
 | 01-job-orchestration-recovery | 6 | 34 min | 6 min |
+| 02-input-decks-lexical-grounding | 1 | 15 min | 15 min |
 
 **Recent Trend:**
 
-- Last 5 plans: 01-02 (3 min), 01-03 (7 min), 01-04 (10 min), 01-05 (12 min), 01-06 (12 min)
-- Trend: Stable-to-increasing
+- Last 5 plans: 01-03 (7 min), 01-04 (10 min), 01-05 (12 min), 01-06 (12 min), 02-01 (15 min)
+- Trend: Increasing with Phase 2 schema work
 
 ## Accumulated Context
 
@@ -73,6 +74,9 @@ Recent decisions affecting current work:
 - [Plan 01-05]: Move JobExecutionReport into a shared services module so lifecycle summary wiring stays import-safe.
 - [Plan 01-06]: Print explicit lifecycle counters on the shipped CLI path so operators can audit completed, failed, skipped, resumed, and overwritten work.
 - [Plan 01-06]: Abort resume attempts when persisted state validation reports inconsistencies instead of continuing unsafely.
+- [Plan 02-01]: Keep lexical candidates as one shared typed contract with submitted, display, and lemma identities separated for downstream grounding work.
+- [Plan 02-01]: Persist lexical candidates with a unique `(job_id, item_key)` key so reruns update one candidate row instead of duplicating it.
+- [Plan 02-01]: Resolve Alembic database URLs from runtime settings so schema verification honors `MULTILANG_DATABASE_URL` in local and CI checks.
 
 ### Pending Todos
 
@@ -94,6 +98,6 @@ Items acknowledged and carried forward from previous milestone close:
 
 ## Session Continuity
 
-Last session: 2026-04-19T14:56:57Z
-Stopped at: Completed 01-06-PLAN.md; Phase 1 gap closure verified
+Last session: 2026-04-19T16:09:32Z
+Stopped at: Completed 02-01-PLAN.md
 Resume file: None
