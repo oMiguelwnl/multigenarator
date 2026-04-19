@@ -1,5 +1,6 @@
 """Runtime settings for Multilang."""
 
+from pathlib import Path
 from typing import Literal
 
 from pydantic import Field
@@ -25,6 +26,7 @@ class Settings(BaseSettings):
 
     database_url: str = "postgresql+psycopg://postgres:postgres@localhost:5432/multilang"
     default_retry_attempts: int = 2
+    lexicon_data_dir: Path = Path(".multilang/lexicon")
     supported_languages: list[SupportedLanguageCode] = Field(
         default_factory=lambda: list(DEFAULT_SUPPORTED_LANGUAGES)
     )
