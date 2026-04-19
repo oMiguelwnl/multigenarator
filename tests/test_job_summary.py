@@ -11,6 +11,8 @@ from multilang.cli import build_generate_executor
 from multilang.db.base import Base
 from multilang.domain.jobs import GenerationRequest, SupportedLanguage
 from multilang.repositories.job_repository import JobRepository
+from multilang.runtime import build_runtime_service
+from multilang.services.execution_report import JobExecutionReport
 from multilang.services.generate_job import GenerateJobService
 from multilang.services.job_summary import JobSummaryBuilder
 from multilang.settings import Settings
@@ -100,3 +102,30 @@ def test_summary_includes_resumed_skipped_and_overwritten_counts(tmp_path: Path)
     assert overwrite_summary.resumed_from_job is None
     assert overwrite_summary.skipped_duplicates == 0
     assert overwrite_summary.overwritten_items == 2
+
+
+def test_summary_uses_shared_execution_report_contract(tmp_path: Path) -> None:
+    repository, _ = build_repository()
+    service = GenerateJobService(repository)
+    builder = JobSummaryBuilder(repository)
+    request = GenerationRequest(
+        language=SupportedLanguage.EN,
+        source_type="word-list",
+        input_file=write_word_list(tmp_path, "alpha"),
+    )
+
+    report = build_generate_executor(service, progress_sink=lambda _: None)(request)
+
+    assert isinstance(report, JobExecutionReport)
+    summary = builder.build(report)
+    assert summary.completed_items == 1
+
+
+def test_build_runtime_service_uses_database_url(tmp_path: Path) -> None:
+    database_path = tmp_path / "runtime.db"
+    service = build_runtime_service(
+        Settings(database_url=f"sqlite+pysqlite:///{database_path}")
+    )
+
+    assert isinstance(service, GenerateJobService)
+    assert str(service.repository.session.get_bind().url) == f"sqlite+pysqlite:///{database_path}"
