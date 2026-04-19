@@ -12,7 +12,7 @@ Multilang v1 should ship as a trust-first Python batch pipeline that turns eithe
 
 Decimal phases appear between their surrounding integers in numeric order.
 
-- [ ] **Phase 1: Job Orchestration & Recovery** - Start supported-language jobs with visible progress, resumability, and duplicate-safe reruns. _(verification gaps found after 4/4 plans)_
+- [x] **Phase 1: Job Orchestration & Recovery** - Start supported-language jobs with visible progress, resumability, and duplicate-safe reruns. _(gap closure completed after 6/6 plans)_
 - [ ] **Phase 2: Input Decks & Lexical Grounding** - Turn frequency sources or custom word lists into normalized lexical card records.
 - [ ] **Phase 3: Sentence Quality & Review Loop** - Produce trustworthy example sentences and translations with reviewable regeneration.
 - [ ] **Phase 4: Audio Synthesis** - Add reliable word and sentence audio with Azure-first fallback handling.
@@ -29,15 +29,17 @@ Decimal phases appear between their surrounding integers in numeric order.
   2. User can see batch-level progress and failures while generation is running.
   3. User can resume an interrupted generation run without losing cards that already completed.
   4. User can rerun the same input without silent duplicate card creation.
-**Plans**: 4 plans
+**Plans**: 6 plans
 
 Plans:
 - [x] 01-01-PLAN.md — Bootstrap the Python project shell and typed job contracts.
 - [x] 01-02-PLAN.md — Add persisted job/item state and duplicate-safe repository rules.
 - [x] 01-03-PLAN.md — Implement the single-command CLI with start, resume, and rerun orchestration.
 - [x] 01-04-PLAN.md — Add progress rendering, bounded retry behavior, and lifecycle smoke coverage.
+- [x] 01-05-PLAN.md — Restore repository-backed runtime bootstrap for the shipped CLI path.
+- [x] 01-06-PLAN.md — Verify shipped-app progress, resume, rerun, and lifecycle summary behavior.
 
-**Verification:** gaps found on 2026-04-19 — the shipped CLI path is not yet wired to the repository-backed orchestration stack, so Phase 1 requires gap closure before it can be marked complete.
+**Verification:** passed on 2026-04-19 after gap-closure Plans 01-05 and 01-06 restored the shipped CLI runtime path and verified visible progress, resume, and duplicate-safe reruns.
 
 ### Phase 2: Input Decks & Lexical Grounding
 **Goal**: Users can generate grounded card candidates from either built-in frequency decks or their own word lists.
@@ -92,7 +94,7 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
-| 1. Job Orchestration & Recovery | 4/4 | Gaps found | - |
+| 1. Job Orchestration & Recovery | 6/6 | Complete | 2026-04-19 |
 | 2. Input Decks & Lexical Grounding | 0/TBD | Not started | - |
 | 3. Sentence Quality & Review Loop | 0/TBD | Not started | - |
 | 4. Audio Synthesis | 0/TBD | Not started | - |

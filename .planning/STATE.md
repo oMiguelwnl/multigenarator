@@ -2,16 +2,16 @@
 gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
-status: gaps_found
-stopped_at: Verification found Phase 1 gaps; plan gap closure for shipped CLI wiring
-last_updated: "2026-04-19T14:32:16Z"
-last_activity: 2026-04-19 -- Verification found shipped CLI wiring gaps after Phase 1 plan execution.
+status: ready_for_next_phase
+stopped_at: Completed 01-06-PLAN.md; Phase 1 gap closure verified
+last_updated: "2026-04-19T14:56:57Z"
+last_activity: 2026-04-19 -- Completed Phase 1 gap closure and verified the shipped CLI runtime path.
 progress:
   total_phases: 5
-  completed_phases: 0
-  total_plans: 4
-  completed_plans: 4
-  percent: 80
+  completed_phases: 1
+  total_plans: 6
+  completed_plans: 6
+  percent: 100
 ---
 
 # Project State
@@ -21,16 +21,16 @@ progress:
 See: .planning/PROJECT.md (updated 2026-04-18)
 
 **Core value:** Generate reliable, high-quality Anki cards for frequent vocabulary in the chosen language so the learner can study real words with accurate definitions, examples, translations, and audio.
-**Current focus:** Phase 01 — job-orchestration-recovery (gap closure needed)
+**Current focus:** Phase 02 — input-decks-lexical-grounding
 
 ## Current Position
 
-Phase: 01 (job-orchestration-recovery) — GAPS FOUND
-Plan: 4 of 4
-Status: Verification found shipped CLI wiring gaps; Phase 01 needs gap closure before completion
-Last activity: 2026-04-19 -- Verification found shipped CLI wiring gaps after Phase 1 plan execution.
+Phase: 02 (input-decks-lexical-grounding) — READY
+Plan: 0 of TBD
+Status: Phase 01 completed after shipped CLI gap closure in Plans 01-05 and 01-06
+Last activity: 2026-04-19 -- Completed Phase 1 gap closure and verified the shipped CLI runtime path.
 
-Progress: [████████░░] 80%
+Progress: [██████████] 100%
 
 ## Performance Metrics
 
@@ -38,18 +38,18 @@ Progress: [████████░░] 80%
 
 - Total plans completed: 4
 - Average duration: 6 min
-- Total execution time: 0.4 hours
+- Total execution time: 0.6 hours
 
 **By Phase:**
 
 | Phase | Plans | Total | Avg/Plan |
 |-------|-------|-------|----------|
-| 01-job-orchestration-recovery | 4 | 22 min | 6 min |
+| 01-job-orchestration-recovery | 6 | 34 min | 6 min |
 
 **Recent Trend:**
 
-- Last 5 plans: 01-01 (2 min), 01-02 (3 min), 01-03 (7 min), 01-04 (10 min)
-- Trend: Increasing
+- Last 5 plans: 01-02 (3 min), 01-03 (7 min), 01-04 (10 min), 01-05 (12 min), 01-06 (12 min)
+- Trend: Stable-to-increasing
 
 ## Accumulated Context
 
@@ -69,6 +69,10 @@ Recent decisions affecting current work:
 - [Plan 01-03]: Build run keys from normalized requested items so resume and rerun decisions remain deterministic across repeated requests.
 - [Plan 01-04]: Track retried and overwritten items in execution metadata so lifecycle summaries can report successful retries and explicit overwrites accurately.
 - [Plan 01-04]: Keep the default terminal UX counter-based and stage-scoped, leaving per-item details for summaries and tests.
+- [Plan 01-05]: Build the shipped CLI runtime service lazily so environment overrides and persisted-state wiring both apply on the default app path.
+- [Plan 01-05]: Move JobExecutionReport into a shared services module so lifecycle summary wiring stays import-safe.
+- [Plan 01-06]: Print explicit lifecycle counters on the shipped CLI path so operators can audit completed, failed, skipped, resumed, and overwritten work.
+- [Plan 01-06]: Abort resume attempts when persisted state validation reports inconsistencies instead of continuing unsafely.
 
 ### Pending Todos
 
@@ -90,6 +94,6 @@ Items acknowledged and carried forward from previous milestone close:
 
 ## Session Continuity
 
-Last session: 2026-04-19T14:32:16Z
-Stopped at: Verification found Phase 1 gaps; plan gap closure for shipped CLI wiring
-Resume file: .planning/phases/01-job-orchestration-recovery/01-VERIFICATION.md
+Last session: 2026-04-19T14:56:57Z
+Stopped at: Completed 01-06-PLAN.md; Phase 1 gap closure verified
+Resume file: None

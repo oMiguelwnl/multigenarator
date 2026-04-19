@@ -42,9 +42,9 @@
 - [ ] **EXPT-01**: User can export generated cards as an `.apkg` deck that imports into Anki without manual field remapping.
 - [ ] **EXPT-02**: User can export the same generated cards as a UTF-8-safe CSV or TSV fallback.
 - [ ] **EXPT-03**: User receives Anki-compatible audio references for `word_audio` and `sentence_audio`, with bundled media files that play correctly after import.
-- [ ] **JOB-01**: User can resume an interrupted generation job without losing already completed cards. _(Phase 1 code exists, but verification found the shipped CLI resume path is not wired to persistence yet.)_
-- [ ] **JOB-02**: User can see per-batch progress and failures while generation is running. _(Phase 1 code exists, but verification found the shipped CLI does not reach the progress-enabled executor yet.)_
-- [ ] **JOB-03**: User can rerun the same deck or custom word list without silent duplicate card creation. _(Phase 1 code exists, but verification found the shipped CLI does not reach duplicate-safe rerun handling yet.)_
+- [x] **JOB-01**: User can resume an interrupted generation job without losing already completed cards. _(Completed by Plans 01-02, 01-05, and 01-06.)_
+- [x] **JOB-02**: User can see per-batch progress and failures while generation is running. _(Completed by Plans 01-04, 01-05, and 01-06.)_
+- [x] **JOB-03**: User can rerun the same deck or custom word list without silent duplicate card creation. _(Completed by Plans 01-02, 01-04, 01-05, and 01-06.)_
 
 ## v2 Requirements
 
@@ -80,9 +80,9 @@ Which phases cover which requirements. Updated during roadmap creation.
 | Requirement | Phase | Status |
 |-------------|-------|--------|
 | DECK-01 | Phase 1 | Completed in Plan 01-01 |
-| JOB-01 | Phase 1 | Blocked by Phase 1 verification gaps |
-| JOB-02 | Phase 1 | Blocked by Phase 1 verification gaps |
-| JOB-03 | Phase 1 | Blocked by Phase 1 verification gaps |
+| JOB-01 | Phase 1 | Completed in Plans 01-02, 01-05, and 01-06 |
+| JOB-02 | Phase 1 | Completed in Plans 01-04, 01-05, and 01-06 |
+| JOB-03 | Phase 1 | Completed in Plans 01-02, 01-04, 01-05, and 01-06 |
 | DECK-02 | Phase 2 | Pending |
 | DECK-03 | Phase 2 | Pending |
 | LEX-01 | Phase 2 | Pending |
@@ -110,4 +110,4 @@ Which phases cover which requirements. Updated during roadmap creation.
 
 ---
 *Requirements defined: 2026-04-18*
-*Last updated: 2026-04-19 after Phase 1 verification gaps were recorded*
+*Last updated: 2026-04-19 after Phase 1 gap closure was completed*
