@@ -1,0 +1,171 @@
+"""Repository tests for lexical candidate persistence."""
+
+from __future__ import annotations
+
+from sqlalchemy import create_engine, text
+from sqlalchemy.orm import Session
+
+from multilang.db.base import Base
+from multilang.domain.jobs import GenerationRequest, SupportedLanguage
+from multilang.domain.lexicon import (
+    DefinitionRecord,
+    GroundingStatus,
+    LexicalCardCandidate,
+    LexicalProvenance,
+    PronunciationRecord,
+)
+from multilang.repositories.job_repository import JobRepository
+from multilang.repositories.lexical_repository import LexicalRepository
+
+
+def build_repositories() -> tuple[LexicalRepository, JobRepository, Session]:
+    engine = create_engine("sqlite+pysqlite:///:memory:")
+    Base.metadata.create_all(engine)
+    session = Session(engine)
+    return LexicalRepository(session), JobRepository(session), session
+
+
+def make_request(source_type: str = "word-list") -> GenerationRequest:
+    return GenerationRequest(language=SupportedLanguage.EN, source_type=source_type, input_file=None)
+
+
+def make_candidate(*, status: GroundingStatus, ipa: str | None, warning_code: str | None) -> LexicalCardCandidate:
+    return LexicalCardCandidate(
+        submitted_form="running",
+        display_form="running",
+        lemma="run",
+        lemma_key="en:run",
+        frequency_rank=17 if status is GroundingStatus.GROUNDED else None,
+        frequency_level=1 if status is GroundingStatus.GROUNDED else None,
+        definitions_html="to move swiftly on foot" if status is GroundingStatus.GROUNDED else None,
+        definition_language="en",
+        ipa=ipa,
+        translation_target_language="pt",
+        grounding_status=status,
+        warning_code=warning_code,
+        warning_detail="Need lexical review" if warning_code else None,
+        provenance=LexicalProvenance(
+            source="kaikki" if status is GroundingStatus.GROUNDED else "user-input",
+            definition=DefinitionRecord(
+                source="kaikki" if status is GroundingStatus.GROUNDED else "fallback",
+                value="to move swiftly on foot",
+                fallback_used=status is not GroundingStatus.GROUNDED,
+            ),
+            pronunciation=PronunciationRecord(
+                source="kaikki" if ipa else "missing",
+                value=ipa,
+                authoritative=ipa is not None,
+            ),
+        ),
+    )
+
+
+def test_upsert_candidate_updates_existing_row() -> None:
+    repository, job_repository, session = build_repositories()
+    job = job_repository.create_job(
+        request=make_request(),
+        run_key="run-en-custom",
+        source_fingerprint="list-a",
+        total_items=1,
+    )
+
+    repository.upsert_candidate(
+        job_id=job.id,
+        run_key=job.run_key,
+        item_key="line-1",
+        source_type="word-list",
+        normalized_source="running",
+        candidate=make_candidate(status=GroundingStatus.PENDING, ipa=None, warning_code="needs-grounding"),
+    )
+    repository.upsert_candidate(
+        job_id=job.id,
+        run_key=job.run_key,
+        item_key="line-1",
+        source_type="word-list",
+        normalized_source="running",
+        candidate=make_candidate(status=GroundingStatus.GROUNDED, ipa="/ɹʌn/", warning_code=None),
+    )
+
+    assert session.execute(
+        text("SELECT COUNT(*) FROM lexical_candidates WHERE job_id = :job_id AND item_key = :item_key"),
+        {"job_id": job.id, "item_key": "line-1"},
+    ).scalar_one() == 1
+
+    stored = repository.list_candidates(job.id)
+    assert len(stored) == 1
+    assert stored[0].grounding_status is GroundingStatus.GROUNDED
+    assert stored[0].ipa == "/ɹʌn/"
+    assert stored[0].frequency_rank == 17
+
+
+def test_list_candidates_preserves_pending_warnings_and_grounded_fields() -> None:
+    repository, job_repository, _ = build_repositories()
+    job = job_repository.create_job(
+        request=make_request(),
+        run_key="run-en-custom",
+        source_fingerprint="list-b",
+        total_items=2,
+    )
+
+    repository.upsert_candidate(
+        job_id=job.id,
+        run_key=job.run_key,
+        item_key="line-1",
+        source_type="word-list",
+        normalized_source="running",
+        candidate=make_candidate(status=GroundingStatus.PENDING, ipa=None, warning_code="needs-grounding"),
+    )
+    repository.upsert_candidate(
+        job_id=job.id,
+        run_key=job.run_key,
+        item_key="line-2",
+        source_type="word-list",
+        normalized_source="run",
+        candidate=make_candidate(status=GroundingStatus.GROUNDED, ipa="/ɹʌn/", warning_code=None),
+    )
+
+    pending, grounded = repository.list_candidates(job.id)
+
+    assert pending.grounding_status is GroundingStatus.PENDING
+    assert pending.warning_code == "needs-grounding"
+    assert pending.provenance.source == "user-input"
+    assert grounded.grounding_status is GroundingStatus.GROUNDED
+    assert grounded.definitions_html == "to move swiftly on foot"
+    assert grounded.ipa == "/ɹʌn/"
+
+
+def test_count_pending_candidates_only_counts_pending_and_insufficient_rows() -> None:
+    repository, job_repository, _ = build_repositories()
+    job = job_repository.create_job(
+        request=make_request(),
+        run_key="run-en-custom",
+        source_fingerprint="list-c",
+        total_items=3,
+    )
+
+    repository.upsert_candidate(
+        job_id=job.id,
+        run_key=job.run_key,
+        item_key="line-1",
+        source_type="word-list",
+        normalized_source="running",
+        candidate=make_candidate(status=GroundingStatus.PENDING, ipa=None, warning_code="needs-grounding"),
+    )
+    repository.upsert_candidate(
+        job_id=job.id,
+        run_key=job.run_key,
+        item_key="line-2",
+        source_type="word-list",
+        normalized_source="run",
+        candidate=make_candidate(status=GroundingStatus.INSUFFICIENT, ipa=None, warning_code="missing-definition"),
+    )
+    repository.upsert_candidate(
+        job_id=job.id,
+        run_key=job.run_key,
+        item_key="line-3",
+        source_type="word-list",
+        normalized_source="runner",
+        candidate=make_candidate(status=GroundingStatus.GROUNDED, ipa="/ɹʌn/", warning_code=None),
+    )
+
+    assert repository.count_pending_candidates(job.id) == 2
