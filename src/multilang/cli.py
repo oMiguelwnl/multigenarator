@@ -11,6 +11,8 @@ import typer
 
 from multilang.domain.jobs import GenerationRequest, JobProgressSnapshot, SupportedLanguage
 from multilang.progress import ProgressRenderer
+from multilang.runtime import build_runtime_service
+from multilang.services.execution_report import JobExecutionReport
 from multilang.services.generate_job import GenerateJobResult, GenerateJobService
 from multilang.settings import Settings
 
@@ -23,30 +25,10 @@ ItemProcessor = Callable[[str], None]
 ProgressSink = Callable[[str], None]
 
 
-@dataclass(slots=True)
-class JobExecutionReport:
-    """Execution details returned by the default CLI runner."""
-
-    orchestration: GenerateJobResult
-    progress_updates: list[str]
-    retried_item_keys: list[str]
-    failed_item_keys: list[str]
-
-    @property
-    def job_id(self) -> str:
-        return self.orchestration.job_id
-
-
 def default_conflict_checker(_: GenerationRequest) -> bool:
     """Return whether the request would overwrite completed items."""
 
     return False
-
-
-def default_generate_executor(request: GenerationRequest) -> GenerationRequest:
-    """Default command behavior until a service is wired in."""
-
-    return request
 
 
 def default_item_processor(_: str) -> None:
@@ -282,13 +264,19 @@ def _confirm_overwrite(request: GenerationRequest, conflict_checker: ConflictChe
 def create_app(
     *,
     conflict_checker: ConflictChecker = default_conflict_checker,
-    generate_executor: GenerateExecutor = default_generate_executor,
+    generate_executor: GenerateExecutor | None = None,
     service: GenerateJobService | None = None,
 ) -> typer.Typer:
     """Build the CLI application with injectable collaborators for tests."""
 
     cli = typer.Typer(help="Multilang operator CLI.")
-    executor = build_generate_executor(service) if service is not None else generate_executor
+
+    def resolve_executor() -> GenerateExecutor:
+        if service is not None:
+            return build_generate_executor(service)
+        if generate_executor is not None:
+            return generate_executor
+        return build_generate_executor(build_runtime_service())
 
     @cli.callback()
     def main() -> None:
@@ -344,7 +332,7 @@ def create_app(
         )
         _validate_request(request)
         _confirm_overwrite(request, conflict_checker)
-        executor(request)
+        resolve_executor()(request)
 
     return cli
 

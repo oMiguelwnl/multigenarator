@@ -6,10 +6,10 @@ from dataclasses import dataclass
 
 from sqlalchemy import select
 
-from multilang.cli import JobExecutionReport
 from multilang.db.models import GenerationItem
 from multilang.domain.jobs import JobStatus
 from multilang.repositories.job_repository import JobRepository
+from multilang.services.execution_report import JobExecutionReport
 
 
 @dataclass(slots=True)
