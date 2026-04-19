@@ -2,16 +2,16 @@
 gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
-status: ready_for_verification
-stopped_at: Completed 01-04 execution; Phase 1 ready for verification
-last_updated: "2026-04-19T14:19:23Z"
-last_activity: 2026-04-19 -- Completed plan 01-04 and closed Phase 01 with progress, retry, and lifecycle summary coverage.
+status: gaps_found
+stopped_at: Verification found Phase 1 gaps; plan gap closure for shipped CLI wiring
+last_updated: "2026-04-19T14:32:16Z"
+last_activity: 2026-04-19 -- Verification found shipped CLI wiring gaps after Phase 1 plan execution.
 progress:
   total_phases: 5
-  completed_phases: 1
+  completed_phases: 0
   total_plans: 4
   completed_plans: 4
-  percent: 100
+  percent: 80
 ---
 
 # Project State
@@ -21,16 +21,16 @@ progress:
 See: .planning/PROJECT.md (updated 2026-04-18)
 
 **Core value:** Generate reliable, high-quality Anki cards for frequent vocabulary in the chosen language so the learner can study real words with accurate definitions, examples, translations, and audio.
-**Current focus:** Phase 01 — job-orchestration-recovery (ready for verification)
+**Current focus:** Phase 01 — job-orchestration-recovery (gap closure needed)
 
 ## Current Position
 
-Phase: 01 (job-orchestration-recovery) — READY FOR VERIFICATION
+Phase: 01 (job-orchestration-recovery) — GAPS FOUND
 Plan: 4 of 4
-Status: Phase 01 complete; awaiting verification before Phase 2 planning
-Last activity: 2026-04-19 -- Completed plan 01-04 and closed Phase 01 with progress, retry, and lifecycle summary coverage.
+Status: Verification found shipped CLI wiring gaps; Phase 01 needs gap closure before completion
+Last activity: 2026-04-19 -- Verification found shipped CLI wiring gaps after Phase 1 plan execution.
 
-Progress: [██████████] 100%
+Progress: [████████░░] 80%
 
 ## Performance Metrics
 
@@ -90,6 +90,6 @@ Items acknowledged and carried forward from previous milestone close:
 
 ## Session Continuity
 
-Last session: 2026-04-19T14:19:23Z
-Stopped at: Completed 01-04 execution; Phase 1 ready for verification
-Resume file: None
+Last session: 2026-04-19T14:32:16Z
+Stopped at: Verification found Phase 1 gaps; plan gap closure for shipped CLI wiring
+Resume file: .planning/phases/01-job-orchestration-recovery/01-VERIFICATION.md
