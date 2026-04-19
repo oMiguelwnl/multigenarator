@@ -24,11 +24,18 @@ class ProgressRenderer:
         failed_items: int,
         skipped_duplicates: int,
     ) -> str:
-        return (
-            f"stage={stage.value} completed={completed_items}/{total_items} "
-            f"retrying={retrying_items} failed={failed_items} "
-            f"skipped_duplicates={skipped_duplicates}"
+        text = Text.assemble(
+            (f"stage={self._format_stage_label(stage)}", "bold cyan"),
+            " ",
+            (f"completed={completed_items}/{total_items}", "bold"),
+            " ",
+            (f"retrying={retrying_items}", "yellow"),
+            " ",
+            (f"failed={failed_items}", "red"),
+            " ",
+            (f"skipped_duplicates={skipped_duplicates}", "magenta"),
         )
+        return text.plain
 
     def render_snapshot(self, snapshot: JobProgressSnapshot, *, total_items: int) -> str:
         return self.render_line(
@@ -42,5 +49,8 @@ class ProgressRenderer:
 
     def print_snapshot(self, snapshot: JobProgressSnapshot, *, total_items: int) -> str:
         line = self.render_snapshot(snapshot, total_items=total_items)
-        self.console.print(Text.from_markup(line))
+        self.console.print(Text(line))
         return line
+
+    def _format_stage_label(self, stage: JobStage) -> str:
+        return stage.value.replace("_", " ")
