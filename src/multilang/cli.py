@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 from collections.abc import Callable
-from dataclasses import dataclass
 from pathlib import Path
 from typing import Annotated, Any
 
@@ -14,6 +13,7 @@ from multilang.progress import ProgressRenderer
 from multilang.runtime import build_runtime_service
 from multilang.services.execution_report import JobExecutionReport
 from multilang.services.generate_job import GenerateJobResult, GenerateJobService
+from multilang.services.job_summary import JobLifecycleSummary, JobSummaryBuilder
 from multilang.settings import Settings
 
 app = typer.Typer(help="Multilang operator CLI.")
@@ -261,6 +261,29 @@ def _confirm_overwrite(request: GenerationRequest, conflict_checker: ConflictChe
         raise typer.Exit(code=1)
 
 
+def _print_summary(summary: JobLifecycleSummary) -> None:
+    typer.echo(f"completed_items={summary.completed_items}")
+    typer.echo(f"retried_items={summary.retried_items}")
+    typer.echo(f"failed_items={len(summary.failed_items)}")
+    typer.echo(f"skipped_duplicates={summary.skipped_duplicates}")
+    typer.echo(f"resumed_from_job={summary.resumed_from_job}")
+    typer.echo(f"overwritten_items={summary.overwritten_items}")
+
+    for failed_item in summary.failed_items:
+        typer.echo(
+            f"failed_item={failed_item.item_key} retry_count={failed_item.retry_count} error={failed_item.error}"
+        )
+
+
+def _print_resume_diagnostic(report: JobExecutionReport) -> None:
+    diagnostic = report.orchestration.diagnostic
+    if diagnostic is None:
+        return
+
+    typer.echo(diagnostic.reason)
+    typer.echo(f"resume_diagnostic_details={diagnostic.details}")
+
+
 def create_app(
     *,
     conflict_checker: ConflictChecker = default_conflict_checker,
@@ -271,12 +294,19 @@ def create_app(
 
     cli = typer.Typer(help="Multilang operator CLI.")
 
-    def resolve_executor() -> GenerateExecutor:
+    def resolve_service() -> GenerateJobService | None:
         if service is not None:
-            return build_generate_executor(service)
+            return service
+        if generate_executor is not None:
+            return None
+        return build_runtime_service()
+
+    def resolve_executor(resolved_service: GenerateJobService | None) -> GenerateExecutor:
+        if resolved_service is not None:
+            return build_generate_executor(resolved_service)
         if generate_executor is not None:
             return generate_executor
-        return build_generate_executor(build_runtime_service())
+        raise RuntimeError("unable to resolve generate executor")
 
     @cli.callback()
     def main() -> None:
@@ -332,7 +362,21 @@ def create_app(
         )
         _validate_request(request)
         _confirm_overwrite(request, conflict_checker)
-        resolve_executor()(request)
+        resolved_service = resolve_service()
+        result = resolve_executor(resolved_service)(request)
+
+        if not isinstance(result, JobExecutionReport):
+            return
+
+        if result.orchestration.diagnostic is not None:
+            _print_resume_diagnostic(result)
+            raise typer.Exit(code=1)
+
+        if resolved_service is None:
+            return
+
+        summary = JobSummaryBuilder(resolved_service.repository).build(result)
+        _print_summary(summary)
 
     return cli
 
