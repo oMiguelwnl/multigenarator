@@ -24,6 +24,7 @@ class GenerateJobResult:
     source_fingerprint: str
     pending_item_keys: list[str]
     skipped_item_keys: list[str]
+    overwritten_item_keys: list[str]
     resume_from_stage: JobStage
     diagnostic: ResumeDiagnostic | None = None
 
@@ -63,10 +64,11 @@ class GenerateJobService:
                 source_fingerprint=source_fingerprint,
                 pending_item_keys=normalized_items,
                 skipped_item_keys=[],
+                overwritten_item_keys=[],
                 resume_from_stage=JobStage(job.current_stage),
             )
 
-        pending_item_keys, skipped_item_keys = self._partition_items(
+        pending_item_keys, skipped_item_keys, overwritten_item_keys = self._partition_items(
             run_key=run_key,
             requested_item_keys=normalized_items,
             overwrite_confirmed=overwrite_confirmed,
@@ -78,6 +80,7 @@ class GenerateJobService:
             source_fingerprint=existing_job.source_fingerprint,
             pending_item_keys=pending_item_keys,
             skipped_item_keys=skipped_item_keys,
+            overwritten_item_keys=overwritten_item_keys,
             resume_from_stage=JobStage(existing_job.current_stage),
         )
 
@@ -101,12 +104,13 @@ class GenerateJobService:
                 source_fingerprint=job.source_fingerprint,
                 pending_item_keys=[],
                 skipped_item_keys=[],
+                overwritten_item_keys=[],
                 resume_from_stage=JobStage(job.current_stage),
                 diagnostic=diagnostic,
             )
 
         normalized_items = normalize_requested_item_keys(requested_item_keys)
-        pending_item_keys, skipped_item_keys = self._partition_items(
+        pending_item_keys, skipped_item_keys, overwritten_item_keys = self._partition_items(
             run_key=job.run_key,
             requested_item_keys=normalized_items,
             overwrite_confirmed=overwrite_confirmed,
@@ -118,6 +122,7 @@ class GenerateJobService:
             source_fingerprint=job.source_fingerprint,
             pending_item_keys=pending_item_keys,
             skipped_item_keys=skipped_item_keys,
+            overwritten_item_keys=overwritten_item_keys,
             resume_from_stage=JobStage(job.current_stage),
             diagnostic=None,
         )
@@ -147,11 +152,14 @@ class GenerateJobService:
         run_key: str,
         requested_item_keys: list[str],
         overwrite_confirmed: bool,
-    ) -> tuple[list[str], list[str]]:
-        if overwrite_confirmed:
-            return requested_item_keys, []
-
+    ) -> tuple[list[str], list[str], list[str]]:
         completed_item_keys = self.repository.list_completed_item_keys(run_key)
+        if overwrite_confirmed:
+            overwritten_item_keys = [
+                item for item in requested_item_keys if item in completed_item_keys
+            ]
+            return requested_item_keys, [], overwritten_item_keys
+
         skipped_item_keys = [item for item in requested_item_keys if item in completed_item_keys]
         pending_item_keys = [item for item in requested_item_keys if item not in completed_item_keys]
-        return pending_item_keys, skipped_item_keys
+        return pending_item_keys, skipped_item_keys, []

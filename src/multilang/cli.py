@@ -29,6 +29,8 @@ class JobExecutionReport:
 
     orchestration: GenerateJobResult
     progress_updates: list[str]
+    retried_item_keys: list[str]
+    failed_item_keys: list[str]
 
     @property
     def job_id(self) -> str:
@@ -77,7 +79,7 @@ def build_generate_executor(
             request,
             requested_item_keys=load_requested_item_keys(request),
         )
-        progress_updates = _execute_with_progress(
+        progress_updates, retried_item_keys, failed_item_keys = _execute_with_progress(
             service,
             orchestration,
             max_attempts=runtime_settings.default_retry_attempts,
@@ -85,7 +87,12 @@ def build_generate_executor(
             progress_renderer=renderer,
             progress_sink=progress_sink,
         )
-        return JobExecutionReport(orchestration=orchestration, progress_updates=progress_updates)
+        return JobExecutionReport(
+            orchestration=orchestration,
+            progress_updates=progress_updates,
+            retried_item_keys=retried_item_keys,
+            failed_item_keys=failed_item_keys,
+        )
 
     return execute
 
@@ -128,12 +135,14 @@ def _execute_with_progress(
     item_processor: ItemProcessor,
     progress_renderer: ProgressRenderer,
     progress_sink: ProgressSink,
-) -> list[str]:
+) -> tuple[list[str], list[str], list[str]]:
     total_items = len(orchestration.pending_item_keys) + len(orchestration.skipped_item_keys)
     completed_items = 0
     failed_items = 0
     skipped_duplicates = len(orchestration.skipped_item_keys)
     progress_updates: list[str] = []
+    retried_item_keys: list[str] = []
+    failed_item_keys: list[str] = []
 
     _emit_progress(
         _build_snapshot(
@@ -155,6 +164,8 @@ def _execute_with_progress(
                 item_processor(item_key)
             except Exception as exc:
                 if attempt < max_attempts:
+                    if item_key not in retried_item_keys:
+                        retried_item_keys.append(item_key)
                     _emit_progress(
                         _build_snapshot(
                             stage=orchestration.resume_from_stage,
@@ -171,6 +182,7 @@ def _execute_with_progress(
                     continue
 
                 failed_items += 1
+                failed_item_keys.append(item_key)
                 service.repository.record_item_failure(
                     orchestration.job_id,
                     item_key=item_key,
@@ -214,7 +226,7 @@ def _execute_with_progress(
             )
             break
 
-    return progress_updates
+    return progress_updates, retried_item_keys, failed_item_keys
 
 
 def load_requested_item_keys(request: GenerationRequest) -> list[str]:
