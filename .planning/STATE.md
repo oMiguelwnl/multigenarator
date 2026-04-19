@@ -4,14 +4,14 @@ milestone: v1.0
 milestone_name: milestone
 status: in_progress
 stopped_at: Completed 02-01-PLAN.md
-last_updated: "2026-04-19T16:09:32Z"
-last_activity: 2026-04-19 -- Completed Plan 02-01 lexical contracts, persistence, and schema verification.
+last_updated: "2026-04-19T16:19:32Z"
+last_activity: 2026-04-19 -- Completed Plan 02-02 deterministic frequency deck curation and level selection.
 progress:
   total_phases: 5
   completed_phases: 1
   total_plans: 10
-  completed_plans: 7
-  percent: 70
+  completed_plans: 8
+  percent: 80
 ---
 
 # Project State
@@ -26,31 +26,31 @@ See: .planning/PROJECT.md (updated 2026-04-18)
 ## Current Position
 
 Phase: 02 (input-decks-lexical-grounding) — IN PROGRESS
-Plan: 1 of 4
-Status: Plan 02-01 completed; continue with frequency deck curation
-Last activity: 2026-04-19 -- Completed Plan 02-01 lexical contracts, persistence, and schema verification.
+Plan: 2 of 4
+Status: Plan 02-02 completed; continue with word-list parsing and lexical grounding
+Last activity: 2026-04-19 -- Completed Plan 02-02 deterministic frequency deck curation and level selection.
 
-Progress: [███████---] 70%
+Progress: [████████--] 80%
 
 ## Performance Metrics
 
 **Velocity:**
 
-- Total plans completed: 5
-- Average duration: 6 min
-- Total execution time: 0.6 hours
+- Total plans completed: 8
+- Average duration: 7 min
+- Total execution time: 0.9 hours
 
 **By Phase:**
 
 | Phase | Plans | Total | Avg/Plan |
 |-------|-------|-------|----------|
 | 01-job-orchestration-recovery | 6 | 34 min | 6 min |
-| 02-input-decks-lexical-grounding | 1 | 15 min | 15 min |
+| 02-input-decks-lexical-grounding | 2 | 19 min | 9 min |
 
 **Recent Trend:**
 
-- Last 5 plans: 01-03 (7 min), 01-04 (10 min), 01-05 (12 min), 01-06 (12 min), 02-01 (15 min)
-- Trend: Increasing with Phase 2 schema work
+- Last 5 plans: 01-04 (10 min), 01-05 (12 min), 01-06 (12 min), 02-01 (15 min), 02-02 (4 min)
+- Trend: Stabilizing after Phase 2 deck-curation setup
 
 ## Accumulated Context
 
@@ -77,6 +77,8 @@ Recent decisions affecting current work:
 - [Plan 02-01]: Keep lexical candidates as one shared typed contract with submitted, display, and lemma identities separated for downstream grounding work.
 - [Plan 02-01]: Persist lexical candidates with a unique `(job_id, item_key)` key so reruns update one candidate row instead of duplicating it.
 - [Plan 02-01]: Resolve Alembic database URLs from runtime settings so schema verification honors `MULTILANG_DATABASE_URL` in local and CI checks.
+- [Plan 02-02]: Use `wordfreq` plus explicit teachability filters as the deterministic source for built-in frequency decks.
+- [Plan 02-02]: Keep level windows explicit at ranks 1-1000, 1001-2000, and 2001-3000, with bounded backfill beyond the window when candidates are rejected.
 
 ### Pending Todos
 
@@ -86,7 +88,6 @@ None yet.
 
 - Voice inventory for all 7 languages still needs validation, especially Dutch fallbacks.
 - Sentence quality rubric and translation QA policy need concrete acceptance rules during planning/execution.
-- Frequency curation policy still needs definition before large-scale deck generation.
 
 ## Deferred Items
 
@@ -98,6 +99,6 @@ Items acknowledged and carried forward from previous milestone close:
 
 ## Session Continuity
 
-Last session: 2026-04-19T16:09:32Z
-Stopped at: Completed 02-01-PLAN.md
+Last session: 2026-04-19T16:19:32Z
+Stopped at: Completed 02-02-PLAN.md
 Resume file: None

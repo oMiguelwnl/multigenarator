@@ -8,7 +8,7 @@
 ### Deck Scope
 
 - [x] **DECK-01**: User can choose one of these target languages before generation starts: Portuguese, Spanish, English, French, German, Russian, or Dutch. _(Plan 01-01 foundation)_
-- [ ] **DECK-02**: User can generate a frequency deck for the selected language with 3 levels of 1000 cards each.
+- [x] **DECK-02**: User can generate a frequency deck for the selected language with 3 levels of 1000 cards each. _(Plan 02-02 deterministic frequency deck curation and level selection.)_
 - [x] **DECK-03**: User can generate cards from a custom user-provided word list instead of the built-in frequency deck. _(Plan 02-01 lexical candidate contract and persistence foundation.)_
 
 ### Card Contract
@@ -83,7 +83,7 @@ Which phases cover which requirements. Updated during roadmap creation.
 | JOB-01 | Phase 1 | Completed in Plans 01-02, 01-05, and 01-06 |
 | JOB-02 | Phase 1 | Completed in Plans 01-04, 01-05, and 01-06 |
 | JOB-03 | Phase 1 | Completed in Plans 01-02, 01-04, 01-05, and 01-06 |
-| DECK-02 | Phase 2 | Pending |
+| DECK-02 | Phase 2 | Completed in Plan 02-02 |
 | DECK-03 | Phase 2 | Completed in Plan 02-01 |
 | LEX-01 | Phase 2 | Completed in Plan 02-01 |
 | LEX-02 | Phase 2 | Completed in Plan 02-01 |
@@ -110,4 +110,4 @@ Which phases cover which requirements. Updated during roadmap creation.
 
 ---
 *Requirements defined: 2026-04-18*
-*Last updated: 2026-04-19 after Plan 02-01 lexical contract and schema completion*
+*Last updated: 2026-04-19 after Plan 02-02 deterministic frequency deck completion*
