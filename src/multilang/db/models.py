@@ -40,6 +40,9 @@ class GenerationJob(Base):
     items: Mapped[list["GenerationItem"]] = relationship(
         back_populates="job", cascade="all, delete-orphan"
     )
+    lexical_candidates: Mapped[list["LexicalCandidate"]] = relationship(
+        back_populates="job", cascade="all, delete-orphan"
+    )
 
 
 class GenerationItem(Base):
@@ -68,3 +71,43 @@ class GenerationItem(Base):
     )
 
     job: Mapped[GenerationJob] = relationship(back_populates="items")
+
+
+class LexicalCandidate(Base):
+    """Persisted grounded lexical candidate for a job item."""
+
+    __tablename__ = "lexical_candidates"
+    __table_args__ = (
+        UniqueConstraint("job_id", "item_key", name="uq_lexical_candidates_job_id_item_key"),
+    )
+
+    id: Mapped[str] = mapped_column(String(36), primary_key=True)
+    job_id: Mapped[str] = mapped_column(
+        ForeignKey("generation_jobs.id", ondelete="CASCADE"), nullable=False, index=True
+    )
+    run_key: Mapped[str] = mapped_column(String(255), nullable=False)
+    item_key: Mapped[str] = mapped_column(String(255), nullable=False)
+    source_type: Mapped[str] = mapped_column(String(32), nullable=False)
+    submitted_form: Mapped[str] = mapped_column(String(255), nullable=False)
+    normalized_source: Mapped[str] = mapped_column(String(255), nullable=False)
+    display_form: Mapped[str] = mapped_column(String(255), nullable=False)
+    lemma: Mapped[str] = mapped_column(String(255), nullable=False)
+    lemma_key: Mapped[str] = mapped_column(String(255), nullable=False, index=True)
+    frequency_rank: Mapped[int | None] = mapped_column(Integer, nullable=True)
+    frequency_level: Mapped[int | None] = mapped_column(Integer, nullable=True)
+    definitions_html: Mapped[str | None] = mapped_column(Text, nullable=True)
+    definition_language: Mapped[str] = mapped_column(String(8), nullable=False)
+    ipa: Mapped[str | None] = mapped_column(String(255), nullable=True)
+    translation_target_language: Mapped[str] = mapped_column(String(8), nullable=False)
+    grounding_status: Mapped[str] = mapped_column(String(32), nullable=False)
+    warning_code: Mapped[str | None] = mapped_column(String(64), nullable=True)
+    warning_detail: Mapped[str | None] = mapped_column(Text, nullable=True)
+    provenance: Mapped[dict[str, Any]] = mapped_column(JSON, nullable=False, default=dict)
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), nullable=False, server_default=func.now()
+    )
+    updated_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), nullable=False, server_default=func.now(), onupdate=func.now()
+    )
+
+    job: Mapped[GenerationJob] = relationship(back_populates="lexical_candidates")
