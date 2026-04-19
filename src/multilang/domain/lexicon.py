@@ -15,6 +15,7 @@ class GroundingStatus(str, Enum):
     PENDING = "pending"
     GROUNDED = "grounded"
     INSUFFICIENT = "insufficient"
+    BACKFILL_REQUIRED = "backfill_required"
 
 
 class DefinitionRecord(BaseModel):
