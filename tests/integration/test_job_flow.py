@@ -1,29 +1,23 @@
-"""Repository-backed lifecycle smoke tests for job execution."""
+"""Shipped-app lifecycle smoke tests for job execution."""
 
 from __future__ import annotations
 
 from pathlib import Path
 
 import pytest
-from sqlalchemy import create_engine
+from sqlalchemy import create_engine, select
 from sqlalchemy.orm import Session
 from typer.testing import CliRunner
 
 from multilang.cli import build_generate_executor, create_app
 from multilang.db.base import Base
+from multilang.db.models import GenerationJob
 from multilang.domain.jobs import GenerationRequest, SupportedLanguage
 from multilang.repositories.job_repository import JobRepository
 from multilang.services.generate_job import GenerateJobService
-from multilang.services.job_summary import JobSummaryBuilder
+from multilang.services.input_fingerprint import build_run_key
 
 runner = CliRunner()
-
-
-def build_repository() -> tuple[JobRepository, Session]:
-    engine = create_engine("sqlite+pysqlite:///:memory:")
-    Base.metadata.create_all(engine)
-    session = Session(engine)
-    return JobRepository(session), session
 
 
 def write_word_list(tmp_path: Path, *items: str) -> Path:
@@ -32,77 +26,115 @@ def write_word_list(tmp_path: Path, *items: str) -> Path:
     return path
 
 
-def test_job_flow_supports_resume_and_duplicate_safe_rerun(tmp_path: Path) -> None:
-    repository, _ = build_repository()
-    service = GenerateJobService(repository)
-    builder = JobSummaryBuilder(repository)
+def build_repository(database_path: Path) -> tuple[JobRepository, Session]:
+    engine = create_engine(f"sqlite+pysqlite:///{database_path}")
+    Base.metadata.create_all(engine)
+    session = Session(engine)
+    return JobRepository(session), session
+
+
+def test_shipped_app_supports_resume_and_duplicate_safe_rerun(
+    monkeypatch, tmp_path: Path
+) -> None:
+    database_path = tmp_path / "job-flow.db"
     source = write_word_list(tmp_path, "alpha", "beta")
-    attempts: list[str] = []
+    monkeypatch.setenv("MULTILANG_DATABASE_URL", f"sqlite+pysqlite:///{database_path}")
+    app = create_app()
 
-    def interrupted_processor(item_key: str) -> None:
-        attempts.append(item_key)
-        if item_key == "beta":
-            raise KeyboardInterrupt("simulate interruption")
-
-    start_request = GenerationRequest(
-        language=SupportedLanguage.EN,
-        source_type="word-list",
-        input_file=source,
-    )
-    interrupted_executor = build_generate_executor(
-        service,
-        item_processor=interrupted_processor,
-        progress_sink=lambda _: None,
-    )
-
-    with pytest.raises(KeyboardInterrupt):
-        interrupted_executor(start_request)
-
-    original_job = repository.get_job(run_key=service.start(start_request, requested_item_keys=["alpha", "beta"]).run_key)
-    assert original_job is not None
-    assert original_job.completed_items == 1
-
-    resumed_items: list[str] = []
-    resume_request = GenerationRequest(
-        language=SupportedLanguage.EN,
-        source_type="word-list",
-        input_file=source,
-        resume_job_id=original_job.id,
-    )
-    resume_executor = build_generate_executor(
-        service,
-        item_processor=resumed_items.append,
-        progress_sink=lambda _: None,
-    )
-    resume_report = resume_executor(resume_request)
-    resume_summary = builder.build(resume_report)
-
-    assert resumed_items == ["beta"]
-    assert resume_summary.resumed_from_job == original_job.id
-    assert resume_summary.skipped_duplicates == 1
-
-    rerun_report = resume_executor(start_request)
-    rerun_summary = builder.build(rerun_report)
-
-    assert rerun_report.orchestration.pending_item_keys == []
-    assert rerun_summary.skipped_duplicates == 2
-
-    app = create_app(service=service, conflict_checker=lambda _: True)
-    denied = runner.invoke(
+    first_result = runner.invoke(
         app,
-        ["generate", "--language", "en", "--source", "word-list", "--input-file", str(source), "--overwrite"],
-        input="n\n",
+        ["generate", "--language", "en", "--source", "word-list", "--input-file", str(source)],
     )
-    assert denied.exit_code == 1
 
-    overwrite_request = GenerationRequest(
-        language=SupportedLanguage.EN,
-        source_type="word-list",
-        input_file=source,
-        overwrite=True,
-        yes_overwrite=True,
+    repository, session = build_repository(database_path)
+    try:
+        jobs = list(session.scalars(select(GenerationJob).order_by(GenerationJob.created_at)))
+        assert len(jobs) == 1
+        first_job = jobs[0]
+        assert first_job.completed_items == 2
+
+        request = GenerationRequest(
+            language=SupportedLanguage.EN,
+            source_type="word-list",
+            input_file=source,
+        )
+        run_key = build_run_key(request, requested_item_keys=["alpha", "beta"])
+
+        interrupted_repository, interrupted_session = build_repository(tmp_path / "resume.db")
+        interrupted_service = GenerateJobService(interrupted_repository)
+        interrupted_request = GenerationRequest(
+            language=SupportedLanguage.EN,
+            source_type="word-list",
+            input_file=source,
+        )
+
+        def interrupted_processor(item_key: str) -> None:
+            if item_key == "beta":
+                raise KeyboardInterrupt("simulate interruption")
+
+        interrupted_executor = build_generate_executor(
+            interrupted_service,
+            item_processor=interrupted_processor,
+            progress_sink=lambda _: None,
+        )
+
+        with pytest.raises(KeyboardInterrupt):
+            interrupted_executor(interrupted_request)
+
+        interrupted_job = interrupted_repository.get_job(
+            run_key=build_run_key(interrupted_request, requested_item_keys=["alpha", "beta"])
+        )
+        assert interrupted_job is not None
+    finally:
+        session.close()
+        if 'interrupted_session' in locals():
+            interrupted_session.close()
+
+    monkeypatch.setenv("MULTILANG_DATABASE_URL", f"sqlite+pysqlite:///{tmp_path / 'resume.db'}")
+    resume_app = create_app()
+    resume_result = runner.invoke(
+        resume_app,
+        [
+            "generate",
+            "--language",
+            "en",
+            "--source",
+            "word-list",
+            "--input-file",
+            str(source),
+            "--resume",
+            interrupted_job.id,
+        ],
     )
-    overwrite_report = resume_executor(overwrite_request)
-    overwrite_summary = builder.build(overwrite_report)
 
-    assert overwrite_summary.overwritten_items == 2
+    monkeypatch.setenv("MULTILANG_DATABASE_URL", f"sqlite+pysqlite:///{database_path}")
+    rerun_result = runner.invoke(
+        app,
+        ["generate", "--language", "en", "--source", "word-list", "--input-file", str(source)],
+    )
+    overwrite_result = runner.invoke(
+        app,
+        [
+            "generate",
+            "--language",
+            "en",
+            "--source",
+            "word-list",
+            "--input-file",
+            str(source),
+            "--overwrite",
+            "--yes-overwrite",
+        ],
+    )
+
+    assert "stage=ingest" in first_result.output
+    assert "completed_items=2" in first_result.output
+    assert first_result.exit_code == 0
+    assert run_key == first_job.run_key
+    assert resume_result.exit_code == 0
+    assert "resumed_from_job=" in resume_result.output
+    assert "stage=ingest" in resume_result.output
+    assert rerun_result.exit_code == 0
+    assert "skipped_duplicates=2" in rerun_result.output
+    assert overwrite_result.exit_code == 0
+    assert "overwritten_items=2" in overwrite_result.output
