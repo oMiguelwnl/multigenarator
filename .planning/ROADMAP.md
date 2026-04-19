@@ -55,10 +55,10 @@ Plans:
 Plans:
 - [x] 02-01-PLAN.md — Define lexical candidate contracts, persistence, and the Phase 2 schema migration.
 - [x] 02-02-PLAN.md — Build the deterministic `wordfreq`-based frequency deck curation and level selector.
-- [ ] 02-03-PLAN.md — Implement plain-text word-list parsing, cached Kaikki lookup, and trust-first lexical grounding.
+- [x] 02-03-PLAN.md — Implement plain-text word-list parsing, cached Kaikki lookup, and trust-first lexical grounding.
 - [ ] 02-04-PLAN.md — Wire the lexical ingestion pipeline into the shipped CLI/runtime path with integration coverage.
 
-**Verification:** Plans 02-01 and 02-02 passed on 2026-04-19 with lexical contract tests, repository persistence tests, disposable SQLite schema verification, and deterministic frequency deck service coverage.
+**Verification:** Plans 02-01 through 02-03 passed on 2026-04-19 with lexical contract tests, repository persistence tests, disposable SQLite schema verification, deterministic frequency deck service coverage, fixture-backed Kaikki lookup tests, and trust-first grounding coverage.
 
 ### Phase 3: Sentence Quality & Review Loop
 **Goal**: Users can trust the meaning-bearing text on each card and repair weak cards without rerunning the full batch.
@@ -103,7 +103,7 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
 | 1. Job Orchestration & Recovery | 6/6 | Complete | 2026-04-19 |
-| 2. Input Decks & Lexical Grounding | 2/4 | In progress | - |
+| 2. Input Decks & Lexical Grounding | 3/4 | In progress | - |
 | 3. Sentence Quality & Review Loop | 0/TBD | Not started | - |
 | 4. Audio Synthesis | 0/TBD | Not started | - |
 | 5. Anki-Safe Export Contract | 0/TBD | Not started | - |

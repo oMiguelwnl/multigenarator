@@ -9,7 +9,7 @@
 
 - [x] **DECK-01**: User can choose one of these target languages before generation starts: Portuguese, Spanish, English, French, German, Russian, or Dutch. _(Plan 01-01 foundation)_
 - [x] **DECK-02**: User can generate a frequency deck for the selected language with 3 levels of 1000 cards each. _(Plan 02-02 deterministic frequency deck curation and level selection.)_
-- [x] **DECK-03**: User can generate cards from a custom user-provided word list instead of the built-in frequency deck. _(Plan 02-01 lexical candidate contract and persistence foundation.)_
+- [x] **DECK-03**: User can generate cards from a custom user-provided word list instead of the built-in frequency deck. _(Plans 02-01 and 02-03: lexical candidate foundation plus plain-text word-list parsing and grounding.)_
 
 ### Card Contract
 
@@ -20,9 +20,9 @@
 
 ### Lexical Enrichment
 
-- [x] **LEX-01**: User receives a normalized base word and frequency rank for every generated card. _(Plan 02-01 lexical candidate contract and persistence foundation.)_
-- [x] **LEX-02**: User receives IPA for every generated card in one consistent display format. _(Plan 02-01 lexical candidate contract and persistence foundation.)_
-- [x] **LEX-03**: User receives definitions that follow one deck-wide template so meaning fields stay consistent across cards. _(Plan 02-01 lexical candidate contract and persistence foundation.)_
+- [x] **LEX-01**: User receives a normalized base word and frequency rank for every generated card. _(Plans 02-01 and 02-03: lexical candidate contract plus trust-first grounding implementation.)_
+- [x] **LEX-02**: User receives IPA for every generated card in one consistent display format. _(Plans 02-01 and 02-03: lexical candidate contract plus authoritative IPA grounding behavior.)_
+- [x] **LEX-03**: User receives definitions that follow one deck-wide template so meaning fields stay consistent across cards. _(Plans 02-01 and 02-03: lexical candidate contract plus English-only `<br>`-joined grounding output.)_
 
 ### Text Quality
 
@@ -84,10 +84,10 @@ Which phases cover which requirements. Updated during roadmap creation.
 | JOB-02 | Phase 1 | Completed in Plans 01-04, 01-05, and 01-06 |
 | JOB-03 | Phase 1 | Completed in Plans 01-02, 01-04, 01-05, and 01-06 |
 | DECK-02 | Phase 2 | Completed in Plan 02-02 |
-| DECK-03 | Phase 2 | Completed in Plan 02-01 |
-| LEX-01 | Phase 2 | Completed in Plan 02-01 |
-| LEX-02 | Phase 2 | Completed in Plan 02-01 |
-| LEX-03 | Phase 2 | Completed in Plan 02-01 |
+| DECK-03 | Phase 2 | Completed in Plans 02-01 and 02-03 |
+| LEX-01 | Phase 2 | Completed in Plans 02-01 and 02-03 |
+| LEX-02 | Phase 2 | Completed in Plans 02-01 and 02-03 |
+| LEX-03 | Phase 2 | Completed in Plans 02-01 and 02-03 |
 | TEXT-01 | Phase 3 | Pending |
 | TEXT-02 | Phase 3 | Pending |
 | TEXT-03 | Phase 3 | Pending |
@@ -110,4 +110,4 @@ Which phases cover which requirements. Updated during roadmap creation.
 
 ---
 *Requirements defined: 2026-04-18*
-*Last updated: 2026-04-19 after Plan 02-02 deterministic frequency deck completion*
+*Last updated: 2026-04-19 after Plan 02-03 lexical grounding completion*

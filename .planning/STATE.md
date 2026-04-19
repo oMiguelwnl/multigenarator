@@ -3,15 +3,15 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: in_progress
-stopped_at: Completed 02-01-PLAN.md
-last_updated: "2026-04-19T16:19:32Z"
-last_activity: 2026-04-19 -- Completed Plan 02-02 deterministic frequency deck curation and level selection.
+stopped_at: Completed 02-03-PLAN.md
+last_updated: "2026-04-19T16:28:07Z"
+last_activity: 2026-04-19 -- Completed Plan 02-03 plain-text word-list parsing, cached Kaikki lookup, and trust-first lexical grounding.
 progress:
   total_phases: 5
   completed_phases: 1
   total_plans: 10
-  completed_plans: 8
-  percent: 80
+  completed_plans: 9
+  percent: 90
 ---
 
 # Project State
@@ -26,17 +26,17 @@ See: .planning/PROJECT.md (updated 2026-04-18)
 ## Current Position
 
 Phase: 02 (input-decks-lexical-grounding) — IN PROGRESS
-Plan: 2 of 4
-Status: Plan 02-02 completed; continue with word-list parsing and lexical grounding
-Last activity: 2026-04-19 -- Completed Plan 02-02 deterministic frequency deck curation and level selection.
+Plan: 3 of 4
+Status: Plan 02-03 completed; continue with CLI/runtime lexical ingestion integration
+Last activity: 2026-04-19 -- Completed Plan 02-03 plain-text word-list parsing, cached Kaikki lookup, and trust-first lexical grounding.
 
-Progress: [████████--] 80%
+Progress: [█████████-] 90%
 
 ## Performance Metrics
 
 **Velocity:**
 
-- Total plans completed: 8
+- Total plans completed: 9
 - Average duration: 7 min
 - Total execution time: 0.9 hours
 
@@ -45,12 +45,12 @@ Progress: [████████--] 80%
 | Phase | Plans | Total | Avg/Plan |
 |-------|-------|-------|----------|
 | 01-job-orchestration-recovery | 6 | 34 min | 6 min |
-| 02-input-decks-lexical-grounding | 2 | 19 min | 9 min |
+| 02-input-decks-lexical-grounding | 3 | 23 min | 8 min |
 
 **Recent Trend:**
 
-- Last 5 plans: 01-04 (10 min), 01-05 (12 min), 01-06 (12 min), 02-01 (15 min), 02-02 (4 min)
-- Trend: Stabilizing after Phase 2 deck-curation setup
+- Last 5 plans: 01-05 (12 min), 01-06 (12 min), 02-01 (15 min), 02-02 (4 min), 02-03 (4 min)
+- Trend: Phase 2 lexical-ingestion primitives are landing with faster iterations
 
 ## Accumulated Context
 
@@ -79,6 +79,8 @@ Recent decisions affecting current work:
 - [Plan 02-01]: Resolve Alembic database URLs from runtime settings so schema verification honors `MULTILANG_DATABASE_URL` in local and CI checks.
 - [Plan 02-02]: Use `wordfreq` plus explicit teachability filters as the deterministic source for built-in frequency decks.
 - [Plan 02-02]: Keep level windows explicit at ranks 1-1000, 1001-2000, and 2001-3000, with bounded backfill beyond the window when candidates are rejected.
+- [Plan 02-03]: Preserve submitted custom-list text while deduping on whitespace-normalized casefolded keys so diagnostics stay deterministic.
+- [Plan 02-03]: Distinguish pending custom lookup misses from `backfill_required` frequency misses so the system never silently swaps away requested words.
 
 ### Pending Todos
 
@@ -99,6 +101,6 @@ Items acknowledged and carried forward from previous milestone close:
 
 ## Session Continuity
 
-Last session: 2026-04-19T16:19:32Z
-Stopped at: Completed 02-02-PLAN.md
+Last session: 2026-04-19T16:28:07Z
+Stopped at: Completed 02-03-PLAN.md
 Resume file: None
