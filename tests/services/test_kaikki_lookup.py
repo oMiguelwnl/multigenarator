@@ -9,6 +9,20 @@ from pathlib import Path
 from multilang.services.kaikki_lookup import KaikkiLookup
 
 
+def test_has_index_reports_missing_and_present_language_index(tmp_path: Path) -> None:
+    lookup = KaikkiLookup(data_dir=tmp_path)
+
+    assert lookup.has_index(language_code="pt") is False
+
+    source_path = _write_fixture_jsonl(
+        tmp_path / "pt.jsonl.gz",
+        [{"word": "lavar", "lang_code": "pt", "senses": [{"glosses": ["to wash"]}]}],
+    )
+    lookup.build_index(language_code="pt", source_path=source_path)
+
+    assert lookup.has_index(language_code="pt") is True
+
+
 def test_lookup_reads_fixture_index(tmp_path: Path) -> None:
     source_path = _write_fixture_jsonl(
         tmp_path / "pt.jsonl.gz",
@@ -59,6 +73,27 @@ def test_lookup_can_refresh_existing_index(tmp_path: Path) -> None:
     assert first_index == second_index
     assert refreshed is not None
     assert refreshed.definitions == ["home"]
+
+
+def test_build_index_reuses_existing_index_until_force_refresh(tmp_path: Path) -> None:
+    lookup = KaikkiLookup(data_dir=tmp_path)
+    source_path = _write_fixture_jsonl(
+        tmp_path / "de.jsonl.gz",
+        [{"word": "haus", "lang_code": "de", "senses": [{"glosses": ["house"]}]}],
+    )
+
+    first_index = lookup.build_index(language_code="de", source_path=source_path)
+    replacement_source = _write_fixture_jsonl(
+        tmp_path / "de-refresh.jsonl.gz",
+        [{"word": "haus", "lang_code": "de", "senses": [{"glosses": ["home"]}]}],
+    )
+
+    second_index = lookup.build_index(language_code="de", source_path=replacement_source)
+    record = lookup.lookup(language_code="de", term="haus")
+
+    assert first_index == second_index
+    assert record is not None
+    assert record.definitions == ["house"]
 
 
 def _write_fixture_jsonl(path: Path, rows: list[dict[str, object]]) -> Path:

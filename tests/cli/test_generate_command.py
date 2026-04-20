@@ -243,3 +243,33 @@ def test_generate_word_list_command_reports_pending_groundings(tmp_path: Path) -
     assert "pending_groundings=1" in result.output
     assert "rejected_rows=1" in result.output
     assert "completed_items=2" in result.output
+
+
+def test_generate_command_bootstraps_missing_lexicon_from_explicit_source_file(
+    monkeypatch, tmp_path: Path
+) -> None:
+    database_path = tmp_path / "bootstrap.db"
+    lexicon_dir = tmp_path / "lexicon"
+    source_file = tmp_path / "kaikki-en.jsonl.gz"
+    source_file.write_bytes(b"stub")
+
+    monkeypatch.setenv("MULTILANG_DATABASE_URL", f"sqlite+pysqlite:///{database_path}")
+    monkeypatch.setenv("MULTILANG_LEXICON_DATA_DIR", str(lexicon_dir))
+
+    app = create_app()
+    result = runner.invoke(
+        app,
+        [
+            "generate",
+            "--language",
+            "en",
+            "--source",
+            "word-list",
+            "--input-file",
+            str(write_word_list(tmp_path, "hello")),
+            "--lexicon-source-file",
+            str(source_file),
+        ],
+    )
+
+    assert result.exit_code == 0
