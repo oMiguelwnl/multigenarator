@@ -13,6 +13,7 @@ from multilang.progress import ProgressRenderer
 from multilang.runtime import build_runtime_service
 from multilang.services.execution_report import JobExecutionReport
 from multilang.services.generate_job import GenerateJobResult, GenerateJobService
+from multilang.services.ingest_lexical_items import IngestLexicalItemsService
 from multilang.services.job_summary import JobLifecycleSummary, JobSummaryBuilder
 from multilang.settings import Settings
 
@@ -215,9 +216,12 @@ def load_requested_item_keys(request: GenerationRequest) -> list[str]:
     """Resolve deterministic item keys for the current orchestration phase."""
 
     if request.source_type == "frequency":
-        if request.level is None:
-            raise ValueError("frequency requests require a level")
-        return [f"level-{request.level}-rank-{index:04d}" for index in range(1, 1001)]
+        levels = [request.level] if request.level is not None else [1, 2, 3]
+        return [
+            f"level-{level}-rank-{index:04d}"
+            for level in levels
+            for index in range(1, 1001)
+        ]
 
     if request.input_file is None:
         raise ValueError("word-list requests require an input file")
@@ -231,7 +235,8 @@ def load_requested_item_keys(request: GenerationRequest) -> list[str]:
 
 def _validate_request(request: GenerationRequest) -> None:
     if request.source_type == "frequency" and request.level is None:
-        raise typer.BadParameter("--level is required when --source frequency")
+        # Allow None level for frequency - indicates full 3-level deck build
+        pass
     if request.source_type == "word-list" and request.input_file is None:
         raise typer.BadParameter("--input-file is required when --source word-list")
     if request.source_type != "frequency" and request.level is not None:
@@ -288,13 +293,13 @@ def create_app(
     *,
     conflict_checker: ConflictChecker = default_conflict_checker,
     generate_executor: GenerateExecutor | None = None,
-    service: GenerateJobService | None = None,
+    service: GenerateJobService | IngestLexicalItemsService | None = None,
 ) -> typer.Typer:
     """Build the CLI application with injectable collaborators for tests."""
 
     cli = typer.Typer(help="Multilang operator CLI.")
 
-    def resolve_service() -> GenerateJobService | None:
+    def resolve_service() -> GenerateJobService | IngestLexicalItemsService | None:
         if service is not None:
             return service
         if generate_executor is not None:
@@ -363,6 +368,23 @@ def create_app(
         _validate_request(request)
         _confirm_overwrite(request, conflict_checker)
         resolved_service = resolve_service()
+
+        if isinstance(resolved_service, IngestLexicalItemsService):
+            lexical_result = resolved_service.execute(request)
+            if lexical_result.report.orchestration.diagnostic is not None:
+                _print_resume_diagnostic(lexical_result.report)
+                raise typer.Exit(code=1)
+
+            typer.echo(f"grounded_candidates={lexical_result.grounded_candidates}")
+            typer.echo(f"pending_groundings={lexical_result.pending_groundings}")
+            typer.echo(f"rejected_rows={lexical_result.rejected_rows}")
+            typer.echo(f"level_1_candidates={lexical_result.level_counts.get(1, 0)}")
+            typer.echo(f"level_2_candidates={lexical_result.level_counts.get(2, 0)}")
+            typer.echo(f"level_3_candidates={lexical_result.level_counts.get(3, 0)}")
+            typer.echo(f"backfilled_candidates={lexical_result.backfilled_candidates}")
+            _print_summary(JobSummaryBuilder(resolved_service.repository).build(lexical_result.report))
+            return
+
         result = resolve_executor(resolved_service)(request)
 
         if not isinstance(result, JobExecutionReport):

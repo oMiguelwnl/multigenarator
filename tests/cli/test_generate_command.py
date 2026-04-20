@@ -12,8 +12,12 @@ from multilang.cli import create_app
 from multilang.db.base import Base
 from multilang.domain.jobs import GenerationRequest, SupportedLanguage
 from multilang.repositories.job_repository import JobRepository
+from multilang.repositories.lexical_repository import LexicalRepository
 from multilang.services.generate_job import GenerateJobService
 from multilang.services.input_fingerprint import build_run_key
+from multilang.services.ingest_lexical_items import IngestLexicalItemsService
+from multilang.services.kaikki_lookup import KaikkiRecord
+from multilang.services.lexical_grounding import LexicalGroundingService
 
 runner = CliRunner()
 
@@ -23,6 +27,38 @@ def build_service() -> tuple[GenerateJobService, Session]:
     Base.metadata.create_all(engine)
     session = Session(engine)
     return GenerateJobService(JobRepository(session)), session
+
+
+class StubLookup:
+    def __init__(self, mapping: dict[str, KaikkiRecord]) -> None:
+        self._mapping = mapping
+
+    def lookup(self, *, language_code: str, term: str) -> KaikkiRecord | None:
+        return self._mapping.get(term.casefold())
+
+
+def build_ingest_service(*, lookup_terms: list[str]) -> tuple[IngestLexicalItemsService, Session]:
+    engine = create_engine("sqlite+pysqlite:///:memory:")
+    Base.metadata.create_all(engine)
+    session = Session(engine)
+    lookup = StubLookup(
+        {
+            term.casefold(): KaikkiRecord(
+                term=term,
+                display_form=term,
+                lemma=term,
+                definitions=[f"definition for {term}"],
+                ipa=f"/{term}/",
+            )
+            for term in lookup_terms
+        }
+    )
+    service = IngestLexicalItemsService(
+        job_service=GenerateJobService(JobRepository(session)),
+        lexical_repo=LexicalRepository(session),
+        grounding_service=LexicalGroundingService(lookup),
+    )
+    return service, session
 
 
 def write_word_list(tmp_path: Path, *items: str) -> Path:
@@ -41,15 +77,6 @@ def test_generate_command_rejects_unsupported_language() -> None:
 
     assert result.exit_code != 0
     assert "Invalid value for '--language'" in result.output
-
-
-def test_frequency_source_requires_level() -> None:
-    app = create_app()
-
-    result = runner.invoke(app, ["generate", "--language", "en", "--source", "frequency"])
-
-    assert result.exit_code != 0
-    assert "--level is required when --source frequency" in result.output
 
 
 def test_word_list_source_requires_input_file() -> None:
@@ -168,3 +195,51 @@ def test_generate_command_aborts_on_inconsistent_resume_state(tmp_path: Path) ->
 
     assert result.exit_code == 1
     assert "persisted resume state is inconsistent" in result.output
+
+
+def test_generate_frequency_command_reports_grounded_candidate_counts(monkeypatch) -> None:
+    service, session = build_ingest_service(
+        lookup_terms=[f"word-{rank}" for rank in range(1, 3005) if rank not in {17, 1013, 2400}],
+    )
+    app = create_app(service=service)
+
+    from multilang.services import frequency_decks
+
+    monkeypatch.setattr(
+        frequency_decks,
+        "iter_curated_frequency_candidates",
+        lambda language, scan_limit=6000: (
+            (rank, f"word-{rank}") for rank in range(1, 3008)
+        ),
+    )
+
+    result = runner.invoke(app, ["generate", "--language", "en", "--source", "frequency"])
+
+    session.close()
+
+    assert result.exit_code == 0
+    assert "grounded_candidates=3000" in result.output
+    assert "backfilled_candidates=3" in result.output
+    assert "level_1_candidates=1000" in result.output
+    assert "level_2_candidates=1000" in result.output
+    assert "level_3_candidates=1000" in result.output
+    assert "pending_groundings=0" in result.output
+
+
+def test_generate_word_list_command_reports_pending_groundings(tmp_path: Path) -> None:
+    service, session = build_ingest_service(lookup_terms=["hello", "world"])
+    app = create_app(service=service)
+    source = write_word_list(tmp_path, "hello", "", "world", "xyzqwe")
+
+    result = runner.invoke(
+        app,
+        ["generate", "--language", "en", "--source", "word-list", "--input-file", str(source)],
+    )
+
+    session.close()
+
+    assert result.exit_code == 0
+    assert "grounded_candidates=2" in result.output
+    assert "pending_groundings=1" in result.output
+    assert "rejected_rows=1" in result.output
+    assert "completed_items=2" in result.output
