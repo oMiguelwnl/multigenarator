@@ -31,6 +31,7 @@ class KaikkiLookup:
 
     def __init__(self, data_dir: str | Path) -> None:
         self._data_dir = Path(data_dir)
+        self._cache: dict[str, dict[str, dict[str, object]]] = {}
 
     def build_index(
         self,
@@ -59,6 +60,7 @@ class KaikkiLookup:
             json.dumps(records, ensure_ascii=False, indent=2, sort_keys=True),
             encoding="utf-8",
         )
+        self._cache[language_code] = records
         return index_path
 
     def lookup(self, *, language_code: str, term: str) -> KaikkiRecord | None:
@@ -68,7 +70,10 @@ class KaikkiLookup:
         if not index_path.exists():
             return None
 
-        payload = json.loads(index_path.read_text(encoding="utf-8"))
+        payload = self._cache.get(language_code)
+        if payload is None:
+            payload = json.loads(index_path.read_text(encoding="utf-8"))
+            self._cache[language_code] = payload
         record = payload.get(normalize_lexical_key(term))
         if record is None:
             return None

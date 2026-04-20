@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from html import escape
+from pathlib import Path
 
 from multilang.domain.jobs import SupportedLanguage
 from multilang.domain.lexicon import (
@@ -14,7 +15,14 @@ from multilang.domain.lexicon import (
     policy_for_language,
 )
 from multilang.services.kaikki_lookup import KaikkiRecord, normalize_lexical_key
+from multilang.services.kaikki_lookup import KaikkiLookup
 from multilang.services.word_list_parser import ParsedWordListItem
+
+
+def build_lexical_grounding_service(lexicon_data_dir: str | Path) -> "LexicalGroundingService":
+    """Create the runtime grounding service backed by the cached Kaikki lookup."""
+
+    return LexicalGroundingService(lookup=KaikkiLookup(data_dir=lexicon_data_dir))
 
 
 class LexicalGroundingService:
@@ -153,4 +161,4 @@ class LexicalGroundingService:
         return "<br>".join(cleaned)
 
 
-__all__ = ["LexicalGroundingService"]
+__all__ = ["LexicalGroundingService", "build_lexical_grounding_service"]

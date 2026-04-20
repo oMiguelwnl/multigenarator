@@ -24,7 +24,7 @@ def build_input_fingerprint(
 
     if request.source_type == "frequency":
         if request.level is None:
-            raise ValueError("frequency requests require a level")
+            return "levels:1-3"
         return f"level:{request.level}"
 
     normalized = normalize_requested_item_keys(requested_item_keys)
