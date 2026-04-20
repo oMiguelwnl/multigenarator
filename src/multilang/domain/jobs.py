@@ -42,6 +42,7 @@ class GenerationRequest(BaseModel):
     source_type: Literal["frequency", "word-list"]
     level: int | None = Field(default=None, ge=1, le=3)
     input_file: Path | None = None
+    lexicon_source_file: Path | None = None
     resume_job_id: str | None = None
     overwrite: bool = False
     yes_overwrite: bool = False

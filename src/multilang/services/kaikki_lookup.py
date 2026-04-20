@@ -63,6 +63,35 @@ class KaikkiLookup:
         self._cache[language_code] = records
         return index_path
 
+    def has_index(self, *, language_code: str) -> bool:
+        """Return whether the runtime index already exists for a language."""
+
+        return self.index_path(language_code=language_code).exists()
+
+    def index_path(self, *, language_code: str) -> Path:
+        """Return the deterministic runtime index path for a language."""
+
+        return self._index_path(language_code)
+
+    def ensure_index(
+        self,
+        *,
+        language_code: str,
+        source_path: str | Path | None = None,
+        force_refresh: bool = False,
+    ) -> Path | None:
+        """Return an existing index or build one from an explicit source archive."""
+
+        if self.has_index(language_code=language_code) and not force_refresh:
+            return self.index_path(language_code=language_code)
+        if source_path is None:
+            return None
+        return self.build_index(
+            language_code=language_code,
+            source_path=source_path,
+            force_refresh=force_refresh,
+        )
+
     def lookup(self, *, language_code: str, term: str) -> KaikkiRecord | None:
         """Query the cached index for a normalized term."""
 

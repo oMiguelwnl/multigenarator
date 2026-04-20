@@ -14,6 +14,7 @@ from multilang.runtime import build_runtime_service
 from multilang.services.execution_report import JobExecutionReport
 from multilang.services.generate_job import GenerateJobResult, GenerateJobService
 from multilang.services.ingest_lexical_items import IngestLexicalItemsService
+from multilang.services.kaikki_lookup import KaikkiLookup
 from multilang.services.job_summary import JobLifecycleSummary, JobSummaryBuilder
 from multilang.settings import Settings
 
@@ -289,6 +290,16 @@ def _print_resume_diagnostic(report: JobExecutionReport) -> None:
     typer.echo(f"resume_diagnostic_details={diagnostic.details}")
 
 
+def _prepare_lexical_data(request: GenerationRequest, *, settings: Settings) -> None:
+    if request.lexicon_source_file is None:
+        return
+
+    KaikkiLookup(data_dir=settings.lexicon_data_dir).ensure_index(
+        language_code=request.language.value,
+        source_path=request.lexicon_source_file,
+    )
+
+
 def create_app(
     *,
     conflict_checker: ConflictChecker = default_conflict_checker,
@@ -337,6 +348,15 @@ def create_app(
             Path | None,
             typer.Option("--input-file", exists=False, dir_okay=False, help="Path to a word list."),
         ] = None,
+        lexicon_source_file: Annotated[
+            Path | None,
+            typer.Option(
+                "--lexicon-source-file",
+                exists=True,
+                dir_okay=False,
+                help="Local Kaikki .jsonl.gz archive used to bootstrap lexical cache data.",
+            ),
+        ] = None,
         resume: Annotated[
             str | None,
             typer.Option("--resume", help="Resume an existing job by id."),
@@ -361,6 +381,7 @@ def create_app(
             source_type=source,
             level=level,
             input_file=input_file,
+            lexicon_source_file=lexicon_source_file,
             resume_job_id=resume,
             overwrite=overwrite,
             yes_overwrite=yes_overwrite,
@@ -370,6 +391,7 @@ def create_app(
         resolved_service = resolve_service()
 
         if isinstance(resolved_service, IngestLexicalItemsService):
+            _prepare_lexical_data(request, settings=resolved_service.settings)
             lexical_result = resolved_service.execute(request)
             if lexical_result.report.orchestration.diagnostic is not None:
                 _print_resume_diagnostic(lexical_result.report)

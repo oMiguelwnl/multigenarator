@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+import gzip
+import json
 from pathlib import Path
 
 from sqlalchemy import create_engine
@@ -64,6 +66,14 @@ def build_ingest_service(*, lookup_terms: list[str]) -> tuple[IngestLexicalItems
 def write_word_list(tmp_path: Path, *items: str) -> Path:
     path = tmp_path / "words.txt"
     path.write_text("\n".join(items), encoding="utf-8")
+    return path
+
+
+def write_kaikki_archive(path: Path, rows: list[dict[str, object]]) -> Path:
+    with gzip.open(path, "wt", encoding="utf-8") as handle:
+        for row in rows:
+            handle.write(json.dumps(row, ensure_ascii=False))
+            handle.write("\n")
     return path
 
 
@@ -250,8 +260,10 @@ def test_generate_command_bootstraps_missing_lexicon_from_explicit_source_file(
 ) -> None:
     database_path = tmp_path / "bootstrap.db"
     lexicon_dir = tmp_path / "lexicon"
-    source_file = tmp_path / "kaikki-en.jsonl.gz"
-    source_file.write_bytes(b"stub")
+    source_file = write_kaikki_archive(
+        tmp_path / "kaikki-en.jsonl.gz",
+        [{"word": "hello", "lang_code": "en", "senses": [{"glosses": ["hello"]}]}],
+    )
 
     monkeypatch.setenv("MULTILANG_DATABASE_URL", f"sqlite+pysqlite:///{database_path}")
     monkeypatch.setenv("MULTILANG_LEXICON_DATA_DIR", str(lexicon_dir))
@@ -273,3 +285,5 @@ def test_generate_command_bootstraps_missing_lexicon_from_explicit_source_file(
     )
 
     assert result.exit_code == 0
+    assert (lexicon_dir / "en" / "kaikki-index.json").exists()
+    assert "grounded_candidates=1" in result.output
