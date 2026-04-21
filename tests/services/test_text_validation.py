@@ -84,3 +84,29 @@ def test_validation_downgrades_confidence_for_risky_but_valid_text() -> None:
     assert result.validation_status is ValidationStatus.PASSED
     assert result.confidence_label is ConfidenceLabel.MEDIUM
     assert result.confidence_score < 0.8
+
+
+def test_validation_accepts_inflected_spanish_reflexive_forms() -> None:
+    result = build_service().validate(
+        sentence=build_sentence(text="Yo me lavo antes de dormir.", target_language="es"),
+        translation=build_translation(text="I wash myself before sleeping.", target_language="en"),
+        display_form="lavarse",
+        lemma="lavar",
+        definitions_html="to wash oneself",
+    )
+
+    assert result.validation_status is ValidationStatus.PASSED
+    assert ValidationFlagCode.MISSING_TARGET_LEMMA not in {flag.code for flag in result.validation_flags}
+
+
+def test_validation_accepts_inflected_german_verb_forms() -> None:
+    result = build_service().validate(
+        sentence=build_sentence(text="Ich mache jeden Tag Sport.", target_language="de"),
+        translation=build_translation(text="I exercise every day.", target_language="en"),
+        display_form="machen",
+        lemma="machen",
+        definitions_html="to do",
+    )
+
+    assert result.validation_status is ValidationStatus.PASSED
+    assert ValidationFlagCode.MISSING_TARGET_LEMMA not in {flag.code for flag in result.validation_flags}

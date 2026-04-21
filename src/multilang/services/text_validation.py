@@ -23,6 +23,35 @@ _BANNED_PATTERNS = (
     "coming soon",
     "lorem ipsum",
 )
+_MATCHABLE_SUFFIXES = (
+    "arse",
+    "erse",
+    "irse",
+    "rse",
+    "ing",
+    "ed",
+    "ies",
+    "amos",
+    "emos",
+    "imos",
+    "aron",
+    "eron",
+    "ando",
+    "iendo",
+    "ado",
+    "ido",
+    "es",
+    "en",
+    "er",
+    "ir",
+    "re",
+    "ar",
+    "se",
+    "s",
+    "e",
+    "o",
+    "a",
+)
 
 
 class TextValidationResult(BaseModel):
@@ -108,8 +137,12 @@ class TextValidationService:
         display_form: str,
         lemma: str,
     ) -> None:
-        candidates = {_normalize_text(display_form), _normalize_text(lemma)} - {""}
-        sentence_terms = {_normalize_text(token) for token in context.sentence_tokens}
+        candidates = _match_keys(display_form) | _match_keys(lemma)
+        sentence_terms = {
+            key
+            for token in context.sentence_tokens
+            for key in _match_keys(token)
+        }
         if candidates.isdisjoint(sentence_terms):
             flags.append(
                 ValidationFlag(
@@ -203,6 +236,42 @@ def _tokenize(value: str) -> list[str]:
 def _normalize_text(value: str) -> str:
     value = re.sub(r"<[^>]+>", " ", value)
     return " ".join(_TOKEN_RE.findall(value.casefold()))
+
+
+def _match_keys(value: str) -> set[str]:
+    normalized = _normalize_text(value)
+    if not normalized:
+        return set()
+
+    keys: set[str] = {normalized}
+    for token in normalized.split():
+        keys.update(_derive_matchable_forms(token))
+    return keys
+
+
+def _derive_matchable_forms(token: str) -> set[str]:
+    derived: set[str] = set()
+    queue = [token]
+
+    while queue:
+        current = queue.pop()
+        if current in derived:
+            continue
+        derived.add(current)
+
+        for suffix in _MATCHABLE_SUFFIXES:
+            if not current.endswith(suffix):
+                continue
+
+            stripped = current[: -len(suffix)]
+            if len(stripped) < 3:
+                continue
+
+            queue.append(stripped)
+            if len(stripped) >= 4 and stripped[-1] == stripped[-2]:
+                queue.append(stripped[:-1])
+
+    return derived
 
 
 def _has_repetitive_tokens(tokens: list[str]) -> bool:
