@@ -84,6 +84,19 @@ def test_validation_rejects_hollow_support_verb_templates() -> None:
     assert result.validation_status is ValidationStatus.FAILED
 
 
+def test_validation_rejects_generic_meta_sentences() -> None:
+    result = build_service().validate(
+        sentence=build_sentence(text="The word alpha is useful in daily life."),
+        translation=build_translation(text="A palavra alpha é útil no dia a dia."),
+        display_form="alpha",
+        lemma="alpha",
+        definitions_html="definition for alpha",
+    )
+
+    assert ValidationFlagCode.BANNED_PATTERN in {flag.code for flag in result.validation_flags}
+    assert result.validation_status is ValidationStatus.FAILED
+
+
 def test_validation_downgrades_confidence_for_risky_but_valid_text() -> None:
     result = build_service().validate(
         sentence=build_sentence(text="I wash the cup at home."),

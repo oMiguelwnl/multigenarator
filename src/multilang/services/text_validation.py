@@ -24,6 +24,15 @@ _BANNED_PATTERNS = (
     "lorem ipsum",
 )
 _GENERIC_SUPPORT_VERBS = {"use", "uso", "utilise", "benutze", "gebruik", "использую"}
+_META_SENTENCE_PREFIXES = (
+    "a palavra",
+    "das wort",
+    "het woord",
+    "la palabra",
+    "le mot",
+    "the word",
+    "слово",
+)
 _MATCHABLE_SUFFIXES = (
     "arse",
     "erse",
@@ -192,7 +201,7 @@ class TextValidationService:
             display_form=display_form,
             lemma=lemma,
             definitions_html=definitions_html,
-        ):
+        ) or _looks_like_meta_sentence(context.sentence_text):
             flags.append(
                 ValidationFlag(
                     code=ValidationFlagCode.BANNED_PATTERN,
@@ -331,6 +340,11 @@ def _looks_like_hollow_support_template(
         if current == target and previous in _GENERIC_SUPPORT_VERBS:
             return True
     return False
+
+
+def _looks_like_meta_sentence(value: str) -> bool:
+    normalized = _normalize_text(value)
+    return normalized.startswith(_META_SENTENCE_PREFIXES)
 
 
 __all__ = ["TextValidationResult", "TextValidationService"]

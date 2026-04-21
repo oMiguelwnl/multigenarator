@@ -434,8 +434,8 @@ def test_generate_command_fails_fast_when_lexical_data_is_missing(tmp_path: Path
 
 def test_generate_command_regenerates_single_flagged_item(tmp_path: Path) -> None:
     database_path = tmp_path / "runtime.db"
-    lexicon_dir = write_lookup_index(tmp_path, "alpha", "flag-beta")
-    source = write_word_list(tmp_path, "alpha", "flag-beta")
+    lexicon_dir = write_lookup_index(tmp_path, "wash", "flag-beta")
+    source = write_word_list(tmp_path, "wash", "flag-beta")
     service = build_runtime_service(
         Settings(
             database_url=f"sqlite+pysqlite:///{database_path}",
