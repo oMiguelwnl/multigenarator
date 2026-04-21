@@ -75,6 +75,14 @@ class LexicalRepository:
         )
         return [self._to_domain(row) for row in rows]
 
+    def get_candidate_for_item(self, job_id: str, item_key: str) -> LexicalCandidate | None:
+        return self.session.scalar(
+            select(LexicalCandidate).where(
+                LexicalCandidate.job_id == job_id,
+                LexicalCandidate.item_key == item_key,
+            )
+        )
+
     def count_pending_candidates(self, job_id: str) -> int:
         statement = select(func.count(LexicalCandidate.id)).where(
             LexicalCandidate.job_id == job_id,

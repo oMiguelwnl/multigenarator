@@ -6,21 +6,24 @@ import gzip
 import json
 from pathlib import Path
 
-from sqlalchemy import create_engine
+from sqlalchemy import create_engine, select
 from sqlalchemy.orm import Session
 from typer.testing import CliRunner
 
 from multilang.cli import create_app
 from multilang.db.base import Base
 from multilang.domain.jobs import GenerationRequest, SupportedLanguage
+from multilang.db.models import GenerationJob
 from multilang.repositories.job_repository import JobRepository
 from multilang.repositories.lexical_repository import LexicalRepository
+from multilang.runtime import build_runtime_service
 from multilang.services.generate_job import GenerateJobService
 from multilang.services.input_fingerprint import build_run_key
 from multilang.services.ingest_lexical_items import IngestLexicalItemsService
 from multilang.services.kaikki_lookup import KaikkiRecord
 from multilang.services.lexical_grounding import LexicalGroundingService
 from multilang.services.text_review import ReviewReport, ReviewReportItem
+from multilang.settings import Settings
 
 runner = CliRunner()
 
@@ -76,6 +79,28 @@ def write_kaikki_archive(path: Path, rows: list[dict[str, object]]) -> Path:
             handle.write(json.dumps(row, ensure_ascii=False))
             handle.write("\n")
     return path
+
+
+def write_lookup_index(tmp_path: Path, *terms: str) -> Path:
+    index_path = tmp_path / "lexicon" / "en" / "kaikki-index.json"
+    index_path.parent.mkdir(parents=True, exist_ok=True)
+    index_path.write_text(
+        json.dumps(
+            {
+                term: {
+                    "term": term,
+                    "display_form": term,
+                    "lemma": term,
+                    "definitions": [f"definition for {term}"],
+                    "ipa": f"/{term}/",
+                    "source": "kaikki",
+                }
+                for term in terms
+            }
+        ),
+        encoding="utf-8",
+    )
+    return index_path.parent.parent
 
 
 def test_generate_command_rejects_unsupported_language() -> None:
@@ -405,3 +430,61 @@ def test_generate_command_fails_fast_when_lexical_data_is_missing(tmp_path: Path
     assert "lexical data is missing for language 'en'" in result.output
     assert "--lexicon-source-file" in result.output
     assert "grounded_candidates=" not in result.output
+
+
+def test_generate_command_regenerates_single_flagged_item(tmp_path: Path) -> None:
+    database_path = tmp_path / "runtime.db"
+    lexicon_dir = write_lookup_index(tmp_path, "alpha", "flag-beta")
+    source = write_word_list(tmp_path, "alpha", "flag-beta")
+    service = build_runtime_service(
+        Settings(
+            database_url=f"sqlite+pysqlite:///{database_path}",
+            lexicon_data_dir=lexicon_dir,
+        )
+    )
+    app = create_app(service=service)
+    review_report = tmp_path / "review.json"
+
+    first_result = runner.invoke(
+        app,
+        [
+            "generate",
+            "--language",
+            "en",
+            "--source",
+            "word-list",
+            "--input-file",
+            str(source),
+            "--review-report-file",
+            str(review_report),
+        ],
+    )
+    job_id = service.repository.session.scalar(select(GenerationJob.id))
+    assert job_id is not None
+
+    second_result = runner.invoke(
+        app,
+        [
+            "generate",
+            "--language",
+            "en",
+            "--source",
+            "word-list",
+            "--input-file",
+            str(source),
+            "--resume",
+            job_id,
+            "--regenerate-item-key",
+            "flag-beta",
+            "--review-report-file",
+            str(review_report),
+        ],
+    )
+
+    assert first_result.exit_code == 0
+    assert "review_required_text_items=1" in first_result.output
+    assert "flagged_cards=1" in first_result.output
+    assert second_result.exit_code == 0
+    assert "--regenerate-item-key" not in second_result.output
+    assert "text_processed_items=1" in second_result.output
+    assert "review_required_text_items=1" in second_result.output

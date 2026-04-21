@@ -251,6 +251,17 @@ def _validate_request(request: GenerationRequest) -> None:
         raise typer.BadParameter("--yes-overwrite requires --overwrite")
 
 
+def _validate_regeneration_flags(
+    *,
+    request: GenerationRequest,
+    regenerate_item_key: str | None,
+) -> None:
+    if regenerate_item_key is None:
+        return
+    if request.resume_job_id is None:
+        raise typer.BadParameter("--regenerate-item-key requires --resume")
+
+
 def _confirm_overwrite(request: GenerationRequest, conflict_checker: ConflictChecker) -> None:
     if not request.overwrite:
         return
@@ -298,7 +309,7 @@ def _default_review_report_path(job_id: str) -> Path:
 
 
 def _build_review_report(
-    service: GenerateJobService,
+    service: GenerateJobService | IngestLexicalItemsService,
     *,
     job_id: str,
     review_report_file: Path | None,
@@ -306,6 +317,12 @@ def _build_review_report(
 ) -> ReviewReport:
     if review_report_builder is not None:
         return review_report_builder(job_id=job_id, output_path=review_report_file)
+
+    if hasattr(service, "build_review_report"):
+        return service.build_review_report(
+            job_id=job_id,
+            output_path=review_report_file or _default_review_report_path(job_id),
+        )
 
     text_repository = TextRepository(service.repository.session)
     return TextReviewService(text_repository=text_repository).build_review_report(
@@ -419,6 +436,13 @@ def create_app(
                 help="Optional output path for the flagged text review report.",
             ),
         ] = None,
+        regenerate_item_key: Annotated[
+            str | None,
+            typer.Option(
+                "--regenerate-item-key",
+                help="Regenerate one persisted text item for the resumed job.",
+            ),
+        ] = None,
     ) -> None:
         if source not in {"frequency", "word-list"}:
             raise typer.BadParameter("--source must be one of: frequency, word-list")
@@ -434,6 +458,10 @@ def create_app(
             yes_overwrite=yes_overwrite,
         )
         _validate_request(request)
+        _validate_regeneration_flags(
+            request=request,
+            regenerate_item_key=regenerate_item_key,
+        )
         _confirm_overwrite(request, conflict_checker)
         resolved_service = resolve_service()
 
@@ -452,6 +480,29 @@ def create_app(
             typer.echo(f"level_2_candidates={lexical_result.level_counts.get(2, 0)}")
             typer.echo(f"level_3_candidates={lexical_result.level_counts.get(3, 0)}")
             typer.echo(f"backfilled_candidates={lexical_result.backfilled_candidates}")
+            if hasattr(resolved_service, "generate_text"):
+                if regenerate_item_key is not None:
+                    text_result = resolved_service.regenerate_text_item(
+                        job_id=lexical_result.report.job_id,
+                        item_key=regenerate_item_key,
+                        deck_language=language,
+                    )
+                else:
+                    text_result = resolved_service.generate_text(
+                        job_id=lexical_result.report.job_id,
+                        deck_language=language,
+                    )
+                typer.echo(f"text_processed_items={text_result.processed_items}")
+                typer.echo(f"accepted_text_items={text_result.accepted_items}")
+                typer.echo(f"review_required_text_items={text_result.review_required_items}")
+                _print_review_report(
+                    _build_review_report(
+                        resolved_service,
+                        job_id=lexical_result.report.job_id,
+                        review_report_file=review_report_file,
+                        review_report_builder=review_report_builder,
+                    )
+                )
             _print_summary(JobSummaryBuilder(resolved_service.repository).build(lexical_result.report))
             return
 

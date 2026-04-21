@@ -118,6 +118,7 @@ class IngestLexicalItemsService:
         result = self._result_from_persisted_candidates(report=report)
         result.backfilled_candidates = total_backfilled
         result.level_counts.update(level_counts)
+        self.repository.advance_job_to_stage(orchestration.job_id, JobStage.GENERATE_TEXT)
         return result
 
     def _ingest_word_list(self, request: GenerationRequest) -> IngestLexicalItemsResult:
@@ -171,6 +172,7 @@ class IngestLexicalItemsService:
 
         result = self._result_from_persisted_candidates(report=report)
         result.rejected_rows = len(parsed.warnings)
+        self.repository.advance_job_to_stage(orchestration.job_id, JobStage.GENERATE_TEXT)
         return result
 
     def _result_from_persisted_candidates(

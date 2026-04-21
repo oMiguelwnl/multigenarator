@@ -88,8 +88,14 @@ class JobRepository:
         item = self._get_item(job.run_key, item_key)
 
         if item and item.status == JobStatus.COMPLETED.value:
-            job.skipped_duplicates += 1
+            item.last_completed_stage = completed_stage.value
+            item.last_error = None
+            job.current_stage = completed_stage.value
+            job.last_completed_stage = completed_stage.value
+            self.session.add(item)
+            self.session.add(job)
             self.session.commit()
+            self._sync_job_counters(job)
             self.session.refresh(job)
             return self._snapshot(job)
 
@@ -196,6 +202,14 @@ class JobRepository:
                 "mismatches": mismatches,
             },
         )
+
+    def advance_job_to_stage(self, job_id: str, stage: JobStage) -> JobProgressSnapshot:
+        job = self._require_job(job_id)
+        job.current_stage = stage.value
+        self.session.add(job)
+        self.session.commit()
+        self.session.refresh(job)
+        return self._snapshot(job)
 
     def _require_job(self, job_id: str) -> GenerationJob:
         job = self.get_job(job_id)
