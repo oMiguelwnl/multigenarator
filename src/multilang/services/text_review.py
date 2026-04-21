@@ -7,7 +7,7 @@ from pathlib import Path
 
 from pydantic import BaseModel, Field
 
-from multilang.domain.text_quality import ConfidenceLabel, ReviewStatus, TextQualityRecord
+from multilang.domain.text_quality import ConfidenceLabel, TextQualityRecord
 
 
 class ReviewReportItem(BaseModel):
@@ -37,12 +37,13 @@ class TextReviewService:
     def build_review_report(self, *, job_id: str, output_path: Path | str) -> ReviewReport:
         items = [self._to_item(record) for record in self.text_repository.list_flagged_records(job_id)]
         items.sort(key=self._sort_key)
+        report_path = Path(output_path) if items else None
 
         report = ReviewReport(
             job_id=job_id,
             item_count=len(items),
             items=items,
-            report_path=Path(output_path),
+            report_path=report_path,
         )
         self._write_report(report)
         return report

@@ -10,12 +10,14 @@ import typer
 
 from multilang.domain.jobs import GenerationRequest, JobProgressSnapshot, SupportedLanguage
 from multilang.progress import ProgressRenderer
+from multilang.repositories.text_repository import TextRepository
 from multilang.runtime import build_runtime_service
 from multilang.services.execution_report import JobExecutionReport
 from multilang.services.generate_job import GenerateJobResult, GenerateJobService
 from multilang.services.ingest_lexical_items import IngestLexicalItemsService
 from multilang.services.kaikki_lookup import KaikkiLookup
 from multilang.services.job_summary import JobLifecycleSummary, JobSummaryBuilder
+from multilang.services.text_review import ReviewReport, TextReviewService
 from multilang.settings import Settings
 
 app = typer.Typer(help="Multilang operator CLI.")
@@ -25,6 +27,7 @@ GenerateExecutor = Callable[[GenerationRequest], Any]
 RequestedItemKeysLoader = Callable[[GenerationRequest], list[str]]
 ItemProcessor = Callable[[str], None]
 ProgressSink = Callable[[str], None]
+ReviewReportBuilder = Callable[..., ReviewReport]
 
 
 def default_conflict_checker(_: GenerationRequest) -> bool:
@@ -290,14 +293,48 @@ def _print_resume_diagnostic(report: JobExecutionReport) -> None:
     typer.echo(f"resume_diagnostic_details={diagnostic.details}")
 
 
-def _prepare_lexical_data(request: GenerationRequest, *, settings: Settings) -> None:
-    if request.lexicon_source_file is None:
-        return
+def _default_review_report_path(job_id: str) -> Path:
+    return Path(".multilang") / "review-reports" / f"{job_id}.json"
 
-    KaikkiLookup(data_dir=settings.lexicon_data_dir).ensure_index(
+
+def _build_review_report(
+    service: GenerateJobService,
+    *,
+    job_id: str,
+    review_report_file: Path | None,
+    review_report_builder: ReviewReportBuilder | None,
+) -> ReviewReport:
+    if review_report_builder is not None:
+        return review_report_builder(job_id=job_id, output_path=review_report_file)
+
+    text_repository = TextRepository(service.repository.session)
+    return TextReviewService(text_repository=text_repository).build_review_report(
+        job_id=job_id,
+        output_path=review_report_file or _default_review_report_path(job_id),
+    )
+
+
+def _print_review_report(report: ReviewReport) -> None:
+    typer.echo(f"flagged_cards={report.item_count}")
+    if report.item_count > 0 and report.report_path is not None:
+        typer.echo(f"review_report={report.report_path}")
+
+
+def _prepare_lexical_data(request: GenerationRequest, *, settings: Settings) -> None:
+    lookup = KaikkiLookup(data_dir=settings.lexicon_data_dir)
+    index_path = lookup.ensure_index(
         language_code=request.language.value,
         source_path=request.lexicon_source_file,
     )
+    if index_path is not None:
+        return
+
+    typer.echo(
+        "lexical data is missing for language "
+        f"'{request.language.value}'. Re-run with --lexicon-source-file "
+        "<path-to-local-kaikki.jsonl.gz> to bootstrap the local cache."
+    )
+    raise typer.Exit(code=1)
 
 
 def create_app(
@@ -305,6 +342,7 @@ def create_app(
     conflict_checker: ConflictChecker = default_conflict_checker,
     generate_executor: GenerateExecutor | None = None,
     service: GenerateJobService | IngestLexicalItemsService | None = None,
+    review_report_builder: ReviewReportBuilder | None = None,
 ) -> typer.Typer:
     """Build the CLI application with injectable collaborators for tests."""
 
@@ -372,6 +410,15 @@ def create_app(
                 help="Confirm overwrite in non-interactive mode when conflicts exist.",
             ),
         ] = False,
+        review_report_file: Annotated[
+            Path | None,
+            typer.Option(
+                "--review-report-file",
+                dir_okay=False,
+                exists=False,
+                help="Optional output path for the flagged text review report.",
+            ),
+        ] = None,
     ) -> None:
         if source not in {"frequency", "word-list"}:
             raise typer.BadParameter("--source must be one of: frequency, word-list")
@@ -391,7 +438,8 @@ def create_app(
         resolved_service = resolve_service()
 
         if isinstance(resolved_service, IngestLexicalItemsService):
-            _prepare_lexical_data(request, settings=resolved_service.settings)
+            if service is None:
+                _prepare_lexical_data(request, settings=resolved_service.settings)
             lexical_result = resolved_service.execute(request)
             if lexical_result.report.orchestration.diagnostic is not None:
                 _print_resume_diagnostic(lexical_result.report)
@@ -421,6 +469,14 @@ def create_app(
 
         summary = JobSummaryBuilder(resolved_service.repository).build(result)
         _print_summary(summary)
+        _print_review_report(
+            _build_review_report(
+                resolved_service,
+                job_id=result.job_id,
+                review_report_file=review_report_file,
+                review_report_builder=review_report_builder,
+            )
+        )
 
     return cli
 
