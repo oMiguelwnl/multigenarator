@@ -88,7 +88,15 @@ class JobRepository:
         item = self._get_item(job.run_key, item_key)
 
         if item and item.status == JobStatus.COMPLETED.value:
-            item.last_completed_stage = completed_stage.value
+            previous_stage = (
+                JobStage(item.last_completed_stage)
+                if item.last_completed_stage is not None
+                else None
+            )
+            if previous_stage == completed_stage:
+                job.skipped_duplicates += 1
+            elif previous_stage is None or self._is_later_stage(completed_stage, previous_stage):
+                item.last_completed_stage = completed_stage.value
             item.last_error = None
             job.current_stage = completed_stage.value
             job.last_completed_stage = completed_stage.value
@@ -261,6 +269,10 @@ class JobRepository:
         if actual_index + 1 < len(stage_order):
             allowed_current.add(stage_order[actual_index + 1].value)
         return current_stage not in allowed_current
+
+    def _is_later_stage(self, candidate: JobStage, current: JobStage) -> bool:
+        stage_order = list(JobStage)
+        return stage_order.index(candidate) > stage_order.index(current)
 
     def _snapshot(self, job: GenerationJob) -> JobProgressSnapshot:
         return JobProgressSnapshot(

@@ -86,3 +86,27 @@ def test_duplicate_item_success_is_not_silently_persisted_twice() -> None:
             "WHERE run_key = 'en-frequency-level-1' AND item_key = 'hola'"
         )
     ).scalar_one() == 1
+
+
+def test_stage_progression_does_not_count_as_duplicate_skip() -> None:
+    repository, _ = build_repository()
+    job = repository.create_job(
+        request=make_request(),
+        run_key="en-frequency-level-1",
+        source_fingerprint="level-1",
+        total_items=1,
+    )
+
+    repository.record_item_success(job.id, item_key="hola", completed_stage=JobStage.INGEST)
+    snapshot = repository.record_item_success(
+        job.id,
+        item_key="hola",
+        completed_stage=JobStage.GENERATE_TEXT,
+    )
+
+    refreshed = repository.get_job(job.id)
+
+    assert refreshed is not None
+    assert refreshed.skipped_duplicates == 0
+    assert refreshed.last_completed_stage == JobStage.GENERATE_TEXT.value
+    assert snapshot.stage == JobStage.GENERATE_TEXT
