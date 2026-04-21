@@ -31,7 +31,7 @@ def upgrade() -> None:
         sa.Column("generation_status", sa.String(length=32), nullable=False),
         sa.Column("validation_status", sa.String(length=32), nullable=False),
         sa.Column("review_status", sa.String(length=32), nullable=False),
-        sa.Column("repair_attempt_count", sa.Integer(), nullable=False, server_default="0"),
+        sa.Column("repair_attempt_count", sa.Integer(), nullable=False, server_default=sa.text("0")),
         sa.Column("confidence_score", sa.Float(), nullable=True),
         sa.Column("confidence_label", sa.String(length=32), nullable=False),
         sa.Column("validation_flags", sa.JSON(), nullable=False, server_default=sa.text("'[]'")),
