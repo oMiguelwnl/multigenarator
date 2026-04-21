@@ -1,4 +1,4 @@
-"""Typed boundaries for Phase 3 sentence generation and translation."""
+"""Typed boundaries and orchestration for Phase 3 text generation."""
 
 from __future__ import annotations
 
@@ -6,6 +6,7 @@ from typing import Any, Protocol
 
 from pydantic import BaseModel, Field
 
+from multilang.domain.text_quality import TextProvenance
 from multilang.domain.jobs import SupportedLanguage
 from multilang.domain.lexicon import GroundingStatus, LexicalCardCandidate
 
@@ -64,6 +65,71 @@ class SentenceTranslationResult(BaseModel):
     provenance: dict[str, Any] = Field(default_factory=dict)
 
 
+class GeneratedSentence(BaseModel):
+    text: str = Field(min_length=1)
+    target_language: str = Field(min_length=2)
+    intended_sense: str | None = None
+    uncertainty_notes: list[str] = Field(default_factory=list)
+    provenance: TextProvenance
+
+
+class GeneratedTranslation(BaseModel):
+    text: str = Field(min_length=1)
+    target_language: str = Field(min_length=2)
+    provenance: TextProvenance
+
+
+class GeneratedTextBundle(BaseModel):
+    sentence: GeneratedSentence
+    translation: GeneratedTranslation
+
+
+class TextGenerationService:
+    """Generate a sentence first, then a sentence-faithful translation."""
+
+    def __init__(
+        self,
+        *,
+        sentence_adapter: SentenceGenerationAdapter,
+        translation_adapter: SentenceTranslationAdapter,
+    ) -> None:
+        self._sentence_adapter = sentence_adapter
+        self._translation_adapter = translation_adapter
+
+    def generate_bundle(
+        self,
+        *,
+        candidate: LexicalCardCandidate,
+        deck_language: SupportedLanguage,
+    ) -> GeneratedTextBundle:
+        sentence_request = SentenceGenerationRequest.from_candidate(
+            candidate=candidate,
+            deck_language=deck_language,
+        )
+        sentence_result = self._sentence_adapter.generate_sentence(sentence_request)
+
+        translation_request = SentenceTranslationRequest.from_sentence(
+            sentence_result=sentence_result,
+            translation_target_language=candidate.translation_target_language,
+        )
+        translation_result = self._translation_adapter.translate_sentence(translation_request)
+
+        return GeneratedTextBundle(
+            sentence=GeneratedSentence(
+                text=sentence_result.sentence,
+                target_language=deck_language.value,
+                intended_sense=sentence_result.intended_sense,
+                uncertainty_notes=[note.strip() for note in sentence_result.uncertainty_notes if note.strip()],
+                provenance=_normalize_provenance(sentence_result.provenance),
+            ),
+            translation=GeneratedTranslation(
+                text=translation_result.translation,
+                target_language=candidate.translation_target_language,
+                provenance=_normalize_provenance(translation_result.provenance),
+            ),
+        )
+
+
 class SentenceGenerationAdapter(Protocol):
     def generate_sentence(self, request: SentenceGenerationRequest) -> SentenceGenerationResult: ...
 
@@ -72,11 +138,30 @@ class SentenceTranslationAdapter(Protocol):
     def translate_sentence(self, request: SentenceTranslationRequest) -> SentenceTranslationResult: ...
 
 
+def _normalize_provenance(payload: dict[str, Any]) -> TextProvenance:
+    metadata = dict(payload)
+    provider = metadata.pop("provider", None)
+    model = metadata.pop("model", None)
+    version = metadata.pop("version", None)
+    source = provider or metadata.pop("source", "adapter")
+    return TextProvenance(
+        source=str(source),
+        provider=provider,
+        model=model,
+        version=version,
+        metadata=metadata,
+    )
+
+
 __all__ = [
+    "GeneratedSentence",
+    "GeneratedTextBundle",
+    "GeneratedTranslation",
     "SentenceGenerationAdapter",
     "SentenceGenerationRequest",
     "SentenceGenerationResult",
     "SentenceTranslationAdapter",
     "SentenceTranslationRequest",
     "SentenceTranslationResult",
+    "TextGenerationService",
 ]
