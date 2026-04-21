@@ -10,10 +10,14 @@ from multilang.domain.lexicon import (
     LexicalProvenance,
 )
 from multilang.services.text_generation import (
+    GeneratedTextBundle,
+    TextGenerationService,
     SentenceGenerationRequest,
     SentenceGenerationResult,
+    SentenceGenerationAdapter,
     SentenceTranslationRequest,
     SentenceTranslationResult,
+    SentenceTranslationAdapter,
 )
 from multilang.settings import Settings
 
@@ -90,3 +94,84 @@ def test_translation_result_keeps_provider_metadata() -> None:
 
     assert result.translation == "I wash myself before going to sleep."
     assert result.provenance["provider"] == "deepl"
+
+
+class FakeSentenceAdapter(SentenceGenerationAdapter):
+    def __init__(self) -> None:
+        self.requests: list[SentenceGenerationRequest] = []
+
+    def generate_sentence(self, request: SentenceGenerationRequest) -> SentenceGenerationResult:
+        self.requests.append(request)
+        return SentenceGenerationResult(
+            sentence="Yo me lavo antes de dormir.",
+            intended_sense="reflexive daily routine",
+            uncertainty_notes=["medium confidence"],
+            provenance={"provider": "litellm", "model": "openai/gpt-4o-mini"},
+        )
+
+
+class FakeTranslationAdapter(SentenceTranslationAdapter):
+    def __init__(self) -> None:
+        self.requests: list[SentenceTranslationRequest] = []
+
+    def translate_sentence(self, request: SentenceTranslationRequest) -> SentenceTranslationResult:
+        self.requests.append(request)
+        return SentenceTranslationResult(
+            translation="I wash myself before going to sleep.",
+            provenance={"provider": "deepl", "model": None},
+        )
+
+
+def test_text_generation_service_returns_sentence_and_translation_provenance() -> None:
+    sentence_adapter = FakeSentenceAdapter()
+    translation_adapter = FakeTranslationAdapter()
+    service = TextGenerationService(
+        sentence_adapter=sentence_adapter,
+        translation_adapter=translation_adapter,
+    )
+
+    result = service.generate_bundle(
+        candidate=build_candidate(),
+        deck_language=SupportedLanguage.ES,
+    )
+
+    assert isinstance(result, GeneratedTextBundle)
+    assert result.sentence.text == "Yo me lavo antes de dormir."
+    assert result.translation.text == "I wash myself before going to sleep."
+    assert result.sentence.provenance.provider == "litellm"
+    assert result.translation.provenance.provider == "deepl"
+
+
+def test_text_generation_service_normalizes_uncertainty_and_sense_notes() -> None:
+    service = TextGenerationService(
+        sentence_adapter=FakeSentenceAdapter(),
+        translation_adapter=FakeTranslationAdapter(),
+    )
+
+    result = service.generate_bundle(
+        candidate=build_candidate(),
+        deck_language=SupportedLanguage.ES,
+    )
+
+    assert result.sentence.intended_sense == "reflexive daily routine"
+    assert result.sentence.uncertainty_notes == ["medium confidence"]
+
+
+def test_text_generation_service_uses_candidate_translation_policy() -> None:
+    sentence_adapter = FakeSentenceAdapter()
+    translation_adapter = FakeTranslationAdapter()
+    service = TextGenerationService(
+        sentence_adapter=sentence_adapter,
+        translation_adapter=translation_adapter,
+    )
+
+    candidate = build_candidate().model_copy(update={"translation_target_language": "pt"})
+
+    result = service.generate_bundle(
+        candidate=candidate,
+        deck_language=SupportedLanguage.ES,
+    )
+
+    assert sentence_adapter.requests[0].target_language == SupportedLanguage.ES.value
+    assert translation_adapter.requests[0].translation_target_language == "pt"
+    assert translation_adapter.requests[0].sentence == result.sentence.text
