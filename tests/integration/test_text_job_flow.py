@@ -183,7 +183,7 @@ def test_generate_command_skips_pending_groundings_during_text_generation(tmp_pa
         session.close()
 
 
-def test_generate_command_uses_requested_translation_target_language(tmp_path: Path) -> None:
+def test_generate_command_uses_requested_sentence_and_translation_languages(tmp_path: Path) -> None:
     database_path = tmp_path / "spanish-runtime.db"
     lexicon_dir = write_lookup_index(tmp_path, "usar", language_code="es")
     source = write_word_list(tmp_path, "usar")
@@ -215,6 +215,7 @@ def test_generate_command_uses_requested_translation_target_language(tmp_path: P
     try:
         generated = session.scalar(select(TextQualityRecordModel))
         assert generated is not None
+        assert generated.example_sentence == "Yo uso usar cada día."
         assert generated.translation_text == "I use this every day."
     finally:
         session.close()

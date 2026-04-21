@@ -29,10 +29,42 @@ from multilang.settings import Settings
 
 class _TemplateSentenceAdapter:
     def generate_sentence(self, request: SentenceGenerationRequest) -> SentenceGenerationResult:
-        if "flag" in request.display_form.casefold():
-            sentence = f"placeholder {request.display_form} placeholder"
-        else:
-            sentence = f"I use {request.display_form} every day."
+        catalog = {
+            "de": {
+                "default": "Ich benutze {display_form} jeden Tag.",
+                "flagged": "placeholder ich benutze {display_form} placeholder",
+            },
+            "en": {
+                "default": "I use {display_form} every day.",
+                "flagged": "placeholder I use {display_form} placeholder",
+            },
+            "es": {
+                "default": "Yo uso {display_form} cada día.",
+                "flagged": "placeholder yo uso {display_form} placeholder",
+            },
+            "fr": {
+                "default": "J'utilise {display_form} tous les jours.",
+                "flagged": "placeholder j'utilise {display_form} placeholder",
+            },
+            "nl": {
+                "default": "Ik gebruik {display_form} elke dag.",
+                "flagged": "placeholder ik gebruik {display_form} placeholder",
+            },
+            "pt": {
+                "default": "Eu uso {display_form} a cada dia.",
+                "flagged": "placeholder eu uso {display_form} placeholder",
+            },
+            "ru": {
+                "default": "Я использую {display_form} каждый день.",
+                "flagged": "placeholder я использую {display_form} placeholder",
+            },
+        }
+        templates = catalog.get(request.target_language)
+        if templates is None:
+            raise ValueError(f"unsupported runtime template language: {request.target_language}")
+
+        template_key = "flagged" if "flag" in request.display_form.casefold() else "default"
+        sentence = templates[template_key].format(display_form=request.display_form)
         return SentenceGenerationResult(
             sentence=sentence,
             intended_sense=request.definitions_html,
