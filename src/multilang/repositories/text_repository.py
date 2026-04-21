@@ -8,6 +8,7 @@ from sqlalchemy import or_, select
 from sqlalchemy.orm import Session
 
 from multilang.db.models import LexicalCandidate, TextQualityRecordModel
+from multilang.domain.lexicon import GroundingStatus
 from multilang.domain.text_quality import (
     ConfidenceLabel,
     ReviewStatus,
@@ -100,6 +101,7 @@ class TextRepository:
             )
             .where(
                 LexicalCandidate.job_id == job_id,
+                LexicalCandidate.grounding_status == GroundingStatus.GROUNDED.value,
                 or_(
                     TextQualityRecordModel.id.is_(None),
                     TextQualityRecordModel.review_status != ReviewStatus.ACCEPTED.value,

@@ -104,6 +104,7 @@ def seed_lexical_candidate(
     run_key: str,
     item_key: str,
     lemma: str,
+    grounding_status: GroundingStatus = GroundingStatus.GROUNDED,
 ) -> LexicalCandidate:
     lexical_repository.upsert_candidate(
         job_id=job_id,
@@ -111,7 +112,7 @@ def seed_lexical_candidate(
         item_key=item_key,
         source_type="word-list",
         normalized_source=lemma,
-        candidate=make_candidate(lemma=lemma),
+        candidate=make_candidate(lemma=lemma).model_copy(update={"grounding_status": grounding_status}),
     )
     return session.query(LexicalCandidate).filter_by(job_id=job_id, item_key=item_key).one()
 
@@ -241,6 +242,7 @@ def test_list_generation_candidates_and_round_trip_structured_fields() -> None:
         run_key=job.run_key,
         item_key="line-1",
         lemma="sing",
+        grounding_status=GroundingStatus.PENDING,
     )
     review = seed_lexical_candidate(
         lexical_repository,
@@ -298,5 +300,6 @@ def test_list_generation_candidates_and_round_trip_structured_fields() -> None:
     assert stored.validation_flags[0].code is ValidationFlagCode.LOW_CONFIDENCE
     assert stored.sentence_provenance.metadata["repair"] is True
     assert stored.translation_provenance.metadata["repair"] is True
-    assert [candidate.item_key for candidate in candidates] == ["line-1", "line-2"]
-    assert candidates[0].lemma == pending.lemma
+    assert pending.grounding_status == GroundingStatus.PENDING.value
+    assert [candidate.item_key for candidate in candidates] == ["line-2"]
+    assert candidates[0].lemma == review.lemma

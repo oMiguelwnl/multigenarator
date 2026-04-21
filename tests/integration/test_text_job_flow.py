@@ -139,3 +139,45 @@ def test_generate_command_regenerates_one_flagged_item_without_full_rerun(tmp_pa
     assert "accepted_text_items=1" in first_result.output
     assert "review_required_text_items=1" in first_result.output
     assert review_report.exists()
+
+
+def test_generate_command_skips_pending_groundings_during_text_generation(tmp_path: Path) -> None:
+    database_path = tmp_path / "mixed-runtime.db"
+    lexicon_dir = write_lookup_index(tmp_path, "alpha")
+    source = write_word_list(tmp_path, "alpha", "unknown-term")
+    service = build_runtime_service(
+        Settings(
+            database_url=f"sqlite+pysqlite:///{database_path}",
+            lexicon_data_dir=lexicon_dir,
+        )
+    )
+    app = create_app(service=service)
+
+    result = runner.invoke(
+        app,
+        [
+            "generate",
+            "--language",
+            "en",
+            "--source",
+            "word-list",
+            "--input-file",
+            str(source),
+        ],
+    )
+
+    assert result.exit_code == 0
+    assert "grounded_candidates=1" in result.output
+    assert "pending_groundings=1" in result.output
+    assert "text_processed_items=1" in result.output
+    assert "accepted_text_items=1" in result.output
+
+    session = Session(create_engine(f"sqlite+pysqlite:///{database_path}"))
+    try:
+        assert session.scalar(select(func.count()).select_from(GenerationJob)) == 1
+        assert session.scalar(select(func.count()).select_from(TextQualityRecordModel)) == 1
+        generated = session.scalar(select(TextQualityRecordModel))
+        assert generated is not None
+        assert generated.item_key == "alpha"
+    finally:
+        session.close()
