@@ -20,6 +20,7 @@ from multilang.services.input_fingerprint import build_run_key
 from multilang.services.ingest_lexical_items import IngestLexicalItemsService
 from multilang.services.kaikki_lookup import KaikkiRecord
 from multilang.services.lexical_grounding import LexicalGroundingService
+from multilang.services.text_review import ReviewReport, ReviewReportItem
 
 runner = CliRunner()
 
@@ -165,6 +166,88 @@ def test_generate_command_prints_runtime_summary_and_duplicate_counts(tmp_path: 
     assert "skipped_duplicates=2" in rerun_result.output
 
 
+def test_generate_command_prints_review_report_for_flagged_text_rows(tmp_path: Path) -> None:
+    service, session = build_service()
+    source = write_word_list(tmp_path, "alpha")
+    report_path = tmp_path / "flagged-review.json"
+
+    def build_review_report(*, job_id: str, output_path: Path | None) -> ReviewReport:
+        path = output_path or report_path
+        path.write_text('{"job_id": "job-1", "item_count": 2}\n', encoding="utf-8")
+        return ReviewReport(
+            job_id=job_id,
+            item_count=2,
+            items=[
+                ReviewReportItem(
+                    confidence_label="low",
+                    example_sentence="I wash the cup at home.",
+                    item_key="alpha",
+                    job_id=job_id,
+                    review_reason="low_confidence",
+                    translation_text="Eu lavo a xícara em casa.",
+                    validation_flags=["low_confidence"],
+                )
+            ],
+            report_path=path,
+        )
+
+    app = create_app(service=service, review_report_builder=build_review_report)
+
+    result = runner.invoke(
+        app,
+        [
+            "generate",
+            "--language",
+            "en",
+            "--source",
+            "word-list",
+            "--input-file",
+            str(source),
+            "--review-report-file",
+            str(report_path),
+        ],
+    )
+
+    session.close()
+
+    assert result.exit_code == 0
+    assert "flagged_cards=2" in result.output
+    assert f"review_report={report_path}" in result.output
+
+
+def test_generate_command_skips_empty_review_artifacts(tmp_path: Path) -> None:
+    service, session = build_service()
+    source = write_word_list(tmp_path, "alpha")
+    report_path = tmp_path / "flagged-review.json"
+
+    def build_review_report(*, job_id: str, output_path: Path | None) -> ReviewReport:
+        return ReviewReport(job_id=job_id, item_count=0, items=[], report_path=output_path)
+
+    app = create_app(service=service, review_report_builder=build_review_report)
+
+    result = runner.invoke(
+        app,
+        [
+            "generate",
+            "--language",
+            "en",
+            "--source",
+            "word-list",
+            "--input-file",
+            str(source),
+            "--review-report-file",
+            str(report_path),
+        ],
+    )
+
+    session.close()
+
+    assert result.exit_code == 0
+    assert "flagged_cards=0" in result.output
+    assert "review_report=" not in result.output
+    assert report_path.exists() is False
+
+
 def test_generate_command_aborts_on_inconsistent_resume_state(tmp_path: Path) -> None:
     service, session = build_service()
     app = create_app(service=service)
@@ -287,3 +370,38 @@ def test_generate_command_bootstraps_missing_lexicon_from_explicit_source_file(
     assert result.exit_code == 0
     assert (lexicon_dir / "en" / "kaikki-index.json").exists()
     assert "grounded_candidates=1" in result.output
+
+
+def test_generate_command_fails_fast_when_lexical_data_is_missing(tmp_path: Path) -> None:
+    database_path = tmp_path / "missing-lexicon.db"
+    lexicon_dir = tmp_path / "lexicon"
+    lexicon_dir.mkdir()
+    
+    from pytest import MonkeyPatch
+
+    monkeypatch = MonkeyPatch()
+    monkeypatch.setenv("MULTILANG_DATABASE_URL", f"sqlite+pysqlite:///{database_path}")
+    monkeypatch.setenv("MULTILANG_LEXICON_DATA_DIR", str(lexicon_dir))
+
+    app = create_app()
+
+    try:
+        result = runner.invoke(
+            app,
+            [
+                "generate",
+                "--language",
+                "en",
+                "--source",
+                "word-list",
+                "--input-file",
+                str(write_word_list(tmp_path, "hello")),
+            ],
+        )
+    finally:
+        monkeypatch.undo()
+
+    assert result.exit_code == 1
+    assert "lexical data is missing for language 'en'" in result.output
+    assert "--lexicon-source-file" in result.output
+    assert "grounded_candidates=" not in result.output
