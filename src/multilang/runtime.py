@@ -45,7 +45,16 @@ class _TemplateTranslationAdapter:
         if "placeholder" in request.sentence.casefold():
             translation = request.sentence
         else:
-            translation = "Eu uso isso todos os dias."
+            catalog = {
+                "de": "Ich benutze das jeden Tag.",
+                "en": "I use this every day.",
+                "es": "Yo uso esto todos los días.",
+                "fr": "J'utilise cela tous les jours.",
+                "nl": "Ik gebruik dit elke dag.",
+                "pt": "Eu uso isso todos os dias.",
+                "ru": "Я использую это каждый день.",
+            }
+            translation = catalog.get(request.translation_target_language, request.sentence)
         return SentenceTranslationResult(
             translation=translation,
             provenance={"source": "runtime-template-translator", "provider": "local"},

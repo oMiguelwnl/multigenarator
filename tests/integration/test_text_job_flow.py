@@ -23,8 +23,8 @@ def write_word_list(tmp_path: Path, *items: str) -> Path:
     return path
 
 
-def write_lookup_index(tmp_path: Path, *terms: str) -> Path:
-    index_path = tmp_path / "lexicon" / "en" / "kaikki-index.json"
+def write_lookup_index(tmp_path: Path, *terms: str, language_code: str = "en") -> Path:
+    index_path = tmp_path / "lexicon" / language_code / "kaikki-index.json"
     index_path.parent.mkdir(parents=True, exist_ok=True)
     index_path.write_text(
         json.dumps(
@@ -179,5 +179,42 @@ def test_generate_command_skips_pending_groundings_during_text_generation(tmp_pa
         generated = session.scalar(select(TextQualityRecordModel))
         assert generated is not None
         assert generated.item_key == "alpha"
+    finally:
+        session.close()
+
+
+def test_generate_command_uses_requested_translation_target_language(tmp_path: Path) -> None:
+    database_path = tmp_path / "spanish-runtime.db"
+    lexicon_dir = write_lookup_index(tmp_path, "usar", language_code="es")
+    source = write_word_list(tmp_path, "usar")
+    service = build_runtime_service(
+        Settings(
+            database_url=f"sqlite+pysqlite:///{database_path}",
+            lexicon_data_dir=lexicon_dir,
+        )
+    )
+    app = create_app(service=service)
+
+    result = runner.invoke(
+        app,
+        [
+            "generate",
+            "--language",
+            "es",
+            "--source",
+            "word-list",
+            "--input-file",
+            str(source),
+        ],
+    )
+
+    assert result.exit_code == 0
+    assert "accepted_text_items=1" in result.output
+
+    session = Session(create_engine(f"sqlite+pysqlite:///{database_path}"))
+    try:
+        generated = session.scalar(select(TextQualityRecordModel))
+        assert generated is not None
+        assert generated.translation_text == "I use this every day."
     finally:
         session.close()
