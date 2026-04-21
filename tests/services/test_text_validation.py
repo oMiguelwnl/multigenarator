@@ -71,6 +71,19 @@ def test_validation_flags_translation_copied_from_definition() -> None:
     assert result.validation_status is ValidationStatus.FAILED
 
 
+def test_validation_rejects_hollow_support_verb_templates() -> None:
+    result = build_service().validate(
+        sentence=build_sentence(text="I use wash every day."),
+        translation=build_translation(text="Eu uso wash todos os dias."),
+        display_form="wash",
+        lemma="wash",
+        definitions_html="to wash",
+    )
+
+    assert ValidationFlagCode.BANNED_PATTERN in {flag.code for flag in result.validation_flags}
+    assert result.validation_status is ValidationStatus.FAILED
+
+
 def test_validation_downgrades_confidence_for_risky_but_valid_text() -> None:
     result = build_service().validate(
         sentence=build_sentence(text="I wash the cup at home."),

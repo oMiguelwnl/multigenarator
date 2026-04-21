@@ -46,6 +46,8 @@ class SentenceGenerationResult(BaseModel):
 class SentenceTranslationRequest(BaseModel):
     sentence: str = Field(min_length=1)
     translation_target_language: str = Field(min_length=2)
+    intended_sense: str | None = None
+    template_kind: str | None = None
 
     @classmethod
     def from_sentence(
@@ -57,6 +59,10 @@ class SentenceTranslationRequest(BaseModel):
         return cls(
             sentence=sentence_result.sentence,
             translation_target_language=translation_target_language,
+            intended_sense=sentence_result.intended_sense,
+            template_kind=str(sentence_result.provenance.get("template_kind"))
+            if sentence_result.provenance.get("template_kind")
+            else None,
         )
 
 

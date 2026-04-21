@@ -23,6 +23,7 @@ _BANNED_PATTERNS = (
     "coming soon",
     "lorem ipsum",
 )
+_GENERIC_SUPPORT_VERBS = {"use", "uso", "utilise", "benutze", "gebruik", "использую"}
 _MATCHABLE_SUFFIXES = (
     "arse",
     "erse",
@@ -101,7 +102,13 @@ class TextValidationService:
 
         self._check_target_form(flags, context=context, display_form=display_form, lemma=lemma)
         self._check_sentence_length(flags, context=context)
-        self._check_banned_patterns(flags, context=context)
+        self._check_banned_patterns(
+            flags,
+            context=context,
+            display_form=display_form,
+            lemma=lemma,
+            definitions_html=definitions_html,
+        )
         self._check_translation(flags, context=context)
 
         validation_status = ValidationStatus.FAILED if flags else ValidationStatus.PASSED
@@ -168,10 +175,23 @@ class TextValidationService:
                 )
             )
 
-    def _check_banned_patterns(self, flags: list[ValidationFlag], *, context: _ValidationContext) -> None:
+    def _check_banned_patterns(
+        self,
+        flags: list[ValidationFlag],
+        *,
+        context: _ValidationContext,
+        display_form: str,
+        lemma: str,
+        definitions_html: str | None,
+    ) -> None:
         lowered_sentence = context.sentence_text.casefold()
         if any(pattern in lowered_sentence for pattern in _BANNED_PATTERNS) or _has_repetitive_tokens(
             context.sentence_tokens
+        ) or _looks_like_hollow_support_template(
+            context.sentence_tokens,
+            display_form=display_form,
+            lemma=lemma,
+            definitions_html=definitions_html,
         ):
             flags.append(
                 ValidationFlag(
@@ -287,6 +307,29 @@ def _has_repetitive_tokens(tokens: list[str]) -> bool:
         else:
             run = 1
             previous = token
+    return False
+
+
+def _looks_like_hollow_support_template(
+    tokens: list[str],
+    *,
+    display_form: str,
+    lemma: str,
+    definitions_html: str | None,
+) -> bool:
+    definition_text = _normalize_text(definitions_html or "")
+    if not definition_text.startswith("to "):
+        return False
+
+    targets = {token for token in _normalize_text(display_form).split() if token}
+    targets.update(token for token in _normalize_text(lemma).split() if token)
+    if len(targets) != 1:
+        return False
+
+    target = next(iter(targets))
+    for previous, current in zip(tokens, tokens[1:], strict=False):
+        if current == target and previous in _GENERIC_SUPPORT_VERBS:
+            return True
     return False
 
 

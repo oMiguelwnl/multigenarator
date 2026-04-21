@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
+import re
 
 from sqlalchemy import create_engine
 from sqlalchemy.orm import Session
@@ -26,49 +27,88 @@ from multilang.services.text_review import ReviewReport, TextReviewService
 from multilang.services.text_validation import TextValidationService
 from multilang.settings import Settings
 
+_DEFINITION_RE = re.compile(r"<[^>]+>")
+
+_SENSE_ALIASES = {
+    "lavar": "wash",
+    "lavarse": "wash",
+    "se laver": "wash",
+    "use": "use",
+    "usar": "use",
+    "wash": "wash",
+}
+
+_SENSE_TRANSLATIONS = {
+    "use": {
+        "de": "benutzen",
+        "en": "use",
+        "es": "usar",
+        "fr": "utiliser",
+        "nl": "gebruiken",
+        "pt": "usar",
+        "ru": "использовать",
+    },
+    "wash": {
+        "de": "waschen",
+        "en": "wash",
+        "es": "lavarse",
+        "fr": "se laver",
+        "nl": "wassen",
+        "pt": "lavar",
+        "ru": "мыться",
+    },
+}
+
+_VERB_TEMPLATES = {
+    "de": "Es ist gut, jeden Tag {term} zu können.",
+    "en": "It is good to {term} every day.",
+    "es": "Es bueno {term} cada día.",
+    "fr": "Il est bon de {term} chaque jour.",
+    "nl": "Het is goed om elke dag {term} te kunnen.",
+    "pt": "É bom {term} todos os dias.",
+    "ru": "Полезно {term} каждый день.",
+}
+
+_TERM_TEMPLATES = {
+    "de": "Das Wort {term} ist im Alltag nützlich.",
+    "en": "The word {term} is useful in daily life.",
+    "es": "La palabra {term} es útil en la vida diaria.",
+    "fr": "Le mot {term} est utile au quotidien.",
+    "nl": "Het woord {term} is nuttig in het dagelijks leven.",
+    "pt": "A palavra {term} é útil no dia a dia.",
+    "ru": "Слово {term} полезно в повседневной жизни.",
+}
+
 
 class _TemplateSentenceAdapter:
     def generate_sentence(self, request: SentenceGenerationRequest) -> SentenceGenerationResult:
-        catalog = {
-            "de": {
-                "default": "Ich benutze {display_form} jeden Tag.",
-                "flagged": "placeholder ich benutze {display_form} placeholder",
-            },
-            "en": {
-                "default": "I use {display_form} every day.",
-                "flagged": "placeholder I use {display_form} placeholder",
-            },
-            "es": {
-                "default": "Yo uso {display_form} cada día.",
-                "flagged": "placeholder yo uso {display_form} placeholder",
-            },
-            "fr": {
-                "default": "J'utilise {display_form} tous les jours.",
-                "flagged": "placeholder j'utilise {display_form} placeholder",
-            },
-            "nl": {
-                "default": "Ik gebruik {display_form} elke dag.",
-                "flagged": "placeholder ik gebruik {display_form} placeholder",
-            },
-            "pt": {
-                "default": "Eu uso {display_form} a cada dia.",
-                "flagged": "placeholder eu uso {display_form} placeholder",
-            },
-            "ru": {
-                "default": "Я использую {display_form} каждый день.",
-                "flagged": "placeholder я использую {display_form} placeholder",
-            },
-        }
-        templates = catalog.get(request.target_language)
-        if templates is None:
+        sense_key = _infer_sense_key(request.definitions_html, request.display_form)
+        sense_hint = _sense_hint(request.definitions_html, request.display_form)
+        if request.target_language not in _VERB_TEMPLATES:
             raise ValueError(f"unsupported runtime template language: {request.target_language}")
 
-        template_key = "flagged" if "flag" in request.display_form.casefold() else "default"
-        sentence = templates[template_key].format(display_form=request.display_form)
+        if "flag" in request.display_form.casefold():
+            sentence = f"placeholder {request.display_form} placeholder"
+            template_kind = "flagged"
+            uncertainty_notes = ["local runtime inserted a placeholder review case"]
+        else:
+            template_kind = "verb" if sense_key is not None else "term"
+            templates = _VERB_TEMPLATES if template_kind == "verb" else _TERM_TEMPLATES
+            sentence = templates[request.target_language].format(term=request.display_form)
+            uncertainty_notes = []
+            if template_kind == "term":
+                uncertainty_notes.append("local runtime used a generic term template")
+
         return SentenceGenerationResult(
             sentence=sentence,
-            intended_sense=request.definitions_html,
-            provenance={"source": "runtime-template-generator", "provider": "local"},
+            intended_sense=sense_key or sense_hint,
+            uncertainty_notes=uncertainty_notes,
+            provenance={
+                "source": "runtime-template-generator",
+                "provider": "local",
+                "template_kind": template_kind,
+                "sense_key": sense_key,
+            },
         )
 
 
@@ -77,16 +117,14 @@ class _TemplateTranslationAdapter:
         if "placeholder" in request.sentence.casefold():
             translation = request.sentence
         else:
-            catalog = {
-                "de": "Ich benutze das jeden Tag.",
-                "en": "I use this every day.",
-                "es": "Yo uso esto todos los días.",
-                "fr": "J'utilise cela tous les jours.",
-                "nl": "Ik gebruik dit elke dag.",
-                "pt": "Eu uso isso todos os dias.",
-                "ru": "Я использую это каждый день.",
-            }
-            translation = catalog.get(request.translation_target_language, request.sentence)
+            term = _localized_sense(
+                request.intended_sense,
+                language=request.translation_target_language,
+            )
+            template_kind = request.template_kind or "term"
+            templates = _VERB_TEMPLATES if template_kind == "verb" else _TERM_TEMPLATES
+            template = templates.get(request.translation_target_language)
+            translation = template.format(term=term) if template is not None else request.sentence
         return SentenceTranslationResult(
             translation=translation,
             provenance={"source": "runtime-template-translator", "provider": "local"},
@@ -179,3 +217,44 @@ def build_runtime_service(settings: Settings | None = None) -> IngestLexicalItem
         ),
         text_review_service=TextReviewService(text_repository=text_repository),
     )
+
+
+def _sense_hint(definitions_html: str | None, display_form: str) -> str:
+    first_gloss = _first_gloss(definitions_html)
+    if not first_gloss:
+        return display_form
+
+    if first_gloss.startswith("definition for "):
+        candidate = first_gloss.removeprefix("definition for ").strip()
+        return candidate or display_form
+
+    if first_gloss.startswith("to "):
+        candidate = first_gloss.removeprefix("to ").strip()
+        return candidate or display_form
+
+    return first_gloss
+
+
+def _infer_sense_key(definitions_html: str | None, display_form: str) -> str | None:
+    candidates = [display_form.casefold(), _sense_hint(definitions_html, display_form).casefold()]
+    for candidate in candidates:
+        if candidate in _SENSE_ALIASES:
+            return _SENSE_ALIASES[candidate]
+    return None
+
+
+def _localized_sense(sense_hint: str | None, *, language: str) -> str:
+    if not sense_hint:
+        return "this"
+
+    sense_key = _SENSE_ALIASES.get(sense_hint.casefold(), sense_hint.casefold())
+    return _SENSE_TRANSLATIONS.get(sense_key, {}).get(language, sense_hint)
+
+
+def _first_gloss(definitions_html: str | None) -> str:
+    if not definitions_html:
+        return ""
+
+    first_segment = definitions_html.split("<br>", 1)[0]
+    stripped = _DEFINITION_RE.sub(" ", first_segment)
+    return " ".join(stripped.casefold().split())

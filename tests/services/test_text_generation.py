@@ -69,6 +69,7 @@ def test_translation_is_built_from_generated_sentence() -> None:
 
     assert request.sentence == "Yo me lavo antes de dormir."
     assert request.translation_target_language == "en"
+    assert request.intended_sense == "reflexive daily routine"
     assert not hasattr(request, "definitions_html")
 
 
