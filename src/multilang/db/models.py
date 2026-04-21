@@ -5,7 +5,7 @@ from __future__ import annotations
 from datetime import datetime
 from typing import Any
 
-from sqlalchemy import DateTime, ForeignKey, Integer, JSON, String, Text, UniqueConstraint, func
+from sqlalchemy import DateTime, Float, ForeignKey, Integer, JSON, String, Text, UniqueConstraint, func
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from multilang.db.base import Base
@@ -41,6 +41,9 @@ class GenerationJob(Base):
         back_populates="job", cascade="all, delete-orphan"
     )
     lexical_candidates: Mapped[list["LexicalCandidate"]] = relationship(
+        back_populates="job", cascade="all, delete-orphan"
+    )
+    text_quality_records: Mapped[list["TextQualityRecordModel"]] = relationship(
         back_populates="job", cascade="all, delete-orphan"
     )
 
@@ -111,3 +114,46 @@ class LexicalCandidate(Base):
     )
 
     job: Mapped[GenerationJob] = relationship(back_populates="lexical_candidates")
+    text_quality_record: Mapped["TextQualityRecordModel | None"] = relationship(
+        back_populates="lexical_candidate", uselist=False
+    )
+
+
+class TextQualityRecordModel(Base):
+    """Persisted sentence-quality record for a single job item."""
+
+    __tablename__ = "text_quality_records"
+    __table_args__ = (
+        UniqueConstraint("job_id", "item_key", name="uq_text_quality_records_job_id_item_key"),
+    )
+
+    id: Mapped[str] = mapped_column(String(36), primary_key=True)
+    job_id: Mapped[str] = mapped_column(
+        ForeignKey("generation_jobs.id", ondelete="CASCADE"), nullable=False, index=True
+    )
+    lexical_candidate_id: Mapped[str] = mapped_column(
+        ForeignKey("lexical_candidates.id", ondelete="CASCADE"), nullable=False, unique=True, index=True
+    )
+    run_key: Mapped[str] = mapped_column(String(255), nullable=False)
+    item_key: Mapped[str] = mapped_column(String(255), nullable=False)
+    example_sentence: Mapped[str | None] = mapped_column(Text, nullable=True)
+    translation_text: Mapped[str | None] = mapped_column(Text, nullable=True)
+    generation_status: Mapped[str] = mapped_column(String(32), nullable=False)
+    validation_status: Mapped[str] = mapped_column(String(32), nullable=False)
+    review_status: Mapped[str] = mapped_column(String(32), nullable=False)
+    repair_attempt_count: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
+    confidence_score: Mapped[float | None] = mapped_column(Float, nullable=True)
+    confidence_label: Mapped[str] = mapped_column(String(32), nullable=False)
+    validation_flags: Mapped[list[dict[str, Any]]] = mapped_column(JSON, nullable=False, default=list)
+    review_reason: Mapped[str | None] = mapped_column(Text, nullable=True)
+    sentence_provenance: Mapped[dict[str, Any]] = mapped_column(JSON, nullable=False, default=dict)
+    translation_provenance: Mapped[dict[str, Any]] = mapped_column(JSON, nullable=False, default=dict)
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), nullable=False, server_default=func.now()
+    )
+    updated_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), nullable=False, server_default=func.now(), onupdate=func.now()
+    )
+
+    job: Mapped[GenerationJob] = relationship(back_populates="text_quality_records")
+    lexical_candidate: Mapped[LexicalCandidate] = relationship(back_populates="text_quality_record")

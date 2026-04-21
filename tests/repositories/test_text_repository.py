@@ -6,6 +6,7 @@ from sqlalchemy import create_engine, text
 from sqlalchemy.orm import Session
 
 from multilang.db.base import Base
+from multilang.db.models import LexicalCandidate
 from multilang.domain.jobs import GenerationRequest, SupportedLanguage
 from multilang.domain.lexicon import (
     DefinitionRecord,
@@ -97,13 +98,14 @@ def make_record(*, lexical_candidate_id: str, job_id: str, item_key: str, **over
 
 def seed_lexical_candidate(
     lexical_repository: LexicalRepository,
+    session: Session,
     *,
     job_id: str,
     run_key: str,
     item_key: str,
     lemma: str,
-) -> LexicalCardCandidate:
-    return lexical_repository.upsert_candidate(
+) -> LexicalCandidate:
+    lexical_repository.upsert_candidate(
         job_id=job_id,
         run_key=run_key,
         item_key=item_key,
@@ -111,6 +113,7 @@ def seed_lexical_candidate(
         normalized_source=lemma,
         candidate=make_candidate(lemma=lemma),
     )
+    return session.query(LexicalCandidate).filter_by(job_id=job_id, item_key=item_key).one()
 
 
 def test_upsert_text_record_updates_existing_row() -> None:
@@ -123,6 +126,7 @@ def test_upsert_text_record_updates_existing_row() -> None:
     )
     lexical = seed_lexical_candidate(
         lexical_repository,
+        session,
         job_id=job.id,
         run_key=job.run_key,
         item_key="line-1",
@@ -131,7 +135,7 @@ def test_upsert_text_record_updates_existing_row() -> None:
 
     repository.upsert_text_record(
         make_record(
-            lexical_candidate_id=lexical.lemma_key,
+            lexical_candidate_id=lexical.id,
             job_id=job.id,
             item_key="line-1",
             generation_status=TextGenerationStatus.GENERATED,
@@ -149,7 +153,7 @@ def test_upsert_text_record_updates_existing_row() -> None:
     )
     updated = repository.upsert_text_record(
         make_record(
-            lexical_candidate_id=lexical.lemma_key,
+            lexical_candidate_id=lexical.id,
             job_id=job.id,
             item_key="line-1",
             example_sentence="I run outside every morning.",
@@ -178,6 +182,7 @@ def test_repository_queries_return_flagged_and_accepted_records() -> None:
     )
     accepted = seed_lexical_candidate(
         lexical_repository,
+        _,
         job_id=job.id,
         run_key=job.run_key,
         item_key="line-1",
@@ -185,6 +190,7 @@ def test_repository_queries_return_flagged_and_accepted_records() -> None:
     )
     flagged = seed_lexical_candidate(
         lexical_repository,
+        _,
         job_id=job.id,
         run_key=job.run_key,
         item_key="line-2",
@@ -192,11 +198,11 @@ def test_repository_queries_return_flagged_and_accepted_records() -> None:
     )
 
     repository.upsert_text_record(
-        make_record(lexical_candidate_id=accepted.lemma_key, job_id=job.id, item_key="line-1")
+        make_record(lexical_candidate_id=accepted.id, job_id=job.id, item_key="line-1")
     )
     repository.upsert_text_record(
         make_record(
-            lexical_candidate_id=flagged.lemma_key,
+            lexical_candidate_id=flagged.id,
             job_id=job.id,
             item_key="line-2",
             validation_status=ValidationStatus.FAILED,
@@ -230,6 +236,7 @@ def test_list_generation_candidates_and_round_trip_structured_fields() -> None:
     )
     pending = seed_lexical_candidate(
         lexical_repository,
+        _,
         job_id=job.id,
         run_key=job.run_key,
         item_key="line-1",
@@ -237,6 +244,7 @@ def test_list_generation_candidates_and_round_trip_structured_fields() -> None:
     )
     review = seed_lexical_candidate(
         lexical_repository,
+        _,
         job_id=job.id,
         run_key=job.run_key,
         item_key="line-2",
@@ -244,6 +252,7 @@ def test_list_generation_candidates_and_round_trip_structured_fields() -> None:
     )
     accepted = seed_lexical_candidate(
         lexical_repository,
+        _,
         job_id=job.id,
         run_key=job.run_key,
         item_key="line-3",
@@ -252,7 +261,7 @@ def test_list_generation_candidates_and_round_trip_structured_fields() -> None:
 
     repository.upsert_text_record(
         make_record(
-            lexical_candidate_id=review.lemma_key,
+            lexical_candidate_id=review.id,
             job_id=job.id,
             item_key="line-2",
             generation_status=TextGenerationStatus.REPAIRED,
@@ -279,7 +288,7 @@ def test_list_generation_candidates_and_round_trip_structured_fields() -> None:
         )
     )
     repository.upsert_text_record(
-        make_record(lexical_candidate_id=accepted.lemma_key, job_id=job.id, item_key="line-3")
+        make_record(lexical_candidate_id=accepted.id, job_id=job.id, item_key="line-3")
     )
 
     stored = repository.get_text_record(job.id, "line-2")
