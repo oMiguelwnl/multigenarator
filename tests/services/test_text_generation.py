@@ -11,6 +11,7 @@ from multilang.domain.lexicon import (
 )
 from multilang.services.text_generation import (
     GeneratedTextBundle,
+    SentenceGenerationFallback,
     TextGenerationService,
     SentenceGenerationRequest,
     SentenceGenerationResult,
@@ -123,6 +124,18 @@ class FakeTranslationAdapter(SentenceTranslationAdapter):
         )
 
 
+class TrackingTranslationAdapter(SentenceTranslationAdapter):
+    def __init__(self) -> None:
+        self.requests: list[SentenceTranslationRequest] = []
+
+    def translate_sentence(self, request: SentenceTranslationRequest) -> SentenceTranslationResult:
+        self.requests.append(request)
+        return SentenceTranslationResult(
+            translation="I wash myself before going to sleep.",
+            provenance={"provider": "deepl", "model": None},
+        )
+
+
 def test_text_generation_service_returns_sentence_and_translation_provenance() -> None:
     sentence_adapter = FakeSentenceAdapter()
     translation_adapter = FakeTranslationAdapter()
@@ -176,3 +189,33 @@ def test_text_generation_service_uses_candidate_translation_policy() -> None:
     assert sentence_adapter.requests[0].target_language == SupportedLanguage.ES.value
     assert translation_adapter.requests[0].translation_target_language == "pt"
     assert translation_adapter.requests[0].sentence == result.sentence.text
+
+
+def test_tatoeba_fallback_translation_uses_selected_sentence_not_linked_translation_text() -> None:
+    translation_adapter = TrackingTranslationAdapter()
+    service = TextGenerationService(
+        sentence_adapter=FakeSentenceAdapter(),
+        translation_adapter=translation_adapter,
+    )
+
+    fallback = SentenceGenerationFallback(
+        sentence_result=SentenceGenerationResult(
+            sentence="Yo me lavo antes de dormir.",
+            intended_sense="reflexive daily routine",
+            provenance={
+                "source": "tatoeba",
+                "linked_translation_text": "I linked this from Tatoeba.",
+            },
+        )
+    )
+
+    result = service.generate_bundle_from_fallback(
+        candidate=build_candidate(),
+        deck_language=SupportedLanguage.ES,
+        fallback=fallback,
+    )
+
+    assert result.sentence.text == "Yo me lavo antes de dormir."
+    assert translation_adapter.requests[0].sentence == "Yo me lavo antes de dormir."
+    assert translation_adapter.requests[0].translation_target_language == "en"
+    assert result.translation.text == "I wash myself before going to sleep."

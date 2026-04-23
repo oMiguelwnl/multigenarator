@@ -1,0 +1,61 @@
+"""Tests for deterministic Tatoeba fallback sentence selection."""
+
+from __future__ import annotations
+
+from multilang.services.tatoeba_sentence_source import TatoebaCandidateRow, TatoebaSentenceSource
+
+
+def build_row(
+    *,
+    sentence: str,
+    translations: list[str] | None = None,
+    base: int = 0,
+    is_direct_translation: bool = True,
+) -> TatoebaCandidateRow:
+    return TatoebaCandidateRow(
+        sentence_id=1,
+        sentence_text=sentence,
+        target_language="es",
+        translation_language="en",
+        linked_translations=translations or ["I wash myself before sleep."],
+        base=base,
+        is_direct_translation=is_direct_translation,
+    )
+
+
+def test_reflexive_target_prefers_reflexive_mid_length_declarative_candidate() -> None:
+    source = TatoebaSentenceSource()
+
+    result = source.select_sentence(
+        display_form="lavarse",
+        lemma="lavar",
+        target_language="es",
+        translation_target_language="en",
+        candidates=[
+            build_row(sentence="¿Lavar ahora?"),
+            build_row(sentence="Lavar ropa."),
+            build_row(sentence="Yo me lavo antes de dormir."),
+        ],
+    )
+
+    assert result is not None
+    assert result.sentence == "Yo me lavo antes de dormir."
+    assert result.provenance["source"] == "tatoeba"
+
+
+def test_returns_no_sentence_when_no_candidate_survives_filters() -> None:
+    source = TatoebaSentenceSource()
+
+    result = source.select_sentence(
+        display_form="wash",
+        lemma="wash",
+        target_language="en",
+        translation_target_language="pt",
+        candidates=[
+            build_row(sentence="Wash!", translations=["Lave!"], base=0),
+            build_row(sentence="What about wash?", translations=["E lavar?"], base=1),
+            build_row(sentence="Wash", translations=[]),
+        ],
+    )
+
+    assert result is None
