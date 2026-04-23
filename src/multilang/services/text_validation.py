@@ -25,6 +25,8 @@ _BANNED_PATTERNS = (
 )
 _GENERIC_SUPPORT_VERBS = {"use", "uso", "utilise", "benutze", "gebruik", "использую"}
 _META_SENTENCE_PREFIXES = (
+    "example",
+    "for example",
     "a palavra",
     "das wort",
     "het woord",
@@ -201,7 +203,9 @@ class TextValidationService:
             display_form=display_form,
             lemma=lemma,
             definitions_html=definitions_html,
-        ) or _looks_like_meta_sentence(context.sentence_text):
+        ) or _looks_like_meta_sentence(context.sentence_text) or _looks_like_question_or_prompt(
+            context.sentence_text
+        ) or _looks_like_short_command(context.sentence_text, context.sentence_tokens):
             flags.append(
                 ValidationFlag(
                     code=ValidationFlagCode.BANNED_PATTERN,
@@ -345,6 +349,16 @@ def _looks_like_hollow_support_template(
 def _looks_like_meta_sentence(value: str) -> bool:
     normalized = _normalize_text(value)
     return normalized.startswith(_META_SENTENCE_PREFIXES)
+
+
+def _looks_like_question_or_prompt(value: str) -> bool:
+    stripped = value.strip()
+    return "?" in stripped or stripped.startswith(("¿", "¿"))
+
+
+def _looks_like_short_command(value: str, tokens: list[str]) -> bool:
+    stripped = value.strip()
+    return len(tokens) <= 4 and stripped.endswith("!")
 
 
 __all__ = ["TextValidationResult", "TextValidationService"]
