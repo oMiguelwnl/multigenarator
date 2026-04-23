@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import Any
+from typing import Any, Protocol
 
 from multilang.domain.jobs import JobStage, SupportedLanguage
 from multilang.domain.lexicon import GroundingStatus, LexicalCardCandidate, LexicalProvenance
@@ -13,8 +13,25 @@ from multilang.domain.text_quality import (
     TextQualityRecord,
     ValidationStatus,
 )
-from multilang.services.text_generation import GeneratedTextBundle, TextGenerationService
+from multilang.services.text_generation import (
+    GeneratedTextBundle,
+    SentenceGenerationFallback,
+    SentenceGenerationResult,
+    TextGenerationService,
+)
 from multilang.services.text_validation import TextValidationResult, TextValidationService
+
+
+class TatoebaSentenceSource(Protocol):
+    def select_sentence(
+        self,
+        *,
+        display_form: str,
+        lemma: str,
+        target_language: str,
+        translation_target_language: str,
+        candidates: list[Any],
+    ) -> SentenceGenerationResult | None: ...
 
 
 @dataclass(slots=True)
@@ -35,12 +52,14 @@ class GenerateTextItemsService:
         text_repository: Any,
         text_generation_service: TextGenerationService,
         text_validation_service: TextValidationService,
+        tatoeba_sentence_source: TatoebaSentenceSource,
     ) -> None:
         self.job_repository = job_repository
         self.lexical_repository = lexical_repository
         self.text_repository = text_repository
         self.text_generation_service = text_generation_service
         self.text_validation_service = text_validation_service
+        self.tatoeba_sentence_source = tatoeba_sentence_source
 
     def execute(
         self,
@@ -67,11 +86,12 @@ class GenerateTextItemsService:
             if validation.validation_status is ValidationStatus.FAILED:
                 repair_attempt_count = 1
                 generation_status = TextGenerationStatus.REPAIRED
-                generated_bundle = self.text_generation_service.generate_bundle(
+                generated_bundle, validation = self._attempt_tatoeba_repair(
                     candidate=lexical_candidate,
                     deck_language=deck_language,
+                    generated_bundle=generated_bundle,
+                    validation=validation,
                 )
-                validation = self._validate_bundle(bundle=generated_bundle, candidate=lexical_candidate)
 
             record = self._build_record(
                 job_id=job_id,
@@ -148,6 +168,32 @@ class GenerateTextItemsService:
             sentence_provenance=bundle.sentence.provenance,
             translation_provenance=bundle.translation.provenance,
         )
+
+    def _attempt_tatoeba_repair(
+        self,
+        *,
+        candidate: LexicalCardCandidate,
+        deck_language: SupportedLanguage,
+        generated_bundle: GeneratedTextBundle,
+        validation: TextValidationResult,
+    ) -> tuple[GeneratedTextBundle, TextValidationResult]:
+        fallback_sentence = self.tatoeba_sentence_source.select_sentence(
+            display_form=candidate.display_form,
+            lemma=candidate.lemma,
+            target_language=deck_language.value,
+            translation_target_language=candidate.translation_target_language,
+            candidates=[],
+        )
+        if fallback_sentence is None:
+            return generated_bundle, validation
+
+        repaired_bundle = self.text_generation_service.generate_bundle_from_fallback(
+            candidate=candidate,
+            deck_language=deck_language,
+            fallback=SentenceGenerationFallback(sentence_result=fallback_sentence),
+        )
+        repaired_validation = self._validate_bundle(bundle=repaired_bundle, candidate=candidate)
+        return repaired_bundle, repaired_validation
 
     def _to_candidate(self, persisted_candidate: Any) -> LexicalCardCandidate:
         if hasattr(persisted_candidate, "candidate"):

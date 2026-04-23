@@ -294,7 +294,10 @@ def test_generate_text_items_uses_tatoeba_once_for_failed_first_pass() -> None:
         candidates=[PersistedCandidate(id="lex-1", item_key="line-1", candidate=make_candidate())]
     )
     generation = FakeGenerationService(
-        bundles=[make_bundle(sentence="They practice every morning.", translation="Eles praticam todas as manhãs.")]
+        bundles=[
+            make_bundle(sentence="They practice every morning.", translation="Eles praticam todas as manhãs."),
+            make_bundle(sentence="I wash the cup at home.", translation="Eu lavo a xícara em casa."),
+        ]
     )
     validation = FakeValidationService(
         results=[

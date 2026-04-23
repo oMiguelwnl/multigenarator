@@ -16,6 +16,7 @@ from multilang.services.generate_job import GenerateJobService
 from multilang.services.generate_text_items import GenerateTextItemsService
 from multilang.services.ingest_lexical_items import IngestLexicalItemsService
 from multilang.services.regenerate_text_item import RegenerateTextItemService
+from multilang.services.tatoeba_sentence_source import TatoebaSentenceSource
 from multilang.services.text_generation import (
     SentenceGenerationRequest,
     SentenceGenerationResult,
@@ -131,6 +132,19 @@ class _TemplateTranslationAdapter:
         )
 
 
+class _NoopTatoebaSentenceSource(TatoebaSentenceSource):
+    def select_sentence(
+        self,
+        *,
+        display_form: str,
+        lemma: str,
+        target_language: str,
+        translation_target_language: str,
+        candidates: list[object],
+    ) -> SentenceGenerationResult | None:
+        return None
+
+
 @dataclass(slots=True)
 class RuntimeTextResult:
     processed_items: int
@@ -207,6 +221,7 @@ def build_runtime_service(settings: Settings | None = None) -> IngestLexicalItem
             text_repository=text_repository,
             text_generation_service=text_generation_service,
             text_validation_service=text_validation_service,
+            tatoeba_sentence_source=_NoopTatoebaSentenceSource(),
         ),
         regenerate_text_item_service=RegenerateTextItemService(
             job_repository=job_repository,
