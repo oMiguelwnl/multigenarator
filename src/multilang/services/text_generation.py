@@ -71,6 +71,10 @@ class SentenceTranslationResult(BaseModel):
     provenance: dict[str, Any] = Field(default_factory=dict)
 
 
+class SentenceGenerationFallback(BaseModel):
+    sentence_result: SentenceGenerationResult
+
+
 class GeneratedSentence(BaseModel):
     text: str = Field(min_length=1)
     target_language: str = Field(min_length=2)
@@ -118,6 +122,40 @@ class TextGenerationService:
             sentence_result=sentence_result,
             translation_target_language=candidate.translation_target_language,
         )
+        return self._build_bundle(
+            sentence_result=sentence_result,
+            candidate=candidate,
+            deck_language=deck_language,
+            translation_request=translation_request,
+        )
+
+    def generate_bundle_from_fallback(
+        self,
+        *,
+        candidate: LexicalCardCandidate,
+        deck_language: SupportedLanguage,
+        fallback: SentenceGenerationFallback,
+    ) -> GeneratedTextBundle:
+        sentence_result = fallback.sentence_result
+        translation_request = SentenceTranslationRequest.from_sentence(
+            sentence_result=sentence_result,
+            translation_target_language=candidate.translation_target_language,
+        )
+        return self._build_bundle(
+            sentence_result=sentence_result,
+            candidate=candidate,
+            deck_language=deck_language,
+            translation_request=translation_request,
+        )
+
+    def _build_bundle(
+        self,
+        *,
+        sentence_result: SentenceGenerationResult,
+        candidate: LexicalCardCandidate,
+        deck_language: SupportedLanguage,
+        translation_request: SentenceTranslationRequest,
+    ) -> GeneratedTextBundle:
         translation_result = self._translation_adapter.translate_sentence(translation_request)
 
         return GeneratedTextBundle(
@@ -161,6 +199,7 @@ def _normalize_provenance(payload: dict[str, Any]) -> TextProvenance:
 
 __all__ = [
     "GeneratedSentence",
+    "SentenceGenerationFallback",
     "GeneratedTextBundle",
     "GeneratedTranslation",
     "SentenceGenerationAdapter",
