@@ -16,7 +16,13 @@ from multilang.domain.text_quality import (
     ValidationStatus,
 )
 from multilang.services.generate_text_items import GenerateTextItemsService
-from multilang.services.text_generation import GeneratedSentence, GeneratedTextBundle, GeneratedTranslation
+from multilang.services.text_generation import (
+    GeneratedSentence,
+    GeneratedTextBundle,
+    GeneratedTranslation,
+    SentenceGenerationFallback,
+    SentenceGenerationResult,
+)
 from multilang.services.text_validation import TextValidationResult
 
 
@@ -95,6 +101,9 @@ class FakeJobRepository:
 class FakeGenerationService:
     bundles: list[GeneratedTextBundle]
     calls: list[tuple[LexicalCardCandidate, SupportedLanguage]] = field(default_factory=list)
+    fallback_calls: list[tuple[LexicalCardCandidate, SupportedLanguage, SentenceGenerationFallback]] = field(
+        default_factory=list
+    )
 
     def generate_bundle(
         self,
@@ -104,6 +113,26 @@ class FakeGenerationService:
     ) -> GeneratedTextBundle:
         self.calls.append((candidate, deck_language))
         return self.bundles.pop(0)
+
+    def generate_bundle_from_fallback(
+        self,
+        *,
+        candidate: LexicalCardCandidate,
+        deck_language: SupportedLanguage,
+        fallback: SentenceGenerationFallback,
+    ) -> GeneratedTextBundle:
+        self.fallback_calls.append((candidate, deck_language, fallback))
+        return self.bundles.pop(0)
+
+
+@dataclass
+class FakeTatoebaSentenceSource:
+    fallback: SentenceGenerationResult | None
+    calls: list[dict[str, object]] = field(default_factory=list)
+
+    def select_sentence(self, **kwargs: object) -> SentenceGenerationResult | None:
+        self.calls.append(kwargs)
+        return self.fallback
 
 
 @dataclass
@@ -161,6 +190,9 @@ def test_generate_text_items_repairs_once_then_accepts() -> None:
         text_repository=repository,
         text_generation_service=generation,
         text_validation_service=validation,
+        tatoeba_sentence_source=FakeTatoebaSentenceSource(
+            fallback=SentenceGenerationResult(sentence="I wash the cup at home.", provenance={"source": "tatoeba"})
+        ),
     )
 
     result = service.execute(job_id="job-1", deck_language=SupportedLanguage.EN)
@@ -205,6 +237,9 @@ def test_generate_text_items_flags_review_after_one_failed_repair() -> None:
         text_repository=repository,
         text_generation_service=generation,
         text_validation_service=validation,
+        tatoeba_sentence_source=FakeTatoebaSentenceSource(
+            fallback=SentenceGenerationResult(sentence="Practice every morning.", provenance={"source": "tatoeba"})
+        ),
     )
 
     result = service.execute(job_id="job-1", deck_language=SupportedLanguage.EN)
@@ -220,3 +255,113 @@ def test_generate_text_items_flags_review_after_one_failed_repair() -> None:
     assert saved.review_reason == "translation_mismatch"
     assert saved.validation_flags[0].code is ValidationFlagCode.TRANSLATION_MISMATCH
     assert job_repository.successes == [("job-1", "line-1", JobStage.GENERATE_TEXT)]
+
+
+def test_generate_text_items_skips_tatoeba_when_first_pass_validation_succeeds() -> None:
+    repository = FakeTextRepository(
+        candidates=[PersistedCandidate(id="lex-1", item_key="line-1", candidate=make_candidate())]
+    )
+    generation = FakeGenerationService(
+        bundles=[make_bundle(sentence="I wash the cup at home.", translation="Eu lavo a xícara em casa.")]
+    )
+    validation = FakeValidationService(
+        results=[make_validation_result(status=ValidationStatus.PASSED, label=ConfidenceLabel.HIGH, score=0.95)]
+    )
+    tatoeba = FakeTatoebaSentenceSource(
+        fallback=SentenceGenerationResult(sentence="I wash late at night.", provenance={"source": "tatoeba"})
+    )
+
+    service = GenerateTextItemsService(
+        job_repository=FakeJobRepository(),
+        lexical_repository=None,
+        text_repository=repository,
+        text_generation_service=generation,
+        text_validation_service=validation,
+        tatoeba_sentence_source=tatoeba,
+    )
+
+    result = service.execute(job_id="job-1", deck_language=SupportedLanguage.EN)
+
+    assert result.accepted_items == 1
+    assert generation.calls == [(repository.candidates[0].candidate, SupportedLanguage.EN)]
+    assert generation.fallback_calls == []
+    assert tatoeba.calls == []
+    assert repository.saved_records[0].generation_status is TextGenerationStatus.GENERATED
+
+
+def test_generate_text_items_uses_tatoeba_once_for_failed_first_pass() -> None:
+    repository = FakeTextRepository(
+        candidates=[PersistedCandidate(id="lex-1", item_key="line-1", candidate=make_candidate())]
+    )
+    generation = FakeGenerationService(
+        bundles=[make_bundle(sentence="They practice every morning.", translation="Eles praticam todas as manhãs.")]
+    )
+    validation = FakeValidationService(
+        results=[
+            make_validation_result(
+                status=ValidationStatus.FAILED,
+                label=ConfidenceLabel.LOW,
+                score=0.3,
+                flags=[ValidationFlag(code=ValidationFlagCode.MISSING_TARGET_LEMMA, detail="missing target form")],
+            ),
+            make_validation_result(status=ValidationStatus.PASSED, label=ConfidenceLabel.HIGH, score=0.92),
+        ]
+    )
+    fallback_sentence = SentenceGenerationResult(
+        sentence="I wash the cup at home.",
+        intended_sense="habit",
+        provenance={"source": "tatoeba"},
+    )
+    tatoeba = FakeTatoebaSentenceSource(fallback=fallback_sentence)
+
+    service = GenerateTextItemsService(
+        job_repository=FakeJobRepository(),
+        lexical_repository=None,
+        text_repository=repository,
+        text_generation_service=generation,
+        text_validation_service=validation,
+        tatoeba_sentence_source=tatoeba,
+    )
+
+    result = service.execute(job_id="job-1", deck_language=SupportedLanguage.EN)
+
+    assert result.accepted_items == 1
+    assert len(tatoeba.calls) == 1
+    assert len(generation.calls) == 1
+    assert len(generation.fallback_calls) == 1
+    assert generation.fallback_calls[0][2].sentence_result.sentence == "I wash the cup at home."
+    assert repository.saved_records[0].generation_status is TextGenerationStatus.REPAIRED
+    assert repository.saved_records[0].review_status is ReviewStatus.ACCEPTED
+
+
+def test_generate_text_items_keeps_review_required_when_tatoeba_has_no_usable_candidate() -> None:
+    repository = FakeTextRepository(
+        candidates=[PersistedCandidate(id="lex-1", item_key="line-1", candidate=make_candidate())]
+    )
+    generation = FakeGenerationService(
+        bundles=[make_bundle(sentence="They practice every morning.", translation="Eles praticam todas as manhãs.")]
+    )
+    failed_result = make_validation_result(
+        status=ValidationStatus.FAILED,
+        label=ConfidenceLabel.LOW,
+        score=0.22,
+        flags=[ValidationFlag(code=ValidationFlagCode.MISSING_TARGET_LEMMA, detail="missing target form")],
+    )
+    validation = FakeValidationService(results=[failed_result])
+
+    service = GenerateTextItemsService(
+        job_repository=FakeJobRepository(),
+        lexical_repository=None,
+        text_repository=repository,
+        text_generation_service=generation,
+        text_validation_service=validation,
+        tatoeba_sentence_source=FakeTatoebaSentenceSource(fallback=None),
+    )
+
+    result = service.execute(job_id="job-1", deck_language=SupportedLanguage.EN)
+
+    assert result.accepted_items == 0
+    assert result.review_required_items == 1
+    assert generation.fallback_calls == []
+    assert repository.saved_records[0].review_status is ReviewStatus.REVIEW_REQUIRED
+    assert repository.saved_records[0].repair_attempt_count == 1
