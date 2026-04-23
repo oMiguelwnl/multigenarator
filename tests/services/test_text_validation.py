@@ -136,3 +136,44 @@ def test_validation_accepts_inflected_german_verb_forms() -> None:
 
     assert result.validation_status is ValidationStatus.PASSED
     assert ValidationFlagCode.MISSING_TARGET_LEMMA not in {flag.code for flag in result.validation_flags}
+
+
+def test_validation_rejects_question_form_fallback_sentences() -> None:
+    result = build_service().validate(
+        sentence=build_sentence(text="Do you wash at home?"),
+        translation=build_translation(text="Você lava em casa?"),
+        display_form="wash",
+        lemma="wash",
+        definitions_html="to wash",
+    )
+
+    assert result.validation_status is ValidationStatus.FAILED
+    assert ValidationFlagCode.BANNED_PATTERN in {flag.code for flag in result.validation_flags}
+
+
+def test_validation_rejects_short_command_like_fallback_sentences() -> None:
+    result = build_service().validate(
+        sentence=build_sentence(text="Wash the cup!"),
+        translation=build_translation(text="Lave a xícara!"),
+        display_form="wash",
+        lemma="wash",
+        definitions_html="to wash",
+    )
+
+    assert result.validation_status is ValidationStatus.FAILED
+    codes = {flag.code for flag in result.validation_flags}
+    assert ValidationFlagCode.BANNED_PATTERN in codes
+    assert ValidationFlagCode.SENTENCE_TOO_SHORT in codes
+
+
+def test_validation_requires_translation_to_pass_for_otherwise_valid_fallback_sentence() -> None:
+    result = build_service().validate(
+        sentence=build_sentence(text="I wash the cup at home."),
+        translation=build_translation(text="I wash the cup at home."),
+        display_form="wash",
+        lemma="wash",
+        definitions_html="to wash",
+    )
+
+    assert result.validation_status is ValidationStatus.FAILED
+    assert ValidationFlagCode.TRANSLATION_MISMATCH in {flag.code for flag in result.validation_flags}
