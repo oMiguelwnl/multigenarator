@@ -205,7 +205,12 @@ class TextValidationService:
             definitions_html=definitions_html,
         ) or _looks_like_meta_sentence(context.sentence_text) or _looks_like_question_or_prompt(
             context.sentence_text
-        ) or _looks_like_short_command(context.sentence_text, context.sentence_tokens):
+        ) or _looks_like_short_command(
+            context.sentence_text,
+            context.sentence_tokens,
+            display_form=display_form,
+            lemma=lemma,
+        ):
             flags.append(
                 ValidationFlag(
                     code=ValidationFlagCode.BANNED_PATTERN,
@@ -356,9 +361,22 @@ def _looks_like_question_or_prompt(value: str) -> bool:
     return "?" in stripped or stripped.startswith(("¿", "¿"))
 
 
-def _looks_like_short_command(value: str, tokens: list[str]) -> bool:
+def _looks_like_short_command(
+    value: str,
+    tokens: list[str],
+    *,
+    display_form: str,
+    lemma: str,
+) -> bool:
     stripped = value.strip()
-    return len(tokens) <= 4 and stripped.endswith("!")
+    if len(tokens) <= 4 and stripped.endswith("!"):
+        return True
+
+    if len(tokens) <= 5 and tokens:
+        targets = _match_keys(display_form) | _match_keys(lemma)
+        return tokens[0] in _GENERIC_SUPPORT_VERBS or tokens[0] in targets
+
+    return False
 
 
 __all__ = ["TextValidationResult", "TextValidationService"]

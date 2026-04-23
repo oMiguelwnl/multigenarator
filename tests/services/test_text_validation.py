@@ -166,6 +166,19 @@ def test_validation_rejects_short_command_like_fallback_sentences() -> None:
     assert ValidationFlagCode.SENTENCE_TOO_SHORT in codes
 
 
+def test_validation_rejects_short_command_like_fallback_sentences_without_exclamation() -> None:
+    result = build_service().validate(
+        sentence=build_sentence(text="Wash the cup now."),
+        translation=build_translation(text="Lave a xícara agora."),
+        display_form="wash",
+        lemma="wash",
+        definitions_html="to wash",
+    )
+
+    assert result.validation_status is ValidationStatus.FAILED
+    assert ValidationFlagCode.BANNED_PATTERN in {flag.code for flag in result.validation_flags}
+
+
 def test_validation_requires_translation_to_pass_for_otherwise_valid_fallback_sentence() -> None:
     result = build_service().validate(
         sentence=build_sentence(text="I wash the cup at home."),

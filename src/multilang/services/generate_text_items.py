@@ -30,7 +30,6 @@ class TatoebaSentenceSource(Protocol):
         lemma: str,
         target_language: str,
         translation_target_language: str,
-        candidates: list[Any],
     ) -> SentenceGenerationResult | None: ...
 
 
@@ -182,7 +181,6 @@ class GenerateTextItemsService:
             lemma=candidate.lemma,
             target_language=deck_language.value,
             translation_target_language=candidate.translation_target_language,
-            candidates=[],
         )
         if fallback_sentence is None:
             return generated_bundle, validation

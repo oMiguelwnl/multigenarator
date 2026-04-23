@@ -2,7 +2,11 @@
 
 from __future__ import annotations
 
+import json
 import re
+import urllib.parse
+import urllib.request
+from typing import Protocol
 
 from pydantic import BaseModel, Field
 
@@ -40,6 +44,26 @@ _REFLEXIVE_MARKERS = (
     " zich ",
 )
 _REFLEXIVE_SUFFIXES = ("se", "ся", "сь")
+_TATOEBA_API_CODES = {
+    "de": "deu",
+    "en": "eng",
+    "es": "spa",
+    "fr": "fra",
+    "nl": "nld",
+    "pt": "por",
+    "ru": "rus",
+}
+
+
+class TatoebaCandidateProvider(Protocol):
+    def search_candidates(
+        self,
+        *,
+        display_form: str,
+        lemma: str,
+        target_language: str,
+        translation_target_language: str,
+    ) -> list["TatoebaCandidateRow"]: ...
 
 
 class TatoebaCandidateRow(BaseModel):
@@ -52,10 +76,102 @@ class TatoebaCandidateRow(BaseModel):
     is_direct_translation: bool = True
 
 
+class StaticTatoebaCandidateProvider:
+    """Deterministic in-memory provider for tests and disabled runtime paths."""
+
+    def __init__(self, rows: list[TatoebaCandidateRow] | None = None) -> None:
+        self._rows = list(rows or [])
+
+    def search_candidates(
+        self,
+        *,
+        display_form: str,
+        lemma: str,
+        target_language: str,
+        translation_target_language: str,
+    ) -> list[TatoebaCandidateRow]:
+        return list(self._rows)
+
+
+class TatoebaApiCandidateProvider:
+    """Fetch candidate rows from the public Tatoeba search API."""
+
+    def __init__(
+        self,
+        *,
+        base_url: str = "https://tatoeba.org/en/api_v0/search",
+        timeout_seconds: int = 10,
+        page_limit: int = 3,
+    ) -> None:
+        self._base_url = base_url
+        self._timeout_seconds = timeout_seconds
+        self._page_limit = page_limit
+
+    def search_candidates(
+        self,
+        *,
+        display_form: str,
+        lemma: str,
+        target_language: str,
+        translation_target_language: str,
+    ) -> list[TatoebaCandidateRow]:
+        target_api = _TATOEBA_API_CODES[target_language]
+        translation_api = _TATOEBA_API_CODES[translation_target_language]
+        rows_by_id: dict[int, TatoebaCandidateRow] = {}
+
+        for query in _query_terms(display_form=display_form, lemma=lemma):
+            for page in range(1, self._page_limit + 1):
+                payload = self._fetch_page(
+                    query=query,
+                    target_language=target_api,
+                    translation_language=translation_api,
+                    page=page,
+                )
+                for result in payload.get("results", []):
+                    row = _result_to_row(
+                        result,
+                        target_language=target_language,
+                        translation_target_language=translation_target_language,
+                    )
+                    if row is None:
+                        continue
+                    existing = rows_by_id.get(row.sentence_id)
+                    if existing is None or _row_priority(row) > _row_priority(existing):
+                        rows_by_id[row.sentence_id] = row
+
+        return list(rows_by_id.values())
+
+    def _fetch_page(
+        self,
+        *,
+        query: str,
+        target_language: str,
+        translation_language: str,
+        page: int,
+    ) -> dict:
+        params = urllib.parse.urlencode(
+            {
+                "from": target_language,
+                "query": query,
+                "sort": "relevance",
+                "to": translation_language,
+                "trans_filter": "limit",
+                "trans_to": translation_language,
+                "page": page,
+            }
+        )
+        request = urllib.request.Request(f"{self._base_url}?{params}")
+        with urllib.request.urlopen(request, timeout=self._timeout_seconds) as response:
+            return json.load(response)
+
+
 class TatoebaSentenceSource:
     """Return one deterministic fallback sentence or no sentence."""
 
     min_sentence_tokens = 4
+
+    def __init__(self, *, candidate_provider: TatoebaCandidateProvider) -> None:
+        self._candidate_provider = candidate_provider
 
     def select_sentence(
         self,
@@ -64,8 +180,17 @@ class TatoebaSentenceSource:
         lemma: str,
         target_language: str,
         translation_target_language: str,
-        candidates: list[TatoebaCandidateRow],
     ) -> SentenceGenerationResult | None:
+        try:
+            candidates = self._candidate_provider.search_candidates(
+                display_form=display_form,
+                lemma=lemma,
+                target_language=target_language,
+                translation_target_language=translation_target_language,
+            )
+        except Exception:
+            return None
+
         eligible: list[tuple[tuple[int, ...], TatoebaCandidateRow]] = []
 
         for candidate in candidates:
@@ -195,4 +320,57 @@ def _target_is_first_token(sentence: str, *, display_form: str, lemma: str) -> b
     return first in targets
 
 
-__all__ = ["TatoebaCandidateRow", "TatoebaSentenceSource"]
+def _query_terms(*, display_form: str, lemma: str) -> list[str]:
+    terms: list[str] = []
+    seen: set[str] = set()
+    for value in (display_form.strip(), lemma.strip()):
+        normalized = value.casefold()
+        if value and normalized not in seen:
+            seen.add(normalized)
+            terms.append(value)
+    return terms
+
+
+def _flatten_translations(result: dict) -> list[dict]:
+    translations: list[dict] = []
+    for bucket in result.get("translations", []):
+        translations.extend(bucket)
+    return translations
+
+
+def _result_to_row(
+    result: dict,
+    *,
+    target_language: str,
+    translation_target_language: str,
+) -> TatoebaCandidateRow | None:
+    translations = [
+        item
+        for item in _flatten_translations(result)
+        if item.get("lang") == _TATOEBA_API_CODES[translation_target_language]
+    ]
+    linked_texts = [item.get("text", "").strip() for item in translations if item.get("text", "").strip()]
+    if not linked_texts:
+        return None
+
+    return TatoebaCandidateRow(
+        sentence_id=int(result["id"]),
+        sentence_text=str(result["text"]),
+        target_language=target_language,
+        translation_language=translation_target_language,
+        linked_translations=linked_texts,
+        base=int(result.get("base", 0) or 0),
+        is_direct_translation=any(bool(item.get("isDirect")) for item in translations),
+    )
+
+
+def _row_priority(row: TatoebaCandidateRow) -> tuple[int, int, int]:
+    return (1 if row.is_direct_translation else 0, 1 if row.base == 0 else 0, len(row.linked_translations))
+
+
+__all__ = [
+    "StaticTatoebaCandidateProvider",
+    "TatoebaApiCandidateProvider",
+    "TatoebaCandidateRow",
+    "TatoebaSentenceSource",
+]

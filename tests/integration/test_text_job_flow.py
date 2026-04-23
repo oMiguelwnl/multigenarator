@@ -53,6 +53,7 @@ def test_generate_command_regenerates_one_flagged_item_without_full_rerun(tmp_pa
         Settings(
             database_url=f"sqlite+pysqlite:///{database_path}",
             lexicon_data_dir=lexicon_dir,
+            tatoeba_enabled=False,
         )
     )
     app = create_app(service=service)
@@ -149,6 +150,7 @@ def test_generate_command_skips_pending_groundings_during_text_generation(tmp_pa
         Settings(
             database_url=f"sqlite+pysqlite:///{database_path}",
             lexicon_data_dir=lexicon_dir,
+            tatoeba_enabled=False,
         )
     )
     app = create_app(service=service)
@@ -191,6 +193,7 @@ def test_generate_command_uses_requested_sentence_and_translation_languages(tmp_
         Settings(
             database_url=f"sqlite+pysqlite:///{database_path}",
             lexicon_data_dir=lexicon_dir,
+            tatoeba_enabled=False,
         )
     )
     app = create_app(service=service)

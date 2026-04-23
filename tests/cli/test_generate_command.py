@@ -440,6 +440,7 @@ def test_generate_command_regenerates_single_flagged_item(tmp_path: Path) -> Non
         Settings(
             database_url=f"sqlite+pysqlite:///{database_path}",
             lexicon_data_dir=lexicon_dir,
+            tatoeba_enabled=False,
         )
     )
     app = create_app(service=service)

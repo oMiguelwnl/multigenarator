@@ -33,6 +33,7 @@ class Settings(BaseSettings):
     text_generation_model: str = "openai/gpt-4o-mini"
     translation_provider: TranslationProvider = "deepl"
     deepl_api_key: str | None = None
+    tatoeba_enabled: bool = True
     supported_languages: list[SupportedLanguageCode] = Field(
         default_factory=lambda: list(DEFAULT_SUPPORTED_LANGUAGES)
     )

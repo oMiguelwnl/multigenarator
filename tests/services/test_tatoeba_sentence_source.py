@@ -2,7 +2,24 @@
 
 from __future__ import annotations
 
+from dataclasses import dataclass
+
 from multilang.services.tatoeba_sentence_source import TatoebaCandidateRow, TatoebaSentenceSource
+
+
+@dataclass
+class FakeCandidateProvider:
+    rows: list[TatoebaCandidateRow]
+
+    def search_candidates(
+        self,
+        *,
+        display_form: str,
+        lemma: str,
+        target_language: str,
+        translation_target_language: str,
+    ) -> list[TatoebaCandidateRow]:
+        return list(self.rows)
 
 
 def build_row(
@@ -24,18 +41,21 @@ def build_row(
 
 
 def test_reflexive_target_prefers_reflexive_mid_length_declarative_candidate() -> None:
-    source = TatoebaSentenceSource()
+    source = TatoebaSentenceSource(
+        candidate_provider=FakeCandidateProvider(
+            rows=[
+                build_row(sentence="¿Lavar ahora?"),
+                build_row(sentence="Lavar ropa."),
+                build_row(sentence="Yo me lavo antes de dormir."),
+            ]
+        )
+    )
 
     result = source.select_sentence(
         display_form="lavarse",
         lemma="lavar",
         target_language="es",
         translation_target_language="en",
-        candidates=[
-            build_row(sentence="¿Lavar ahora?"),
-            build_row(sentence="Lavar ropa."),
-            build_row(sentence="Yo me lavo antes de dormir."),
-        ],
     )
 
     assert result is not None
@@ -44,18 +64,21 @@ def test_reflexive_target_prefers_reflexive_mid_length_declarative_candidate() -
 
 
 def test_returns_no_sentence_when_no_candidate_survives_filters() -> None:
-    source = TatoebaSentenceSource()
+    source = TatoebaSentenceSource(
+        candidate_provider=FakeCandidateProvider(
+            rows=[
+                build_row(sentence="Wash!", translations=["Lave!"], base=0),
+                build_row(sentence="What about wash?", translations=["E lavar?"], base=1),
+                build_row(sentence="Wash", translations=[]),
+            ]
+        )
+    )
 
     result = source.select_sentence(
         display_form="wash",
         lemma="wash",
         target_language="en",
         translation_target_language="pt",
-        candidates=[
-            build_row(sentence="Wash!", translations=["Lave!"], base=0),
-            build_row(sentence="What about wash?", translations=["E lavar?"], base=1),
-            build_row(sentence="Wash", translations=[]),
-        ],
     )
 
     assert result is None
