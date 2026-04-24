@@ -46,6 +46,9 @@ class GenerationJob(Base):
     text_quality_records: Mapped[list["TextQualityRecordModel"]] = relationship(
         back_populates="job", cascade="all, delete-orphan"
     )
+    audio_assets: Mapped[list["AudioAssetModel"]] = relationship(
+        back_populates="job", cascade="all, delete-orphan"
+    )
 
 
 class GenerationItem(Base):
@@ -157,3 +160,47 @@ class TextQualityRecordModel(Base):
 
     job: Mapped[GenerationJob] = relationship(back_populates="text_quality_records")
     lexical_candidate: Mapped[LexicalCandidate] = relationship(back_populates="text_quality_record")
+
+
+class AudioAssetModel(Base):
+    """Persisted audio asset for a single job item and asset kind."""
+
+    __tablename__ = "audio_assets"
+    __table_args__ = (
+        UniqueConstraint(
+            "job_id",
+            "item_key",
+            "asset_kind",
+            name="uq_audio_assets_job_id_item_key_asset_kind",
+        ),
+    )
+
+    id: Mapped[str] = mapped_column(String(36), primary_key=True)
+    job_id: Mapped[str] = mapped_column(
+        ForeignKey("generation_jobs.id", ondelete="CASCADE"), nullable=False, index=True
+    )
+    run_key: Mapped[str] = mapped_column(String(255), nullable=False, index=True)
+    item_key: Mapped[str] = mapped_column(String(255), nullable=False)
+    asset_kind: Mapped[str] = mapped_column(String(32), nullable=False)
+    display_text: Mapped[str] = mapped_column(Text, nullable=False)
+    tts_text: Mapped[str] = mapped_column(Text, nullable=False)
+    ssml_text: Mapped[str | None] = mapped_column(Text, nullable=True)
+    provider: Mapped[str] = mapped_column(String(32), nullable=False)
+    voice_id: Mapped[str] = mapped_column(String(255), nullable=False, index=True)
+    locale: Mapped[str] = mapped_column(String(32), nullable=False)
+    format: Mapped[str] = mapped_column(String(64), nullable=False)
+    text_hash: Mapped[str] = mapped_column(String(64), nullable=False, index=True)
+    ssml_hash: Mapped[str] = mapped_column(String(64), nullable=False, index=True)
+    storage_path: Mapped[str] = mapped_column(String(512), nullable=False)
+    byte_size: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
+    duration_ms: Mapped[int | None] = mapped_column(Integer, nullable=True)
+    status: Mapped[str] = mapped_column(String(32), nullable=False)
+    fallback_used: Mapped[bool] = mapped_column(nullable=False, default=False)
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), nullable=False, server_default=func.now()
+    )
+    updated_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), nullable=False, server_default=func.now(), onupdate=func.now()
+    )
+
+    job: Mapped[GenerationJob] = relationship(back_populates="audio_assets")
