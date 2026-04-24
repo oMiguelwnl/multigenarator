@@ -15,7 +15,7 @@ Decimal phases appear between their surrounding integers in numeric order.
 - [x] **Phase 1: Job Orchestration & Recovery** - Start supported-language jobs with visible progress, resumability, and duplicate-safe reruns. _(gap closure completed after 6/6 plans)_
 - [x] **Phase 2: Input Decks & Lexical Grounding** - Turn frequency sources or custom word lists into normalized lexical card records.
 - [x] **Phase 3: Sentence Quality & Review Loop** - Produce trustworthy example sentences and translations with reviewable regeneration.
-- [ ] **Phase 4: Audio Synthesis** - Add reliable word and sentence audio with Azure-first fallback handling.
+- [x] **Phase 4: Audio Synthesis** - Add reliable word and sentence audio with Azure-first fallback handling. _(gap closure completed after 5/5 plans)_
 - [ ] **Phase 5: Anki-Safe Export Contract** - Freeze the card schema, template behavior, and export clean decks that import into Anki without repair.
 
 ## Phase Details
@@ -93,11 +93,13 @@ Plans:
 **Plans**: 5 plans
 
 Plans:
-- [ ] 04-01-PLAN.md — Define audio contracts, the Azure voice registry, and typed speech settings.
-- [ ] 04-02-PLAN.md — Add audio persistence, repository reuse rules, and the Phase 4 schema migration.
-- [ ] 04-03-PLAN.md — Implement Azure-first synthesis, TTS normalization, and media-integrity validation.
-- [ ] 04-04-PLAN.md — Wire shipped-path audio generation, reuse, and CLI/integration verification.
-- [ ] 04-05-PLAN.md — Close the shipped runtime Azure adapter and playable-media verification gaps.
+- [x] 04-01-PLAN.md — Define audio contracts, the Azure voice registry, and typed speech settings.
+- [x] 04-02-PLAN.md — Add audio persistence, repository reuse rules, and the Phase 4 schema migration.
+- [x] 04-03-PLAN.md — Implement Azure-first synthesis, TTS normalization, and media-integrity validation.
+- [x] 04-04-PLAN.md — Wire shipped-path audio generation, reuse, and CLI/integration verification.
+- [x] 04-05-PLAN.md — Close the shipped runtime Azure adapter and playable-media verification gaps.
+
+**Verification:** Gap-closure Plan 04-05 completed on 2026-04-24 with a real Azure Speech adapter, shipped-path runtime wiring, and passing fallback/reuse/playable-media coverage on the default `multilang generate` path.
 
 ### Phase 5: Anki-Safe Export Contract
 **Goal**: Users receive complete cards in a fixed schema with the expected template behavior and can export them into Anki safely.
@@ -122,5 +124,5 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5
 | 1. Job Orchestration & Recovery | 6/6 | Complete | 2026-04-19 |
 | 2. Input Decks & Lexical Grounding | 5/5 | Complete | 2026-04-21 |
 | 3. Sentence Quality & Review Loop | 5/5 | Complete | 2026-04-21 |
-| 4. Audio Synthesis | 0/5 | Not started | - |
+| 4. Audio Synthesis | 5/5 | Complete | 2026-04-24 |
 | 5. Anki-Safe Export Contract | 0/TBD | Not started | - |

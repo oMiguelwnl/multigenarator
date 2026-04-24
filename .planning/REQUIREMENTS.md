@@ -34,8 +34,8 @@
 
 ### Audio
 
-- [ ] **AUDI-01**: User receives `word_audio` for the target word using Azure TTS or a documented fallback when the preferred voice is unavailable.
-- [ ] **AUDI-02**: User receives `sentence_audio` for the example sentence using Azure TTS or a documented fallback when the preferred voice is unavailable.
+- [x] **AUDI-01**: User receives `word_audio` for the target word using Azure TTS or a documented fallback when the preferred voice is unavailable. _(Completed by Plans 04-01 through 04-05, with shipped-path Azure closure in Plan 04-05.)_
+- [x] **AUDI-02**: User receives `sentence_audio` for the example sentence using Azure TTS or a documented fallback when the preferred voice is unavailable. _(Completed by Plans 04-01 through 04-05, with shipped-path Azure closure in Plan 04-05.)_
 
 ### Export and Jobs
 
@@ -93,8 +93,8 @@ Which phases cover which requirements. Updated during roadmap creation.
 | TEXT-03 | Phase 3 | Pending |
 | TEXT-04 | Phase 3 | Pending |
 | TEXT-05 | Phase 3 | Pending |
-| AUDI-01 | Phase 4 | Pending |
-| AUDI-02 | Phase 4 | Pending |
+| AUDI-01 | Phase 4 | Completed in Plans 04-01 through 04-05 |
+| AUDI-02 | Phase 4 | Completed in Plans 04-01 through 04-05 |
 | CARD-01 | Phase 5 | Pending |
 | CARD-02 | Phase 5 | Pending |
 | CARD-03 | Phase 5 | Pending |
@@ -110,4 +110,4 @@ Which phases cover which requirements. Updated during roadmap creation.
 
 ---
 *Requirements defined: 2026-04-18*
-*Last updated: 2026-04-19 after Plan 02-03 lexical grounding completion*
+*Last updated: 2026-04-24 after Plan 04-05 audio runtime gap closure*
