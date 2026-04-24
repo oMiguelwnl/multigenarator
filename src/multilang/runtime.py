@@ -3,16 +3,24 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
+from pathlib import Path
 import re
 
 from sqlalchemy import create_engine
 from sqlalchemy.orm import Session
 
 from multilang.db.base import Base
+from multilang.repositories.audio_repository import AudioRepository
 from multilang.repositories.job_repository import JobRepository
 from multilang.repositories.lexical_repository import LexicalRepository
 from multilang.repositories.text_repository import TextRepository
+from multilang.services.audio_synthesis import (
+    AudioSynthesisAdapter,
+    AudioSynthesisResponse,
+    AudioSynthesisService,
+)
 from multilang.services.generate_job import GenerateJobService
+from multilang.services.generate_audio_items import GenerateAudioItemsService
 from multilang.services.generate_text_items import GenerateTextItemsService
 from multilang.services.ingest_lexical_items import IngestLexicalItemsService
 from multilang.services.regenerate_text_item import RegenerateTextItemService
@@ -85,6 +93,29 @@ _TERM_TEMPLATES = {
 }
 
 
+class _RuntimeAudioAdapter:
+    def available_voice_ids(self) -> set[str] | None:
+        return None
+
+    def synthesize(
+        self,
+        *,
+        ssml_text: str,
+        voice_id: str,
+        locale: str,
+        output_path: Path,
+        audio_format: str,
+    ) -> AudioSynthesisResponse:
+        output_path.parent.mkdir(parents=True, exist_ok=True)
+        payload = f"{voice_id}:{locale}:{audio_format}:{ssml_text}".encode("utf-8")
+        output_path.write_bytes(payload)
+        return AudioSynthesisResponse(
+            storage_path=output_path,
+            byte_size=len(payload),
+            duration_ms=750,
+        )
+
+
 class _TemplateSentenceAdapter:
     def generate_sentence(self, request: SentenceGenerationRequest) -> SentenceGenerationResult:
         sense_key = _infer_sense_key(request.definitions_html, request.display_form)
@@ -141,6 +172,10 @@ class RuntimeTextResult:
     processed_items: int
     accepted_items: int
     review_required_items: int
+    audio_processed_items: int = 0
+    audio_reused_items: int = 0
+    fallback_audio_items: int = 0
+    failed_audio_items: int = 0
 
 
 class RuntimeGenerateService(IngestLexicalItemsService):
@@ -153,6 +188,7 @@ class RuntimeGenerateService(IngestLexicalItemsService):
         generate_text_items_service: GenerateTextItemsService,
         regenerate_text_item_service: RegenerateTextItemService,
         text_review_service: TextReviewService,
+        generate_audio_items_service: GenerateAudioItemsService,
         **kwargs: object,
     ) -> None:
         super().__init__(**kwargs)
@@ -160,13 +196,22 @@ class RuntimeGenerateService(IngestLexicalItemsService):
         self.generate_text_items_service = generate_text_items_service
         self.regenerate_text_item_service = regenerate_text_item_service
         self.text_review_service = text_review_service
+        self.generate_audio_items_service = generate_audio_items_service
 
     def generate_text(self, *, job_id: str, deck_language: object) -> RuntimeTextResult:
         result = self.generate_text_items_service.execute(job_id=job_id, deck_language=deck_language)
+        audio_result = self.generate_audio_items_service.execute(
+            job_id=job_id,
+            deck_language=deck_language,
+        )
         return RuntimeTextResult(
             processed_items=result.processed_items,
             accepted_items=result.accepted_items,
             review_required_items=result.review_required_items,
+            audio_processed_items=audio_result.processed_items,
+            audio_reused_items=audio_result.reused_items,
+            fallback_audio_items=audio_result.fallback_items,
+            failed_audio_items=audio_result.failed_items,
         )
 
     def regenerate_text_item(self, *, job_id: str, item_key: str, deck_language: object) -> RuntimeTextResult:
@@ -175,17 +220,30 @@ class RuntimeGenerateService(IngestLexicalItemsService):
             item_key=item_key,
             deck_language=deck_language,
         )
+        audio_result = self.generate_audio_items_service.execute(
+            job_id=job_id,
+            deck_language=deck_language,
+            item_keys={item_key},
+        )
         return RuntimeTextResult(
             processed_items=1,
             accepted_items=1 if record.review_status.value == "accepted" else 0,
             review_required_items=1 if record.review_status.value == "review_required" else 0,
+            audio_processed_items=audio_result.processed_items,
+            audio_reused_items=audio_result.reused_items,
+            fallback_audio_items=audio_result.fallback_items,
+            failed_audio_items=audio_result.failed_items,
         )
 
     def build_review_report(self, *, job_id: str, output_path: object) -> ReviewReport:
         return self.text_review_service.build_review_report(job_id=job_id, output_path=output_path)
 
 
-def build_runtime_service(settings: Settings | None = None) -> IngestLexicalItemsService:
+def build_runtime_service(
+    settings: Settings | None = None,
+    *,
+    audio_adapter: AudioSynthesisAdapter | None = None,
+) -> IngestLexicalItemsService:
     """Construct the repository-backed orchestration service from runtime settings."""
 
     runtime_settings = settings or Settings()
@@ -195,6 +253,7 @@ def build_runtime_service(settings: Settings | None = None) -> IngestLexicalItem
     job_repository = JobRepository(session)
     lexical_repository = LexicalRepository(session)
     text_repository = TextRepository(session)
+    audio_repository = AudioRepository(session)
     generate_job_service = GenerateJobService(job_repository)
     text_generation_service = TextGenerationService(
         sentence_adapter=_TemplateSentenceAdapter(),
@@ -207,6 +266,10 @@ def build_runtime_service(settings: Settings | None = None) -> IngestLexicalItem
             if runtime_settings.tatoeba_enabled
             else StaticTatoebaCandidateProvider()
         )
+    )
+    audio_synthesis_service = AudioSynthesisService(
+        adapter=audio_adapter or _RuntimeAudioAdapter(),
+        settings=runtime_settings,
     )
     return RuntimeGenerateService(
         job_service=generate_job_service,
@@ -229,6 +292,13 @@ def build_runtime_service(settings: Settings | None = None) -> IngestLexicalItem
             text_validation_service=text_validation_service,
         ),
         text_review_service=TextReviewService(text_repository=text_repository),
+        generate_audio_items_service=GenerateAudioItemsService(
+            job_repository=job_repository,
+            lexical_repository=lexical_repository,
+            text_repository=text_repository,
+            audio_repository=audio_repository,
+            audio_synthesis_service=audio_synthesis_service,
+        ),
     )
 
 

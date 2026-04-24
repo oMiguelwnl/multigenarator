@@ -35,10 +35,18 @@ class GenerateAudioItemsService:
         self.audio_repository = audio_repository
         self.audio_synthesis_service = audio_synthesis_service
 
-    def execute(self, *, job_id: str, deck_language: SupportedLanguage) -> GenerateAudioItemsResult:
+    def execute(
+        self,
+        *,
+        job_id: str,
+        deck_language: SupportedLanguage,
+        item_keys: set[str] | None = None,
+    ) -> GenerateAudioItemsResult:
         result = GenerateAudioItemsResult()
 
         for text_record in self.text_repository.list_accepted_records(job_id):
+            if item_keys is not None and text_record.item_key not in item_keys:
+                continue
             lexical_candidate = self.lexical_repository.get_candidate_for_item(job_id, text_record.item_key)
             if lexical_candidate is None:
                 continue

@@ -495,6 +495,10 @@ def create_app(
                 typer.echo(f"text_processed_items={text_result.processed_items}")
                 typer.echo(f"accepted_text_items={text_result.accepted_items}")
                 typer.echo(f"review_required_text_items={text_result.review_required_items}")
+                typer.echo(f"audio_processed_items={text_result.audio_processed_items}")
+                typer.echo(f"audio_reused_items={text_result.audio_reused_items}")
+                typer.echo(f"fallback_audio_items={text_result.fallback_audio_items}")
+                typer.echo(f"failed_audio_items={text_result.failed_audio_items}")
                 _print_review_report(
                     _build_review_report(
                         resolved_service,

@@ -65,6 +65,22 @@ class AudioSynthesisService:
         display_word: str,
         text_record: TextQualityRecord,
     ) -> AudioSynthesisBundle:
+        prepared = self.prepare_item_assets(
+            language=language,
+            display_word=display_word,
+            text_record=text_record,
+        )
+        word_asset = self.synthesize_prepared_asset(prepared.word_asset)
+        sentence_asset = self.synthesize_prepared_asset(prepared.sentence_asset)
+        return AudioSynthesisBundle(word_asset=word_asset, sentence_asset=sentence_asset)
+
+    def prepare_item_assets(
+        self,
+        *,
+        language: SupportedLanguage,
+        display_word: str,
+        text_record: TextQualityRecord,
+    ) -> AudioSynthesisBundle:
         if not self._is_accepted(text_record):
             return AudioSynthesisBundle(
                 word_asset=self._failed_asset(
@@ -83,23 +99,68 @@ class AudioSynthesisService:
                 ),
             )
 
-        word_asset = self._synthesize_asset(
-            language=language,
-            job_id=text_record.job_id,
-            item_key=text_record.item_key,
-            asset_kind=AudioAssetKind.WORD,
-            display_text=display_word,
+        return AudioSynthesisBundle(
+            word_asset=self._prepare_asset(
+                language=language,
+                job_id=text_record.job_id,
+                item_key=text_record.item_key,
+                asset_kind=AudioAssetKind.WORD,
+                display_text=display_word,
+            ),
+            sentence_asset=self._prepare_asset(
+                language=language,
+                job_id=text_record.job_id,
+                item_key=text_record.item_key,
+                asset_kind=AudioAssetKind.SENTENCE,
+                display_text=text_record.example_sentence or "",
+            ),
         )
-        sentence_asset = self._synthesize_asset(
-            language=language,
-            job_id=text_record.job_id,
-            item_key=text_record.item_key,
-            asset_kind=AudioAssetKind.SENTENCE,
-            display_text=text_record.example_sentence or "",
-        )
-        return AudioSynthesisBundle(word_asset=word_asset, sentence_asset=sentence_asset)
 
-    def _synthesize_asset(
+    def synthesize_prepared_asset(self, prepared_asset: AudioAssetRecord) -> AudioAssetRecord:
+        if prepared_asset.provenance.status is AudioSynthesisStatus.FAILED:
+            return prepared_asset
+
+        output_path = Path(prepared_asset.provenance.storage_path)
+        response = self.adapter.synthesize(
+            ssml_text=prepared_asset.normalized_input.ssml_text or prepared_asset.normalized_input.tts_text,
+            voice_id=prepared_asset.provenance.voice_id,
+            locale=prepared_asset.provenance.locale,
+            output_path=output_path,
+            audio_format=self.settings.azure_speech_output_format,
+        )
+
+        if not self._is_valid_media(expected_path=output_path, response=response):
+            return self._build_record(
+                job_id=prepared_asset.job_id,
+                item_key=prepared_asset.item_key,
+                asset_kind=prepared_asset.asset_kind,
+                display_text=prepared_asset.display_text,
+                normalized_input=prepared_asset.normalized_input,
+                voice_id=prepared_asset.provenance.voice_id,
+                locale=prepared_asset.provenance.locale,
+                storage_path=str(output_path),
+                byte_size=0,
+                duration_ms=None,
+                status=AudioSynthesisStatus.FAILED,
+                fallback_used=prepared_asset.provenance.fallback_used,
+            )
+
+        return self._build_record(
+            job_id=prepared_asset.job_id,
+            item_key=prepared_asset.item_key,
+            asset_kind=prepared_asset.asset_kind,
+            display_text=prepared_asset.display_text,
+            normalized_input=prepared_asset.normalized_input,
+            voice_id=prepared_asset.provenance.voice_id,
+            locale=prepared_asset.provenance.locale,
+            storage_path=str(response.storage_path),
+            byte_size=response.byte_size,
+            duration_ms=response.duration_ms,
+            status=AudioSynthesisStatus.SYNTHESIZED,
+            fallback_used=prepared_asset.provenance.fallback_used,
+        )
+
+    def _prepare_asset(
         self,
         *,
         language: SupportedLanguage,
@@ -107,7 +168,7 @@ class AudioSynthesisService:
         item_key: str,
         asset_kind: AudioAssetKind,
         display_text: str,
-    ) -> AudioAssetRecord:
+        ) -> AudioAssetRecord:
         normalized_input = self._normalize_input(display_text)
         try:
             voice = select_voice(
@@ -130,29 +191,6 @@ class AudioSynthesisService:
             locale=voice.locale,
             registry_version=voice.registry_version,
         )
-        response = self.adapter.synthesize(
-            ssml_text=normalized_input.ssml_text or normalized_input.tts_text,
-            voice_id=voice.voice_id,
-            locale=voice.locale,
-            output_path=output_path,
-            audio_format=self.settings.azure_speech_output_format,
-        )
-
-        if not self._is_valid_media(expected_path=output_path, response=response):
-            return self._build_record(
-                job_id=job_id,
-                item_key=item_key,
-                asset_kind=asset_kind,
-                display_text=display_text,
-                normalized_input=normalized_input,
-                voice_id=voice.voice_id,
-                locale=voice.locale,
-                storage_path=str(output_path),
-                byte_size=0,
-                duration_ms=None,
-                status=AudioSynthesisStatus.FAILED,
-                fallback_used=voice.fallback_used,
-            )
 
         return self._build_record(
             job_id=job_id,
@@ -162,10 +200,10 @@ class AudioSynthesisService:
             normalized_input=normalized_input,
             voice_id=voice.voice_id,
             locale=voice.locale,
-            storage_path=str(response.storage_path),
-            byte_size=response.byte_size,
-            duration_ms=response.duration_ms,
-            status=AudioSynthesisStatus.SYNTHESIZED,
+            storage_path=str(output_path),
+            byte_size=0,
+            duration_ms=None,
+            status=AudioSynthesisStatus.PENDING,
             fallback_used=voice.fallback_used,
         )
 

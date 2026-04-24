@@ -6,14 +6,15 @@ import gzip
 import json
 from pathlib import Path
 
-from sqlalchemy import create_engine, select
+from sqlalchemy import create_engine, func, select
 from sqlalchemy.orm import Session
 from typer.testing import CliRunner
 
 from multilang.cli import create_app
 from multilang.db.base import Base
+from multilang.services.audio_synthesis import AudioSynthesisAdapter, AudioSynthesisResponse
 from multilang.domain.jobs import GenerationRequest, SupportedLanguage
-from multilang.db.models import GenerationJob
+from multilang.db.models import AudioAssetModel, GenerationJob
 from multilang.repositories.job_repository import JobRepository
 from multilang.repositories.lexical_repository import LexicalRepository
 from multilang.runtime import build_runtime_service
@@ -26,6 +27,25 @@ from multilang.services.text_review import ReviewReport, ReviewReportItem
 from multilang.settings import Settings
 
 runner = CliRunner()
+
+
+class FileWritingAudioAdapter(AudioSynthesisAdapter):
+    def available_voice_ids(self) -> set[str] | None:
+        return None
+
+    def synthesize(
+        self,
+        *,
+        ssml_text: str,
+        voice_id: str,
+        locale: str,
+        output_path: Path,
+        audio_format: str,
+    ) -> AudioSynthesisResponse:
+        output_path.parent.mkdir(parents=True, exist_ok=True)
+        payload = f"{voice_id}:{locale}:{audio_format}:{ssml_text}".encode("utf-8")
+        output_path.write_bytes(payload)
+        return AudioSynthesisResponse(storage_path=output_path, byte_size=len(payload), duration_ms=800)
 
 
 def build_service() -> tuple[GenerateJobService, Session]:
@@ -489,3 +509,57 @@ def test_generate_command_regenerates_single_flagged_item(tmp_path: Path) -> Non
     assert "--regenerate-item-key" not in second_result.output
     assert "text_processed_items=1" in second_result.output
     assert "review_required_text_items=1" in second_result.output
+
+
+def test_generate_command_reports_audio_counters(tmp_path: Path) -> None:
+    database_path = tmp_path / "audio-runtime.db"
+    lexicon_dir = write_lookup_index(tmp_path, "wash")
+    source = write_word_list(tmp_path, "wash")
+    service = build_runtime_service(
+        Settings(
+            database_url=f"sqlite+pysqlite:///{database_path}",
+            lexicon_data_dir=lexicon_dir,
+            audio_storage_dir=tmp_path / "audio",
+            tatoeba_enabled=False,
+        ),
+        audio_adapter=FileWritingAudioAdapter(),
+    )
+    app = create_app(service=service)
+
+    first_result = runner.invoke(
+        app,
+        [
+            "generate",
+            "--language",
+            "en",
+            "--source",
+            "word-list",
+            "--input-file",
+            str(source),
+        ],
+    )
+    second_result = runner.invoke(
+        app,
+        [
+            "generate",
+            "--language",
+            "en",
+            "--source",
+            "word-list",
+            "--input-file",
+            str(source),
+            "--resume",
+            service.repository.session.scalar(select(GenerationJob.id)),
+        ],
+    )
+
+    assert first_result.exit_code == 0
+    assert "audio_processed_items=2" in first_result.output
+    assert "audio_reused_items=0" in first_result.output
+    assert "fallback_audio_items=0" in first_result.output
+    assert "failed_audio_items=0" in first_result.output
+    assert second_result.exit_code == 0
+    assert "audio_processed_items=2" in second_result.output
+    assert "audio_reused_items=2" in second_result.output
+    assert service.repository.session.scalar(select(GenerationJob.id)) is not None
+    assert service.repository.session.scalar(select(func.count()).select_from(AudioAssetModel)) == 2
