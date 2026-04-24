@@ -20,6 +20,7 @@ dependencies = [
   "psycopg[binary]>=3.2,<4.0",
   "deepl>=1.17,<2.0",
   "wordfreq>=3.1,<4.0",
+  "azure-cognitiveservices-speech>=1.49,<2.0",
 ]
 
 [project.optional-dependencies]

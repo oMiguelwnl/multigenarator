@@ -121,13 +121,29 @@ class AudioSynthesisService:
             return prepared_asset
 
         output_path = Path(prepared_asset.provenance.storage_path)
-        response = self.adapter.synthesize(
-            ssml_text=prepared_asset.normalized_input.ssml_text or prepared_asset.normalized_input.tts_text,
-            voice_id=prepared_asset.provenance.voice_id,
-            locale=prepared_asset.provenance.locale,
-            output_path=output_path,
-            audio_format=self.settings.azure_speech_output_format,
-        )
+        try:
+            response = self.adapter.synthesize(
+                ssml_text=prepared_asset.normalized_input.ssml_text or prepared_asset.normalized_input.tts_text,
+                voice_id=prepared_asset.provenance.voice_id,
+                locale=prepared_asset.provenance.locale,
+                output_path=output_path,
+                audio_format=self.settings.azure_speech_output_format,
+            )
+        except Exception:
+            return self._build_record(
+                job_id=prepared_asset.job_id,
+                item_key=prepared_asset.item_key,
+                asset_kind=prepared_asset.asset_kind,
+                display_text=prepared_asset.display_text,
+                normalized_input=prepared_asset.normalized_input,
+                voice_id=prepared_asset.provenance.voice_id,
+                locale=prepared_asset.provenance.locale,
+                storage_path=str(output_path),
+                byte_size=0,
+                duration_ms=None,
+                status=AudioSynthesisStatus.FAILED,
+                fallback_used=prepared_asset.provenance.fallback_used,
+            )
 
         if not self._is_valid_media(expected_path=output_path, response=response):
             return self._build_record(
