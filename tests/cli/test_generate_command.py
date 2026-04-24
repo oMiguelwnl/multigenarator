@@ -5,6 +5,7 @@ from __future__ import annotations
 import gzip
 import json
 from pathlib import Path
+from typing import ClassVar
 
 from sqlalchemy import create_engine, func, select
 from sqlalchemy.orm import Session
@@ -17,6 +18,7 @@ from multilang.domain.jobs import GenerationRequest, SupportedLanguage
 from multilang.db.models import AudioAssetModel, GenerationJob
 from multilang.repositories.job_repository import JobRepository
 from multilang.repositories.lexical_repository import LexicalRepository
+import multilang.runtime as runtime_module
 from multilang.runtime import build_runtime_service
 from multilang.services.generate_job import GenerateJobService
 from multilang.services.input_fingerprint import build_run_key
@@ -44,6 +46,34 @@ class FileWritingAudioAdapter(AudioSynthesisAdapter):
     ) -> AudioSynthesisResponse:
         output_path.parent.mkdir(parents=True, exist_ok=True)
         payload = f"{voice_id}:{locale}:{audio_format}:{ssml_text}".encode("utf-8")
+        output_path.write_bytes(payload)
+        return AudioSynthesisResponse(storage_path=output_path, byte_size=len(payload), duration_ms=800)
+
+
+class FakeAzureSpeechAdapter(AudioSynthesisAdapter):
+    instances: ClassVar[list[FakeAzureSpeechAdapter]] = []
+    available_ids: ClassVar[set[str] | None] = None
+
+    def __init__(self, settings: Settings | None = None) -> None:
+        self.settings = settings or Settings()
+        self.calls: list[Path] = []
+        type(self).instances.append(self)
+
+    def available_voice_ids(self) -> set[str] | None:
+        return None if self.available_ids is None else set(self.available_ids)
+
+    def synthesize(
+        self,
+        *,
+        ssml_text: str,
+        voice_id: str,
+        locale: str,
+        output_path: Path,
+        audio_format: str,
+    ) -> AudioSynthesisResponse:
+        self.calls.append(output_path)
+        output_path.parent.mkdir(parents=True, exist_ok=True)
+        payload = b"ID3" + f":{voice_id}:{locale}:{audio_format}:{ssml_text}".encode("utf-8")
         output_path.write_bytes(payload)
         return AudioSynthesisResponse(storage_path=output_path, byte_size=len(payload), duration_ms=800)
 
@@ -511,18 +541,22 @@ def test_generate_command_regenerates_single_flagged_item(tmp_path: Path) -> Non
     assert "review_required_text_items=1" in second_result.output
 
 
-def test_generate_command_reports_audio_counters(tmp_path: Path) -> None:
+def test_generate_command_default_runtime_reports_audio_counters(tmp_path: Path, monkeypatch) -> None:
     database_path = tmp_path / "audio-runtime.db"
     lexicon_dir = write_lookup_index(tmp_path, "wash")
     source = write_word_list(tmp_path, "wash")
+    FakeAzureSpeechAdapter.instances.clear()
+    FakeAzureSpeechAdapter.available_ids = {"en-US-GuyNeural"}
+    monkeypatch.setattr(runtime_module, "AzureSpeechAdapter", FakeAzureSpeechAdapter)
     service = build_runtime_service(
         Settings(
             database_url=f"sqlite+pysqlite:///{database_path}",
             lexicon_data_dir=lexicon_dir,
             audio_storage_dir=tmp_path / "audio",
+            azure_speech_key="key",
+            azure_speech_region="eastus",
             tatoeba_enabled=False,
         ),
-        audio_adapter=FileWritingAudioAdapter(),
     )
     app = create_app(service=service)
 
@@ -556,10 +590,50 @@ def test_generate_command_reports_audio_counters(tmp_path: Path) -> None:
     assert first_result.exit_code == 0
     assert "audio_processed_items=2" in first_result.output
     assert "audio_reused_items=0" in first_result.output
-    assert "fallback_audio_items=0" in first_result.output
+    assert "fallback_audio_items=2" in first_result.output
     assert "failed_audio_items=0" in first_result.output
     assert second_result.exit_code == 0
     assert "audio_processed_items=2" in second_result.output
     assert "audio_reused_items=2" in second_result.output
+    assert len(FakeAzureSpeechAdapter.instances) == 1
     assert service.repository.session.scalar(select(GenerationJob.id)) is not None
     assert service.repository.session.scalar(select(func.count()).select_from(AudioAssetModel)) == 2
+
+
+def test_generate_command_reports_failed_audio_when_no_approved_voice_exists(
+    tmp_path: Path, monkeypatch
+) -> None:
+    database_path = tmp_path / "audio-runtime.db"
+    lexicon_dir = write_lookup_index(tmp_path, "wash")
+    source = write_word_list(tmp_path, "wash")
+    FakeAzureSpeechAdapter.instances.clear()
+    FakeAzureSpeechAdapter.available_ids = {"en-AU-NatashaNeural"}
+    monkeypatch.setattr(runtime_module, "AzureSpeechAdapter", FakeAzureSpeechAdapter)
+    service = build_runtime_service(
+        Settings(
+            database_url=f"sqlite+pysqlite:///{database_path}",
+            lexicon_data_dir=lexicon_dir,
+            audio_storage_dir=tmp_path / "audio",
+            azure_speech_key="key",
+            azure_speech_region="eastus",
+            tatoeba_enabled=False,
+        )
+    )
+    app = create_app(service=service)
+
+    result = runner.invoke(
+        app,
+        [
+            "generate",
+            "--language",
+            "en",
+            "--source",
+            "word-list",
+            "--input-file",
+            str(source),
+        ],
+    )
+
+    assert result.exit_code == 0
+    assert "audio_processed_items=2" in result.output
+    assert "failed_audio_items=2" in result.output
