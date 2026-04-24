@@ -83,6 +83,19 @@ class MissingFileAdapter(FakeAudioAdapter):
         return AudioSynthesisResponse(storage_path=output_path, byte_size=0, duration_ms=None)
 
 
+class RaisingAdapter(FakeAudioAdapter):
+    def synthesize(
+        self,
+        *,
+        ssml_text: str,
+        voice_id: str,
+        locale: str,
+        output_path: Path,
+        audio_format: str,
+    ) -> AudioSynthesisResponse:
+        raise RuntimeError("azure canceled")
+
+
 def build_service(tmp_path: Path, *, available_voice_ids: set[str] | None = None) -> AudioSynthesisService:
     return AudioSynthesisService(
         adapter=FakeAudioAdapter(tmp_path, available_voice_ids=available_voice_ids),
@@ -160,6 +173,22 @@ def test_audio_synthesis_service_rejects_missing_or_empty_media_files(tmp_path: 
 
     assert bundle.word_asset.provenance.status is AudioSynthesisStatus.FAILED
     assert bundle.word_asset.provenance.byte_size == 0
+    assert bundle.sentence_asset.provenance.status is AudioSynthesisStatus.FAILED
+
+
+def test_audio_synthesis_service_marks_adapter_errors_as_failed(tmp_path: Path) -> None:
+    service = AudioSynthesisService(
+        adapter=RaisingAdapter(tmp_path),
+        settings=Settings(audio_storage_dir=tmp_path / "audio"),
+    )
+
+    bundle = service.synthesize_item(
+        language=SupportedLanguage.EN,
+        display_word="read",
+        text_record=make_text_record(),
+    )
+
+    assert bundle.word_asset.provenance.status is AudioSynthesisStatus.FAILED
     assert bundle.sentence_asset.provenance.status is AudioSynthesisStatus.FAILED
 
 
