@@ -14,9 +14,9 @@ from multilang.repositories.audio_repository import AudioRepository
 from multilang.repositories.job_repository import JobRepository
 from multilang.repositories.lexical_repository import LexicalRepository
 from multilang.repositories.text_repository import TextRepository
+from multilang.services.azure_speech_adapter import AzureSpeechAdapter
 from multilang.services.audio_synthesis import (
     AudioSynthesisAdapter,
-    AudioSynthesisResponse,
     AudioSynthesisService,
 )
 from multilang.services.generate_job import GenerateJobService
@@ -91,31 +91,6 @@ _TERM_TEMPLATES = {
     "pt": "A palavra {term} é útil no dia a dia.",
     "ru": "Слово {term} полезно в повседневной жизни.",
 }
-
-
-class _RuntimeAudioAdapter:
-    def available_voice_ids(self) -> set[str] | None:
-        return None
-
-    def synthesize(
-        self,
-        *,
-        ssml_text: str,
-        voice_id: str,
-        locale: str,
-        output_path: Path,
-        audio_format: str,
-    ) -> AudioSynthesisResponse:
-        output_path.parent.mkdir(parents=True, exist_ok=True)
-        payload = f"{voice_id}:{locale}:{audio_format}:{ssml_text}".encode("utf-8")
-        output_path.write_bytes(payload)
-        return AudioSynthesisResponse(
-            storage_path=output_path,
-            byte_size=len(payload),
-            duration_ms=750,
-        )
-
-
 class _TemplateSentenceAdapter:
     def generate_sentence(self, request: SentenceGenerationRequest) -> SentenceGenerationResult:
         sense_key = _infer_sense_key(request.definitions_html, request.display_form)
@@ -268,7 +243,7 @@ def build_runtime_service(
         )
     )
     audio_synthesis_service = AudioSynthesisService(
-        adapter=audio_adapter or _RuntimeAudioAdapter(),
+        adapter=audio_adapter or AzureSpeechAdapter(runtime_settings),
         settings=runtime_settings,
     )
     return RuntimeGenerateService(
