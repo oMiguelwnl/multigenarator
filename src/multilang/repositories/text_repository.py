@@ -92,6 +92,18 @@ class TextRepository:
         )
         return [self._to_domain(row) for row in rows]
 
+    def list_accepted_records(self, job_id: str) -> list[TextQualityRecord]:
+        rows = self.session.scalars(
+            select(TextQualityRecordModel)
+            .where(
+                TextQualityRecordModel.job_id == job_id,
+                TextQualityRecordModel.review_status == ReviewStatus.ACCEPTED.value,
+                TextQualityRecordModel.validation_status == ValidationStatus.PASSED.value,
+            )
+            .order_by(TextQualityRecordModel.item_key.asc())
+        )
+        return [self._to_domain(row) for row in rows]
+
     def list_generation_candidates(self, job_id: str) -> list[LexicalCandidate]:
         rows = self.session.scalars(
             select(LexicalCandidate)
