@@ -56,7 +56,7 @@ def test_write_export_tabular_bundle_writes_utf8_csv_with_fixed_field_order(tmp_
     )
 
     lines = output.output_path.read_text(encoding="utf-8").splitlines()
-    parsed = next(csv.reader([lines[-1]]))
+    parsed = list(csv.reader(output.output_path.read_text(encoding="utf-8").splitlines()[5:]))[0]
 
     assert output.output_path.suffix == ".csv"
     assert lines[0] == "#separator:Comma"
@@ -66,8 +66,7 @@ def test_write_export_tabular_bundle_writes_utf8_csv_with_fixed_field_order(tmp_
         "beta front",
         "/beta/",
         "um<br>dois",
-        "Пример, beta",
-        "в строке два",
+        "Пример, beta<br>в строке два",
         'texto, "traduzido"',
         "[sound:beta.mp3]",
         "[sound:beta-sentence.mp3]",
@@ -87,8 +86,8 @@ def test_write_export_tabular_bundle_round_trips_non_latin_text_and_br_values(tm
         note_type_name="Multilang::Card",
     )
 
-    lines = output.output_path.read_text(encoding="utf-8").splitlines()
+    parsed_rows = list(csv.reader(output.output_path.read_text(encoding="utf-8").splitlines()[5:], delimiter="\t"))
 
-    assert "ёж" in lines[-2]
-    assert "日本語, português, \"quoted\"" in lines[-2]
-    assert "значение<br>ещё одно" in lines[-2]
+    assert parsed_rows[0][1] == "ёж"
+    assert parsed_rows[0][6] == '日本語, português, "quoted"'
+    assert parsed_rows[0][4] == "значение<br>ещё одно"
