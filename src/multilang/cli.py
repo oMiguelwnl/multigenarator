@@ -3,12 +3,15 @@
 from __future__ import annotations
 
 from collections.abc import Callable
+import gzip
+import json
 from pathlib import Path
 from typing import Annotated, Any
 
 import typer
 
 from multilang.domain.jobs import GenerationRequest, JobProgressSnapshot, SupportedLanguage
+from multilang.domain.exporting import ExportArtifactFormat
 from multilang.progress import ProgressRenderer
 from multilang.repositories.text_repository import TextRepository
 from multilang.runtime import build_runtime_service
@@ -21,6 +24,11 @@ from multilang.services.text_review import ReviewReport, TextReviewService
 from multilang.settings import Settings
 
 app = typer.Typer(help="Multilang operator CLI.")
+
+TEST_MODE_CARDS_PER_LEVEL = 10
+LOCAL_SMOKE_LANGUAGE = SupportedLanguage.EN
+LOCAL_SMOKE_FIXTURE_DIR = Path(".multilang/live-smoke-azure")
+LOCAL_SMOKE_WORDS = ("wash",)
 
 ConflictChecker = Callable[[GenerationRequest], bool]
 GenerateExecutor = Callable[[GenerationRequest], Any]
@@ -221,10 +229,11 @@ def load_requested_item_keys(request: GenerationRequest) -> list[str]:
 
     if request.source_type == "frequency":
         levels = [request.level] if request.level is not None else [1, 2, 3]
+        cards_per_level = request.resolved_cards_per_level()
         return [
             f"level-{level}-rank-{index:04d}"
             for level in levels
-            for index in range(1, 1001)
+            for index in range(1, cards_per_level + 1)
         ]
 
     if request.input_file is None:
@@ -237,7 +246,7 @@ def load_requested_item_keys(request: GenerationRequest) -> list[str]:
     ]
 
 
-def _validate_request(request: GenerationRequest) -> None:
+def _validate_request(request: GenerationRequest, *, test_mode: bool = False) -> None:
     if request.source_type == "frequency" and request.level is None:
         # Allow None level for frequency - indicates full 3-level deck build
         pass
@@ -245,6 +254,10 @@ def _validate_request(request: GenerationRequest) -> None:
         raise typer.BadParameter("--input-file is required when --source word-list")
     if request.source_type != "frequency" and request.level is not None:
         raise typer.BadParameter("--level is only valid when --source frequency")
+    if request.source_type != "frequency" and test_mode:
+        raise typer.BadParameter("--test-mode is only valid when --source frequency")
+    if request.source_type != "frequency" and request.cards_per_level is not None:
+        raise typer.BadParameter("--cards-per-level is only valid when --source frequency")
     if request.source_type != "word-list" and request.input_file is not None:
         raise typer.BadParameter("--input-file is only valid when --source word-list")
     if request.yes_overwrite and not request.overwrite:
@@ -354,6 +367,39 @@ def _prepare_lexical_data(request: GenerationRequest, *, settings: Settings) -> 
     raise typer.Exit(code=1)
 
 
+def _local_smoke_archive_rows() -> list[dict[str, object]]:
+    return [
+        {
+            "word": word,
+            "lang_code": LOCAL_SMOKE_LANGUAGE.value,
+            "senses": [{"glosses": [f"definition for {word}"]}],
+            "sounds": [{"ipa": f"/{word}/"}],
+        }
+        for word in LOCAL_SMOKE_WORDS
+    ]
+
+
+def _write_local_smoke_assets(output_dir: Path) -> tuple[Path, Path, Path]:
+    output_dir.mkdir(parents=True, exist_ok=True)
+
+    archive_path = output_dir / f"kaikki-{LOCAL_SMOKE_LANGUAGE.value}.jsonl.gz"
+    with gzip.open(archive_path, "wt", encoding="utf-8") as handle:
+        for row in _local_smoke_archive_rows():
+            handle.write(json.dumps(row, ensure_ascii=False))
+            handle.write("\n")
+
+    words_path = output_dir / "words.txt"
+    words_path.write_text("\n".join(LOCAL_SMOKE_WORDS), encoding="utf-8")
+
+    lookup = KaikkiLookup(data_dir=output_dir / "lexicon")
+    index_path = lookup.build_index(
+        language_code=LOCAL_SMOKE_LANGUAGE.value,
+        source_path=archive_path,
+        force_refresh=True,
+    )
+    return archive_path, words_path, index_path
+
+
 def create_app(
     *,
     conflict_checker: ConflictChecker = default_conflict_checker,
@@ -385,6 +431,32 @@ def create_app(
 
         return None
 
+    @cli.command("prepare-local-smoke")
+    def prepare_local_smoke(
+        output_dir: Annotated[
+            Path,
+            typer.Option(
+                "--output-dir",
+                file_okay=False,
+                dir_okay=True,
+                writable=True,
+                help="Directory where the local English smoke assets will be written.",
+            ),
+        ] = LOCAL_SMOKE_FIXTURE_DIR,
+    ) -> None:
+        archive_path, words_path, index_path = _write_local_smoke_assets(output_dir)
+        typer.echo(f"archive={archive_path}")
+        typer.echo(f"words={words_path}")
+        typer.echo(f"index={index_path}")
+        typer.echo(
+            "smoke_command="
+            f"MULTILANG_DATABASE_URL=sqlite+pysqlite:///{output_dir / 'smoke.db'} "
+            f"MULTILANG_LEXICON_DATA_DIR={output_dir / 'lexicon'} "
+            f"MULTILANG_AUDIO_STORAGE_DIR={output_dir / 'audio'} "
+            "uv run python -m multilang.cli generate --language en --source word-list "
+            f"--input-file {words_path} --lexicon-source-file {archive_path}"
+        )
+
     @cli.command("generate")
     def generate(
         language: Annotated[
@@ -399,6 +471,17 @@ def create_app(
             int | None,
             typer.Option("--level", min=1, max=3, help="Frequency level 1-3."),
         ] = None,
+        cards_per_level: Annotated[
+            int | None,
+            typer.Option("--cards-per-level", min=1, help="Cards to generate per frequency level."),
+        ] = None,
+        test_mode: Annotated[
+            bool,
+            typer.Option(
+                "--test-mode",
+                help=f"Shortcut for a small frequency run ({TEST_MODE_CARDS_PER_LEVEL} cards per level).",
+            ),
+        ] = False,
         input_file: Annotated[
             Path | None,
             typer.Option("--input-file", exists=False, dir_okay=False, help="Path to a word list."),
@@ -447,17 +530,22 @@ def create_app(
         if source not in {"frequency", "word-list"}:
             raise typer.BadParameter("--source must be one of: frequency, word-list")
 
+        resolved_cards_per_level = cards_per_level
+        if source == "frequency" and test_mode and resolved_cards_per_level is None:
+            resolved_cards_per_level = TEST_MODE_CARDS_PER_LEVEL
+
         request = GenerationRequest(
             language=language,
             source_type=source,
             level=level,
+            cards_per_level=resolved_cards_per_level,
             input_file=input_file,
             lexicon_source_file=lexicon_source_file,
             resume_job_id=resume,
             overwrite=overwrite,
             yes_overwrite=yes_overwrite,
         )
-        _validate_request(request)
+        _validate_request(request, test_mode=test_mode)
         _validate_regeneration_flags(
             request=request,
             regenerate_item_key=regenerate_item_key,
@@ -532,6 +620,49 @@ def create_app(
                 review_report_builder=review_report_builder,
             )
         )
+
+    @cli.command("export")
+    def export(
+        job_id: Annotated[str, typer.Option("--job-id", help="Persisted job id to export.")],
+        format: Annotated[
+            ExportArtifactFormat,
+            typer.Option("--format", help="Export format: apkg, csv, or tsv."),
+        ],
+        output_dir: Annotated[
+            Path | None,
+            typer.Option(
+                "--output-dir",
+                file_okay=False,
+                dir_okay=True,
+                writable=True,
+                help="Directory where the export artifact will be written.",
+            ),
+        ] = None,
+        deck_name: Annotated[
+            str | None,
+            typer.Option("--deck-name", help="Optional deck name override for exported artifacts."),
+        ] = None,
+    ) -> None:
+        resolved_service = resolve_service()
+        if resolved_service is None or not hasattr(resolved_service, "export_job"):
+            raise typer.Exit(code=1)
+
+        settings = getattr(resolved_service, "settings", Settings())
+        target_output_dir = output_dir or settings.export_output_dir
+
+        try:
+            result = resolved_service.export_job(
+                job_id=job_id,
+                export_format=format,
+                output_dir=target_output_dir,
+                deck_name=deck_name,
+            )
+        except ValueError as exc:
+            typer.echo(str(exc))
+            raise typer.Exit(code=1) from exc
+
+        typer.echo(f"artifact_path={result.output_path}")
+        typer.echo(f"card_count={result.card_count}")
 
     return cli
 
