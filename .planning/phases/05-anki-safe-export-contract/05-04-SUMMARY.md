@@ -73,6 +73,7 @@ None - plan executed exactly as written.
 
 ## Issues Encountered
 - Real Azure Speech credentials are not configured in this shell (`MULTILANG_AZURE_SPEECH_KEY` / `MULTILANG_AZURE_SPEECH_REGION` absent), so I could not auto-generate a fresh human-review `.apkg` with production-style playable audio for the final Anki desktop checkpoint.
+- Human verification later found three product gaps in the first review artifact: the package was not using `CARD_TEMPLATE.md`, the default deck name created nested Anki sub-decks, and the smoke fixture was too weak to judge presentation quality. Those gaps were fixed afterward in commits `0731383` and `722d24a`.
 
 ## User Setup Required
 
@@ -80,9 +81,12 @@ None for this plan's code path. Final human verification still needs a review ar
 
 ## Next Phase Readiness
 - Final automated pre-check is green: `uv run pytest tests/services/test_export_anki_package.py tests/cli/test_export_command.py tests/integration/test_export_job_flow.py -q`
-- Export command template for the final Anki verification step:
-  - `MULTILANG_DATABASE_URL=<db-url> MULTILANG_LEXICON_DATA_DIR=<lexicon-dir> MULTILANG_AUDIO_STORAGE_DIR=<audio-dir> uv run python -m multilang.cli export --job-id <job-id> --format apkg --output-dir .multilang/exports`
-- The remaining blocker is generating a human-reviewable `.apkg` with real playable audio in an environment that has Azure Speech credentials.
+- Updated review-artifact path for the final Anki verification step:
+  1. `uv run python -m multilang.cli prepare-local-smoke --output-dir .multilang/live-smoke-azure`
+  2. `MULTILANG_DATABASE_URL=sqlite+pysqlite:///.multilang/live-smoke-azure/review.db MULTILANG_LEXICON_DATA_DIR=.multilang/live-smoke-azure/lexicon MULTILANG_AUDIO_STORAGE_DIR=.multilang/live-smoke-azure/audio MULTILANG_AZURE_SPEECH_KEY=<key> MULTILANG_AZURE_SPEECH_REGION=<region> uv run python -m multilang.cli generate --language en --source word-list --input-file .multilang/live-smoke-azure/words.txt --lexicon-source-file .multilang/live-smoke-azure/kaikki-en.jsonl.gz`
+  3. `MULTILANG_DATABASE_URL=sqlite+pysqlite:///.multilang/live-smoke-azure/review.db MULTILANG_LEXICON_DATA_DIR=.multilang/live-smoke-azure/lexicon MULTILANG_AUDIO_STORAGE_DIR=.multilang/live-smoke-azure/audio uv run python -m multilang.cli export --job-id <job-id> --format apkg --output-dir .multilang/exports`
+- The updated artifact will now use the project card template, a flat single-deck name, and three stronger sample cards (`harbor`, `lantern`, `meadow`).
+- The remaining blocker is generating that refreshed `.apkg` in an environment that has Azure Speech credentials.
 
 ## Self-Check: PASSED
 - Found `.planning/phases/05-anki-safe-export-contract/05-04-SUMMARY.md`
