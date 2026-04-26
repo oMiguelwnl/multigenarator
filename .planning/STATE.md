@@ -3,15 +3,15 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: in_progress
-stopped_at: Quick task 260421-001 verified; Phase 3 execution remains the primary roadmap work
-last_updated: "2026-04-23T17:45:52Z"
-last_activity: 2026-04-23 -- Completed quick task 260421-001: implement Tatoeba as a filtered secondary sentence source with advanced reranking and validation, never as the raw default primary source.
+stopped_at: Completed Phase 5 Plan 01 export contract foundation; Plan 02 export row assembly is next
+last_updated: "2026-04-26T20:00:27Z"
+last_activity: 2026-04-26 -- Completed Phase 5 Plan 01 with the frozen export contract, export snapshot persistence, and verified schema migration.
 progress:
   total_phases: 5
-  completed_phases: 2
-  total_plans: 16
-  completed_plans: 11
-  percent: 69
+  completed_phases: 4
+  total_plans: 26
+  completed_plans: 22
+  percent: 85
 ---
 
 # Project State
@@ -21,24 +21,24 @@ progress:
 See: .planning/PROJECT.md (updated 2026-04-18)
 
 **Core value:** Generate reliable, high-quality Anki cards for frequent vocabulary in the chosen language so the learner can study real words with accurate definitions, examples, translations, and audio.
-**Current focus:** Phase 03 execution, with Plan 03-01 ready to start
+**Current focus:** Phase 05 execution for the Anki-safe export contract, with the export storage foundation now complete
 
 ## Current Position
 
-Phase: 03 (sentence-quality-review-loop) — READY TO START
-Plan: 0 of 5 executed
-Status: Phase 2 is verified complete; Phase 3 planning is complete and execution can begin
-Last activity: 2026-04-23 -- Completed quick task 260421-001: implement Tatoeba as a filtered secondary sentence source with advanced reranking and validation, never as the raw default primary source.
+Phase: 05 (anki-safe-export-contract) — NEXT UP
+Plan: 1 of 5 executed
+Status: Phases 01, 02, 03, and 04 are verified complete; Phase 5 execution has started with the export contract foundation in place
+Last activity: 2026-04-26 -- Completed Plan 05-01 and verified the export contract migration against disposable SQLite.
 
-Progress: [███████---] 69%
+Progress: [████████--] 80%
 
 ## Performance Metrics
 
 **Velocity:**
 
-- Total plans completed: 11
-- Average duration: 15 min
-- Total execution time: 2.7 hours
+- Total plans completed: 22
+- Average duration: 14 min
+- Total execution time: 5h 1m
 
 **By Phase:**
 
@@ -46,11 +46,13 @@ Progress: [███████---] 69%
 |-------|-------|-------|----------|
 | 01-job-orchestration-recovery | 6 | 34 min | 6 min |
 | 02-input-decks-lexical-grounding | 5 | 2h 7m | 25 min |
+| 03-sentence-quality-review-loop | 5 | 1h 17m | 15 min |
+| 04-audio-synthesis | 5 | 1h 3m | 13 min |
 
 **Recent Trend:**
 
-- Last 5 plans: 02-01 (15 min), 02-02 (4 min), 02-03 (4 min), 02-04 (1h 5m), 02-05 (39 min)
-- Trend: Phase 2 is now closed; the next active work is Phase 3 execution
+- Last 5 plans: 04-02, 04-03, 04-04, 04-05, 05-01 completed; export contract execution is now underway
+- Trend: Phase 5 has started cleanly with deterministic export contracts and storage in place for downstream serializer work
 
 ## Accumulated Context
 
@@ -63,7 +65,12 @@ Recent decisions affecting current work:
 - [Phase 2]: Treat frequency decks and custom word lists as one lexical-ingestion capability.
 - [Phase 3]: Put review/regeneration inside the text-quality phase because trust depends on fixing weak cards before export.
 - [Phase 3]: Treat Tatoeba as a secondary sentence source only when advanced filtering/reranking and validation are applied; do not use it as the raw default source.
+- [Phase 3]: Human UAT closed the remaining naturalness and report-actionability checks, so Phase 3 is verified complete.
+- [Phase 4]: Human verification closed the remaining live Azure synthesis and playback-quality checks, so Phase 4 is verified complete.
 - [Phase 5]: Freeze the card contract and Anki export semantics only after upstream text and audio stabilize.
+- [Plan 05-01]: Freeze export field order in one alias-backed Pydantic contract so every downstream serializer emits the same ten fields.
+- [Plan 05-01]: Persist card snapshots by `(job_id, item_key)` and deck artifacts by `(job_id, export_format)` so reruns update deterministically instead of duplicating exports.
+- [Plan 05-01]: Store `lemma_key` with export snapshots because stable note identity must round-trip through persistence, not just visible card fields.
 - [Plan 01-01]: Use a uv-managed src-layout Python package with typed settings and explicit resume diagnostics as the foundation for Phase 1.
 - [Plan 01-02]: Store run-level and item-level state separately so resume validation can compare stage pointers against item rows.
 - [Plan 01-02]: Treat repeated successful item writes for the same run_key/item_key as duplicate reuse and count them in skipped_duplicates.
@@ -87,12 +94,11 @@ Recent decisions affecting current work:
 
 ### Pending Todos
 
-- Execute Phase 3 Plan 03-01 on top of the now-verified lexical grounding baseline.
+- Execute Phase 5 Plan 02 for the Anki-safe export contract.
 
 ### Blockers/Concerns
 
-- Voice inventory for all 7 languages still needs validation, especially Dutch fallbacks.
-- Phase 3 now has a locked short learner-friendly direction, but language-specific sentence bands and benchmark fixtures still need concrete execution-time rules.
+- No current blockers; Phase 5 Plan 02 should assemble rows strictly from accepted text and persisted audio against the new frozen contract.
 
 ### Quick Tasks Completed
 
@@ -110,6 +116,6 @@ Items acknowledged and carried forward from previous milestone close:
 
 ## Session Continuity
 
-Last session: 2026-04-21T17:32:43Z
-Stopped at: Phase 2 re-verification passed; start Phase 3 at Plan 03-01
+Last session: 2026-04-26T20:00:27Z
+Stopped at: Completed Phase 5 Plan 01; resume at Plan 02 export row assembly
 Resume file: None

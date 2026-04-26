@@ -99,7 +99,7 @@ Plans:
 - [x] 04-04-PLAN.md — Wire shipped-path audio generation, reuse, and CLI/integration verification.
 - [x] 04-05-PLAN.md — Close the shipped runtime Azure adapter and playable-media verification gaps.
 
-**Verification:** Gap-closure Plan 04-05 completed on 2026-04-24 with a real Azure Speech adapter, shipped-path runtime wiring, and passing fallback/reuse/playable-media coverage on the default `multilang generate` path.
+**Verification:** Gap-closure Plan 04-05 completed on 2026-04-24 with a real Azure Speech adapter, shipped-path runtime wiring, and passing fallback/reuse/playable-media coverage on the default `multilang generate` path. Human verification of live Azure synthesis and playback quality was later recorded on 2026-04-26, closing Phase 4 completely.
 
 ### Phase 5: Anki-Safe Export Contract
 **Goal**: Users receive complete cards in a fixed schema with the expected template behavior and can export them into Anki safely.
@@ -112,7 +112,14 @@ Plans:
   4. User can export an `.apkg` deck that imports into Anki without manual field remapping.
   5. User can export the same cards as a UTF-8-safe CSV or TSV fallback.
   6. User receives packaged audio media and Anki-compatible sound references that play correctly after import.
-**Plans**: TBD
+**Plans**: 5 plans
+
+Plans:
+- [x] 05-01-PLAN.md — Freeze the export contract, persistence, and Phase 5 schema migration.
+- [ ] 05-02-PLAN.md — Assemble fixed-schema export cards and UTF-8-safe CSV/TSV fallback bundles.
+- [ ] 05-03-PLAN.md — Add `genanki` packaging with stable note identity and bundled media.
+- [ ] 05-04-PLAN.md — Wire the shipped CLI/runtime export flow and end-to-end artifact tests.
+- [ ] 05-05-PLAN.md — Verify real Anki import behavior, translation reveal rules, and audio playback.
 
 ## Progress
 
@@ -124,5 +131,5 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5
 | 1. Job Orchestration & Recovery | 6/6 | Complete | 2026-04-19 |
 | 2. Input Decks & Lexical Grounding | 5/5 | Complete | 2026-04-21 |
 | 3. Sentence Quality & Review Loop | 5/5 | Complete | 2026-04-21 |
-| 4. Audio Synthesis | 5/5 | Complete | 2026-04-24 |
-| 5. Anki-Safe Export Contract | 0/TBD | Not started | - |
+| 4. Audio Synthesis | 5/5 | Complete | 2026-04-26 |
+| 5. Anki-Safe Export Contract | 1/5 | In progress | 2026-04-26 |
