@@ -28,7 +28,7 @@ app = typer.Typer(help="Multilang operator CLI.")
 TEST_MODE_CARDS_PER_LEVEL = 10
 LOCAL_SMOKE_LANGUAGE = SupportedLanguage.EN
 LOCAL_SMOKE_FIXTURE_DIR = Path(".multilang/live-smoke-azure")
-LOCAL_SMOKE_WORDS = ("wash",)
+LOCAL_SMOKE_WORDS = ("harbor", "lantern", "meadow")
 
 ConflictChecker = Callable[[GenerationRequest], bool]
 GenerateExecutor = Callable[[GenerationRequest], Any]
@@ -370,12 +370,23 @@ def _prepare_lexical_data(request: GenerationRequest, *, settings: Settings) -> 
 def _local_smoke_archive_rows() -> list[dict[str, object]]:
     return [
         {
-            "word": word,
+            "word": "harbor",
             "lang_code": LOCAL_SMOKE_LANGUAGE.value,
-            "senses": [{"glosses": [f"definition for {word}"]}],
-            "sounds": [{"ipa": f"/{word}/"}],
-        }
-        for word in LOCAL_SMOKE_WORDS
+            "senses": [{"glosses": ["a sheltered place where boats can anchor safely", "to provide shelter or refuge"]}],
+            "sounds": [{"ipa": "/ˈhɑːrbɚ/"}],
+        },
+        {
+            "word": "lantern",
+            "lang_code": LOCAL_SMOKE_LANGUAGE.value,
+            "senses": [{"glosses": ["a portable light protected by a transparent case"]}],
+            "sounds": [{"ipa": "/ˈlæntɚn/"}],
+        },
+        {
+            "word": "meadow",
+            "lang_code": LOCAL_SMOKE_LANGUAGE.value,
+            "senses": [{"glosses": ["a field of grass and wildflowers"]}],
+            "sounds": [{"ipa": "/ˈmɛdoʊ/"}],
+        },
     ]
 
 

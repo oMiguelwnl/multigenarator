@@ -15,6 +15,10 @@ DECK_ID = 1_602_300_502
 NOTE_TYPE_NAME = "Multilang::Card"
 
 _SOUND_TAG_RE = re.compile(r"^\[sound:(?P<name>[^\]]+)\]$")
+_SECTION_RE = re.compile(
+    r"## Front Template\s+```html\n(?P<front>.*?)```.*?## Back Template\s+```html\n(?P<back>.*?)```.*?## Styling \(CSS\)\s+```css\n(?P<css>.*?)```",
+    re.DOTALL,
+)
 
 
 class ExportAnkiPackageError(ValueError):
@@ -35,6 +39,7 @@ class MultilangNote(genanki.Note):
 
 
 def build_multilang_model() -> genanki.Model:
+    template = _load_project_card_template()
     return genanki.Model(
         MODEL_ID,
         NOTE_TYPE_NAME,
@@ -42,11 +47,11 @@ def build_multilang_model() -> genanki.Model:
         templates=[
             {
                 "name": "Card 1",
-                "qfmt": "{{Front of Card}}<br>{{IPA}}<br>{{word_audio}}",
-                "afmt": "{{FrontSide}}<hr id=\"answer\">{{Definitions}}<br>{{Example Sentence}}<br>{{Translation}}<br>{{sentence_audio}}",
+                "qfmt": template["front"],
+                "afmt": template["back"],
             }
         ],
-        css=".card { font-family: arial; font-size: 20px; }",
+        css=template["css"],
     )
 
 
@@ -106,6 +111,15 @@ def _require_media_file(sound_tag: str, *, media_index: dict[str, Path]) -> Path
     if media_path.name != match.group("name"):
         raise ExportAnkiPackageError(f"media basename mismatch for {match.group('name')}")
     return media_path
+
+
+def _load_project_card_template() -> dict[str, str]:
+    template_path = Path(__file__).resolve().parents[3] / "CARD_TEMPLATE.md"
+    content = template_path.read_text(encoding="utf-8")
+    match = _SECTION_RE.search(content)
+    if match is None:
+        raise ExportAnkiPackageError(f"unable to parse card template from {template_path}")
+    return {name: match.group(name).strip() for name in ("front", "back", "css")}
 
 
 __all__ = [

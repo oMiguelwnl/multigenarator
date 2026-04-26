@@ -253,7 +253,7 @@ class RuntimeGenerateService(IngestLexicalItemsService):
                 deck_language=SupportedLanguage(job.language),
             ).cards
 
-        resolved_deck_name = deck_name or f"Multilang::{job.language.upper()}::{job_id}"
+        resolved_deck_name = _sanitize_deck_name(deck_name or f"Multilang {job.language.upper()} {job_id[:8]}")
         output_path = output_dir / f"{job_id}.{export_format.value}"
         if export_format is ExportArtifactFormat.APKG:
             package_result = export_anki_package(
@@ -411,3 +411,7 @@ def _first_gloss(definitions_html: str | None) -> str:
     first_segment = definitions_html.split("<br>", 1)[0]
     stripped = _DEFINITION_RE.sub(" ", first_segment)
     return " ".join(stripped.casefold().split())
+
+
+def _sanitize_deck_name(deck_name: str) -> str:
+    return " ".join(deck_name.replace("::", " - ").split())
