@@ -64,18 +64,26 @@ _SENSE_TRANSLATIONS = {
         "en": "use",
         "es": "usar",
         "fr": "utiliser",
+        "it": "usare",
         "nl": "gebruiken",
+        "pl": "używać",
         "pt": "usar",
+        "ro": "folosi",
         "ru": "использовать",
+        "tr": "kullanmak",
     },
     "wash": {
         "de": "waschen",
         "en": "wash",
         "es": "lavarse",
         "fr": "se laver",
+        "it": "lavarsi",
         "nl": "wassen",
+        "pl": "myć się",
         "pt": "lavar",
+        "ro": "a se spăla",
         "ru": "мыться",
+        "tr": "yıkanmak",
     },
 }
 
@@ -84,9 +92,13 @@ _VERB_TEMPLATES = {
     "en": "It is good to {term} every day.",
     "es": "Es bueno {term} cada día.",
     "fr": "Il est bon de {term} chaque jour.",
+    "it": "È bene {term} ogni giorno.",
     "nl": "Het is goed om elke dag {term} te kunnen.",
+    "pl": "Dobrze jest {term} codziennie.",
     "pt": "É bom {term} todos os dias.",
+    "ro": "Este bine să {term} în fiecare zi.",
     "ru": "Полезно {term} каждый день.",
+    "tr": "Her gün {term} iyidir.",
 }
 
 _TERM_TEMPLATES = {
@@ -94,12 +106,66 @@ _TERM_TEMPLATES = {
     "en": "The word {term} is useful in daily life.",
     "es": "La palabra {term} es útil en la vida diaria.",
     "fr": "Le mot {term} est utile au quotidien.",
+    "it": "La parola {term} è utile nella vita quotidiana.",
     "nl": "Het woord {term} is nuttig in het dagelijks leven.",
+    "pl": "Słowo {term} jest przydatne w codziennym życiu.",
     "pt": "A palavra {term} é útil no dia a dia.",
+    "ro": "Cuvântul {term} este util în viața de zi cu zi.",
     "ru": "Слово {term} полезно в повседневной жизни.",
+    "tr": "{term} kelimesi günlük hayatta faydalıdır.",
 }
+
+_CURATED_LOCAL_TEXT = {
+    "harbor": {
+        "sentence": "The fishing boats returned to the harbor before sunset.",
+        "translations": {
+            "pt": "Os barcos de pesca voltaram ao porto antes do pôr do sol.",
+        },
+    },
+    "lantern": {
+        "sentence": "She hung the lantern beside the cabin door.",
+        "translations": {
+            "pt": "Ela pendurou a lanterna ao lado da porta da cabana.",
+        },
+    },
+    "meadow": {
+        "sentence": "Wildflowers covered the meadow in early spring.",
+        "translations": {
+            "pt": "Flores silvestres cobriam o prado no início da primavera.",
+        },
+    },
+}
+
+_LANGUAGE_NAMES = {
+    SupportedLanguage.PT: "Portuguese",
+    SupportedLanguage.ES: "Spanish",
+    SupportedLanguage.EN: "English",
+    SupportedLanguage.FR: "French",
+    SupportedLanguage.DE: "German",
+    SupportedLanguage.IT: "Italian",
+    SupportedLanguage.PL: "Polish",
+    SupportedLanguage.TR: "Turkish",
+    SupportedLanguage.RO: "Romanian",
+    SupportedLanguage.RU: "Russian",
+    SupportedLanguage.NL: "Dutch",
+}
+
+
 class _TemplateSentenceAdapter:
     def generate_sentence(self, request: SentenceGenerationRequest) -> SentenceGenerationResult:
+        curated = _CURATED_LOCAL_TEXT.get(request.display_form.casefold())
+        if curated is not None and request.target_language == SupportedLanguage.EN.value:
+            return SentenceGenerationResult(
+                sentence=curated["sentence"],
+                intended_sense=_sense_hint(request.definitions_html, request.display_form),
+                uncertainty_notes=[],
+                provenance={
+                    "source": "runtime-template-generator",
+                    "provider": "local",
+                    "template_kind": f"curated:{request.display_form.casefold()}",
+                },
+            )
+
         sense_key = _infer_sense_key(request.definitions_html, request.display_form)
         sense_hint = _sense_hint(request.definitions_html, request.display_form)
         if request.target_language not in _VERB_TEMPLATES:
@@ -132,6 +198,16 @@ class _TemplateSentenceAdapter:
 
 class _TemplateTranslationAdapter:
     def translate_sentence(self, request: SentenceTranslationRequest) -> SentenceTranslationResult:
+        if request.template_kind and request.template_kind.startswith("curated:"):
+            curated = _CURATED_LOCAL_TEXT.get(request.template_kind.split(":", 1)[1])
+            if curated is not None:
+                translation = curated["translations"].get(request.translation_target_language)
+                if translation is not None:
+                    return SentenceTranslationResult(
+                        translation=translation,
+                        provenance={"source": "runtime-template-translator", "provider": "local"},
+                    )
+
         if "placeholder" in request.sentence.casefold():
             translation = request.sentence
         else:
@@ -253,7 +329,7 @@ class RuntimeGenerateService(IngestLexicalItemsService):
                 deck_language=SupportedLanguage(job.language),
             ).cards
 
-        resolved_deck_name = _sanitize_deck_name(deck_name or f"Multilang {job.language.upper()} {job_id[:8]}")
+        resolved_deck_name = _sanitize_deck_name(deck_name or _default_deck_name(SupportedLanguage(job.language)))
         output_path = output_dir / f"{job_id}.{export_format.value}"
         if export_format is ExportArtifactFormat.APKG:
             package_result = export_anki_package(
@@ -415,3 +491,7 @@ def _first_gloss(definitions_html: str | None) -> str:
 
 def _sanitize_deck_name(deck_name: str) -> str:
     return " ".join(deck_name.replace("::", " - ").split())
+
+
+def _default_deck_name(language: SupportedLanguage) -> str:
+    return f"Multilang {_LANGUAGE_NAMES[language]}"

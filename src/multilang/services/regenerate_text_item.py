@@ -43,11 +43,18 @@ class RegenerateTextItemService:
             raise ValueError(f"unknown lexical candidate for job {job_id!r} item {item_key!r}")
 
         candidate = GenerateTextItemsService._to_candidate(self, persisted_candidate)
+        seen_sentences = GenerateTextItemsService._normalize_sentences(
+            self.text_repository.list_example_sentences_for_job(job_id, exclude_item_key=item_key)
+        )
         generated_bundle = self.text_generation_service.generate_bundle(
             candidate=candidate,
             deck_language=deck_language,
         )
-        validation = self._validate_bundle(bundle=generated_bundle, candidate=candidate)
+        validation = self._validate_bundle(
+            bundle=generated_bundle,
+            candidate=candidate,
+            seen_sentences=seen_sentences,
+        )
         generation_status = TextGenerationStatus.GENERATED
         repair_attempt_count = 0
 
@@ -58,7 +65,11 @@ class RegenerateTextItemService:
                 candidate=candidate,
                 deck_language=deck_language,
             )
-            validation = self._validate_bundle(bundle=generated_bundle, candidate=candidate)
+            validation = self._validate_bundle(
+                bundle=generated_bundle,
+                candidate=candidate,
+                seen_sentences=seen_sentences,
+            )
 
         regenerated_record = self._build_record(
             existing_record=existing_record,
@@ -75,13 +86,20 @@ class RegenerateTextItemService:
         )
         return saved_record
 
-    def _validate_bundle(self, *, bundle: GeneratedTextBundle, candidate: object) -> TextValidationResult:
+    def _validate_bundle(
+        self,
+        *,
+        bundle: GeneratedTextBundle,
+        candidate: object,
+        seen_sentences: set[str] | None = None,
+    ) -> TextValidationResult:
         return self.text_validation_service.validate(
             sentence=bundle.sentence,
             translation=bundle.translation,
             display_form=getattr(candidate, "display_form"),
             lemma=getattr(candidate, "lemma"),
             definitions_html=getattr(candidate, "definitions_html"),
+            disallowed_sentence_texts=set(seen_sentences or set()),
         )
 
     def _build_record(

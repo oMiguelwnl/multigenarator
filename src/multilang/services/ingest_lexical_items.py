@@ -62,10 +62,11 @@ class IngestLexicalItemsService:
 
         language = request.language
         levels = [request.level] if request.level is not None else [1, 2, 3]
+        cards_per_level = request.resolved_cards_per_level()
         requested_item_keys = [
             self._frequency_item_key(level, position)
             for level in levels
-            for position in range(1, 1001)
+            for position in range(1, cards_per_level + 1)
         ]
         orchestration = self.job_service.orchestrate(
             request,
@@ -96,6 +97,7 @@ class IngestLexicalItemsService:
             grounded_candidates, backfilled_count = self._build_grounded_frequency_level(
                 language=language,
                 level=level,
+                required_count_per_level=cards_per_level,
             )
             total_backfilled += backfilled_count
             level_counts[level] = len(grounded_candidates)

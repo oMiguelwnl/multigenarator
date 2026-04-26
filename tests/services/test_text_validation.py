@@ -190,3 +190,17 @@ def test_validation_requires_translation_to_pass_for_otherwise_valid_fallback_se
 
     assert result.validation_status is ValidationStatus.FAILED
     assert ValidationFlagCode.TRANSLATION_MISMATCH in {flag.code for flag in result.validation_flags}
+
+
+def test_validation_rejects_duplicate_sentence_within_job() -> None:
+    result = build_service().validate(
+        sentence=build_sentence(text="I wash the cup at home."),
+        translation=build_translation(text="Eu lavo a xícara em casa."),
+        display_form="wash",
+        lemma="wash",
+        definitions_html="to wash",
+        disallowed_sentence_texts={"i wash the cup at home"},
+    )
+
+    assert result.validation_status is ValidationStatus.FAILED
+    assert ValidationFlagCode.DUPLICATE_SENTENCE in {flag.code for flag in result.validation_flags}

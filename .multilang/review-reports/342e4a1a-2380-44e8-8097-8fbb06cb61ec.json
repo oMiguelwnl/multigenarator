@@ -1,0 +1,29 @@
+{
+  "job_id": "342e4a1a-2380-44e8-8097-8fbb06cb61ec",
+  "generated_at": null,
+  "item_count": 2,
+  "items": [
+    {
+      "confidence_label": "low",
+      "example_sentence": "The word lantern is useful in daily life.",
+      "item_key": "lantern",
+      "job_id": "342e4a1a-2380-44e8-8097-8fbb06cb61ec",
+      "review_reason": "banned_pattern",
+      "translation_text": "A palavra a portable light protected by a transparent case é útil no dia a dia.",
+      "validation_flags": [
+        "banned_pattern"
+      ]
+    },
+    {
+      "confidence_label": "low",
+      "example_sentence": "The word meadow is useful in daily life.",
+      "item_key": "meadow",
+      "job_id": "342e4a1a-2380-44e8-8097-8fbb06cb61ec",
+      "review_reason": "banned_pattern",
+      "translation_text": "A palavra a field of grass and wildflowers é útil no dia a dia.",
+      "validation_flags": [
+        "banned_pattern"
+      ]
+    }
+  ]
+}

@@ -83,6 +83,8 @@ def test_build_multilang_model_uses_project_card_template_sections() -> None:
 
     assert '<div class="customCard cardBack">' in model.templates[0]["qfmt"]
     assert '<div id="translation" class="sentenceTranslation indent" style="display:none;">' in model.templates[0]["qfmt"]
+    assert '<div class="header">Definition:</div>' in model.templates[0]["qfmt"]
+    assert 'definitionsList' in model.templates[0]["qfmt"]
     assert 'document.getElementById("translation").style.display = "block";' in model.templates[0]["afmt"]
     assert "--max-width-card: 400px;" in model.css
     assert ".customCard" in model.css

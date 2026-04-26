@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import json
 from pathlib import Path
 
 import pytest
@@ -26,6 +27,28 @@ def write_word_list(tmp_path: Path, *items: str) -> Path:
     return path
 
 
+def write_lookup_index(tmp_path: Path, *terms: str) -> Path:
+    index_path = tmp_path / "lexicon" / "en" / "kaikki-index.json"
+    index_path.parent.mkdir(parents=True, exist_ok=True)
+    index_path.write_text(
+        json.dumps(
+            {
+                term: {
+                    "term": term,
+                    "display_form": term,
+                    "lemma": term,
+                    "definitions": [f"definition for {term}"],
+                    "ipa": f"/{term}/",
+                    "source": "kaikki",
+                }
+                for term in terms
+            }
+        ),
+        encoding="utf-8",
+    )
+    return index_path.parent.parent
+
+
 def build_repository(database_path: Path) -> tuple[JobRepository, Session]:
     engine = create_engine(f"sqlite+pysqlite:///{database_path}")
     Base.metadata.create_all(engine)
@@ -38,7 +61,9 @@ def test_shipped_app_supports_resume_and_duplicate_safe_rerun(
 ) -> None:
     database_path = tmp_path / "job-flow.db"
     source = write_word_list(tmp_path, "alpha", "beta")
+    lexicon_dir = write_lookup_index(tmp_path, "alpha", "beta")
     monkeypatch.setenv("MULTILANG_DATABASE_URL", f"sqlite+pysqlite:///{database_path}")
+    monkeypatch.setenv("MULTILANG_LEXICON_DATA_DIR", str(lexicon_dir))
     app = create_app()
 
     first_result = runner.invoke(
@@ -91,6 +116,7 @@ def test_shipped_app_supports_resume_and_duplicate_safe_rerun(
             interrupted_session.close()
 
     monkeypatch.setenv("MULTILANG_DATABASE_URL", f"sqlite+pysqlite:///{tmp_path / 'resume.db'}")
+    monkeypatch.setenv("MULTILANG_LEXICON_DATA_DIR", str(lexicon_dir))
     resume_app = create_app()
     resume_result = runner.invoke(
         resume_app,
@@ -108,6 +134,7 @@ def test_shipped_app_supports_resume_and_duplicate_safe_rerun(
     )
 
     monkeypatch.setenv("MULTILANG_DATABASE_URL", f"sqlite+pysqlite:///{database_path}")
+    monkeypatch.setenv("MULTILANG_LEXICON_DATA_DIR", str(lexicon_dir))
     rerun_result = runner.invoke(
         app,
         ["generate", "--language", "en", "--source", "word-list", "--input-file", str(source)],
@@ -127,13 +154,13 @@ def test_shipped_app_supports_resume_and_duplicate_safe_rerun(
         ],
     )
 
-    assert "stage=ingest" in first_result.output
+    assert "grounded_candidates=2" in first_result.output
     assert "completed_items=2" in first_result.output
     assert first_result.exit_code == 0
     assert run_key == first_job.run_key
     assert resume_result.exit_code == 0
     assert "resumed_from_job=" in resume_result.output
-    assert "stage=ingest" in resume_result.output
+    assert "completed_items=2" in resume_result.output
     assert rerun_result.exit_code == 0
     assert "skipped_duplicates=2" in rerun_result.output
     assert overwrite_result.exit_code == 0

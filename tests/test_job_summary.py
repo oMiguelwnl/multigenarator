@@ -14,6 +14,7 @@ from multilang.repositories.job_repository import JobRepository
 from multilang.runtime import build_runtime_service
 from multilang.services.execution_report import JobExecutionReport
 from multilang.services.generate_job import GenerateJobService
+from multilang.services.ingest_lexical_items import IngestLexicalItemsService
 from multilang.services.job_summary import JobSummaryBuilder
 from multilang.settings import Settings
 
@@ -127,5 +128,5 @@ def test_build_runtime_service_uses_database_url(tmp_path: Path) -> None:
         Settings(database_url=f"sqlite+pysqlite:///{database_path}")
     )
 
-    assert isinstance(service, GenerateJobService)
+    assert isinstance(service, IngestLexicalItemsService)
     assert str(service.repository.session.get_bind().url) == f"sqlite+pysqlite:///{database_path}"

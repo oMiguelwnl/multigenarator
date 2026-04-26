@@ -8,7 +8,7 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 
 from multilang.services.audio_voice_registry import VOICE_REGISTRY_VERSION
 
-SupportedLanguageCode = Literal["pt", "es", "en", "fr", "de", "ru", "nl"]
+SupportedLanguageCode = Literal["pt", "es", "en", "fr", "de", "it", "pl", "tr", "ro", "ru", "nl"]
 TextGenerationProvider = Literal["litellm"]
 TranslationProvider = Literal["deepl"]
 AudioOutputFormat = Literal["audio-24khz-48kbitrate-mono-mp3"]
@@ -19,6 +19,10 @@ DEFAULT_SUPPORTED_LANGUAGES: tuple[SupportedLanguageCode, ...] = (
     "en",
     "fr",
     "de",
+    "it",
+    "pl",
+    "tr",
+    "ro",
     "ru",
     "nl",
 )

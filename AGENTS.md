@@ -3,7 +3,7 @@
 
 **Multilang Anki Card Generator**
 
-Multilang is a multilingual Anki card generator focused on the most frequent words in a target language. It is meant to create high-quality study decks for learners of Portuguese, Spanish, English, French, German, Russian, and Dutch, with a separate mode for generating cards from a user-provided word list collected from reading.
+Multilang is a multilingual Anki card generator focused on the most frequent words in a target language. It is meant to create high-quality study decks for learners of Portuguese, Spanish, English, French, German, Italian, Polish, Turkish, Romanian, Russian, and Dutch, with a separate mode for generating cards from a user-provided word list collected from reading.
 
 The product generates structured Anki-ready cards with word data, phonetics, definitions, example sentences, translations, audio, and an empty image field that the user can fill manually later. AI-assisted generation is part of the intended approach, but the exact provider and supporting services still need research and validation.
 
@@ -11,7 +11,7 @@ The product generates structured Anki-ready cards with word data, phonetics, def
 
 ### Constraints
 
-- **Languages**: v1 must support Portuguese, Spanish, English, French, German, Russian, and Dutch — these are the explicit target languages.
+- **Languages**: v1 must support Portuguese, Spanish, English, French, German, Italian, Polish, Turkish, Romanian, Russian, and Dutch.
 - **Deck Structure**: Cards must be separated into 3 levels with 1000 cards per level — this defines the core content structure.
 - **Output Quality**: Example sentences and translations must be high quality — prior low-quality outputs from Tatoeba are a known concern.
 - **Audio Provider**: Audio should use Azure TTS if the required voices are available — this is the user's preferred TTS direction.

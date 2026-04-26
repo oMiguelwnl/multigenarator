@@ -1,0 +1,29 @@
+{
+  "job_id": "d62dc386-2f9c-42f8-9ebd-8162cba02f47",
+  "generated_at": null,
+  "item_count": 2,
+  "items": [
+    {
+      "confidence_label": "low",
+      "example_sentence": "The word alpha is useful in daily life.",
+      "item_key": "alpha",
+      "job_id": "d62dc386-2f9c-42f8-9ebd-8162cba02f47",
+      "review_reason": "banned_pattern",
+      "translation_text": "A palavra alpha é útil no dia a dia.",
+      "validation_flags": [
+        "banned_pattern"
+      ]
+    },
+    {
+      "confidence_label": "low",
+      "example_sentence": "The word beta is useful in daily life.",
+      "item_key": "beta",
+      "job_id": "d62dc386-2f9c-42f8-9ebd-8162cba02f47",
+      "review_reason": "banned_pattern",
+      "translation_text": "A palavra beta é útil no dia a dia.",
+      "validation_flags": [
+        "banned_pattern"
+      ]
+    }
+  ]
+}

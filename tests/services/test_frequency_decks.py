@@ -164,3 +164,23 @@ def test_build_frequency_level_scans_past_rank_3000_for_backfill(monkeypatch) ->
 
     assert [candidate.frequency_rank for candidate in level] == [2996, 3001, 3002, 3003, 3004]
     assert level[-1].frequency_level == 3
+
+
+def test_build_frequency_deck_supports_custom_cards_per_level(monkeypatch) -> None:
+    from multilang.services import frequency_decks
+
+    monkeypatch.setattr(
+        frequency_decks,
+        "iter_curated_frequency_candidates",
+        lambda language, scan_limit=6000: ((rank, f"word-{rank}") for rank in range(1, 3010)),
+    )
+
+    deck = frequency_decks.build_frequency_deck(
+        SupportedLanguage.EN,
+        required_count_per_level=4,
+    )
+
+    assert [len(deck[level]) for level in (1, 2, 3)] == [4, 4, 4]
+    assert [candidate.frequency_rank for candidate in deck[1]] == [1, 2, 3, 4]
+    assert [candidate.frequency_rank for candidate in deck[2]] == [1001, 1002, 1003, 1004]
+    assert [candidate.frequency_rank for candidate in deck[3]] == [2001, 2002, 2003, 2004]

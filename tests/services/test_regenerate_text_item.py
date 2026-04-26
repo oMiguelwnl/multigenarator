@@ -118,6 +118,18 @@ class FakeTextRepository:
     def get_text_record(self, job_id: str, item_key: str) -> TextQualityRecord | None:
         return self.records.get((job_id, item_key))
 
+    def list_example_sentences_for_job(
+        self,
+        job_id: str,
+        *,
+        exclude_item_key: str | None = None,
+    ) -> list[str]:
+        return [
+            record.example_sentence
+            for (record_job_id, record_item_key), record in self.records.items()
+            if record_job_id == job_id and record.example_sentence and record_item_key != exclude_item_key
+        ]
+
     def upsert_text_record(self, record: TextQualityRecord) -> TextQualityRecord:
         self.upserted.append(record)
         self.records[(record.job_id, record.item_key)] = record
@@ -291,3 +303,62 @@ def test_regenerate_text_item_keeps_failed_item_flagged_in_place() -> None:
     assert regenerated.review_reason == "translation_mismatch"
     assert len(text_repository.records) == 1
     assert len(text_repository.upserted) == 1
+
+
+def test_regenerate_text_item_flags_duplicate_sentence_against_other_cards() -> None:
+    lexical_repository = FakeLexicalRepository(
+        candidates={
+            ("job-1", "line-1"): PersistedCandidate(
+                id="lex-line-1", item_key="line-1", candidate=make_candidate(item_key="line-1")
+            )
+        }
+    )
+    text_repository = FakeTextRepository(
+        records={
+            ("job-1", "line-1"): make_record(item_key="line-1"),
+            ("job-1", "line-2"): make_record(item_key="line-2", status=ValidationStatus.PASSED).model_copy(
+                update={"example_sentence": "I wash the cup at home."}
+            ),
+        }
+    )
+    generation = FakeGenerationService(
+        bundles=[
+            make_bundle(sentence="I wash the cup at home.", translation="Eu lavo a xícara em casa."),
+            make_bundle(sentence="I wash the cup tonight.", translation="Eu lavo a xícara esta noite."),
+        ]
+    )
+    validation = FakeValidationService(
+        results=[
+            make_validation_result(
+                status=ValidationStatus.FAILED,
+                label=ConfidenceLabel.LOW,
+                score=0.42,
+                flags=[
+                    ValidationFlag(
+                        code=ValidationFlagCode.DUPLICATE_SENTENCE,
+                        detail="sentence must be unique across cards in the same deck generation job",
+                    )
+                ],
+            ),
+            make_validation_result(
+                status=ValidationStatus.PASSED,
+                label=ConfidenceLabel.HIGH,
+                score=0.9,
+            ),
+        ]
+    )
+
+    service = RegenerateTextItemService(
+        job_repository=FakeJobRepository(),
+        lexical_repository=lexical_repository,
+        text_repository=text_repository,
+        text_generation_service=generation,
+        text_validation_service=validation,
+    )
+
+    regenerated = service.execute(job_id="job-1", item_key="line-1", deck_language=SupportedLanguage.EN)
+
+    assert regenerated.example_sentence == "I wash the cup tonight."
+    assert regenerated.review_status is ReviewStatus.ACCEPTED
+    assert validation.calls[0]["disallowed_sentence_texts"] == {"i wash the cup at home"}
+    assert validation.calls[1]["disallowed_sentence_texts"] == {"i wash the cup at home"}

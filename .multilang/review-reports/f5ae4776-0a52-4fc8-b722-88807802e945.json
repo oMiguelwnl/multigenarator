@@ -1,0 +1,18 @@
+{
+  "job_id": "f5ae4776-0a52-4fc8-b722-88807802e945",
+  "generated_at": null,
+  "item_count": 1,
+  "items": [
+    {
+      "confidence_label": "low",
+      "example_sentence": "The word alpha is useful in daily life.",
+      "item_key": "alpha",
+      "job_id": "f5ae4776-0a52-4fc8-b722-88807802e945",
+      "review_reason": "banned_pattern",
+      "translation_text": "A palavra alpha é útil no dia a dia.",
+      "validation_flags": [
+        "banned_pattern"
+      ]
+    }
+  ]
+}

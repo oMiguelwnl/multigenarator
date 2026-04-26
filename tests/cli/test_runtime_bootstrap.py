@@ -133,14 +133,14 @@ def test_prepare_local_smoke_writes_english_archive_words_and_index(tmp_path: Pa
         {
             "word": "harbor",
             "lang_code": "en",
-            "senses": [{"glosses": ["a sheltered place where boats can anchor safely", "to provide shelter or refuge"]}],
-            "sounds": [{"ipa": "/ˈhɑːrbɚ/"}],
+            "senses": [{"glosses": ["a sheltered place where boats can anchor safely"]}],
+            "sounds": [{"ipa": "/ˈhɑrbər/"}],
         },
         {
             "word": "lantern",
             "lang_code": "en",
             "senses": [{"glosses": ["a portable light protected by a transparent case"]}],
-            "sounds": [{"ipa": "/ˈlæntɚn/"}],
+            "sounds": [{"ipa": "/ˈlæntərn/"}],
         },
         {
             "word": "meadow",

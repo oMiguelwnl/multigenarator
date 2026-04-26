@@ -87,7 +87,9 @@ _FAKE_SPEECHSDK = SimpleNamespace(
     SpeechSynthesisOutputFormat=SimpleNamespace(Audio24Khz48KBitRateMonoMp3="mp3-enum"),
     ResultReason=SimpleNamespace(SynthesizingAudioCompleted="completed"),
     CancellationDetails=SimpleNamespace(
-        from_result=lambda result: SimpleNamespace(reason="canceled", error_details="boom")
+        from_result=lambda result: SimpleNamespace(
+            reason="canceled", error_code="BadRequest", error_details="boom"
+        )
     ),
     audio=SimpleNamespace(AudioOutputConfig=_FakeAudioOutputConfig),
 )
@@ -125,7 +127,7 @@ def test_azure_speech_adapter_synthesizes_ssml_to_expected_file(tmp_path: Path) 
     )
 
     response = adapter.synthesize(
-        ssml_text="<speak>Hello</speak>",
+        ssml_text="<speak>Hello & \"Azure\"</speak>",
         voice_id="en-US-JennyNeural",
         locale="en-US",
         output_path=output_path,
@@ -140,11 +142,17 @@ def test_azure_speech_adapter_synthesizes_ssml_to_expected_file(tmp_path: Path) 
     assert _FakeSpeechSynthesizer.latest_config.speech_synthesis_voice_name == "en-US-JennyNeural"
     assert _FakeSpeechSynthesizer.latest_config.speech_synthesis_language == "en-US"
     assert _FakeSpeechSynthesizer.latest_config.output_format == "mp3-enum"
-    assert _FakeSpeechSynthesizer.latest_ssml == "<speak>Hello</speak>"
+    assert _FakeSpeechSynthesizer.latest_ssml is not None
+    assert 'xmlns="http://www.w3.org/2001/10/synthesis"' in _FakeSpeechSynthesizer.latest_ssml
+    assert 'xml:lang="en-US"' in _FakeSpeechSynthesizer.latest_ssml
+    assert '<voice name="en-US-JennyNeural">Hello &amp; &quot;Azure&quot;</voice>' in _FakeSpeechSynthesizer.latest_ssml
 
 
 def test_azure_speech_adapter_requires_credentials_for_synthesis(tmp_path: Path) -> None:
-    adapter = AzureSpeechAdapter(Settings(), speechsdk_module=_FAKE_SPEECHSDK)
+    adapter = AzureSpeechAdapter(
+        Settings(_env_file=None, azure_speech_key=None, azure_speech_region=None),
+        speechsdk_module=_FAKE_SPEECHSDK,
+    )
 
     with pytest.raises(AzureSpeechAdapterError, match="MULTILANG_AZURE_SPEECH_KEY"):
         adapter.synthesize(
@@ -154,3 +162,33 @@ def test_azure_speech_adapter_requires_credentials_for_synthesis(tmp_path: Path)
             output_path=tmp_path / "audio.mp3",
             audio_format="audio-24khz-48kbitrate-mono-mp3",
         )
+
+
+def test_azure_speech_adapter_surfaces_cancellation_details(tmp_path: Path) -> None:
+    _FakeSpeechSynthesizer.next_result = _FakeResult(
+        reason="canceled",
+        audio_data=b"",
+        audio_duration=None,
+    )
+    adapter = AzureSpeechAdapter(
+        Settings(azure_speech_key="key", azure_speech_region="eastus"),
+        speechsdk_module=_FAKE_SPEECHSDK,
+    )
+
+    with pytest.raises(
+        AzureSpeechAdapterError,
+        match="reason=canceled; error_code=BadRequest; details=boom",
+    ):
+        adapter.synthesize(
+            ssml_text="hello",
+            voice_id="en-US-JennyNeural",
+            locale="en-US",
+            output_path=tmp_path / "audio.mp3",
+            audio_format="audio-24khz-48kbitrate-mono-mp3",
+        )
+
+    _FakeSpeechSynthesizer.next_result = _FakeResult(
+        reason="completed",
+        audio_data=b"ID3-provider-bytes",
+        audio_duration=timedelta(milliseconds=875),
+    )

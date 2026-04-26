@@ -6,7 +6,7 @@ from pydantic import BaseModel, Field
 
 from multilang.domain.jobs import SupportedLanguage
 
-VOICE_REGISTRY_VERSION = "2026-04-24"
+VOICE_REGISTRY_VERSION = "2026-04-26b"
 
 
 class VoiceSelectionError(ValueError):
@@ -46,28 +46,48 @@ _VOICE_REGISTRY: dict[SupportedLanguage, VoicePlan] = {
         alternate_locale_alternates=(VoiceOption(voice_id="pt-PT-RaquelNeural", locale="pt-PT"),),
     ),
     SupportedLanguage.ES: VoicePlan(
-        preferred=VoiceOption(voice_id="es-ES-ElviraNeural", locale="es-ES"),
+        preferred=VoiceOption(voice_id="es-ES-TristanMultilingualNeural", locale="es-ES"),
         same_locale_alternates=(VoiceOption(voice_id="es-ES-AlvaroNeural", locale="es-ES"),),
         alternate_locale_alternates=(VoiceOption(voice_id="es-MX-DaliaNeural", locale="es-MX"),),
     ),
     SupportedLanguage.EN: VoicePlan(
-        preferred=VoiceOption(voice_id="en-US-JennyNeural", locale="en-US"),
-        same_locale_alternates=(VoiceOption(voice_id="en-US-GuyNeural", locale="en-US"),),
+        preferred=VoiceOption(voice_id="en-US-Andrew:DragonHDLatestNeural", locale="en-US"),
+        same_locale_alternates=(
+            VoiceOption(voice_id="en-US-AndrewNeural", locale="en-US"),
+            VoiceOption(voice_id="en-US-GuyNeural", locale="en-US"),
+        ),
         alternate_locale_alternates=(VoiceOption(voice_id="en-GB-SoniaNeural", locale="en-GB"),),
     ),
     SupportedLanguage.FR: VoicePlan(
-        preferred=VoiceOption(voice_id="fr-FR-DeniseNeural", locale="fr-FR"),
+        preferred=VoiceOption(voice_id="fr-FR-Remy:DragonHDLatestNeural", locale="fr-FR"),
         same_locale_alternates=(VoiceOption(voice_id="fr-FR-HenriNeural", locale="fr-FR"),),
         alternate_locale_alternates=(VoiceOption(voice_id="fr-CA-SylvieNeural", locale="fr-CA"),),
     ),
     SupportedLanguage.DE: VoicePlan(
-        preferred=VoiceOption(voice_id="de-DE-KatjaNeural", locale="de-DE"),
-        same_locale_alternates=(VoiceOption(voice_id="de-DE-ConradNeural", locale="de-DE"),),
+        preferred=VoiceOption(voice_id="de-DE-ConradNeural", locale="de-DE"),
+        same_locale_alternates=(VoiceOption(voice_id="de-DE-KatjaNeural", locale="de-DE"),),
         alternate_locale_alternates=(VoiceOption(voice_id="de-AT-IngridNeural", locale="de-AT"),),
     ),
+    SupportedLanguage.IT: VoicePlan(
+        preferred=VoiceOption(voice_id="it-IT-GiuseppeMultilingualNeural", locale="it-IT"),
+        same_locale_alternates=(VoiceOption(voice_id="it-IT-DiegoNeural", locale="it-IT"),),
+        alternate_locale_alternates=(VoiceOption(voice_id="it-IT-IsabellaNeural", locale="it-IT"),),
+    ),
+    SupportedLanguage.PL: VoicePlan(
+        preferred=VoiceOption(voice_id="pl-PL-AgnieszkaNeural", locale="pl-PL"),
+        same_locale_alternates=(VoiceOption(voice_id="pl-PL-MarekNeural", locale="pl-PL"),),
+    ),
+    SupportedLanguage.TR: VoicePlan(
+        preferred=VoiceOption(voice_id="tr-TR-EmelNeural", locale="tr-TR"),
+        same_locale_alternates=(VoiceOption(voice_id="tr-TR-AhmetNeural", locale="tr-TR"),),
+    ),
+    SupportedLanguage.RO: VoicePlan(
+        preferred=VoiceOption(voice_id="ro-RO-AlinaNeural", locale="ro-RO"),
+        same_locale_alternates=(VoiceOption(voice_id="ro-RO-EmilNeural", locale="ro-RO"),),
+    ),
     SupportedLanguage.RU: VoicePlan(
-        preferred=VoiceOption(voice_id="ru-RU-SvetlanaNeural", locale="ru-RU"),
-        same_locale_alternates=(VoiceOption(voice_id="ru-RU-DmitryNeural", locale="ru-RU"),),
+        preferred=VoiceOption(voice_id="ru-RU-DmitryNeural", locale="ru-RU"),
+        same_locale_alternates=(VoiceOption(voice_id="ru-RU-SvetlanaNeural", locale="ru-RU"),),
     ),
     SupportedLanguage.NL: VoicePlan(
         preferred=VoiceOption(voice_id="nl-NL-ColetteNeural", locale="nl-NL"),

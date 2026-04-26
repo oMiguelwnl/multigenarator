@@ -85,7 +85,7 @@ class AssembleExportCardsService:
     def _render_definitions(self, candidate: LexicalCardCandidate) -> str:
         raw = candidate.definitions_html or ""
         cleaned = raw.replace("</ul>", "").replace("<ul>", "\n").replace("</li>", "\n").replace("<li>", "")
-        parts = [escape(part.strip()) for part in split(r"\n+", cleaned) if part.strip()]
+        parts = [escape(part.strip()) for part in split(r"(?:<br\s*/?>|\n)+", cleaned) if part.strip()]
         if not parts:
             raise AssembleExportCardsError(f"missing definitions for item {candidate.lemma_key}")
         return "<br>".join(parts)

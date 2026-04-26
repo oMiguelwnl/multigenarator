@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import re
 from dataclasses import dataclass
 from typing import Any, Protocol
 
@@ -43,6 +44,8 @@ class GenerateTextItemsResult:
 class GenerateTextItemsService:
     """Run generate -> validate -> repair once -> persist for pending text items."""
 
+    _sentence_token_re = re.compile(r"\b[\w'-]+\b", re.UNICODE)
+
     def __init__(
         self,
         *,
@@ -67,6 +70,7 @@ class GenerateTextItemsService:
         deck_language: SupportedLanguage,
     ) -> GenerateTextItemsResult:
         result = GenerateTextItemsResult()
+        seen_sentences = self._normalize_sentences(self.text_repository.list_example_sentences_for_job(job_id))
 
         for persisted_candidate in self.text_repository.list_generation_candidates(job_id):
             candidate_id = getattr(persisted_candidate, "id")
@@ -77,7 +81,11 @@ class GenerateTextItemsService:
                 candidate=lexical_candidate,
                 deck_language=deck_language,
             )
-            validation = self._validate_bundle(bundle=generated_bundle, candidate=lexical_candidate)
+            validation = self._validate_bundle(
+                bundle=generated_bundle,
+                candidate=lexical_candidate,
+                seen_sentences=seen_sentences,
+            )
             generation_status = TextGenerationStatus.GENERATED
             repair_attempt_count = 0
 
@@ -90,6 +98,7 @@ class GenerateTextItemsService:
                     deck_language=deck_language,
                     generated_bundle=generated_bundle,
                     validation=validation,
+                    seen_sentences=seen_sentences,
                 )
 
             record = self._build_record(
@@ -102,6 +111,9 @@ class GenerateTextItemsService:
                 repair_attempt_count=repair_attempt_count,
             )
             self.text_repository.upsert_text_record(record)
+            normalized_sentence = self._normalize_sentence_text(record.example_sentence)
+            if normalized_sentence:
+                seen_sentences.add(normalized_sentence)
             self.job_repository.record_item_success(
                 job_id,
                 item_key=item_key,
@@ -121,6 +133,7 @@ class GenerateTextItemsService:
         *,
         bundle: GeneratedTextBundle,
         candidate: LexicalCardCandidate,
+        seen_sentences: set[str] | None = None,
     ) -> TextValidationResult:
         return self.text_validation_service.validate(
             sentence=bundle.sentence,
@@ -128,6 +141,7 @@ class GenerateTextItemsService:
             display_form=candidate.display_form,
             lemma=candidate.lemma,
             definitions_html=candidate.definitions_html,
+            disallowed_sentence_texts=set(seen_sentences or set()),
         )
 
     def _build_record(
@@ -175,6 +189,7 @@ class GenerateTextItemsService:
         deck_language: SupportedLanguage,
         generated_bundle: GeneratedTextBundle,
         validation: TextValidationResult,
+        seen_sentences: set[str],
     ) -> tuple[GeneratedTextBundle, TextValidationResult]:
         fallback_sentence = self.tatoeba_sentence_source.select_sentence(
             display_form=candidate.display_form,
@@ -190,8 +205,26 @@ class GenerateTextItemsService:
             deck_language=deck_language,
             fallback=SentenceGenerationFallback(sentence_result=fallback_sentence),
         )
-        repaired_validation = self._validate_bundle(bundle=repaired_bundle, candidate=candidate)
+        repaired_validation = self._validate_bundle(
+            bundle=repaired_bundle,
+            candidate=candidate,
+            seen_sentences=seen_sentences,
+        )
         return repaired_bundle, repaired_validation
+
+    @staticmethod
+    def _normalize_sentence_text(value: str | None) -> str:
+        if value is None:
+            return ""
+        return " ".join(GenerateTextItemsService._sentence_token_re.findall(value.casefold()))
+
+    @classmethod
+    def _normalize_sentences(cls, values: list[str]) -> set[str]:
+        return {
+            normalized
+            for value in values
+            if (normalized := cls._normalize_sentence_text(value))
+        }
 
     def _to_candidate(self, persisted_candidate: Any) -> LexicalCardCandidate:
         if hasattr(persisted_candidate, "candidate"):

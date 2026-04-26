@@ -23,6 +23,10 @@ def test_voice_registry_resolves_supported_languages() -> None:
         SupportedLanguage.EN,
         SupportedLanguage.FR,
         SupportedLanguage.DE,
+        SupportedLanguage.IT,
+        SupportedLanguage.PL,
+        SupportedLanguage.TR,
+        SupportedLanguage.RO,
         SupportedLanguage.RU,
         SupportedLanguage.NL,
     }
@@ -58,8 +62,24 @@ def test_voice_registry_uses_deterministic_fallback_order() -> None:
         select_voice(SupportedLanguage.NL, available_voice_ids={"en-US-JennyNeural"})
 
 
+def test_voice_registry_prefers_english_andrew_dragon_hd_voice() -> None:
+    selection = select_voice(SupportedLanguage.EN)
+
+    assert selection.voice_id == "en-US-Andrew:DragonHDLatestNeural"
+    assert selection.locale == "en-US"
+
+
+def test_voice_registry_uses_requested_preferred_voices() -> None:
+    assert select_voice(SupportedLanguage.DE).voice_id == "de-DE-ConradNeural"
+    assert select_voice(SupportedLanguage.ES).voice_id == "es-ES-TristanMultilingualNeural"
+    assert select_voice(SupportedLanguage.FR).voice_id == "fr-FR-Remy:DragonHDLatestNeural"
+    assert select_voice(SupportedLanguage.IT).voice_id == "it-IT-GiuseppeMultilingualNeural"
+    assert select_voice(SupportedLanguage.RU).voice_id == "ru-RU-DmitryNeural"
+
+
 def test_settings_expose_azure_speech_configuration() -> None:
     settings = Settings(
+        _env_file=None,
         azure_speech_key="speech-key",
         azure_speech_region="westeurope",
     )

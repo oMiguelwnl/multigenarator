@@ -372,14 +372,14 @@ def _local_smoke_archive_rows() -> list[dict[str, object]]:
         {
             "word": "harbor",
             "lang_code": LOCAL_SMOKE_LANGUAGE.value,
-            "senses": [{"glosses": ["a sheltered place where boats can anchor safely", "to provide shelter or refuge"]}],
-            "sounds": [{"ipa": "/ˈhɑːrbɚ/"}],
+            "senses": [{"glosses": ["a sheltered place where boats can anchor safely"]}],
+            "sounds": [{"ipa": "/ˈhɑrbər/"}],
         },
         {
             "word": "lantern",
             "lang_code": LOCAL_SMOKE_LANGUAGE.value,
             "senses": [{"glosses": ["a portable light protected by a transparent case"]}],
-            "sounds": [{"ipa": "/ˈlæntɚn/"}],
+            "sounds": [{"ipa": "/ˈlæntərn/"}],
         },
         {
             "word": "meadow",

@@ -81,6 +81,22 @@ class TextRepository:
         )
         return [self._to_domain(row) for row in rows]
 
+    def list_example_sentences_for_job(
+        self,
+        job_id: str,
+        *,
+        exclude_item_key: str | None = None,
+    ) -> list[str]:
+        statement = select(TextQualityRecordModel.example_sentence).where(
+            TextQualityRecordModel.job_id == job_id,
+            TextQualityRecordModel.example_sentence.is_not(None),
+        )
+        if exclude_item_key is not None:
+            statement = statement.where(TextQualityRecordModel.item_key != exclude_item_key)
+
+        rows = self.session.scalars(statement.order_by(TextQualityRecordModel.item_key.asc()))
+        return [sentence for sentence in rows if sentence]
+
     def list_flagged_records(self, job_id: str) -> list[TextQualityRecord]:
         rows = self.session.scalars(
             select(TextQualityRecordModel)

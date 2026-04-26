@@ -1,0 +1,24 @@
+{
+  "terminal": {
+    "copy_on_select": true,
+    "shell": {
+      "program": "/bin/bash"
+    }
+  },
+  "key_bindings": [
+    {
+      "context": "Workspace",
+      "bindings": {
+        "ctrl+`": "terminal_panel::Open",
+        "ctrl+shift+t": "terminal_panel::Open"
+      }
+    },
+    {
+      "context": "Terminal",
+      "bindings": {
+        "ctrl+shift+c": "terminal::Copy",
+        "ctrl+shift+v": "terminal::Paste"
+      }
+    }
+  ]
+}

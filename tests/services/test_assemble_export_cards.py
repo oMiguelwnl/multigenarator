@@ -188,6 +188,21 @@ def test_assemble_export_cards_joins_definitions_with_br_and_preserves_image_bla
     assert row.image == ""
 
 
+def test_assemble_export_cards_normalizes_existing_br_separators() -> None:
+    service, _ = build_service(
+        accepted_records=[make_text_record(item_key="harbor")],
+        candidates={"harbor": make_candidate(item_key="harbor", definitions_html="first sense<br>second & third")},
+        assets={
+            ("harbor", AudioAssetKind.WORD.value): make_asset(item_key="harbor", asset_kind=AudioAssetKind.WORD, storage_path="harbor-word.mp3"),
+            ("harbor", AudioAssetKind.SENTENCE.value): make_asset(item_key="harbor", asset_kind=AudioAssetKind.SENTENCE, storage_path="harbor-sentence.mp3"),
+        },
+    )
+
+    row = service.execute(job_id="job-1", deck_language=SupportedLanguage.EN).cards[0]
+
+    assert row.definitions == "first sense<br>second &amp; third"
+
+
 def test_assemble_export_cards_escapes_text_and_keeps_guid_stable_when_text_changes() -> None:
     assets = {
         ("read", AudioAssetKind.WORD.value): make_asset(item_key="read", asset_kind=AudioAssetKind.WORD, storage_path="dir/read-word.mp3"),

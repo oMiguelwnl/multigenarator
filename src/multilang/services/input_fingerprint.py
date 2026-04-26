@@ -23,9 +23,10 @@ def build_input_fingerprint(
     """Build a reproducible fingerprint for the requested input."""
 
     if request.source_type == "frequency":
+        cards_per_level = request.resolved_cards_per_level()
         if request.level is None:
-            return "levels:1-3"
-        return f"level:{request.level}"
+            return f"levels:1-3:cards:{cards_per_level}"
+        return f"level:{request.level}:cards:{cards_per_level}"
 
     normalized = normalize_requested_item_keys(requested_item_keys)
     digest = sha256("\n".join(normalized).encode("utf-8")).hexdigest()

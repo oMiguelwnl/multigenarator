@@ -158,7 +158,7 @@ def test_generate_command_rejects_unsupported_language() -> None:
 
     result = runner.invoke(
         app,
-        ["generate", "--language", "it", "--source", "frequency", "--level", "1"],
+        ["generate", "--language", "sv", "--source", "frequency", "--level", "1"],
     )
 
     assert result.exit_code != 0
@@ -172,6 +172,28 @@ def test_word_list_source_requires_input_file() -> None:
 
     assert result.exit_code != 0
     assert "--input-file is required when --source word-list" in result.output
+
+
+def test_word_list_source_rejects_frequency_only_flags(tmp_path: Path) -> None:
+    app = create_app()
+    source = write_word_list(tmp_path, "alpha")
+
+    result = runner.invoke(
+        app,
+        [
+            "generate",
+            "--language",
+            "en",
+            "--source",
+            "word-list",
+            "--input-file",
+            str(source),
+            "--test-mode",
+        ],
+    )
+
+    assert result.exit_code != 0
+    assert "--test-mode is only valid when --source frequency" in result.output
 
 
 def test_overwrite_requires_explicit_confirmation() -> None:
@@ -392,6 +414,72 @@ def test_generate_frequency_command_reports_grounded_candidate_counts(monkeypatc
     assert "level_2_candidates=1000" in result.output
     assert "level_3_candidates=1000" in result.output
     assert "pending_groundings=0" in result.output
+
+
+def test_generate_frequency_command_supports_test_mode(monkeypatch) -> None:
+    service, session = build_ingest_service(
+        lookup_terms=[f"word-{rank}" for rank in range(1, 3010)],
+    )
+    app = create_app(service=service)
+
+    from multilang.services import frequency_decks
+
+    monkeypatch.setattr(
+        frequency_decks,
+        "iter_curated_frequency_candidates",
+        lambda language, scan_limit=6000: ((rank, f"word-{rank}") for rank in range(1, 3010)),
+    )
+
+    result = runner.invoke(
+        app,
+        ["generate", "--language", "en", "--source", "frequency", "--test-mode"],
+    )
+
+    session.close()
+
+    assert result.exit_code == 0
+    assert "grounded_candidates=30" in result.output
+    assert "level_1_candidates=10" in result.output
+    assert "level_2_candidates=10" in result.output
+    assert "level_3_candidates=10" in result.output
+
+
+def test_generate_frequency_command_supports_cards_per_level_override(monkeypatch) -> None:
+    service, session = build_ingest_service(
+        lookup_terms=[f"word-{rank}" for rank in range(1, 2010)],
+    )
+    app = create_app(service=service)
+
+    from multilang.services import frequency_decks
+
+    monkeypatch.setattr(
+        frequency_decks,
+        "iter_curated_frequency_candidates",
+        lambda language, scan_limit=6000: ((rank, f"word-{rank}") for rank in range(1, 2010)),
+    )
+
+    result = runner.invoke(
+        app,
+        [
+            "generate",
+            "--language",
+            "en",
+            "--source",
+            "frequency",
+            "--level",
+            "2",
+            "--cards-per-level",
+            "3",
+        ],
+    )
+
+    session.close()
+
+    assert result.exit_code == 0
+    assert "grounded_candidates=3" in result.output
+    assert "level_1_candidates=0" in result.output
+    assert "level_2_candidates=3" in result.output
+    assert "level_3_candidates=0" in result.output
 
 
 def test_generate_word_list_command_reports_pending_groundings(tmp_path: Path) -> None:

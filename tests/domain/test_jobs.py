@@ -19,6 +19,10 @@ def test_supported_languages() -> None:
         "en",
         "fr",
         "de",
+        "it",
+        "pl",
+        "tr",
+        "ro",
         "ru",
         "nl",
     }
@@ -30,7 +34,7 @@ def test_supported_languages() -> None:
 
 def test_generation_request_rejects_unsupported_language() -> None:
     with pytest.raises(ValidationError):
-        GenerationRequest(language="it", source_type="frequency", level=1)
+        GenerationRequest(language="sv", source_type="frequency", level=1)
 
 
 def test_resume_diagnostic_requires_reason() -> None:

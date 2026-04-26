@@ -1,0 +1,238 @@
+{
+  "job_id": "3f432b9f-222b-4706-855b-723ffd602b27",
+  "generated_at": null,
+  "item_count": 21,
+  "items": [
+    {
+      "confidence_label": "low",
+      "example_sentence": "The word word-1 is useful in daily life.",
+      "item_key": "level-1-rank-0001",
+      "job_id": "3f432b9f-222b-4706-855b-723ffd602b27",
+      "review_reason": "banned_pattern",
+      "translation_text": "A palavra word-1 é útil no dia a dia.",
+      "validation_flags": [
+        "banned_pattern"
+      ]
+    },
+    {
+      "confidence_label": "low",
+      "example_sentence": "The word word-2 is useful in daily life.",
+      "item_key": "level-1-rank-0002",
+      "job_id": "3f432b9f-222b-4706-855b-723ffd602b27",
+      "review_reason": "banned_pattern",
+      "translation_text": "A palavra word-2 é útil no dia a dia.",
+      "validation_flags": [
+        "banned_pattern"
+      ]
+    },
+    {
+      "confidence_label": "low",
+      "example_sentence": "The word word-3 is useful in daily life.",
+      "item_key": "level-1-rank-0003",
+      "job_id": "3f432b9f-222b-4706-855b-723ffd602b27",
+      "review_reason": "banned_pattern",
+      "translation_text": "A palavra word-3 é útil no dia a dia.",
+      "validation_flags": [
+        "banned_pattern"
+      ]
+    },
+    {
+      "confidence_label": "low",
+      "example_sentence": "The word word-4 is useful in daily life.",
+      "item_key": "level-1-rank-0004",
+      "job_id": "3f432b9f-222b-4706-855b-723ffd602b27",
+      "review_reason": "banned_pattern",
+      "translation_text": "A palavra word-4 é útil no dia a dia.",
+      "validation_flags": [
+        "banned_pattern"
+      ]
+    },
+    {
+      "confidence_label": "low",
+      "example_sentence": "The word word-5 is useful in daily life.",
+      "item_key": "level-1-rank-0005",
+      "job_id": "3f432b9f-222b-4706-855b-723ffd602b27",
+      "review_reason": "banned_pattern",
+      "translation_text": "A palavra word-5 é útil no dia a dia.",
+      "validation_flags": [
+        "banned_pattern"
+      ]
+    },
+    {
+      "confidence_label": "low",
+      "example_sentence": "The word word-6 is useful in daily life.",
+      "item_key": "level-1-rank-0006",
+      "job_id": "3f432b9f-222b-4706-855b-723ffd602b27",
+      "review_reason": "banned_pattern",
+      "translation_text": "A palavra word-6 é útil no dia a dia.",
+      "validation_flags": [
+        "banned_pattern"
+      ]
+    },
+    {
+      "confidence_label": "low",
+      "example_sentence": "The word word-7 is useful in daily life.",
+      "item_key": "level-1-rank-0007",
+      "job_id": "3f432b9f-222b-4706-855b-723ffd602b27",
+      "review_reason": "banned_pattern",
+      "translation_text": "A palavra word-7 é útil no dia a dia.",
+      "validation_flags": [
+        "banned_pattern"
+      ]
+    },
+    {
+      "confidence_label": "low",
+      "example_sentence": "The word word-1001 is useful in daily life.",
+      "item_key": "level-2-rank-0001",
+      "job_id": "3f432b9f-222b-4706-855b-723ffd602b27",
+      "review_reason": "banned_pattern",
+      "translation_text": "A palavra word-1001 é útil no dia a dia.",
+      "validation_flags": [
+        "banned_pattern"
+      ]
+    },
+    {
+      "confidence_label": "low",
+      "example_sentence": "The word word-1002 is useful in daily life.",
+      "item_key": "level-2-rank-0002",
+      "job_id": "3f432b9f-222b-4706-855b-723ffd602b27",
+      "review_reason": "banned_pattern",
+      "translation_text": "A palavra word-1002 é útil no dia a dia.",
+      "validation_flags": [
+        "banned_pattern"
+      ]
+    },
+    {
+      "confidence_label": "low",
+      "example_sentence": "The word word-1003 is useful in daily life.",
+      "item_key": "level-2-rank-0003",
+      "job_id": "3f432b9f-222b-4706-855b-723ffd602b27",
+      "review_reason": "banned_pattern",
+      "translation_text": "A palavra word-1003 é útil no dia a dia.",
+      "validation_flags": [
+        "banned_pattern"
+      ]
+    },
+    {
+      "confidence_label": "low",
+      "example_sentence": "The word word-1004 is useful in daily life.",
+      "item_key": "level-2-rank-0004",
+      "job_id": "3f432b9f-222b-4706-855b-723ffd602b27",
+      "review_reason": "banned_pattern",
+      "translation_text": "A palavra word-1004 é útil no dia a dia.",
+      "validation_flags": [
+        "banned_pattern"
+      ]
+    },
+    {
+      "confidence_label": "low",
+      "example_sentence": "The word word-1005 is useful in daily life.",
+      "item_key": "level-2-rank-0005",
+      "job_id": "3f432b9f-222b-4706-855b-723ffd602b27",
+      "review_reason": "banned_pattern",
+      "translation_text": "A palavra word-1005 é útil no dia a dia.",
+      "validation_flags": [
+        "banned_pattern"
+      ]
+    },
+    {
+      "confidence_label": "low",
+      "example_sentence": "The word word-1006 is useful in daily life.",
+      "item_key": "level-2-rank-0006",
+      "job_id": "3f432b9f-222b-4706-855b-723ffd602b27",
+      "review_reason": "banned_pattern",
+      "translation_text": "A palavra word-1006 é útil no dia a dia.",
+      "validation_flags": [
+        "banned_pattern"
+      ]
+    },
+    {
+      "confidence_label": "low",
+      "example_sentence": "The word word-1007 is useful in daily life.",
+      "item_key": "level-2-rank-0007",
+      "job_id": "3f432b9f-222b-4706-855b-723ffd602b27",
+      "review_reason": "banned_pattern",
+      "translation_text": "A palavra word-1007 é útil no dia a dia.",
+      "validation_flags": [
+        "banned_pattern"
+      ]
+    },
+    {
+      "confidence_label": "low",
+      "example_sentence": "The word word-2001 is useful in daily life.",
+      "item_key": "level-3-rank-0001",
+      "job_id": "3f432b9f-222b-4706-855b-723ffd602b27",
+      "review_reason": "banned_pattern",
+      "translation_text": "A palavra word-2001 é útil no dia a dia.",
+      "validation_flags": [
+        "banned_pattern"
+      ]
+    },
+    {
+      "confidence_label": "low",
+      "example_sentence": "The word word-2002 is useful in daily life.",
+      "item_key": "level-3-rank-0002",
+      "job_id": "3f432b9f-222b-4706-855b-723ffd602b27",
+      "review_reason": "banned_pattern",
+      "translation_text": "A palavra word-2002 é útil no dia a dia.",
+      "validation_flags": [
+        "banned_pattern"
+      ]
+    },
+    {
+      "confidence_label": "low",
+      "example_sentence": "The word word-2003 is useful in daily life.",
+      "item_key": "level-3-rank-0003",
+      "job_id": "3f432b9f-222b-4706-855b-723ffd602b27",
+      "review_reason": "banned_pattern",
+      "translation_text": "A palavra word-2003 é útil no dia a dia.",
+      "validation_flags": [
+        "banned_pattern"
+      ]
+    },
+    {
+      "confidence_label": "low",
+      "example_sentence": "The word word-2004 is useful in daily life.",
+      "item_key": "level-3-rank-0004",
+      "job_id": "3f432b9f-222b-4706-855b-723ffd602b27",
+      "review_reason": "banned_pattern",
+      "translation_text": "A palavra word-2004 é útil no dia a dia.",
+      "validation_flags": [
+        "banned_pattern"
+      ]
+    },
+    {
+      "confidence_label": "low",
+      "example_sentence": "The word word-2005 is useful in daily life.",
+      "item_key": "level-3-rank-0005",
+      "job_id": "3f432b9f-222b-4706-855b-723ffd602b27",
+      "review_reason": "banned_pattern",
+      "translation_text": "A palavra word-2005 é útil no dia a dia.",
+      "validation_flags": [
+        "banned_pattern"
+      ]
+    },
+    {
+      "confidence_label": "low",
+      "example_sentence": "The word word-2006 is useful in daily life.",
+      "item_key": "level-3-rank-0006",
+      "job_id": "3f432b9f-222b-4706-855b-723ffd602b27",
+      "review_reason": "banned_pattern",
+      "translation_text": "A palavra word-2006 é útil no dia a dia.",
+      "validation_flags": [
+        "banned_pattern"
+      ]
+    },
+    {
+      "confidence_label": "low",
+      "example_sentence": "The word word-2007 is useful in daily life.",
+      "item_key": "level-3-rank-0007",
+      "job_id": "3f432b9f-222b-4706-855b-723ffd602b27",
+      "review_reason": "banned_pattern",
+      "translation_text": "A palavra word-2007 é útil no dia a dia.",
+      "validation_flags": [
+        "banned_pattern"
+      ]
+    }
+  ]
+}

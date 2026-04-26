@@ -33,6 +33,7 @@ class ValidationFlagCode(str, Enum):
     SENTENCE_TOO_SHORT = "sentence_too_short"
     SENTENCE_TOO_LONG = "sentence_too_long"
     BANNED_PATTERN = "banned_pattern"
+    DUPLICATE_SENTENCE = "duplicate_sentence"
     TRANSLATION_MISMATCH = "translation_mismatch"
     LOW_CONFIDENCE = "low_confidence"
 

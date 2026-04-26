@@ -97,6 +97,7 @@ class TextValidationService:
         lemma: str,
         definitions_html: str | None,
         uncertainty_notes: list[str] | None = None,
+        disallowed_sentence_texts: set[str] | None = None,
     ) -> TextValidationResult:
         context = _ValidationContext(
             sentence_text=sentence.text.strip(),
@@ -113,6 +114,11 @@ class TextValidationService:
 
         self._check_target_form(flags, context=context, display_form=display_form, lemma=lemma)
         self._check_sentence_length(flags, context=context)
+        self._check_duplicate_sentence(
+            flags,
+            context=context,
+            disallowed_sentence_texts=disallowed_sentence_texts or set(),
+        )
         self._check_banned_patterns(
             flags,
             context=context,
@@ -215,6 +221,22 @@ class TextValidationService:
                 ValidationFlag(
                     code=ValidationFlagCode.BANNED_PATTERN,
                     detail="sentence contains placeholder, robotic, or overly repetitive text",
+                )
+            )
+
+    def _check_duplicate_sentence(
+        self,
+        flags: list[ValidationFlag],
+        *,
+        context: _ValidationContext,
+        disallowed_sentence_texts: set[str],
+    ) -> None:
+        normalized_sentence = _normalize_text(context.sentence_text)
+        if normalized_sentence and normalized_sentence in disallowed_sentence_texts:
+            flags.append(
+                ValidationFlag(
+                    code=ValidationFlagCode.DUPLICATE_SENTENCE,
+                    detail="sentence must be unique across cards in the same deck generation job",
                 )
             )
 

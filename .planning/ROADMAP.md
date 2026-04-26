@@ -25,7 +25,7 @@ Decimal phases appear between their surrounding integers in numeric order.
 **Depends on**: Nothing (first phase)
 **Requirements**: DECK-01, JOB-01, JOB-02, JOB-03
 **Success Criteria** (what must be TRUE):
-  1. User can choose one of the 7 supported target languages before a job starts.
+  1. User can choose one of the 11 supported target languages before a job starts.
   2. User can see batch-level progress and failures while generation is running.
   3. User can resume an interrupted generation run without losing cards that already completed.
   4. User can rerun the same input without silent duplicate card creation.

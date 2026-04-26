@@ -1,0 +1,18 @@
+{
+  "job_id": "cbf18900-7e9a-40e4-b130-2f266b35157a",
+  "generated_at": null,
+  "item_count": 1,
+  "items": [
+    {
+      "confidence_label": "low",
+      "example_sentence": "The word hello is useful in daily life.",
+      "item_key": "hello",
+      "job_id": "cbf18900-7e9a-40e4-b130-2f266b35157a",
+      "review_reason": "banned_pattern",
+      "translation_text": "A palavra hello é útil no dia a dia.",
+      "validation_flags": [
+        "banned_pattern"
+      ]
+    }
+  ]
+}

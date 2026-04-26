@@ -1,0 +1,32 @@
+{
+  "harbor": {
+    "definitions": [
+      "a sheltered place where boats can anchor safely"
+    ],
+    "display_form": "harbor",
+    "ipa": "/ˈhɑrbər/",
+    "lemma": "harbor",
+    "source": "kaikki",
+    "term": "harbor"
+  },
+  "lantern": {
+    "definitions": [
+      "a portable light protected by a transparent case"
+    ],
+    "display_form": "lantern",
+    "ipa": "/ˈlæntərn/",
+    "lemma": "lantern",
+    "source": "kaikki",
+    "term": "lantern"
+  },
+  "meadow": {
+    "definitions": [
+      "a field of grass and wildflowers"
+    ],
+    "display_form": "meadow",
+    "ipa": "/ˈmɛdoʊ/",
+    "lemma": "meadow",
+    "source": "kaikki",
+    "term": "meadow"
+  }
+}

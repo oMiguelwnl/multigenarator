@@ -80,9 +80,18 @@ def make_validation_result(
 class FakeTextRepository:
     candidates: list[object]
     saved_records: list[object] = field(default_factory=list)
+    existing_sentences: list[str] = field(default_factory=list)
 
     def list_generation_candidates(self, job_id: str) -> list[object]:
         return list(self.candidates)
+
+    def list_example_sentences_for_job(
+        self,
+        job_id: str,
+        *,
+        exclude_item_key: str | None = None,
+    ) -> list[str]:
+        return list(self.existing_sentences)
 
     def upsert_text_record(self, record: object) -> object:
         self.saved_records.append(record)
@@ -368,3 +377,57 @@ def test_generate_text_items_keeps_review_required_when_tatoeba_has_no_usable_ca
     assert generation.fallback_calls == []
     assert repository.saved_records[0].review_status is ReviewStatus.REVIEW_REQUIRED
     assert repository.saved_records[0].repair_attempt_count == 1
+
+
+def test_generate_text_items_flags_duplicate_sentence_across_cards() -> None:
+    repository = FakeTextRepository(
+        candidates=[
+            PersistedCandidate(id="lex-1", item_key="line-1", candidate=make_candidate(item_key="line-1")),
+            PersistedCandidate(id="lex-2", item_key="line-2", candidate=make_candidate(lemma="clean", item_key="line-2")),
+        ]
+    )
+    generation = FakeGenerationService(
+        bundles=[
+            make_bundle(sentence="I wash the cup at home.", translation="Eu lavo a xícara em casa."),
+            make_bundle(sentence="I wash the cup at home.", translation="Eu limpo a xícara em casa."),
+            make_bundle(sentence="I clean the cup at home.", translation="Eu limpo a xícara em casa."),
+        ]
+    )
+    validation = FakeValidationService(
+        results=[
+            make_validation_result(status=ValidationStatus.PASSED, label=ConfidenceLabel.HIGH, score=0.95),
+            make_validation_result(
+                status=ValidationStatus.FAILED,
+                label=ConfidenceLabel.LOW,
+                score=0.45,
+                flags=[
+                    ValidationFlag(
+                        code=ValidationFlagCode.DUPLICATE_SENTENCE,
+                        detail="sentence must be unique across cards in the same deck generation job",
+                    )
+                ],
+            ),
+            make_validation_result(status=ValidationStatus.PASSED, label=ConfidenceLabel.HIGH, score=0.91),
+        ]
+    )
+    service = GenerateTextItemsService(
+        job_repository=FakeJobRepository(),
+        lexical_repository=None,
+        text_repository=repository,
+        text_generation_service=generation,
+        text_validation_service=validation,
+        tatoeba_sentence_source=FakeTatoebaSentenceSource(
+            fallback=SentenceGenerationResult(sentence="I clean the cup at home.", provenance={"source": "tatoeba"})
+        ),
+    )
+
+    result = service.execute(job_id="job-1", deck_language=SupportedLanguage.EN)
+
+    assert result.processed_items == 2
+    assert result.accepted_items == 2
+    assert result.review_required_items == 0
+    assert len(validation.calls) == 3
+    assert validation.calls[0]["disallowed_sentence_texts"] == set()
+    assert validation.calls[1]["disallowed_sentence_texts"] == {"i wash the cup at home"}
+    assert validation.calls[2]["disallowed_sentence_texts"] == {"i wash the cup at home"}
+    assert repository.saved_records[1].generation_status is TextGenerationStatus.REPAIRED

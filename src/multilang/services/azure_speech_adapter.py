@@ -6,14 +6,18 @@ from datetime import timedelta
 import importlib
 import json
 from pathlib import Path
+import re
 from types import ModuleType
 from typing import Any
+from xml.etree import ElementTree
+from xml.sax.saxutils import escape
 from urllib.request import Request, urlopen
 
 from multilang.services.audio_synthesis import AudioSynthesisResponse
 from multilang.settings import Settings
 
 _VOICE_LIST_PATH = "/cognitiveservices/voices/list"
+_LEGACY_SPEAK_RE = re.compile(r"^<speak(?:\s[^>]*)?>(.*)</speak>$", re.DOTALL)
 _OUTPUT_FORMATS = {
     "audio-24khz-48kbitrate-mono-mp3": "Audio24Khz48KBitRateMonoMp3",
 }
@@ -90,13 +94,12 @@ class AzureSpeechAdapter:
             speech_config=speech_config,
             audio_config=audio_config,
         )
-        result = synthesizer.speak_ssml_async(ssml_text).get()
+        result = synthesizer.speak_ssml_async(
+            build_azure_ssml(text=ssml_text, locale=locale, voice_id=voice_id)
+        ).get()
         completed_reason = getattr(speechsdk.ResultReason, "SynthesizingAudioCompleted", None)
         if getattr(result, "reason", None) != completed_reason:
-            details = speechsdk.CancellationDetails.from_result(result)
-            raise AzureSpeechAdapterError(
-                f"Azure Speech synthesis failed: {getattr(details, 'reason', 'unknown')}"
-            )
+            raise AzureSpeechAdapterError(self._build_cancellation_message(result))
 
         byte_size = len(getattr(result, "audio_data", b""))
         if byte_size == 0 and output_path.exists():
@@ -122,6 +125,62 @@ class AzureSpeechAdapter:
             raise AzureSpeechAdapterError(
                 "Azure Speech credentials are required: set MULTILANG_AZURE_SPEECH_KEY and MULTILANG_AZURE_SPEECH_REGION"
             )
+
+    def _build_cancellation_message(self, result: object) -> str:
+        details = getattr(self._speechsdk, "CancellationDetails", None)
+        from_result = getattr(details, "from_result", None)
+        if not callable(from_result):
+            return "Azure Speech synthesis failed"
+
+        cancellation = from_result(result)
+        parts = ["Azure Speech synthesis failed"]
+
+        reason = getattr(cancellation, "reason", None)
+        if reason is not None:
+            parts.append(f"reason={reason}")
+
+        error_code = getattr(cancellation, "error_code", None)
+        if error_code is not None:
+            parts.append(f"error_code={error_code}")
+
+        error_details = getattr(cancellation, "error_details", None)
+        if error_details:
+            parts.append(f"details={error_details}")
+
+        return "; ".join(parts)
+
+
+def build_azure_ssml(*, text: str, locale: str, voice_id: str) -> str:
+    """Normalize plain text or legacy SSML into Azure-compatible SSML."""
+
+    plain_text = _extract_spoken_text(text)
+    escaped_text = escape(plain_text, {'"': '&quot;', "'": '&apos;'})
+    return (
+        f'<speak version="1.0" xmlns="http://www.w3.org/2001/10/synthesis" '
+        f'xml:lang="{escape(locale)}">'
+        f'<voice name="{escape(voice_id)}">{escaped_text}</voice>'
+        "</speak>"
+    )
+
+
+def _extract_spoken_text(text: str) -> str:
+    stripped = text.strip()
+    if not stripped:
+        return ""
+
+    try:
+        root = ElementTree.fromstring(stripped)
+    except ElementTree.ParseError:
+        legacy_match = _LEGACY_SPEAK_RE.match(stripped)
+        if legacy_match is not None:
+            return legacy_match.group(1).strip()
+        return stripped
+
+    tag_name = root.tag.rsplit("}", 1)[-1]
+    if tag_name != "speak":
+        return "".join(root.itertext()).strip() or stripped
+
+    return "".join(root.itertext()).strip()
 
 
 def _duration_to_ms(value: object) -> int | None:

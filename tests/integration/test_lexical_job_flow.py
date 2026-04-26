@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import gzip
 import json
 from pathlib import Path
 
@@ -52,6 +53,25 @@ def write_lookup_index(tmp_path: Path, *, language_code: str, terms: list[str]) 
     return index_path.parent.parent
 
 
+def write_kaikki_archive(tmp_path: Path, *, language_code: str, terms: list[str]) -> Path:
+    archive_path = tmp_path / f"kaikki-{language_code}.jsonl.gz"
+    with gzip.open(archive_path, "wt", encoding="utf-8") as handle:
+        for term in terms:
+            handle.write(
+                json.dumps(
+                    {
+                        "word": term,
+                        "lang_code": language_code,
+                        "senses": [{"glosses": [f"definition for {term}"]}],
+                        "sounds": [{"ipa": f"/{term}/"}],
+                    },
+                    ensure_ascii=False,
+                )
+            )
+            handle.write("\n")
+    return archive_path
+
+
 def test_generate_frequency_deck_persists_three_grounded_levels(monkeypatch, tmp_path: Path) -> None:
     """Default frequency runs persist 1000 grounded candidates in each level."""
 
@@ -100,6 +120,131 @@ def test_generate_frequency_deck_persists_three_grounded_levels(monkeypatch, tmp
             for level in (1, 2, 3)
         }
         assert counts == {1: 1000, 2: 1000, 3: 1000}
+    finally:
+        session.close()
+
+
+def test_generate_frequency_deck_bootstraps_lexicon_from_local_archive(
+    monkeypatch, tmp_path: Path
+) -> None:
+    database_path = str(tmp_path / "bootstrap-flow.db")
+    lexicon_dir = tmp_path / "lexicon"
+    all_terms = [f"word-{rank}" for rank in range(1, 3001)]
+    source_archive = write_kaikki_archive(tmp_path, language_code="en", terms=all_terms)
+
+    monkeypatch.setenv("MULTILANG_DATABASE_URL", f"sqlite+pysqlite:///{database_path}")
+    monkeypatch.setenv("MULTILANG_LEXICON_DATA_DIR", str(lexicon_dir))
+
+    from multilang.services import frequency_decks
+
+    monkeypatch.setattr(
+        frequency_decks,
+        "iter_curated_frequency_candidates",
+        lambda language, scan_limit=6000: ((rank, f"word-{rank}") for rank in range(1, 3001)),
+    )
+
+    app = create_app()
+    result = runner.invoke(
+        app,
+        [
+            "generate",
+            "--language",
+            "en",
+            "--source",
+            "frequency",
+            "--lexicon-source-file",
+            str(source_archive),
+        ],
+    )
+
+    assert result.exit_code == 0
+    assert "grounded_candidates=3000" in result.output
+    assert (lexicon_dir / "en" / "kaikki-index.json").exists()
+
+
+def test_generate_frequency_deck_persists_custom_cards_per_level(monkeypatch, tmp_path: Path) -> None:
+    database_path = str(tmp_path / "custom-frequency-count.db")
+    all_terms = [f"word-{rank}" for rank in range(1, 3010)]
+    lexicon_dir = write_lookup_index(tmp_path, language_code="en", terms=all_terms)
+
+    monkeypatch.setenv("MULTILANG_DATABASE_URL", f"sqlite+pysqlite:///{database_path}")
+    monkeypatch.setenv("MULTILANG_LEXICON_DATA_DIR", str(lexicon_dir))
+
+    from multilang.services import frequency_decks
+
+    monkeypatch.setattr(
+        frequency_decks,
+        "iter_curated_frequency_candidates",
+        lambda language, scan_limit=6000: ((rank, f"word-{rank}") for rank in range(1, 3010)),
+    )
+
+    app = create_app()
+    result = runner.invoke(
+        app,
+        [
+            "generate",
+            "--language",
+            "en",
+            "--source",
+            "frequency",
+            "--cards-per-level",
+            "7",
+        ],
+    )
+
+    assert result.exit_code == 0
+    assert "grounded_candidates=21" in result.output
+    assert "level_1_candidates=7" in result.output
+    assert "level_2_candidates=7" in result.output
+    assert "level_3_candidates=7" in result.output
+
+    session = build_session(database_path)
+    try:
+        job = session.scalar(select(GenerationJob).order_by(GenerationJob.created_at))
+        assert job is not None
+
+        counts = {
+            level: session.scalar(
+                select(func.count(LexicalCandidate.id)).where(
+                    LexicalCandidate.job_id == job.id,
+                    LexicalCandidate.frequency_level == level,
+                    LexicalCandidate.grounding_status == "grounded",
+                )
+            )
+            for level in (1, 2, 3)
+        }
+        assert counts == {1: 7, 2: 7, 3: 7}
+    finally:
+        session.close()
+
+
+def test_generate_frequency_deck_fails_fast_without_lexicon_data(
+    monkeypatch, tmp_path: Path
+) -> None:
+    database_path = str(tmp_path / "missing-lexicon.db")
+    lexicon_dir = tmp_path / "lexicon"
+    lexicon_dir.mkdir()
+
+    monkeypatch.setenv("MULTILANG_DATABASE_URL", f"sqlite+pysqlite:///{database_path}")
+    monkeypatch.setenv("MULTILANG_LEXICON_DATA_DIR", str(lexicon_dir))
+
+    app = create_app()
+    result = runner.invoke(
+        app,
+        ["generate", "--language", "en", "--source", "frequency", "--level", "1"],
+    )
+
+    assert result.exit_code == 1
+    assert "lexical data is missing for language 'en'" in result.output
+    assert "grounded_candidates=" not in result.output
+
+    session = build_session(database_path)
+    try:
+        job_count = session.scalar(select(func.count(GenerationJob.id)))
+        candidate_count = session.scalar(select(func.count(LexicalCandidate.id)))
+
+        assert job_count == 0
+        assert candidate_count == 0
     finally:
         session.close()
 

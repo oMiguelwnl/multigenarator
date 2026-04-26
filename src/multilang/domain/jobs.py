@@ -13,6 +13,10 @@ class SupportedLanguage(str, Enum):
     EN = "en"
     FR = "fr"
     DE = "de"
+    IT = "it"
+    PL = "pl"
+    TR = "tr"
+    RO = "ro"
     RU = "ru"
     NL = "nl"
 
@@ -41,11 +45,17 @@ class GenerationRequest(BaseModel):
     language: SupportedLanguage
     source_type: Literal["frequency", "word-list"]
     level: int | None = Field(default=None, ge=1, le=3)
+    cards_per_level: int | None = Field(default=None, ge=1)
     input_file: Path | None = None
     lexicon_source_file: Path | None = None
     resume_job_id: str | None = None
     overwrite: bool = False
     yes_overwrite: bool = False
+
+    def resolved_cards_per_level(self) -> int:
+        if self.cards_per_level is not None:
+            return self.cards_per_level
+        return 1000
 
 
 class JobProgressSnapshot(BaseModel):

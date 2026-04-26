@@ -7,7 +7,7 @@
 
 ### Deck Scope
 
-- [x] **DECK-01**: User can choose one of these target languages before generation starts: Portuguese, Spanish, English, French, German, Russian, or Dutch. _(Plan 01-01 foundation)_
+- [x] **DECK-01**: User can choose one of these target languages before generation starts: Portuguese, Spanish, English, French, German, Italian, Polish, Turkish, Romanian, Russian, or Dutch. _(Plan 01-01 foundation, expanded language list later aligned in code and voice registry.)_
 - [x] **DECK-02**: User can generate a frequency deck for the selected language with 3 levels of 1000 cards each. _(Plan 02-02 deterministic frequency deck curation and level selection.)_
 - [x] **DECK-03**: User can generate cards from a custom user-provided word list instead of the built-in frequency deck. _(Plans 02-01 and 02-03: lexical candidate foundation plus plain-text word-list parsing and grounding.)_
 
@@ -70,7 +70,7 @@
 | Automatic image generation or sourcing | The user wants the `Image` field to stay blank and add images manually later. |
 | Browser-extension or web-capture workflows | Useful later, but v1 should stay focused on frequency decks and custom word lists. |
 | Full spaced-repetition app or AI tutor | Anki remains the destination study tool; the product should focus on card generation quality. |
-| Languages beyond Portuguese, Spanish, English, French, German, Russian, and Dutch | Expanding language scope early would multiply QA and language-specific edge cases. |
+| Languages beyond Portuguese, Spanish, English, French, German, Italian, Polish, Turkish, Romanian, Russian, and Dutch | Expanding language scope early would multiply QA and language-specific edge cases. |
 | Deck styling/theme builder or card marketplace | Not part of the core value of trustworthy multilingual card generation. |
 
 ## Traceability
@@ -110,4 +110,4 @@ Which phases cover which requirements. Updated during roadmap creation.
 
 ---
 *Requirements defined: 2026-04-18*
-*Last updated: 2026-04-24 after Plan 04-05 audio runtime gap closure*
+*Last updated: 2026-04-26 after expanding supported language scope and voice preferences*

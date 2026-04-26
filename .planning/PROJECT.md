@@ -2,7 +2,7 @@
 
 ## What This Is
 
-Multilang is a multilingual Anki card generator focused on the most frequent words in a target language. It is meant to create high-quality study decks for learners of Portuguese, Spanish, English, French, German, Russian, and Dutch, with a separate mode for generating cards from a user-provided word list collected from reading.
+Multilang is a multilingual Anki card generator focused on the most frequent words in a target language. It is meant to create high-quality study decks for learners of Portuguese, Spanish, English, French, German, Italian, Polish, Turkish, Romanian, Russian, and Dutch, with a separate mode for generating cards from a user-provided word list collected from reading.
 
 The product generates structured Anki-ready cards with word data, phonetics, definitions, example sentences, translations, audio, and an empty image field that the user can fill manually later. AI-assisted generation is part of the intended approach, but the exact provider and supporting services still need research and validation.
 
@@ -26,7 +26,7 @@ Generate reliable, high-quality Anki cards for frequent vocabulary in the chosen
 
 - Automatic image generation or image sourcing — the image field should stay blank because the user wants to add images manually.
 - Using Tatoeba as the default sentence source without quality validation — prior experience suggests example quality is not good enough.
-- Languages outside Portuguese, Spanish, English, French, German, Russian, and Dutch for v1 — initial scope should stay focused.
+- Languages outside Portuguese, Spanish, English, French, German, Italian, Polish, Turkish, Romanian, Russian, and Dutch for v1 — initial scope should stay focused.
 
 ## Context
 
@@ -44,7 +44,7 @@ Each card should include these fields:
 - `sentence_audio` — audio for the example sentence
 - `Image` — blank field
 
-Audio is intended to use Azure TTS, with user-provided preferred voices for German, English, Spanish, French, Italian, and Russian. Voice availability and exact model identifiers still need validation. Dutch is in language scope, but no voice preference was provided yet.
+Audio is intended to use Azure TTS. The current preferred voices are German `de-DE-ConradNeural`, English `en-US-Andrew:DragonHDLatestNeural`, Spanish `es-ES-TristanMultilingualNeural`, French `fr-FR-Remy:DragonHDLatestNeural`, Italian `it-IT-GiuseppeMultilingualNeural`, and Russian `ru-RU-DmitryNeural`. Other in-scope languages use an approved deterministic fallback matrix until stronger user preferences are provided.
 
 The implementation stack is still open between Python and JavaScript. The user wants the project to follow good architecture and engineering practices, including tests, fallbacks, and robust integrations with AI and supporting services.
 
@@ -52,7 +52,7 @@ The user also mentioned possible future integration patterns around OpenRouter, 
 
 ## Constraints
 
-- **Languages**: v1 must support Portuguese, Spanish, English, French, German, Russian, and Dutch — these are the explicit target languages.
+- **Languages**: v1 must support Portuguese, Spanish, English, French, German, Italian, Polish, Turkish, Romanian, Russian, and Dutch.
 - **Deck Structure**: Cards must be separated into 3 levels with 1000 cards per level — this defines the core content structure.
 - **Output Quality**: Example sentences and translations must be high quality — prior low-quality outputs from Tatoeba are a known concern.
 - **Audio Provider**: Audio should use Azure TTS if the required voices are available — this is the user's preferred TTS direction.
@@ -69,7 +69,7 @@ The user also mentioned possible future integration patterns around OpenRouter, 
 | Keep the image field blank | The user prefers to add images manually later | — Pending |
 | Use Azure TTS as the planned audio provider | The user already selected Azure voices as the intended direction for audio generation | — Pending |
 | Defer the stack decision between Python and JavaScript until research | The right ecosystem depends on frequency data, AI orchestration, translation quality, audio tooling, and export ergonomics | — Pending |
-| Re-evaluate sentence and translation sourcing instead of defaulting to Tatoeba | Existing quality concerns make source quality a first-class decision | — Pending |
+| Re-evaluate sentence and translation sourcing instead of defaulting to Tatoeba | Existing quality concerns make source quality a first-class decision | Locked: Tatoeba may be used only as a secondary sentence source behind advanced filtering/reranking; it is not the raw default primary source. |
 
 ## Evolution
 
@@ -89,4 +89,4 @@ This document evolves at phase transitions and milestone boundaries.
 4. Update Context with current state
 
 ---
-*Last updated: 2026-04-18 after initialization*
+*Last updated: 2026-04-23 after sentence-sourcing decision update*
