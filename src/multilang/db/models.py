@@ -49,6 +49,12 @@ class GenerationJob(Base):
     audio_assets: Mapped[list["AudioAssetModel"]] = relationship(
         back_populates="job", cascade="all, delete-orphan"
     )
+    card_exports: Mapped[list["CardExportModel"]] = relationship(
+        back_populates="job", cascade="all, delete-orphan"
+    )
+    deck_exports: Mapped[list["DeckExportModel"]] = relationship(
+        back_populates="job", cascade="all, delete-orphan"
+    )
 
 
 class GenerationItem(Base):
@@ -204,3 +210,67 @@ class AudioAssetModel(Base):
     )
 
     job: Mapped[GenerationJob] = relationship(back_populates="audio_assets")
+
+
+class CardExportModel(Base):
+    """Persisted frozen export snapshot for a single job item."""
+
+    __tablename__ = "card_exports"
+    __table_args__ = (
+        UniqueConstraint("job_id", "item_key", name="uq_card_exports_job_id_item_key"),
+    )
+
+    id: Mapped[str] = mapped_column(String(36), primary_key=True)
+    job_id: Mapped[str] = mapped_column(
+        ForeignKey("generation_jobs.id", ondelete="CASCADE"), nullable=False, index=True
+    )
+    run_key: Mapped[str] = mapped_column(String(255), nullable=False, index=True)
+    item_key: Mapped[str] = mapped_column(String(255), nullable=False)
+    lemma_key: Mapped[str] = mapped_column(String(255), nullable=False, index=True)
+    note_guid: Mapped[str] = mapped_column(String(64), nullable=False, index=True)
+    sort_index: Mapped[int] = mapped_column(Integer, nullable=False, index=True)
+    word: Mapped[str] = mapped_column(String(255), nullable=False)
+    front_of_card: Mapped[str] = mapped_column(Text, nullable=False)
+    ipa: Mapped[str | None] = mapped_column(String(255), nullable=True)
+    definitions: Mapped[str] = mapped_column(Text, nullable=False)
+    example_sentence: Mapped[str] = mapped_column(Text, nullable=False)
+    translation: Mapped[str] = mapped_column(Text, nullable=False)
+    word_audio: Mapped[str] = mapped_column(String(255), nullable=False, default="")
+    sentence_audio: Mapped[str] = mapped_column(String(255), nullable=False, default="")
+    image: Mapped[str] = mapped_column(String(255), nullable=False, default="")
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), nullable=False, server_default=func.now()
+    )
+    updated_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), nullable=False, server_default=func.now(), onupdate=func.now()
+    )
+
+    job: Mapped[GenerationJob] = relationship(back_populates="card_exports")
+
+
+class DeckExportModel(Base):
+    """Persisted artifact manifest for produced deck exports."""
+
+    __tablename__ = "deck_exports"
+    __table_args__ = (
+        UniqueConstraint("job_id", "export_format", name="uq_deck_exports_job_id_export_format"),
+    )
+
+    id: Mapped[str] = mapped_column(String(36), primary_key=True)
+    job_id: Mapped[str] = mapped_column(
+        ForeignKey("generation_jobs.id", ondelete="CASCADE"), nullable=False, index=True
+    )
+    run_key: Mapped[str] = mapped_column(String(255), nullable=False, index=True)
+    export_format: Mapped[str] = mapped_column(String(16), nullable=False)
+    deck_name: Mapped[str] = mapped_column(String(255), nullable=False)
+    output_path: Mapped[str] = mapped_column(String(512), nullable=False)
+    card_count: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
+    status: Mapped[str] = mapped_column(String(32), nullable=False)
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), nullable=False, server_default=func.now()
+    )
+    updated_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), nullable=False, server_default=func.now(), onupdate=func.now()
+    )
+
+    job: Mapped[GenerationJob] = relationship(back_populates="deck_exports")

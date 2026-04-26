@@ -95,11 +95,21 @@ class ExportCardRow(BaseModel):
         return {field_name: values[field_name] for field_name in EXPORT_CARD_FIELD_NAMES}
 
 
+class ExportDeckArtifact(BaseModel):
+    job_id: str = Field(min_length=1)
+    export_format: ExportArtifactFormat
+    deck_name: str = Field(min_length=1)
+    output_path: str = Field(min_length=1)
+    card_count: int = Field(ge=0)
+    status: ExportArtifactStatus
+
+
 __all__ = [
     "EXPORT_CARD_FIELD_NAMES",
     "ExportArtifactFormat",
     "ExportArtifactStatus",
     "ExportCardIdentity",
     "ExportCardRow",
+    "ExportDeckArtifact",
     "build_export_note_guid",
 ]
