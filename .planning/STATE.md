@@ -3,15 +3,15 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: in_progress
-stopped_at: Completed Phase 5 Plan 01 export contract foundation; Plan 02 export row assembly is next
-last_updated: "2026-04-26T20:00:27Z"
-last_activity: 2026-04-26 -- Completed Phase 5 Plan 01 with the frozen export contract, export snapshot persistence, and verified schema migration.
+stopped_at: Completed Phase 5 Plan 02 export assembly and tabular fallbacks; Plan 03 `.apkg` packaging is next
+last_updated: "2026-04-26T20:08:07Z"
+last_activity: 2026-04-26 -- Completed Phase 5 Plan 02 with deterministic export-row assembly and UTF-8 CSV/TSV fallback bundles.
 progress:
   total_phases: 5
   completed_phases: 4
   total_plans: 26
-  completed_plans: 22
-  percent: 85
+  completed_plans: 23
+  percent: 88
 ---
 
 # Project State
@@ -21,14 +21,14 @@ progress:
 See: .planning/PROJECT.md (updated 2026-04-18)
 
 **Core value:** Generate reliable, high-quality Anki cards for frequent vocabulary in the chosen language so the learner can study real words with accurate definitions, examples, translations, and audio.
-**Current focus:** Phase 05 execution for the Anki-safe export contract, with the export storage foundation now complete
+**Current focus:** Phase 05 execution for the Anki-safe export contract, with tabular export assembly now complete
 
 ## Current Position
 
 Phase: 05 (anki-safe-export-contract) — NEXT UP
-Plan: 1 of 5 executed
-Status: Phases 01, 02, 03, and 04 are verified complete; Phase 5 execution has started with the export contract foundation in place
-Last activity: 2026-04-26 -- Completed Plan 05-01 and verified the export contract migration against disposable SQLite.
+Plan: 2 of 5 executed
+Status: Phases 01, 02, 03, and 04 are verified complete; Phase 5 now has frozen export rows plus CSV/TSV fallbacks ready for `.apkg` packaging
+Last activity: 2026-04-26 -- Completed Plan 05-02 and verified export assembly plus tabular serialization.
 
 Progress: [████████--] 80%
 
@@ -36,7 +36,7 @@ Progress: [████████--] 80%
 
 **Velocity:**
 
-- Total plans completed: 22
+- Total plans completed: 23
 - Average duration: 14 min
 - Total execution time: 5h 1m
 
@@ -51,8 +51,8 @@ Progress: [████████--] 80%
 
 **Recent Trend:**
 
-- Last 5 plans: 04-02, 04-03, 04-04, 04-05, 05-01 completed; export contract execution is now underway
-- Trend: Phase 5 has started cleanly with deterministic export contracts and storage in place for downstream serializer work
+- Last 5 plans: 04-03, 04-04, 04-05, 05-01, 05-02 completed; export artifacts are moving from schema to real files
+- Trend: Phase 5 has stable snapshots and fallback serializers in place, reducing remaining work to packaging, CLI wiring, and final human verification
 
 ## Accumulated Context
 
@@ -71,6 +71,8 @@ Recent decisions affecting current work:
 - [Plan 05-01]: Freeze export field order in one alias-backed Pydantic contract so every downstream serializer emits the same ten fields.
 - [Plan 05-01]: Persist card snapshots by `(job_id, item_key)` and deck artifacts by `(job_id, export_format)` so reruns update deterministically instead of duplicating exports.
 - [Plan 05-01]: Store `lemma_key` with export snapshots because stable note identity must round-trip through persistence, not just visible card fields.
+- [Plan 05-02]: Assemble export rows only from accepted text plus synthesized audio, and fail fast instead of emitting broken fallback artifacts.
+- [Plan 05-02]: Normalize multiline CSV/TSV fields to `<br>` so UTF-8 text imports preserve one field per column in Anki-safe form.
 - [Plan 01-01]: Use a uv-managed src-layout Python package with typed settings and explicit resume diagnostics as the foundation for Phase 1.
 - [Plan 01-02]: Store run-level and item-level state separately so resume validation can compare stage pointers against item rows.
 - [Plan 01-02]: Treat repeated successful item writes for the same run_key/item_key as duplicate reuse and count them in skipped_duplicates.
@@ -94,11 +96,11 @@ Recent decisions affecting current work:
 
 ### Pending Todos
 
-- Execute Phase 5 Plan 02 for the Anki-safe export contract.
+- Execute Phase 5 Plan 03 for the Anki-safe export contract.
 
 ### Blockers/Concerns
 
-- No current blockers; Phase 5 Plan 02 should assemble rows strictly from accepted text and persisted audio against the new frozen contract.
+- No current blockers; Phase 5 Plan 03 should package `.apkg` artifacts directly from the frozen export rows and packaged audio paths.
 
 ### Quick Tasks Completed
 
@@ -116,6 +118,6 @@ Items acknowledged and carried forward from previous milestone close:
 
 ## Session Continuity
 
-Last session: 2026-04-26T20:00:27Z
-Stopped at: Completed Phase 5 Plan 01; resume at Plan 02 export row assembly
+Last session: 2026-04-26T20:08:07Z
+Stopped at: Completed Phase 5 Plan 02; resume at Plan 03 `.apkg` packaging
 Resume file: None
