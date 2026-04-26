@@ -71,9 +71,21 @@ def test_build_multilang_model_uses_exact_fields_and_hides_translation_on_front(
         "sentence_audio",
         "Image",
     ]
-    assert "Translation" not in model.templates[0]["qfmt"]
-    assert "{{Translation}}" in model.templates[0]["afmt"]
+    assert 'id="translation"' in model.templates[0]["qfmt"]
+    assert 'style="display:none;"' in model.templates[0]["qfmt"]
+    assert "{{Translation}}" in model.templates[0]["qfmt"]
+    assert "document.getElementById(\"translation\").style.display = \"block\";" in model.templates[0]["afmt"]
     assert "{{FrontSide}}" in model.templates[0]["afmt"]
+
+
+def test_build_multilang_model_uses_project_card_template_sections() -> None:
+    model = build_multilang_model()
+
+    assert '<div class="customCard cardBack">' in model.templates[0]["qfmt"]
+    assert '<div id="translation" class="sentenceTranslation indent" style="display:none;">' in model.templates[0]["qfmt"]
+    assert 'document.getElementById("translation").style.display = "block";' in model.templates[0]["afmt"]
+    assert "--max-width-card: 400px;" in model.css
+    assert ".customCard" in model.css
 
 
 def test_build_multilang_note_reuses_deterministic_guid_across_mutable_content_changes() -> None:

@@ -132,6 +132,8 @@ def test_export_command_runtime_path_writes_apkg_csv_and_tsv_artifacts(tmp_path:
         assert (output_dir / f"{job.id}.tsv").exists()
         assert session.scalar(select(func.count()).select_from(CardExportModel)) == 1
         assert session.scalar(select(func.count()).select_from(DeckExportModel)) == 3
+        deck_exports = list(session.scalars(select(DeckExportModel).order_by(DeckExportModel.export_format.asc())))
+        assert all("::" not in export.deck_name for export in deck_exports)
     finally:
         session.close()
 
