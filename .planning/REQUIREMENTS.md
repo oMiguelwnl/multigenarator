@@ -13,10 +13,10 @@
 
 ### Card Contract
 
-- [ ] **CARD-01**: User receives every generated card with these fields in a fixed schema: `SortIndex`, `word`, `Front of Card`, `IPA`, `Definitions`, `Example Sentence`, `Translation`, `word_audio`, `sentence_audio`, and `Image`.
-- [ ] **CARD-02**: User receives `Image` as an empty field in every generated card so images can be added manually later.
-- [ ] **CARD-03**: User sees `Translation` hidden on the front of the Anki card and revealed on the back, matching the provided card template behavior.
-- [ ] **CARD-04**: User receives `Definitions` as one template-compatible field value; if multiple senses are present they are separated with `<br>` inside the same field, not nested `<ul>` or `<li>` markup.
+- [x] **CARD-01**: User receives every generated card with these fields in a fixed schema: `SortIndex`, `word`, `Front of Card`, `IPA`, `Definitions`, `Example Sentence`, `Translation`, `word_audio`, `sentence_audio`, and `Image`. _(Completed by Phase 5 export contract, field-order tests, and verification.)_
+- [x] **CARD-02**: User receives `Image` as an empty field in every generated card so images can be added manually later. _(Completed by Phase 5 row validation and assembly behavior.)_
+- [x] **CARD-03**: User sees `Translation` hidden on the front of the Anki card and revealed on the back, matching the provided card template behavior. _(Completed by Phase 5 template packaging and approved Anki Desktop verification.)_
+- [x] **CARD-04**: User receives `Definitions` as one template-compatible field value; if multiple senses are present they are separated with `<br>` inside the same field, not nested `<ul>` or `<li>` markup. _(Completed by Phase 5 definition rendering and tests.)_
 
 ### Lexical Enrichment
 
@@ -39,9 +39,9 @@
 
 ### Export and Jobs
 
-- [ ] **EXPT-01**: User can export generated cards as an `.apkg` deck that imports into Anki without manual field remapping.
-- [ ] **EXPT-02**: User can export the same generated cards as a UTF-8-safe CSV or TSV fallback.
-- [ ] **EXPT-03**: User receives Anki-compatible audio references for `word_audio` and `sentence_audio`, with bundled media files that play correctly after import.
+- [x] **EXPT-01**: User can export generated cards as an `.apkg` deck that imports into Anki without manual field remapping. _(Completed by Phase 5 genanki packaging, shipped CLI export, and approved Anki Desktop import verification.)_
+- [x] **EXPT-02**: User can export the same generated cards as a UTF-8-safe CSV or TSV fallback. _(Completed by Phase 5 tabular export and integration coverage.)_
+- [x] **EXPT-03**: User receives Anki-compatible audio references for `word_audio` and `sentence_audio`, with bundled media files that play correctly after import. _(Completed by Phase 5 media validation, package bundling, and approved Anki Desktop audio verification.)_
 - [x] **JOB-01**: User can resume an interrupted generation job without losing already completed cards. _(Completed by Plans 01-02, 01-05, and 01-06.)_
 - [x] **JOB-02**: User can see per-batch progress and failures while generation is running. _(Completed by Plans 01-04, 01-05, and 01-06.)_
 - [x] **JOB-03**: User can rerun the same deck or custom word list without silent duplicate card creation. _(Completed by Plans 01-02, 01-04, 01-05, and 01-06.)_
@@ -95,13 +95,13 @@ Which phases cover which requirements. Updated during roadmap creation.
 | TEXT-05 | Phase 3 | Pending |
 | AUDI-01 | Phase 4 | Completed in Plans 04-01 through 04-05 |
 | AUDI-02 | Phase 4 | Completed in Plans 04-01 through 04-05 |
-| CARD-01 | Phase 5 | Pending |
-| CARD-02 | Phase 5 | Pending |
-| CARD-03 | Phase 5 | Pending |
-| CARD-04 | Phase 5 | Pending |
-| EXPT-01 | Phase 5 | Pending |
-| EXPT-02 | Phase 5 | Pending |
-| EXPT-03 | Phase 5 | Pending |
+| CARD-01 | Phase 5 | Completed in Plans 05-01 and 05-02 |
+| CARD-02 | Phase 5 | Completed in Plans 05-01 and 05-02 |
+| CARD-03 | Phase 5 | Completed in Plans 05-03 and 05-05 |
+| CARD-04 | Phase 5 | Completed in Plan 05-02 |
+| EXPT-01 | Phase 5 | Completed in Plans 05-03, 05-04, and 05-05 |
+| EXPT-02 | Phase 5 | Completed in Plans 05-02 and 05-04 |
+| EXPT-03 | Phase 5 | Completed in Plans 05-03, 05-04, and 05-05 |
 
 **Coverage:**
 - v1 requirements: 23 total
@@ -110,4 +110,4 @@ Which phases cover which requirements. Updated during roadmap creation.
 
 ---
 *Requirements defined: 2026-04-18*
-*Last updated: 2026-04-26 after expanding supported language scope and voice preferences*
+*Last updated: 2026-04-28 after Phase 5 export-contract verification*

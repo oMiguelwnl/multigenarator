@@ -14,12 +14,11 @@ Generate reliable, high-quality Anki cards for frequent vocabulary in the chosen
 
 ### Validated
 
-(None yet — ship to validate)
+- [x] Produce complete Anki-ready cards with consistent fields, formatting, and export structure. _(Validated in Phase 5: Anki-Safe Export Contract.)_
 
 ### Active
 
 - [ ] Generate a 3-level frequency-based card set for each supported language, with 1000 cards per level.
-- [ ] Produce complete Anki-ready cards with consistent fields, formatting, and export structure.
 - [ ] Support a custom input mode where the user provides their own list of words and receives generated cards for those words.
 
 ### Out of Scope
@@ -70,6 +69,7 @@ The user also mentioned possible future integration patterns around OpenRouter, 
 | Use Azure TTS as the planned audio provider | The user already selected Azure voices as the intended direction for audio generation | — Pending |
 | Defer the stack decision between Python and JavaScript until research | The right ecosystem depends on frequency data, AI orchestration, translation quality, audio tooling, and export ergonomics | — Pending |
 | Re-evaluate sentence and translation sourcing instead of defaulting to Tatoeba | Existing quality concerns make source quality a first-class decision | Locked: Tatoeba may be used only as a secondary sentence source behind advanced filtering/reranking; it is not the raw default primary source. |
+| Freeze the Anki export contract around the requested ten fields and project card template | Stable field order, blank `Image`, hidden/revealed `Translation`, and playable packaged audio define whether exports are useful in Anki | Validated in Phase 5 with automated tests plus approved Anki Desktop import/audio verification. |
 
 ## Evolution
 
@@ -89,4 +89,4 @@ This document evolves at phase transitions and milestone boundaries.
 4. Update Context with current state
 
 ---
-*Last updated: 2026-04-23 after sentence-sourcing decision update*
+*Last updated: 2026-04-28 after Phase 5 export-contract verification*

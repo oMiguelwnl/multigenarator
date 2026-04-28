@@ -2,16 +2,16 @@
 gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
-status: in_progress
-stopped_at: Human verification found export-template and review-fixture gaps; fixes landed, but a refreshed Azure-backed review artifact is still needed before final Anki verification
-last_updated: "2026-04-26T20:16:31Z"
-last_activity: 2026-04-26 -- Fixed the Phase 5 human-verification gaps by loading CARD_TEMPLATE.md, flattening default deck names, and strengthening the local review fixture.
+status: complete
+stopped_at: Phase 05 verified complete; v1.0 milestone implementation phases are complete and ready for milestone closeout
+last_updated: "2026-04-28T12:53:37Z"
+last_activity: 2026-04-28 -- Closed Phase 5 with approved Anki Desktop verification, clean code-review recheck, and passed phase verification.
 progress:
   total_phases: 5
-  completed_phases: 4
+  completed_phases: 5
   total_plans: 26
-  completed_plans: 25
-  percent: 96
+  completed_plans: 26
+  percent: 100
 ---
 
 # Project State
@@ -21,24 +21,24 @@ progress:
 See: .planning/PROJECT.md (updated 2026-04-18)
 
 **Core value:** Generate reliable, high-quality Anki cards for frequent vocabulary in the chosen language so the learner can study real words with accurate definitions, examples, translations, and audio.
-**Current focus:** Phase 05 execution for the Anki-safe export contract, with verification-gap fixes landed and a refreshed human Anki verification run pending
+**Current focus:** v1.0 phase execution complete; ready for milestone closeout
 
 ## Current Position
 
-Phase: 05 (anki-safe-export-contract) — NEXT UP
-Plan: 4 of 5 executed
-Status: Phases 01, 02, 03, and 04 are verified complete; Phase 5 now has a shipped export command and only the final Anki desktop verification remains
-Last activity: 2026-04-26 -- Fixed the post-checkpoint template, flat-deck, and weak-review-artifact gaps discovered during Anki verification.
+Phase: 05 (anki-safe-export-contract) — COMPLETE
+Plan: 5 of 5 executed
+Status: Phases 01 through 05 are verified complete; the Anki-safe export contract is closed with real Anki Desktop approval and clean review verification
+Last activity: 2026-04-28 -- Closed Phase 5 after approved Anki import/audio validation, export warning fixes, clean review, and phase verification.
 
-Progress: [████████--] 80%
+Progress: [██████████] 100%
 
 ## Performance Metrics
 
 **Velocity:**
 
-- Total plans completed: 25
+- Total plans completed: 26
 - Average duration: 14 min
-- Total execution time: 5h 1m
+- Total execution time: 5h 18m
 
 **By Phase:**
 
@@ -48,11 +48,12 @@ Progress: [████████--] 80%
 | 02-input-decks-lexical-grounding | 5 | 2h 7m | 25 min |
 | 03-sentence-quality-review-loop | 5 | 1h 17m | 15 min |
 | 04-audio-synthesis | 5 | 1h 3m | 13 min |
+| 05-anki-safe-export-contract | 5 | 17 min | 3 min |
 
 **Recent Trend:**
 
-- Last 5 plans: 04-05, 05-01, 05-02, 05-03, 05-04 completed; export flow is functionally complete pending live Anki review
-- Trend: Only the final human verification step remains, but review-artifact automation is gated on missing Azure credentials
+- Last 5 plans: 05-01, 05-02, 05-03, 05-04, 05-05 completed; export flow is verified in tests and Anki Desktop
+- Trend: v1.0 phase execution is complete; next workflow should close out or audit the milestone
 
 ## Accumulated Context
 
@@ -79,6 +80,8 @@ Recent decisions affecting current work:
 - [Plan 05-04]: Reuse frozen snapshots when available and assemble on demand only when export rows have not been persisted yet.
 - [Plan 05-05 follow-up]: Load the packaged note template from `CARD_TEMPLATE.md` instead of maintaining a divergent inline template in code.
 - [Plan 05-05 follow-up]: Default review artifacts must use a flat deck name and richer sample cards so human verification can judge presentation quality, not just import mechanics.
+- [Plan 05-05]: Treat Anki Desktop import, Translation reveal behavior, and packaged audio playback as the final real-product gate for the export contract.
+- [Plan 05-05]: Validate media references before every export format writes artifacts, and reject visible `SortIndex` values that diverge from stable identity.
 - [Plan 01-01]: Use a uv-managed src-layout Python package with typed settings and explicit resume diagnostics as the foundation for Phase 1.
 - [Plan 01-02]: Store run-level and item-level state separately so resume validation can compare stage pointers against item rows.
 - [Plan 01-02]: Treat repeated successful item writes for the same run_key/item_key as duplicate reuse and count them in skipped_duplicates.
@@ -102,11 +105,11 @@ Recent decisions affecting current work:
 
 ### Pending Todos
 
-- Prepare the refreshed final Phase 5 Anki verification artifact once Azure Speech credentials are available, then rerun Plan 05 human verification against the fixed template and sample cards.
+- None. Phase 05 verification is complete.
 
 ### Blockers/Concerns
 
-- Blocked for final verification only: Azure Speech credentials are absent in this environment, so a refreshed `.apkg` using the fixed template and stronger sample cards cannot yet be auto-generated for Anki Desktop review.
+- None. The user completed the required Anki Desktop validation outside this shell.
 
 ### Quick Tasks Completed
 
@@ -124,6 +127,6 @@ Items acknowledged and carried forward from previous milestone close:
 
 ## Session Continuity
 
-Last session: 2026-04-26T20:16:31Z
-Stopped at: Post-verification fixes committed; next step is refreshed Azure-backed review artifact generation and renewed Plan 05 human verification
+Last session: 2026-04-28T12:53:37Z
+Stopped at: Phase 05 verified complete; next step is milestone closeout or progress audit
 Resume file: None

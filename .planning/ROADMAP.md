@@ -16,7 +16,7 @@ Decimal phases appear between their surrounding integers in numeric order.
 - [x] **Phase 2: Input Decks & Lexical Grounding** - Turn frequency sources or custom word lists into normalized lexical card records.
 - [x] **Phase 3: Sentence Quality & Review Loop** - Produce trustworthy example sentences and translations with reviewable regeneration.
 - [x] **Phase 4: Audio Synthesis** - Add reliable word and sentence audio with Azure-first fallback handling. _(gap closure completed after 5/5 plans)_
-- [ ] **Phase 5: Anki-Safe Export Contract** - Freeze the card schema, template behavior, and export clean decks that import into Anki without repair.
+- [x] **Phase 5: Anki-Safe Export Contract** - Freeze the card schema, template behavior, and export clean decks that import into Anki without repair. _(verified complete on 2026-04-28)_
 
 ## Phase Details
 
@@ -119,7 +119,9 @@ Plans:
 - [x] 05-02-PLAN.md — Assemble fixed-schema export cards and UTF-8-safe CSV/TSV fallback bundles.
 - [x] 05-03-PLAN.md — Add `genanki` packaging with stable note identity and bundled media.
 - [x] 05-04-PLAN.md — Wire the shipped CLI/runtime export flow and end-to-end artifact tests.
-- [ ] 05-05-PLAN.md — Verify real Anki import behavior, translation reveal rules, and audio playback.
+- [x] 05-05-PLAN.md — Verify real Anki import behavior, translation reveal rules, and audio playback.
+
+**Verification:** Phase 5 passed on 2026-04-28 after the real Anki Desktop checkpoint confirmed import without remapping, correct Translation reveal behavior, and playable packaged audio. The advisory code-review gate found two export consistency warnings; both were fixed in `8b9a241`, re-reviewed cleanly, and phase verification passed with 6/6 must-haves verified.
 
 ## Progress
 
@@ -132,4 +134,4 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5
 | 2. Input Decks & Lexical Grounding | 5/5 | Complete | 2026-04-21 |
 | 3. Sentence Quality & Review Loop | 5/5 | Complete | 2026-04-21 |
 | 4. Audio Synthesis | 5/5 | Complete | 2026-04-26 |
-| 5. Anki-Safe Export Contract | 4/5 | In progress | 2026-04-26 |
+| 5. Anki-Safe Export Contract | 5/5 | Complete | 2026-04-28 |
