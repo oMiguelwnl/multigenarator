@@ -80,6 +80,8 @@ class ExportCardRow(BaseModel):
     def populate_stable_fields(self) -> "ExportCardRow":
         if self.sort_index is None:
             object.__setattr__(self, "sort_index", self.identity.sort_index)
+        elif self.sort_index != self.identity.sort_index:
+            raise ValueError("SortIndex must match identity.sort_index")
         if self.note_guid is None:
             object.__setattr__(self, "note_guid", build_export_note_guid(self.identity))
         if self.image != "":

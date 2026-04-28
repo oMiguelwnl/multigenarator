@@ -6,6 +6,7 @@ import json
 from pathlib import Path
 from typing import ClassVar
 
+import pytest
 from sqlalchemy import create_engine, func, select
 from sqlalchemy.orm import Session
 from typer.testing import CliRunner
@@ -138,7 +139,12 @@ def test_export_command_runtime_path_writes_apkg_csv_and_tsv_artifacts(tmp_path:
         session.close()
 
 
-def test_export_command_runtime_path_fails_loudly_when_audio_is_missing(tmp_path: Path, monkeypatch) -> None:
+@pytest.mark.parametrize("export_format", ["apkg", "csv", "tsv"])
+def test_export_command_runtime_path_fails_loudly_when_audio_is_missing(
+    export_format: str,
+    tmp_path: Path,
+    monkeypatch,
+) -> None:
     database_path = tmp_path / "export-missing-audio.db"
     lexicon_dir = write_lookup_index(tmp_path, "wash")
     source = write_word_list(tmp_path, "wash")
@@ -178,7 +184,7 @@ def test_export_command_runtime_path_fails_loudly_when_audio_is_missing(tmp_path
 
         export_result = runner.invoke(
             app,
-            ["export", "--job-id", job.id, "--format", "apkg", "--output-dir", str(tmp_path / "exports")],
+            ["export", "--job-id", job.id, "--format", export_format, "--output-dir", str(tmp_path / "exports")],
         )
 
         assert generate_result.exit_code == 0

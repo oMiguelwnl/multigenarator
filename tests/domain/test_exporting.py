@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+import pytest
+
 from multilang.domain.exporting import (
     EXPORT_CARD_FIELD_NAMES,
     ExportArtifactFormat,
@@ -81,3 +83,8 @@ def test_image_defaults_blank_and_definitions_stay_single_html_field() -> None:
 
 def test_export_artifact_formats_cover_apkg_csv_and_tsv() -> None:
     assert {member.value for member in ExportArtifactFormat} == {"apkg", "csv", "tsv"}
+
+
+def test_visible_sort_index_must_match_stable_identity() -> None:
+    with pytest.raises(ValueError, match="SortIndex"):
+        make_row(SortIndex=2)

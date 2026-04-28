@@ -331,10 +331,11 @@ class RuntimeGenerateService(IngestLexicalItemsService):
 
         resolved_deck_name = _sanitize_deck_name(deck_name or _default_deck_name(SupportedLanguage(job.language)))
         output_path = output_dir / f"{job_id}.{export_format.value}"
+        media_index = self._build_media_index(rows)
         if export_format is ExportArtifactFormat.APKG:
             package_result = export_anki_package(
                 rows=rows,
-                media_index=self._build_media_index(rows),
+                media_index=media_index,
                 output_path=output_path,
                 deck_name=resolved_deck_name,
             )
@@ -370,9 +371,21 @@ class RuntimeGenerateService(IngestLexicalItemsService):
             sentence_asset = self.audio_repository.get_asset(row.identity.job_id, row.identity.item_key, AudioAssetKind.SENTENCE)
             if word_asset is None or sentence_asset is None:
                 raise ValueError(f"missing required audio for item {row.identity.item_key}")
-            media_index[row.word_audio] = Path(word_asset.provenance.storage_path)
-            media_index[row.sentence_audio] = Path(sentence_asset.provenance.storage_path)
+            word_path = Path(word_asset.provenance.storage_path)
+            sentence_path = Path(sentence_asset.provenance.storage_path)
+            _validate_media_reference(sound_tag=row.word_audio, media_path=word_path)
+            _validate_media_reference(sound_tag=row.sentence_audio, media_path=sentence_path)
+            media_index[row.word_audio] = word_path
+            media_index[row.sentence_audio] = sentence_path
         return media_index
+
+
+def _validate_media_reference(*, sound_tag: str, media_path: Path) -> None:
+    expected_sound_tag = f"[sound:{media_path.name}]"
+    if sound_tag != expected_sound_tag:
+        raise ValueError(f"media basename mismatch for {media_path.name}")
+    if not media_path.exists():
+        raise ValueError(f"missing media file for {media_path.name}")
 
 
 def build_runtime_service(
