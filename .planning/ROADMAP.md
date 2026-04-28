@@ -155,10 +155,13 @@ Plans:
   2. `REQUIREMENTS.md` and Phase 5 summary frontmatter accurately reflect completed versus reopened requirements.
   3. Phase 4 validation metadata exists or the audit documents an intentional exception.
   4. `audit-open` no longer reports passed UAT files, verified quick tasks, or stale verification files as milestone blockers.
-**Plans**: pending planning
+**Plans**: 4 plans
 
 Plans:
-- [ ] Pending — run `/gsd-plan-phase 7` after Phase 6 closes the functional E2E gap.
+- [ ] 07-01-PLAN.md — Refresh stale Phase 1 lifecycle verification for JOB-01, JOB-02, and JOB-03.
+- [ ] 07-02-PLAN.md — Add missing Phase 4 validation metadata from verified audio evidence.
+- [ ] 07-03-PLAN.md — Reconcile scanner-facing UAT, quick-task, and Phase 5 summary metadata.
+- [ ] 07-04-PLAN.md — Refresh requirements, roadmap, state, and v1.0 milestone audit from current evidence.
 
 ## Progress
 
@@ -173,4 +176,4 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 6 → 7
 | 4. Audio Synthesis | 5/5 | Complete | 2026-04-26 |
 | 5. Anki-Safe Export Contract | 5/5 | Complete | 2026-04-28 |
 | 6. End-to-End Text Acceptance Pipeline | 4/4 | Complete | 2026-04-28 |
-| 7. Milestone Evidence & Audit Hygiene | 0/? | Not planned | - |
+| 7. Milestone Evidence & Audit Hygiene | 0/4 | Planned | - |

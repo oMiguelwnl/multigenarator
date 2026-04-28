@@ -2,14 +2,14 @@
 gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
-status: in_progress
-stopped_at: Phase 6 functional E2E gap closure complete; Phase 7 evidence and audit hygiene remains next
+status: ready_to_execute
+stopped_at: Phase 7 evidence and audit hygiene planned; ready to execute 4 plans
 last_updated: "2026-04-28T14:20:35Z"
-last_activity: 2026-04-28 -- Completed Phase 6 end-to-end text acceptance pipeline with custom and frequency generate/audio/export E2E proof.
+last_activity: 2026-04-28 -- Planned Phase 7 milestone evidence and audit hygiene across 4 executable plans.
 progress:
   total_phases: 7
   completed_phases: 6
-  total_plans: 30
+  total_plans: 34
   completed_plans: 30
   percent: 86
 ---
@@ -21,14 +21,14 @@ progress:
 See: .planning/PROJECT.md (updated 2026-04-18)
 
 **Core value:** Generate reliable, high-quality Anki cards for frequent vocabulary in the chosen language so the learner can study real words with accurate definitions, examples, translations, and audio.
-**Current focus:** Phase 07 evidence and audit hygiene for v1.0 milestone closeout
+**Current focus:** Execute Phase 07 evidence and audit hygiene for v1.0 milestone closeout
 
 ## Current Position
 
 Phase: 07 (milestone-evidence-audit-hygiene) — NEXT UP
-Plan: Not planned
-Status: Phase 6 closed the functional accepted-text/audio/export E2E gap; Phase 7 must refresh evidence and audit metadata before milestone closeout
-Last activity: 2026-04-28 -- Completed Phase 6 with local text acceptance, refreshed text integration, custom-list E2E export, and frequency E2E export proof.
+Plan: 4 plans ready
+Status: Phase 7 planned to refresh Phase 1 verification, Phase 4 validation metadata, Phase 5/frontmatter audit metadata, and the v1.0 audit snapshot.
+Last activity: 2026-04-28 -- Planned Phase 7 with 4 executable plans in 2 waves.
 
 Progress: [█████████-] 86%
 
@@ -53,8 +53,8 @@ Progress: [█████████-] 86%
 
 **Recent Trend:**
 
-- Last 5 plans: 05-05, 06-01, 06-02, 06-03, 06-04 completed
-- Trend: Functional E2E gap closure is complete; evidence/audit hygiene remains before milestone closeout
+- Last 5 completed plans: 05-05, 06-01, 06-02, 06-03, 06-04 completed
+- Trend: Functional E2E gap closure is complete; Phase 7 evidence/audit hygiene is planned and ready to execute before milestone closeout
 
 ## Accumulated Context
 
@@ -112,7 +112,7 @@ Recent decisions affecting current work:
 
 ### Pending Todos
 
-- Plan and execute Phase 7: Milestone Evidence & Audit Hygiene.
+- Execute Phase 7: Milestone Evidence & Audit Hygiene.
 - Re-run `/gsd-audit-milestone v1.0` after both gap-closure phases complete.
 
 ### Blockers/Concerns
