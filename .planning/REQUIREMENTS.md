@@ -8,8 +8,8 @@
 ### Deck Scope
 
 - [x] **DECK-01**: User can choose one of these target languages before generation starts: Portuguese, Spanish, English, French, German, Italian, Polish, Turkish, Romanian, Russian, or Dutch. _(Plan 01-01 foundation, expanded language list later aligned in code and voice registry.)_
-- [x] **DECK-02**: User can generate a frequency deck for the selected language with 3 levels of 1000 cards each. _(Plan 02-02 deterministic frequency deck curation and level selection.)_
-- [x] **DECK-03**: User can generate cards from a custom user-provided word list instead of the built-in frequency deck. _(Plans 02-01 and 02-03: lexical candidate foundation plus plain-text word-list parsing and grounding.)_
+- [ ] **DECK-02**: User can generate a frequency deck for the selected language with 3 levels of 1000 cards each. _(Reopened by v1.0 audit for Phase 6: lexical 3x1000 is verified, but accepted text/audio/export E2E is not yet proven.)_
+- [ ] **DECK-03**: User can generate cards from a custom user-provided word list instead of the built-in frequency deck. _(Reopened by v1.0 audit for Phase 6: custom grounding is verified, but arbitrary words can still stall before accepted text/audio/export.)_
 
 ### Card Contract
 
@@ -26,25 +26,25 @@
 
 ### Text Quality
 
-- [ ] **TEXT-01**: User receives an example sentence that contains the target word and matches the intended meaning of the card.
-- [ ] **TEXT-02**: User receives an example sentence that passes project quality rules for length, naturalness, and readability.
-- [ ] **TEXT-03**: User receives a translation that matches the displayed example sentence rather than only the isolated headword meaning.
-- [ ] **TEXT-04**: User can review flagged low-confidence cards before final export.
-- [ ] **TEXT-05**: User can regenerate a flagged card from the review workflow without rerunning the full batch.
+- [ ] **TEXT-01**: User receives an example sentence that contains the target word and matches the intended meaning of the card. _(Reopened by v1.0 audit for Phase 6: validators work, but realistic runtime generation can route terms to review-only.)_
+- [ ] **TEXT-02**: User receives an example sentence that passes project quality rules for length, naturalness, and readability. _(Reopened by v1.0 audit for Phase 6: quality checks expose weak fallback generation for arbitrary vocabulary.)_
+- [ ] **TEXT-03**: User receives a translation that matches the displayed example sentence rather than only the isolated headword meaning. _(Reopened by v1.0 audit for Phase 6: translation is wired but depends on the limited local generation path.)_
+- [x] **TEXT-04**: User can review flagged low-confidence cards before final export. _(Completed by Phase 3 review report flow; checkbox corrected during v1.0 gap planning.)_
+- [x] **TEXT-05**: User can regenerate a flagged card from the review workflow without rerunning the full batch. _(Completed by Phase 3 targeted regeneration flow; checkbox corrected during v1.0 gap planning.)_
 
 ### Audio
 
-- [x] **AUDI-01**: User receives `word_audio` for the target word using Azure TTS or a documented fallback when the preferred voice is unavailable. _(Completed by Plans 04-01 through 04-05, with shipped-path Azure closure in Plan 04-05.)_
-- [x] **AUDI-02**: User receives `sentence_audio` for the example sentence using Azure TTS or a documented fallback when the preferred voice is unavailable. _(Completed by Plans 04-01 through 04-05, with shipped-path Azure closure in Plan 04-05.)_
+- [ ] **AUDI-01**: User receives `word_audio` for the target word using Azure TTS or a documented fallback when the preferred voice is unavailable. _(Reopened by v1.0 audit for Phase 6: audio works for accepted text rows, but full E2E generation can stall before audio.)_
+- [ ] **AUDI-02**: User receives `sentence_audio` for the example sentence using Azure TTS or a documented fallback when the preferred voice is unavailable. _(Reopened by v1.0 audit for Phase 6: audio works for accepted text rows, but full E2E generation can stall before audio.)_
 
 ### Export and Jobs
 
-- [x] **EXPT-01**: User can export generated cards as an `.apkg` deck that imports into Anki without manual field remapping. _(Completed by Phase 5 genanki packaging, shipped CLI export, and approved Anki Desktop import verification.)_
-- [x] **EXPT-02**: User can export the same generated cards as a UTF-8-safe CSV or TSV fallback. _(Completed by Phase 5 tabular export and integration coverage.)_
-- [x] **EXPT-03**: User receives Anki-compatible audio references for `word_audio` and `sentence_audio`, with bundled media files that play correctly after import. _(Completed by Phase 5 media validation, package bundling, and approved Anki Desktop audio verification.)_
-- [x] **JOB-01**: User can resume an interrupted generation job without losing already completed cards. _(Completed by Plans 01-02, 01-05, and 01-06.)_
-- [x] **JOB-02**: User can see per-batch progress and failures while generation is running. _(Completed by Plans 01-04, 01-05, and 01-06.)_
-- [x] **JOB-03**: User can rerun the same deck or custom word list without silent duplicate card creation. _(Completed by Plans 01-02, 01-04, 01-05, and 01-06.)_
+- [ ] **EXPT-01**: User can export generated cards as an `.apkg` deck that imports into Anki without manual field remapping. _(Reopened by v1.0 audit for Phase 6: package export works from accepted rows, but full generate-to-export E2E remains partial.)_
+- [ ] **EXPT-02**: User can export the same generated cards as a UTF-8-safe CSV or TSV fallback. _(Reopened by v1.0 audit for Phase 6: tabular export works from accepted rows, but full generate-to-export E2E remains partial.)_
+- [ ] **EXPT-03**: User receives Anki-compatible audio references for `word_audio` and `sentence_audio`, with bundled media files that play correctly after import. _(Reopened by v1.0 audit for Phase 6: media packaging works from accepted audio rows, but full E2E remains partial.)_
+- [ ] **JOB-01**: User can resume an interrupted generation job without losing already completed cards. _(Reopened by v1.0 audit for Phase 7: current code may satisfy this, but stale Phase 1 verification still marks it blocked.)_
+- [ ] **JOB-02**: User can see per-batch progress and failures while generation is running. _(Reopened by v1.0 audit for Phase 7: current code may satisfy this, but stale Phase 1 verification still marks it blocked.)_
+- [ ] **JOB-03**: User can rerun the same deck or custom word list without silent duplicate card creation. _(Reopened by v1.0 audit for Phase 7: current code may satisfy this, but stale Phase 1 verification still marks it blocked.)_
 
 ## v2 Requirements
 
@@ -80,34 +80,36 @@ Which phases cover which requirements. Updated during roadmap creation.
 | Requirement | Phase | Status |
 |-------------|-------|--------|
 | DECK-01 | Phase 1 | Completed in Plan 01-01 |
-| JOB-01 | Phase 1 | Completed in Plans 01-02, 01-05, and 01-06 |
-| JOB-02 | Phase 1 | Completed in Plans 01-04, 01-05, and 01-06 |
-| JOB-03 | Phase 1 | Completed in Plans 01-02, 01-04, 01-05, and 01-06 |
-| DECK-02 | Phase 2 | Completed in Plan 02-02 |
-| DECK-03 | Phase 2 | Completed in Plans 02-01 and 02-03 |
+| JOB-01 | Phase 7 | Pending gap closure: refresh/supersede stale Phase 1 verification |
+| JOB-02 | Phase 7 | Pending gap closure: refresh/supersede stale Phase 1 verification |
+| JOB-03 | Phase 7 | Pending gap closure: refresh/supersede stale Phase 1 verification |
+| DECK-02 | Phase 6 | Pending gap closure: prove frequency candidates reach accepted text/audio/export |
+| DECK-03 | Phase 6 | Pending gap closure: prove custom-list candidates reach accepted text/audio/export |
 | LEX-01 | Phase 2 | Completed in Plans 02-01 and 02-03 |
 | LEX-02 | Phase 2 | Completed in Plans 02-01 and 02-03 |
 | LEX-03 | Phase 2 | Completed in Plans 02-01 and 02-03 |
-| TEXT-01 | Phase 3 | Pending |
-| TEXT-02 | Phase 3 | Pending |
-| TEXT-03 | Phase 3 | Pending |
-| TEXT-04 | Phase 3 | Pending |
-| TEXT-05 | Phase 3 | Pending |
-| AUDI-01 | Phase 4 | Completed in Plans 04-01 through 04-05 |
-| AUDI-02 | Phase 4 | Completed in Plans 04-01 through 04-05 |
+| TEXT-01 | Phase 6 | Pending gap closure: accepted text for realistic runtime vocabulary |
+| TEXT-02 | Phase 6 | Pending gap closure: accepted text for realistic runtime vocabulary |
+| TEXT-03 | Phase 6 | Pending gap closure: accepted text for realistic runtime vocabulary |
+| TEXT-04 | Phase 3 | Completed in Plans 03-04 and 03-05 |
+| TEXT-05 | Phase 3 | Completed in Plan 03-05 |
+| AUDI-01 | Phase 6 | Pending gap closure: full accepted text -> audio E2E |
+| AUDI-02 | Phase 6 | Pending gap closure: full accepted text -> audio E2E |
 | CARD-01 | Phase 5 | Completed in Plans 05-01 and 05-02 |
 | CARD-02 | Phase 5 | Completed in Plans 05-01 and 05-02 |
 | CARD-03 | Phase 5 | Completed in Plans 05-03 and 05-05 |
 | CARD-04 | Phase 5 | Completed in Plan 05-02 |
-| EXPT-01 | Phase 5 | Completed in Plans 05-03, 05-04, and 05-05 |
-| EXPT-02 | Phase 5 | Completed in Plans 05-02 and 05-04 |
-| EXPT-03 | Phase 5 | Completed in Plans 05-03, 05-04, and 05-05 |
+| EXPT-01 | Phase 6 | Pending gap closure: full accepted text/audio -> `.apkg` E2E |
+| EXPT-02 | Phase 6 | Pending gap closure: full accepted text/audio -> CSV/TSV E2E |
+| EXPT-03 | Phase 6 | Pending gap closure: full accepted text/audio -> packaged media E2E |
 
 **Coverage:**
 - v1 requirements: 23 total
+- Checked complete: 10
+- Pending gap closure: 13
 - Mapped to phases: 23
 - Unmapped: 0 ✓
 
 ---
 *Requirements defined: 2026-04-18*
-*Last updated: 2026-04-28 after Phase 5 export-contract verification*
+*Last updated: 2026-04-28 after v1.0 milestone gap planning*

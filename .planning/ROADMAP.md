@@ -17,6 +17,8 @@ Decimal phases appear between their surrounding integers in numeric order.
 - [x] **Phase 3: Sentence Quality & Review Loop** - Produce trustworthy example sentences and translations with reviewable regeneration.
 - [x] **Phase 4: Audio Synthesis** - Add reliable word and sentence audio with Azure-first fallback handling. _(gap closure completed after 5/5 plans)_
 - [x] **Phase 5: Anki-Safe Export Contract** - Freeze the card schema, template behavior, and export clean decks that import into Anki without repair. _(verified complete on 2026-04-28)_
+- [ ] **Phase 6: End-to-End Text Acceptance Pipeline** - Close the milestone audit gap where realistic vocabulary can stall at review-only text before audio/export. _(gap closure planned from v1.0 audit)_
+- [ ] **Phase 7: Milestone Evidence & Audit Hygiene** - Refresh stale verification and planning metadata so the v1.0 audit can pass cleanly. _(gap closure planned from v1.0 audit)_
 
 ## Phase Details
 
@@ -123,6 +125,36 @@ Plans:
 
 **Verification:** Phase 5 passed on 2026-04-28 after the real Anki Desktop checkpoint confirmed import without remapping, correct Translation reveal behavior, and playable packaged audio. The advisory code-review gate found two export consistency warnings; both were fixed in `8b9a241`, re-reviewed cleanly, and phase verification passed with 6/6 must-haves verified.
 
+### Phase 6: End-to-End Text Acceptance Pipeline
+**Goal**: Realistic custom-list and frequency-deck inputs can produce accepted text rows that continue through audio generation and export instead of stalling as review-only records.
+**Depends on**: Phase 5
+**Requirements**: DECK-02, DECK-03, TEXT-01, TEXT-02, TEXT-03, AUDI-01, AUDI-02, EXPT-01, EXPT-02, EXPT-03
+**Gap Closure**: Closes the critical v1.0 milestone audit integration gap `GAP-1` and the broken custom/frequency E2E flows.
+**Success Criteria** (what must be TRUE):
+  1. Custom word-list generation can produce accepted sentence/translation rows for representative grounded vocabulary without relying on weak meta templates.
+  2. A frequency-deck sample proves candidates can move through accepted text, word/sentence audio, and exportable card assembly.
+  3. `tests/integration/test_text_job_flow.py` is refreshed to match intended runtime behavior and passes.
+  4. At least one shipped-path E2E test proves custom word list -> accepted text -> audio -> `.apkg`/CSV/TSV export.
+**Plans**: pending planning
+
+Plans:
+- [ ] Pending — run `/gsd-plan-phase 6` to create executable plans.
+
+### Phase 7: Milestone Evidence & Audit Hygiene
+**Goal**: The milestone audit uses current evidence instead of stale verification artifacts or mismatched planning metadata.
+**Depends on**: Phase 6
+**Requirements**: JOB-01, JOB-02, JOB-03
+**Gap Closure**: Closes the stale Phase 1 verification blocker, audit-open false positives, missing Phase 4 validation metadata, stale requirement checkboxes, and missing Phase 5 summary frontmatter evidence noted by `.planning/v1.0-MILESTONE-AUDIT.md`.
+**Success Criteria** (what must be TRUE):
+  1. Phase 1 verification is refreshed or superseded so resume, progress, and duplicate-safe rerun behavior are verified on the current shipped CLI/runtime path.
+  2. `REQUIREMENTS.md` and Phase 5 summary frontmatter accurately reflect completed versus reopened requirements.
+  3. Phase 4 validation metadata exists or the audit documents an intentional exception.
+  4. `audit-open` no longer reports passed UAT files, verified quick tasks, or stale verification files as milestone blockers.
+**Plans**: pending planning
+
+Plans:
+- [ ] Pending — run `/gsd-plan-phase 7` after Phase 6 closes the functional E2E gap.
+
 ## Progress
 
 **Execution Order:**
@@ -135,3 +167,5 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5
 | 3. Sentence Quality & Review Loop | 5/5 | Complete | 2026-04-21 |
 | 4. Audio Synthesis | 5/5 | Complete | 2026-04-26 |
 | 5. Anki-Safe Export Contract | 5/5 | Complete | 2026-04-28 |
+| 6. End-to-End Text Acceptance Pipeline | 0/? | Not planned | - |
+| 7. Milestone Evidence & Audit Hygiene | 0/? | Not planned | - |

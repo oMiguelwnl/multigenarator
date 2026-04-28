@@ -2,16 +2,16 @@
 gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
-status: complete
-stopped_at: Phase 05 verified complete; v1.0 milestone implementation phases are complete and ready for milestone closeout
-last_updated: "2026-04-28T12:53:37Z"
-last_activity: 2026-04-28 -- Closed Phase 5 with approved Anki Desktop verification, clean code-review recheck, and passed phase verification.
+status: in_progress
+stopped_at: v1.0 milestone audit found functional E2E and evidence gaps; Phase 6 and Phase 7 gap-closure phases were added for planning
+last_updated: "2026-04-28T14:06:28Z"
+last_activity: 2026-04-28 -- Added Phase 6 and Phase 7 gap-closure phases from the v1.0 milestone audit.
 progress:
-  total_phases: 5
+  total_phases: 7
   completed_phases: 5
   total_plans: 26
   completed_plans: 26
-  percent: 100
+  percent: 71
 ---
 
 # Project State
@@ -21,16 +21,16 @@ progress:
 See: .planning/PROJECT.md (updated 2026-04-18)
 
 **Core value:** Generate reliable, high-quality Anki cards for frequent vocabulary in the chosen language so the learner can study real words with accurate definitions, examples, translations, and audio.
-**Current focus:** v1.0 phase execution complete; ready for milestone closeout
+**Current focus:** Phase 06 planning for v1.0 milestone gap closure
 
 ## Current Position
 
-Phase: 05 (anki-safe-export-contract) — COMPLETE
-Plan: 5 of 5 executed
-Status: Phases 01 through 05 are verified complete; the Anki-safe export contract is closed with real Anki Desktop approval and clean review verification
-Last activity: 2026-04-28 -- Closed Phase 5 after approved Anki import/audio validation, export warning fixes, clean review, and phase verification.
+Phase: 06 (end-to-end-text-acceptance-pipeline) — NEXT UP
+Plan: Not planned
+Status: v1.0 audit found gaps after Phase 05 completion; Phase 6 must close the functional accepted-text/audio/export E2E gap before milestone closeout
+Last activity: 2026-04-28 -- Added Phase 6 and Phase 7 gap-closure phases from `.planning/v1.0-MILESTONE-AUDIT.md`.
 
-Progress: [██████████] 100%
+Progress: [███████---] 71%
 
 ## Performance Metrics
 
@@ -52,8 +52,8 @@ Progress: [██████████] 100%
 
 **Recent Trend:**
 
-- Last 5 plans: 05-01, 05-02, 05-03, 05-04, 05-05 completed; export flow is verified in tests and Anki Desktop
-- Trend: v1.0 phase execution is complete; next workflow should close out or audit the milestone
+- Last 5 plans: 05-01, 05-02, 05-03, 05-04, 05-05 completed; audit then created Phase 6 and Phase 7 gap closures
+- Trend: Functional E2E gap closure is next, followed by evidence/audit hygiene before milestone closeout
 
 ## Accumulated Context
 
@@ -82,6 +82,8 @@ Recent decisions affecting current work:
 - [Plan 05-05 follow-up]: Default review artifacts must use a flat deck name and richer sample cards so human verification can judge presentation quality, not just import mechanics.
 - [Plan 05-05]: Treat Anki Desktop import, Translation reveal behavior, and packaged audio playback as the final real-product gate for the export contract.
 - [Plan 05-05]: Validate media references before every export format writes artifacts, and reject visible `SortIndex` values that diverge from stable identity.
+- [Milestone v1.0 audit]: Full milestone closeout requires proving realistic custom/frequency vocabulary can reach accepted text, audio, and export, not only proving export from already accepted rows.
+- [Milestone v1.0 audit]: Stale verification artifacts and metadata mismatches can block milestone archival even when later code likely fixed the original issue.
 - [Plan 01-01]: Use a uv-managed src-layout Python package with typed settings and explicit resume diagnostics as the foundation for Phase 1.
 - [Plan 01-02]: Store run-level and item-level state separately so resume validation can compare stage pointers against item rows.
 - [Plan 01-02]: Treat repeated successful item writes for the same run_key/item_key as duplicate reuse and count them in skipped_duplicates.
@@ -105,11 +107,14 @@ Recent decisions affecting current work:
 
 ### Pending Todos
 
-- None. Phase 05 verification is complete.
+- Plan and execute Phase 6: End-to-End Text Acceptance Pipeline.
+- Plan and execute Phase 7: Milestone Evidence & Audit Hygiene.
+- Re-run `/gsd-audit-milestone v1.0` after both gap-closure phases complete.
 
 ### Blockers/Concerns
 
-- None. The user completed the required Anki Desktop validation outside this shell.
+- [Phase 6] Runtime text generation can route realistic vocabulary to review-only, blocking downstream audio/export E2E.
+- [Phase 7] Phase 1 verification and audit metadata are stale relative to later gap-closure work.
 
 ### Quick Tasks Completed
 
@@ -127,6 +132,6 @@ Items acknowledged and carried forward from previous milestone close:
 
 ## Session Continuity
 
-Last session: 2026-04-28T12:53:37Z
-Stopped at: Phase 05 verified complete; next step is milestone closeout or progress audit
+Last session: 2026-04-28T14:06:28Z
+Stopped at: Gap-closure phases added; next step is `/gsd-plan-phase 6`
 Resume file: None
