@@ -135,10 +135,13 @@ Plans:
   2. A frequency-deck sample proves candidates can move through accepted text, word/sentence audio, and exportable card assembly.
   3. `tests/integration/test_text_job_flow.py` is refreshed to match intended runtime behavior and passes.
   4. At least one shipped-path E2E test proves custom word list -> accepted text -> audio -> `.apkg`/CSV/TSV export.
-**Plans**: pending planning
+**Plans**: 4 plans
 
 Plans:
-- [ ] Pending — run `/gsd-plan-phase 6` to create executable plans.
+- [ ] 06-01-PLAN.md — Strengthen shipped local text adapters so realistic grounded vocabulary produces accepted rows.
+- [ ] 06-02-PLAN.md — Refresh the audit-cited text integration test around intended accepted/review behavior.
+- [ ] 06-03-PLAN.md — Prove custom word-list accepted text, audio, and `.apkg`/CSV/TSV export E2E.
+- [ ] 06-04-PLAN.md — Prove frequency-deck accepted text, audio, and export E2E across all three levels.
 
 ### Phase 7: Milestone Evidence & Audit Hygiene
 **Goal**: The milestone audit uses current evidence instead of stale verification artifacts or mismatched planning metadata.
@@ -158,7 +161,7 @@ Plans:
 ## Progress
 
 **Execution Order:**
-Phases execute in numeric order: 1 → 2 → 3 → 4 → 5
+Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 6 → 7
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
@@ -167,5 +170,5 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5
 | 3. Sentence Quality & Review Loop | 5/5 | Complete | 2026-04-21 |
 | 4. Audio Synthesis | 5/5 | Complete | 2026-04-26 |
 | 5. Anki-Safe Export Contract | 5/5 | Complete | 2026-04-28 |
-| 6. End-to-End Text Acceptance Pipeline | 0/? | Not planned | - |
+| 6. End-to-End Text Acceptance Pipeline | 0/4 | Planned | - |
 | 7. Milestone Evidence & Audit Hygiene | 0/? | Not planned | - |
