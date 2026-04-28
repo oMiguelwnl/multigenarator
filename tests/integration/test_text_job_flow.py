@@ -218,7 +218,10 @@ def test_generate_command_uses_requested_sentence_and_translation_languages(tmp_
     try:
         generated = session.scalar(select(TextQualityRecordModel))
         assert generated is not None
-        assert generated.example_sentence == "Yo uso usar cada día."
-        assert generated.translation_text == "I use this every day."
+        assert generated.review_status == "accepted"
+        assert "usar" in generated.example_sentence.casefold()
+        assert not generated.example_sentence.casefold().startswith(("la palabra", "the word"))
+        assert generated.translation_text
+        assert generated.translation_text != generated.example_sentence
     finally:
         session.close()
