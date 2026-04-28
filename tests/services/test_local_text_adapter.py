@@ -128,3 +128,26 @@ def test_text_generation_service_accepts_representative_grounded_candidates() ->
         assert not bundle.sentence.text.casefold().startswith(("the word", "la palabra"))
         assert bundle.translation.text != bundle.sentence.text
         assert bundle.translation.text.casefold() != (candidate.definitions_html or "").casefold()
+
+
+def test_service_generates_accepted_spanish_verb_with_english_translation() -> None:
+    candidate = make_candidate("usar", language=SupportedLanguage.ES, definition="to use")
+    service = TextGenerationService(
+        sentence_adapter=LocalSentenceAdapter(),
+        translation_adapter=LocalTranslationAdapter(),
+    )
+
+    bundle = service.generate_bundle(candidate=candidate, deck_language=SupportedLanguage.ES)
+    result = TextValidationService().validate(
+        sentence=bundle.sentence,
+        translation=bundle.translation,
+        display_form=candidate.display_form,
+        lemma=candidate.lemma,
+        definitions_html=candidate.definitions_html,
+    )
+
+    assert result.validation_status.value == "passed"
+    assert "usar" in bundle.sentence.text.casefold()
+    assert bundle.translation.target_language == "en"
+    assert bundle.translation.text
+    assert bundle.translation.text != bundle.sentence.text
