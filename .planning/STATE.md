@@ -3,15 +3,15 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: in_progress
-stopped_at: v1.0 milestone audit found functional E2E and evidence gaps; Phase 6 and Phase 7 gap-closure phases were added for planning
-last_updated: "2026-04-28T14:06:28Z"
-last_activity: 2026-04-28 -- Added Phase 6 and Phase 7 gap-closure phases from the v1.0 milestone audit.
+stopped_at: Phase 6 functional E2E gap closure complete; Phase 7 evidence and audit hygiene remains next
+last_updated: "2026-04-28T14:20:35Z"
+last_activity: 2026-04-28 -- Completed Phase 6 end-to-end text acceptance pipeline with custom and frequency generate/audio/export E2E proof.
 progress:
   total_phases: 7
-  completed_phases: 5
-  total_plans: 26
-  completed_plans: 26
-  percent: 71
+  completed_phases: 6
+  total_plans: 30
+  completed_plans: 30
+  percent: 86
 ---
 
 # Project State
@@ -21,24 +21,24 @@ progress:
 See: .planning/PROJECT.md (updated 2026-04-18)
 
 **Core value:** Generate reliable, high-quality Anki cards for frequent vocabulary in the chosen language so the learner can study real words with accurate definitions, examples, translations, and audio.
-**Current focus:** Phase 06 planning for v1.0 milestone gap closure
+**Current focus:** Phase 07 evidence and audit hygiene for v1.0 milestone closeout
 
 ## Current Position
 
-Phase: 06 (end-to-end-text-acceptance-pipeline) — NEXT UP
+Phase: 07 (milestone-evidence-audit-hygiene) — NEXT UP
 Plan: Not planned
-Status: v1.0 audit found gaps after Phase 05 completion; Phase 6 must close the functional accepted-text/audio/export E2E gap before milestone closeout
-Last activity: 2026-04-28 -- Added Phase 6 and Phase 7 gap-closure phases from `.planning/v1.0-MILESTONE-AUDIT.md`.
+Status: Phase 6 closed the functional accepted-text/audio/export E2E gap; Phase 7 must refresh evidence and audit metadata before milestone closeout
+Last activity: 2026-04-28 -- Completed Phase 6 with local text acceptance, refreshed text integration, custom-list E2E export, and frequency E2E export proof.
 
-Progress: [███████---] 71%
+Progress: [█████████-] 86%
 
 ## Performance Metrics
 
 **Velocity:**
 
-- Total plans completed: 26
+- Total plans completed: 30
 - Average duration: 14 min
-- Total execution time: 5h 18m
+- Total execution time: 5h 58m
 
 **By Phase:**
 
@@ -49,11 +49,12 @@ Progress: [███████---] 71%
 | 03-sentence-quality-review-loop | 5 | 1h 17m | 15 min |
 | 04-audio-synthesis | 5 | 1h 3m | 13 min |
 | 05-anki-safe-export-contract | 5 | 17 min | 3 min |
+| 06-end-to-end-text-acceptance-pipeline | 4 | 40 min | 10 min |
 
 **Recent Trend:**
 
-- Last 5 plans: 05-01, 05-02, 05-03, 05-04, 05-05 completed; audit then created Phase 6 and Phase 7 gap closures
-- Trend: Functional E2E gap closure is next, followed by evidence/audit hygiene before milestone closeout
+- Last 5 plans: 05-05, 06-01, 06-02, 06-03, 06-04 completed
+- Trend: Functional E2E gap closure is complete; evidence/audit hygiene remains before milestone closeout
 
 ## Accumulated Context
 
@@ -84,6 +85,10 @@ Recent decisions affecting current work:
 - [Plan 05-05]: Validate media references before every export format writes artifacts, and reject visible `SortIndex` values that diverge from stable identity.
 - [Milestone v1.0 audit]: Full milestone closeout requires proving realistic custom/frequency vocabulary can reach accepted text, audio, and export, not only proving export from already accepted rows.
 - [Milestone v1.0 audit]: Stale verification artifacts and metadata mismatches can block milestone archival even when later code likely fixed the original issue.
+- [Plan 06-01]: Keep text validators strict and move deterministic runtime local generation into adapter classes that produce natural accepted sentences.
+- [Plan 06-02]: Assert shipped text integration behavior by persisted contract instead of stale exact sentence literals.
+- [Plan 06-03]: Treat custom word-list generate → accepted text → fake Azure audio → `.apkg`/CSV/TSV export as required milestone evidence.
+- [Plan 06-04]: Use bounded frequency samples for E2E speed but separately assert the production 3 levels × 1000 cards contract.
 - [Plan 01-01]: Use a uv-managed src-layout Python package with typed settings and explicit resume diagnostics as the foundation for Phase 1.
 - [Plan 01-02]: Store run-level and item-level state separately so resume validation can compare stage pointers against item rows.
 - [Plan 01-02]: Treat repeated successful item writes for the same run_key/item_key as duplicate reuse and count them in skipped_duplicates.
@@ -107,13 +112,11 @@ Recent decisions affecting current work:
 
 ### Pending Todos
 
-- Plan and execute Phase 6: End-to-End Text Acceptance Pipeline.
 - Plan and execute Phase 7: Milestone Evidence & Audit Hygiene.
 - Re-run `/gsd-audit-milestone v1.0` after both gap-closure phases complete.
 
 ### Blockers/Concerns
 
-- [Phase 6] Runtime text generation can route realistic vocabulary to review-only, blocking downstream audio/export E2E.
 - [Phase 7] Phase 1 verification and audit metadata are stale relative to later gap-closure work.
 
 ### Quick Tasks Completed
@@ -132,6 +135,6 @@ Items acknowledged and carried forward from previous milestone close:
 
 ## Session Continuity
 
-Last session: 2026-04-28T14:06:28Z
-Stopped at: Gap-closure phases added; next step is `/gsd-plan-phase 6`
+Last session: 2026-04-28T14:20:35Z
+Stopped at: Phase 6 complete; next step is `/gsd-plan-phase 7`
 Resume file: None

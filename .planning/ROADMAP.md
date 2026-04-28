@@ -17,7 +17,7 @@ Decimal phases appear between their surrounding integers in numeric order.
 - [x] **Phase 3: Sentence Quality & Review Loop** - Produce trustworthy example sentences and translations with reviewable regeneration.
 - [x] **Phase 4: Audio Synthesis** - Add reliable word and sentence audio with Azure-first fallback handling. _(gap closure completed after 5/5 plans)_
 - [x] **Phase 5: Anki-Safe Export Contract** - Freeze the card schema, template behavior, and export clean decks that import into Anki without repair. _(verified complete on 2026-04-28)_
-- [ ] **Phase 6: End-to-End Text Acceptance Pipeline** - Close the milestone audit gap where realistic vocabulary can stall at review-only text before audio/export. _(gap closure planned from v1.0 audit)_
+- [x] **Phase 6: End-to-End Text Acceptance Pipeline** - Close the milestone audit gap where realistic vocabulary can stall at review-only text before audio/export. _(functional E2E gap closure completed on 2026-04-28)_
 - [ ] **Phase 7: Milestone Evidence & Audit Hygiene** - Refresh stale verification and planning metadata so the v1.0 audit can pass cleanly. _(gap closure planned from v1.0 audit)_
 
 ## Phase Details
@@ -138,10 +138,12 @@ Plans:
 **Plans**: 4 plans
 
 Plans:
-- [ ] 06-01-PLAN.md — Strengthen shipped local text adapters so realistic grounded vocabulary produces accepted rows.
-- [ ] 06-02-PLAN.md — Refresh the audit-cited text integration test around intended accepted/review behavior.
-- [ ] 06-03-PLAN.md — Prove custom word-list accepted text, audio, and `.apkg`/CSV/TSV export E2E.
-- [ ] 06-04-PLAN.md — Prove frequency-deck accepted text, audio, and export E2E across all three levels.
+- [x] 06-01-PLAN.md — Strengthen shipped local text adapters so realistic grounded vocabulary produces accepted rows.
+- [x] 06-02-PLAN.md — Refresh the audit-cited text integration test around intended accepted/review behavior.
+- [x] 06-03-PLAN.md — Prove custom word-list accepted text, audio, and `.apkg`/CSV/TSV export E2E.
+- [x] 06-04-PLAN.md — Prove frequency-deck accepted text, audio, and export E2E across all three levels.
+
+**Verification:** Phase 6 passed on 2026-04-28 with local text adapter/service tests, refreshed text job integration, custom word-list generate→audio→export E2E, and frequency all-three-level generate→audio→export E2E. Phase verification suite passed with 41 tests.
 
 ### Phase 7: Milestone Evidence & Audit Hygiene
 **Goal**: The milestone audit uses current evidence instead of stale verification artifacts or mismatched planning metadata.
@@ -170,5 +172,5 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 6 → 7
 | 3. Sentence Quality & Review Loop | 5/5 | Complete | 2026-04-21 |
 | 4. Audio Synthesis | 5/5 | Complete | 2026-04-26 |
 | 5. Anki-Safe Export Contract | 5/5 | Complete | 2026-04-28 |
-| 6. End-to-End Text Acceptance Pipeline | 0/4 | Planned | - |
+| 6. End-to-End Text Acceptance Pipeline | 4/4 | Complete | 2026-04-28 |
 | 7. Milestone Evidence & Audit Hygiene | 0/? | Not planned | - |
