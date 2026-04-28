@@ -4,7 +4,6 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 from pathlib import Path
-import re
 
 from sqlalchemy import create_engine
 from sqlalchemy.orm import Session
@@ -29,112 +28,18 @@ from multilang.services.generate_job import GenerateJobService
 from multilang.services.generate_audio_items import GenerateAudioItemsService
 from multilang.services.generate_text_items import GenerateTextItemsService
 from multilang.services.ingest_lexical_items import IngestLexicalItemsService
+from multilang.services.local_text_adapter import LocalSentenceAdapter, LocalTranslationAdapter
 from multilang.services.regenerate_text_item import RegenerateTextItemService
 from multilang.services.tatoeba_sentence_source import (
     StaticTatoebaCandidateProvider,
     TatoebaApiCandidateProvider,
     TatoebaSentenceSource,
 )
-from multilang.services.text_generation import (
-    SentenceGenerationRequest,
-    SentenceGenerationResult,
-    SentenceTranslationRequest,
-    SentenceTranslationResult,
-    TextGenerationService,
-)
+from multilang.services.text_generation import TextGenerationService
 from multilang.services.text_review import ReviewReport, TextReviewService
 from multilang.services.text_validation import TextValidationService
 from multilang.settings import Settings
 from multilang.domain.jobs import SupportedLanguage
-
-_DEFINITION_RE = re.compile(r"<[^>]+>")
-
-_SENSE_ALIASES = {
-    "lavar": "wash",
-    "lavarse": "wash",
-    "se laver": "wash",
-    "use": "use",
-    "usar": "use",
-    "wash": "wash",
-}
-
-_SENSE_TRANSLATIONS = {
-    "use": {
-        "de": "benutzen",
-        "en": "use",
-        "es": "usar",
-        "fr": "utiliser",
-        "it": "usare",
-        "nl": "gebruiken",
-        "pl": "używać",
-        "pt": "usar",
-        "ro": "folosi",
-        "ru": "использовать",
-        "tr": "kullanmak",
-    },
-    "wash": {
-        "de": "waschen",
-        "en": "wash",
-        "es": "lavarse",
-        "fr": "se laver",
-        "it": "lavarsi",
-        "nl": "wassen",
-        "pl": "myć się",
-        "pt": "lavar",
-        "ro": "a se spăla",
-        "ru": "мыться",
-        "tr": "yıkanmak",
-    },
-}
-
-_VERB_TEMPLATES = {
-    "de": "Es ist gut, jeden Tag {term} zu können.",
-    "en": "It is good to {term} every day.",
-    "es": "Es bueno {term} cada día.",
-    "fr": "Il est bon de {term} chaque jour.",
-    "it": "È bene {term} ogni giorno.",
-    "nl": "Het is goed om elke dag {term} te kunnen.",
-    "pl": "Dobrze jest {term} codziennie.",
-    "pt": "É bom {term} todos os dias.",
-    "ro": "Este bine să {term} în fiecare zi.",
-    "ru": "Полезно {term} каждый день.",
-    "tr": "Her gün {term} iyidir.",
-}
-
-_TERM_TEMPLATES = {
-    "de": "Das Wort {term} ist im Alltag nützlich.",
-    "en": "The word {term} is useful in daily life.",
-    "es": "La palabra {term} es útil en la vida diaria.",
-    "fr": "Le mot {term} est utile au quotidien.",
-    "it": "La parola {term} è utile nella vita quotidiana.",
-    "nl": "Het woord {term} is nuttig in het dagelijks leven.",
-    "pl": "Słowo {term} jest przydatne w codziennym życiu.",
-    "pt": "A palavra {term} é útil no dia a dia.",
-    "ro": "Cuvântul {term} este util în viața de zi cu zi.",
-    "ru": "Слово {term} полезно в повседневной жизни.",
-    "tr": "{term} kelimesi günlük hayatta faydalıdır.",
-}
-
-_CURATED_LOCAL_TEXT = {
-    "harbor": {
-        "sentence": "The fishing boats returned to the harbor before sunset.",
-        "translations": {
-            "pt": "Os barcos de pesca voltaram ao porto antes do pôr do sol.",
-        },
-    },
-    "lantern": {
-        "sentence": "She hung the lantern beside the cabin door.",
-        "translations": {
-            "pt": "Ela pendurou a lanterna ao lado da porta da cabana.",
-        },
-    },
-    "meadow": {
-        "sentence": "Wildflowers covered the meadow in early spring.",
-        "translations": {
-            "pt": "Flores silvestres cobriam o prado no início da primavera.",
-        },
-    },
-}
 
 _LANGUAGE_NAMES = {
     SupportedLanguage.PT: "Portuguese",
@@ -149,80 +54,6 @@ _LANGUAGE_NAMES = {
     SupportedLanguage.RU: "Russian",
     SupportedLanguage.NL: "Dutch",
 }
-
-
-class _TemplateSentenceAdapter:
-    def generate_sentence(self, request: SentenceGenerationRequest) -> SentenceGenerationResult:
-        curated = _CURATED_LOCAL_TEXT.get(request.display_form.casefold())
-        if curated is not None and request.target_language == SupportedLanguage.EN.value:
-            return SentenceGenerationResult(
-                sentence=curated["sentence"],
-                intended_sense=_sense_hint(request.definitions_html, request.display_form),
-                uncertainty_notes=[],
-                provenance={
-                    "source": "runtime-template-generator",
-                    "provider": "local",
-                    "template_kind": f"curated:{request.display_form.casefold()}",
-                },
-            )
-
-        sense_key = _infer_sense_key(request.definitions_html, request.display_form)
-        sense_hint = _sense_hint(request.definitions_html, request.display_form)
-        if request.target_language not in _VERB_TEMPLATES:
-            raise ValueError(f"unsupported runtime template language: {request.target_language}")
-
-        if "flag" in request.display_form.casefold():
-            sentence = f"placeholder {request.display_form} placeholder"
-            template_kind = "flagged"
-            uncertainty_notes = ["local runtime inserted a placeholder review case"]
-        else:
-            template_kind = "verb" if sense_key is not None else "term"
-            templates = _VERB_TEMPLATES if template_kind == "verb" else _TERM_TEMPLATES
-            sentence = templates[request.target_language].format(term=request.display_form)
-            uncertainty_notes = []
-            if template_kind == "term":
-                uncertainty_notes.append("local runtime used a generic term template")
-
-        return SentenceGenerationResult(
-            sentence=sentence,
-            intended_sense=sense_key or sense_hint,
-            uncertainty_notes=uncertainty_notes,
-            provenance={
-                "source": "runtime-template-generator",
-                "provider": "local",
-                "template_kind": template_kind,
-                "sense_key": sense_key,
-            },
-        )
-
-
-class _TemplateTranslationAdapter:
-    def translate_sentence(self, request: SentenceTranslationRequest) -> SentenceTranslationResult:
-        if request.template_kind and request.template_kind.startswith("curated:"):
-            curated = _CURATED_LOCAL_TEXT.get(request.template_kind.split(":", 1)[1])
-            if curated is not None:
-                translation = curated["translations"].get(request.translation_target_language)
-                if translation is not None:
-                    return SentenceTranslationResult(
-                        translation=translation,
-                        provenance={"source": "runtime-template-translator", "provider": "local"},
-                    )
-
-        if "placeholder" in request.sentence.casefold():
-            translation = request.sentence
-        else:
-            term = _localized_sense(
-                request.intended_sense,
-                language=request.translation_target_language,
-            )
-            template_kind = request.template_kind or "term"
-            templates = _VERB_TEMPLATES if template_kind == "verb" else _TERM_TEMPLATES
-            template = templates.get(request.translation_target_language)
-            translation = template.format(term=term) if template is not None else request.sentence
-        return SentenceTranslationResult(
-            translation=translation,
-            provenance={"source": "runtime-template-translator", "provider": "local"},
-        )
 
 
 @dataclass(slots=True)
@@ -406,8 +237,8 @@ def build_runtime_service(
     export_repository = ExportRepository(session)
     generate_job_service = GenerateJobService(job_repository)
     text_generation_service = TextGenerationService(
-        sentence_adapter=_TemplateSentenceAdapter(),
-        translation_adapter=_TemplateTranslationAdapter(),
+        sentence_adapter=LocalSentenceAdapter(),
+        translation_adapter=LocalTranslationAdapter(),
     )
     text_validation_service = TextValidationService()
     tatoeba_sentence_source = TatoebaSentenceSource(
@@ -459,47 +290,6 @@ def build_runtime_service(
         ),
         runtime_settings=runtime_settings,
     )
-
-
-def _sense_hint(definitions_html: str | None, display_form: str) -> str:
-    first_gloss = _first_gloss(definitions_html)
-    if not first_gloss:
-        return display_form
-
-    if first_gloss.startswith("definition for "):
-        candidate = first_gloss.removeprefix("definition for ").strip()
-        return candidate or display_form
-
-    if first_gloss.startswith("to "):
-        candidate = first_gloss.removeprefix("to ").strip()
-        return candidate or display_form
-
-    return first_gloss
-
-
-def _infer_sense_key(definitions_html: str | None, display_form: str) -> str | None:
-    candidates = [display_form.casefold(), _sense_hint(definitions_html, display_form).casefold()]
-    for candidate in candidates:
-        if candidate in _SENSE_ALIASES:
-            return _SENSE_ALIASES[candidate]
-    return None
-
-
-def _localized_sense(sense_hint: str | None, *, language: str) -> str:
-    if not sense_hint:
-        return "this"
-
-    sense_key = _SENSE_ALIASES.get(sense_hint.casefold(), sense_hint.casefold())
-    return _SENSE_TRANSLATIONS.get(sense_key, {}).get(language, sense_hint)
-
-
-def _first_gloss(definitions_html: str | None) -> str:
-    if not definitions_html:
-        return ""
-
-    first_segment = definitions_html.split("<br>", 1)[0]
-    stripped = _DEFINITION_RE.sub(" ", first_segment)
-    return " ".join(stripped.casefold().split())
 
 
 def _sanitize_deck_name(deck_name: str) -> str:
