@@ -52,6 +52,7 @@ completed: 2026-04-29T12:39:00Z
 - Task 2 audit metadata assertion → passed.
 - `uv run pytest tests/integration/test_text_job_flow.py tests/integration/test_custom_word_list_e2e_export_flow.py tests/integration/test_frequency_e2e_export_flow.py tests/integration/test_job_flow.py tests/cli/test_generate_command.py -q` → `25 passed in 162.37s (0:02:42)`.
 - Combined final metadata assertions after Task 3 → passed.
+- Phase-level exploratory full suite `uv run pytest tests -q` → failed during collection because `tests/test_runtime.py` and `tests/test_runtime_templates.py` import removed `_TemplateSentenceAdapter` / `_TemplateTranslationAdapter` symbols from `multilang.runtime`; this is pre-existing source/test drift unrelated to Phase 7 documentation/evidence edits and is logged in `deferred-items.md`.
 
 ## Deviations from Plan
 
@@ -71,6 +72,10 @@ None.
 ## Threat Flags
 
 None.
+
+## Deferred Issues
+
+- Pre-existing full-suite collection drift: `tests/test_runtime.py` and `tests/test_runtime_templates.py` still import `_TemplateSentenceAdapter` / `_TemplateTranslationAdapter` from `multilang.runtime`, but those private runtime symbols are no longer exported. Focused Phase 7 evidence suites passed; resolving the stale runtime tests is out of scope for this documentation/evidence hygiene plan.
 
 ## Self-Check: PASSED
 
