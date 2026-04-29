@@ -26,7 +26,7 @@ key-decisions:
   - "Validate every referenced media file before writing the package instead of producing a broken `.apkg`."
 patterns-established:
   - "Anki package notes derive GUIDs from the frozen export contract, not from mutable rendered content."
-requirements-completed: []
+requirements-completed: [CARD-03, EXPT-01, EXPT-03]
 duration: 6min
 completed: 2026-04-26
 ---

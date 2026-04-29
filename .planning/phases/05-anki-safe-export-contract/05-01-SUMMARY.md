@@ -30,7 +30,7 @@ key-decisions:
 patterns-established:
   - "Export contracts follow the same typed-domain pattern as lexical, text, and audio phases."
   - "New persistence phases ship ORM models, repository tests, and an Alembic migration together."
-requirements-completed: []
+requirements-completed: [CARD-01, CARD-02]
 duration: 7min
 completed: 2026-04-26
 ---

@@ -28,7 +28,7 @@ key-decisions:
 patterns-established:
   - "Runtime export flows persist produced artifact manifests after every successful write."
   - "CLI export failures surface as explicit non-zero messages instead of empty or partial artifacts."
-requirements-completed: []
+requirements-completed: [EXPT-01, EXPT-02, EXPT-03]
 duration: 4min
 completed: 2026-04-26
 ---

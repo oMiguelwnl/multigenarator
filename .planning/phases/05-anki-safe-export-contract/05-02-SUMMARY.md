@@ -27,7 +27,7 @@ key-decisions:
 patterns-established:
   - "Export workflow services return typed results instead of ad-hoc dictionaries."
   - "Tabular export files always include Anki import headers plus the canonical CARD-01 column order."
-requirements-completed: []
+requirements-completed: [CARD-01, CARD-02, CARD-04, EXPT-02, EXPT-03]
 duration: 3min
 completed: 2026-04-26
 ---
