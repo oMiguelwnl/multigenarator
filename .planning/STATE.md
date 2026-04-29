@@ -2,16 +2,16 @@
 gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
-status: ready_to_execute
-stopped_at: Phase 7 evidence and audit hygiene planned; ready to execute 4 plans
-last_updated: "2026-04-28T14:20:35Z"
-last_activity: 2026-04-28 -- Planned Phase 7 milestone evidence and audit hygiene across 4 executable plans.
+status: complete
+stopped_at: Phase 7 evidence and audit hygiene complete; v1.0 audit snapshot passed
+last_updated: "2026-04-29T12:32:00Z"
+last_activity: 2026-04-29 -- Completed Phase 7: refreshed Phase 1 verification, Phase 4 validation metadata, Phase 5/frontmatter audit metadata, and v1.0 audit snapshot.
 progress:
   total_phases: 7
-  completed_phases: 6
+  completed_phases: 7
   total_plans: 34
-  completed_plans: 30
-  percent: 86
+  completed_plans: 34
+  percent: 100
 ---
 
 # Project State
@@ -21,22 +21,22 @@ progress:
 See: .planning/PROJECT.md (updated 2026-04-18)
 
 **Core value:** Generate reliable, high-quality Anki cards for frequent vocabulary in the chosen language so the learner can study real words with accurate definitions, examples, translations, and audio.
-**Current focus:** Execute Phase 07 evidence and audit hygiene for v1.0 milestone closeout
+**Current focus:** Phase 07 evidence and audit hygiene complete for v1.0 milestone closeout
 
 ## Current Position
 
-Phase: 07 (milestone-evidence-audit-hygiene) — NEXT UP
-Plan: 4 plans ready
-Status: Phase 7 planned to refresh Phase 1 verification, Phase 4 validation metadata, Phase 5/frontmatter audit metadata, and the v1.0 audit snapshot.
-Last activity: 2026-04-28 -- Planned Phase 7 with 4 executable plans in 2 waves.
+Phase: 07 (milestone-evidence-audit-hygiene) — COMPLETE
+Plan: 04 complete (4/4 plans complete)
+Status: Phase 7 refreshed Phase 1 verification, Phase 4 validation metadata, Phase 5/frontmatter audit metadata, and the v1.0 audit snapshot.
+Last activity: 2026-04-29 -- Completed Phase 7 with current Phase 1 verification, Phase 4 validation metadata, Phase 5 summary metadata, and audit-open metadata reconciliation.
 
-Progress: [█████████-] 86%
+Progress: [██████████] 100%
 
 ## Performance Metrics
 
 **Velocity:**
 
-- Total plans completed: 30
+- Total plans completed: 34
 - Average duration: 14 min
 - Total execution time: 5h 58m
 
@@ -50,11 +50,12 @@ Progress: [█████████-] 86%
 | 04-audio-synthesis | 5 | 1h 3m | 13 min |
 | 05-anki-safe-export-contract | 5 | 17 min | 3 min |
 | 06-end-to-end-text-acceptance-pipeline | 4 | 40 min | 10 min |
+| 07-milestone-evidence-audit-hygiene | 4 | 20 min | 5 min |
 
 **Recent Trend:**
 
-- Last 5 completed plans: 05-05, 06-01, 06-02, 06-03, 06-04 completed
-- Trend: Functional E2E gap closure is complete; Phase 7 evidence/audit hygiene is planned and ready to execute before milestone closeout
+- Last 5 completed plans: 06-04, 07-01, 07-02, 07-03, 07-04 completed
+- Trend: Functional E2E gap closure and evidence/audit hygiene are complete; v1.0 milestone audit snapshot now passes
 
 ## Accumulated Context
 
@@ -89,6 +90,10 @@ Recent decisions affecting current work:
 - [Plan 06-02]: Assert shipped text integration behavior by persisted contract instead of stale exact sentence literals.
 - [Plan 06-03]: Treat custom word-list generate → accepted text → fake Azure audio → `.apkg`/CSV/TSV export as required milestone evidence.
 - [Plan 06-04]: Use bounded frequency samples for E2E speed but separately assert the production 3 levels × 1000 cards contract.
+- [Plan 07-01]: Treat refreshed `01-VERIFICATION.md` as the current source of truth for shipped-path resume, visible progress, and duplicate-safe rerun behavior.
+- [Plan 07-02]: Represent live Azure and playback checks as manual-only validation rows while keeping Phase 4 non-live provider/service checks automated.
+- [Plan 07-03]: Reconcile scanner-facing metadata through frontmatter-only updates that preserve existing UAT, quick-task, and Phase 5 evidence prose.
+- [Plan 07-04]: Close JOB requirements only after current Phase 1 re-verification exists, then preserve prior audit gaps under a closed-gaps history instead of deleting context.
 - [Plan 01-01]: Use a uv-managed src-layout Python package with typed settings and explicit resume diagnostics as the foundation for Phase 1.
 - [Plan 01-02]: Store run-level and item-level state separately so resume validation can compare stage pointers against item rows.
 - [Plan 01-02]: Treat repeated successful item writes for the same run_key/item_key as duplicate reuse and count them in skipped_duplicates.
@@ -112,12 +117,11 @@ Recent decisions affecting current work:
 
 ### Pending Todos
 
-- Execute Phase 7: Milestone Evidence & Audit Hygiene.
-- Re-run `/gsd-audit-milestone v1.0` after both gap-closure phases complete.
+- Archive or complete v1.0 milestone when ready.
 
 ### Blockers/Concerns
 
-- [Phase 7] Phase 1 verification and audit metadata are stale relative to later gap-closure work.
+- *(none)*
 
 ### Quick Tasks Completed
 
@@ -135,6 +139,6 @@ Items acknowledged and carried forward from previous milestone close:
 
 ## Session Continuity
 
-Last session: 2026-04-28T14:20:35Z
-Stopped at: Phase 6 complete; next step is `/gsd-plan-phase 7`
+Last session: 2026-04-29T12:32:00Z
+Stopped at: Phase 7 complete; v1.0 audit snapshot passed
 Resume file: None

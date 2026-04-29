@@ -18,7 +18,7 @@ Decimal phases appear between their surrounding integers in numeric order.
 - [x] **Phase 4: Audio Synthesis** - Add reliable word and sentence audio with Azure-first fallback handling. _(gap closure completed after 5/5 plans)_
 - [x] **Phase 5: Anki-Safe Export Contract** - Freeze the card schema, template behavior, and export clean decks that import into Anki without repair. _(verified complete on 2026-04-28)_
 - [x] **Phase 6: End-to-End Text Acceptance Pipeline** - Close the milestone audit gap where realistic vocabulary can stall at review-only text before audio/export. _(functional E2E gap closure completed on 2026-04-28)_
-- [ ] **Phase 7: Milestone Evidence & Audit Hygiene** - Refresh stale verification and planning metadata so the v1.0 audit can pass cleanly. _(gap closure planned from v1.0 audit)_
+- [x] **Phase 7: Milestone Evidence & Audit Hygiene** - Refresh stale verification and planning metadata so the v1.0 audit can pass cleanly. _(evidence hygiene complete on 2026-04-29)_
 
 ## Phase Details
 
@@ -135,7 +135,7 @@ Plans:
   2. A frequency-deck sample proves candidates can move through accepted text, word/sentence audio, and exportable card assembly.
   3. `tests/integration/test_text_job_flow.py` is refreshed to match intended runtime behavior and passes.
   4. At least one shipped-path E2E test proves custom word list -> accepted text -> audio -> `.apkg`/CSV/TSV export.
-**Plans**: 4 plans
+**Plans:** 4 plans
 
 Plans:
 - [x] 06-01-PLAN.md — Strengthen shipped local text adapters so realistic grounded vocabulary produces accepted rows.
@@ -158,10 +158,12 @@ Plans:
 **Plans**: 4 plans
 
 Plans:
-- [ ] 07-01-PLAN.md — Refresh stale Phase 1 lifecycle verification for JOB-01, JOB-02, and JOB-03.
-- [ ] 07-02-PLAN.md — Add missing Phase 4 validation metadata from verified audio evidence.
-- [ ] 07-03-PLAN.md — Reconcile scanner-facing UAT, quick-task, and Phase 5 summary metadata.
-- [ ] 07-04-PLAN.md — Refresh requirements, roadmap, state, and v1.0 milestone audit from current evidence.
+- [x] 07-01-PLAN.md — Refresh stale Phase 1 lifecycle verification for JOB-01, JOB-02, and JOB-03.
+- [x] 07-02-PLAN.md — Add missing Phase 4 validation metadata from verified audio evidence.
+- [x] 07-03-PLAN.md — Reconcile scanner-facing UAT, quick-task, and Phase 5 summary metadata.
+- [x] 07-04-PLAN.md — Refresh requirements, roadmap, state, and v1.0 milestone audit from current evidence.
+
+**Verification:** Phase 7 completed on 2026-04-29 with refreshed Phase 1 verification (`7/7`), Phase 4 validation metadata, scanner-readable UAT/quick-task/Phase 5 summary metadata, checked JOB requirements, and a passing v1.0 audit snapshot.
 
 ## Progress
 
@@ -176,4 +178,4 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 6 → 7
 | 4. Audio Synthesis | 5/5 | Complete | 2026-04-26 |
 | 5. Anki-Safe Export Contract | 5/5 | Complete | 2026-04-28 |
 | 6. End-to-End Text Acceptance Pipeline | 4/4 | Complete | 2026-04-28 |
-| 7. Milestone Evidence & Audit Hygiene | 0/4 | Planned | - |
+| 7. Milestone Evidence & Audit Hygiene | 4/4 | Complete | 2026-04-29 |

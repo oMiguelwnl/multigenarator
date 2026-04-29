@@ -42,9 +42,9 @@
 - [x] **EXPT-01**: User can export generated cards as an `.apkg` deck that imports into Anki without manual field remapping. _(Phase 6 custom and frequency E2E tests export generated jobs as `.apkg` through the shipped CLI.)_
 - [x] **EXPT-02**: User can export the same generated cards as a UTF-8-safe CSV or TSV fallback. _(Phase 6 custom and frequency E2E tests export generated jobs as CSV and TSV through the shipped CLI.)_
 - [x] **EXPT-03**: User receives Anki-compatible audio references for `word_audio` and `sentence_audio`, with bundled media files that play correctly after import. _(Phase 6 E2E tests verify media-backed export after generated word and sentence audio assets exist.)_
-- [ ] **JOB-01**: User can resume an interrupted generation job without losing already completed cards. _(Reopened by v1.0 audit for Phase 7: current code may satisfy this, but stale Phase 1 verification still marks it blocked.)_
-- [ ] **JOB-02**: User can see per-batch progress and failures while generation is running. _(Reopened by v1.0 audit for Phase 7: current code may satisfy this, but stale Phase 1 verification still marks it blocked.)_
-- [ ] **JOB-03**: User can rerun the same deck or custom word list without silent duplicate card creation. _(Reopened by v1.0 audit for Phase 7: current code may satisfy this, but stale Phase 1 verification still marks it blocked.)_
+- [x] **JOB-01**: User can resume an interrupted generation job without losing already completed cards. _(Phase 7 Plan 07-01 refreshed `01-VERIFICATION.md`; current shipped-path evidence asserts `resumed_from_job=`.)_
+- [x] **JOB-02**: User can see per-batch progress and failures while generation is running. _(Phase 7 Plan 07-01 refreshed `01-VERIFICATION.md`; current CLI evidence asserts `stage=ingest` and lifecycle counters.)_
+- [x] **JOB-03**: User can rerun the same deck or custom word list without silent duplicate card creation. _(Phase 7 Plan 07-01 refreshed `01-VERIFICATION.md`; current shipped-path evidence asserts `skipped_duplicates=2` and `overwritten_items=2`.)_
 
 ## v2 Requirements
 
@@ -80,9 +80,9 @@ Which phases cover which requirements. Updated during roadmap creation.
 | Requirement | Phase | Status |
 |-------------|-------|--------|
 | DECK-01 | Phase 1 | Completed in Plan 01-01 |
-| JOB-01 | Phase 7 | Pending gap closure: refresh/supersede stale Phase 1 verification |
-| JOB-02 | Phase 7 | Pending gap closure: refresh/supersede stale Phase 1 verification |
-| JOB-03 | Phase 7 | Pending gap closure: refresh/supersede stale Phase 1 verification |
+| JOB-01 | Phase 7 | Completed in Phase 7 Plan 07-01 refreshed Phase 1 verification |
+| JOB-02 | Phase 7 | Completed in Phase 7 Plan 07-01 refreshed Phase 1 verification |
+| JOB-03 | Phase 7 | Completed in Phase 7 Plan 07-01 refreshed Phase 1 verification |
 | DECK-02 | Phase 6 | Completed in Plan 06-04 frequency accepted text/audio/export E2E |
 | DECK-03 | Phase 6 | Completed in Plan 06-03 custom-list accepted text/audio/export E2E |
 | LEX-01 | Phase 2 | Completed in Plans 02-01 and 02-03 |
@@ -105,11 +105,11 @@ Which phases cover which requirements. Updated during roadmap creation.
 
 **Coverage:**
 - v1 requirements: 23 total
-- Checked complete: 20
-- Pending gap closure: 3
+- Checked complete: 23
+- Pending gap closure: 0
 - Mapped to phases: 23
 - Unmapped: 0 ✓
 
 ---
 *Requirements defined: 2026-04-18*
-*Last updated: 2026-04-28 after Phase 6 functional E2E gap closure*
+*Last updated: 2026-04-29 after Phase 7 milestone evidence hygiene closure*
