@@ -74,6 +74,7 @@ Full decision history is in `.planning/PROJECT.md` and `.planning/milestones/v1.
 ### Pending Todos
 
 - Run `/gsd-new-milestone` to define fresh requirements and roadmap for the next milestone.
+- `.planning/todos/pending/2026-05-01-standardize-card-definition-templates.md` - Standardize card definition templates.
 
 ### Blockers/Concerns
 
