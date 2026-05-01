@@ -75,6 +75,53 @@ def test_lookup_can_refresh_existing_index(tmp_path: Path) -> None:
     assert refreshed.definitions == ["home"]
 
 
+
+def test_build_index_extracts_definition_metadata(tmp_path: Path) -> None:
+    source_path = _write_fixture_jsonl(
+        tmp_path / "es.jsonl.gz",
+        [
+            {
+                "word": "lavar",
+                "lang_code": "es",
+                "pos": "verb",
+                "forms": [{"form": "lavar", "tags": ["infinitive"]}],
+                "senses": [{"glosses": ["to wash something or clean it with water"]}],
+            },
+        ],
+    )
+
+    lookup = KaikkiLookup(data_dir=tmp_path)
+    lookup.build_index(language_code="es", source_path=source_path)
+    record = lookup.lookup(language_code="es", term="lavar")
+
+    assert record is not None
+    assert record.definitions == ["to wash something or clean it with water"]
+    assert record.part_of_speech == "verb"
+    assert record.grammar_tags == ["infinitive"]
+
+
+def test_build_index_prefers_more_explanatory_gloss(tmp_path: Path) -> None:
+    source_path = _write_fixture_jsonl(
+        tmp_path / "en.jsonl.gz",
+        [
+            {
+                "word": "house",
+                "lang_code": "en",
+                "pos": "noun",
+                "senses": [{"glosses": ["home", "a building where people live"]}],
+            },
+        ],
+    )
+
+    lookup = KaikkiLookup(data_dir=tmp_path)
+    lookup.build_index(language_code="en", source_path=source_path)
+    record = lookup.lookup(language_code="en", term="house")
+
+    assert record is not None
+    assert record.definitions == ["a building where people live"]
+    assert record.part_of_speech == "noun"
+
+
 def test_build_index_reuses_existing_index_until_force_refresh(tmp_path: Path) -> None:
     lookup = KaikkiLookup(data_dir=tmp_path)
     source_path = _write_fixture_jsonl(

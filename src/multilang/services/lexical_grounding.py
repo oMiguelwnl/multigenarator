@@ -93,7 +93,11 @@ class LexicalGroundingService:
     ) -> LexicalCardCandidate:
         policy = policy_for_language(language)
         learner_display_form = self._select_display_form(default=display_form, record=record)
-        definitions_html = self._format_definitions(record.definitions)
+        definitions_html = self._format_definitions(
+            record.definitions,
+            part_of_speech=record.part_of_speech,
+            grammar_tags=record.grammar_tags,
+        )
         pronunciation_source = "kaikki" if record.ipa else "kaikki_missing"
         notes: list[str] = []
         if record.ipa is None:
@@ -154,11 +158,118 @@ class LexicalGroundingService:
         return default
 
     @staticmethod
-    def _format_definitions(definitions: list[str]) -> str | None:
-        cleaned = [escape(definition.strip()) for definition in definitions if definition.strip()]
+    def _format_definitions(
+        definitions: list[str],
+        *,
+        part_of_speech: str | None = None,
+        grammar_tags: list[str] | None = None,
+    ) -> str | None:
+        cleaned = [
+            escape(
+                _format_definition_text(
+                    definition.strip(),
+                    part_of_speech=part_of_speech,
+                    grammar_tags=grammar_tags or [],
+                )
+            )
+            for definition in definitions
+            if definition.strip()
+        ]
         if not cleaned:
             return None
         return "<br>".join(cleaned)
+
+
+
+_PART_OF_SPEECH_LABELS = {
+    "adj": "adjective",
+    "adjective": "adjective",
+    "adv": "adverb",
+    "adverb": "adverb",
+    "article": "article",
+    "aux": "auxiliary verb",
+    "conj": "conjunction",
+    "conjunction": "conjunction",
+    "det": "determiner",
+    "determiner": "determiner",
+    "interj": "interjection",
+    "interjection": "interjection",
+    "noun": "noun",
+    "num": "numeral",
+    "numeral": "numeral",
+    "particle": "particle",
+    "postp": "postposition",
+    "prep": "preposition",
+    "preposition": "preposition",
+    "pron": "pronoun",
+    "pronoun": "pronoun",
+    "proper": "proper noun",
+    "proper noun": "proper noun",
+    "verb": "verb",
+}
+
+_VERB_FORM_LABELS = {
+    "conditional": "conditional",
+    "future": "future",
+    "gerund": "gerund",
+    "imperative": "imperative",
+    "infinitive": "infinitive",
+    "participle": "participle",
+    "past": "past",
+    "present": "present",
+    "subjunctive": "subjunctive",
+}
+
+_VERB_FORM_PRIORITY = (
+    "infinitive",
+    "past",
+    "present",
+    "future",
+    "imperative",
+    "gerund",
+    "participle",
+    "conditional",
+    "subjunctive",
+)
+
+
+def _format_definition_text(
+    meaning: str,
+    *,
+    part_of_speech: str | None,
+    grammar_tags: list[str],
+) -> str:
+    label = _part_of_speech_label(part_of_speech)
+    if label is None:
+        return meaning
+
+    details = [label]
+    verb_form = _simple_verb_form(meaning=meaning, part_of_speech_label=label, grammar_tags=grammar_tags)
+    if verb_form:
+        details.append(verb_form)
+    return f"{meaning} ({'; '.join(details)})"
+
+
+def _part_of_speech_label(value: str | None) -> str | None:
+    if value is None:
+        return None
+    normalized = " ".join(value.replace("-", " ").replace("_", " ").casefold().split())
+    if not normalized:
+        return None
+    return _PART_OF_SPEECH_LABELS.get(normalized, normalized)
+
+
+def _simple_verb_form(*, meaning: str, part_of_speech_label: str, grammar_tags: list[str]) -> str | None:
+    if part_of_speech_label not in {"verb", "auxiliary verb"}:
+        return None
+
+    normalized_tags = {tag.casefold() for tag in grammar_tags}
+    for tag in _VERB_FORM_PRIORITY:
+        if tag in normalized_tags:
+            return _VERB_FORM_LABELS[tag]
+    if meaning.casefold().startswith("to "):
+        return "infinitive"
+    return None
 
 
 __all__ = ["LexicalGroundingService", "build_lexical_grounding_service"]

@@ -22,6 +22,8 @@ class KaikkiRecord(BaseModel):
     display_form: str = Field(min_length=1)
     lemma: str = Field(min_length=1)
     definitions: list[str] = Field(default_factory=list)
+    part_of_speech: str | None = None
+    grammar_tags: list[str] = Field(default_factory=list)
     ipa: str | None = None
     source: str = Field(min_length=1, default="kaikki")
 
@@ -124,6 +126,8 @@ class KaikkiLookup:
             display_form=display_form,
             lemma=lemma,
             definitions=definitions,
+            part_of_speech=self._part_of_speech_from_payload(payload),
+            grammar_tags=self._grammar_tags_from_payload(payload),
             ipa=ipa,
         )
 
@@ -154,7 +158,8 @@ class KaikkiLookup:
                 gloss_text = str(gloss).strip()
                 if gloss_text and gloss_text not in definitions:
                     definitions.append(gloss_text)
-        return definitions
+        selected = _select_best_definition(definitions)
+        return [selected] if selected else []
 
     @staticmethod
     def _ipa_from_payload(payload: dict[str, object]) -> str | None:
@@ -168,6 +173,69 @@ class KaikkiLookup:
             if isinstance(ipa, str) and ipa.strip():
                 return ipa.strip()
         return None
+
+
+
+    @staticmethod
+    def _part_of_speech_from_payload(payload: dict[str, object]) -> str | None:
+        value = str(payload.get("pos") or "").strip()
+        return value or None
+
+    @staticmethod
+    def _grammar_tags_from_payload(payload: dict[str, object]) -> list[str]:
+        tags: list[str] = []
+        for tag in _payload_tags(payload):
+            if tag in _IGNORED_GRAMMAR_TAGS or tag in tags:
+                continue
+            tags.append(tag)
+        return tags
+
+
+_IGNORED_GRAMMAR_TAGS = {
+    "abbreviation",
+    "alt-of",
+    "alternative",
+    "canonical",
+    "form-of",
+    "romanization",
+    "table-tags",
+}
+
+
+def _payload_tags(payload: dict[str, object]) -> list[str]:
+    tags: list[str] = []
+    for section_name in ("forms", "senses"):
+        section = payload.get(section_name)
+        if not isinstance(section, list):
+            continue
+        for item in section:
+            if not isinstance(item, dict):
+                continue
+            item_tags = item.get("tags")
+            if not isinstance(item_tags, list):
+                continue
+            for tag in item_tags:
+                tag_value = str(tag).strip().casefold()
+                if tag_value and tag_value not in tags:
+                    tags.append(tag_value)
+    return tags
+
+
+def _select_best_definition(definitions: list[str]) -> str | None:
+    candidates = [" ".join(definition.split()) for definition in definitions if definition.strip()]
+    if not candidates:
+        return None
+    return max(candidates, key=_definition_quality_score)
+
+
+
+def _definition_quality_score(definition: str) -> int:
+    score = min(len(definition), 120)
+    if " " in definition:
+        score += 30
+    if 25 <= len(definition) <= 180:
+        score += 20
+    return score
 
 
 __all__ = ["KaikkiLookup", "KaikkiRecord", "normalize_lexical_key"]

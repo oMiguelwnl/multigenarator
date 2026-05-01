@@ -18,7 +18,7 @@ class StubLookup:
         return self._mapping.get(term.casefold())
 
 
-def test_grounding_prefers_study_form_and_english_definitions() -> None:
+def test_grounding_prefers_study_form_and_definition_template() -> None:
     service = LexicalGroundingService(
         lookup=StubLookup(
             {
@@ -26,7 +26,9 @@ def test_grounding_prefers_study_form_and_english_definitions() -> None:
                     term="lavar",
                     display_form="lavarse",
                     lemma="lavar",
-                    definitions=["to wash", "to wash oneself"],
+                    definitions=["to wash something or clean it with water", "to wash oneself"],
+                    part_of_speech="verb",
+                    grammar_tags=["infinitive"],
                     ipa="/laˈβaɾ/",
                 )
             }
@@ -46,11 +48,113 @@ def test_grounding_prefers_study_form_and_english_definitions() -> None:
     assert candidate.display_form == "lavarse"
     assert candidate.lemma == "lavar"
     assert candidate.lemma_key == "lavar"
-    assert candidate.definitions_html == "to wash<br>to wash oneself"
+    assert candidate.definitions_html == (
+        "to wash something or clean it with water (verb; infinitive)"
+        "<br>to wash oneself (verb; infinitive)"
+    )
     assert candidate.definition_language == "en"
     assert candidate.translation_target_language == "en"
     assert candidate.grounding_status is GroundingStatus.GROUNDED
 
+
+
+def test_grounding_formats_simple_grammar_labels_for_common_parts_of_speech() -> None:
+    service = LexicalGroundingService(
+        lookup=StubLookup(
+            {
+                "casa": KaikkiRecord(
+                    term="casa",
+                    display_form="casa",
+                    lemma="casa",
+                    definitions=["a building where people live"],
+                    part_of_speech="noun",
+                ),
+                "bonito": KaikkiRecord(
+                    term="bonito",
+                    display_form="bonito",
+                    lemma="bonito",
+                    definitions=["beautiful; pleasant to look at or experience"],
+                    part_of_speech="adj",
+                ),
+                "em": KaikkiRecord(
+                    term="em",
+                    display_form="em",
+                    lemma="em",
+                    definitions=["used to show location, time, or position inside something"],
+                    part_of_speech="prep",
+                ),
+            }
+        )
+    )
+
+    expected = {
+        "casa": "a building where people live (noun)",
+        "bonito": "beautiful; pleasant to look at or experience (adjective)",
+        "em": "used to show location, time, or position inside something (preposition)",
+    }
+    for item_key, definition in expected.items():
+        candidate = service.ground_word_list_item(
+            language=SupportedLanguage.ES,
+            item=ParsedWordListItem(
+                line_number=1,
+                submitted_form=item_key,
+                display_form=item_key,
+                item_key=item_key,
+            ),
+        )
+
+        assert candidate.definitions_html == definition
+
+
+def test_grounding_keeps_verb_grammar_simple() -> None:
+    service = LexicalGroundingService(
+        lookup=StubLookup(
+            {
+                "lava": KaikkiRecord(
+                    term="lava",
+                    display_form="lava",
+                    lemma="lavar",
+                    definitions=["washes; cleans something with water"],
+                    part_of_speech="verb",
+                    grammar_tags=["present", "third", "singular"],
+                )
+            }
+        )
+    )
+
+    candidate = service.ground_word_list_item(
+        language=SupportedLanguage.ES,
+        item=ParsedWordListItem(
+            line_number=1,
+            submitted_form="lava",
+            display_form="lava",
+            item_key="lava",
+        ),
+    )
+
+    assert candidate.definitions_html == "washes; cleans something with water (verb; present)"
+    assert "third" not in candidate.definitions_html
+    assert "singular" not in candidate.definitions_html
+
+
+def test_definition_formatter_covers_supported_basic_part_of_speech_labels() -> None:
+    cases = [
+        ("adv", "in a fast way", "in a fast way (adverb)"),
+        ("article", "used before a specific thing", "used before a specific thing (article)"),
+        ("conj", "used to connect ideas", "used to connect ideas (conjunction)"),
+        ("det", "used to point to a specific thing", "used to point to a specific thing (determiner)"),
+        ("interj", "used to greet someone", "used to greet someone (interjection)"),
+        ("num", "the number three", "the number three (numeral)"),
+        ("particle", "used to mark negation", "used to mark negation (particle)"),
+        ("pron", "used instead of a noun", "used instead of a noun (pronoun)"),
+        ("proper", "the name of a country", "the name of a country (proper noun)"),
+    ]
+
+    for part_of_speech, meaning, expected in cases:
+        assert (
+            LexicalGroundingService._format_definitions([meaning], part_of_speech=part_of_speech)
+            == expected
+        )
 
 def test_grounding_does_not_invent_ipa() -> None:
     service = LexicalGroundingService(
