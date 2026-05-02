@@ -5,6 +5,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 from html import escape
 from pathlib import Path
+import re
 from re import split
 
 from multilang.domain.audio import AudioAssetKind, AudioAssetRecord, AudioSynthesisStatus
@@ -85,7 +86,8 @@ class AssembleExportCardsService:
     def _render_definitions(self, candidate: LexicalCardCandidate) -> str:
         raw = candidate.definitions_html or ""
         cleaned = raw.replace("</ul>", "").replace("<ul>", "\n").replace("</li>", "\n").replace("<li>", "")
-        parts = [escape(part.strip()) for part in split(r"(?:<br\s*/?>|\n)+", cleaned) if part.strip()]
+        raw_parts = [part.strip() for part in split(r"(?:<br\s*/?>|\n)+", cleaned) if part.strip()]
+        parts = [escape(_require_definition_template(candidate, part)) for part in raw_parts]
         if not parts:
             raise AssembleExportCardsError(f"missing definitions for item {candidate.lemma_key}")
         return "<br>".join(parts)
@@ -93,6 +95,17 @@ class AssembleExportCardsService:
     def _to_sound_tag(self, asset: AudioAssetRecord) -> str:
         return f"[sound:{Path(asset.provenance.storage_path).name}]"
 
+
+
+_DEFINITION_TEMPLATE_RE = re.compile(r"^[A-Za-z][A-Za-z -]{1,40}:\s+\S")
+
+
+def _require_definition_template(candidate: LexicalCardCandidate, definition: str) -> str:
+    if _DEFINITION_TEMPLATE_RE.match(definition):
+        return definition
+    raise AssembleExportCardsError(
+        f"definition for item {candidate.lemma_key} must use '[part of speech]: [meaning]'"
+    )
 
 __all__ = [
     "AssembleExportCardsError",

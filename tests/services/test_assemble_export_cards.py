@@ -38,7 +38,11 @@ def make_text_record(
     )
 
 
-def make_candidate(*, item_key: str, definitions_html: str = "to run<ul><li>fast</li></ul>move & jump") -> LexicalCardCandidate:
+def make_candidate(
+    *,
+    item_key: str,
+    definitions_html: str = "verb: to run<ul><li>verb: to move & jump</li></ul>",
+) -> LexicalCardCandidate:
     return LexicalCardCandidate(
         submitted_form=item_key,
         display_form=f"{item_key} <front>",
@@ -173,7 +177,7 @@ def test_assemble_export_cards_persists_exact_field_order_and_sound_tags() -> No
 def test_assemble_export_cards_joins_definitions_with_br_and_preserves_image_blank() -> None:
     service, _ = build_service(
         accepted_records=[make_text_record(item_key="jump")],
-        candidates={"jump": make_candidate(item_key="jump", definitions_html="first sense<ul><li>nested</li></ul>second & third")},
+        candidates={"jump": make_candidate(item_key="jump", definitions_html="noun: first sense<ul><li>noun: nested</li></ul>noun: second & third")},
         assets={
             ("jump", AudioAssetKind.WORD.value): make_asset(item_key="jump", asset_kind=AudioAssetKind.WORD, storage_path="jump-word.mp3"),
             ("jump", AudioAssetKind.SENTENCE.value): make_asset(item_key="jump", asset_kind=AudioAssetKind.SENTENCE, storage_path="jump-sentence.mp3"),
@@ -182,7 +186,7 @@ def test_assemble_export_cards_joins_definitions_with_br_and_preserves_image_bla
 
     row = service.execute(job_id="job-1", deck_language=SupportedLanguage.EN).cards[0]
 
-    assert row.definitions == "first sense<br>nested<br>second &amp; third"
+    assert row.definitions == "noun: first sense<br>noun: nested<br>noun: second &amp; third"
     assert "<ul>" not in row.definitions
     assert "<li>" not in row.definitions
     assert row.image == ""
@@ -191,7 +195,7 @@ def test_assemble_export_cards_joins_definitions_with_br_and_preserves_image_bla
 def test_assemble_export_cards_normalizes_existing_br_separators() -> None:
     service, _ = build_service(
         accepted_records=[make_text_record(item_key="harbor")],
-        candidates={"harbor": make_candidate(item_key="harbor", definitions_html="first sense<br>second & third")},
+        candidates={"harbor": make_candidate(item_key="harbor", definitions_html="noun: first sense<br>noun: second & third")},
         assets={
             ("harbor", AudioAssetKind.WORD.value): make_asset(item_key="harbor", asset_kind=AudioAssetKind.WORD, storage_path="harbor-word.mp3"),
             ("harbor", AudioAssetKind.SENTENCE.value): make_asset(item_key="harbor", asset_kind=AudioAssetKind.SENTENCE, storage_path="harbor-sentence.mp3"),
@@ -200,7 +204,7 @@ def test_assemble_export_cards_normalizes_existing_br_separators() -> None:
 
     row = service.execute(job_id="job-1", deck_language=SupportedLanguage.EN).cards[0]
 
-    assert row.definitions == "first sense<br>second &amp; third"
+    assert row.definitions == "noun: first sense<br>noun: second &amp; third"
 
 
 def test_assemble_export_cards_escapes_text_and_keeps_guid_stable_when_text_changes() -> None:
@@ -210,12 +214,12 @@ def test_assemble_export_cards_escapes_text_and_keeps_guid_stable_when_text_chan
     }
     service, _ = build_service(
         accepted_records=[make_text_record(item_key="read")],
-        candidates={"read": make_candidate(item_key="read", definitions_html="definition & example")},
+        candidates={"read": make_candidate(item_key="read", definitions_html="verb: definition & example")},
         assets=assets,
     )
     changed_service, _ = build_service(
         accepted_records=[make_text_record(item_key="read", example_sentence="I read <later>.", translation_text='Eu leio "depois" & sempre.')],
-        candidates={"read": make_candidate(item_key="read", definitions_html="definition & example")},
+        candidates={"read": make_candidate(item_key="read", definitions_html="verb: definition & example")},
         assets=assets,
     )
 
@@ -254,4 +258,22 @@ def test_assemble_export_cards_fails_fast_on_missing_export_prerequisites(
     )
 
     with pytest.raises(AssembleExportCardsError, match=message):
+        service.execute(job_id="job-1", deck_language=SupportedLanguage.EN)
+
+
+def test_assemble_export_cards_rejects_untemplated_definitions() -> None:
+    service, _ = build_service(
+        accepted_records=[make_text_record(item_key="raw")],
+        candidates={"raw": make_candidate(item_key="raw", definitions_html="raw meaning without grammar label")},
+        assets={
+            ("raw", AudioAssetKind.WORD.value): make_asset(
+                item_key="raw", asset_kind=AudioAssetKind.WORD, storage_path="raw-word.mp3"
+            ),
+            ("raw", AudioAssetKind.SENTENCE.value): make_asset(
+                item_key="raw", asset_kind=AudioAssetKind.SENTENCE, storage_path="raw-sentence.mp3"
+            ),
+        },
+    )
+
+    with pytest.raises(AssembleExportCardsError, match="must use"):
         service.execute(job_id="job-1", deck_language=SupportedLanguage.EN)
