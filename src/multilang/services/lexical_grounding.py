@@ -96,7 +96,6 @@ class LexicalGroundingService:
         definitions_html = self._format_definitions(
             record.definitions,
             part_of_speech=record.part_of_speech,
-            grammar_tags=record.grammar_tags,
         )
         pronunciation_source = "kaikki" if record.ipa else "kaikki_missing"
         notes: list[str] = []
@@ -162,14 +161,12 @@ class LexicalGroundingService:
         definitions: list[str],
         *,
         part_of_speech: str | None = None,
-        grammar_tags: list[str] | None = None,
     ) -> str | None:
         cleaned = [
             escape(
                 _format_definition_text(
                     definition.strip(),
                     part_of_speech=part_of_speech,
-                    grammar_tags=grammar_tags or [],
                 )
             )
             for definition in definitions
@@ -208,46 +205,16 @@ _PART_OF_SPEECH_LABELS = {
     "verb": "verb",
 }
 
-_VERB_FORM_LABELS = {
-    "conditional": "conditional",
-    "future": "future",
-    "gerund": "gerund",
-    "imperative": "imperative",
-    "infinitive": "infinitive",
-    "participle": "participle",
-    "past": "past",
-    "present": "present",
-    "subjunctive": "subjunctive",
-}
-
-_VERB_FORM_PRIORITY = (
-    "infinitive",
-    "past",
-    "present",
-    "future",
-    "imperative",
-    "gerund",
-    "participle",
-    "conditional",
-    "subjunctive",
-)
-
-
 def _format_definition_text(
     meaning: str,
     *,
     part_of_speech: str | None,
-    grammar_tags: list[str],
 ) -> str:
     label = _part_of_speech_label(part_of_speech)
     if label is None:
         return meaning
 
-    details = [label]
-    verb_form = _simple_verb_form(meaning=meaning, part_of_speech_label=label, grammar_tags=grammar_tags)
-    if verb_form:
-        details.append(verb_form)
-    return f"{meaning} ({'; '.join(details)})"
+    return f"{label}: {meaning}"
 
 
 def _part_of_speech_label(value: str | None) -> str | None:
@@ -258,18 +225,6 @@ def _part_of_speech_label(value: str | None) -> str | None:
         return None
     return _PART_OF_SPEECH_LABELS.get(normalized, normalized)
 
-
-def _simple_verb_form(*, meaning: str, part_of_speech_label: str, grammar_tags: list[str]) -> str | None:
-    if part_of_speech_label not in {"verb", "auxiliary verb"}:
-        return None
-
-    normalized_tags = {tag.casefold() for tag in grammar_tags}
-    for tag in _VERB_FORM_PRIORITY:
-        if tag in normalized_tags:
-            return _VERB_FORM_LABELS[tag]
-    if meaning.casefold().startswith("to "):
-        return "infinitive"
-    return None
 
 
 __all__ = ["LexicalGroundingService", "build_lexical_grounding_service"]

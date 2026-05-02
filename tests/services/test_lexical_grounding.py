@@ -49,8 +49,8 @@ def test_grounding_prefers_study_form_and_definition_template() -> None:
     assert candidate.lemma == "lavar"
     assert candidate.lemma_key == "lavar"
     assert candidate.definitions_html == (
-        "to wash something or clean it with water (verb; infinitive)"
-        "<br>to wash oneself (verb; infinitive)"
+        "verb: to wash something or clean it with water"
+        "<br>verb: to wash oneself"
     )
     assert candidate.definition_language == "en"
     assert candidate.translation_target_language == "en"
@@ -88,9 +88,9 @@ def test_grounding_formats_simple_grammar_labels_for_common_parts_of_speech() ->
     )
 
     expected = {
-        "casa": "a building where people live (noun)",
-        "bonito": "beautiful; pleasant to look at or experience (adjective)",
-        "em": "used to show location, time, or position inside something (preposition)",
+        "casa": "noun: a building where people live",
+        "bonito": "adjective: beautiful; pleasant to look at or experience",
+        "em": "preposition: used to show location, time, or position inside something",
     }
     for item_key, definition in expected.items():
         candidate = service.ground_word_list_item(
@@ -106,7 +106,7 @@ def test_grounding_formats_simple_grammar_labels_for_common_parts_of_speech() ->
         assert candidate.definitions_html == definition
 
 
-def test_grounding_keeps_verb_grammar_simple() -> None:
+def test_grounding_omits_verb_tense_from_definition_template() -> None:
     service = LexicalGroundingService(
         lookup=StubLookup(
             {
@@ -132,22 +132,23 @@ def test_grounding_keeps_verb_grammar_simple() -> None:
         ),
     )
 
-    assert candidate.definitions_html == "washes; cleans something with water (verb; present)"
+    assert candidate.definitions_html == "verb: washes; cleans something with water"
+    assert "present" not in candidate.definitions_html
     assert "third" not in candidate.definitions_html
     assert "singular" not in candidate.definitions_html
 
 
 def test_definition_formatter_covers_supported_basic_part_of_speech_labels() -> None:
     cases = [
-        ("adv", "in a fast way", "in a fast way (adverb)"),
-        ("article", "used before a specific thing", "used before a specific thing (article)"),
-        ("conj", "used to connect ideas", "used to connect ideas (conjunction)"),
-        ("det", "used to point to a specific thing", "used to point to a specific thing (determiner)"),
-        ("interj", "used to greet someone", "used to greet someone (interjection)"),
-        ("num", "the number three", "the number three (numeral)"),
-        ("particle", "used to mark negation", "used to mark negation (particle)"),
-        ("pron", "used instead of a noun", "used instead of a noun (pronoun)"),
-        ("proper", "the name of a country", "the name of a country (proper noun)"),
+        ("adv", "in a fast way", "adverb: in a fast way"),
+        ("article", "used before a specific thing", "article: used before a specific thing"),
+        ("conj", "used to connect ideas", "conjunction: used to connect ideas"),
+        ("det", "used to point to a specific thing", "determiner: used to point to a specific thing"),
+        ("interj", "used to greet someone", "interjection: used to greet someone"),
+        ("num", "the number three", "numeral: the number three"),
+        ("particle", "used to mark negation", "particle: used to mark negation"),
+        ("pron", "used instead of a noun", "pronoun: used instead of a noun"),
+        ("proper", "the name of a country", "proper noun: the name of a country"),
     ]
 
     for part_of_speech, meaning, expected in cases:
