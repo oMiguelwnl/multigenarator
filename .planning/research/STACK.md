@@ -1,315 +1,193 @@
-# Technology Stack
+# Stack Research: v1.2 Kindle Highlights and Template Refresh
 
 **Project:** Multilang Anki Card Generator  
-**Dimension:** Stack  
-**Researched:** 2026-04-18  
-**Overall recommendation:** Build this in **Python**, not JavaScript.
+**Milestone:** v1.2 Kindle Highlights and Template Refresh  
+**Researched:** 2026-05-03  
+**Scope:** Stack additions/changes only for WebDAV Kindle highlight ingestion, local Kindle Formatter-style normalization, highlight deck templates, concise richer examples, and phonetics template refresh. Existing Python 3.12/uv/Typer/Pydantic/SQLAlchemy/Alembic/Azure/genanki choices remain valid and should not be reworked.
 
-## Bottom-line Recommendation
+## Recommendation Summary
 
-For a 2025-standard build of a multilingual AI-assisted Anki deck generator, use a **Python application stack with FastAPI + Pydantic + SQLAlchemy + PostgreSQL**, plus **Azure Speech** for TTS, **DeepL** for sentence translation, **PydanticAI + LiteLLM** for LLM orchestration, **Kaikki/Wiktextract + curated frequency assets** for lexical grounding, and **genanki** for `.apkg` export.
+Do **not** add a new application framework or browser automation layer for v1.2. Implement Kindle highlight ingestion as a small typed Python adapter in the existing CLI/domain/persistence pipeline: `httpx` for WebDAV `PROPFIND`/`GET`, `defusedxml` for safe WebDAV XML parsing, stdlib `html.parser`/`html`/`re`/`unicodedata` for local Kindle export normalization, existing Pydantic models for normalized highlight contracts, existing SQLAlchemy/Alembic tables for idempotent import tracking, and existing `genanki` model/template support for highlight and phonetics decks.
 
-This is the standard stack because the hardest parts of the product are **language data assembly, validation, audio generation, and Anki packaging**. Python is materially better than JS/TS for those jobs.
+The only runtime dependency I recommend adding is **`defusedxml==0.7.1`** if it is not already present. Use existing `httpx` if already in the project; if not pinned yet, pin the current stable **`httpx==0.28.1`** rather than adding a WebDAV-specific library. Add **`respx==0.23.1`** as a dev dependency only if the current test suite lacks HTTPX request mocking.
 
----
+This milestone is mostly about **adapters, contracts, templates, and regression tests**, not new external services. The roadmap should schedule work around: WebDAV source adapter, Kindle HTML/text normalizer, highlight candidate mapper, highlight deck export model, phonetics template refresh, and golden-file/export validation.
 
-## Recommended Stack
+## Stack Additions
 
-### Core runtime / app shape
+| Area | Recommendation | Version / Status | Runtime or Dev | Why | Confidence |
+|---|---|---:|---|---|---|
+| WebDAV HTTP client | `httpx` | `0.28.1` current stable; `1.0.dev*` exists but do not use pre-release | Runtime if not already present | Supports custom HTTP methods through generic requests, strict timeouts, Basic/Digest auth, sync/async APIs, and matches existing FastAPI/HTTPX testing stack. | HIGH |
+| WebDAV XML parsing | `defusedxml.ElementTree` | `0.7.1` latest stable; old but production/stable | Runtime | WebDAV `PROPFIND` returns XML `207 Multi-Status`; safe XML parsing avoids entity-expansion/XXE issues from remote server responses. | HIGH |
+| Kindle export parsing | stdlib `html.parser.HTMLParser`, `html.unescape` / `html.escape` | Python 3.12 baseline | Runtime | Kindle Formatter is a client-side HTML normalizer. For v1.2, parse exported Kindle HTML locally into highlights/notes without a heavyweight HTML dependency. | MEDIUM-HIGH |
+| Text normalization | stdlib `re`, `unicodedata`, `pathlib`, `hashlib`, `datetime` | Python 3.12 baseline | Runtime | Handles whitespace collapse, comma/newline formatting, Unicode quote/dash cleanup, deterministic source hashes, file naming, and import timestamps without dependency bloat. | HIGH |
+| Import/export text artifacts | stdlib `csv` | Python 3.12 baseline | Runtime | Existing CSV/TSV artifacts can support normalized highlight audit output and candidate review; no pandas needed. | HIGH |
+| Highlight contracts | Existing Pydantic v2 | Already validated stack | Runtime | Define `WebDavResource`, `KindleHighlightRaw`, `KindleHighlightNormalized`, `HighlightDeckCandidate`, and `HighlightCard` contracts. Avoid untyped dicts between ingestion and generation. | HIGH |
+| Persistence | Existing SQLAlchemy/Alembic | Already validated stack | Runtime | Add import-source/job tables and uniqueness constraints for idempotent highlight ingestion; no new database. | HIGH |
+| Anki templates | Existing `genanki` | Existing stack (`0.13.1` previously recommended) | Runtime | `genanki.Model` supports fields, templates, CSS, media files, stable model IDs/GUIDs, and multiple note models for highlight vs phonetics cards. | HIGH |
+| HTTP mocking | `respx` | `0.23.1` current, released 2026-04-08 | Dev only | Mock WebDAV `PROPFIND`, `GET`, redirects, auth failures, timeouts, and malformed XML at HTTPX layer. Add only if existing HTTPX mocks are insufficient. | HIGH |
 
-| Technology | Version / family | Purpose | Why this choice | Confidence |
-|---|---|---|---|---|
-| Python | **3.12** baseline | Main runtime | Best ecosystem for NLP assets, lexical ETL, Azure Speech SDK, and Anki packaging. Safer than making JS do data-engineering work it is not best at. | HIGH |
-| uv | current `uv` family | Package/env/project manager | Fast, modern, lockfile-based, and now standard for greenfield Python projects. | HIGH |
-| FastAPI | current stable | API layer | Clean typed API, easy background integration, OpenAPI docs, strong fit for internal/admin APIs. | HIGH |
-| Typer | current stable | CLI layer | Same type-hint-first ergonomics as FastAPI; ideal for `import`, `generate`, `synthesize`, `export` commands. | HIGH |
-| Pydantic | **v2** family | Schema validation | Critical for validating card payloads, AI outputs, provider responses, and export contracts. | HIGH |
-
-### Database / persistence
-
-| Technology | Version / family | Purpose | Why this choice | Confidence |
-|---|---|---|---|---|
-| PostgreSQL | **17 family** target; 18-compatible schema | Source of truth | Best default relational store for card generation jobs, lexical assets metadata, deck versions, audio manifests, and auditability. Use PG17 for broad hosting support; keep schema compatible with PG18. | HIGH |
-| SQLAlchemy | **2.0** family | ORM / SQL layer | Mature, current, async-capable, and better long-term than lightweight ORMs for a data-heavy product. | HIGH |
-| Alembic | **1.18** family | DB migrations | Standard SQLAlchemy migration tool; use from day one. | HIGH |
-| Object storage | **Azure Blob** initially | Store generated audio, exports, cached raw assets | Since Azure TTS is already chosen, Blob is the path of least friction for audio artifacts and signed downloads. | MEDIUM |
-| Redis | current family, optional in MVP | Cache + job queue backing | Useful once you parallelize TTS/LLM work; not required for day-1 if a DB-backed job table is enough. | MEDIUM |
-
-### AI orchestration
-
-| Technology | Version / family | Purpose | Why this choice | Confidence |
-|---|---|---|---|---|
-| PydanticAI | current stable | Typed LLM workflow layer | Best fit when the output must be strict JSON-like card structures, not chatbot text. Stronger than prompt-string glue code. | HIGH |
-| LiteLLM | current stable | Provider abstraction / fallback routing | Keeps OpenAI/Azure/OpenRouter optionality without infecting the whole codebase with provider-specific logic. | HIGH |
-| Provider model | OpenAI or Azure OpenAI family for generation/judging | Generate definitions, examples, normalization, QA | Use one high-quality model family first; add fallbacks later through LiteLLM. | MEDIUM |
-
-**Recommendation:** use LLMs for **generation and adjudication**, not as the primary lexical database.
-
----
-
-## Domain-specific stack decisions
-
-### 1) Frequency lists
-
-**Recommended stack**
-
-| Component | Version / family | Role | Recommendation |
-|---|---|---|---|
-| `wordfreq` | **3.1.1** | Bootstrap candidate frequency ranks | Use to seed the initial 1k/2k/3k candidate lists for supported languages. |
-| Curated frozen assets | internal CSV/JSON/SQL tables | Production source of truth | After seeding, freeze and version your own frequency lists per language. |
-
-**Why:** `wordfreq` is excellent for bootstrapping and supports all 7 target languages, but it is not enough as the permanent product truth layer. It is from 2023 and aggregates mixed corpora; your deck product needs **deterministic, reviewable ranks**.
-
-**Do this:**
-- Generate candidate top-N lists with `wordfreq`
-- Filter junk tokens, inflected duplicates, abbreviations, and punctuation artifacts
-- Freeze the final production lists in Postgres + versioned asset files
-
-**Do not:** query `wordfreq` live at runtime and treat it as the final deck definition.
-
-**Confidence:** HIGH for bootstrap, MEDIUM for final ranking quality without manual curation.
-
-### 2) Dictionary + IPA data
-
-**Recommended stack**
-
-| Component | Version / family | Role | Recommendation |
-|---|---|---|---|
-| Kaikki / Wiktextract | current dump family | Structured lexical source | Primary open lexical source for lemma, senses, forms, usage labels, and often IPA/audio links. |
-| Internal normalization layer | custom | Canonical lexical model | Normalize per-language entries into one internal schema before any AI step. |
-
-**Why:** there is no single clean, official, multilingual API that reliably gives high-quality lemma + IPA + sense data across Portuguese, Spanish, English, French, German, Russian, and Dutch. Kaikki/Wiktextract is the most practical open structured base.
-
-**Use AI only for:**
-- filling gaps
-- rewriting definitions to your deck style
-- normalizing inconsistent glosses
-
-**Do not:** use unofficial free dictionary APIs as the core data source. Coverage and schema stability are too weak.
-
-**Confidence:** MEDIUM-HIGH.
-
-### 3) Example sentence sourcing
-
-**Recommended stack**
-
-| Component | Role | Recommendation |
-|---|---|---|
-| Grounded LLM generation | Primary sentence source | Generate short learner-friendly example sentences from lexical context and deck rules. |
-| Kaikki/Wiktionary examples | Secondary/reference source | Reuse only when short, natural, and clearly mapped to the intended sense. |
-| spaCy + Stanza | Validation layer | Check the target lemma/form actually appears and sentence segmentation/tokenization are sane. |
-
-**Why:** Tatoeba is not a good default quality bar for this product. A better 2025 stack is **generate with constraints, then validate**.
-
-**Practical rule:**
-- use lexical grounding + prompt template + structured output
-- verify sentence length, lemma inclusion, banned patterns, and language correctness
-- keep human-review hooks for the top-frequency decks
-
-**Confidence:** MEDIUM.
-
-### 4) Translation quality
-
-**Recommended stack**
-
-| Technology | Version / family | Role | Why |
-|---|---|---|---|
-| DeepL API | current API | Primary sentence translation | Strong support for all target languages here and usually better literal sentence quality than generic LLM-only translation for European languages. | 
-| LLM judge / rewrite pass | same provider as generation | Repair/normalize edge cases | Use only as fallback or QA, not as the main translator. |
-
-**Why:** your output is learner-facing and sentence translation accuracy matters more than generic AI flexibility. DeepL is the better default translation backbone here.
-
-**Do not:** rely on the same LLM prompt that generated the sentence to also “translate itself” as the only quality mechanism.
-
-**Confidence:** HIGH for language coverage, MEDIUM for final quality until evaluated on your sentence style.
-
-### 5) TTS / audio generation
-
-**Recommended stack**
-
-| Technology | Version / family | Role | Why |
-|---|---|---|---|
-| Azure Speech Service | current | TTS provider | Officially supports TTS voices for the target languages and is already the intended provider. |
-| `azure-cognitiveservices-speech` | **1.49.x** | Python SDK | Official SDK with current releases and good Python support. |
-| SSML | Azure SSML support | Pronunciation/styling control | Necessary for pronunciation tuning, voice selection, pacing, and multilingual handling. |
-
-**Why:** Azure Speech is the most natural fit here because voice coverage is broad, SSML is mature, and Python integration is straightforward.
-
-**Implementation advice:**
-- Generate and cache **word audio** and **sentence audio** separately
-- Track voice ID, locale, SDK version, and synthesis hash in DB
-- Make audio generation idempotent
-
-**Confidence:** HIGH.
-
-### 6) Anki export
-
-**Recommended stack**
-
-| Technology | Version / family | Role | Why |
-|---|---|---|---|
-| `genanki` | **0.13.1** | `.apkg` generation | Still the pragmatic Python standard for generating Anki decks programmatically with media packaging. |
-| Stable internal card schema | custom | Export contract | Prevents export logic from leaking into generation logic. |
-
-**Why:** this is exactly the kind of task Python is better at. `genanki` is not flashy, but it directly matches the product need.
-
-**Important:** use stable note GUID generation from `(language, lemma, rank/list_id)` so regenerated decks update cleanly in Anki instead of duplicating notes.
-
-**Confidence:** MEDIUM-HIGH (library is older, but still the practical default).
-
-### 7) Storage model
-
-**Canonical entities**
-
-- `language`
-- `frequency_list_version`
-- `lemma`
-- `lexical_entry`
-- `example_sentence`
-- `translation`
-- `audio_asset`
-- `card`
-- `deck_export`
-- `generation_job`
-
-**Recommendation:** keep **normalized generation data** in Postgres, and only materialize final Anki fields at export time.
-
-Why: you will re-run prompts, switch voices, fix IPA normalization, and regenerate exports. A flat CSV-first architecture will become painful quickly.
-
-### 8) Testing stack
-
-| Technology | Version / family | Purpose | Why |
-|---|---|---|---|
-| pytest | **9.x** family | Test runner | Standard Python choice; strong fixtures and parametrization. |
-| HTTPX | current stable | API tests / external client mocking | Natural fit with FastAPI and async integrations. |
-| PydanticAI test utilities / mock providers | current family | AI workflow tests | Lets you test deterministic structured outputs without hitting live models. |
-| Golden-file fixtures | custom | Deck/export regression tests | Essential for ensuring card field order, HTML, media refs, and GUID stability. |
-
-**Minimum test layers:**
-- lexical normalization tests
-- prompt/output schema tests
-- translation/TTS provider adapter tests
-- `.apkg` export regression tests
-- end-to-end “generate 10 cards” smoke test
-
-**Confidence:** HIGH.
-
----
-
-## Recommended application shape
-
-### MVP shape
-
-1. **Typer CLI** for batch generation workflows
-   - `import-frequency`
-   - `import-lexicon`
-   - `generate-cards`
-   - `synthesize-audio`
-   - `export-anki`
-
-2. **FastAPI admin/internal API**
-   - trigger generation jobs
-   - inspect failed jobs
-   - preview cards
-   - download exports
-
-3. **Worker process**
-   - LLM generation
-   - translation
-   - TTS synthesis
-   - export packaging
-
-### Why this shape
-
-This product is fundamentally a **data pipeline with export**, not a realtime consumer SaaS app first. A CLI-first + API-assisted architecture is the cleanest v1. Build the web UI later on top of the same services.
-
----
-
-## What NOT to use
-
-| Avoid | Why not |
-|---|---|
-| Full JS/TS backend as the primary stack | Worse fit for lexical ETL, Python-only language tooling, and Anki packaging. |
-| LangChain as the default orchestration layer | Too much abstraction for a product that needs deterministic typed outputs, not agent experimentation. |
-| Tatoeba as default sentence source | Known quality concern; should be optional reference data only. |
-| SQLite as production source of truth | Fine for local dev; weak for concurrent generation jobs, auditability, and long-lived assets. |
-| “LLM-only” dictionary/IPA generation | Too hallucination-prone for learner content. Ground first, generate second. |
-| Live provider responses as permanent truth | Always persist normalized outputs and provider metadata; never make export depend on re-calling providers. |
-
----
-
-## Installation baseline
+### Minimal uv changes
 
 ```bash
-# project/runtime
-uv init
-uv add fastapi typer pydantic sqlalchemy alembic psycopg[binary] httpx
+# runtime addition
+uv add defusedxml
 
-# ai/orchestration
-uv add pydantic-ai litellm
+# only if httpx is not already installed/pinned
+uv add httpx
 
-# language + export
-uv add wordfreq stanza spacy genanki azure-cognitiveservices-speech
-
-# testing
-uv add --dev pytest pytest-asyncio
+# only if current tests cannot mock HTTPX requests cleanly
+uv add --dev respx
 ```
 
-**Optional later:** `redis`, worker library (`arq`/`dramatiq` family), `orjson`, `logfire`.
+Do not pin to HTTPX `1.0.dev*`; PyPI shows pre-releases, but v1.2 should use stable `0.28.1` unless the project has a deliberate pre-release policy.
 
----
+## Integration Points
 
-## Decision summary for roadmap use
+### 1. WebDAV ingestion adapter
 
-### Prescriptive recommendation
+Add a source adapter, not a new service:
 
-- **Use Python.**
-- **Use FastAPI + Typer + Pydantic + SQLAlchemy + PostgreSQL as the backbone.**
-- **Use `wordfreq` only to bootstrap frequency candidates, then freeze your own lists.**
-- **Use Kaikki/Wiktextract as the lexical base for definitions/IPA, not LLMs alone.**
-- **Use grounded LLM generation for example sentences, validated with spaCy/Stanza.**
-- **Use DeepL for translation.**
-- **Use Azure Speech for audio.**
-- **Use genanki for `.apkg` export.**
+- `KindleWebDavSource` or `WebDavHighlightSource` using `httpx.Client` / existing project HTTP client conventions.
+- Operations needed for v1.2:
+  - `PROPFIND` configured directory (`Depth: 1`) to list candidate files.
+  - Parse `207 Multi-Status` XML with `defusedxml.ElementTree`.
+  - Select newest or matching Kindle export files by extension/name/mtime/ETag.
+  - `GET` selected file content.
+  - Persist source URL, ETag / Last-Modified where available, content hash, fetched timestamp, and import job ID.
+- Keep credentials in existing config/env handling. Do not store WebDAV passwords in DB or exported artifacts.
 
-If you want one sentence: **this should be a Python data-product stack with strong lexical grounding and typed AI orchestration, not a generic JS AI app.**
+Use direct WebDAV protocol support rather than a WebDAV package because v1.2 only needs read/list/download. RFC 4918 confirms these are standard HTTP extensions (`PROPFIND`, `Depth`, `207 Multi-Status`) over normal HTTP.
 
----
+### 2. Local Kindle Formatter-style normalization
 
-## Confidence by area
+Implement as a deterministic local module, e.g. `kindle_normalizer.py`:
 
-| Area | Confidence | Notes |
+- Input: raw Kindle exported HTML/text bytes from WebDAV or local fixture.
+- Decode with explicit UTF-8 fallback strategy and preserve raw content hash.
+- Use `html.parser.HTMLParser` to extract book title/author if present and highlight/note text blocks.
+- Use `html.unescape`, `unicodedata.normalize("NFC", ...)`, `re` whitespace cleanup, and quote/dash normalization rules.
+- Output Pydantic records with raw text, normalized text, source book metadata, source position if available, and deterministic highlight hash.
+- Produce comma-separated or line-separated normalized candidate text only as an **artifact**, not as the internal canonical model.
+
+The pch Kindle Formatter page confirms the existing external tool accepts Kindle-exported HTML and produces Markdown/plain text in-browser. Reimplement the necessary deterministic subset locally; do not automate the site.
+
+### 3. Highlight deck candidate flow
+
+Integrate highlights as a third input mode beside frequency and custom word-list flows:
+
+- Add CLI commands/options such as `import-kindle-highlights`, `normalize-highlights`, and `generate --mode highlights` or equivalent consistent with existing Typer command style.
+- Convert normalized highlights to candidate vocabulary through existing word-list/generation pipeline where possible, but tag source as `highlight`.
+- Preserve existing frequency deck mode; despite `alter_organizado.md` saying highlights may replace `wordfreq` for this workflow, project constraints say highlights are a **new mode**, not a replacement.
+- Store source provenance so generated highlight cards can be traced back to book/export/highlight.
+
+### 4. Highlight-specific Anki model/template
+
+Use existing `genanki` export layer but add a separate note model for highlight cards:
+
+- Field names should be English and stable, e.g. `SortIndex`, `Word`, `IPA`, `Example Sentence`, `Definition`, `word_audio`, `sentence_audio`, `Image`, plus optional hidden provenance fields only if they do not leak into the template.
+- No `Translation` field for highlight cards.
+- Front: word, IPA, audio, example sentence.
+- Back: `{{FrontSide}}`, divider, `Definition`, blank/manual image field.
+- CSS: centered responsive layout using Multilang colors; adapt the supplied template but avoid fragile inline JS autoplay assumptions as a core requirement.
+
+Genanki supports separate `Model` definitions with fields/templates/CSS and media packaging, so this does not require a new export library.
+
+### 5. Phonetics template refresh
+
+Keep this inside the existing genanki template registry:
+
+- Add/update the phonetics model fields to remove unused `Notes`, `is_priming`, and `is_sentence` from the export contract where safe.
+- Use the supplied front template structure.
+- Back should reveal `Sentence Translation` like the normal card behavior.
+- Restyle CSS to Multilang colors.
+- Preserve media field references: `letter_audio`, `word_audio`, `sentence_audio`.
+
+This is template/model contract work, not new TTS/audio stack work.
+
+### 6. Example sentence rule refresh
+
+No new sentence-generation library is needed. Adjust existing LLM prompt/contracts/validators:
+
+- Add highlight-mode sentence policy: grammatically richer than v1.0/v1.1 but still concise.
+- Validate max token/character length, target word inclusion, no excessive clauses, and no translation field for highlight decks.
+- Keep existing text validation/regeneration path.
+
+## Testing Notes
+
+### Unit tests
+
+- WebDAV XML parser:
+  - Valid `207 Multi-Status` with multiple resources.
+  - Namespaces and URL-encoded filenames.
+  - Missing ETag/Last-Modified.
+  - Malformed XML and entity/DTD payloads blocked by `defusedxml`.
+- Kindle normalizer:
+  - Golden fixtures for representative Kindle-exported HTML.
+  - Unicode normalization, smart quotes, em/en dashes, non-breaking spaces, duplicated whitespace.
+  - Empty highlights, notes without highlights, duplicate highlights, multiline highlights.
+- Pydantic contracts:
+  - Raw-to-normalized-to-candidate schema validation.
+  - Deterministic hashes and dedupe keys.
+
+### Adapter/integration tests
+
+- Use `respx` or existing HTTPX mock utilities to test:
+  - `PROPFIND` then `GET` happy path.
+  - 401/403 auth errors.
+  - 404 configured folder/file not found.
+  - Timeout/retry behavior according to existing retry policy.
+  - Server redirects and trailing-slash collection behavior.
+- Use SQLAlchemy tests for idempotent imports:
+  - Same ETag/hash does not duplicate records.
+  - Changed content creates a new import version.
+  - Candidate/card generation can resume after partial failure.
+
+### Export regression tests
+
+- Golden-file or model snapshot tests for:
+  - Highlight model field order and absence of `Translation`.
+  - `Definition` only on the back.
+  - English field names in templates.
+  - Responsive CSS retained in generated model.
+  - Phonetics model no longer references removed fields.
+  - Back template reveals `Sentence Translation`.
+  - Stable GUIDs for highlight cards, preferably derived from `(language, normalized_word_or_lemma, highlight_source_hash)` or an explicit candidate identity.
+
+### Manual smoke tests
+
+- Fetch one real WebDAV export from `https://otaru.infini-cloud.net/dav/` using configured credentials.
+- Generate a tiny highlight deck and import into Anki Desktop.
+- Confirm media references play, layout is centered on desktop/mobile widths, highlight cards have no translation, and phonetics back reveals sentence translation.
+
+## What Not To Add
+
+| Avoid | Why |
+|---|---|
+| Browser automation / Playwright / Selenium for Kindle Formatter | The external formatter is a static client-side tool; automation would be brittle, untestable, and unnecessary. Reimplement normalization locally. |
+| A WebDAV-specific dependency as the default (`webdavclient3`, etc.) | v1.2 only needs list/download. Direct `httpx` keeps behavior transparent, typed, and easy to mock. Reconsider only if the real server exposes non-standard quirks that make direct HTTP too costly. |
+| BeautifulSoup/lxml as default HTML parser | Kindle export normalization is narrow. Start with stdlib `html.parser`; add `beautifulsoup4` only if real Kindle fixtures prove malformed markup cannot be handled deterministically. Avoid `lxml` unless needed because it expands the dependency/security surface. |
+| pandas | Highlight normalization is record parsing, not dataframe analytics. Pydantic + stdlib CSV is enough. |
+| New database or queue | Existing SQLAlchemy/Alembic persistence and job tracking are sufficient for v1.2. Add queue work only if parallel ingestion/generation becomes a measured bottleneck. |
+| New LLM/translation provider | Highlight mode changes prompt rules and templates, not provider strategy. Keep existing generation/validation stack. |
+| New Anki export library | `genanki` already supports separate models, CSS, templates, media files, and stable note GUIDs. |
+| Storing WebDAV secrets in imported source rows | Credentials should stay in env/config/secrets handling; persist only non-secret source metadata. |
+
+## Sources/Confidence
+
+| Source | Finding Used | Confidence |
 |---|---|---|
-| Python over JavaScript | HIGH | Strong ecosystem advantage for this exact problem shape. |
-| Core app stack | HIGH | FastAPI/Pydantic/SQLAlchemy/Postgres is standard and current. |
-| Frequency bootstrap | HIGH | `wordfreq` is solid for seeding. |
-| Dictionary/IPA source | MEDIUM-HIGH | Kaikki/Wiktextract is practical, but normalization work is non-trivial. |
-| Sentence sourcing | MEDIUM | Quality depends on prompt + validation design. |
-| Translation | HIGH | DeepL language support is strong for this scope. |
-| TTS | HIGH | Azure Speech coverage and Python SDK are current. |
-| Anki export | MEDIUM-HIGH | `genanki` is older but still the pragmatic choice. |
+| Project context: `.planning/PROJECT.md`, `.planning/ROADMAP.md`, `.planning/REQUIREMENTS.md`, `alter_organizado.md` | v1.2 scope, current stack constraints, highlight/template requirements. | HIGH |
+| HTTPX docs — https://www.python-httpx.org/ | HTTPX provides sync/async APIs, strict timeouts, auth support, custom HTTP transport behavior; appropriate for WebDAV requests. | HIGH |
+| HTTPX PyPI — https://pypi.org/project/httpx/ | Current stable `0.28.1`; `1.0.dev*` pre-releases exist. | HIGH |
+| RFC 4918 — https://www.rfc-editor.org/rfc/rfc4918 | WebDAV uses HTTP methods/headers and XML `207 Multi-Status`; `PROPFIND` and `Depth` are standard. | HIGH |
+| defusedxml PyPI — https://pypi.org/project/defusedxml/ | Latest stable `0.7.1`; package protects stdlib XML parsing from entity expansion/external reference risks. | HIGH |
+| Python `html.parser` docs — https://docs.python.org/3/library/html.parser.html | Stdlib parser handles invalid HTML and exposes events for tags/data/comments; suitable for deterministic Kindle export extraction. | HIGH |
+| Python `csv` docs — https://docs.python.org/3/library/csv.html | Stdlib CSV supports dialects and dict reader/writer for audit artifacts. | HIGH |
+| Python `re` docs — https://docs.python.org/3/library/re.html | Stdlib regex supports Unicode string matching and compiled patterns for normalization rules. | HIGH |
+| Kindle Formatter page — https://pch.github.io/kindle-formatter/ | External formatter is browser/local-file oriented and transforms Kindle-exported HTML to Markdown/plain text. | MEDIUM |
+| Anki Manual templates — https://docs.ankiweb.net/templates/intro.html | Anki templates are HTML/CSS and control front/back field display. | HIGH |
+| genanki GitHub README — https://github.com/kerrickstaley/genanki | `genanki.Model` supports fields/templates/CSS/media and stable GUID customization. | HIGH |
+| RESPX PyPI — https://pypi.org/project/respx/ | Current `0.23.1`; mocks HTTPX/HTTP Core for pytest. | HIGH |
 
----
-
-## Sources
-
-- FastAPI docs — https://fastapi.tiangolo.com/ — HIGH
-- Pydantic docs (v2.13.2 shown) — https://docs.pydantic.dev/latest/ — HIGH
-- PydanticAI docs — https://ai.pydantic.dev/ — HIGH
-- SQLAlchemy 2.0 docs (2.0.49 current release) — https://docs.sqlalchemy.org/en/20/ — HIGH
-- Alembic docs (1.18.4 docs) — https://alembic.sqlalchemy.org/en/latest/ — HIGH
-- Typer docs — https://typer.tiangolo.com/ — HIGH
-- uv docs — https://docs.astral.sh/uv/ — HIGH
-- PostgreSQL current docs (18.3 current, recommend PG17 target for hosting compatibility) — https://www.postgresql.org/docs/current/ — HIGH
-- Azure Speech TTS overview — https://learn.microsoft.com/en-us/azure/ai-services/speech-service/text-to-speech — HIGH
-- Azure Speech language/voice support — https://learn.microsoft.com/en-us/azure/ai-services/speech-service/language-support?tabs=tts — HIGH
-- Azure Speech Python SDK PyPI (`azure-cognitiveservices-speech` 1.49.1) — https://pypi.org/project/azure-cognitiveservices-speech/ — HIGH
-- DeepL supported languages — https://developers.deepl.com/docs/getting-started/supported-languages — HIGH
-- `wordfreq` 3.1.1 PyPI — https://pypi.org/project/wordfreq/ — MEDIUM-HIGH
-- Kaikki/Wiktextract raw data docs — https://kaikki.org/dictionary/rawdata.html — MEDIUM-HIGH
-- spaCy language/models docs — https://spacy.io/usage/models — HIGH
-- Stanza overview — https://stanfordnlp.github.io/stanza/ — MEDIUM-HIGH
-- `genanki` 0.13.1 PyPI — https://pypi.org/project/genanki/ — MEDIUM
-- pytest docs — https://docs.pytest.org/en/stable/ — HIGH
-- HTTPX docs — https://www.python-httpx.org/ — HIGH
-- LiteLLM docs — https://docs.litellm.ai/ — MEDIUM-HIGH
+**Overall confidence:** HIGH for WebDAV/httpx/defusedxml/genanki recommendations; MEDIUM-HIGH for stdlib-only Kindle normalization until real exported Kindle fixtures from the user's WebDAV folder are validated.

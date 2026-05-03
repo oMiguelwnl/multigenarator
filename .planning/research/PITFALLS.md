@@ -1,331 +1,433 @@
-# Domain Pitfalls
+# v1.2 Pitfalls: Kindle Highlights and Template Refresh
 
-**Domain:** Multilingual AI-assisted language-learning Anki card generation
-**Researched:** 2026-04-18
-**Overall confidence:** HIGH for Anki/Azure constraints, MEDIUM for content-quality failure patterns
+**Project:** Multilang Anki Card Generator  
+**Milestone:** v1.2 Kindle Highlights and Template Refresh  
+**Researched:** 2026-05-03  
+**Overall confidence:** HIGH for Anki/WebDAV/export-contract risks; MEDIUM for Kindle Formatter parity because the formatter is small and public but has no formal spec or releases.
+
+## Context-Specific Risk Summary
+
+v1.2 adds a new reading-derived input source to an already shipped Python generator. The main failure mode is not “can WebDAV fetch a file?”; it is accidentally weakening stable v1.0/v1.1 contracts while threading a new source, new note/template behavior, local normalization, and revised phonetics rendering through existing generation/export paths.
+
+The roadmap should isolate this milestone into phases that first protect existing frequency/custom-word flows, then add secure ingestion, then normalize locally with fixture parity, then introduce highlight-mode generation and templates, and only then refresh phonetics templates with export/import evidence.
 
 ## Critical Pitfalls
 
-These are the mistakes most likely to cause rework, unusable decks, or a loss of trust in the generated content.
+### 1) Replacing frequency/custom-word flows instead of adding a third input mode
 
-### 1) Treating a “word” as a raw string instead of a lexical entry
-**What goes wrong:** The system builds cards around surface forms without modeling lemma, part of speech, sense, inflection, or fixed expression status.
+**What goes wrong:** Kindle highlights are implemented as “the new source” and code paths that previously handled frequency decks or custom word lists are edited in-place. The shipped 3-level frequency flow, stable ten-field schema, resume behavior, or custom-list flow regresses.
 
-**Why it happens:** Frequency lists and user word lists look like simple strings, so teams postpone lexical modeling.
-
-**Consequences:**
-- Duplicate cards for inflected variants
-- Wrong definitions for ambiguous forms
-- Bad examples for verbs that need reflexive particles or required prepositions
-- Inconsistent cards across languages with richer morphology
+**Impact:** High. This would break validated v1.0 value while adding v1.2.
 
 **Warning signs:**
-- Same spelling appears twice with different meanings and no disambiguation
-- Cards mix noun/verb/adjective senses under one definition block
-- Portuguese/Spanish reflexive verbs, gendered forms, or article-dependent nouns look wrong
-- Russian or German cards lose case/gender information needed for study
+- CLI flags or config names imply only one global `source` path.
+- Tests for v1.0 frequency/custom list generation are skipped because templates changed.
+- Highlight code branches on deck type inside low-level exporters or audio adapters.
+- Existing note schema fields are renamed globally to satisfy the highlight template.
 
-**Prevention strategy:**
-- Define a canonical lexical record early: `lemma`, `surface_form`, `pos`, `sense_id`, `morphology`, `register`, `translation`, `example`, `audio_text`
-- Separate lemma ranking from card rendering
-- Require POS-aware generation and validation
-- Add per-language morphology adapters instead of one universal formatter
+**Prevention:**
+- Introduce `InputSource` / `DeckMode` as a boundary: `frequency`, `custom_words`, `highlights`.
+- Keep canonical card/domain objects separate from Anki note-type renderers.
+- Add non-regression tests proving existing frequency and custom word-list fixtures produce byte/stable-field-compatible exports except where intentionally versioned.
+- Make “highlights replace wordfreq” a user-facing mode choice, not a codebase-wide replacement.
 
-**Phase to address:** Phase 1 - Content schema and lexical model
+**Test / verification strategy:**
+- Run one fixture per existing mode through generation -> audio manifest -> `.apkg`/CSV/TSV export.
+- Snapshot the original ten fields: `SortIndex`, `word`, `Front of Card`, `IPA`, `Definitions`, `Example Sentence`, `Translation`, `word_audio`, `sentence_audio`, `Image`.
+- Verify no highlight-specific note type appears in existing exports.
 
-### 2) Using frequency lists as a ready-made curriculum
-**What goes wrong:** Teams import top-N frequency data directly into the deck and assume “frequent” equals “good beginner card.”
+**Phase placement recommendation:** Phase 1 - integration boundary and regression harness before touching WebDAV.
 
-**Why it happens:** Frequency data looks objective and scalable.
+---
 
-**Consequences:**
-- Decks contain proper nouns, web noise, discourse fragments, abbreviations, or forms that are common in corpora but poor flashcards
-- Levels feel random instead of pedagogically useful
-- Cross-language decks become incomparable because the corpora differ
+### 2) Treating WebDAV as simple file download
 
-**Warning signs:**
-- Top 500 includes names, broken tokens, numerals, or corpus artifacts
-- Too many function words appear before more teachable content words
-- Users ask why obvious learner vocabulary is missing while junk is included
+**What goes wrong:** The importer assumes one URL maps directly to one static file and uses naive GET/listing logic. WebDAV servers expose collections, member URLs, redirects, trailing-slash behavior, XML `PROPFIND` responses, ETags, timestamps, locks, and partial failure statuses.
 
-**Prevention strategy:**
-- Treat frequency as one ranking signal, not the curriculum itself
-- Add a filtering layer for proper nouns, symbols, OCR/web noise, taboo content, and low-teachability items
-- Define inclusion/exclusion rules per POS and per language
-- Spot-audit each 100-word slice before scaling to 3000 cards/language
-
-**Phase to address:** Phase 2 - Lexical sourcing and ranking pipeline
-
-**Evidence:** `wordfreq` explicitly says its frequencies are a snapshot through about 2021 and unlikely to be updated again; it also mixes sources such as subtitles, web text, books, Twitter, and Reddit, which is useful for breadth but not a learner-ready curriculum by itself.
-
-### 3) One-shot AI generation with no validation loop
-**What goes wrong:** The system asks a model for definition + example + translation + IPA and trusts the response if it is syntactically valid JSON.
-
-**Why it happens:** Structured output looks reliable, and early demos seem impressive.
-
-**Consequences:**
-- Example sentence does not actually match the target sense
-- Translation is plausible but not faithful to the example
-- Definitions are too advanced, too dictionary-like, or subtly wrong
-- Quality drifts by language and by provider/model version
+**Impact:** High. Ingestion becomes flaky, duplicates are imported, or changed highlights are missed.
 
 **Warning signs:**
-- Example omits the target word or uses the wrong inflected form
-- Back-translation of the example diverges from intended meaning
-- Cards pass schema validation but fail human review
-- Quality is good in English/Spanish and noticeably worse in Russian/Dutch
+- Code hard-codes one filename and has no `PROPFIND` integration test.
+- The sync state stores only “last run time” and not remote path + ETag/Last-Modified/content hash.
+- 207 Multi-Status responses are not parsed.
+- Paths fail when the collection URL lacks or gains a trailing slash.
 
-**Prevention strategy:**
-- Split generation into stages: lexical analysis -> candidate content -> validation -> repair
-- Use separate prompts/models for generation vs critique
-- Add automatic checks: target word present, POS alignment, translation consistency, banned patterns, length bounds, register checks
-- Maintain a human-reviewed benchmark set per language and compare every pipeline revision against it
+**Prevention:**
+- Model WebDAV as a sync adapter with explicit operations: discover collection, list candidates, fetch selected object, persist remote metadata.
+- Use `Depth: 1` listing unless recursive sync is explicitly required.
+- Store remote URL/path, ETag if available, last modified, size, content hash, and imported-at timestamp.
+- Make ingestion idempotent: same remote content cannot create duplicate highlight records.
+- Handle redirects, 401/403/404/423/5xx, network timeouts, and malformed XML distinctly.
 
-**Phase to address:** Phase 3 - Content generation and QA pipeline
+**Test / verification strategy:**
+- Mock WebDAV `PROPFIND` 207 Multi-Status, direct GET, redirects, missing trailing slash, auth failure, and stale ETag cases.
+- Re-run sync twice against identical fixtures; assert zero duplicates.
+- Change only remote content hash; assert existing import record versions instead of creating unrelated rows.
 
-### 4) Letting low-quality example sources poison the deck
-**What goes wrong:** Teams ingest example corpora because they are cheap and multilingual, but they contain unnatural, mistranslated, decontextualized, or learner-hostile sentences.
+**Phase placement recommendation:** Phase 2 - WebDAV ingestion adapter and sync-state model.
 
-**Why it happens:** Example sourcing is the highest-volume content problem, so shortcuts are tempting.
+**Sources:** RFC 4918 defines WebDAV collections, `PROPFIND`, `Depth`, ETag handling, Multi-Status, and security considerations.
 
-**Consequences:**
-- Cards feel robotic or bizarre
-- Sentence translations are misleading
-- TTS sounds unnatural because the source sentence was unnatural
-- Users lose trust quickly because examples are the most visible quality signal
+---
 
-**Warning signs:**
-- Sentences are grammatically valid but socially odd, rare, or humorously unnatural
-- Literal translations preserve syntax from another language
-- Many examples read like subtitles, fragments, or isolated dialogue turns
+### 3) Leaking WebDAV credentials or learner reading data
 
-**Prevention strategy:**
-- Maintain a source quality rubric before any bulk ingestion
-- Score examples for naturalness, pedagogical usefulness, and translation faithfulness
-- Reject sources that cannot provide provenance and consistent quality
-- Prefer generation-plus-validation or curated sources over raw parallel corpora
+**What goes wrong:** Credentials, full highlight text, book titles, author names, or remote paths end up in logs, screenshots, CSV debug artifacts, test fixtures, exception traces, or AI-provider prompts.
 
-**Phase to address:** Phase 3 - Example sourcing and sentence QA
-
-### 5) Ignoring language-specific grammar and register rules
-**What goes wrong:** A single “universal card template” erases differences that matter for learners: articles, gender, aspect, separable prefixes, reflexive markers, case government, politeness, or formality.
-
-**Why it happens:** Teams optimize for shared schema and underestimate what must vary by language.
-
-**Consequences:**
-- Cards are technically filled but pedagogically weak
-- Learners memorize incomplete forms
-- Examples teach the wrong register or unnatural collocations
+**Impact:** Critical. WebDAV credentials grant access to personal files; highlights reveal what the learner reads and studies.
 
 **Warning signs:**
-- German nouns lack article/gender policy
-- Russian verbs/nouns omit aspect or case cues
-- Spanish/Portuguese verbs lose reflexive markers
-- Definitions and examples mix formal and colloquial registers without labeling
+- Config examples include real URLs/usernames/passwords.
+- Failed HTTP requests log full authorization headers or full response bodies.
+- Raw highlights are sent to an LLM before local minimization.
+- Golden fixtures are copied from a real Kindle library without redaction.
+- `.env`, local config, or fetched highlight files are candidates for commit.
 
-**Prevention strategy:**
-- Keep one canonical schema, but allow language-specific rendering rules
-- Define mandatory metadata per language family before deck generation
-- Add language-specific acceptance tests and review checklists
+**Prevention:**
+- Use environment variables or a local secrets file excluded from git; never store credentials in `.planning`, test fixtures, or generated decks.
+- Redact `Authorization`, usernames, passwords, tokens, remote paths, book titles, and raw highlight text in logs.
+- Persist only what is needed: normalized candidate terms, minimal provenance IDs, content hashes, and optional redacted source labels.
+- Default to local parsing before AI; if sending any source text to AI, send only the minimal selected highlight snippet and record user-visible consent/config.
+- Add `.gitignore` entries for downloaded WebDAV files, raw Kindle exports, local sync cache, and secrets.
 
-**Phase to address:** Phase 1 - Schema design, then Phase 6 - language-by-language expansion
+**Test / verification strategy:**
+- Unit-test log redaction and exception formatting.
+- Add a secret-scanning check over fixtures and generated artifacts.
+- Use fake WebDAV credentials and synthetic book/highlight fixtures only.
+- Verify AI prompt fixtures do not contain full raw highlight dumps.
 
-### 6) Assuming Azure TTS compatibility without building a voice matrix
-**What goes wrong:** The system assumes every in-scope language/locale has the desired voice, accent, and SSML behavior, then discovers late that some voices or locale variants differ from expectations.
+**Phase placement recommendation:** Phase 1 - security/privacy baseline; Phase 2 - WebDAV adapter; Phase 4 - AI generation prompt minimization.
 
-**Why it happens:** Voice support looks broad, so teams skip capability inventory.
+**Sources:** RFC 4918 security sections call out authentication, denial-of-service, privacy around properties/locks, XML entity risks, and malicious content hosting.
 
-**Consequences:**
-- Broken synthesis for some languages or accents
-- Inconsistent audio quality across decks
-- Last-minute schema changes because audio text must differ from display text
+---
 
-**Warning signs:**
-- Voice IDs are hard-coded in prompts/config without smoke tests
-- Some languages use locale fallback silently
-- Audio sounds fine for the word but poor for full sentences
-- Preferred accents are unavailable or inconsistent with target market
+### 4) Copying Kindle Formatter output superficially without defining normalization semantics
 
-**Prevention strategy:**
-- Build and version a voice capability matrix per target language and locale
-- Smoke-test every chosen voice with both single words and full sentences
-- Separate `display_text`, `tts_text`, and `tts_voice`
-- Define fallback voices before launch, not after failures
+**What goes wrong:** The local formatter only “splits by comma” and misses real Kindle export cleanup: metadata lines, separators, blank lines, clipped highlights, repeated highlights, punctuation, encodings, language-specific punctuation, multi-line highlights, and book/title boundaries.
 
-**Phase to address:** Phase 4 - Audio integration and SSML compatibility
-
-**Evidence:** Azure documents locale-specific voice availability and notes that multilingual voice language/accent behavior depends on supported locales and SSML; non-multilingual voices do not support `<lang xml:lang>`.
-
-### 7) Treating pronunciation/IPA as a formatting problem
-**What goes wrong:** IPA is generated or normalized as decorative text instead of as a language-specific pronunciation artifact.
-
-**Why it happens:** IPA looks like “just another field.”
-
-**Consequences:**
-- Incorrect or inconsistent phonetics across cards
-- Mixing phonemic and phonetic notation
-- Romanized helper text drifts from IPA and from TTS pronunciation
+**Impact:** High. The generated vocabulary set becomes noisy and non-reproducible.
 
 **Warning signs:**
-- Same word gets different IPA in different runs
-- Broad transcription for one language and narrow transcription for another with no policy
-- IPA is copied from the wrong regional standard
+- There is no fixture pair of raw Kindle export -> expected normalized output.
+- Parser logic depends on one personal export sample.
+- Normalizer does not preserve enough provenance to explain why a candidate exists.
+- Comma splitting corrupts phrases, decimals, names, clauses, or quoted text.
 
-**Prevention strategy:**
-- Define a pronunciation policy per language before generation
-- Separate authoritative pronunciation sourcing from LLM paraphrasing
-- Normalize output to one notation style per language and test for stability
-- Allow missing IPA when confidence is low instead of fabricating it
+**Prevention:**
+- Treat Kindle Formatter as behavior inspiration, not a spec. Define Multilang’s own local normalization contract.
+- Build parser stages: decode -> segment records -> remove Kindle metadata -> normalize whitespace/punctuation -> deduplicate -> extract candidate terms/snippets.
+- Preserve stable source provenance: book/source hash, highlight index, raw snippet hash, normalized text.
+- Add fixture families for accented characters, em dashes, quotes, multi-line highlights, duplicate highlights, empty notes, and malformed exports.
 
-**Phase to address:** Phase 2 - Lexical enrichment and pronunciation sourcing
+**Test / verification strategy:**
+- Golden tests for raw export fixtures and normalized comma-separated/text outputs.
+- Differential smoke check against Kindle Formatter for representative examples, but do not rely on browser automation.
+- Property tests for idempotence: `normalize(normalize(x)) == normalize(x)` where applicable.
 
-### 8) Designing export late instead of as a product contract
-**What goes wrong:** Teams get content generation “working” first and postpone Anki import/export rules until the end.
+**Phase placement recommendation:** Phase 3 - local parsing and normalization, before any card generation.
 
-**Why it happens:** CSV export seems trivial.
+**Sources:** `pch/kindle-formatter` README says it is a simple browser-only tool for cleaning Kindle desktop exports into plain text and that highlights are processed locally in the browser; it has no formal API/release contract.
 
-**Consequences:**
-- Broken UTF-8 import for multilingual text
-- Wrong field counts due to unescaped delimiters/newlines
-- Duplicate handling updates the wrong notes
-- Audio fields do not play after import
+---
 
-**Warning signs:**
-- CSV rows have variable column counts
-- Example sentences include raw newlines or separators without escaping
-- Import requires manual clicking/tweaking to succeed
-- Re-importing the same deck creates duplicates unexpectedly
+### 5) Losing source context needed for sense disambiguation
 
-**Prevention strategy:**
-- Freeze the Anki note schema early and treat it as an integration contract
-- Add golden-file tests for importable UTF-8 text exports
-- Test round-trip behavior: import -> reimport update -> media check
-- Decide early whether stable IDs live in the first field, a dedicated ID field, or both
+**What goes wrong:** Highlight ingestion extracts isolated words, discards surrounding sentence/book context, and then uses the existing custom-word generation path. Polysemous words get the wrong definition/example because reading context was thrown away.
 
-**Phase to address:** Phase 1 - Schema contract, then Phase 5 - export verification
-
-**Evidence:** Anki requires plain UTF-8 text for text imports, determines field count from the first row, treats the first field as the default uniqueness key for duplicate handling, and requires media references like `[sound:file.mp3]` to live in fields rather than templates.
-
-### 9) Inconsistent field formatting across languages
-**What goes wrong:** Each language pipeline gradually invents its own formatting for definitions, examples, IPA, and audio references.
-
-**Why it happens:** Teams add language support incrementally without a strict field contract.
-
-**Consequences:**
-- Deck templates become brittle
-- Export/import behavior changes by language
-- Users cannot trust what each field means
-- Regression testing becomes expensive
+**Impact:** High for learning quality.
 
 **Warning signs:**
-- Definitions are bullets in one language and prose blocks in another
-- Some decks include HTML, others plain text, others mixed formatting
-- Audio references use different naming conventions by language
+- Highlight candidate records contain only `word` and `language`.
+- Definition generation prompt does not include the original highlight sentence/snippet.
+- QA cannot explain which highlight produced a card.
+- Common words from highlights receive generic frequency-deck definitions instead of context-relevant senses.
 
-**Prevention strategy:**
-- Publish a canonical field-spec document with examples for every field
-- Create formatters that emit one normalized representation only
-- Add schema and snapshot tests at the record level
+**Prevention:**
+- Store both candidate term and source snippet/context window.
+- Add `source_mode=highlights`, `source_snippet`, `source_language`, `source_hash`, and `candidate_extraction_reason` metadata.
+- Use the highlight snippet for sense selection, but generate a new concise example sentence rather than copying the full highlight by default.
+- Mark low-confidence sense matches for review instead of exporting silently.
 
-**Phase to address:** Phase 1 - Field contract and formatting rules
+**Test / verification strategy:**
+- Fixture with ambiguous terms; assert selected definition follows highlight context.
+- Verify exported highlight cards do not expose private source snippets unless explicitly intended.
+- Add review report fields that map card -> source highlight ID/hash.
+
+**Phase placement recommendation:** Phase 3 - normalized candidate schema; Phase 4 - highlight-specific generation.
+
+---
+
+### 6) Generating highlight cards by reusing the translation-bearing normal deck schema
+
+**What goes wrong:** Highlight decks still include `Translation`, put `Definition` on the front, or reuse field names from the frequency note type. The new template requirement says `Definition` belongs on the back, there is no `Translation` field, field names should be English, and layout should be centered/responsive.
+
+**Impact:** High. The deck may import but not match the requested study behavior.
+
+**Warning signs:**
+- Template conditionally hides `Translation` instead of using a separate highlight note type.
+- The exporter fills blank translation fields for highlight decks “for compatibility.”
+- Front template includes too much answer information.
+- Field names mix Portuguese (`Palavra`, `Significado`) with English (`Definition`).
+
+**Prevention:**
+- Define a dedicated highlight note type with explicit fields, e.g. `SortIndex`, `Word`, `IPA`, `Example Sentence`, `Definition`, `word_audio`, `sentence_audio`, `Image` plus any stable hidden ID if needed.
+- Keep highlight field names English and template-specific; do not globally rename existing fields.
+- Use a renderer map from canonical domain card -> note type fields.
+- Add a template contract test: front has no definition/translation; back has definition; no `Translation` field exists.
+
+**Test / verification strategy:**
+- Snapshot front/back HTML and field list for highlight `.apkg`/CSV.
+- Import into Anki Desktop or inspect generated model fields; confirm no missing field replacements.
+- Verify cards remain usable when optional `IPA`, audio, or `Image` is blank.
+
+**Phase placement recommendation:** Phase 5 - highlight Anki note type/template/export.
+
+**Sources:** Anki field replacements are case-sensitive; `{{FrontSide}}` is only valid on the back; media references should live in fields rather than constructed from templates.
+
+---
+
+### 7) Breaking Anki update/import semantics by changing note types in place
+
+**What goes wrong:** Existing note types are modified to add/remove fields for highlights or phonetics. Anki can import missing notes, but updating existing notes becomes unreliable when note types change; newer Anki versions have merge behavior, but relying on user-side merging is brittle.
+
+**Impact:** High. Users may get duplicates, failed updates, or full-sync surprises.
+
+**Warning signs:**
+- One model ID/name is reused for incompatible field sets.
+- Existing templates lose fields like `Translation` because highlight decks do not need them.
+- The phonetics note type removes `Notes`, `is_priming`, or `is_sentence` without versioning/migration tests.
+- Re-import tests are missing.
+
+**Prevention:**
+- Version note types intentionally: e.g. `Multilang Normal v1`, `Multilang Highlight v1`, `Multilang Phonetics v2`.
+- Preserve old model IDs/field IDs where update compatibility is required; otherwise use new model names and document migration.
+- Keep stable note identity independent of display field changes.
+- Test import and re-import behavior on Anki 23.10+ assumptions instead of relying on manual merges.
+
+**Test / verification strategy:**
+- Generate v1.1 normal deck and v1.2 normal/highlight/phonetics decks; import/reimport in a disposable Anki profile.
+- Assert existing normal cards update or remain untouched as intended.
+- Confirm highlight and phonetics note types do not collide with normal decks.
+
+**Phase placement recommendation:** Phase 5 - export contract; Phase 6 - phonetics template refresh.
+
+**Sources:** Anki packaged deck docs warn that updates are generally not possible when the note type changes; Anki 23.10 adds more merge/update options but template/field IDs matter.
+
+---
+
+### 8) Making templates depend on unsupported or fragile Anki behavior
+
+**What goes wrong:** Template refresh uses browser JavaScript assumptions, autoplay logic, dynamic media references, CSS that only works on desktop, or fields that no longer exist. The supplied highlight template includes autoplay JS and Portuguese field names; the phonetics template includes fields targeted for removal.
+
+**Impact:** Medium to high. Cards may work in preview but fail on AnkiMobile/AnkiDroid or exported decks.
+
+**Warning signs:**
+- Template references `{{Notes}}`, `{{is_priming}}`, `{{is_sentence}}`, `{{Palavra}}`, or `{{Significado}}` after field changes.
+- Audio is only triggered by custom JS rather than Anki media fields.
+- CSS uses fixed top spacing instead of flexible centering.
+- Responsiveness is checked only in browser dev tools, not Anki.
+
+**Prevention:**
+- Prefer Anki-native `[sound:file]` media fields and simple field replacements.
+- Remove or isolate autoplay JS; do not depend on autoplay being allowed.
+- Implement responsive centering with conservative CSS (`min-height`, flex column, safe max-width, mobile-friendly font sizing).
+- Run a field-reference linter over every template and model field set.
+
+**Test / verification strategy:**
+- Static parse templates and fail if any `{{Field}}` reference is not in the note type.
+- Snapshot rendered HTML for empty and full optional fields.
+- Human import/playback check in Anki Desktop; if possible, spot-check AnkiMobile/AnkiDroid later.
+
+**Phase placement recommendation:** Phase 5 - highlight templates; Phase 6 - phonetics template refresh.
+
+**Sources:** Anki docs state field names are case-sensitive; `FrontSide` audio does not automatically replay; media references constructed from field names are unsupported.
+
+---
+
+### 9) Overcorrecting example sentences into long, complex learner-hostile text
+
+**What goes wrong:** The new rule says highlight examples can be grammatically richer, but generation creates long sentences, embedded clauses, idioms, or rare constructions that obscure the target word.
+
+**Impact:** Medium-high. The deck feels more authentic but less studyable.
+
+**Warning signs:**
+- Average sentence length rises sharply compared with v1.1.
+- Sentences require advanced grammar unrelated to the target word.
+- TTS sentence audio becomes long and fatiguing.
+- Generated examples no longer contain the target lemma/form clearly.
+
+**Prevention:**
+- Define explicit bounds: “concise but richer” means one natural sentence, target word present, one optional subordinate/prepositional phrase, no paragraph-length outputs.
+- Use language-aware length bands instead of one universal character limit.
+- Keep examples generated from lexical context but not copied verbatim from private highlights unless desired.
+- Validate target inclusion, sentence count, length, punctuation, and banned complexity patterns.
+
+**Test / verification strategy:**
+- Add golden examples for each supported language category.
+- Track sentence length distribution and rejection reasons in review reports.
+- Run validator fixtures where examples are too short, too long, missing target, or too complex.
+
+**Phase placement recommendation:** Phase 4 - highlight-specific generation and QA rules.
+
+---
+
+### 10) Ignoring malformed, adversarial, or huge highlight files
+
+**What goes wrong:** The importer trusts remote content. A corrupted export, huge file, unusual encoding, HTML/script-like text, XML entity payload, or binary file causes crashes, memory blowups, bad prompts, or unsafe rendered fields.
+
+**Impact:** High for robustness and security.
+
+**Warning signs:**
+- Parser reads entire remote content without size limits.
+- No content-type/extension validation.
+- Raw highlight text is inserted into HTML templates without escaping/sanitization.
+- XML parsing for WebDAV allows external entities.
+
+**Prevention:**
+- Enforce max file size, allowed content types/extensions, decode policy, and timeout limits.
+- Use safe XML parsing for WebDAV responses; disable external entity resolution.
+- Escape user-derived text before inserting into HTML fields; allow only intentional Anki media markup.
+- Quarantine failed imports with redacted error summaries.
+
+**Test / verification strategy:**
+- Fuzz malformed exports, invalid UTF-8, very long lines, embedded HTML/script, and malicious XML entity samples.
+- Assert importer fails closed with no partial card generation.
+- Verify rendered template output escapes raw highlight text.
+
+**Phase placement recommendation:** Phase 2 - WebDAV adapter; Phase 3 - parser/normalizer hardening.
+
+**Sources:** RFC 4918 notes XML entity and malicious content risks in WebDAV security considerations.
+
+---
 
 ## Moderate Pitfalls
 
-### 10) Coupling translation quality to definition quality
-**What goes wrong:** The system uses one translation output to stand in for both sense gloss and sentence translation.
+### 11) Poor duplicate strategy across highlight, custom, and frequency decks
 
-**Warning signs:**
-- Word meaning is correct but sentence translation misses idiom or syntax
-- Same translation text appears in both `Definitions` and `Translation`
+**What goes wrong:** The same word appears in a frequency deck and a highlight deck, or in multiple books/highlights, and the system either suppresses useful context-specific cards or floods the user with duplicates.
 
-**Prevention strategy:**
-- Treat lemma definition and example translation as separate tasks
-- Validate sentence translation against the actual example, not the isolated headword
+**Impact:** Medium-high.
 
-**Phase to address:** Phase 3 - Translation validation
+**Prevention:**
+- Deduplicate at two levels: exact source highlight duplicates, and configurable lexical duplicates.
+- Keep highlight deck identity separate from frequency identity: same lemma can have a distinct highlight-sense card when context differs.
+- Report duplicates instead of silently dropping them.
 
-### 11) Not separating display text from TTS text
-**What goes wrong:** The exact same string is used for rendered fields, export fields, and synthesis input.
+**Test / verification strategy:**
+- Fixtures with same word in multiple highlights and existing custom list.
+- Assertions for exact duplicate suppression and context-specific retention.
 
-**Warning signs:**
-- TTS misreads abbreviations, punctuation, IPA, clitics, or parenthetical glosses
-- Teams strip useful learner-facing formatting because audio breaks on it
+**Phase placement recommendation:** Phase 3 - candidate normalization; Phase 4 - card selection.
 
-**Prevention strategy:**
-- Store dedicated `tts_text_word` and `tts_text_sentence`
-- Keep UI formatting out of synthesis inputs
-- Use SSML only after plain-text baselines pass
+---
 
-**Phase to address:** Phase 4 - Audio pipeline design
+### 12) Treating book/highlight language as globally equal to target language
 
-### 12) No stable note identity/versioning strategy
-**What goes wrong:** Regenerated decks cannot reliably update existing Anki notes.
+**What goes wrong:** Highlights from bilingual text, quotes, names, or mixed-language passages are processed as the selected target language.
 
-**Warning signs:**
-- Re-import creates duplicates after minor formatting changes
-- The same lemma changes deck position or identity between runs
+**Impact:** Medium.
 
-**Prevention strategy:**
-- Define deterministic note IDs from language + lemma + POS + sense
-- Keep a stable import key in the first field or dedicated GUID workflow
-- Version records and exports explicitly
+**Prevention:**
+- Detect/validate language at highlight snippet and candidate level.
+- Allow user override but flag mismatches.
+- Reject or review candidates whose language does not match the deck language.
 
-**Phase to address:** Phase 5 - Export/update semantics
+**Test / verification strategy:**
+- Mixed-language fixtures and proper-noun-heavy highlights.
+- QA report listing rejected language mismatches.
+
+**Phase placement recommendation:** Phase 3 - normalization and candidate filtering.
+
+---
+
+### 13) Audio naming collisions between deck modes
+
+**What goes wrong:** Highlight word/sentence audio files use the same filenames as frequency/custom cards, causing packaged media collisions or stale playback.
+
+**Impact:** Medium.
+
+**Prevention:**
+- Include deck mode, language, normalized note ID, audio type, voice ID, and synthesis hash in media filenames or manifests.
+- Keep media references inside fields and package all referenced media.
+
+**Test / verification strategy:**
+- Generate normal and highlight decks containing the same word; assert media names differ or hashes match intentionally.
+- Import `.apkg` and run Anki media check manually/automated where possible.
+
+**Phase placement recommendation:** Phase 4 - generation/audio; Phase 5 - export packaging.
+
+---
+
+### 14) Phonetics template refresh accidentally changes generation semantics
+
+**What goes wrong:** A visual template change leaks back into phonetics data generation: fields are removed from data models before confirming whether they are unused, `Sentence Translation` stops being populated, or audio fields change names.
+
+**Impact:** Medium-high.
+
+**Prevention:**
+- Treat phonetics refresh as a renderer/export change unless requirements explicitly require generation-model changes.
+- Remove `Notes`, `is_priming`, and `is_sentence` only from the note type/template after proving no runtime code depends on them.
+- Add a phonetics fixture asserting front layout, back `Sentence Translation`, and audio field references.
+
+**Test / verification strategy:**
+- Static field-reference linter.
+- Focused phonetics export/import smoke test with word audio, letter audio, sentence audio, and sentence translation.
+
+**Phase placement recommendation:** Phase 6 - phonetics template refresh after highlight export is stable.
+
+---
 
 ## Minor Pitfalls
 
-### 13) Overfitting sentence length rules
-**What goes wrong:** Teams optimize only for shortness, producing unnaturally clipped examples.
+### 15) No user-visible sync/reporting summary
 
-**Warning signs:**
-- Sentences are simple but not something a native speaker would say
-- High rejection rate from reviewers for “technically fine, pedagogically bad” examples
+**What goes wrong:** The user cannot tell whether WebDAV import found files, skipped duplicates, rejected malformed highlights, or generated cards.
 
-**Prevention strategy:**
-- Optimize for comprehensibility and naturalness, not minimum token count alone
-- Use length bands by language and level rather than one global hard cap
+**Prevention:** Emit a redacted sync report: files discovered, files fetched, highlights parsed, candidates extracted, duplicates skipped, cards generated, cards requiring review.
 
-**Phase to address:** Phase 3 - Example quality policy
+**Phase placement recommendation:** Phase 2 and Phase 4.
 
-### 14) Hiding low confidence instead of surfacing it
-**What goes wrong:** Weak cards are emitted without confidence metadata or review flags.
+### 16) Unclear fallback for WebDAV unavailable/offline mode
 
-**Warning signs:**
-- Same pipeline generates both excellent and dubious cards with no distinction
-- Reviewers cannot target the worst items first
+**What goes wrong:** Generation blocks entirely when WebDAV is down, even if a previously downloaded export or local file could be used.
 
-**Prevention strategy:**
-- Attach confidence and provenance to every field group
-- Route low-confidence cards to review or exclusion
+**Prevention:** Support explicit local-file import path and cached-last-fetch behavior with clear warnings.
 
-**Phase to address:** Phase 3 - QA instrumentation
+**Phase placement recommendation:** Phase 2.
 
-## Phase-Specific Warnings
+### 17) Planning around one personal WebDAV provider only
 
-| Phase Topic | Likely Pitfall | Mitigation |
-|-------------|---------------|------------|
-| Phase 1 - Schema & note design | Freezing Anki fields before lexical modeling, or vice versa | Define lexical record and Anki field contract together; include stable IDs and language-specific required metadata |
-| Phase 2 - Frequency & lexical sourcing | Shipping raw top-N frequency lists | Add teachability filters, POS/sense enrichment, and manual slice audits |
-| Phase 2 - Pronunciation enrichment | Fabricated or inconsistent IPA | Set language-specific pronunciation policy and confidence thresholds |
-| Phase 3 - Example/definition generation | One-pass LLM generation accepted as truth | Use generate -> validate -> repair pipeline with benchmark decks |
-| Phase 3 - Translation layer | Sentence translation not faithful to example | Validate against example sentence, not headword gloss |
-| Phase 4 - TTS integration | Discovering voice/locale issues after content is generated | Build a voice matrix and synthesis smoke tests before bulk generation |
-| Phase 5 - Anki export | CSV/media issues discovered only in manual import | Add golden import tests, UTF-8 checks, escaped newline tests, and media verification |
-| Phase 6 - New language rollout | Reusing the same heuristics across all languages | Add per-language acceptance criteria and staged rollout by language |
+**What goes wrong:** The code accidentally fits `https://otaru.infini-cloud.net/dav/` quirks and fails against other WebDAV-compliant servers.
 
-## Most Important Planning Implications
+**Prevention:** Keep provider-specific behavior in config/adapter tests; rely on RFC-level WebDAV concepts for core logic.
 
-1. **Do not start with bulk generation.** Start with schema, lexical identity, and export contract.
-2. **Treat example quality as the core product risk.** This deserves its own validation phase.
-3. **Audio should not be “just another field.”** Voice/locale validation must happen before large-scale synthesis.
-4. **Plan for language-specific rules from day one.** Shared schema is good; shared heuristics are not enough.
+**Phase placement recommendation:** Phase 2.
+
+## Phase Placement Matrix
+
+| Recommended Phase | Risks to Address | Required Evidence Before Moving On |
+|---|---|---|
+| **Phase 1 - Contracts, privacy, and regression harness** | Existing flows regress; credentials/log leaks; note-type collision strategy unclear | Existing frequency/custom fixtures still pass; redaction tests pass; deck-mode and note-type contracts documented |
+| **Phase 2 - WebDAV ingestion adapter** | Naive GET-only WebDAV; bad sync state; auth failures; offline behavior | Mock WebDAV `PROPFIND`/GET tests, idempotent sync test, redacted sync report, local-file fallback |
+| **Phase 3 - Local Kindle normalization and candidate extraction** | Formatter parity gaps; malformed files; lost context; duplicate chaos; language mismatch | Golden raw->normalized fixtures, candidate provenance records, parser hardening tests, duplicate/language reports |
+| **Phase 4 - Highlight-specific generation and QA** | Wrong sense; too-long examples; prompt privacy; audio/media collisions | Ambiguous-term fixtures, sentence quality validators, prompt minimization tests, audio manifest tests |
+| **Phase 5 - Highlight template and export** | Wrong fields; definition visible on front; translation retained; Anki import/update breakage | Highlight note type snapshot, template field linter, `.apkg` import/reimport smoke test |
+| **Phase 6 - Phonetics template refresh** | Removed fields break runtime; missing `Sentence Translation`; mobile/Anki template fragility | Phonetics field linter, export/import smoke test, visual/template snapshots |
+| **Phase 7 - End-to-end audit** | Integrated pipeline only works in unit tests | WebDAV/local fixture -> normalized candidates -> generated highlight deck -> `.apkg` import evidence; existing mode regression evidence |
+
+## Most Important Roadmap Warnings
+
+1. **Do not start with the template.** First freeze deck-mode boundaries and protect existing exports.
+2. **Treat WebDAV and raw highlights as private data.** Redaction, local parsing, and prompt minimization are milestone requirements, not polish.
+3. **Make normalization fixture-driven.** Kindle Formatter is not a stable API; Multilang needs its own documented behavior.
+4. **Use separate note types for separate study behaviors.** Highlight and phonetics templates should not mutate the normal frequency deck contract.
+5. **Verify in Anki, not just generated HTML.** Field replacement, media packaging, and note-type update behavior are Anki integration contracts.
 
 ## Sources
 
-- Project context: `/home/miguel/Programming/Multilang/.planning/PROJECT.md`
-- Anki Manual - Text Files: https://docs.ankiweb.net/importing/text-files.html
-- Anki Manual - Media: https://docs.ankiweb.net/media.html
-- Anki Manual - Field Replacements / media field references: https://docs.ankiweb.net/templates/fields.html
-- Azure Speech language and voice support: https://learn.microsoft.com/en-us/azure/ai-services/speech-service/language-support?tabs=tts
-- Azure Speech SSML voice/language behavior: https://learn.microsoft.com/en-us/azure/ai-services/speech-service/speech-synthesis-markup-voice
-- wordfreq README and sunset note: https://github.com/rspeer/wordfreq/blob/master/README.md
+- Project context: `.planning/PROJECT.md`, `.planning/ROADMAP.md`, `.planning/REQUIREMENTS.md`, `alter_organizado.md` — HIGH
+- RFC 4918 WebDAV specification: https://www.rfc-editor.org/rfc/rfc4918 — HIGH
+- Anki Manual - Field Replacements: https://docs.ankiweb.net/templates/fields.html — HIGH
+- Anki Manual - Packaged Decks / updating note types: https://docs.ankiweb.net/importing/packaged-decks.html — HIGH
+- Kindle Formatter GitHub README: https://github.com/pch/kindle-formatter — MEDIUM

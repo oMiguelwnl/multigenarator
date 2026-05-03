@@ -1,148 +1,246 @@
-# Feature Landscape
+# Feature Landscape: v1.2 Kindle Highlights and Template Refresh
 
-**Domain:** multilingual AI-assisted Anki vocabulary card generator
-**Project:** Multilang
-**Researched:** 2026-04-18
-**Overall confidence:** MEDIUM
+**Domain:** reading-derived vocabulary deck generation for an existing multilingual Anki card generator  
+**Project:** Multilang  
+**Researched:** 2026-05-03  
+**Overall confidence:** MEDIUM-HIGH
 
 ## Executive Take
 
-In this category, users do **not** expect a full language-learning platform first. They expect a tool that turns vocabulary inputs into **clean, accurate, Anki-ready notes** with very little manual cleanup. The bar is especially high for **example sentence quality, translation quality, audio coverage, and export reliability**.
+v1.2 should add a **third input mode**: Kindle highlights from WebDAV. It should not replace the shipped frequency-deck or custom word-list flows. The user-visible value is: “I exported/highlighted while reading; Multilang finds those highlights, normalizes them locally, extracts useful vocabulary candidates, and produces an Anki deck whose card behavior matches reading-derived study.”
 
-Products adjacent to this space consistently emphasize: fast vocabulary capture, context-aware meaning, flashcard generation, spaced-repetition compatibility, and export/use inside Anki. For Multilang specifically, the winning v1 is not “more AI”; it is **better controlled output quality** for multilingual vocabulary decks.
+For highlight decks, the product should optimize for **context, deduplication, and clean review behavior**, not for the 3×1000 frequency-deck structure. A highlight deck is naturally bounded by imported reading material: source file/book metadata, highlight text, extracted target words, and a generated card per approved vocabulary item. The learner expects the card to test recall from the target word + pronunciation + example sentence, then reveal the definition on the back. Because this mode is for reading-derived vocabulary, **no `Translation` field should be exported in the highlight note type** unless a later milestone explicitly adds optional bilingual behavior.
 
-## Table Stakes
+The milestone should be treated as an integration and contract-refresh milestone: WebDAV ingestion, local Kindle Formatter-style normalization, candidate extraction, highlight-specific generation rules, new highlight note type/template, and phonetics template refresh. Avoid turning v1.2 into a generic ebook parser, reading app, sync service, or AI tutor.
 
-Features users expect. Missing these makes the product feel incomplete or untrustworthy.
+## v1.2 Scope Recommendation
 
-| Feature | Why Expected | Complexity | Dependencies | Notes |
-|---------|--------------|------------|--------------|-------|
-| Language selection for supported deck languages | Core entry point; users must choose target language before generation | Low | None | Must be explicit and constrained to the 7 v1 languages |
-| Frequency-list deck generation | Your core promise is high-frequency vocabulary decks; without this there is no product | Medium | Language selection, frequency data source | Needs stable ranking source and level boundaries |
-| Custom word-list import | User-provided vocabulary is a common expectation in vocab tooling and is explicitly in project scope | Medium | Language selection, parsing/validation | Accept plain text/CSV; show rejected rows clearly |
-| Fixed Anki-ready card schema | Users expect consistent fields and import without manual remapping pain | Medium | Card model design, export pipeline | Must preserve requested fields: rank, word, IPA, definitions, sentence, translation, audio, blank image |
-| CSV/TSV export that imports cleanly into Anki | Export reliability is table stakes because Anki is the destination product | Medium | Fixed schema, escaping/encoding rules | Must honor UTF-8, quoting, HTML/audio syntax, predictable column order |
-| Word-level linguistic enrichment | A bare word list is not enough; users expect meaning and pronunciation data | Medium | Lexical data sources, normalization | Includes lemma/headword handling, part of speech if available, IPA, definitions |
-| Example sentence generation or sourcing | Context is expected for vocab learning; bare definitions feel weak | High | Word enrichment, generation/sourcing pipeline | Must enforce sentence-length and readability rules |
-| High-quality sentence translation | Especially critical here; poor translations destroy trust fast | High | Example sentence quality, translation pipeline | Translation must match the sentence actually shown, not generic word meaning |
-| Audio for word and sentence | Common expectation for language flashcards, especially pronunciation training | Medium | TTS provider, field schema | Must generate both `word_audio` and `sentence_audio` consistently |
-| Inline quality review/edit before export | Users expect to fix bad cards instead of regenerating entire batches | Medium | Generation pipeline, UI/CLI review surface | Even a minimal review queue is better than opaque batch output |
-| Duplicate detection / idempotent regeneration | Users frequently re-run batches; duplicates and drift are painful in Anki workflows | Medium | Stable identifiers, export rules | Should support update vs skip behavior |
-| Batch progress, failure visibility, retry | Long-running AI/TTS jobs fail sometimes; users expect recoverability | Medium | Queue/job orchestration | Need per-card status and resumability |
+### Build in v1.2
+
+1. WebDAV fetch from the configured Kindle highlight export location.
+2. Local normalization of Kindle-exported HTML/text into plain highlight records.
+3. Highlight deck mode that consumes normalized highlights and generates cards without touching normal deck behavior.
+4. Highlight note type/template with English field names, centered responsive layout, `Definition` on the back, no `Translation` field, packaged audio, and blank `Image` support.
+5. Highlight-specific example rules: concise sentences, target word included, slightly richer grammar than v1.0/v1.1 normal cards, not long or literary.
+6. Phonetics note/template refresh using the provided front layout, `Sentence Translation` on the back, removed unused fields, and Multilang colors.
+7. Deterministic acceptance evidence: parser fixtures, duplicate/idempotency checks, export field-order checks, template snapshot checks, and small end-to-end highlight deck generation.
+
+### Defer after v1.2
+
+- Sense-aware disambiguation using full highlight context.
+- Book/chapter-aware deck organization beyond basic source metadata.
+- Automatic Kindle account/device sync.
+- Browser extension or live reading capture.
+- Optional translations in highlight cards.
+- Rich review UI for editing extracted candidates.
+
+## Feature Categories
+
+### 1. Kindle/WebDAV Ingestion
+
+Table-stakes ingestion behavior for v1.2.
+
+| Feature | v1.2? | Why Expected | Complexity | Dependencies | Acceptance Signals |
+|---------|-------|--------------|------------|--------------|--------------------|
+| Configured WebDAV source URL and credentials | Yes | Automatic import must know where to fetch highlights and must not hard-code private credentials | Medium | Config/secrets layer, HTTP/WebDAV client | CLI accepts config; secrets are read from env/config, never committed or printed; missing config gives actionable error |
+| Remote listing and file selection | Yes | A WebDAV location can contain multiple files; user expects the newest/exported highlight file to be found | Medium | WebDAV `PROPFIND`/directory listing support | Given fixture listing, importer chooses newest matching file or user-specified path; unsupported files are skipped with reasons |
+| Download with retry and clear failure modes | Yes | Network/auth failures are common and should not silently create empty decks | Medium | HTTP client, job status/reporting | 401/403/auth errors, 404 path errors, timeout errors, and empty directory errors produce distinct messages |
+| Local file fallback input | Yes | Needed for tests and for users when WebDAV is unavailable | Low | Existing custom input plumbing | Same normalization pipeline accepts a downloaded/local Kindle export file |
+| Import manifest and idempotency | Yes | Re-running should not duplicate cards from the same highlight export | Medium | Persistence, stable hashing | Import stores source URL/path, content hash, fetched timestamp, and normalized record count; rerun reports unchanged/imported/skipped counts |
+
+### 2. Local Kindle Formatter-Style Normalization
+
+The existing external Kindle Formatter page transforms exported Kindle Notebook HTML into plain Markdown/text. v1.2 should reimplement the required subset locally, not automate that website.
+
+| Feature | v1.2? | Why Expected | Complexity | Dependencies | Acceptance Signals |
+|---------|-------|--------------|------------|--------------|--------------------|
+| Parse Kindle-exported HTML into highlight records | Yes | Raw Kindle export is not directly suitable for vocabulary extraction | Medium-High | HTML parser, fixture examples | Parser extracts book/title metadata when present, highlight text, note text if present, location/page if present, and record order |
+| Normalize highlights into comma/newline-separated candidate text | Yes | User explicitly relies on Kindle Formatter-style normalization where highlights are separated clearly | Medium | Parser output | Normalized output is deterministic, UTF-8 safe, strips UI boilerplate, preserves diacritics/Cyrillic/Turkish characters, and separates highlights unambiguously |
+| Clean whitespace, punctuation, and duplicated fragments | Yes | Kindle exports often include line breaks, HTML entities, and repeated snippets | Medium | Text normalization | Fixture with messy spacing produces stable clean text; punctuation inside sentences is preserved; wrapper junk is removed |
+| Reject unusable highlights | Yes | Very short, numeric-only, URL-only, or non-target-language snippets create bad cards | Medium | Language detection/token validation | Import report lists rejected highlights with reason; rejected rows do not reach AI generation |
+| Preserve source provenance | Yes | Users studying reading-derived vocabulary benefit from knowing which highlight/book produced a card | Medium | Data model/export metadata | Internal records keep source file, source title if known, original highlight text, normalized text, and candidate extraction trace |
+
+### 3. Vocabulary Candidate Extraction from Highlights
+
+Highlight mode should turn reading snippets into words to study, not blindly card every token.
+
+| Feature | v1.2? | Why Expected | Complexity | Dependencies | Acceptance Signals |
+|---------|-------|--------------|------------|--------------|--------------------|
+| Target-language tokenization and candidate filtering | Yes | Highlight text contains articles, punctuation, names, and already-known common function words | High | Existing language configs, lexical grounding | Candidates exclude punctuation/numbers/URLs; preserve accents; support the 11 existing languages; rejected candidate reasons are reportable |
+| Lemma/headword normalization using existing lexical grounding | Yes | Cards should be generated for useful vocabulary entries, not random inflected duplicates | High | Existing lexical pipeline | Inflected duplicates collapse where current language tooling supports it; unresolved cases remain as surface forms with warnings |
+| Frequency-aware filtering as a ranking signal, not the source | Yes | User says highlights replace `wordfreq` as source; frequency can still help prioritize noise removal | Medium | Existing frequency assets | Highlight occurrence/source order drives inclusion; frequency is only used to rank/filter obvious ultra-common words if configured |
+| Duplicate detection against prior highlight imports and existing decks | Yes | Reading decks are rerun often; duplicates are frustrating in Anki | Medium | Card identity strategy | Same language+headword+source mode does not create duplicate notes unless explicitly allowed |
+| Small-batch preview/report before generation | Should | Prevents spending AI/TTS budget on bad extraction | Medium | CLI reporting | CLI shows imported highlights, extracted candidates, rejected count, duplicate count, and planned card count before expensive generation |
+
+### 4. Highlight-Specific Card Generation
+
+Highlight cards should reuse v1.0/v1.1 quality infrastructure while changing deck behavior.
+
+| Feature | v1.2? | Why Expected | Complexity | Dependencies | Acceptance Signals |
+|---------|-------|--------------|------------|--------------|--------------------|
+| New `highlights` deck mode | Yes | Must sit alongside frequency and custom word-list flows | Medium | CLI/job routing, card type discriminator | CLI can generate `frequency`, `word-list`, and `highlights` decks independently; existing flows remain regression-tested |
+| Highlight note schema with English fields | Yes | User explicitly requested English field names for the new template | Medium | Export model, genanki note type | Exported highlight note type uses stable English fields such as `Word`, `IPA`, `Definition`, `Example Sentence`, `word_audio`, `sentence_audio`, `Image`; no Portuguese field names remain |
+| No `Translation` field in highlight deck | Yes | User explicitly requested no translation for this mode | Low-Medium | Schema/export/template split | CSV/TSV/APKG highlight exports contain no `Translation` column/field; template has no dangling `{{Translation}}` reference |
+| `Definition` revealed on back only | Yes | Highlight study flow should test recall before revealing meaning | Low-Medium | Template design | Front preview shows word, IPA/audio, example; back preview adds definition after answer divider |
+| Concise but richer example sentences | Yes | User wants more grammatical complexity without long sentences | High | AI prompt/validator | Validator enforces target word presence, target language, max length, and non-trivial grammar; examples are not single-clause baby sentences by default |
+| Audio behavior preserved | Yes | Existing product promise includes Azure word and sentence audio | Medium | Azure adapter, media packaging | Highlight cards package playable word and sentence audio with correct field references and no missing media warnings |
+| Blank image field preserved | Yes | Existing project decision: user manually adds images | Low | Schema/export | `Image` field exists for highlight cards but is empty unless user supplied content later |
+
+### 5. Highlight Deck Template Behavior
+
+The template is user-visible and should have explicit acceptance criteria, not only “looks better.”
+
+| Feature | v1.2? | Why Expected | Complexity | Dependencies | Acceptance Signals |
+|---------|-------|--------------|------------|--------------|--------------------|
+| Centered responsive layout | Yes | User identified current option as too top-aligned and less responsive | Medium | CSS/template snapshots, Anki preview | Card content is vertically and horizontally balanced on desktop and mobile-width previews; no overflow for long definitions/examples |
+| Multilang visual theme | Yes | New deck should feel part of the existing product | Low-Medium | Existing v1.1 CSS tokens/colors | Uses Multilang dark theme/color palette consistently with normal card refresh |
+| English template field names | Yes | Required by user | Low | Schema/template | Front/back/style references match exported fields exactly; field names are case-correct because Anki fields are case-sensitive |
+| Back includes `{{FrontSide}}` plus definition | Yes | Standard Anki behavior for basic cards and requested reveal flow | Low | Anki template rules | Back preview reproduces front and shows definition below answer divider |
+| Safe media references | Yes | Anki does not reliably package media referenced dynamically from templates | Medium | Export field values | Audio/image references are stored in fields, not generated as dynamic filenames in template |
+
+### 6. Phonetics Template Refresh
+
+This is separate from highlight mode but part of v1.2.
+
+| Feature | v1.2? | Why Expected | Complexity | Dependencies | Acceptance Signals |
+|---------|-------|--------------|------------|--------------|--------------------|
+| Use provided phonetics front layout | Yes | User supplied a concrete front template | Medium | Phonetics note type/template | Front shows spellings, sound, letter audio, example word, word audio, word translation, example sentence, sentence audio |
+| Show `Sentence Translation` on back | Yes | User explicitly wants same behavior as normal cards | Low-Medium | Back template | Front uses hint behavior if desired; back reveals actual `Sentence Translation` reliably |
+| Remove unused phonetics fields | Yes | `Notes`, `is_priming`, and `is_sentence` should not be in the deck | Medium | Schema/export/tests | APKG/CSV phonetics exports do not include removed fields; no template references remain |
+| Apply Multilang colors | Yes | Visual consistency requirement | Low-Medium | CSS | Phonetics template uses the same color system as current Multilang cards |
+| Preserve existing Russian phonetics data behavior | Yes | Existing feature must not regress while template changes | Medium | Regression tests | Russian phonetics deck still exports playable audio and required phonetics fields after schema cleanup |
 
 ## Differentiators
 
-Features that would create meaningful competitive advantage for this specific product.
+These are worth doing when they fit naturally in v1.2, but should not endanger the table stakes.
 
-| Feature | Value Proposition | Complexity | Dependencies | Notes |
-|---------|-------------------|------------|--------------|-------|
-| Quality-gated sentence pipeline | Best differentiator because user cares strongly about sentence quality; reject awkward, too-long, low-frequency, or non-idiomatic examples before export | High | Example generation, validation rules, review UI | Make quality policy explicit rather than “AI wrote something” |
-| Quality-gated translation pipeline | Strongest trust differentiator; translation should preserve nuance, register, and sentence meaning | High | Sentence pipeline, translation validation | Prefer translation checks against source sentence and target word sense |
-| Source-aware card provenance | Lets users see whether a field came from lexicon, AI, or TTS and decide what to trust | Medium | Metadata model, export/review surface | Important for debugging and user trust |
-| Per-language generation rules | Better than one generic pipeline; each language has different morphology, clitics, articles, stress, and tokenization issues | High | Language config layer | Especially valuable for Russian and Portuguese; likely needed for quality |
-| Sense disambiguation for polysemous words | Prevents “wrong definition, right spelling” cards, a common low-quality failure mode | High | Lexical data + sentence context | High leverage for frequent words with multiple meanings |
-| Register/frequency-aware example selection | Produces study material that feels natural and useful rather than literary or weirdly formal | High | Frequency metadata, quality scoring | Good place to outperform generic AI outputs |
-| Human-in-the-loop approval workflow | Lets users approve only flagged cards, reducing total review effort while preserving trust | Medium | Quality scoring, review UI | Start with review-required flags, not full editor complexity |
-| Regenerate-by-field controls | Much better UX than regenerating the whole card when only translation/audio is bad | Medium | Field-level job model | Practical and highly valuable |
-| Consistency scoring / deck linting | Catch malformed IPA, missing audio, repeated example patterns, translation mismatch, and formatting drift before export | High | Validation layer | Strong differentiator for “export-ready” promise |
-| Reusable user glossary / protected translations | Keeps recurring words translated consistently across decks and custom lists | Medium | User settings, term memory | Particularly useful for multilingual users and domain-specific vocab |
+| Feature | v1.2 Recommendation | Value Proposition | Complexity | Dependencies | Notes |
+|---------|---------------------|-------------------|------------|--------------|-------|
+| Candidate extraction report with reasons | Include if cheap | Builds trust: user sees why words were included/skipped | Medium | Import/candidate pipeline | Strong requirement-definition candidate because it improves debugging |
+| Source-aware tags in Anki | Include minimal version | Lets users filter cards by book/import/source | Low-Medium | Export metadata | Use safe tags like `multilang`, `highlights`, language, source slug |
+| Dry-run mode | Include if CLI plumbing exists | Prevents accidental expensive AI/TTS runs | Low-Medium | Pipeline flags | `--dry-run` should stop after normalized highlights + candidate report |
+| Incremental imports | Include basic hash-based version | Reruns only new/changed source files | Medium | Manifest | Full sync conflict handling can wait |
+| Highlight context stored internally but not shown by default | Include internally | Enables future sense disambiguation and debugging | Medium | Data model | Do not clutter v1.2 card face unless user asks |
+
+## Deferred / Future Ideas
+
+| Future Feature | Why Defer | Prerequisites |
+|----------------|-----------|---------------|
+| Sense-aware card generation from exact highlight context | High value but requires robust disambiguation and QA | Stored highlight provenance, lexical sense ranking |
+| Optional bilingual highlight decks with translation | Conflicts with current explicit “no Translation field” request | New note type or template option |
+| Book/chapter subdecks | Nice organization, but source metadata from Kindle exports may be inconsistent | Reliable title/chapter parsing |
+| Interactive candidate approval UI | Useful, but v1.2 can use reports and config thresholds first | Review UI/editor milestone |
+| Kindle account/device sync | Too broad and likely brittle | Official supported API or stable local export workflow |
+| Generic ebook/PDF/website ingestion | Scope creep from Kindle highlights | Abstraction after Kindle mode stabilizes |
+| Automatic image sourcing | Already out of scope | Explicit future product decision |
 
 ## Anti-Features
 
-Features to deliberately not build in early phases.
-
 | Anti-Feature | Why Avoid | What to Do Instead |
 |--------------|-----------|-------------------|
-| Full spaced-repetition app competing with Anki | Duplicates Anki’s job and expands scope massively | Export cleanly to Anki and optimize note quality |
-| Automatic image generation/sourcing | Already out of scope; adds cost, copyright risk, and QA burden | Keep image field blank as planned |
-| Broad “learn from any website/video” browser-extension workflow in v1 | Valuable, but it changes product shape from generator to platform | Focus on frequency decks + custom word lists first |
-| AI conversation/chat tutor | Common adjacent feature, but not necessary for card generation | Invest that effort in sentence/translation quality |
-| Support for many more languages in v1 | Multiplies QA surface and language-specific edge cases | Make the 7 target languages excellent first |
-| Rich deck styling/theme builder | Nice-to-have but not core to learning value | Ship one well-documented note template |
-| Fully automatic publishing/sharing marketplace | Moderation and quality control become a product of their own | Export files locally first |
-
-## Recommended MVP Feature Set
-
-Prioritize these first:
-
-1. **Frequency-list generation by language and level**
-2. **Custom word-list import**
-3. **Stable Anki-ready schema + reliable CSV/TSV export**
-4. **Word enrichment: normalized word, IPA, definitions**
-5. **High-quality example sentence generation/sourcing**
-6. **High-quality sentence translation**
-7. **Word audio + sentence audio generation**
-8. **Minimal review queue with per-card accept/edit/regenerate**
-9. **Duplicate handling and resumable batch jobs**
+| Automating the external Kindle Formatter website | Browser automation is brittle, hard to test, and unnecessary | Reimplement the required normalization locally with fixtures |
+| Replacing frequency decks globally with highlights | v1.2 adds a mode; existing shipped flows must keep working | Add `highlights` as a separate deck/input source |
+| Treating every highlighted word/token as a card | Creates duplicates, names, function words, and low-value cards | Tokenize, filter, normalize, and report candidates |
+| Adding `Translation` back into highlight cards | Directly conflicts with requested highlight template behavior | Keep definition-only reveal; revisit optional bilingual variant later |
+| Long literary example sentences copied from highlights by default | Hard to review and may not isolate target vocabulary | Generate concise learner-friendly examples grounded by the word/sense |
+| Hiding WebDAV/auth/import failures | Silent empty decks destroy trust | Fail clearly with reason and no exported deck unless user forces partial output |
+| Dynamic Anki media filenames in templates | Anki warns that template-scanned media references are unreliable | Store media references inside fields and package them normally |
+| Full reading app or SRS replacement | Not the product; Anki remains destination | Export high-quality Anki decks |
 
 ## Feature Dependencies
 
 ```text
-Language selection
-  → Frequency-list generation
-  → Custom word-list import
+WebDAV configuration
+  → Remote listing/download
+  → Import manifest/idempotency
+  → Local Kindle normalization
 
-Frequency-list generation / Custom word-list import
-  → Word normalization + lexical enrichment
-  → Stable card schema
+Local Kindle normalization
+  → Highlight records with provenance
+  → Candidate extraction/filtering
+  → Dry-run/import report
 
-Word normalization + lexical enrichment
-  → Example sentence generation/sourcing
+Candidate extraction/filtering
+  → Existing lexical grounding
+  → Highlight-specific AI generation
+  → Audio generation
+  → Highlight card export
 
-Example sentence generation/sourcing
-  → Sentence translation
-  → Sentence audio
+Highlight note schema
+  → Highlight template field names
+  → CSV/TSV/APKG export contracts
+  → Template snapshot/import tests
 
-Stable card schema
-  → Anki export
-  → Duplicate detection
-
-Quality scoring / validation
-  → Review queue
-  → Field-level regeneration
-  → Deck linting
+Phonetics schema cleanup
+  → Phonetics front/back template refresh
+  → Russian phonetics regression evidence
 ```
 
-## Scoping Guidance
+## User-Visible Acceptance Criteria for v1.2
 
-### Phase 1: Must-have foundation
-- Language selection
-- Frequency-list ingestion
-- Custom word-list ingestion
-- Stable schema
-- Export pipeline
+### Kindle/WebDAV Import
 
-### Phase 2: Core content quality
-- IPA/definitions
-- Example sentence generation/sourcing
-- Translation generation
-- Audio generation
+- User can configure WebDAV URL, username, and secret without editing source code.
+- Running highlight import fetches a remote Kindle export or accepts a local fallback file.
+- The command reports fetched file name/path, content hash, number of raw highlights, normalized highlights, rejected highlights, extracted candidates, duplicates, and planned cards.
+- Bad credentials, missing file, empty file, unsupported file type, and timeout each produce a clear failure message.
+- Re-running the same import does not silently create duplicate cards.
 
-### Phase 3: Trust and workflow quality
-- Review/edit/regenerate flow
-- Duplicate/update behavior
-- Retry/resume behavior
-- Validation/linting
+### Normalization and Candidate Extraction
 
-### Phase 4: Competitive differentiation
-- Per-language rules
-- Sense disambiguation
-- Provenance metadata
-- Reusable glossary / translation memory
+- Kindle export boilerplate is removed; highlight text remains readable and deterministic.
+- Highlight separators are unambiguous, matching the user’s current Kindle Formatter-style workflow.
+- Diacritics, Cyrillic, Turkish dotted/dotless characters, apostrophes, and language-specific punctuation are preserved.
+- Non-vocabulary fragments are rejected with reasons.
+- Candidate extraction supports all existing target languages without adding new languages.
 
-## What to Treat as the Real Product Constraint
+### Highlight Deck Generation
 
-The hard part is **not** generating cards; it is generating cards that users do not need to repair manually. For this product, sentence quality and translation quality are not secondary enrichment features. They are the product.
+- User can select/generate `highlights` mode without changing normal frequency or custom word-list commands.
+- Highlight cards include word/headword, IPA/spoken pronunciation behavior consistent with current project quality rules, definition, example sentence, word audio, sentence audio, and blank image.
+- Highlight cards do **not** include a `Translation` field.
+- Examples are concise, target-containing, grammatically natural, and not overly simplistic.
+- Audio files are generated/reused through existing Azure-first behavior and packaged in APKG exports.
 
-## Sources
+### Highlight Template
 
-- Anki Manual — Text file import requirements, media syntax, duplicate/update behavior: https://docs.ankiweb.net/importing/text-files.html **(HIGH confidence)**
-- Readlang homepage — click-to-translate, flashcards, AI context explanations, export flashcards: https://readlang.com/ **(MEDIUM confidence; official marketing page)**
-- Readlang features page — vocab manager, export to Anki, flashcards, AI context explanations: https://readlang.com/features **(MEDIUM confidence; official marketing page)**
-- Migaku FAQ / Tools + Features — media-rich flashcards, dictionary/context explanations, text analysis, one-click card creation: https://migaku.com/faq/features **(MEDIUM confidence; official product page)**
+- Front shows the prompt side only: word, IPA, audio controls, and example sentence.
+- Back shows `FrontSide`, answer divider, and `Definition`; image appears only if manually populated.
+- Layout is centered, responsive, and uses Multilang colors.
+- All template field references use exact English field names and pass snapshot/import checks.
+
+### Phonetics Template
+
+- Phonetics front uses the provided layout structure.
+- Back reveals `Sentence Translation` correctly.
+- `Notes`, `is_priming`, and `is_sentence` are removed from fields and templates.
+- Russian phonetics deck exports still work with required audio and translation behavior.
+
+## Suggested v1.2 Requirement IDs
+
+Use these as seeds for `.planning/REQUIREMENTS.md`.
+
+- **KINDLE-INGEST-01:** Multilang can fetch Kindle highlight exports from configured WebDAV storage and fail clearly on auth/path/network errors.
+- **KINDLE-INGEST-02:** Multilang can process a local Kindle export file through the same normalization path used by WebDAV imports.
+- **KINDLE-NORM-01:** Multilang locally normalizes Kindle-exported highlights into deterministic highlight records without using the external Kindle Formatter site.
+- **KINDLE-NORM-02:** Normalization preserves target-language characters and reports rejected unusable highlights.
+- **KINDLE-CAND-01:** Multilang extracts filtered vocabulary candidates from normalized highlights with duplicate detection and a user-visible report.
+- **HIGHLIGHT-DECK-01:** Multilang supports `highlights` as a separate deck generation mode without regressing frequency or custom word-list flows.
+- **HIGHLIGHT-CARD-01:** Highlight cards use a highlight-specific schema with English field names, no `Translation`, blank `Image`, and `Definition` on the back.
+- **HIGHLIGHT-EXAMPLE-01:** Highlight examples are concise, target-containing, grammatically natural, and validated before export.
+- **HIGHLIGHT-TEMPLATE-01:** Highlight APKG exports use a centered responsive Multilang-colored template matching the requested front/back behavior.
+- **PHONETICS-TEMPLATE-01:** Phonetics cards use the provided front layout, reveal `Sentence Translation` on the back, and remove unused fields.
+- **REGRESSION-01:** Existing frequency-deck, custom word-list, audio, and export flows remain operational after v1.2 changes.
+
+## Sources and Confidence
+
+- Project context: `.planning/PROJECT.md`, `.planning/ROADMAP.md`, `.planning/REQUIREMENTS.md`, `alter_organizado.md` — **HIGH confidence** for user intent and existing milestone constraints.
+- Kindle Highlights Formatter page — confirms current external workflow takes Kindle-exported HTML and outputs Markdown/plain text: https://pch.github.io/kindle-formatter/ — **MEDIUM confidence** for behavior; official for that tool but minimal docs.
+- WebDAV RFC 4918 — confirms WebDAV collection/resource model, methods such as `PROPFIND`, and network/error considerations: https://datatracker.ietf.org/doc/html/rfc4918 — **HIGH confidence** for protocol expectations.
+- Anki Manual: field replacements/templates — confirms field names are case-sensitive, `FrontSide` back behavior, hint fields, and media-reference caveats: https://docs.ankiweb.net/templates/fields.html — **HIGH confidence** for template acceptance criteria.
 
 ## Confidence Notes
 
-- **HIGH:** Anki import/export expectations and media formatting requirements.
-- **MEDIUM:** Feature expectations inferred from adjacent official product pages (Readlang, Migaku).
-- **LOW:** None stated as authoritative; where market-wide expectations are inferred from overlap across adjacent products, they are framed as recommendations rather than hard facts.
+- **HIGH:** User-requested v1.2 behavior, Anki template constraints, “separate mode not replacement,” no translation field in highlight cards.
+- **MEDIUM-HIGH:** WebDAV ingestion shape and idempotent import/report requirements; grounded in WebDAV protocol plus standard batch-import UX.
+- **MEDIUM:** Exact Kindle export HTML variability; needs fixture collection from the user’s actual Kindle/WebDAV exports during implementation.

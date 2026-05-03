@@ -1,191 +1,169 @@
-# Project Research Summary
+# Research Summary: v1.2 Kindle Highlights and Template Refresh
 
-**Project:** Multilang Anki Card Generator
-**Domain:** Multilingual AI-assisted Anki deck generation
-**Researched:** 2026-04-18
-**Confidence:** MEDIUM-HIGH
+**Project:** Multilang Anki Card Generator  
+**Milestone:** v1.2 Kindle Highlights and Template Refresh  
+**Researched:** 2026-05-03  
+**Confidence:** HIGH for integration/export direction; MEDIUM for exact Kindle export normalization until real fixtures are validated.
 
 ## Executive Summary
 
-Multilang should be built as a **Python-based batch content pipeline** that produces reliable Anki decks, not as a generic AI app or a hosted learning platform. The research is consistent: the hard part is not generating text, but producing **lexically grounded, reviewable, Anki-safe cards** with good examples, faithful translations, stable audio, and deterministic export behavior. The recommended v1 shape is **library-first**, with a thin **CLI** for deck generation and an optional internal/admin API later.
+v1.2 should add **Kindle highlights as a third deck input mode** beside existing frequency and custom word-list flows. The correct implementation is not a new app, new pipeline, or browser automation around Kindle Formatter; it is a deterministic pre-ingestion path that fetches highlights from WebDAV, normalizes them locally, extracts vocabulary candidates, and then reuses Multilang’s existing lexical grounding, text generation, audio, and genanki export infrastructure.
 
-The strongest recommendation is to optimize for **quality control and reproducibility** over feature breadth. Use **FastAPI + Typer + Pydantic + SQLAlchemy + PostgreSQL** for the backbone, **Kaikki/Wiktextract + curated frequency assets** for lexical grounding, **PydanticAI + LiteLLM** for structured generation, **DeepL** for sentence translation, **Azure Speech** for audio, and **genanki** for `.apkg` export. v1 should focus on the 7 target languages, 3-level frequency decks, custom word-list import, a fixed card schema, and a minimal review/regeneration loop.
+The core design decision is to introduce explicit **source profiles** for `frequency`, `word-list`, and `kindle-highlights`. Highlight mode needs different ingestion, richer-but-concise example rules, a separate Anki note type, no exported `Translation` field, `Definition` on the back, and English field names. Existing frequency/custom-word decks must remain stable and must not inherit highlight behavior.
 
-The biggest risks are also clear: treating words as raw strings instead of lexical entries, shipping raw frequency lists as curriculum, trusting one-shot AI output, and discovering Anki/TTS issues too late. Planning should therefore start with the **card schema, lexical identity model, export contract, and validation gates**, then move into enrichment and generation. Do not attempt a rich frontend, extra languages, image generation, or an Anki competitor in v1.
+The main risks are regression of shipped v1.0/v1.1 contracts, leaking WebDAV credentials or private reading data, vague Kindle Formatter parity, and invalid Anki template/media behavior. Mitigate by building regression/source-profile boundaries first, making local-file normalization fixture-driven before remote WebDAV, adding redacted import reports, and testing generated APKGs rather than only rendered HTML.
 
 ## Key Findings
 
-### Recommended Stack
+### Stack Additions
 
-The stack research is unusually decisive: this project fits Python much better than JavaScript because it is fundamentally ETL + NLP + media generation + Anki packaging. The recommended app shape is a typed Python core with batch orchestration, persisted artifacts, and provider adapters so generation, translation, TTS, and export can evolve independently.
+- **Keep existing stack:** Python 3.12, uv, Typer, Pydantic v2, SQLAlchemy/Alembic, existing generation/audio/export services, Azure-first audio, and genanki remain the right base.
+- **Add `defusedxml==0.7.1`:** required for safe parsing of WebDAV `PROPFIND` XML / `207 Multi-Status` responses.
+- **Use `httpx==0.28.1` if not already pinned:** direct WebDAV methods (`PROPFIND`, `GET`) are enough; do not add a WebDAV-specific package for v1.2.
+- **Use stdlib normalization tools:** `html.parser`, `html`, `re`, `unicodedata`, `hashlib`, `datetime`, `pathlib`, and `csv` are sufficient until real Kindle fixtures prove otherwise.
+- **Optional dev dependency:** `respx==0.23.1` only if current HTTPX mocking is insufficient.
+- **Do not add:** Playwright/Selenium, BeautifulSoup/lxml by default, pandas, new DB/queue, new LLM provider, or new Anki export library.
 
-**Core technologies:**
-- **Python 3.12 + uv**: main runtime and project management — best fit for language tooling, lexical ETL, and export workflows.
-- **FastAPI + Typer**: admin/API and CLI surfaces — gives a clean internal API while keeping batch commands first-class.
-- **Pydantic v2 + SQLAlchemy 2 + PostgreSQL 17 + Alembic**: schema, persistence, and migrations — needed for strict contracts, resumability, provenance, and stable exports.
-- **PydanticAI + LiteLLM**: typed LLM orchestration — use LLMs for structured generation and adjudication, not as the source of truth.
-- **Kaikki/Wiktextract + curated frequency assets + `wordfreq` bootstrap**: lexical grounding — seed with `wordfreq`, then freeze reviewed lists and normalize into an internal schema.
-- **DeepL + Azure Speech + genanki**: translation, audio, and Anki export — strongest fit for learner-facing translations, broad voice support, and `.apkg` generation.
+### Table-Stakes Features
 
-**Critical version requirements:**
-- Python **3.12** baseline
-- Pydantic **v2** family
-- SQLAlchemy **2.0** family
-- PostgreSQL **17** target, keep schema **18-compatible**
-- Azure Speech SDK **1.49.x**
-- `genanki` **0.13.1**
+- Configure WebDAV URL/username/secret without hard-coding or logging secrets.
+- List and fetch Kindle export files via WebDAV, with clear auth/path/timeout/empty-directory failures.
+- Accept a **local Kindle export file** through the same normalization path for tests and offline fallback.
+- Locally normalize Kindle-exported HTML/text into deterministic highlight records, preserving diacritics, Cyrillic, Turkish characters, punctuation, source hash, record order, and provenance.
+- Extract target-language vocabulary candidates from highlights with filtering, deterministic keys, dedupe, and a visible report of imported/rejected/duplicate/planned cards.
+- Add `highlights` / `kindle-highlights` generation mode without changing frequency or custom word-list behavior.
+- Generate highlight cards with word/headword, IPA, definition, concise richer example sentence, word audio, sentence audio, and blank `Image`.
+- Export highlight cards with English fields and **no `Translation` field**; front shows prompt content, back shows `{{FrontSide}}` plus `Definition`.
+- Refresh phonetics cards with the supplied front layout, `Sentence Translation` revealed on the back, removed `Notes`/`is_priming`/`is_sentence`, fixed field names, playable audio, and Multilang colors.
 
-### Expected Features
+### Architecture Path
 
-v1 is not “AI cards for everything.” It is a constrained deck generator with a very high trust bar. Users will forgive limited scope, but they will not forgive bad examples, weak translations, broken audio, or exports that need manual repair.
+Implement highlights as:
 
-**Must have (table stakes):**
-- Language selection limited to the 7 v1 languages
-- Frequency-list deck generation with 3 levels × 1000 cards
-- Custom word-list import
-- Fixed Anki-ready schema with the requested fields
-- Clean CSV/TSV export and primary `.apkg` export behavior
-- Word enrichment: normalized word, lemma/POS where available, IPA, definitions
-- Example sentence generation/sourcing with quality checks
-- High-quality sentence translation
-- Word and sentence audio
-- Minimal review/edit/regenerate flow
-- Duplicate detection, resumable jobs, progress/failure visibility
+```text
+WebDAV or local file
+  -> raw artifact by content hash
+  -> KindleHighlightNormalizer
+  -> HighlightVocabularyExtractor
+  -> existing lexical ingestion/grounding
+  -> existing text generation with highlight source profile
+  -> existing Azure audio
+  -> source-specific export mapping and genanki model
+```
 
-**Should have (competitive):**
-- Quality-gated sentence pipeline
-- Quality-gated translation pipeline
-- Per-language generation/rendering rules
-- Sense disambiguation for polysemous words
-- Source/provenance metadata in review surfaces
-- Deck linting and field-level regeneration
+Recommended component changes:
 
-**Defer (v2+):**
-- Full spaced-repetition app
-- Browser-extension/web capture workflows
-- AI tutor/chat features
-- Automatic image generation/sourcing
-- Broad language expansion beyond the 7 targets
-- Rich theme/styling builders or deck marketplace features
+- Add `SourceProfile` mapping for translation export, sentence length, note type, and template selection.
+- Extend generation source type with `kindle-highlights` / `highlights` consistently.
+- Add `domain.highlights` Pydantic contracts: source document, normalized highlight, vocabulary item.
+- Add `KindleHighlightNormalizer` as a pure, fixture-tested local service.
+- Add `HighlightVocabularyExtractor` with deterministic ordering, dedupe, and provenance.
+- Add `WebDavHighlightSource` as a thin adapter only; normalizer consumes local raw artifacts, not live streams.
+- Reuse existing DB tables where possible; store highlight metadata in provenance JSON for v1.2 rather than adding book/highlight tables prematurely.
+- Add `HIGHLIGHT_EXPORT_CARD_FIELD_NAMES`, highlight model ID/name, source-specific template loading, and mixed-source export guard.
+- Keep phonetics refresh isolated in `russian_phoneme_deck.py` and `templates/russian_phoneme_card.md`.
 
-### Architecture Approach
+## Roadmap Implications
 
-The architecture research strongly favors **library-first, stage-based pipeline design**. The canonical unit is a `CardSpec`/card record that each stage enriches and validates. The system should persist artifacts after ingestion, enrichment, generation, validation, audio, and export so failures are inspectable and reruns are cheap.
+Phase numbering should begin at **Phase 09**.
 
-**Major components:**
-1. **CLI / orchestrator** — runs batch jobs, checkpoints stages, reports progress, and coordinates retries.
-2. **Ingestion + lexical enrichment** — normalizes inputs, deduplicates, attaches lemma/POS/IPA/definitions, and stores provenance.
-3. **Generation + validation + repair** — produces example/translation, runs quality gates, retries/falls back, and routes failures to review.
-4. **Audio adapter** — synthesizes word and sentence audio only after text passes validation.
-5. **Deck assembler + exporters** — maps canonical fields to Anki, emits `.apkg`, and writes CSV/JSONL manifests for debug/recovery.
+### Phase 09: Source Profiles, Contracts, Privacy, and Regression Harness
 
-### Critical Pitfalls
+**Rationale:** Protect shipped frequency/custom-word behavior before threading in a new source.  
+**Delivers:** explicit source profiles, source-type constants, export field mapping guardrails, redaction rules, non-regression tests for existing decks.  
+**Avoids:** highlights being treated as frequency, global schema renames, secret leaks, note-type collisions.  
+**Research flag:** Standard patterns; no deeper research needed.
 
-1. **Modeling a word as just a string** — define lexical identity early (`lemma`, `pos`, sense/morphology metadata) so decks do not collapse meanings or duplicate inflections.
-2. **Shipping raw frequency lists as curriculum** — use `wordfreq` only as bootstrap data, then filter and freeze curated lists per language.
-3. **Trusting one-shot AI output** — separate generation, validation, and repair; validate word presence, sense alignment, translation faithfulness, and formatting.
-4. **Ignoring language-specific rules** — keep one schema but support per-language rendering, morphology, and acceptance tests from the start.
-5. **Leaving export/audio validation until late** — freeze the Anki contract early, build stable note identity, and create a voice matrix plus synthesis smoke tests before bulk runs.
+### Phase 10: Local Kindle Normalization and Candidate Extraction
 
-## Implications for Roadmap
+**Rationale:** Local fixture-driven normalization is the core product behavior and should work before remote I/O.  
+**Delivers:** highlight contracts, raw-to-normalized fixture tests, Kindle Formatter-style text artifacts, candidate extractor, dedupe/provenance, local-file CLI path.  
+**Avoids:** brittle formatter automation, noisy tokens, lost sense context, malformed export crashes.  
+**Research flag:** Needs fixture validation against real user Kindle exports.
 
-Based on research, suggested phase structure:
+### Phase 11: Highlight Ingestion into Existing Pipeline
 
-### Phase 1: Schema, Lexical Identity, and Pipeline Shell
-**Rationale:** Everything else depends on stable card contracts and stage boundaries; starting with generation first would create rework.
-**Delivers:** Canonical `CardSpec`, lexical record, field contract, stable note/GUID strategy, config model, artifact layout, CLI skeleton, no-op/sample pipeline.
-**Addresses:** Fixed Anki-ready schema, duplicate handling foundation, export compatibility, language selection scaffold.
-**Avoids:** Raw-string lexical modeling, inconsistent field formatting, late export design.
+**Rationale:** Prove highlights can reuse grounding, jobs, resume, duplicate prevention, and existing quality services.  
+**Delivers:** highlight ingestion branch, input fingerprint based on content/candidate keys, provenance JSON, candidate reports, regression evidence for existing modes.  
+**Avoids:** duplicate cards, timestamp-only reruns, context-free generation.  
+**Research flag:** Standard implementation once Phase 10 contracts are stable.
 
-### Phase 2: Input Ingestion and Deterministic Enrichment
-**Rationale:** Quality generation depends on clean inputs and grounded lexical context.
-**Delivers:** Frequency ingestion, custom list import, filtering/teachability rules, per-language config registry, lemma/POS/IPA/definition enrichment, provenance capture.
-**Uses:** `wordfreq`, Kaikki/Wiktextract, Pydantic, SQLAlchemy/Postgres.
-**Implements:** Ingestion/normalizer, card store, enrichment adapters, Gate A/B validation.
+### Phase 12: Highlight Generation Profile, Audio, and QA
 
-### Phase 3: Text Quality Engine
-**Rationale:** Example sentence and translation quality are the core product risk and should be proven before audio/export polish.
-**Delivers:** Sentence generation, translation pipeline, validation rules, repair/fallback loop, confidence scoring, benchmark deck checks, minimal manual review queue.
-**Addresses:** Example generation, translation quality, edit/regenerate workflow, failure visibility.
-**Avoids:** One-shot AI generation, poisoned example sources, coupling translation to definitions.
+**Rationale:** Highlight cards need a different study behavior but should reuse current generation/audio infrastructure.  
+**Delivers:** richer-but-concise example policy, 6-16-ish token validation profile, target inclusion checks, no exported translation, prompt minimization, audio manifest collision tests.  
+**Avoids:** long learner-hostile examples, wrong sense, private raw-highlight prompt dumps, media collisions.  
+**Research flag:** Needs deeper QA tuning across supported languages.
 
-### Phase 4: Audio Integration
-**Rationale:** Audio is expected in v1, but only after text quality is trustworthy.
-**Delivers:** Azure voice matrix, word/sentence TTS adapters, SSML policy, `display_text` vs `tts_text` separation, audio caching, media validation.
-**Addresses:** Word and sentence audio, resumable generation, provider metadata.
-**Avoids:** Late voice/locale surprises, broken synthesis from display formatting, non-idempotent media generation.
+### Phase 13: Highlight Template and Export
 
-### Phase 5: Export, Reimport, and Deck Reliability
-**Rationale:** The product succeeds or fails at the Anki boundary; export should be hardened after upstream fields stabilize.
-**Delivers:** `.apkg` export via `genanki`, CSV/TSV + JSONL fallback manifests, golden import/reimport tests, media reference checks, deck-level linting.
-**Addresses:** Clean Anki import, duplicate/update behavior, deterministic deck outputs.
-**Avoids:** Broken UTF-8/escaping, unstable note identity, silent partial failures.
+**Rationale:** Export should happen after source/profile behavior is stable; Anki field contracts are user-visible.  
+**Delivers:** dedicated highlight note type/template, English fields, no `Translation`, `Definition` on back, centered responsive CSS, APKG/CSV/TSV snapshots, mixed-source export failure.  
+**Avoids:** dangling fields, definition visible on front, fragile JS/media behavior, invalid note updates.  
+**Research flag:** Standard Anki/genanki patterns; verify in Anki Desktop.
 
-### Phase 6: Workflow Hardening and Language-Specific Differentiation
-**Rationale:** Once the baseline pipeline works, invest in the features that most improve trust and multilingual quality.
-**Delivers:** Better review UX, field-level regeneration, per-language rules, sense disambiguation, provenance surfaces, resumability/concurrency improvements.
-**Addresses:** Main differentiators worth keeping in scope after baseline reliability.
-**Avoids:** Premature frontend/platform expansion while still improving real output quality.
+### Phase 14: WebDAV Fetch Adapter
 
-### Phase Ordering Rationale
+**Rationale:** Remote fetch is valuable but should not block local highlight generation; isolate network variability.  
+**Delivers:** settings/env config, `PROPFIND`/`GET`, safe XML parsing, content-hash artifact storage, idempotent imports, distinct failure messages, redacted sync report.  
+**Avoids:** naive GET-only sync, duplicate imports, credential leaks, provider-specific coupling to one WebDAV server.  
+**Research flag:** Needs validation against the real WebDAV provider after fake-server tests pass.
 
-- Put **contracts before content generation**: schema, lexical identity, and export semantics are prerequisites, not cleanup work.
-- Group **input + enrichment** together because the generation phase depends on grounded lexical context and curated frequency data.
-- Isolate **text quality** as its own phase because it is the main trust risk and the most likely area to need iteration.
-- Delay **audio** until validated text exists, and delay **export hardening** until field semantics are stable.
-- Keep **differentiators** after baseline reliability, except for the minimal review queue, which belongs in v1 because users need a way to fix bad cards without rerunning everything.
+### Phase 15: Phonetics Template Refresh
 
-### Research Flags
+**Rationale:** Independent renderer/export work; keep separate to reduce regression blast radius.  
+**Delivers:** supplied front layout, `Sentence Translation` on back, removed unused fields, field-name typo cleanup, Multilang colors, focused phonetics APKG/template tests.  
+**Avoids:** phonetics data-model churn, missing audio fields, dangling `Notes`/`is_priming`/`is_sentence` references.  
+**Research flag:** Standard template work; no additional research needed.
 
-Phases likely needing deeper research during planning:
-- **Phase 2:** lexical normalization, per-language teachability filters, and pronunciation policy need more implementation-level design.
-- **Phase 3:** sentence quality scoring, translation validation, and benchmark strategy are the most complex product-quality problems.
-- **Phase 4:** Azure voice selection and locale/SSML behavior need explicit capability validation for all 7 languages.
+### Phase 16: End-to-End Audit
 
-Phases with standard patterns (skip research-phase):
-- **Phase 1:** schema, typed pipeline shell, CLI structure, persistence, and migrations are all well-understood patterns.
-- **Phase 5:** Anki export testing, UTF-8 handling, and deterministic packaging are straightforward once field contracts are frozen.
+**Rationale:** v1.2 crosses ingestion, generation, media, and export boundaries; unit tests are not enough.  
+**Delivers:** local fixture -> generated highlight deck -> APKG import evidence, optional real WebDAV smoke, existing frequency/custom regression evidence, phonetics import evidence.  
+**Avoids:** integration-only failures and Anki/media surprises.  
+**Research flag:** No research; evidence-gathering phase.
+
+## Recommended Requirement Categories
+
+- **KINDLE-INGEST:** WebDAV config, listing/download, local-file fallback, idempotent manifest, failure reporting.
+- **KINDLE-NORM:** local formatter-style parser, deterministic normalization, character preservation, rejection reasons, provenance.
+- **KINDLE-CANDIDATES:** tokenization/filtering, lemma/headword normalization, duplicate strategy, report/dry-run.
+- **HIGHLIGHT-MODE:** new deck mode, source profile, pipeline integration, no regression of frequency/custom flows.
+- **HIGHLIGHT-GENERATION:** concise richer examples, sense/context handling, validators, prompt privacy, audio reuse.
+- **HIGHLIGHT-EXPORT:** dedicated note type, English fields, no `Translation`, `Definition` on back, responsive Multilang template, APKG/CSV/TSV snapshots.
+- **PHONETICS-TEMPLATE:** supplied front layout, `Sentence Translation` back reveal, removed unused fields, audio references, Multilang colors.
+- **REGRESSION/SECURITY:** redaction, secret exclusion, fixture safety, existing-mode export stability, Anki import/reimport evidence.
+
+## Risks and Watch-Outs
+
+1. **Do not replace frequency decks.** Highlights are a new mode; frequency and custom word-list flows must remain regression-tested.
+2. **Do not automate Kindle Formatter.** Define Multilang’s own local normalization contract with golden fixtures.
+3. **Treat highlights as private data.** Redact credentials, paths, titles, raw text, and prompt payloads; keep raw downloads out of git.
+4. **Do not reuse normal note types for highlight behavior.** Use dedicated model names/IDs and exact field lists.
+5. **Avoid fragile Anki behavior.** Prefer native media fields; do not depend on autoplay JS or dynamic media filenames.
+6. **WebDAV is not just GET.** Handle `PROPFIND`, `207 Multi-Status`, ETags, redirects, trailing slashes, timeouts, and auth errors.
+7. **Richer examples still need bounds.** Validate target inclusion, sentence count, length, and complexity.
+8. **Real Kindle fixtures are mandatory.** Exact HTML/text shape is the main unknown.
 
 ## Confidence Assessment
 
 | Area | Confidence | Notes |
-|------|------------|-------|
-| Stack | HIGH | Backed mostly by official docs and strong ecosystem fit; Python choice is well-supported by the problem shape. |
-| Features | MEDIUM | Table stakes are plausible and useful, but some market expectations were inferred from adjacent tools rather than direct user validation. |
-| Architecture | MEDIUM-HIGH | The library-first pipeline recommendation is an informed design judgment strongly aligned with the product shape, even where not directly sourced from vendor docs. |
-| Pitfalls | HIGH | Anki and Azure constraints are well documented, and the major content-quality risks are consistently supported across research. |
-
-**Overall confidence:** MEDIUM-HIGH
-
-### Gaps to Address
-
-- **Per-language lexical policy:** decide required metadata and rendering rules for each of the 7 languages before large-scale deck generation.
-- **Frequency curation policy:** define inclusion/exclusion rules and spot-audit process before freezing the 3×1000-card lists.
-- **Sentence quality rubric:** formalize what counts as acceptable length, naturalness, and register by language/level.
-- **Translation QA policy:** define how fidelity will be checked against the example sentence, not just the headword meaning.
-- **Voice inventory:** confirm preferred Azure voices and fallback voices for every target language, especially Dutch and locale variants.
+|---|---|---|
+| Stack additions | HIGH | HTTPX, defusedxml, stdlib parsing, Pydantic, SQLAlchemy, and genanki are well matched to the scope. |
+| Feature scope | HIGH | User intent is explicit in project context and `alter_organizado.md`; research consistently supports separate highlight mode. |
+| Architecture | HIGH | Source profiles plus fetch/normalize/extract/reuse-existing-pipeline is the clearest low-regression path. |
+| WebDAV behavior | MEDIUM-HIGH | Protocol is clear, but real provider quirks must be tested. |
+| Kindle normalization | MEDIUM | Needs real exported Kindle fixtures; external formatter is inspiration, not a formal spec. |
+| Templates/export | HIGH | Anki/genanki constraints are clear; still requires import/reimport smoke evidence. |
 
 ## Sources
 
-### Primary (HIGH confidence)
-- FastAPI docs — API design patterns and typed service support
-- Pydantic docs — schema validation approach
-- SQLAlchemy + Alembic docs — persistence and migration patterns
-- PostgreSQL docs — database baseline and compatibility direction
-- Azure Speech docs — TTS language/voice support and SSML constraints
-- DeepL docs — supported language coverage
-- Anki Manual — import/export, duplicate handling, media syntax
-
-### Secondary (MEDIUM confidence)
-- `wordfreq` docs/README — ranked vocabulary bootstrap guidance and limitations
-- Kaikki/Wiktextract docs — structured lexical source practicality
-- `genanki` docs/PyPI — pragmatic `.apkg` export path
-- LiteLLM docs — provider abstraction strategy
-- spaCy and Stanza docs — validation-layer support for language checks
-
-### Tertiary (LOW confidence)
-- Adjacent product pages (Readlang, Migaku) — used only to infer user expectations and differentiator opportunities, not as implementation truth.
+- `.planning/research/STACK.md` — stack additions and dependency guidance.
+- `.planning/research/FEATURES.md` — v1.2 feature table stakes and requirement seeds.
+- `.planning/research/ARCHITECTURE.md` — integration path, source profiles, component map, safe build order.
+- `.planning/research/PITFALLS.md` — critical risks, mitigations, and phase placement.
+- `.planning/PROJECT.md` — active v1.2 milestone constraints and current product state.
+- `alter_organizado.md` — user-provided WebDAV, Kindle Formatter, highlight template, sentence, and phonetics requirements.
 
 ---
-*Research completed: 2026-04-18*
-*Ready for roadmap: yes*
+*Ready for requirements and roadmap: yes.*
