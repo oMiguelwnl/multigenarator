@@ -86,37 +86,38 @@ Which phases cover which requirements. Updated during roadmap creation.
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| INGEST-01 | TBD | Pending |
-| INGEST-02 | TBD | Pending |
-| INGEST-03 | TBD | Pending |
-| INGEST-04 | TBD | Pending |
-| NORM-01 | TBD | Pending |
-| NORM-02 | TBD | Pending |
-| NORM-03 | TBD | Pending |
-| CAND-01 | TBD | Pending |
-| CAND-02 | TBD | Pending |
-| CAND-03 | TBD | Pending |
-| MODE-01 | TBD | Pending |
-| MODE-02 | TBD | Pending |
-| GEN-01 | TBD | Pending |
-| GEN-02 | TBD | Pending |
-| GEN-03 | TBD | Pending |
-| EXPORT-01 | TBD | Pending |
-| EXPORT-02 | TBD | Pending |
-| EXPORT-03 | TBD | Pending |
-| PHON-01 | TBD | Pending |
-| PHON-02 | TBD | Pending |
-| PHON-03 | TBD | Pending |
-| SEC-01 | TBD | Pending |
-| SEC-02 | TBD | Pending |
-| EVID-01 | TBD | Pending |
+| INGEST-01 | Phase 14 | Pending |
+| INGEST-02 | Phase 14 | Pending |
+| INGEST-03 | Phase 10 | Pending |
+| INGEST-04 | Phase 11 | Pending |
+| NORM-01 | Phase 10 | Pending |
+| NORM-02 | Phase 10 | Pending |
+| NORM-03 | Phase 10 | Pending |
+| CAND-01 | Phase 10 | Pending |
+| CAND-02 | Phase 10 | Pending |
+| CAND-03 | Phase 10 | Pending |
+| MODE-01 | Phase 11 | Pending |
+| MODE-02 | Phase 09 | Pending |
+| GEN-01 | Phase 12 | Pending |
+| GEN-02 | Phase 12 | Pending |
+| GEN-03 | Phase 12 | Pending |
+| EXPORT-01 | Phase 13 | Pending |
+| EXPORT-02 | Phase 13 | Pending |
+| EXPORT-03 | Phase 13 | Pending |
+| PHON-01 | Phase 15 | Pending |
+| PHON-02 | Phase 15 | Pending |
+| PHON-03 | Phase 15 | Pending |
+| SEC-01 | Phase 09 | Pending |
+| SEC-02 | Phase 09 | Pending |
+| EVID-01 | Phase 16 | Pending |
 
 **Coverage:**
 
 - v1.2 requirements: 24 total
-- Mapped to phases: 0
-- Unmapped: 24 pending roadmap
+- Mapped to phases: 24
+- Unmapped: 0
+- Coverage validated: 24/24 mapped exactly once across Phases 09-16
 
 ---
 *Requirements defined: 2026-05-03*  
-*Last updated: 2026-05-03 after initial v1.2 definition*
+*Last updated: 2026-05-03 after v1.2 roadmap creation*

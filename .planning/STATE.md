@@ -2,12 +2,12 @@
 gsd_state_version: 1.0
 milestone: v1.2
 milestone_name: Kindle Highlights and Template Refresh
-status: defining_requirements
-stopped_at: Milestone v1.2 started; defining requirements and roadmap
+status: roadmap_created
+stopped_at: Roadmap created; ready to plan Phase 09
 last_updated: "2026-05-03T00:00:00Z"
-last_activity: 2026-05-03 -- Milestone v1.2 started from alter_organizado.md goals.
+last_activity: 2026-05-03 -- v1.2 roadmap created with Phases 09-16 and 24/24 requirements mapped.
 progress:
-  total_phases: 0
+  total_phases: 8
   completed_phases: 0
   total_plans: 0
   completed_plans: 0
@@ -21,14 +21,14 @@ progress:
 See: .planning/PROJECT.md (updated 2026-05-03)
 
 **Core value:** Generate reliable, high-quality Anki cards for real vocabulary the learner needs to study, with accurate definitions, examples, translations where appropriate, and audio.  
-**Current focus:** Define requirements and roadmap for v1.2 Kindle Highlights and Template Refresh
+**Current focus:** Phase 09: Source Profiles, Privacy, and Regression Boundary for v1.2 Kindle Highlights and Template Refresh
 
 ## Current Position
 
-Phase: Not started (defining requirements)  
-Plan: -  
-Status: Defining requirements  
-Last activity: 2026-05-03 - Milestone v1.2 started
+Phase: 09 - Source Profiles, Privacy, and Regression Boundary  
+Plan: Not started  
+Status: Roadmap created; ready for phase planning  
+Last activity: 2026-05-03 - v1.2 roadmap created
 
 Progress: [----------] 0%
 
@@ -36,10 +36,12 @@ Progress: [----------] 0%
 
 **Velocity:**
 
-- Total plans completed: 34
-- Best-effort task count from summaries: 68
-- Average duration: 14 min
-- Total execution time: 5h 58m
+- Total plans completed: 38
+- v1.0 plans completed: 34
+- v1.1 plans completed: 4
+- Best-effort task count from v1.0 summaries: 68
+- v1.2 planned phases: 8
+- v1.2 requirements mapped: 24/24
 
 **By Phase:**
 
@@ -52,11 +54,12 @@ Progress: [----------] 0%
 | 05-anki-safe-export-contract | 5 | 17 min | 3 min |
 | 06-end-to-end-text-acceptance-pipeline | 4 | 40 min | 10 min |
 | 07-milestone-evidence-audit-hygiene | 4 | 20 min | 5 min |
+| 08-card-quality-refresh | 4 | complete | complete |
 
 **Recent Trend:**
 
-- Last 5 completed plans: 06-04, 07-01, 07-02, 07-03, 07-04 completed.
-- Trend: Functional E2E gap closure and evidence/audit hygiene are complete; v1.0 milestone audit snapshot passed.
+- Last completed milestone work: Phase 08 Card Quality Refresh completed 2026-05-02.
+- Trend: v1.2 begins from a stable card-quality refresh but must protect existing frequency/custom flows while adding highlights.
 
 ## Accumulated Context
 
@@ -68,18 +71,22 @@ Full decision history is in `.planning/PROJECT.md` and `.planning/milestones/v1.
 - Keep Python/uv as the implementation backbone.
 - Keep Tatoeba secondary-only behind filtering, reranking, and validation.
 - Keep Azure Speech as the primary audio direction with documented fallback behavior.
-- Keep Anki export contract stable around the requested ten fields.
-- Add Kindle highlights as a new deck input mode rather than removing the shipped frequency-deck path.
+- Preserve existing frequency-deck and custom word-list behavior while adding highlights as a third input mode.
 - Normalize Kindle highlights locally instead of depending on the external Kindle Formatter website.
+- Treat WebDAV credentials, raw highlight exports, book metadata, and private reading text as sensitive data that must be redacted from logs, prompts, reports, artifacts, and commits.
+- Use dedicated highlight export/template behavior rather than mutating the normal deck note type.
+- Keep the phonetics template refresh isolated from normal and highlight deck generation.
 
 ### Pending Todos
 
-- Define v1.2 requirements for automatic Kindle highlights ingestion, local highlight normalization, highlight deck generation, highlight-specific template behavior, and phonetics template refresh.
-- Create v1.2 roadmap starting at Phase 09.
+- Plan Phase 09 with explicit source profile, regression, and privacy/redaction work.
+- Keep v1.2 requirement coverage at 24/24 as phases are planned and executed.
+- Preserve Phase 08 completion information until v1.1 is archived.
 
 ### Blockers/Concerns
 
-- Full-suite collection drift remains in `tests/test_runtime.py` and `tests/test_runtime_templates.py`, which import removed private runtime template adapters. Focused v1.0 milestone evidence suites passed.
+- Full-suite collection drift remains in `tests/test_runtime.py` and `tests/test_runtime_templates.py`, which import removed private runtime template adapters. Focused milestone evidence suites passed; Phase 09 should address regression boundaries before relying on broad full-suite gating.
+- Exact Kindle export shapes still need real fixture validation; Phase 10 should be fixture-driven and fail closed for malformed or unsafe highlight fragments.
 
 ### Quick Tasks Completed
 
@@ -98,5 +105,5 @@ Items acknowledged and carried forward from v1.0 milestone close:
 ## Session Continuity
 
 Last session: 2026-05-03T00:00:00Z  
-Stopped at: v1.2 milestone started; requirements and roadmap definition in progress  
+Stopped at: v1.2 roadmap created; ready to plan Phase 09  
 Resume file: None
