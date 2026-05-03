@@ -2,13 +2,13 @@
 
 ## What This Is
 
-Multilang is a Python CLI/batch pipeline for generating high-quality multilingual Anki vocabulary cards from either supported-language frequency decks or a user-provided word list. v1.0 ships the first usable product slice for Portuguese, Spanish, English, French, German, Italian, Polish, Turkish, Romanian, Russian, and Dutch.
+Multilang is a Python CLI/batch pipeline for generating high-quality multilingual Anki vocabulary cards from supported-language frequency decks, user-provided word lists, and reading-derived vocabulary sources. v1.0 ships the first usable product slice for Portuguese, Spanish, English, French, German, Italian, Polish, Turkish, Romanian, Russian, and Dutch.
 
-The product generates structured Anki-ready cards with word data, IPA, definitions, example sentences, translations, word audio, sentence audio, and an empty `Image` field that the user can fill manually later. v1.0 uses grounded lexical inputs, deterministic validation, Azure-first audio synthesis, and fixed-schema Anki export rather than relying on unverified generated text alone.
+The product generates structured Anki-ready cards with word data, IPA, definitions, example sentences, translations where the deck type requires them, word audio, sentence audio, and an empty `Image` field that the user can fill manually later. v1.0 uses grounded lexical inputs, deterministic validation, Azure-first audio synthesis, and fixed-schema Anki export rather than relying on unverified generated text alone.
 
 ## Core Value
 
-Generate reliable, high-quality Anki cards for frequent vocabulary in the chosen language so the learner can study real words with accurate definitions, examples, translations, and audio.
+Generate reliable, high-quality Anki cards for real vocabulary the learner needs to study, with accurate definitions, examples, translations where appropriate, and audio.
 
 ## Current State
 
@@ -19,9 +19,24 @@ Generate reliable, high-quality Anki cards for frequent vocabulary in the chosen
 
 v1.0 provides the shipped CLI path for generation, review support, audio generation, and export. Representative custom word-list and frequency-deck inputs are verified end to end through accepted text, audio assets, and `.apkg`/CSV/TSV artifacts.
 
+v1.1 Card Quality Refresh was executed through Phase 08 on 2026-05-02. The planning state records the phase as complete with targeted validation passing, but the milestone has not been archived in `.planning/MILESTONES.md` yet.
+
+## Current Milestone: v1.2 Kindle Highlights and Template Refresh
+
+**Goal:** Add a highlights-based deck mode that automatically imports Kindle highlights from WebDAV, normalizes them locally, generates Anki cards from reading-derived vocabulary, and updates highlight and phonetics card templates for the new study flow.
+
+**Target features:**
+
+- Automatically fetch Kindle highlights from the configured WebDAV export location.
+- Reimplement Kindle Formatter-style normalization inside Multilang instead of depending on the external formatter website.
+- Add a new highlights deck mode alongside the existing frequency-deck and custom word-list flows.
+- Generate highlight-specific cards with concise but grammatically richer example sentences.
+- Support a highlight deck template where `Definition` is on the back, there is no `Translation` field, fields use English names, and the layout is centered and responsive.
+- Refresh the phonetics card template with the provided front layout, `Sentence Translation` on the back, removed unused fields, and Multilang colors.
+
 ## Next Milestone Goals
 
-Fresh requirements should be defined through `/gsd-new-milestone`. Candidate directions from the archived v1 requirement seeds:
+After v1.2, candidate directions from the archived v1 requirement seeds remain:
 
 - Add language-specific generation and rendering rules for each supported language.
 - Add sense-aware disambiguation before export for polysemous words.
@@ -45,7 +60,11 @@ Fresh requirements should be defined through `/gsd-new-milestone`. Candidate dir
 
 ### Active
 
-- [ ] Define the next milestone requirements with `/gsd-new-milestone`.
+- [ ] Add automatic Kindle highlights ingestion from WebDAV as a new deck input source.
+- [ ] Normalize Kindle highlight exports locally into usable vocabulary candidates.
+- [ ] Generate highlight-specific Anki cards without replacing the existing frequency-deck flow.
+- [ ] Add a responsive highlight deck template with `Definition` on the back and no `Translation` field.
+- [ ] Refresh the phonetics deck template while preserving required sentence translation behavior.
 
 ### Out of Scope
 
@@ -79,6 +98,7 @@ Known follow-up debt: full-suite collection drift remains in tests that import r
 
 - **Languages**: v1 supports Portuguese, Spanish, English, French, German, Italian, Polish, Turkish, Romanian, Russian, and Dutch.
 - **Deck Structure**: Cards are separated into 3 levels with 1000 cards per level.
+- **Highlights Mode**: Kindle highlights are a new deck input mode and must not remove the existing frequency-deck mode.
 - **Output Quality**: Example sentences and translations must be high quality; Tatoeba is secondary-only behind validation.
 - **Audio Provider**: Audio should use Azure TTS if required voices are available, with documented fallback behavior.
 - **Card Schema**: The generated deck must preserve the requested field set and formatting.
@@ -97,6 +117,8 @@ Known follow-up debt: full-suite collection drift remains in tests that import r
 | Re-evaluate sentence and translation sourcing instead of defaulting to Tatoeba | Existing quality concerns make source quality a first-class decision | Locked: Tatoeba is secondary-only behind filtering/reranking and validation. |
 | Freeze the Anki export contract around the requested ten fields and project card template | Stable field order, blank `Image`, hidden/revealed `Translation`, and playable packaged audio define whether exports are useful in Anki | Validated in v1.0 with automated tests and approved Anki Desktop import/audio verification. |
 | Treat milestone close as evidence-driven, not task-count driven | Stale artifacts can hide real gaps or false positives | Validated in Phase 7 with refreshed verification, requirements, and audit metadata. |
+| Add Kindle highlights as a new mode instead of replacing frequency decks | The learner wants reading-derived vocabulary while preserving the shipped frequency-deck path | Pending in v1.2. |
+| Normalize Kindle highlights locally instead of automating the external formatter website | A local formatter keeps generation reproducible, testable, and independent of a browser-only tool | Pending in v1.2. |
 
 ## Evolution
 
@@ -118,4 +140,4 @@ This document evolves at phase transitions and milestone boundaries.
 4. Update Context with current state.
 
 ---
-*Last updated: 2026-04-29 after v1.0 milestone completion*
+*Last updated: 2026-05-03 after starting v1.2 milestone*

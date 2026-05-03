@@ -1,37 +1,36 @@
 ---
 gsd_state_version: 1.0
-milestone: v1.0
-milestone_name: MVP
-status: archived
-stopped_at: v1.0 milestone shipped and archived; ready to define next milestone
-last_updated: "2026-04-29T12:45:00Z"
-last_activity: 2026-04-29 -- Archived v1.0 milestone roadmap and requirements, updated project state, and prepared for fresh next-milestone requirements.
+milestone: v1.2
+milestone_name: Kindle Highlights and Template Refresh
+status: defining_requirements
+stopped_at: Milestone v1.2 started; defining requirements and roadmap
+last_updated: "2026-05-03T00:00:00Z"
+last_activity: 2026-05-03 -- Milestone v1.2 started from alter_organizado.md goals.
 progress:
-  total_phases: 7
-  completed_phases: 7
-  total_plans: 34
-  completed_plans: 34
-  percent: 100
+  total_phases: 0
+  completed_phases: 0
+  total_plans: 0
+  completed_plans: 0
+  percent: 0
 ---
 
 # Project State
 
 ## Project Reference
 
-See: .planning/PROJECT.md (updated 2026-04-29)
+See: .planning/PROJECT.md (updated 2026-05-03)
 
-**Core value:** Generate reliable, high-quality Anki cards for frequent vocabulary in the chosen language so the learner can study real words with accurate definitions, examples, translations, and audio.  
-**Current focus:** Planning the next milestone after v1.0 shipment
+**Core value:** Generate reliable, high-quality Anki cards for real vocabulary the learner needs to study, with accurate definitions, examples, translations where appropriate, and audio.  
+**Current focus:** Define requirements and roadmap for v1.2 Kindle Highlights and Template Refresh
 
 ## Current Position
 
-Milestone: v1.0 MVP - SHIPPED and ARCHIVED 2026-04-29  
-Phase range: 1-7 complete  
-Plan completion: 34/34 complete  
-Requirements: 23/23 v1 requirements satisfied  
-Audit: passed with 8/8 integration flows satisfied
+Phase: Not started (defining requirements)  
+Plan: -  
+Status: Defining requirements  
+Last activity: 2026-05-03 - Milestone v1.2 started
 
-Progress: [##########] 100%
+Progress: [----------] 0%
 
 ## Performance Metrics
 
@@ -70,10 +69,13 @@ Full decision history is in `.planning/PROJECT.md` and `.planning/milestones/v1.
 - Keep Tatoeba secondary-only behind filtering, reranking, and validation.
 - Keep Azure Speech as the primary audio direction with documented fallback behavior.
 - Keep Anki export contract stable around the requested ten fields.
+- Add Kindle highlights as a new deck input mode rather than removing the shipped frequency-deck path.
+- Normalize Kindle highlights locally instead of depending on the external Kindle Formatter website.
 
 ### Pending Todos
 
-- Run `/gsd-new-milestone` to define fresh requirements and roadmap for the next milestone.
+- Define v1.2 requirements for automatic Kindle highlights ingestion, local highlight normalization, highlight deck generation, highlight-specific template behavior, and phonetics template refresh.
+- Create v1.2 roadmap starting at Phase 09.
 
 ### Blockers/Concerns
 
@@ -95,6 +97,6 @@ Items acknowledged and carried forward from v1.0 milestone close:
 
 ## Session Continuity
 
-Last session: 2026-04-29T12:45:00Z  
-Stopped at: v1.0 milestone archived; next step is `/gsd-new-milestone`  
+Last session: 2026-05-03T00:00:00Z  
+Stopped at: v1.2 milestone started; requirements and roadmap definition in progress  
 Resume file: None
