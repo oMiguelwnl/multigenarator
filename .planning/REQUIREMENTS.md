@@ -31,7 +31,7 @@ Requirements for the current milestone. Each requirement maps to exactly one roa
 ### Highlight Deck Mode and Generation
 
 - [ ] **MODE-01**: User can generate a `highlights` deck mode alongside existing frequency-deck and custom word-list modes.
-- [ ] **MODE-02**: Existing frequency-deck and custom word-list behavior remains unchanged when highlight mode is added.
+- [x] **MODE-02**: Existing frequency-deck and custom word-list behavior remains unchanged when highlight mode is added.
 - [ ] **GEN-01**: User receives highlight cards with word or headword, IPA and spoken-pronunciation behavior, definition, example sentence, word audio, sentence audio, and blank `Image`.
 - [ ] **GEN-02**: User receives concise but grammatically richer highlight examples that include the target word and pass language and length validation.
 - [ ] **GEN-03**: User's private highlight text is minimized or redacted in prompts, reports, and errors while preserving enough internal provenance for audit and sense or context use.
@@ -50,8 +50,8 @@ Requirements for the current milestone. Each requirement maps to exactly one roa
 
 ### Regression, Security, and Evidence
 
-- [ ] **SEC-01**: User's WebDAV credentials, raw highlight files, book metadata, and private reading text are excluded from commits and redacted from logs and errors.
-- [ ] **SEC-02**: User gets tests proving existing frequency and custom generation, audio, and export contracts still work after v1.2 changes.
+- [x] **SEC-01**: User's WebDAV credentials, raw highlight files, book metadata, and private reading text are excluded from commits and redacted from logs and errors.
+- [x] **SEC-02**: User gets tests proving existing frequency and custom generation, audio, and export contracts still work after v1.2 changes.
 - [ ] **EVID-01**: User gets end-to-end evidence that a local Kindle fixture can become generated highlight cards and importable Anki exports, plus phonetics template export evidence.
 
 ## Future Requirements
@@ -97,7 +97,7 @@ Which phases cover which requirements. Updated during roadmap creation.
 | CAND-02 | Phase 10 | Pending |
 | CAND-03 | Phase 10 | Pending |
 | MODE-01 | Phase 11 | Pending |
-| MODE-02 | Phase 09 | Pending |
+| MODE-02 | Phase 09 | Complete |
 | GEN-01 | Phase 12 | Pending |
 | GEN-02 | Phase 12 | Pending |
 | GEN-03 | Phase 12 | Pending |
@@ -107,8 +107,8 @@ Which phases cover which requirements. Updated during roadmap creation.
 | PHON-01 | Phase 15 | Pending |
 | PHON-02 | Phase 15 | Pending |
 | PHON-03 | Phase 15 | Pending |
-| SEC-01 | Phase 09 | Pending |
-| SEC-02 | Phase 09 | Pending |
+| SEC-01 | Phase 09 | Complete |
+| SEC-02 | Phase 09 | Complete |
 | EVID-01 | Phase 16 | Pending |
 
 **Coverage:**
@@ -120,4 +120,4 @@ Which phases cover which requirements. Updated during roadmap creation.
 
 ---
 *Requirements defined: 2026-05-03*  
-*Last updated: 2026-05-03 after v1.2 roadmap creation*
+*Last updated: 2026-05-04 after Phase 09 completion*

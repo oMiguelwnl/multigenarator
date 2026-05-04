@@ -13,7 +13,7 @@ Phase 09: Source Profiles, Privacy, and Regression Boundary.
 ## Phases
 
 - [x] **Phase 08: Card Quality Refresh** - Generated non-phonetics Anki cards have prominent Azure word audio, AI-generated IPA, readable spoken-form hints beside IPA, and the user-provided normal deck styling.
-- [ ] **Phase 09: Source Profiles, Privacy, and Regression Boundary** - Existing frequency/custom decks stay stable while highlight mode, source profiles, and redaction boundaries are introduced.
+- [x] **Phase 09: Source Profiles, Privacy, and Regression Boundary** - Existing frequency/custom decks stay stable while highlight mode, source profiles, and redaction boundaries are introduced.
 - [ ] **Phase 10: Local Kindle Normalization and Candidate Extraction** - Local Kindle exports become deterministic normalized highlights and reviewable vocabulary candidates without external formatter dependency.
 - [ ] **Phase 11: Highlight Pipeline Integration** - Highlight candidates enter the existing job, grounding, resume, and duplicate-prevention flow as a new deck mode.
 - [ ] **Phase 12: Highlight Generation, Audio, and QA** - Highlight cards receive privacy-aware text generation, richer concise examples, validation, and audio.
@@ -54,14 +54,14 @@ Plans:
   2. User can still generate custom word-list decks without highlight note types, fields, or sentence rules leaking into that flow.
   3. User's WebDAV credentials, raw highlight files, book metadata, and private reading text are redacted from logs, errors, reports, and commit candidates.
   4. User receives regression test evidence that existing frequency and custom generation, audio, and export contracts still work before highlight work proceeds.
-**Plans**: 4 plans
+**Plans**: 4 plans complete
 
 Plans:
 
-- [ ] 09-01-PLAN.md — Define explicit source-profile contracts while preserving existing generation modes.
-- [ ] 09-02-PLAN.md — Apply source-profile boundaries to export field and note-type selection.
-- [ ] 09-03-PLAN.md — Add privacy redaction helpers and local artifact ignore rules.
-- [ ] 09-04-PLAN.md — Create v1.2 existing-mode regression evidence before highlight work proceeds.
+- [x] 09-01-PLAN.md — Define explicit source-profile contracts while preserving existing generation modes.
+- [x] 09-02-PLAN.md — Apply source-profile boundaries to export field and note-type selection.
+- [x] 09-03-PLAN.md — Add privacy redaction helpers and local artifact ignore rules.
+- [x] 09-04-PLAN.md — Create v1.2 existing-mode regression evidence before highlight work proceeds.
 
 ### Phase 10: Local Kindle Normalization and Candidate Extraction
 
@@ -156,12 +156,12 @@ Plans:
 |-----------|--------|-------|--------|---------|
 | v1.0 MVP | 1-7 | 34/34 | Complete | 2026-04-29 |
 | v1.1 Card Quality Refresh | 8 | 4/4 | Complete | 2026-05-02 |
-| v1.2 Kindle Highlights and Template Refresh | 9-16 | 0/4+TBD | Not started | - |
+| v1.2 Kindle Highlights and Template Refresh | 9-16 | 4/4+TBD | In progress | - |
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
 | 08. Card Quality Refresh | 4/4 | Complete | 2026-05-02 |
-| 09. Source Profiles, Privacy, and Regression Boundary | 0/4 | Planned | - |
+| 09. Source Profiles, Privacy, and Regression Boundary | 4/4 | Complete | 2026-05-04 |
 | 10. Local Kindle Normalization and Candidate Extraction | 0/TBD | Not started | - |
 | 11. Highlight Pipeline Integration | 0/TBD | Not started | - |
 | 12. Highlight Generation, Audio, and QA | 0/TBD | Not started | - |

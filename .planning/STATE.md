@@ -2,16 +2,16 @@
 gsd_state_version: 1.0
 milestone: v1.2
 milestone_name: Kindle Highlights and Template Refresh
-status: roadmap_created
-stopped_at: Roadmap created; ready to plan Phase 09
-last_updated: "2026-05-03T00:00:00Z"
-last_activity: 2026-05-03 -- v1.2 roadmap created with Phases 09-16 and 24/24 requirements mapped.
+status: phase_09_completed
+stopped_at: Phase 09 complete; ready to plan Phase 10
+last_updated: "2026-05-04T12:09:23Z"
+last_activity: 2026-05-04 -- Phase 09 completed with source profiles, export isolation, redaction helpers, and regression evidence.
 progress:
   total_phases: 8
-  completed_phases: 0
-  total_plans: 0
-  completed_plans: 0
-  percent: 0
+  completed_phases: 1
+  total_plans: 4
+  completed_plans: 4
+  percent: 12
 ---
 
 # Project State
@@ -21,16 +21,16 @@ progress:
 See: .planning/PROJECT.md (updated 2026-05-03)
 
 **Core value:** Generate reliable, high-quality Anki cards for real vocabulary the learner needs to study, with accurate definitions, examples, translations where appropriate, and audio.  
-**Current focus:** Phase 09: Source Profiles, Privacy, and Regression Boundary for v1.2 Kindle Highlights and Template Refresh
+**Current focus:** Phase 10: Local Kindle Normalization and Candidate Extraction for v1.2 Kindle Highlights and Template Refresh
 
 ## Current Position
 
-Phase: 09 - Source Profiles, Privacy, and Regression Boundary  
+Phase: 10 - Local Kindle Normalization and Candidate Extraction  
 Plan: Not started  
-Status: Roadmap created; ready for phase planning  
-Last activity: 2026-05-03 - v1.2 roadmap created
+Status: Phase 09 complete; ready for Phase 10 planning  
+Last activity: 2026-05-04 - Phase 09 completed
 
-Progress: [----------] 0%
+Progress: [#---------] 12%
 
 ## Performance Metrics
 
@@ -76,16 +76,20 @@ Full decision history is in `.planning/PROJECT.md` and `.planning/milestones/v1.
 - Treat WebDAV credentials, raw highlight exports, book metadata, and private reading text as sensitive data that must be redacted from logs, prompts, reports, artifacts, and commits.
 - Use dedicated highlight export/template behavior rather than mutating the normal deck note type.
 - Keep the phonetics template refresh isolated from normal and highlight deck generation.
+- Source-specific behavior is resolved through explicit `SourceProfile` contracts rather than implicit string fallback branches.
+- `kindle-highlights` is internally representable for domain/export isolation but remains blocked from the user-facing CLI until Phase 11.
+- Highlight exports must use a dedicated note model and omit `Translation`; mixed-source exports fail closed.
+- Future highlight/WebDAV diagnostics should use `multilang.security.redaction` before logging/reporting private data.
 
 ### Pending Todos
 
-- Plan Phase 09 with explicit source profile, regression, and privacy/redaction work.
+- Plan Phase 10 local Kindle normalization using Phase 09 source-profile and redaction boundaries.
 - Keep v1.2 requirement coverage at 24/24 as phases are planned and executed.
 - Preserve Phase 08 completion information until v1.1 is archived.
 
 ### Blockers/Concerns
 
-- Full-suite collection drift remains in `tests/test_runtime.py` and `tests/test_runtime_templates.py`, which import removed private runtime template adapters. Focused milestone evidence suites passed; Phase 09 should address regression boundaries before relying on broad full-suite gating.
+- Broad pytest collection now succeeds (`uv run pytest --collect-only -q` collected 247 tests during Phase 09), but future phases should keep the Phase 09 evidence commands green before relying on wider execution.
 - Exact Kindle export shapes still need real fixture validation; Phase 10 should be fixture-driven and fail closed for malformed or unsafe highlight fragments.
 
 ### Quick Tasks Completed
@@ -100,10 +104,10 @@ Items acknowledged and carried forward from v1.0 milestone close:
 
 | Category | Item | Status | Deferred At |
 |----------|------|--------|-------------|
-| tests | full-suite runtime template adapter import drift | deferred | 2026-04-29 |
+| tests | full-suite runtime template adapter import drift | resolved by Phase 09 collect-only evidence | 2026-05-04 |
 
 ## Session Continuity
 
-Last session: 2026-05-03T00:00:00Z  
-Stopped at: v1.2 roadmap created; ready to plan Phase 09  
+Last session: 2026-05-04T12:09:23Z  
+Stopped at: Phase 09 complete; ready to plan Phase 10  
 Resume file: None
