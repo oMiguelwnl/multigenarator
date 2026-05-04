@@ -8,11 +8,16 @@ import re
 
 import genanki
 
-from multilang.domain.exporting import EXPORT_CARD_FIELD_NAMES, ExportCardRow
+from multilang.domain.exporting import ExportCardRow, export_field_names_for_source_type
+from multilang.domain.source_profiles import get_source_profile
 
 MODEL_ID = 1_602_300_501
 DECK_ID = 1_602_300_502
 NOTE_TYPE_NAME = "Multilang::Card"
+MANUAL_MODEL_ID = 1_602_300_503
+MANUAL_NOTE_TYPE_NAME = "Multilang::Manual Card"
+HIGHLIGHT_MODEL_ID = 1_602_300_504
+HIGHLIGHT_NOTE_TYPE_NAME = "Multilang::Highlight Card"
 
 _SOUND_TAG_RE = re.compile(r"^\[sound:(?P<name>[^\]]+)\]$")
 _SECTION_RE = re.compile(
@@ -38,12 +43,18 @@ class MultilangNote(genanki.Note):
         return self._multilang_guid  # type: ignore[attr-defined]
 
 
-def build_multilang_model() -> genanki.Model:
-    template = _load_project_card_template()
+def build_multilang_model(*, source_type: str = "frequency") -> genanki.Model:
+    template = _load_project_card_template(source_type=source_type)
+    profile = get_source_profile(source_type)
+    model_id = {
+        "frequency": MODEL_ID,
+        "word-list": MANUAL_MODEL_ID,
+        "kindle-highlights": HIGHLIGHT_MODEL_ID,
+    }[profile.source_type]
     return genanki.Model(
-        MODEL_ID,
-        NOTE_TYPE_NAME,
-        fields=[{"name": field_name} for field_name in EXPORT_CARD_FIELD_NAMES],
+        model_id,
+        profile.note_type_name,
+        fields=[{"name": field_name} for field_name in export_field_names_for_source_type(source_type)],
         templates=[
             {
                 "name": "Card 1",
@@ -56,7 +67,11 @@ def build_multilang_model() -> genanki.Model:
 
 
 def build_multilang_note(row: ExportCardRow, *, model: genanki.Model | None = None) -> genanki.Note:
-    note = MultilangNote(model=model or build_multilang_model(), fields=_row_fields(row))
+    field_names = export_field_names_for_source_type(row.identity.source_type)
+    note = MultilangNote(
+        model=model or build_multilang_model(source_type=row.identity.source_type),
+        fields=_row_fields(row, field_names=field_names),
+    )
     note._multilang_guid = row.note_guid  # type: ignore[attr-defined]
     return note
 
@@ -68,7 +83,11 @@ def export_anki_package(
     output_path: Path,
     deck_name: str,
 ) -> ExportAnkiPackageResult:
-    model = build_multilang_model()
+    source_types = {row.identity.source_type for row in rows}
+    if len(source_types) > 1:
+        raise ExportAnkiPackageError("cannot export mixed source types in one note model")
+    source_type = next(iter(source_types), "frequency")
+    model = build_multilang_model(source_type=source_type)
     deck = genanki.Deck(DECK_ID, deck_name)
     media_files: list[Path] = []
 
@@ -89,9 +108,9 @@ def export_anki_package(
     )
 
 
-def _row_fields(row: ExportCardRow) -> list[str]:
-    mapping = row.ordered_field_mapping()
-    return [str(mapping[field_name]) if mapping[field_name] is not None else "" for field_name in EXPORT_CARD_FIELD_NAMES]
+def _row_fields(row: ExportCardRow, *, field_names: tuple[str, ...]) -> list[str]:
+    mapping = row.ordered_field_mapping(field_names=field_names)
+    return [str(mapping[field_name]) if mapping[field_name] is not None else "" for field_name in field_names]
 
 
 def _resolve_media_files(*, row: ExportCardRow, media_index: dict[str, Path]) -> list[Path]:
@@ -113,7 +132,7 @@ def _require_media_file(sound_tag: str, *, media_index: dict[str, Path]) -> Path
     return media_path
 
 
-def _load_project_card_template() -> dict[str, str]:
+def _load_project_card_template(*, source_type: str = "frequency") -> dict[str, str]:
     template_path = Path(__file__).resolve().parents[3] / "CARD_TEMPLATE.md"
     content = template_path.read_text(encoding="utf-8")
     match = _SECTION_RE.search(content)
@@ -124,7 +143,11 @@ def _load_project_card_template() -> dict[str, str]:
 
 __all__ = [
     "DECK_ID",
+    "HIGHLIGHT_MODEL_ID",
+    "HIGHLIGHT_NOTE_TYPE_NAME",
     "MODEL_ID",
+    "MANUAL_MODEL_ID",
+    "MANUAL_NOTE_TYPE_NAME",
     "NOTE_TYPE_NAME",
     "ExportAnkiPackageError",
     "ExportAnkiPackageResult",

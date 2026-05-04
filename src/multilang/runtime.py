@@ -22,13 +22,22 @@ from multilang.services.audio_synthesis import (
     AudioSynthesisService,
 )
 from multilang.services.assemble_export_cards import AssembleExportCardsService
-from multilang.services.export_anki_package import NOTE_TYPE_NAME, export_anki_package
+from multilang.services.export_anki_package import MANUAL_NOTE_TYPE_NAME, NOTE_TYPE_NAME, export_anki_package
 from multilang.services.export_tabular_bundle import ExportTabularBundleResult, write_export_tabular_bundle
 from multilang.services.generate_job import GenerateJobService
 from multilang.services.generate_audio_items import GenerateAudioItemsService
 from multilang.services.generate_text_items import GenerateTextItemsService
 from multilang.services.ingest_lexical_items import IngestLexicalItemsService
 from multilang.services.local_text_adapter import LocalSentenceAdapter, LocalTranslationAdapter
+from multilang.services.provider_text_adapters import (
+    DeepLTranslationAdapter,
+    FallbackTranslationAdapter,
+    GoogleTranslateAdapter,
+    LiteLLMSentenceAdapter,
+    can_use_deepl,
+    can_use_google_translate,
+    can_use_litellm,
+)
 from multilang.services.regenerate_text_item import RegenerateTextItemService
 from multilang.services.tatoeba_sentence_source import (
     StaticTatoebaCandidateProvider,
@@ -40,6 +49,7 @@ from multilang.services.text_review import ReviewReport, TextReviewService
 from multilang.services.text_validation import TextValidationService
 from multilang.settings import Settings
 from multilang.domain.jobs import SupportedLanguage
+from multilang.domain.source_profiles import get_source_profile
 
 _LANGUAGE_NAMES = {
     SupportedLanguage.PT: "Portuguese",
@@ -177,7 +187,7 @@ class RuntimeGenerateService(IngestLexicalItemsService):
                 export_format=export_format,
                 output_dir=output_dir,
                 deck_name=resolved_deck_name,
-                note_type_name=NOTE_TYPE_NAME,
+                note_type_name=_note_type_name_for_rows(rows),
             )
             if tabular_result.output_path != output_path:
                 tabular_result.output_path.replace(output_path)
@@ -219,6 +229,34 @@ def _validate_media_reference(*, sound_tag: str, media_path: Path) -> None:
         raise ValueError(f"missing media file for {media_path.name}")
 
 
+def _build_translation_adapter(runtime_settings: Settings) -> object:
+    if runtime_settings.translation_provider == "local":
+        return LocalTranslationAdapter()
+    if can_use_deepl(runtime_settings):
+        return FallbackTranslationAdapter(
+            primary=DeepLTranslationAdapter(runtime_settings),
+            fallback=GoogleTranslateAdapter(),
+        )
+    if can_use_google_translate(runtime_settings):
+        return GoogleTranslateAdapter()
+    if runtime_settings.translation_provider == "deepl":
+        raise ValueError("DeepL translation requires MULTILANG_DEEPL_API_KEY or DEEPL_API_KEY")
+    raise ValueError(f"unsupported translation provider: {runtime_settings.translation_provider}")
+
+
+def _build_sentence_adapter(runtime_settings: Settings) -> object:
+    if runtime_settings.text_generation_provider == "local":
+        return LocalSentenceAdapter()
+    if can_use_litellm(runtime_settings):
+        return LiteLLMSentenceAdapter(runtime_settings)
+    if runtime_settings.text_generation_provider == "litellm":
+        raise ValueError(
+            "LiteLLM sentence generation requires MULTILANG_LITELLM_API_KEY, "
+            "MULTILANG_OPENAI_API_KEY, or MULTILANG_OPENROUTER_API_KEY"
+        )
+    raise ValueError(f"unsupported text generation provider: {runtime_settings.text_generation_provider}")
+
+
 def build_runtime_service(
     settings: Settings | None = None,
     *,
@@ -237,8 +275,8 @@ def build_runtime_service(
     export_repository = ExportRepository(session)
     generate_job_service = GenerateJobService(job_repository)
     text_generation_service = TextGenerationService(
-        sentence_adapter=LocalSentenceAdapter(),
-        translation_adapter=LocalTranslationAdapter(),
+        sentence_adapter=_build_sentence_adapter(runtime_settings),
+        translation_adapter=_build_translation_adapter(runtime_settings),
     )
     text_validation_service = TextValidationService()
     tatoeba_sentence_source = TatoebaSentenceSource(
@@ -298,3 +336,11 @@ def _sanitize_deck_name(deck_name: str) -> str:
 
 def _default_deck_name(language: SupportedLanguage) -> str:
     return f"Multilang {_LANGUAGE_NAMES[language]}"
+
+
+def _note_type_name_for_rows(rows: list[object]) -> str:
+    source_types = {row.identity.source_type for row in rows}
+    if len(source_types) > 1:
+        raise ValueError("cannot export mixed source types in one note model")
+    source_type = next(iter(source_types), "frequency")
+    return get_source_profile(source_type).note_type_name

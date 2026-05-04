@@ -8,8 +8,9 @@ from hashlib import sha256
 from pydantic import BaseModel, ConfigDict, Field, model_validator
 
 from multilang.domain.jobs import SupportedLanguage
+from multilang.domain.source_profiles import get_source_profile
 
-EXPORT_CARD_FIELD_NAMES = (
+FREQUENCY_EXPORT_CARD_FIELD_NAMES = (
     "SortIndex",
     "word",
     "Front of Card",
@@ -19,6 +20,18 @@ EXPORT_CARD_FIELD_NAMES = (
     "Translation",
     "word_audio",
     "sentence_audio",
+    "Image",
+)
+MANUAL_EXPORT_CARD_FIELD_NAMES = FREQUENCY_EXPORT_CARD_FIELD_NAMES
+EXPORT_CARD_FIELD_NAMES = FREQUENCY_EXPORT_CARD_FIELD_NAMES
+HIGHLIGHT_EXPORT_CARD_FIELD_NAMES = (
+    "SortIndex",
+    "Word",
+    "IPA",
+    "word_audio",
+    "Example Sentence",
+    "sentence_audio",
+    "Definition",
     "Image",
 )
 
@@ -71,7 +84,7 @@ class ExportCardRow(BaseModel):
     ipa: str | None = Field(default=None, alias="IPA")
     definitions: str = Field(min_length=1, alias="Definitions")
     example_sentence: str = Field(min_length=1, alias="Example Sentence")
-    translation: str = Field(min_length=1, alias="Translation")
+    translation: str = Field(default="", alias="Translation")
     word_audio: str = Field(default="", alias="word_audio")
     sentence_audio: str = Field(default="", alias="sentence_audio")
     image: str = Field(default="", alias="Image")
@@ -89,12 +102,32 @@ class ExportCardRow(BaseModel):
         return self
 
     @classmethod
-    def field_names(cls) -> tuple[str, ...]:
-        return EXPORT_CARD_FIELD_NAMES
+    def field_names(cls, *, source_type: str = "frequency") -> tuple[str, ...]:
+        return export_field_names_for_source_type(source_type)
 
-    def ordered_field_mapping(self) -> dict[str, object]:
+    def ordered_field_mapping(self, *, field_names: tuple[str, ...] | None = None) -> dict[str, object]:
+        resolved_field_names = field_names or export_field_names_for_source_type(self.identity.source_type)
         values = self.model_dump(by_alias=True, exclude={"identity", "note_guid"})
-        return {field_name: values[field_name] for field_name in EXPORT_CARD_FIELD_NAMES}
+        values["Word"] = values["word"]
+        values["Definition"] = values["Definitions"]
+        return {field_name: values[field_name] for field_name in resolved_field_names}
+
+
+def export_field_names_for_source_type(source_type: str) -> tuple[str, ...]:
+    profile = get_source_profile(source_type)
+    if not profile.exports_translation_field:
+        return HIGHLIGHT_EXPORT_CARD_FIELD_NAMES
+    if profile.source_type == "word-list":
+        return MANUAL_EXPORT_CARD_FIELD_NAMES
+    return FREQUENCY_EXPORT_CARD_FIELD_NAMES
+
+
+def export_field_names_for_rows(rows: list[ExportCardRow]) -> tuple[str, ...]:
+    source_types = {row.identity.source_type for row in rows}
+    if len(source_types) > 1:
+        raise ValueError("cannot resolve export field names for mixed source types")
+    source_type = next(iter(source_types), "frequency")
+    return export_field_names_for_source_type(source_type)
 
 
 class ExportDeckArtifact(BaseModel):
@@ -108,10 +141,15 @@ class ExportDeckArtifact(BaseModel):
 
 __all__ = [
     "EXPORT_CARD_FIELD_NAMES",
+    "FREQUENCY_EXPORT_CARD_FIELD_NAMES",
+    "HIGHLIGHT_EXPORT_CARD_FIELD_NAMES",
+    "MANUAL_EXPORT_CARD_FIELD_NAMES",
     "ExportArtifactFormat",
     "ExportArtifactStatus",
     "ExportCardIdentity",
     "ExportCardRow",
     "ExportDeckArtifact",
     "build_export_note_guid",
+    "export_field_names_for_rows",
+    "export_field_names_for_source_type",
 ]
