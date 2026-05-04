@@ -2,8 +2,10 @@
 
 from __future__ import annotations
 
+import re
 from html import escape
 from pathlib import Path
+from typing import Protocol
 
 from multilang.domain.jobs import SupportedLanguage
 from multilang.domain.lexicon import (
@@ -16,6 +18,7 @@ from multilang.domain.lexicon import (
 )
 from multilang.services.kaikki_lookup import KaikkiRecord, normalize_lexical_key
 from multilang.services.kaikki_lookup import KaikkiLookup
+from multilang.services.provider_pronunciation_adapters import PronunciationGenerationRequest
 from multilang.services.word_list_parser import ParsedWordListItem
 
 
@@ -25,11 +28,16 @@ def build_lexical_grounding_service(lexicon_data_dir: str | Path) -> "LexicalGro
     return LexicalGroundingService(lookup=KaikkiLookup(data_dir=lexicon_data_dir))
 
 
+class PronunciationGenerator(Protocol):
+    def generate_pronunciation(self, request: PronunciationGenerationRequest) -> object: ...
+
+
 class LexicalGroundingService:
     """Ground parsed lexical inputs against authoritative cached lookups."""
 
-    def __init__(self, lookup: object) -> None:
+    def __init__(self, lookup: object, pronunciation_generator: PronunciationGenerator | None = None) -> None:
         self._lookup = lookup
+        self._pronunciation_generator = pronunciation_generator
 
     def ground_word_list_item(
         self,
@@ -40,11 +48,17 @@ class LexicalGroundingService:
         record = self._lookup_record(language=language, term=item.item_key)
         if record is None:
             return self._pending_candidate(language=language, item=item)
-        return self._grounded_candidate(
+        candidate = self._grounded_candidate(
             language=language,
             submitted_form=item.submitted_form,
             display_form=item.display_form,
             record=record,
+        )
+        return candidate.model_copy(
+            update={
+                "definition_language": language.value,
+                "translation_target_language": language.value,
+            }
         )
 
     def ground_frequency_candidate(
@@ -55,16 +69,14 @@ class LexicalGroundingService:
     ) -> LexicalCardCandidate:
         record = self._lookup_record(language=language, term=candidate.lemma_key)
         if record is None:
-            return candidate.model_copy(
-                update={
-                    "grounding_status": GroundingStatus.BACKFILL_REQUIRED,
-                    "warning_code": "backfill_required",
-                    "warning_detail": f"no authoritative lexical match for '{candidate.lemma}'",
-                    "provenance": LexicalProvenance(
-                        source=candidate.provenance.source,
-                        notes=["frequency candidate requires lexical backfill"],
-                    ),
-                }
+            return self._backfill_required_candidate(
+                candidate,
+                warning_detail=f"no authoritative lexical match for '{candidate.lemma}'",
+            )
+        if not _is_frequency_card_worthy(record, candidate=candidate, language=language):
+            return self._backfill_required_candidate(
+                candidate,
+                warning_detail=f"lexical match for '{candidate.lemma}' is not a primary card entry",
             )
 
         grounded = self._grounded_candidate(
@@ -97,10 +109,28 @@ class LexicalGroundingService:
             record.definitions,
             part_of_speech=record.part_of_speech,
         )
+        ipa = record.ipa
+        spoken_form: str | None = learner_display_form if record.ipa else None
         pronunciation_source = "kaikki" if record.ipa else "kaikki_missing"
         notes: list[str] = []
         if record.ipa is None:
             notes.append("authoritative IPA missing in lexical source")
+        if self._pronunciation_generator is not None:
+            pronunciation = self._pronunciation_generator.generate_pronunciation(
+                PronunciationGenerationRequest(
+                    target_language=language.value,
+                    display_form=learner_display_form,
+                    lemma=record.lemma,
+                    definitions_html=definitions_html,
+                )
+            )
+            ipa = str(getattr(pronunciation, "ipa")).strip()
+            spoken_form = str(getattr(pronunciation, "spoken_form")).strip()
+            pronunciation_source = str(
+                getattr(pronunciation, "provenance", {}).get(
+                    "source", "provider-pronunciation-generator"
+                )
+            )
 
         return LexicalCardCandidate(
             submitted_form=submitted_form,
@@ -109,7 +139,8 @@ class LexicalGroundingService:
             lemma_key=normalize_lexical_key(record.lemma),
             definitions_html=definitions_html,
             definition_language=policy.definition_language,
-            ipa=record.ipa,
+            ipa=ipa,
+            spoken_form=spoken_form,
             translation_target_language=policy.translation_target_language,
             grounding_status=GroundingStatus.GROUNDED,
             provenance=LexicalProvenance(
@@ -117,7 +148,7 @@ class LexicalGroundingService:
                 definition=DefinitionRecord(source=record.source, value=definitions_html, fallback_used=False),
                 pronunciation=PronunciationRecord(
                     source=pronunciation_source,
-                    value=record.ipa,
+                    value=ipa,
                     authoritative=True,
                 ),
                 notes=notes,
@@ -130,14 +161,13 @@ class LexicalGroundingService:
         language: SupportedLanguage,
         item: ParsedWordListItem,
     ) -> LexicalCardCandidate:
-        policy = policy_for_language(language)
         return LexicalCardCandidate(
             submitted_form=item.submitted_form,
             display_form=item.display_form,
             lemma=item.display_form,
             lemma_key=item.item_key,
-            definition_language=policy.definition_language,
-            translation_target_language=policy.translation_target_language,
+            definition_language=language.value,
+            translation_target_language=language.value,
             grounding_status=GroundingStatus.PENDING,
             warning_code="lexical_lookup_missing",
             warning_detail=(
@@ -145,6 +175,24 @@ class LexicalGroundingService:
                 f"{item.line_number}"
             ),
             provenance=LexicalProvenance(source="word_list", notes=["custom word retained for later review"]),
+        )
+
+    @staticmethod
+    def _backfill_required_candidate(
+        candidate: LexicalCardCandidate,
+        *,
+        warning_detail: str,
+    ) -> LexicalCardCandidate:
+        return candidate.model_copy(
+            update={
+                "grounding_status": GroundingStatus.BACKFILL_REQUIRED,
+                "warning_code": "backfill_required",
+                "warning_detail": warning_detail,
+                "provenance": LexicalProvenance(
+                    source=candidate.provenance.source,
+                    notes=["frequency candidate requires lexical backfill"],
+                ),
+            }
         )
 
     @staticmethod
@@ -162,20 +210,14 @@ class LexicalGroundingService:
         *,
         part_of_speech: str | None = None,
     ) -> str | None:
-        cleaned = [
-            escape(
-                _format_definition_text(
-                    definition.strip(),
-                    part_of_speech=part_of_speech,
-                )
-            )
-            for definition in definitions
-            if definition.strip()
-        ]
-        if not cleaned:
+        primary_definition = _select_primary_definition(definitions)
+        if primary_definition is None:
             return None
-        return "<br>".join(cleaned)
-
+        formatted = _format_definition_text(
+            primary_definition,
+            part_of_speech=part_of_speech,
+        )
+        return escape(formatted)
 
 
 _PART_OF_SPEECH_LABELS = {
@@ -205,6 +247,103 @@ _PART_OF_SPEECH_LABELS = {
     "verb": "verb",
 }
 
+_RELATION_PREFIX_RE = re.compile(
+    r"^(?:abbreviation|acronym|alternative form|alternative spelling|archaic spelling|"
+    r"clipping|initialism|misspelling|obsolete spelling|pre-1918 spelling|"
+    r"romanization|same as|superseded spelling|transliteration)\b"
+)
+_LETTER_DEFINITION_RE = re.compile(r"\bletter of (?:the )?.*alphabet\b")
+_MAX_CARD_DEFINITION_CHARS = 180
+
+_FORM_OF_TERMS = {
+    "ablative",
+    "accusative",
+    "active",
+    "adverbial",
+    "animate",
+    "aorist",
+    "comparative",
+    "conditional",
+    "dative",
+    "definite",
+    "feminine",
+    "first",
+    "form",
+    "future",
+    "genitive",
+    "gerund",
+    "imperative",
+    "imperfect",
+    "imperfective",
+    "indicative",
+    "infinitive",
+    "instrumental",
+    "locative",
+    "masculine",
+    "neuter",
+    "nominative",
+    "participle",
+    "passive",
+    "past",
+    "perfect",
+    "perfective",
+    "person",
+    "plural",
+    "prepositional",
+    "present",
+    "second",
+    "singular",
+    "subjunctive",
+    "superlative",
+    "third",
+    "vocative",
+}
+
+
+def _is_frequency_card_worthy(
+    record: KaikkiRecord,
+    *,
+    candidate: LexicalCardCandidate,
+    language: SupportedLanguage,
+) -> bool:
+    if (
+        language is SupportedLanguage.RU
+        and candidate.submitted_form == candidate.submitted_form.casefold()
+        and record.lemma != record.lemma.casefold()
+    ):
+        return False
+    return any(_is_substantive_definition(definition) for definition in record.definitions)
+
+
+def _is_substantive_definition(definition: str) -> bool:
+    normalized = " ".join(definition.casefold().split())
+    if not normalized or re.fullmatch(r"\[[^\]]+\]", normalized):
+        return False
+    if _LETTER_DEFINITION_RE.search(normalized):
+        return False
+    if _RELATION_PREFIX_RE.match(normalized):
+        return False
+
+    before_of, separator, _ = normalized.partition(" of ")
+    if separator:
+        terms = set(re.findall(r"[a-z]+", before_of))
+        if terms and terms.issubset(_FORM_OF_TERMS):
+            return False
+    return True
+
+
+def _select_primary_definition(definitions: list[str]) -> str | None:
+    fallback: str | None = None
+    for definition in definitions:
+        cleaned = _clean_definition_text(definition)
+        if not cleaned:
+            continue
+        fallback = fallback or cleaned
+        if _is_substantive_definition(cleaned):
+            return cleaned
+    return fallback
+
+
 def _format_definition_text(
     meaning: str,
     *,
@@ -213,7 +352,6 @@ def _format_definition_text(
     label = _part_of_speech_label(part_of_speech)
     if label is None:
         return meaning
-
     return f"{label}: {meaning}"
 
 
@@ -225,6 +363,18 @@ def _part_of_speech_label(value: str | None) -> str | None:
         return None
     return _PART_OF_SPEECH_LABELS.get(normalized, normalized)
 
+
+def _clean_definition_text(value: str) -> str:
+    cleaned = " ".join(value.split())
+    if len(cleaned) <= _MAX_CARD_DEFINITION_CHARS:
+        return cleaned
+
+    for separator in (". ", "; "):
+        first_segment = cleaned.split(separator, 1)[0].strip()
+        if 20 <= len(first_segment) <= _MAX_CARD_DEFINITION_CHARS:
+            return first_segment
+
+    return cleaned[:_MAX_CARD_DEFINITION_CHARS].rsplit(" ", 1)[0].strip() + "..."
 
 
 __all__ = ["LexicalGroundingService", "build_lexical_grounding_service"]

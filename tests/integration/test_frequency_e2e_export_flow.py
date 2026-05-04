@@ -58,6 +58,7 @@ def write_lookup_index(tmp_path: Path, *terms: str) -> Path:
                     "display_form": term,
                     "lemma": term,
                     "definitions": [f"definition for {term}"],
+                    "part_of_speech": "noun",
                     "ipa": f"/{term}/",
                     "source": "kaikki",
                 }
