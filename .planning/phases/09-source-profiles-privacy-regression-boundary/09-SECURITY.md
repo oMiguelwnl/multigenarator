@@ -1,11 +1,11 @@
 ---
 phase: 09
 slug: source-profiles-privacy-regression-boundary
-status: blocked
-threats_open: 1
+status: verified
+threats_open: 0
 asvs_level: 1
 created: 2026-05-04T12:38:37Z
-updated: 2026-05-04T12:53:41Z
+updated: 2026-05-04T12:59:09Z
 ---
 
 # Phase 09 — Security
@@ -31,7 +31,7 @@ updated: 2026-05-04T12:53:41Z
 | Threat ID | Category | Component | Disposition | Mitigation | Status |
 |-----------|----------|-----------|-------------|------------|--------|
 | T-09-01 | Tampering | `GenerationRequest.source_type` | mitigate | `GenerationRequest` uses shared `SourceType`; supported keys live in `SOURCE_PROFILES`. Evidence: `src/multilang/domain/jobs.py`, `src/multilang/domain/source_profiles.py`. | closed |
-| T-09-02 | Information Disclosure | `get_source_profile` errors | mitigate | Expected: unsupported source errors must not disclose file contents, raw highlights, paths, or credentials. Audit found `source_type` reflected verbatim in the `ValueError`; test currently asserts a private/path-bearing value appears. | open |
+| T-09-02 | Information Disclosure | `get_source_profile` errors | mitigate | Unsupported source errors include only safe source-type keys and never file contents, raw highlights, paths, or credentials. Evidence: `src/multilang/domain/source_profiles.py`, `tests/domain/test_source_profiles.py`. | closed |
 | T-09-03 | Elevation of Privilege | highlight profile defaults | mitigate | `kindle-highlights` is internal-only in Phase 09; CLI remains gated to `frequency` and `word-list`. Evidence: `src/multilang/cli.py`, `tests/integration/test_v12_existing_mode_regression_boundary.py`. | closed |
 | T-09-04 | Tampering | `export_anki_package()` | mitigate | Mixed source rows are rejected before package/model creation. Evidence: `src/multilang/services/export_anki_package.py`, `tests/services/test_export_anki_package.py`. | closed |
 | T-09-05 | Information Disclosure | highlight field mapping | mitigate | Highlight field names omit `Translation` and use explicit aliases instead of fallback. Evidence: `src/multilang/domain/exporting.py`, `tests/domain/test_exporting.py`. | closed |
@@ -60,9 +60,7 @@ Status: open or closed. Disposition: mitigate, accept, or transfer.
 
 ## Open Threats
 
-| Threat ID | Mitigation Expected | Files Searched | Gap |
-|-----------|---------------------|----------------|-----|
-| T-09-02 | Error messages include only source-type keys and never file contents, raw highlights, paths, or credentials. | `src/multilang/domain/source_profiles.py`, `tests/domain/test_source_profiles.py` | Unknown `source_type` is reflected verbatim in the exception message, so a path/secret-bearing value would be disclosed. |
+No open threats remain after T-09-02 remediation.
 
 ## Security Audit Trail
 
@@ -70,24 +68,24 @@ Status: open or closed. Disposition: mitigate, accept, or transfer.
 |------------|---------------|--------|------|--------|
 | 2026-05-04 | 12 | 11 | 1 | gsd-security-auditor |
 | 2026-05-04 | 12 | 11 | 1 | gsd-security-auditor recheck |
+| 2026-05-04 | 12 | 12 | 0 | gsd-gap-closure |
 
 Notes:
 - `gsd-sdk` was unavailable on PATH; security enforcement used the workflow default `true`.
 - Auditor result: `OPEN_THREATS`, `threats_open: 1`.
 - User chose to block the gate rather than accept T-09-02.
 - Recheck result at 2026-05-04T12:53:41Z: `OPEN_THREATS`; `src/multilang/domain/source_profiles.py` still reflects raw unknown `source_type`, and `tests/domain/test_source_profiles.py` still asserts a private/path-bearing value appears in the error.
+- Gap-closure result at 2026-05-04T12:59:09Z: `VERIFIED`; `get_source_profile()` omits the unsafe unknown source value, and `tests/domain/test_source_profiles.py` asserts private/path-bearing values are absent from unsupported source errors.
 
 ## Recommendations
 
-- Fix T-09-02 by changing `get_source_profile()` so unsupported source errors do not reflect arbitrary unknown input, or redact/truncate the value before raising.
-- Update `tests/domain/test_source_profiles.py` so privacy-sensitive unknown values are not expected in exception text.
-- Re-run `/gsd-secure-phase 09` after the fix.
+- Keep future highlight/WebDAV diagnostics on the same safe-output boundary: omit or redact private source values before they reach errors, logs, prompts, reports, or artifacts.
 
 ## Sign-Off
 
 - [x] All threats have a disposition (mitigate / accept / transfer)
 - [x] Accepted risks documented in Accepted Risks Log
-- [ ] `threats_open: 0` confirmed
-- [ ] `status: verified` set in frontmatter
+- [x] `threats_open: 0` confirmed
+- [x] `status: verified` set in frontmatter
 
-**Approval:** blocked pending T-09-02 remediation
+**Approval:** verified after T-09-02 remediation
