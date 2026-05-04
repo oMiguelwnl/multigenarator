@@ -54,7 +54,7 @@ Plans:
   2. User can still generate custom word-list decks without highlight note types, fields, or sentence rules leaking into that flow.
   3. User's WebDAV credentials, raw highlight files, book metadata, and private reading text are redacted from logs, errors, reports, and commit candidates.
   4. User receives regression test evidence that existing frequency and custom generation, audio, and export contracts still work before highlight work proceeds.
-**Plans**: 5 plans (4 complete, 1 gap-closure plan pending)
+**Plans**: 5 plans complete
 
 Plans:
 
@@ -62,7 +62,7 @@ Plans:
 - [x] 09-02-PLAN.md — Apply source-profile boundaries to export field and note-type selection.
 - [x] 09-03-PLAN.md — Add privacy redaction helpers and local artifact ignore rules.
 - [x] 09-04-PLAN.md — Create v1.2 existing-mode regression evidence before highlight work proceeds.
-- [ ] 09-05-PLAN.md — Close the T-09-02 privacy leak in unsupported source-profile errors.
+- [x] 09-05-PLAN.md — Close the T-09-02 privacy leak in unsupported source-profile errors.
 
 ### Phase 10: Local Kindle Normalization and Candidate Extraction
 
@@ -157,12 +157,12 @@ Plans:
 |-----------|--------|-------|--------|---------|
 | v1.0 MVP | 1-7 | 34/34 | Complete | 2026-04-29 |
 | v1.1 Card Quality Refresh | 8 | 4/4 | Complete | 2026-05-02 |
-| v1.2 Kindle Highlights and Template Refresh | 9-16 | 4/5+TBD | In progress | - |
+| v1.2 Kindle Highlights and Template Refresh | 9-16 | 5/5+TBD | In progress | - |
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
 | 08. Card Quality Refresh | 4/4 | Complete | 2026-05-02 |
-| 09. Source Profiles, Privacy, and Regression Boundary | 4/5 | Security gap closure planned | - |
+| 09. Source Profiles, Privacy, and Regression Boundary | 5/5 | Complete | 2026-05-04 |
 | 10. Local Kindle Normalization and Candidate Extraction | 0/TBD | Not started | - |
 | 11. Highlight Pipeline Integration | 0/TBD | Not started | - |
 | 12. Highlight Generation, Audio, and QA | 0/TBD | Not started | - |

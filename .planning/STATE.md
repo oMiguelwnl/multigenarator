@@ -4,13 +4,13 @@ milestone: v1.2
 milestone_name: Kindle Highlights and Template Refresh
 status: phase_09_completed
 stopped_at: Phase 09 complete; ready to plan Phase 10
-last_updated: "2026-05-04T12:09:23Z"
-last_activity: 2026-05-04 -- Phase 09 completed with source profiles, export isolation, redaction helpers, and regression evidence.
+last_updated: "2026-05-04T13:02:07Z"
+last_activity: 2026-05-04 -- Phase 09 security gap T-09-02 closed; source-profile errors are privacy-safe and security status is verified.
 progress:
   total_phases: 8
   completed_phases: 1
-  total_plans: 4
-  completed_plans: 4
+  total_plans: 5
+  completed_plans: 5
   percent: 12
 ---
 
@@ -27,8 +27,8 @@ See: .planning/PROJECT.md (updated 2026-05-03)
 
 Phase: 10 - Local Kindle Normalization and Candidate Extraction  
 Plan: Not started  
-Status: Phase 09 complete; ready for Phase 10 planning  
-Last activity: 2026-05-04 - Phase 09 completed
+Status: Phase 09 complete with security gap closed; ready for Phase 10 planning  
+Last activity: 2026-05-04 - Phase 09 T-09-02 gap closure completed
 
 Progress: [#---------] 12%
 
@@ -36,7 +36,7 @@ Progress: [#---------] 12%
 
 **Velocity:**
 
-- Total plans completed: 38
+- Total plans completed: 39
 - v1.0 plans completed: 34
 - v1.1 plans completed: 4
 - Best-effort task count from v1.0 summaries: 68
@@ -80,10 +80,11 @@ Full decision history is in `.planning/PROJECT.md` and `.planning/milestones/v1.
 - `kindle-highlights` is internally representable for domain/export isolation but remains blocked from the user-facing CLI until Phase 11.
 - Highlight exports must use a dedicated note model and omit `Translation`; mixed-source exports fail closed.
 - Future highlight/WebDAV diagnostics should use `multilang.security.redaction` before logging/reporting private data.
+- Unsupported source-profile errors omit rejected private/path-bearing input entirely and list only safe supported source keys.
 
 ### Pending Todos
 
-- Plan Phase 10 local Kindle normalization using Phase 09 source-profile and redaction boundaries.
+- Plan Phase 10 local Kindle normalization using Phase 09 source-profile and redaction boundaries, including the T-09-02 omit-unsafe-input error pattern.
 - Keep v1.2 requirement coverage at 24/24 as phases are planned and executed.
 - Preserve Phase 08 completion information until v1.1 is archived.
 
@@ -108,6 +109,6 @@ Items acknowledged and carried forward from v1.0 milestone close:
 
 ## Session Continuity
 
-Last session: 2026-05-04T12:09:23Z  
-Stopped at: Phase 09 complete; ready to plan Phase 10  
+Last session: 2026-05-04T13:02:07Z  
+Stopped at: Phase 09 complete with T-09-02 closed; ready to plan Phase 10  
 Resume file: None
