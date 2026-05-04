@@ -56,7 +56,10 @@ def get_source_profile(source_type: str) -> SourceProfile:
     try:
         return SOURCE_PROFILES[source_type]  # type: ignore[index]
     except KeyError as exc:
-        raise ValueError(f"unsupported source_type: {source_type}") from exc
+        raise ValueError(
+            "unsupported source_type; expected one of: "
+            + ", ".join(SUPPORTED_SOURCE_TYPES)
+        ) from exc
 
 
 __all__ = [
