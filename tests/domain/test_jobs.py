@@ -37,6 +37,38 @@ def test_generation_request_rejects_unsupported_language() -> None:
         GenerationRequest(language="sv", source_type="frequency", level=1)
 
 
+def test_generation_request_accepts_existing_frequency_source_type() -> None:
+    request = GenerationRequest(language="en", source_type="frequency")
+
+    assert request.source_type == "frequency"
+
+
+def test_generation_request_accepts_existing_word_list_source_type(tmp_path) -> None:
+    source = tmp_path / "words.txt"
+    source.write_text("alpha\n", encoding="utf-8")
+
+    request = GenerationRequest(language="en", source_type="word-list", input_file=source)
+
+    assert request.source_type == "word-list"
+    assert request.input_file == source
+
+
+def test_generation_request_accepts_internal_kindle_highlights_source_type(tmp_path) -> None:
+    source = tmp_path / "kindle-highlights.html"
+    source.write_text("synthetic highlight", encoding="utf-8")
+
+    request = GenerationRequest(language="en", source_type="kindle-highlights", input_file=source)
+
+    assert request.source_type == "kindle-highlights"
+    assert request.input_file == source
+
+
+
+def test_generation_request_rejects_unsupported_source_type() -> None:
+    with pytest.raises(ValidationError):
+        GenerationRequest(language="en", source_type="unsupported")
+
+
 def test_resume_diagnostic_requires_reason() -> None:
     with pytest.raises(ValidationError):
         ResumeDiagnostic(job_id="job-123", reason="", details={"stage": "export"})
