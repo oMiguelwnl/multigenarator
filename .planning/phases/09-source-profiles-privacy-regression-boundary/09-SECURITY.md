@@ -5,7 +5,7 @@ status: blocked
 threats_open: 1
 asvs_level: 1
 created: 2026-05-04T12:38:37Z
-updated: 2026-05-04T12:38:37Z
+updated: 2026-05-04T12:53:41Z
 ---
 
 # Phase 09 — Security
@@ -69,11 +69,13 @@ Status: open or closed. Disposition: mitigate, accept, or transfer.
 | Audit Date | Threats Total | Closed | Open | Run By |
 |------------|---------------|--------|------|--------|
 | 2026-05-04 | 12 | 11 | 1 | gsd-security-auditor |
+| 2026-05-04 | 12 | 11 | 1 | gsd-security-auditor recheck |
 
 Notes:
 - `gsd-sdk` was unavailable on PATH; security enforcement used the workflow default `true`.
 - Auditor result: `OPEN_THREATS`, `threats_open: 1`.
 - User chose to block the gate rather than accept T-09-02.
+- Recheck result at 2026-05-04T12:53:41Z: `OPEN_THREATS`; `src/multilang/domain/source_profiles.py` still reflects raw unknown `source_type`, and `tests/domain/test_source_profiles.py` still asserts a private/path-bearing value appears in the error.
 
 ## Recommendations
 
