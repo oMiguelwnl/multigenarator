@@ -47,17 +47,23 @@ def test_kindle_highlights_source_profile_omits_translation_with_highlight_templ
     assert profile.template_name == "highlight_card"
 
 
-def test_unknown_source_profile_errors_include_only_unknown_value() -> None:
+def test_unknown_source_profile_error_omits_private_input() -> None:
     unknown = "missing-source /home/user/.multilang/highlights/raw/private.html secret text"
 
     with pytest.raises(ValueError) as exc_info:
         get_source_profile(unknown)
 
     message = str(exc_info.value)
-    assert message == f"unsupported source_type: {unknown}"
-    assert "frequency" not in message
-    assert "word-list" not in message
-    assert "kindle-highlights" not in message
+    assert "unsupported source_type" in message
+    assert "frequency" in message
+    assert "word-list" in message
+    assert "kindle-highlights" in message
+    assert "missing-source" not in message
+    assert "/home/user" not in message
+    assert ".multilang" not in message
+    assert "private.html" not in message
+    assert "secret" not in message
+    assert "text" not in message
 
 
 def test_supported_source_types_match_profile_keys() -> None:
