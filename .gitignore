@@ -12,3 +12,4 @@ __pycache__/
 kindle-highlights*.html
 kindle-highlights*.txt
 webdav-secrets*.json
+.multilang/
