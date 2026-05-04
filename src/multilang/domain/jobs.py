@@ -2,9 +2,11 @@
 
 from enum import Enum
 from pathlib import Path
-from typing import Any, Literal
+from typing import Any
 
 from pydantic import BaseModel, Field, field_validator
+
+from multilang.domain.source_profiles import SourceType
 
 
 class SupportedLanguage(str, Enum):
@@ -43,7 +45,7 @@ class RetryPolicy(BaseModel):
 
 class GenerationRequest(BaseModel):
     language: SupportedLanguage
-    source_type: Literal["frequency", "word-list"]
+    source_type: SourceType
     level: int | None = Field(default=None, ge=1, le=3)
     cards_per_level: int | None = Field(default=None, ge=1)
     input_file: Path | None = None
