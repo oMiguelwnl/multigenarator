@@ -3,4 +3,12 @@ __pycache__/
 .pytest_cache/
 .venv/
 .env
+.env.*
+!.env.example
 .multilang/
+.multilang/highlights/raw/
+.multilang/highlights/cache/
+.multilang/highlights/sync/
+kindle-highlights*.html
+kindle-highlights*.txt
+webdav-secrets*.json
