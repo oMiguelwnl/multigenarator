@@ -9,6 +9,11 @@ from multilang.domain.exporting import (
     ExportArtifactFormat,
     ExportCardIdentity,
     ExportCardRow,
+    FREQUENCY_EXPORT_CARD_FIELD_NAMES,
+    HIGHLIGHT_EXPORT_CARD_FIELD_NAMES,
+    MANUAL_EXPORT_CARD_FIELD_NAMES,
+    export_field_names_for_rows,
+    export_field_names_for_source_type,
 )
 from multilang.domain.jobs import SupportedLanguage
 
@@ -16,12 +21,16 @@ from multilang.domain.jobs import SupportedLanguage
 def make_identity(*, item_key: str = "line-1") -> ExportCardIdentity:
     return ExportCardIdentity(
         language=SupportedLanguage.EN,
-        source_type="word-list",
+        source_type="frequency",
         job_id="job-123",
         item_key=item_key,
         lemma_key="en:run",
         sort_index=1,
     )
+
+
+def make_identity_for_source(source_type: str, *, item_key: str = "line-1") -> ExportCardIdentity:
+    return make_identity(item_key=item_key).model_copy(update={"source_type": source_type})
 
 
 def make_row(**overrides: object) -> ExportCardRow:
@@ -56,6 +65,71 @@ def test_export_contract_uses_exact_field_order() -> None:
         "Image",
     )
     assert tuple(row.model_dump(by_alias=True, exclude={"identity", "note_guid"}).keys()) == EXPORT_CARD_FIELD_NAMES
+
+
+def test_manual_word_list_export_preserves_fixed_translation_field() -> None:
+    row = make_row(identity=make_identity(), translation="Eu corro.")
+    manual_identity = row.identity.model_copy(update={"source_type": "word-list"})
+    manual_row = row.model_copy(update={"identity": manual_identity})
+
+    assert MANUAL_EXPORT_CARD_FIELD_NAMES == (
+        "SortIndex",
+        "word",
+        "Front of Card",
+        "IPA",
+        "Definitions",
+        "Example Sentence",
+        "Translation",
+        "word_audio",
+        "sentence_audio",
+        "Image",
+    )
+    assert manual_row.ordered_field_mapping()["Translation"] == "Eu corro."
+
+
+def test_export_field_names_are_source_profile_aware_for_existing_modes() -> None:
+    assert export_field_names_for_source_type("frequency") == FREQUENCY_EXPORT_CARD_FIELD_NAMES
+    assert export_field_names_for_source_type("word-list") == MANUAL_EXPORT_CARD_FIELD_NAMES
+    assert "Translation" in export_field_names_for_source_type("frequency")
+    assert "Translation" in export_field_names_for_source_type("word-list")
+
+
+def test_highlight_export_field_names_omit_translation_and_use_highlight_aliases() -> None:
+    assert export_field_names_for_source_type("kindle-highlights") == HIGHLIGHT_EXPORT_CARD_FIELD_NAMES
+    assert HIGHLIGHT_EXPORT_CARD_FIELD_NAMES == (
+        "SortIndex",
+        "Word",
+        "IPA",
+        "word_audio",
+        "Example Sentence",
+        "sentence_audio",
+        "Definition",
+        "Image",
+    )
+    assert "Translation" not in HIGHLIGHT_EXPORT_CARD_FIELD_NAMES
+    assert "word" not in HIGHLIGHT_EXPORT_CARD_FIELD_NAMES
+    assert "Definitions" not in HIGHLIGHT_EXPORT_CARD_FIELD_NAMES
+
+
+def test_highlight_ordered_mapping_synthesizes_aliases_without_translation() -> None:
+    row = make_row(identity=make_identity_for_source("kindle-highlights"))
+
+    mapping = row.ordered_field_mapping()
+
+    assert tuple(mapping.keys()) == HIGHLIGHT_EXPORT_CARD_FIELD_NAMES
+    assert mapping["Word"] == "run"
+    assert mapping["Definition"] == "to move quickly<br>to operate"
+    assert "Translation" not in mapping
+
+
+def test_export_field_names_for_rows_rejects_mixed_sources() -> None:
+    rows = [
+        make_row(identity=make_identity_for_source("frequency", item_key="one")),
+        make_row(identity=make_identity_for_source("word-list", item_key="two")),
+    ]
+
+    with pytest.raises(ValueError, match="mixed source types"):
+        export_field_names_for_rows(rows)
 
 
 def test_note_guid_ignores_mutable_card_content() -> None:
