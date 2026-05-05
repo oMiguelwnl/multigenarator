@@ -99,6 +99,8 @@ class TextValidationService:
         uncertainty_notes: list[str] | None = None,
         disallowed_sentence_texts: set[str] | None = None,
         require_translation: bool = True,
+        min_sentence_tokens: int | None = None,
+        max_sentence_tokens: int | None = None,
     ) -> TextValidationResult:
         context = _ValidationContext(
             sentence_text=sentence.text.strip(),
@@ -114,7 +116,12 @@ class TextValidationService:
         flags: list[ValidationFlag] = []
 
         self._check_target_form(flags, context=context, display_form=display_form, lemma=lemma)
-        self._check_sentence_length(flags, context=context)
+        self._check_sentence_length(
+            flags,
+            context=context,
+            min_sentence_tokens=min_sentence_tokens,
+            max_sentence_tokens=max_sentence_tokens,
+        )
         self._check_duplicate_sentence(
             flags,
             context=context,
@@ -177,20 +184,29 @@ class TextValidationService:
                 )
             )
 
-    def _check_sentence_length(self, flags: list[ValidationFlag], *, context: _ValidationContext) -> None:
+    def _check_sentence_length(
+        self,
+        flags: list[ValidationFlag],
+        *,
+        context: _ValidationContext,
+        min_sentence_tokens: int | None = None,
+        max_sentence_tokens: int | None = None,
+    ) -> None:
+        min_tokens = self.min_sentence_tokens if min_sentence_tokens is None else min_sentence_tokens
+        max_tokens = self.max_sentence_tokens if max_sentence_tokens is None else max_sentence_tokens
         token_count = len(context.sentence_tokens)
-        if token_count < self.min_sentence_tokens:
+        if token_count < min_tokens:
             flags.append(
                 ValidationFlag(
                     code=ValidationFlagCode.SENTENCE_TOO_SHORT,
-                    detail=f"sentence has {token_count} tokens; expected at least {self.min_sentence_tokens}",
+                    detail=f"sentence has {token_count} tokens; expected at least {min_tokens}",
                 )
             )
-        if token_count > self.max_sentence_tokens:
+        if token_count > max_tokens:
             flags.append(
                 ValidationFlag(
                     code=ValidationFlagCode.SENTENCE_TOO_LONG,
-                    detail=f"sentence has {token_count} tokens; expected at most {self.max_sentence_tokens}",
+                    detail=f"sentence has {token_count} tokens; expected at most {max_tokens}",
                 )
             )
 
