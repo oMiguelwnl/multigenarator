@@ -66,9 +66,20 @@ class HighlightCandidateExtractionResult(BaseModel):
     rejected_token_count: int = Field(ge=0)
 
 
+class HighlightImportPreview(BaseModel):
+    """Count-only preview of a local Kindle import before generation."""
+
+    imported_highlights: int = Field(ge=0)
+    extracted_candidates: int = Field(ge=0)
+    rejected_highlights: int = Field(ge=0)
+    duplicate_candidates: int = Field(ge=0)
+    planned_cards: int = Field(ge=0)
+
+
 __all__ = [
     "HighlightCandidate",
     "HighlightCandidateExtractionResult",
+    "HighlightImportPreview",
     "HighlightProvenance",
     "KindleParseResult",
     "NormalizedHighlight",
