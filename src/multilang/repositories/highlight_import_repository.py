@@ -99,6 +99,14 @@ class HighlightImportRepository:
             )
         )
 
+    def get_private_record(self, job_id: str, highlight_id: str) -> HighlightImportRecordModel | None:
+        return self.session.scalar(
+            select(HighlightImportRecordModel).where(
+                HighlightImportRecordModel.job_id == job_id,
+                HighlightImportRecordModel.highlight_id == highlight_id,
+            )
+        )
+
     @staticmethod
     def _to_manifest(row: HighlightImportManifestModel) -> HighlightImportManifest:
         return HighlightImportManifest(

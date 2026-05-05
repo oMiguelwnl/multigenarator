@@ -143,6 +143,7 @@ class IngestLexicalItemsService:
                 update={
                     "notes": [
                         *grounded.provenance.notes,
+                        f"first_highlight_id={highlight_candidate.first_highlight_id}",
                         f"source_content_hash={highlight_candidate.source_content_hash}",
                         f"first_source_index={highlight_candidate.first_source_index}",
                         f"occurrence_count={highlight_candidate.occurrence_count}",

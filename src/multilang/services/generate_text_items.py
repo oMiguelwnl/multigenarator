@@ -6,9 +6,10 @@ import re
 from dataclasses import dataclass
 from typing import Any, Protocol
 
-from multilang.domain.source_profiles import get_source_profile
 from multilang.domain.jobs import JobStage, SupportedLanguage
 from multilang.domain.lexicon import GroundingStatus, LexicalCardCandidate, LexicalProvenance
+from multilang.domain.source_profiles import get_source_profile
+from multilang.security.redaction import redact_sensitive_text
 from multilang.domain.text_quality import (
     ConfidenceLabel,
     ReviewStatus,
@@ -59,6 +60,7 @@ class GenerateTextItemsService:
         text_generation_service: TextGenerationService,
         text_validation_service: TextValidationService,
         tatoeba_sentence_source: TatoebaSentenceSource,
+        highlight_import_repository: Any | None = None,
     ) -> None:
         self.job_repository = job_repository
         self.lexical_repository = lexical_repository
@@ -66,6 +68,7 @@ class GenerateTextItemsService:
         self.text_generation_service = text_generation_service
         self.text_validation_service = text_validation_service
         self.tatoeba_sentence_source = tatoeba_sentence_source
+        self.highlight_import_repository = highlight_import_repository
 
     def execute(
         self,
@@ -84,10 +87,17 @@ class GenerateTextItemsService:
                 getattr(persisted_candidate, "source_type", None),
                 candidate=lexical_candidate,
             )
+            highlight_context = self._build_highlight_context(
+                job_id=job_id,
+                source_type=source_type,
+                candidate=lexical_candidate,
+            )
 
             generated_bundle = self.text_generation_service.generate_bundle(
                 candidate=lexical_candidate,
                 deck_language=deck_language,
+                source_type=source_type,
+                highlight_context=highlight_context,
             )
             validation = self._validate_bundle(
                 bundle=generated_bundle,
@@ -108,6 +118,7 @@ class GenerateTextItemsService:
                     validation=validation,
                     seen_sentences=seen_sentences,
                     source_type=source_type,
+                    highlight_context=highlight_context,
                 )
 
             record = self._build_record(
@@ -212,10 +223,13 @@ class GenerateTextItemsService:
         validation: TextValidationResult,
         seen_sentences: set[str],
         source_type: str | None,
+        highlight_context: str | None = None,
     ) -> tuple[GeneratedTextBundle, TextValidationResult, int]:
         retry_bundle = self.text_generation_service.generate_bundle(
             candidate=candidate,
             deck_language=deck_language,
+            source_type=source_type,
+            highlight_context=highlight_context,
         )
         retry_validation = self._validate_bundle(
             bundle=retry_bundle,
@@ -234,6 +248,7 @@ class GenerateTextItemsService:
             validation=retry_validation,
             seen_sentences=seen_sentences,
             source_type=source_type,
+            highlight_context=highlight_context,
         )
         fallback_used = fallback_bundle is not retry_bundle
         return fallback_bundle, fallback_validation, 2 if fallback_used else 1
@@ -247,6 +262,7 @@ class GenerateTextItemsService:
         validation: TextValidationResult,
         seen_sentences: set[str],
         source_type: str | None,
+        highlight_context: str | None = None,
     ) -> tuple[GeneratedTextBundle, TextValidationResult]:
         fallback_sentence = self.tatoeba_sentence_source.select_sentence(
             display_form=candidate.display_form,
@@ -261,6 +277,8 @@ class GenerateTextItemsService:
             candidate=candidate,
             deck_language=deck_language,
             fallback=SentenceGenerationFallback(sentence_result=fallback_sentence),
+            source_type=source_type,
+            highlight_context=highlight_context,
         )
         repaired_validation = self._validate_bundle(
             bundle=repaired_bundle,
@@ -313,6 +331,58 @@ class GenerateTextItemsService:
         if candidate.frequency_rank is not None or candidate.frequency_level is not None:
             return "frequency"
         return "word-list"
+
+    def _build_highlight_context(
+        self,
+        *,
+        job_id: str,
+        source_type: str,
+        candidate: LexicalCardCandidate,
+    ) -> str | None:
+        if source_type != "kindle-highlights" or self.highlight_import_repository is None:
+            return None
+        highlight_id = _provenance_note_value(candidate.provenance.notes, "first_highlight_id")
+        if not highlight_id:
+            return None
+        record = self.highlight_import_repository.get_private_record(job_id, highlight_id)
+        if record is None:
+            return None
+        normalized_text = str(getattr(record, "normalized_text", "") or "").strip()
+        if not normalized_text:
+            return None
+        redacted = redact_sensitive_text(normalized_text)
+        return _bounded_context_snippet(
+            redacted,
+            display_form=candidate.display_form,
+            lemma=candidate.lemma,
+        )
+
+
+def _provenance_note_value(notes: list[str], key: str) -> str | None:
+    prefix = f"{key}="
+    for note in notes:
+        if note.startswith(prefix):
+            value = note.removeprefix(prefix).strip()
+            if value:
+                return value
+    return None
+
+
+def _bounded_context_snippet(text: str, *, display_form: str, lemma: str, max_tokens: int = 24) -> str:
+    tokens = GenerateTextItemsService._sentence_token_re.findall(text)
+    if not tokens:
+        return ""
+    match_keys = {display_form.casefold(), lemma.casefold()}
+    center = 0
+    for index, token in enumerate(tokens):
+        if token.casefold() in match_keys:
+            center = index
+            break
+    half_window = max_tokens // 2
+    start = max(0, center - half_window)
+    end = min(len(tokens), start + max_tokens)
+    start = max(0, end - max_tokens)
+    return " ".join(tokens[start:end])
 
 
 def _gate_frequency_local_templates(

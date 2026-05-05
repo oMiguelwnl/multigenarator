@@ -111,6 +111,8 @@ class TextGenerationService:
         *,
         candidate: LexicalCardCandidate,
         deck_language: SupportedLanguage,
+        source_type: str | None = None,
+        highlight_context: str | None = None,
     ) -> GeneratedTextBundle:
         sentence_request = SentenceGenerationRequest.from_candidate(
             candidate=candidate,
@@ -135,6 +137,8 @@ class TextGenerationService:
         candidate: LexicalCardCandidate,
         deck_language: SupportedLanguage,
         fallback: SentenceGenerationFallback,
+        source_type: str | None = None,
+        highlight_context: str | None = None,
     ) -> GeneratedTextBundle:
         sentence_result = fallback.sentence_result
         translation_request = SentenceTranslationRequest.from_sentence(
