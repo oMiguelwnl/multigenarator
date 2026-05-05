@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from collections.abc import Sequence
+from hashlib import sha256
 import re
 import unicodedata
 
@@ -39,8 +40,7 @@ def extract_highlight_candidates(
 ) -> HighlightCandidateExtractionResult:
     """Return first-seen ordered candidate forms with duplicate/noise counters."""
 
-    candidates_by_key: dict[str, HighlightCandidate] = {}
-    ordered_keys: list[str] = []
+    candidates_by_key: dict[tuple[str, str], HighlightCandidate] = {}
     duplicate_count = 0
     rejected_token_count = 0
     stopwords = _STOPWORDS[language]
@@ -59,17 +59,19 @@ def extract_highlight_candidates(
                 rejected_token_count += 1
                 continue
 
-            if lemma_key in candidates_by_key:
+            candidate_key = (highlight.provenance.content_hash, lemma_key)
+            if candidate_key in candidates_by_key:
                 duplicate_count += 1
-                existing = candidates_by_key[lemma_key]
-                candidates_by_key[lemma_key] = existing.model_copy(
+                existing = candidates_by_key[candidate_key]
+                candidates_by_key[candidate_key] = existing.model_copy(
                     update={"occurrence_count": existing.occurrence_count + 1}
                 )
                 continue
 
-            ordered_keys.append(lemma_key)
-            candidates_by_key[lemma_key] = HighlightCandidate(
-                item_key=f"highlight-{language.value}-{len(ordered_keys):04d}-{lemma_key}",
+            lemma_hash = sha256(lemma_key.encode("utf-8")).hexdigest()[:16]
+            source_hash = highlight.provenance.content_hash[:16]
+            candidates_by_key[candidate_key] = HighlightCandidate(
+                item_key=f"highlight-{language.value}-{source_hash}-{lemma_hash}",
                 source_content_hash=highlight.provenance.content_hash,
                 display_form=display_form,
                 lemma_key=lemma_key,
@@ -79,7 +81,14 @@ def extract_highlight_candidates(
             )
 
     return HighlightCandidateExtractionResult(
-        candidates=[candidates_by_key[key] for key in ordered_keys],
+        candidates=sorted(
+            candidates_by_key.values(),
+            key=lambda candidate: (
+                candidate.first_source_index,
+                candidate.lemma_key,
+                candidate.item_key,
+            ),
+        ),
         duplicate_count=duplicate_count,
         rejected_token_count=rejected_token_count,
     )
