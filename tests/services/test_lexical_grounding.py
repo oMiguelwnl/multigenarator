@@ -14,11 +14,27 @@ class StubLookup:
         self._mapping = mapping
 
     def lookup(self, *, language_code: str, term: str) -> KaikkiRecord | None:
-        assert language_code == SupportedLanguage.ES.value
         return self._mapping.get(term.casefold())
 
 
-def test_grounding_prefers_study_form_and_definition_template() -> None:
+class StubPronunciationGenerator:
+    def __init__(self) -> None:
+        self.calls: list[object] = []
+
+    def generate_pronunciation(self, request: object) -> object:
+        self.calls.append(request)
+        return type(
+            "Pronunciation",
+            (),
+            {
+                "ipa": "/right/",
+                "spoken_form": "RYT",
+                "provenance": {"source": "provider-pronunciation-generator"},
+            },
+        )()
+
+
+def test_grounding_prefers_study_form_and_manual_language_policy() -> None:
     service = LexicalGroundingService(
         lookup=StubLookup(
             {
@@ -48,14 +64,10 @@ def test_grounding_prefers_study_form_and_definition_template() -> None:
     assert candidate.display_form == "lavarse"
     assert candidate.lemma == "lavar"
     assert candidate.lemma_key == "lavar"
-    assert candidate.definitions_html == (
-        "verb: to wash something or clean it with water"
-        "<br>verb: to wash oneself"
-    )
-    assert candidate.definition_language == "en"
-    assert candidate.translation_target_language == "en"
+    assert candidate.definitions_html == "verb: to wash something or clean it with water"
+    assert candidate.definition_language == "es"
+    assert candidate.translation_target_language == "es"
     assert candidate.grounding_status is GroundingStatus.GROUNDED
-
 
 
 def test_grounding_formats_simple_grammar_labels_for_common_parts_of_speech() -> None:
@@ -94,7 +106,7 @@ def test_grounding_formats_simple_grammar_labels_for_common_parts_of_speech() ->
     }
     for item_key, definition in expected.items():
         candidate = service.ground_word_list_item(
-            language=SupportedLanguage.ES,
+            language=SupportedLanguage.PT,
             item=ParsedWordListItem(
                 line_number=1,
                 submitted_form=item_key,
@@ -123,7 +135,7 @@ def test_grounding_omits_verb_tense_from_definition_template() -> None:
     )
 
     candidate = service.ground_word_list_item(
-        language=SupportedLanguage.ES,
+        language=SupportedLanguage.PT,
         item=ParsedWordListItem(
             line_number=1,
             submitted_form="lava",
@@ -156,6 +168,7 @@ def test_definition_formatter_covers_supported_basic_part_of_speech_labels() -> 
             LexicalGroundingService._format_definitions([meaning], part_of_speech=part_of_speech)
             == expected
         )
+
 
 def test_grounding_does_not_invent_ipa() -> None:
     service = LexicalGroundingService(
@@ -233,3 +246,139 @@ def test_frequency_failures_are_flagged_for_backfill() -> None:
     assert candidate.warning_code == "backfill_required"
     assert candidate.frequency_rank == 12
     assert candidate.frequency_level == 1
+
+
+def test_frequency_rejects_morphological_only_lexical_records() -> None:
+    service = LexicalGroundingService(
+        lookup=StubLookup(
+            {
+                "casas": KaikkiRecord(
+                    term="casas",
+                    display_form="casas",
+                    lemma="casas",
+                    definitions=["nominative plural of casa"],
+                    ipa="/casas/",
+                )
+            }
+        )
+    )
+    seed = LexicalCardCandidate(
+        submitted_form="casas",
+        display_form="casas",
+        lemma="casas",
+        lemma_key="casas",
+        frequency_rank=14,
+        frequency_level=1,
+        translation_target_language="en",
+        grounding_status=GroundingStatus.PENDING,
+        provenance=LexicalProvenance(source="wordfreq"),
+    )
+
+    candidate = service.ground_frequency_candidate(
+        language=SupportedLanguage.ES,
+        candidate=seed,
+    )
+
+    assert candidate.grounding_status is GroundingStatus.BACKFILL_REQUIRED
+    assert candidate.warning_code == "backfill_required"
+    assert "not a primary card entry" in (candidate.warning_detail or "")
+
+
+def test_russian_frequency_rejects_uppercase_duplicate_records() -> None:
+    service = LexicalGroundingService(
+        lookup=StubLookup(
+            {
+                "и": KaikkiRecord(
+                    term="И",
+                    display_form="И",
+                    lemma="И",
+                    definitions=["The name of the Cyrillic script letter И."],
+                    ipa="[i]",
+                )
+            }
+        )
+    )
+    seed = LexicalCardCandidate(
+        submitted_form="и",
+        display_form="и",
+        lemma="и",
+        lemma_key="и",
+        frequency_rank=2,
+        frequency_level=1,
+        translation_target_language="en",
+        grounding_status=GroundingStatus.PENDING,
+        provenance=LexicalProvenance(source="wordfreq"),
+    )
+
+    candidate = service.ground_frequency_candidate(
+        language=SupportedLanguage.RU,
+        candidate=seed,
+    )
+
+    assert candidate.grounding_status is GroundingStatus.BACKFILL_REQUIRED
+
+
+def test_grounding_uses_ai_pronunciation_over_kaikki_for_custom_word_list() -> None:
+    generator = StubPronunciationGenerator()
+    service = LexicalGroundingService(
+        lookup=StubLookup(
+            {
+                "casa": KaikkiRecord(
+                    term="casa",
+                    display_form="casa",
+                    lemma="casa",
+                    definitions=["house"],
+                    ipa="/wrong/",
+                )
+            }
+        ),
+        pronunciation_generator=generator,
+    )
+
+    candidate = service.ground_word_list_item(
+        language=SupportedLanguage.PT,
+        item=ParsedWordListItem(line_number=1, submitted_form="casa", display_form="casa", item_key="casa"),
+    )
+
+    assert candidate.ipa == "/right/"
+    assert candidate.spoken_form == "RYT"
+    assert candidate.provenance.pronunciation is not None
+    assert candidate.provenance.pronunciation.source == "provider-pronunciation-generator"
+    assert generator.calls
+
+
+def test_grounding_uses_ai_pronunciation_for_frequency_candidates() -> None:
+    generator = StubPronunciationGenerator()
+    service = LexicalGroundingService(
+        lookup=StubLookup(
+            {
+                "casa": KaikkiRecord(
+                    term="casa",
+                    display_form="casa",
+                    lemma="casa",
+                    definitions=["house"],
+                    ipa="/wrong/",
+                )
+            }
+        ),
+        pronunciation_generator=generator,
+    )
+    seed = LexicalCardCandidate(
+        submitted_form="casa",
+        display_form="casa",
+        lemma="casa",
+        lemma_key="casa",
+        frequency_rank=1,
+        frequency_level=1,
+        translation_target_language="en",
+        grounding_status=GroundingStatus.PENDING,
+        provenance=LexicalProvenance(source="wordfreq"),
+    )
+
+    candidate = service.ground_frequency_candidate(language=SupportedLanguage.PT, candidate=seed)
+
+    assert candidate.ipa == "/right/"
+    assert candidate.spoken_form == "RYT"
+    assert candidate.provenance.pronunciation is not None
+    assert candidate.provenance.pronunciation.source == "provider-pronunciation-generator"
+    assert len(generator.calls) == 1

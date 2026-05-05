@@ -86,7 +86,13 @@ class GenerateAudioItemsService:
             format=prepared_asset.provenance.format,
         )
         if reusable is not None:
-            return reusable, True
+            return reusable.model_copy(
+                update={
+                    "job_id": prepared_asset.job_id,
+                    "item_key": prepared_asset.item_key,
+                    "display_text": prepared_asset.display_text,
+                }
+            ), True
 
         if prepared_asset.provenance.status is AudioSynthesisStatus.FAILED:
             return prepared_asset, False

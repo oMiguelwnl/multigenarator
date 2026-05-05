@@ -130,6 +130,68 @@ class JobRepository:
         self.session.refresh(job)
         return self._snapshot(job)
 
+    def record_item_successes(
+        self,
+        job_id: str,
+        *,
+        item_keys: Iterable[str],
+        completed_stage: JobStage,
+    ) -> JobProgressSnapshot:
+        normalized_item_keys = list(item_keys)
+        if not normalized_item_keys:
+            return self._snapshot(self._require_job(job_id))
+
+        job = self._require_job(job_id)
+        existing = {
+            item.item_key: item
+            for item in self.session.scalars(
+                select(GenerationItem).where(
+                    GenerationItem.run_key == job.run_key,
+                    GenerationItem.item_key.in_(normalized_item_keys),
+                )
+            )
+        }
+
+        for item_key in normalized_item_keys:
+            item = existing.get(item_key)
+            if item is None:
+                self.session.add(
+                    GenerationItem(
+                        id=str(uuid4()),
+                        job_id=job.id,
+                        run_key=job.run_key,
+                        item_key=item_key,
+                        status=JobStatus.COMPLETED.value,
+                        last_completed_stage=completed_stage.value,
+                        retry_count=0,
+                    )
+                )
+                continue
+
+            if item.status == JobStatus.COMPLETED.value:
+                previous_stage = (
+                    JobStage(item.last_completed_stage)
+                    if item.last_completed_stage is not None
+                    else None
+                )
+                if previous_stage == completed_stage:
+                    job.skipped_duplicates += 1
+                elif previous_stage is None or self._is_later_stage(completed_stage, previous_stage):
+                    item.last_completed_stage = completed_stage.value
+            else:
+                item.status = JobStatus.COMPLETED.value
+                item.last_completed_stage = completed_stage.value
+            item.last_error = None
+            self.session.add(item)
+
+        job.current_stage = completed_stage.value
+        job.last_completed_stage = completed_stage.value
+        self.session.add(job)
+        self.session.commit()
+        self._sync_job_counters(job)
+        self.session.refresh(job)
+        return self._snapshot(job)
+
     def record_item_failure(
         self,
         job_id: str,

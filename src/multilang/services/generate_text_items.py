@@ -9,9 +9,12 @@ from typing import Any, Protocol
 from multilang.domain.jobs import JobStage, SupportedLanguage
 from multilang.domain.lexicon import GroundingStatus, LexicalCardCandidate, LexicalProvenance
 from multilang.domain.text_quality import (
+    ConfidenceLabel,
     ReviewStatus,
     TextGenerationStatus,
     TextQualityRecord,
+    ValidationFlag,
+    ValidationFlagCode,
     ValidationStatus,
 )
 from multilang.services.text_generation import (
@@ -42,7 +45,7 @@ class GenerateTextItemsResult:
 
 
 class GenerateTextItemsService:
-    """Run generate -> validate -> repair once -> persist for pending text items."""
+    """Run generate -> validate -> AI retry -> Tatoeba fallback -> persist."""
 
     _sentence_token_re = re.compile(r"\b[\w'-]+\b", re.UNICODE)
 
@@ -75,6 +78,7 @@ class GenerateTextItemsService:
         for persisted_candidate in self.text_repository.list_generation_candidates(job_id):
             candidate_id = getattr(persisted_candidate, "id")
             item_key = getattr(persisted_candidate, "item_key")
+            source_type = getattr(persisted_candidate, "source_type", None)
             lexical_candidate = self._to_candidate(persisted_candidate)
 
             generated_bundle = self.text_generation_service.generate_bundle(
@@ -85,20 +89,21 @@ class GenerateTextItemsService:
                 bundle=generated_bundle,
                 candidate=lexical_candidate,
                 seen_sentences=seen_sentences,
+                source_type=source_type,
+                deck_language=deck_language,
             )
             generation_status = TextGenerationStatus.GENERATED
             repair_attempt_count = 0
 
-            # Single repair attempt only.
             if validation.validation_status is ValidationStatus.FAILED:
-                repair_attempt_count = 1
                 generation_status = TextGenerationStatus.REPAIRED
-                generated_bundle, validation = self._attempt_tatoeba_repair(
+                generated_bundle, validation, repair_attempt_count = self._attempt_repair_chain(
                     candidate=lexical_candidate,
                     deck_language=deck_language,
                     generated_bundle=generated_bundle,
                     validation=validation,
                     seen_sentences=seen_sentences,
+                    source_type=source_type,
                 )
 
             record = self._build_record(
@@ -134,14 +139,23 @@ class GenerateTextItemsService:
         bundle: GeneratedTextBundle,
         candidate: LexicalCardCandidate,
         seen_sentences: set[str] | None = None,
+        source_type: str | None = None,
+        deck_language: SupportedLanguage,
     ) -> TextValidationResult:
-        return self.text_validation_service.validate(
+        validation = self.text_validation_service.validate(
             sentence=bundle.sentence,
             translation=bundle.translation,
             display_form=candidate.display_form,
             lemma=candidate.lemma,
             definitions_html=candidate.definitions_html,
             disallowed_sentence_texts=set(seen_sentences or set()),
+            require_translation=source_type != "word-list",
+        )
+        return _gate_frequency_local_templates(
+            validation=validation,
+            bundle=bundle,
+            source_type=source_type,
+            deck_language=deck_language,
         )
 
     def _build_record(
@@ -182,6 +196,41 @@ class GenerateTextItemsService:
             translation_provenance=bundle.translation.provenance,
         )
 
+    def _attempt_repair_chain(
+        self,
+        *,
+        candidate: LexicalCardCandidate,
+        deck_language: SupportedLanguage,
+        generated_bundle: GeneratedTextBundle,
+        validation: TextValidationResult,
+        seen_sentences: set[str],
+        source_type: str | None,
+    ) -> tuple[GeneratedTextBundle, TextValidationResult, int]:
+        retry_bundle = self.text_generation_service.generate_bundle(
+            candidate=candidate,
+            deck_language=deck_language,
+        )
+        retry_validation = self._validate_bundle(
+            bundle=retry_bundle,
+            candidate=candidate,
+            seen_sentences=seen_sentences,
+            source_type=source_type,
+            deck_language=deck_language,
+        )
+        if retry_validation.validation_status is ValidationStatus.PASSED:
+            return retry_bundle, retry_validation, 1
+
+        fallback_bundle, fallback_validation = self._attempt_tatoeba_repair(
+            candidate=candidate,
+            deck_language=deck_language,
+            generated_bundle=retry_bundle,
+            validation=retry_validation,
+            seen_sentences=seen_sentences,
+            source_type=source_type,
+        )
+        fallback_used = fallback_bundle is not retry_bundle
+        return fallback_bundle, fallback_validation, 2 if fallback_used else 1
+
     def _attempt_tatoeba_repair(
         self,
         *,
@@ -190,6 +239,7 @@ class GenerateTextItemsService:
         generated_bundle: GeneratedTextBundle,
         validation: TextValidationResult,
         seen_sentences: set[str],
+        source_type: str | None,
     ) -> tuple[GeneratedTextBundle, TextValidationResult]:
         fallback_sentence = self.tatoeba_sentence_source.select_sentence(
             display_form=candidate.display_form,
@@ -209,6 +259,8 @@ class GenerateTextItemsService:
             bundle=repaired_bundle,
             candidate=candidate,
             seen_sentences=seen_sentences,
+            source_type=source_type,
+            deck_language=deck_language,
         )
         return repaired_bundle, repaired_validation
 
@@ -246,6 +298,56 @@ class GenerateTextItemsService:
             warning_detail=getattr(persisted_candidate, "warning_detail"),
             provenance=LexicalProvenance.model_validate(getattr(persisted_candidate, "provenance")),
         )
+
+
+def _gate_frequency_local_templates(
+    *,
+    validation: TextValidationResult,
+    bundle: GeneratedTextBundle,
+    source_type: str | None,
+    deck_language: SupportedLanguage,
+) -> TextValidationResult:
+    if (
+        source_type != "frequency"
+        or deck_language is SupportedLanguage.EN
+        or not _uses_generic_local_text(bundle)
+    ):
+        return validation
+
+    flags = [
+        *validation.validation_flags,
+        ValidationFlag(
+            code=ValidationFlagCode.BANNED_PATTERN,
+            detail="frequency decks must not accept generic local text templates as learner-facing content",
+        ),
+    ]
+    return validation.model_copy(
+        update={
+            "validation_status": ValidationStatus.FAILED,
+            "validation_flags": flags,
+            "confidence_score": min(validation.confidence_score, 0.45),
+            "confidence_label": ConfidenceLabel.LOW,
+        }
+    )
+
+
+def _uses_generic_local_text(bundle: GeneratedTextBundle) -> bool:
+    return _is_generic_local_provenance(bundle.sentence.provenance) or _is_generic_local_provenance(
+        bundle.translation.provenance
+    )
+
+
+def _is_generic_local_provenance(provenance: object) -> bool:
+    provider = getattr(provenance, "provider", None)
+    source = getattr(provenance, "source", None)
+    metadata = getattr(provenance, "metadata", {}) or {}
+    template_kind = str(metadata.get("template_kind") or "")
+    local_source = str(metadata.get("source") or "")
+
+    is_local = provider == "local" or source == "local" or local_source.startswith("runtime-local")
+    if not is_local:
+        return False
+    return not template_kind.startswith("curated:")
 
 
 __all__ = ["GenerateTextItemsResult", "GenerateTextItemsService"]

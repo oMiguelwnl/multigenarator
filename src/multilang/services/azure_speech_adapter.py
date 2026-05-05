@@ -153,14 +153,43 @@ class AzureSpeechAdapter:
 def build_azure_ssml(*, text: str, locale: str, voice_id: str) -> str:
     """Normalize plain text or legacy SSML into Azure-compatible SSML."""
 
-    plain_text = _extract_spoken_text(text)
-    escaped_text = escape(plain_text, {'"': '&quot;', "'": '&apos;'})
+    safe_ssml = _extract_safe_spoken_ssml(text)
+    if safe_ssml is None:
+        plain_text = _extract_spoken_text(text)
+        safe_ssml = escape(plain_text, {'"': '&quot;', "'": '&apos;'})
     return (
         f'<speak version="1.0" xmlns="http://www.w3.org/2001/10/synthesis" '
         f'xml:lang="{escape(locale)}">'
-        f'<voice name="{escape(voice_id)}">{escaped_text}</voice>'
+        f'<voice name="{escape(voice_id)}">{safe_ssml}</voice>'
         "</speak>"
     )
+
+
+def _extract_safe_spoken_ssml(text: str) -> str | None:
+    stripped = text.strip()
+    if not stripped:
+        return ""
+
+    try:
+        root = ElementTree.fromstring(stripped)
+    except ElementTree.ParseError:
+        return None
+
+    tag_name = root.tag.rsplit("}", 1)[-1]
+    if tag_name != "speak":
+        return None
+
+    safe_children: list[str] = []
+    if root.text and root.text.strip():
+        return None
+    for child in list(root):
+        child_tag = child.tag.rsplit("}", 1)[-1]
+        if child_tag != "prosody":
+            return None
+        safe_children.append(ElementTree.tostring(child, encoding="unicode", short_empty_elements=False))
+        if child.tail and child.tail.strip():
+            return None
+    return "".join(safe_children)
 
 
 def _extract_spoken_text(text: str) -> str:

@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
+from html import escape
 from pathlib import Path
 import re
 from typing import Protocol
@@ -185,7 +186,7 @@ class AudioSynthesisService:
         asset_kind: AudioAssetKind,
         display_text: str,
         ) -> AudioAssetRecord:
-        normalized_input = self._normalize_input(display_text)
+        normalized_input = self._normalize_input(display_text, asset_kind=asset_kind)
         try:
             voice = select_voice(
                 language,
@@ -233,7 +234,7 @@ class AudioSynthesisService:
         reason_text: str,
     ) -> AudioAssetRecord:
         display = display_text or reason_text or asset_kind.value
-        normalized_input = self._normalize_input(display)
+        normalized_input = self._normalize_input(display, asset_kind=asset_kind)
         return self._build_record(
             job_id=job_id,
             item_key=item_key,
@@ -292,9 +293,17 @@ class AudioSynthesisService:
             ),
         )
 
-    def _normalize_input(self, display_text: str) -> NormalizedTtsInput:
+    def _normalize_input(self, display_text: str, *, asset_kind: AudioAssetKind) -> NormalizedTtsInput:
         normalized = _WHITESPACE_RE.sub(" ", display_text.replace("’", "'").strip())
-        ssml_text = f"<speak version=\"1.0\">{normalized}</speak>"
+        escaped = escape(normalized, quote=True)
+        if asset_kind is AudioAssetKind.WORD:
+            ssml_text = (
+                '<speak version="1.0"><prosody rate="-10%" pitch="+8%" volume="+20%">'
+                f"{escaped}"
+                "</prosody></speak>"
+            )
+        else:
+            ssml_text = f'<speak version="1.0">{escaped}</speak>'
         return NormalizedTtsInput(
             display_text=display_text,
             tts_text=normalized,

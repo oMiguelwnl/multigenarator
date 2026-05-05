@@ -61,6 +61,31 @@ def make_bundle(*, sentence: str, translation: str) -> GeneratedTextBundle:
     )
 
 
+def make_local_bundle(*, sentence: str, translation: str) -> GeneratedTextBundle:
+    return GeneratedTextBundle(
+        sentence=GeneratedSentence(
+            text=sentence,
+            target_language="en",
+            intended_sense="habit",
+            uncertainty_notes=[],
+            provenance=TextProvenance(
+                source="local",
+                provider="local",
+                metadata={"source": "runtime-local-generator", "template_kind": "term"},
+            ),
+        ),
+        translation=GeneratedTranslation(
+            text=translation,
+            target_language="pt",
+            provenance=TextProvenance(
+                source="local",
+                provider="local",
+                metadata={"source": "runtime-local-translator"},
+            ),
+        ),
+    )
+
+
 def make_validation_result(
     *,
     status: ValidationStatus,
@@ -159,6 +184,7 @@ class PersistedCandidate:
     id: str
     item_key: str
     candidate: LexicalCardCandidate
+    source_type: str = "word-list"
 
 
 def test_generate_text_items_repairs_once_then_accepts() -> None:
@@ -224,6 +250,7 @@ def test_generate_text_items_flags_review_after_one_failed_repair() -> None:
         bundles=[
             make_bundle(sentence="They practice every morning.", translation="Eles praticam todas as manhãs."),
             make_bundle(sentence="Practice every morning.", translation="to wash"),
+            make_bundle(sentence="Practice every morning.", translation="to wash"),
         ]
     )
     failed_result = make_validation_result(
@@ -237,7 +264,7 @@ def test_generate_text_items_flags_review_after_one_failed_repair() -> None:
             )
         ],
     )
-    validation = FakeValidationService(results=[failed_result, failed_result])
+    validation = FakeValidationService(results=[failed_result, failed_result, failed_result])
     job_repository = FakeJobRepository()
 
     service = GenerateTextItemsService(
@@ -260,7 +287,7 @@ def test_generate_text_items_flags_review_after_one_failed_repair() -> None:
     saved = repository.saved_records[0]
     assert saved.review_status is ReviewStatus.REVIEW_REQUIRED
     assert saved.validation_status is ValidationStatus.FAILED
-    assert saved.repair_attempt_count == 1
+    assert saved.repair_attempt_count == 2
     assert saved.review_reason == "translation_mismatch"
     assert saved.validation_flags[0].code is ValidationFlagCode.TRANSLATION_MISMATCH
     assert job_repository.successes == [("job-1", "line-1", JobStage.GENERATE_TEXT)]
@@ -298,13 +325,66 @@ def test_generate_text_items_skips_tatoeba_when_first_pass_validation_succeeds()
     assert repository.saved_records[0].generation_status is TextGenerationStatus.GENERATED
 
 
-def test_generate_text_items_uses_tatoeba_once_for_failed_first_pass() -> None:
+def test_generate_text_items_routes_frequency_local_templates_to_review() -> None:
+    repository = FakeTextRepository(
+        candidates=[
+            PersistedCandidate(
+                id="lex-1",
+                item_key="level-1-rank-0001",
+                candidate=make_candidate(item_key="level-1-rank-0001"),
+                source_type="frequency",
+            )
+        ]
+    )
+    generation = FakeGenerationService(
+        bundles=[
+            make_local_bundle(
+                sentence="Friends discuss wash during lunch.",
+                translation="Amigos comentam wash durante o almoço.",
+            ),
+            make_local_bundle(
+                sentence="Friends discuss wash during lunch.",
+                translation="Amigos comentam wash durante o almoço.",
+            ),
+        ]
+    )
+    validation = FakeValidationService(
+        results=[
+            make_validation_result(status=ValidationStatus.PASSED, label=ConfidenceLabel.HIGH, score=0.95),
+            make_validation_result(status=ValidationStatus.PASSED, label=ConfidenceLabel.HIGH, score=0.95),
+        ]
+    )
+    tatoeba = FakeTatoebaSentenceSource(fallback=None)
+
+    service = GenerateTextItemsService(
+        job_repository=FakeJobRepository(),
+        lexical_repository=None,
+        text_repository=repository,
+        text_generation_service=generation,
+        text_validation_service=validation,
+        tatoeba_sentence_source=tatoeba,
+    )
+
+    result = service.execute(job_id="job-1", deck_language=SupportedLanguage.RU)
+
+    assert result.accepted_items == 0
+    assert result.review_required_items == 1
+    assert tatoeba.calls
+    saved = repository.saved_records[0]
+    assert saved.review_status is ReviewStatus.REVIEW_REQUIRED
+    assert saved.validation_status is ValidationStatus.FAILED
+    assert saved.review_reason == "banned_pattern"
+    assert saved.validation_flags[0].detail.startswith("frequency decks must not accept")
+
+
+def test_generate_text_items_retries_ai_then_uses_tatoeba_for_failed_first_pass() -> None:
     repository = FakeTextRepository(
         candidates=[PersistedCandidate(id="lex-1", item_key="line-1", candidate=make_candidate())]
     )
     generation = FakeGenerationService(
         bundles=[
             make_bundle(sentence="They practice every morning.", translation="Eles praticam todas as manhãs."),
+            make_bundle(sentence="Practice every morning.", translation="Pratique todas as manhãs."),
             make_bundle(sentence="I wash the cup at home.", translation="Eu lavo a xícara em casa."),
         ]
     )
@@ -314,6 +394,12 @@ def test_generate_text_items_uses_tatoeba_once_for_failed_first_pass() -> None:
                 status=ValidationStatus.FAILED,
                 label=ConfidenceLabel.LOW,
                 score=0.3,
+                flags=[ValidationFlag(code=ValidationFlagCode.MISSING_TARGET_LEMMA, detail="missing target form")],
+            ),
+            make_validation_result(
+                status=ValidationStatus.FAILED,
+                label=ConfidenceLabel.LOW,
+                score=0.31,
                 flags=[ValidationFlag(code=ValidationFlagCode.MISSING_TARGET_LEMMA, detail="missing target form")],
             ),
             make_validation_result(status=ValidationStatus.PASSED, label=ConfidenceLabel.HIGH, score=0.92),
@@ -339,7 +425,7 @@ def test_generate_text_items_uses_tatoeba_once_for_failed_first_pass() -> None:
 
     assert result.accepted_items == 1
     assert len(tatoeba.calls) == 1
-    assert len(generation.calls) == 1
+    assert len(generation.calls) == 2
     assert len(generation.fallback_calls) == 1
     assert generation.fallback_calls[0][2].sentence_result.sentence == "I wash the cup at home."
     assert repository.saved_records[0].generation_status is TextGenerationStatus.REPAIRED
@@ -351,7 +437,10 @@ def test_generate_text_items_keeps_review_required_when_tatoeba_has_no_usable_ca
         candidates=[PersistedCandidate(id="lex-1", item_key="line-1", candidate=make_candidate())]
     )
     generation = FakeGenerationService(
-        bundles=[make_bundle(sentence="They practice every morning.", translation="Eles praticam todas as manhãs.")]
+        bundles=[
+            make_bundle(sentence="They practice every morning.", translation="Eles praticam todas as manhãs."),
+            make_bundle(sentence="Practice every morning.", translation="Pratique todas as manhãs."),
+        ]
     )
     failed_result = make_validation_result(
         status=ValidationStatus.FAILED,
@@ -359,7 +448,7 @@ def test_generate_text_items_keeps_review_required_when_tatoeba_has_no_usable_ca
         score=0.22,
         flags=[ValidationFlag(code=ValidationFlagCode.MISSING_TARGET_LEMMA, detail="missing target form")],
     )
-    validation = FakeValidationService(results=[failed_result])
+    validation = FakeValidationService(results=[failed_result, failed_result])
 
     service = GenerateTextItemsService(
         job_repository=FakeJobRepository(),
@@ -374,6 +463,7 @@ def test_generate_text_items_keeps_review_required_when_tatoeba_has_no_usable_ca
 
     assert result.accepted_items == 0
     assert result.review_required_items == 1
+    assert len(generation.calls) == 2
     assert generation.fallback_calls == []
     assert repository.saved_records[0].review_status is ReviewStatus.REVIEW_REQUIRED
     assert repository.saved_records[0].repair_attempt_count == 1

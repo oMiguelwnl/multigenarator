@@ -3,14 +3,14 @@
 from pathlib import Path
 from typing import Literal
 
-from pydantic import Field
+from pydantic import AliasChoices, Field
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 from multilang.services.audio_voice_registry import VOICE_REGISTRY_VERSION
 
 SupportedLanguageCode = Literal["pt", "es", "en", "fr", "de", "it", "pl", "tr", "ro", "ru", "nl"]
-TextGenerationProvider = Literal["litellm"]
-TranslationProvider = Literal["deepl"]
+TextGenerationProvider = Literal["litellm", "local"]
+TranslationProvider = Literal["deepl", "google", "local"]
 AudioOutputFormat = Literal["audio-24khz-48kbitrate-mono-mp3"]
 
 DEFAULT_SUPPORTED_LANGUAGES: tuple[SupportedLanguageCode, ...] = (
@@ -36,6 +36,7 @@ class Settings(BaseSettings):
         env_file=".env",
         env_file_encoding="utf-8",
         extra="ignore",
+        populate_by_name=True,
     )
 
     database_url: str = "postgresql+psycopg://postgres:postgres@localhost:5432/multilang"
@@ -44,7 +45,22 @@ class Settings(BaseSettings):
     text_generation_provider: TextGenerationProvider = "litellm"
     text_generation_model: str = "openai/gpt-4o-mini"
     translation_provider: TranslationProvider = "deepl"
-    deepl_api_key: str | None = None
+    litellm_api_key: str | None = Field(
+        default=None,
+        validation_alias=AliasChoices("MULTILANG_LITELLM_API_KEY", "LITELLM_API_KEY"),
+    )
+    openai_api_key: str | None = Field(
+        default=None,
+        validation_alias=AliasChoices("MULTILANG_OPENAI_API_KEY", "OPENAI_API_KEY"),
+    )
+    openrouter_api_key: str | None = Field(
+        default=None,
+        validation_alias=AliasChoices("MULTILANG_OPENROUTER_API_KEY", "OPENROUTER_API_KEY"),
+    )
+    deepl_api_key: str | None = Field(
+        default=None,
+        validation_alias=AliasChoices("MULTILANG_DEEPL_API_KEY", "DEEPL_API_KEY"),
+    )
     azure_speech_key: str | None = None
     azure_speech_region: str | None = None
     azure_speech_output_format: AudioOutputFormat = "audio-24khz-48kbitrate-mono-mp3"

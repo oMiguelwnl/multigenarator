@@ -10,11 +10,18 @@ from multilang.domain.jobs import SupportedLanguage
 from multilang.services.export_tabular_bundle import write_export_tabular_bundle
 
 
-def make_row(*, item_key: str, sort_index: int, translation: str, definitions: str) -> ExportCardRow:
+def make_row(
+    *,
+    item_key: str,
+    sort_index: int,
+    translation: str,
+    definitions: str,
+    source_type: str = "frequency",
+) -> ExportCardRow:
     return ExportCardRow(
         identity=ExportCardIdentity(
             language=SupportedLanguage.RU,
-            source_type="word-list",
+            source_type=source_type,
             job_id="job-1",
             item_key=item_key,
             lemma_key=f"ru:{item_key}",
@@ -91,3 +98,28 @@ def test_write_export_tabular_bundle_round_trips_non_latin_text_and_br_values(tm
     assert parsed_rows[0][1] == "ёж"
     assert parsed_rows[0][6] == '日本語, português, "quoted"'
     assert parsed_rows[0][4] == "значение<br>ещё одно"
+
+
+def test_write_export_tabular_bundle_preserves_translation_for_manual_word_lists(tmp_path: Path) -> None:
+    output = write_export_tabular_bundle(
+        rows=[
+            make_row(
+                item_key="мир",
+                sort_index=1,
+                translation="world",
+                definitions="значение",
+                source_type="word-list",
+            )
+        ],
+        export_format=ExportArtifactFormat.TSV,
+        output_dir=tmp_path,
+        deck_name="Manual Russian",
+        note_type_name="Multilang::Manual Card",
+    )
+
+    content = output.output_path.read_text(encoding="utf-8")
+    parsed_rows = list(csv.reader(content.splitlines()[5:], delimiter="\t"))
+
+    assert "\tTranslation\t" in content.splitlines()[4]
+    assert parsed_rows[0][6] == "world"
+    assert content.splitlines()[2] == "#notetype:Multilang::Manual Card"

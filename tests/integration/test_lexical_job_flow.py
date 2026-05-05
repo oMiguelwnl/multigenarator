@@ -10,9 +10,11 @@ from sqlalchemy import create_engine, func, select
 from sqlalchemy.orm import Session
 from typer.testing import CliRunner
 
+import multilang.cli as cli_module
 from multilang.cli import create_app
 from multilang.db.base import Base
 from multilang.db.models import GenerationJob, LexicalCandidate
+from multilang.runtime import RuntimeGenerateService, RuntimeTextResult
 
 runner = CliRunner()
 
@@ -72,6 +74,18 @@ def write_kaikki_archive(tmp_path: Path, *, language_code: str, terms: list[str]
     return archive_path
 
 
+def skip_runtime_text_generation(monkeypatch) -> None:
+    monkeypatch.setattr(
+        RuntimeGenerateService,
+        "generate_text",
+        lambda self, *, job_id, deck_language: RuntimeTextResult(
+            processed_items=0,
+            accepted_items=0,
+            review_required_items=0,
+        ),
+    )
+
+
 def test_generate_frequency_deck_persists_three_grounded_levels(monkeypatch, tmp_path: Path) -> None:
     """Default frequency runs persist 1000 grounded candidates in each level."""
 
@@ -82,6 +96,7 @@ def test_generate_frequency_deck_persists_three_grounded_levels(monkeypatch, tmp
 
     monkeypatch.setenv("MULTILANG_DATABASE_URL", f"sqlite+pysqlite:///{database_path}")
     monkeypatch.setenv("MULTILANG_LEXICON_DATA_DIR", str(lexicon_dir))
+    skip_runtime_text_generation(monkeypatch)
 
     from multilang.services import frequency_decks
 
@@ -134,6 +149,7 @@ def test_generate_frequency_deck_bootstraps_lexicon_from_local_archive(
 
     monkeypatch.setenv("MULTILANG_DATABASE_URL", f"sqlite+pysqlite:///{database_path}")
     monkeypatch.setenv("MULTILANG_LEXICON_DATA_DIR", str(lexicon_dir))
+    skip_runtime_text_generation(monkeypatch)
 
     from multilang.services import frequency_decks
 
@@ -227,6 +243,7 @@ def test_generate_frequency_deck_fails_fast_without_lexicon_data(
 
     monkeypatch.setenv("MULTILANG_DATABASE_URL", f"sqlite+pysqlite:///{database_path}")
     monkeypatch.setenv("MULTILANG_LEXICON_DATA_DIR", str(lexicon_dir))
+    monkeypatch.setattr(cli_module, "DEFAULT_KAIKKI_SOURCE_DIR", tmp_path / "missing-kaikki")
 
     app = create_app()
     result = runner.invoke(

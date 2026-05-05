@@ -7,7 +7,7 @@ from typing import Any
 
 from pydantic import BaseModel, Field
 
-DEFAULT_MAX_REPAIR_ATTEMPTS = 1
+DEFAULT_MAX_REPAIR_ATTEMPTS = 2
 
 
 class TextGenerationStatus(str, Enum):

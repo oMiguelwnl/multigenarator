@@ -2,12 +2,12 @@
 
 from __future__ import annotations
 
-from multilang.runtime import _TemplateSentenceAdapter, _TemplateTranslationAdapter
+from multilang.services.local_text_adapter import LocalSentenceAdapter, LocalTranslationAdapter
 from multilang.services.text_generation import SentenceGenerationRequest, SentenceTranslationRequest
 
 
 def test_runtime_sentence_adapter_uses_meaning_aware_english_template() -> None:
-    result = _TemplateSentenceAdapter().generate_sentence(
+    result = LocalSentenceAdapter().generate_sentence(
         SentenceGenerationRequest(
             display_form="wash",
             lemma="wash",
@@ -17,13 +17,13 @@ def test_runtime_sentence_adapter_uses_meaning_aware_english_template() -> None:
         )
     )
 
-    assert result.sentence == "It is good to wash every day."
+    assert result.sentence == "My brother wants to wash tomorrow."
     assert result.intended_sense == "wash"
     assert result.provenance["template_kind"] == "verb"
 
 
 def test_runtime_translation_adapter_uses_sentence_sense_hint() -> None:
-    result = _TemplateTranslationAdapter().translate_sentence(
+    result = LocalTranslationAdapter().translate_sentence(
         SentenceTranslationRequest(
             sentence="It is good to wash every day.",
             translation_target_language="pt",
@@ -32,11 +32,11 @@ def test_runtime_translation_adapter_uses_sentence_sense_hint() -> None:
         )
     )
 
-    assert result.translation == "É bom lavar todos os dias."
+    assert result.translation == "Meu irmão quer lavar amanhã."
 
 
 def test_runtime_sentence_adapter_uses_generic_term_template_when_sense_is_unknown() -> None:
-    result = _TemplateSentenceAdapter().generate_sentence(
+    result = LocalSentenceAdapter().generate_sentence(
         SentenceGenerationRequest(
             display_form="alpha",
             lemma="alpha",
@@ -46,6 +46,6 @@ def test_runtime_sentence_adapter_uses_generic_term_template_when_sense_is_unkno
         )
     )
 
-    assert result.sentence == "The word alpha is useful in daily life."
-    assert result.uncertainty_notes == ["local runtime used a generic term template"]
+    assert result.sentence == "Friends discuss alpha during lunch."
+    assert result.uncertainty_notes == []
     assert result.provenance["template_kind"] == "term"

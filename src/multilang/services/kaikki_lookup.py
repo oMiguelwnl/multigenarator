@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import gzip
 import json
+import re
 from pathlib import Path
 
 from pydantic import BaseModel, Field
@@ -50,13 +51,19 @@ class KaikkiLookup:
 
         index_path.parent.mkdir(parents=True, exist_ok=True)
         records: dict[str, dict[str, object]] = {}
+        record_scores: dict[str, int] = {}
         with gzip.open(Path(source_path), "rt", encoding="utf-8") as handle:
             for line in handle:
                 payload = json.loads(line)
                 record = self._record_from_payload(payload)
                 if record is None:
                     continue
-                records[normalize_lexical_key(record.term)] = record.model_dump()
+                key = normalize_lexical_key(record.term)
+                score = self._payload_score(payload=payload, record=record)
+                if key in records and score <= record_scores[key]:
+                    continue
+                records[key] = record.model_dump()
+                record_scores[key] = score
 
         index_path.write_text(
             json.dumps(records, ensure_ascii=False, indent=2, sort_keys=True),
@@ -122,7 +129,7 @@ class KaikkiLookup:
         display_form = self._display_form_from_payload(payload, lemma)
         ipa = self._ipa_from_payload(payload)
         return KaikkiRecord(
-            term=display_form,
+            term=lemma,
             display_form=display_form,
             lemma=lemma,
             definitions=definitions,
@@ -138,7 +145,13 @@ class KaikkiLookup:
             for form in forms:
                 if isinstance(form, dict):
                     form_value = str(form.get("form") or "").strip()
-                    if form_value:
+                    if not form_value:
+                        continue
+                    tags = form.get("tags")
+                    tag_values = {str(tag) for tag in tags} if isinstance(tags, list) else set()
+                    if "romanization" in tag_values:
+                        continue
+                    if "canonical" in tag_values:
                         return form_value
         return lemma
 
@@ -155,7 +168,7 @@ class KaikkiLookup:
             if not isinstance(glosses, list):
                 continue
             for gloss in glosses:
-                gloss_text = str(gloss).strip()
+                gloss_text = _clean_definition_text(str(gloss))
                 if gloss_text and gloss_text not in definitions:
                     definitions.append(gloss_text)
         selected = _select_best_definition(definitions)
@@ -174,8 +187,6 @@ class KaikkiLookup:
                 return ipa.strip()
         return None
 
-
-
     @staticmethod
     def _part_of_speech_from_payload(payload: dict[str, object]) -> str | None:
         value = str(payload.get("pos") or "").strip()
@@ -190,6 +201,99 @@ class KaikkiLookup:
             tags.append(tag)
         return tags
 
+    @staticmethod
+    def _payload_score(*, payload: dict[str, object], record: KaikkiRecord) -> int:
+        score = 0
+        if any(_is_substantive_definition(definition) for definition in record.definitions):
+            score += 50
+        else:
+            score -= 80
+
+        pos = str(payload.get("pos") or "")
+        if pos in _PREFERRED_PARTS_OF_SPEECH:
+            score += _PREFERRED_PARTS_OF_SPEECH[pos]
+        if pos in {"character", "symbol"}:
+            score -= 15
+
+        word = str(payload.get("word") or "")
+        if word and word == word.casefold():
+            score += 5
+        elif word:
+            score -= 5
+
+        tags = _sense_tags(payload)
+        if tags & {"form-of", "alt-of", "abbreviation"}:
+            score -= 40
+        return score
+
+
+_PREFERRED_PARTS_OF_SPEECH = {
+    "prep": 30,
+    "postp": 30,
+    "conj": 28,
+    "particle": 26,
+    "pron": 24,
+    "det": 22,
+    "num": 20,
+    "adv": 18,
+    "verb": 16,
+    "noun": 14,
+    "proper": 12,
+    "adj": 12,
+    "interj": 8,
+}
+
+_RELATION_PREFIX_RE = re.compile(
+    r"^(?:abbreviation|acronym|alternative form|alternative spelling|archaic spelling|"
+    r"clipping|initialism|misspelling|obsolete spelling|pre-1918 spelling|"
+    r"romanization|same as|superseded spelling|transliteration)\b"
+)
+_LETTER_DEFINITION_RE = re.compile(r"\bletter of (?:the )?.*alphabet\b")
+_MAX_CARD_DEFINITION_CHARS = 180
+
+_FORM_OF_TERMS = {
+    "ablative",
+    "accusative",
+    "active",
+    "adverbial",
+    "animate",
+    "aorist",
+    "comparative",
+    "conditional",
+    "dative",
+    "definite",
+    "feminine",
+    "first",
+    "form",
+    "future",
+    "genitive",
+    "gerund",
+    "imperative",
+    "imperfect",
+    "imperfective",
+    "indicative",
+    "infinitive",
+    "instrumental",
+    "locative",
+    "masculine",
+    "neuter",
+    "nominative",
+    "participle",
+    "passive",
+    "past",
+    "perfect",
+    "perfective",
+    "person",
+    "plural",
+    "prepositional",
+    "present",
+    "second",
+    "singular",
+    "subjunctive",
+    "superlative",
+    "third",
+    "vocative",
+}
 
 _IGNORED_GRAMMAR_TAGS = {
     "abbreviation",
@@ -200,6 +304,20 @@ _IGNORED_GRAMMAR_TAGS = {
     "romanization",
     "table-tags",
 }
+
+
+def _sense_tags(payload: dict[str, object]) -> set[str]:
+    tags: set[str] = set()
+    senses = payload.get("senses")
+    if not isinstance(senses, list):
+        return tags
+    for sense in senses:
+        if not isinstance(sense, dict):
+            continue
+        sense_tags = sense.get("tags")
+        if isinstance(sense_tags, list):
+            tags.update(str(tag) for tag in sense_tags)
+    return tags
 
 
 def _payload_tags(payload: dict[str, object]) -> list[str]:
@@ -221,20 +339,56 @@ def _payload_tags(payload: dict[str, object]) -> list[str]:
     return tags
 
 
-def _select_best_definition(definitions: list[str]) -> str | None:
-    candidates = [" ".join(definition.split()) for definition in definitions if definition.strip()]
-    if not candidates:
-        return None
-    return max(candidates, key=_definition_quality_score)
+def _is_substantive_definition(definition: str) -> bool:
+    normalized = " ".join(definition.casefold().split())
+    if not normalized or re.fullmatch(r"\[[^\]]+\]", normalized):
+        return False
+    if _LETTER_DEFINITION_RE.search(normalized):
+        return False
+    if _RELATION_PREFIX_RE.match(normalized):
+        return False
 
+    before_of, separator, _ = normalized.partition(" of ")
+    if separator:
+        terms = set(re.findall(r"[a-z]+", before_of))
+        if terms and terms.issubset(_FORM_OF_TERMS):
+            return False
+    return True
+
+
+def _clean_definition_text(value: str) -> str:
+    cleaned = " ".join(value.split())
+    if len(cleaned) <= _MAX_CARD_DEFINITION_CHARS:
+        return cleaned
+
+    for separator in (". ", "; "):
+        first_segment = cleaned.split(separator, 1)[0].strip()
+        if 20 <= len(first_segment) <= _MAX_CARD_DEFINITION_CHARS:
+            return first_segment
+
+    return cleaned[:_MAX_CARD_DEFINITION_CHARS].rsplit(" ", 1)[0].strip() + "..."
+
+
+def _select_best_definition(definitions: list[str]) -> str | None:
+    cleaned = [_clean_definition_text(definition) for definition in definitions]
+    candidates = [definition for definition in cleaned if definition]
+    substantive = [definition for definition in candidates if _is_substantive_definition(definition)]
+    if substantive:
+        return max(substantive, key=_definition_quality_score)
+    return candidates[0] if candidates else None
 
 
 def _definition_quality_score(definition: str) -> int:
-    score = min(len(definition), 120)
+    length = len(definition)
+    score = min(length, 120)
     if " " in definition:
         score += 30
-    if 25 <= len(definition) <= 180:
+    if any(separator in definition for separator in (";", ",", " or ")):
+        score += 10
+    if 25 <= length <= _MAX_CARD_DEFINITION_CHARS:
         score += 20
+    if length < 12:
+        score -= 20
     return score
 
 

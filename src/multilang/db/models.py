@@ -110,6 +110,7 @@ class LexicalCandidate(Base):
     definitions_html: Mapped[str | None] = mapped_column(Text, nullable=True)
     definition_language: Mapped[str] = mapped_column(String(8), nullable=False)
     ipa: Mapped[str | None] = mapped_column(String(255), nullable=True)
+    spoken_form: Mapped[str | None] = mapped_column(String(255), nullable=True)
     translation_target_language: Mapped[str] = mapped_column(String(8), nullable=False)
     grounding_status: Mapped[str] = mapped_column(String(32), nullable=False)
     warning_code: Mapped[str | None] = mapped_column(String(64), nullable=True)

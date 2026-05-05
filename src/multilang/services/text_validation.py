@@ -98,6 +98,7 @@ class TextValidationService:
         definitions_html: str | None,
         uncertainty_notes: list[str] | None = None,
         disallowed_sentence_texts: set[str] | None = None,
+        require_translation: bool = True,
     ) -> TextValidationResult:
         context = _ValidationContext(
             sentence_text=sentence.text.strip(),
@@ -126,7 +127,8 @@ class TextValidationService:
             lemma=lemma,
             definitions_html=definitions_html,
         )
-        self._check_translation(flags, context=context)
+        if require_translation:
+            self._check_translation(flags, context=context)
 
         validation_status = ValidationStatus.FAILED if flags else ValidationStatus.PASSED
         confidence_score = self._score(flags=flags, uncertainty_count=len(context.uncertainty_notes))

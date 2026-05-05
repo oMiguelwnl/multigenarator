@@ -101,21 +101,23 @@ class IngestLexicalItemsService:
             )
             total_backfilled += backfilled_count
             level_counts[level] = len(grounded_candidates)
+            candidate_rows: list[tuple[str, str, LexicalCardCandidate]] = []
+            item_keys: list[str] = []
             for position, candidate in enumerate(grounded_candidates, start=1):
                 item_key = self._frequency_item_key(level, position)
-                self.lexical_repo.upsert_candidate(
-                    job_id=orchestration.job_id,
-                    run_key=orchestration.run_key,
-                    item_key=item_key,
-                    source_type="frequency",
-                    normalized_source=candidate.lemma_key,
-                    candidate=candidate,
-                )
-                self.repository.record_item_success(
-                    orchestration.job_id,
-                    item_key=item_key,
-                    completed_stage=JobStage.INGEST,
-                )
+                candidate_rows.append((item_key, candidate.lemma_key, candidate))
+                item_keys.append(item_key)
+            self.lexical_repo.upsert_candidates(
+                job_id=orchestration.job_id,
+                run_key=orchestration.run_key,
+                source_type="frequency",
+                candidates=candidate_rows,
+            )
+            self.repository.record_item_successes(
+                orchestration.job_id,
+                item_keys=item_keys,
+                completed_stage=JobStage.INGEST,
+            )
 
         result = self._result_from_persisted_candidates(report=report)
         result.backfilled_candidates = total_backfilled

@@ -7,7 +7,7 @@ from dataclasses import dataclass
 from io import StringIO
 from pathlib import Path
 
-from multilang.domain.exporting import EXPORT_CARD_FIELD_NAMES, ExportArtifactFormat, ExportCardRow
+from multilang.domain.exporting import ExportArtifactFormat, ExportCardRow, export_field_names_for_rows
 
 
 @dataclass(frozen=True)
@@ -29,6 +29,7 @@ def write_export_tabular_bundle(
 
     output_dir.mkdir(parents=True, exist_ok=True)
     sorted_rows = sorted(rows, key=lambda row: (row.sort_index or 0, row.identity.item_key))
+    field_names = export_field_names_for_rows(sorted_rows)
     delimiter = "\t" if export_format is ExportArtifactFormat.TSV else ","
     separator_name = "Tab" if export_format is ExportArtifactFormat.TSV else "Comma"
     suffix = ".tsv" if export_format is ExportArtifactFormat.TSV else ".csv"
@@ -41,12 +42,12 @@ def write_export_tabular_bundle(
     buffer.write("#html:true\n")
     buffer.write(f"#notetype:{note_type_name}\n")
     buffer.write(f"#deck:{deck_name}\n")
-    buffer.write(f"#columns:{delimiter.join(EXPORT_CARD_FIELD_NAMES)}\n")
+    buffer.write(f"#columns:{delimiter.join(field_names)}\n")
 
     for row in sorted_rows:
-        mapping = row.ordered_field_mapping()
+        mapping = row.ordered_field_mapping(field_names=field_names)
         writer.writerow([
-            _serialize_field(mapping[field_name]) for field_name in EXPORT_CARD_FIELD_NAMES
+            _serialize_field(mapping[field_name]) for field_name in field_names
         ])
 
     output_path.write_text(buffer.getvalue(), encoding="utf-8")

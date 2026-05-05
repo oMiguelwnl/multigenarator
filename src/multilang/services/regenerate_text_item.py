@@ -43,6 +43,7 @@ class RegenerateTextItemService:
             raise ValueError(f"unknown lexical candidate for job {job_id!r} item {item_key!r}")
 
         candidate = GenerateTextItemsService._to_candidate(self, persisted_candidate)
+        source_type = getattr(persisted_candidate, "source_type", None)
         seen_sentences = GenerateTextItemsService._normalize_sentences(
             self.text_repository.list_example_sentences_for_job(job_id, exclude_item_key=item_key)
         )
@@ -54,6 +55,7 @@ class RegenerateTextItemService:
             bundle=generated_bundle,
             candidate=candidate,
             seen_sentences=seen_sentences,
+            source_type=source_type,
         )
         generation_status = TextGenerationStatus.GENERATED
         repair_attempt_count = 0
@@ -69,6 +71,7 @@ class RegenerateTextItemService:
                 bundle=generated_bundle,
                 candidate=candidate,
                 seen_sentences=seen_sentences,
+                source_type=source_type,
             )
 
         regenerated_record = self._build_record(
@@ -92,6 +95,7 @@ class RegenerateTextItemService:
         bundle: GeneratedTextBundle,
         candidate: object,
         seen_sentences: set[str] | None = None,
+        source_type: str | None = None,
     ) -> TextValidationResult:
         return self.text_validation_service.validate(
             sentence=bundle.sentence,
@@ -100,6 +104,7 @@ class RegenerateTextItemService:
             lemma=getattr(candidate, "lemma"),
             definitions_html=getattr(candidate, "definitions_html"),
             disallowed_sentence_texts=set(seen_sentences or set()),
+            require_translation=source_type != "word-list",
         )
 
     def _build_record(

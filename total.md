@@ -1,69 +1,12 @@
-# Anki Card Template
+1. - quero tornar o audio do word_audio mais
+destacada, pesquise forma para realizar isso. Isso tem a ver com o serviço de voz
 
-This file contains the complete Anki note type template for the Multilingual Card Generator.  
-Import these into your Anki note type under **Card Template → Front / Back / Styling**.
+2. Em todos os cards, ao lado do IPA deve estar a forma de falada, e isso nao está em todos os cardã gerados, implemente em TODOS os cards que serao gerados
 
----
+3. As IPA geradas pelo kaikki estão erradas, não corresponde às palavras, coloque a AI para gerar, implemente em TODOS os cards que serao gerados
 
-## Front Template
+4. Quero mudar o styles dos decks, siga o que eu te mandar em baixo. ISSO NAO É O TEMPLATE PARA O DECK DE FONETICA
 
-```html
-<div class="customCard cardBack">
-  <div class="horizontalPadding centerVertically targetWordContainer">
-    <div class="wordBlock">
-      <span class="targetWord">{{Front of Card}}</span>
-      {{#IPA}}<span class="ipa">{{IPA}}</span>{{/IPA}}
-    </div>
-    <span class="wordAudioButtonBack">{{word_audio}}</span>
-  </div>
-
-  <div class="dividerLine"></div>
-
-  <div class="horizontalPadding">
-    <div class="header">Definition:</div>
-    <div class="indent">
-      <ul class="definitionsList">
-        <li>{{Definitions}}</li>
-      </ul>
-    </div>
-  </div>
-
-  <div class="dividerLine"></div>
-
-  <div class="horizontalPadding">
-    <div class="header">example:</div>
-    <div class="indent">
-      {{Example Sentence}}
-      <span class="wordAudioButtonBack">{{sentence_audio}}</span>
-    </div>
-    <div id="translation" class="sentenceTranslation indent" style="display:none;">
-      {{Translation}}
-    </div>
-  </div>
-
-  {{#Image}}
-  <div class="image">{{Image}}</div>
-  {{/Image}}
-</div>
-```
-
----
-
-## Back Template
-
-```html
-{{FrontSide}}
-
-<script>
-  document.getElementById("translation").style.display = "block";
-</script>
-```
-
----
-
-## Styling (CSS)
-
-```css
 :root {
   --max-width-card: 400px;
   --font-size-card: 18px;
@@ -102,27 +45,96 @@ p {
   margin-inline-end: 0px;
 }
 
-div { display: block; }
+div {
+  display: block;
+}
 
 body {
   display: block;
   line-height: 1.187;
 }
 
-html { display: block; }
+html {
+  display: block;
+}
 
-span, applet, object, iframe,
-h1, h2, h3, h4, h5, h6,
-blockquote, pre, a, abbr, acronym, address, big, cite, code,
-del, dfn, em, img, ins, kbd, q, s, samp, small, strike, strong,
-sub, sup, tt, var, b, u, i, center,
-dl, dt, dd, ol, ul, li,
-fieldset, form, label, legend,
-table, caption, tbody, tfoot, thead, tr, th, td,
-article, aside, canvas, details, embed,
-figure, figcaption, footer, header, hgroup,
-menu, nav, output, ruby, section, summary,
-time, mark, audio, video {
+span,
+applet,
+object,
+iframe,
+h1,
+h2,
+h3,
+h4,
+h5,
+h6,
+blockquote,
+pre,
+a,
+abbr,
+acronym,
+address,
+big,
+cite,
+code,
+del,
+dfn,
+em,
+img,
+ins,
+kbd,
+q,
+s,
+samp,
+small,
+strike,
+strong,
+sub,
+sup,
+tt,
+var,
+b,
+u,
+i,
+center,
+dl,
+dt,
+dd,
+ol,
+ul,
+li,
+fieldset,
+form,
+label,
+legend,
+table,
+caption,
+tbody,
+tfoot,
+thead,
+tr,
+th,
+td,
+article,
+aside,
+canvas,
+details,
+embed,
+figure,
+figcaption,
+footer,
+header,
+hgroup,
+menu,
+nav,
+output,
+ruby,
+section,
+summary,
+time,
+mark,
+audio,
+video {
   margin: 0;
   padding: 0;
   border: 0;
@@ -131,43 +143,63 @@ time, mark, audio, video {
   vertical-align: baseline;
 }
 
-article, aside, details, figcaption, figure,
-footer, header, hgroup, menu, nav, section {
+article,
+aside,
+details,
+figcaption,
+figure,
+footer,
+header,
+hgroup,
+menu,
+nav,
+section {
   display: block;
 }
 
-ol, ul { list-style: none; }
-
-blockquote, q { quotes: none; }
-
-blockquote:before, blockquote:after,
-q:before, q:after {
+ol,
+ul {
+  list-style: none;
+}
+blockquote,
+q {
+  quotes: none;
+}
+blockquote:before,
+blockquote:after,
+q:before,
+q:after {
   content: "";
   content: none;
 }
-
 table {
   border-collapse: collapse;
   border-spacing: 0;
 }
 
-* { box-sizing: border-box; }
-
-/* ========== NIGHT MODE SCROLLBAR ========== */
+* {
+  box-sizing: border-box;
+}
 
 body.nightMode::-webkit-scrollbar {
   background: #0a1628;
 }
-body.nightMode::-webkit-scrollbar:horizontal { height: 12px; }
-body.nightMode::-webkit-scrollbar:vertical { width: 12px; }
+body.nightMode::-webkit-scrollbar:horizontal {
+  height: 12px;
+}
+body.nightMode::-webkit-scrollbar:vertical {
+  width: 12px;
+}
 body.nightMode::-webkit-scrollbar-thumb {
   background: #2563eb;
   border-radius: 8px;
 }
-body.nightMode::-webkit-scrollbar-thumb:horizontal { min-width: 50px; }
-body.nightMode::-webkit-scrollbar-thumb:vertical { min-height: 50px; }
-
-/* ========== BASE ========== */
+body.nightMode::-webkit-scrollbar-thumb:horizontal {
+  min-width: 50px;
+}
+body.nightMode::-webkit-scrollbar-thumb:vertical {
+  min-height: 50px;
+}
 
 body {
   overscroll-behavior: none;
@@ -200,13 +232,24 @@ body {
   width: 100%;
   box-sizing: border-box;
 }
-
-.typeGood { background: #0f0; }
-.typeBad { background: #f00; }
-.typeMissed { background: #ccc; }
-.nightMode .latex { filter: invert(100%); }
-.drawing { zoom: 50%; }
-.nightMode img.drawing { filter: invert(1) hue-rotate(180deg); }
+.typeGood {
+  background: #0f0;
+}
+.typeBad {
+  background: #f00;
+}
+.typeMissed {
+  background: #ccc;
+}
+.nightMode .latex {
+  filter: invert(100%);
+}
+.drawing {
+  zoom: 50%;
+}
+.nightMode img.drawing {
+  filter: invert(1) hue-rotate(180deg);
+}
 
 /* ========== CARD STYLES ========== */
 
@@ -310,20 +353,16 @@ body {
   top: 21px;
   right: 22px;
 }
-
 .wordAudioButtonBack {
   margin-left: 8px;
 }
-
 .replay-button svg {
   width: 20px;
   height: 20px;
 }
-
 .replay-button svg path {
   fill: var(--color-audio-button);
 }
-
 .replay-button svg circle {
   fill: none;
   stroke: none;
@@ -359,6 +398,7 @@ body {
   margin-top: 16px;
   width: 100%;
   height: 210px;
+  margin-top: 16px;
 }
 
 .image img {
@@ -369,8 +409,12 @@ body {
   max-height: 100% !important;
 }
 
-.hint { color: var(--color-hint); }
-.nightMode .hint { color: var(--color-nightMode-hint); }
+.hint {
+  color: var(--color-hint);
+}
+.nightMode .hint {
+  color: var(--color-nightMode-hint);
+}
 
 .sentenceTranslation {
   color: var(--color-sentence-translation);
@@ -379,7 +423,6 @@ body {
   padding-right: 15px;
   padding-top: 8px;
 }
-
 .nightMode .sentenceTranslation {
   color: var(--color-nightMode-sentence-translation);
 }
@@ -400,7 +443,6 @@ body {
   margin-top: 8px;
   margin-bottom: 8px;
 }
-
 .nightMode .header {
   color: var(--color-nightMode-header);
 }
@@ -411,7 +453,6 @@ body {
   margin-top: 8px;
   margin-bottom: 8px;
 }
-
 .nightMode .dividerLine {
   border-color: var(--color-nightMode-divider);
 }
@@ -430,13 +471,3 @@ body {
   display: flex;
   align-items: center;
 }
-```
-
----
-
-## Notes
-
-- The `Translation` field is **hidden on the front** and revealed on the back via the inline `<script>` tag.
-- The `Image` field renders only when populated — the `{{#Image}}...{{/Image}}` conditional keeps the card clean when blank.
-- The `IPA` field also uses a conditional block: if empty, no phonetic line is shown.
-- Audio fields (`word_audio`, `sentence_audio`) use Anki's built-in `[sound:filename.mp3]` syntax, which is injected automatically by `genanki` during deck assembly.

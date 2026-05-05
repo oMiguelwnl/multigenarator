@@ -61,6 +61,7 @@ class LexicalCardCandidate(BaseModel):
     definitions_html: str | None = None
     definition_language: str = DEFAULT_DEFINITION_LANGUAGE
     ipa: str | None = None
+    spoken_form: str | None = None
     translation_target_language: str = Field(min_length=2)
     grounding_status: GroundingStatus
     warning_code: str | None = None

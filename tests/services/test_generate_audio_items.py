@@ -136,7 +136,11 @@ class FakeAudioSynthesisService:
 
 
 def test_generate_audio_items_service_reuses_existing_assets() -> None:
-    existing_word = make_asset(item_key="alpha", asset_kind=AudioAssetKind.WORD, status=AudioSynthesisStatus.SYNTHESIZED)
+    existing_word = make_asset(
+        item_key="alpha",
+        asset_kind=AudioAssetKind.WORD,
+        status=AudioSynthesisStatus.SYNTHESIZED,
+    ).model_copy(update={"job_id": "old-job", "item_key": "old-item"})
     prepared_word = make_asset(item_key="alpha", asset_kind=AudioAssetKind.WORD, status=AudioSynthesisStatus.PENDING)
     prepared_sentence = make_asset(item_key="alpha", asset_kind=AudioAssetKind.SENTENCE, status=AudioSynthesisStatus.PENDING)
     audio_repository = FakeAudioRepository(
@@ -168,6 +172,8 @@ def test_generate_audio_items_service_reuses_existing_assets() -> None:
     assert result.reused_items == 1
     assert result.failed_items == 0
     assert len(audio_repository.saved_assets) == 2
+    assert audio_repository.saved_assets[0].job_id == "job-1"
+    assert audio_repository.saved_assets[0].item_key == "alpha"
     assert audio_repository.saved_assets[0].provenance.storage_path == existing_word.provenance.storage_path
     assert synthesis.synthesized[0].asset_kind is AudioAssetKind.SENTENCE
 

@@ -207,3 +207,18 @@ def test_audio_synthesis_service_returns_separate_word_and_sentence_assets(tmp_p
     assert bundle.word_asset.provenance.storage_path != bundle.sentence_asset.provenance.storage_path
     assert bundle.word_asset.display_text == "read"
     assert bundle.sentence_asset.display_text == "I read before bed."
+
+
+def test_audio_synthesis_service_applies_prominent_prosody_to_word_only(tmp_path: Path) -> None:
+    service = build_service(tmp_path)
+
+    bundle = service.prepare_item_assets(
+        language=SupportedLanguage.EN,
+        display_word="read",
+        text_record=make_text_record(example_sentence="I read before bed."),
+    )
+
+    word_ssml = bundle.word_asset.normalized_input.ssml_text or ""
+    sentence_ssml = bundle.sentence_asset.normalized_input.ssml_text or ""
+    assert '<prosody rate="-10%" pitch="+8%" volume="+20%">read</prosody>' in word_ssml
+    assert "<prosody" not in sentence_ssml

@@ -438,10 +438,10 @@ def test_generate_frequency_command_supports_test_mode(monkeypatch) -> None:
     session.close()
 
     assert result.exit_code == 0
-    assert "grounded_candidates=30" in result.output
-    assert "level_1_candidates=10" in result.output
-    assert "level_2_candidates=10" in result.output
-    assert "level_3_candidates=10" in result.output
+    assert "grounded_candidates=9" in result.output
+    assert "level_1_candidates=3" in result.output
+    assert "level_2_candidates=3" in result.output
+    assert "level_3_candidates=3" in result.output
 
 
 def test_generate_frequency_command_supports_cards_per_level_override(monkeypatch) -> None:
@@ -535,34 +535,65 @@ def test_generate_command_bootstraps_missing_lexicon_from_explicit_source_file(
     assert "grounded_candidates=1" in result.output
 
 
-def test_generate_command_fails_fast_when_lexical_data_is_missing(tmp_path: Path) -> None:
-    database_path = tmp_path / "missing-lexicon.db"
+def test_generate_command_bootstraps_missing_lexicon_from_default_source_file(
+    monkeypatch, tmp_path: Path
+) -> None:
+    database_path = tmp_path / "bootstrap-default.db"
     lexicon_dir = tmp_path / "lexicon"
-    lexicon_dir.mkdir()
-    
-    from pytest import MonkeyPatch
+    source_dir = tmp_path / ".multilang" / "sources" / "kaikki"
+    source_dir.mkdir(parents=True)
+    write_kaikki_archive(
+        source_dir / "kaikki-en.jsonl.gz",
+        [{"word": "hello", "lang_code": "en", "senses": [{"glosses": ["hello"]}]}],
+    )
 
-    monkeypatch = MonkeyPatch()
+    monkeypatch.chdir(tmp_path)
     monkeypatch.setenv("MULTILANG_DATABASE_URL", f"sqlite+pysqlite:///{database_path}")
     monkeypatch.setenv("MULTILANG_LEXICON_DATA_DIR", str(lexicon_dir))
 
     app = create_app()
+    result = runner.invoke(
+        app,
+        [
+            "generate",
+            "--language",
+            "en",
+            "--source",
+            "word-list",
+            "--input-file",
+            str(write_word_list(tmp_path, "hello")),
+        ],
+    )
 
-    try:
-        result = runner.invoke(
-            app,
-            [
-                "generate",
-                "--language",
-                "en",
-                "--source",
-                "word-list",
-                "--input-file",
-                str(write_word_list(tmp_path, "hello")),
-            ],
-        )
-    finally:
-        monkeypatch.undo()
+    assert result.exit_code == 0
+    assert (lexicon_dir / "en" / "kaikki-index.json").exists()
+    assert "grounded_candidates=1" in result.output
+
+
+def test_generate_command_fails_fast_when_lexical_data_is_missing(
+    monkeypatch, tmp_path: Path
+) -> None:
+    database_path = tmp_path / "missing-lexicon.db"
+    lexicon_dir = tmp_path / "lexicon"
+    lexicon_dir.mkdir()
+
+    monkeypatch.chdir(tmp_path)
+    monkeypatch.setenv("MULTILANG_DATABASE_URL", f"sqlite+pysqlite:///{database_path}")
+    monkeypatch.setenv("MULTILANG_LEXICON_DATA_DIR", str(lexicon_dir))
+
+    app = create_app()
+    result = runner.invoke(
+        app,
+        [
+            "generate",
+            "--language",
+            "en",
+            "--source",
+            "word-list",
+            "--input-file",
+            str(write_word_list(tmp_path, "hello")),
+        ],
+    )
 
     assert result.exit_code == 1
     assert "lexical data is missing for language 'en'" in result.output

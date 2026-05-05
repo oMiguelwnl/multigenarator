@@ -2,13 +2,17 @@
 
 from __future__ import annotations
 
-from multilang.runtime import _TemplateSentenceAdapter, _TemplateTranslationAdapter
+import pytest
+
+from multilang.runtime import build_runtime_service
+from multilang.services.local_text_adapter import LocalSentenceAdapter, LocalTranslationAdapter
 from multilang.services.text_generation import SentenceGenerationRequest, SentenceTranslationRequest
+from multilang.settings import Settings
 
 
 def test_local_runtime_uses_curated_smoke_sentence_and_translation_for_lantern() -> None:
-    sentence_adapter = _TemplateSentenceAdapter()
-    translation_adapter = _TemplateTranslationAdapter()
+    sentence_adapter = LocalSentenceAdapter()
+    translation_adapter = LocalTranslationAdapter()
 
     sentence = sentence_adapter.generate_sentence(
         SentenceGenerationRequest(
@@ -29,3 +33,40 @@ def test_local_runtime_uses_curated_smoke_sentence_and_translation_for_lantern()
     assert sentence.sentence == "She hung the lantern beside the cabin door."
     assert translation.translation == "Ela pendurou a lanterna ao lado da porta da cabana."
     assert sentence.provenance["template_kind"] == "curated:lantern"
+
+
+def test_runtime_fails_loudly_when_litellm_is_configured_without_credentials(tmp_path) -> None:
+    with pytest.raises(ValueError, match="LiteLLM sentence generation requires"):
+        build_runtime_service(
+            Settings(
+                _env_file=None,
+                database_url=f"sqlite+pysqlite:///{tmp_path / 'runtime.db'}",
+                text_generation_provider="litellm",
+                translation_provider="local",
+            )
+        )
+
+
+def test_runtime_fails_loudly_when_deepl_is_configured_without_credentials(tmp_path) -> None:
+    with pytest.raises(ValueError, match="DeepL translation requires"):
+        build_runtime_service(
+            Settings(
+                _env_file=None,
+                database_url=f"sqlite+pysqlite:///{tmp_path / 'runtime.db'}",
+                text_generation_provider="local",
+                translation_provider="deepl",
+            )
+        )
+
+
+def test_runtime_allows_local_text_services_only_when_explicitly_configured(tmp_path) -> None:
+    service = build_runtime_service(
+        Settings(
+            _env_file=None,
+            database_url=f"sqlite+pysqlite:///{tmp_path / 'runtime.db'}",
+            text_generation_provider="local",
+            translation_provider="local",
+        )
+    )
+
+    assert service is not None

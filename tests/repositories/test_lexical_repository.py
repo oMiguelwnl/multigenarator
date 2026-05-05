@@ -29,7 +29,9 @@ def make_request(source_type: str = "word-list") -> GenerationRequest:
     return GenerationRequest(language=SupportedLanguage.EN, source_type=source_type, input_file=None)
 
 
-def make_candidate(*, status: GroundingStatus, ipa: str | None, warning_code: str | None) -> LexicalCardCandidate:
+def make_candidate(
+    *, status: GroundingStatus, ipa: str | None, warning_code: str | None, spoken_form: str | None = None
+) -> LexicalCardCandidate:
     return LexicalCardCandidate(
         submitted_form="running",
         display_form="running",
@@ -40,6 +42,7 @@ def make_candidate(*, status: GroundingStatus, ipa: str | None, warning_code: st
         definitions_html="to move swiftly on foot" if status is GroundingStatus.GROUNDED else None,
         definition_language="en",
         ipa=ipa,
+        spoken_form=spoken_form,
         translation_target_language="pt",
         grounding_status=status,
         warning_code=warning_code,
@@ -52,7 +55,7 @@ def make_candidate(*, status: GroundingStatus, ipa: str | None, warning_code: st
                 fallback_used=status is not GroundingStatus.GROUNDED,
             ),
             pronunciation=PronunciationRecord(
-                source="kaikki" if ipa else "missing",
+                source="provider-pronunciation-generator" if ipa else "missing",
                 value=ipa,
                 authoritative=ipa is not None,
             ),
@@ -83,7 +86,7 @@ def test_upsert_candidate_updates_existing_row() -> None:
         item_key="line-1",
         source_type="word-list",
         normalized_source="running",
-        candidate=make_candidate(status=GroundingStatus.GROUNDED, ipa="/ɹʌn/", warning_code=None),
+        candidate=make_candidate(status=GroundingStatus.GROUNDED, ipa="/ɹʌn/", spoken_form="RYT", warning_code=None),
     )
 
     assert session.execute(
@@ -95,6 +98,7 @@ def test_upsert_candidate_updates_existing_row() -> None:
     assert len(stored) == 1
     assert stored[0].grounding_status is GroundingStatus.GROUNDED
     assert stored[0].ipa == "/ɹʌn/"
+    assert stored[0].spoken_form == "RYT"
     assert stored[0].frequency_rank == 17
 
 
@@ -121,7 +125,7 @@ def test_list_candidates_preserves_pending_warnings_and_grounded_fields() -> Non
         item_key="line-2",
         source_type="word-list",
         normalized_source="run",
-        candidate=make_candidate(status=GroundingStatus.GROUNDED, ipa="/ɹʌn/", warning_code=None),
+        candidate=make_candidate(status=GroundingStatus.GROUNDED, ipa="/ɹʌn/", spoken_form="RYT", warning_code=None),
     )
 
     pending, grounded = repository.list_candidates(job.id)
@@ -132,6 +136,7 @@ def test_list_candidates_preserves_pending_warnings_and_grounded_fields() -> Non
     assert grounded.grounding_status is GroundingStatus.GROUNDED
     assert grounded.definitions_html == "to move swiftly on foot"
     assert grounded.ipa == "/ɹʌn/"
+    assert grounded.spoken_form == "RYT"
 
 
 def test_count_pending_candidates_only_counts_pending_and_insufficient_rows() -> None:
@@ -165,7 +170,7 @@ def test_count_pending_candidates_only_counts_pending_and_insufficient_rows() ->
         item_key="line-3",
         source_type="word-list",
         normalized_source="runner",
-        candidate=make_candidate(status=GroundingStatus.GROUNDED, ipa="/ɹʌn/", warning_code=None),
+        candidate=make_candidate(status=GroundingStatus.GROUNDED, ipa="/ɹʌn/", spoken_form="RYT", warning_code=None),
     )
 
     assert repository.count_pending_candidates(job.id) == 2

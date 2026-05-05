@@ -97,12 +97,21 @@ def test_status_helpers_model_generate_validate_repair_review_flow() -> None:
         review_status=ReviewStatus.NOT_REVIEWED,
         repair_attempt_count=1,
     )
+    failed_twice = make_record(
+        generation_status=TextGenerationStatus.REPAIRED,
+        validation_status=ValidationStatus.FAILED,
+        review_status=ReviewStatus.NOT_REVIEWED,
+        repair_attempt_count=2,
+    )
     accepted = make_record()
 
     assert pending.stage_flow == "generate"
     assert pending.can_attempt_repair() is True
-    assert failed_once.stage_flow == "review"
-    assert failed_once.can_attempt_repair() is False
-    assert failed_once.requires_review is True
+    assert failed_once.stage_flow == "repair"
+    assert failed_once.can_attempt_repair() is True
+    assert failed_once.requires_review is False
+    assert failed_twice.stage_flow == "review"
+    assert failed_twice.can_attempt_repair() is False
+    assert failed_twice.requires_review is True
     assert accepted.stage_flow == "complete"
     assert accepted.requires_review is False

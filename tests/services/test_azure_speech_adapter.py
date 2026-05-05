@@ -9,7 +9,7 @@ from types import SimpleNamespace
 
 import pytest
 
-from multilang.services.azure_speech_adapter import AzureSpeechAdapter, AzureSpeechAdapterError
+from multilang.services.azure_speech_adapter import AzureSpeechAdapter, AzureSpeechAdapterError, build_azure_ssml
 from multilang.settings import Settings
 
 
@@ -162,6 +162,16 @@ def test_azure_speech_adapter_requires_credentials_for_synthesis(tmp_path: Path)
             output_path=tmp_path / "audio.mp3",
             audio_format="audio-24khz-48kbitrate-mono-mp3",
         )
+
+
+def test_build_azure_ssml_preserves_safe_prosody_from_legacy_speak() -> None:
+    ssml = build_azure_ssml(
+        text='<speak version="1.0"><prosody rate="-10%" pitch="+8%" volume="+20%">run</prosody></speak>',
+        voice_id="en-US-JennyNeural",
+        locale="en-US",
+    )
+
+    assert '<voice name="en-US-JennyNeural"><prosody rate="-10%" pitch="+8%" volume="+20%">run</prosody></voice>' in ssml
 
 
 def test_azure_speech_adapter_surfaces_cancellation_details(tmp_path: Path) -> None:

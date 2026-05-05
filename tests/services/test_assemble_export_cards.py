@@ -42,6 +42,8 @@ def make_candidate(
     *,
     item_key: str,
     definitions_html: str = "verb: to run<ul><li>verb: to move & jump</li></ul>",
+    ipa: str | None = None,
+    spoken_form: str | None = None,
 ) -> LexicalCardCandidate:
     return LexicalCardCandidate(
         submitted_form=item_key,
@@ -52,7 +54,8 @@ def make_candidate(
         frequency_level=1,
         definitions_html=definitions_html,
         definition_language="en",
-        ipa=f"/{item_key}/",
+        ipa=ipa if ipa is not None else f"/{item_key}/",
+        spoken_form=spoken_form if spoken_form is not None else item_key.upper(),
         translation_target_language="pt",
         grounding_status=GroundingStatus.GROUNDED,
         provenance=LexicalProvenance(
@@ -171,7 +174,23 @@ def test_assemble_export_cards_persists_exact_field_order_and_sound_tags() -> No
     )
     assert row.word_audio == "[sound:run-word.mp3]"
     assert row.sentence_audio == "[sound:run-sentence.mp3]"
+    assert row.ipa == "/run/ (RUN)"
     assert export_repository.saved_rows[0].note_guid == row.note_guid
+
+
+def test_assemble_export_cards_renders_ai_ipa_with_spoken_form() -> None:
+    service, _ = build_service(
+        accepted_records=[make_text_record(item_key="casa")],
+        candidates={"casa": make_candidate(item_key="casa", ipa="/ˈkaza/", spoken_form="KA-za")},
+        assets={
+            ("casa", AudioAssetKind.WORD.value): make_asset(item_key="casa", asset_kind=AudioAssetKind.WORD, storage_path="casa-word.mp3"),
+            ("casa", AudioAssetKind.SENTENCE.value): make_asset(item_key="casa", asset_kind=AudioAssetKind.SENTENCE, storage_path="casa-sentence.mp3"),
+        },
+    )
+
+    row = service.execute(job_id="job-1", deck_language=SupportedLanguage.EN).cards[0]
+
+    assert row.ipa == "/ˈkaza/ (KA-za)"
 
 
 def test_assemble_export_cards_joins_definitions_with_br_and_preserves_image_blank() -> None:
@@ -276,4 +295,29 @@ def test_assemble_export_cards_rejects_untemplated_definitions() -> None:
     )
 
     with pytest.raises(AssembleExportCardsError, match="must use"):
+        service.execute(job_id="job-1", deck_language=SupportedLanguage.EN)
+
+
+@pytest.mark.parametrize(
+    ("candidate", "message"),
+    [
+        (make_candidate(item_key="missing-ipa").model_copy(update={"ipa": None}), "missing IPA"),
+        (make_candidate(item_key="missing-spoken").model_copy(update={"spoken_form": None}), "missing spoken form"),
+    ],
+)
+def test_assemble_export_cards_rejects_missing_pronunciation_data(
+    candidate: LexicalCardCandidate,
+    message: str,
+) -> None:
+    item_key = candidate.submitted_form
+    service, _ = build_service(
+        accepted_records=[make_text_record(item_key=item_key)],
+        candidates={item_key: candidate},
+        assets={
+            (item_key, AudioAssetKind.WORD.value): make_asset(item_key=item_key, asset_kind=AudioAssetKind.WORD, storage_path=f"{item_key}-word.mp3"),
+            (item_key, AudioAssetKind.SENTENCE.value): make_asset(item_key=item_key, asset_kind=AudioAssetKind.SENTENCE, storage_path=f"{item_key}-sentence.mp3"),
+        },
+    )
+
+    with pytest.raises(AssembleExportCardsError, match=message):
         service.execute(job_id="job-1", deck_language=SupportedLanguage.EN)

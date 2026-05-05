@@ -185,7 +185,7 @@ def test_generate_command_skips_pending_groundings_during_text_generation(tmp_pa
         session.close()
 
 
-def test_generate_command_uses_requested_sentence_and_translation_languages(tmp_path: Path) -> None:
+def test_generate_command_uses_requested_language_for_manual_word_list_text(tmp_path: Path) -> None:
     database_path = tmp_path / "spanish-runtime.db"
     lexicon_dir = write_lookup_index(tmp_path, "usar", language_code="es")
     source = write_word_list(tmp_path, "usar")
@@ -222,6 +222,6 @@ def test_generate_command_uses_requested_sentence_and_translation_languages(tmp_
         assert "usar" in generated.example_sentence.casefold()
         assert not generated.example_sentence.casefold().startswith(("la palabra", "the word"))
         assert generated.translation_text
-        assert generated.translation_text != generated.example_sentence
+        assert generated.translation_text == generated.example_sentence
     finally:
         session.close()

@@ -19,6 +19,7 @@ dependencies = [
   "alembic>=1.16,<2.0",
   "psycopg[binary]>=3.2,<4.0",
   "deepl>=1.17,<2.0",
+  "deep-translator>=1.11,<2.0",
   "wordfreq>=3.1,<4.0",
   "azure-cognitiveservices-speech>=1.49,<2.0",
   "genanki>=0.13,<0.14",

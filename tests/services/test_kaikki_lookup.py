@@ -75,29 +75,35 @@ def test_lookup_can_refresh_existing_index(tmp_path: Path) -> None:
     assert refreshed.definitions == ["home"]
 
 
-
-def test_build_index_extracts_definition_metadata(tmp_path: Path) -> None:
+def test_build_index_uses_source_word_when_first_form_is_romanization(tmp_path: Path) -> None:
     source_path = _write_fixture_jsonl(
-        tmp_path / "es.jsonl.gz",
+        tmp_path / "ru.jsonl.gz",
         [
             {
-                "word": "lavar",
-                "lang_code": "es",
+                "word": "быть",
+                "lang_code": "ru",
                 "pos": "verb",
-                "forms": [{"form": "lavar", "tags": ["infinitive"]}],
-                "senses": [{"glosses": ["to wash something or clean it with water"]}],
+                "forms": [
+                    {"form": "bytʹ", "tags": ["romanization"]},
+                    {"form": "imperfective intransitive", "tags": ["table-tags"]},
+                    {"form": "бы́ть", "tags": ["infinitive"]},
+                ],
+                "senses": [{"glosses": ["to be"]}],
             },
         ],
     )
 
     lookup = KaikkiLookup(data_dir=tmp_path)
-    lookup.build_index(language_code="es", source_path=source_path)
-    record = lookup.lookup(language_code="es", term="lavar")
+    lookup.build_index(language_code="ru", source_path=source_path)
+    record = lookup.lookup(language_code="ru", term="  БЫТЬ  ")
 
     assert record is not None
-    assert record.definitions == ["to wash something or clean it with water"]
+    assert record.lemma == "быть"
+    assert record.display_form == "быть"
+    assert record.definitions == ["to be"]
     assert record.part_of_speech == "verb"
     assert record.grammar_tags == ["infinitive"]
+    assert lookup.lookup(language_code="ru", term="bytʹ") is None
 
 
 def test_build_index_prefers_more_explanatory_gloss(tmp_path: Path) -> None:
@@ -120,6 +126,76 @@ def test_build_index_prefers_more_explanatory_gloss(tmp_path: Path) -> None:
     assert record is not None
     assert record.definitions == ["a building where people live"]
     assert record.part_of_speech == "noun"
+
+
+def test_build_index_prefers_substantive_entry_over_form_of_duplicate(tmp_path: Path) -> None:
+    source_path = _write_fixture_jsonl(
+        tmp_path / "ru.jsonl.gz",
+        [
+            {
+                "word": "премьера",
+                "lang_code": "ru",
+                "pos": "noun",
+                "forms": [{"form": "премье́ра", "tags": ["canonical"]}],
+                "senses": [{"glosses": ["premiere"]}],
+            },
+            {
+                "word": "премьера",
+                "lang_code": "ru",
+                "pos": "noun",
+                "forms": [{"form": "премье́ра", "tags": ["canonical"]}],
+                "senses": [
+                    {
+                        "tags": ["form-of", "genitive", "singular"],
+                        "glosses": ["genitive singular of премье́р (premʹjér)"],
+                    }
+                ],
+            },
+        ],
+    )
+
+    lookup = KaikkiLookup(data_dir=tmp_path)
+    lookup.build_index(language_code="ru", source_path=source_path)
+    record = lookup.lookup(language_code="ru", term="премьера")
+
+    assert record is not None
+    assert record.definitions == ["premiere"]
+
+
+def test_build_index_prefers_preposition_over_uppercase_abbreviation_duplicate(tmp_path: Path) -> None:
+    source_path = _write_fixture_jsonl(
+        tmp_path / "ru.jsonl.gz",
+        [
+            {
+                "word": "в",
+                "lang_code": "ru",
+                "pos": "prep",
+                "sounds": [{"ipa": "[v]"}],
+                "senses": [{"glosses": ["in, at, on"]}],
+            },
+            {
+                "word": "В",
+                "lang_code": "ru",
+                "pos": "noun",
+                "sounds": [{"ipa": "[vɐˈstok]"}],
+                "senses": [
+                    {
+                        "tags": ["abbreviation", "alt-of"],
+                        "glosses": ["abbreviation of восто́к (vostók, “east”)"]
+                    }
+                ],
+            },
+        ],
+    )
+
+    lookup = KaikkiLookup(data_dir=tmp_path)
+    lookup.build_index(language_code="ru", source_path=source_path)
+    record = lookup.lookup(language_code="ru", term="в")
+
+    assert record is not None
+    assert record.lemma == "в"
+    assert record.definitions == ["in, at, on"]
+    assert record.ipa == "[v]"
 
 
 def test_build_index_reuses_existing_index_until_force_refresh(tmp_path: Path) -> None:

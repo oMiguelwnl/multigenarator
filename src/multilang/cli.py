@@ -20,12 +20,17 @@ from multilang.services.generate_job import GenerateJobResult, GenerateJobServic
 from multilang.services.ingest_lexical_items import IngestLexicalItemsService
 from multilang.services.kaikki_lookup import KaikkiLookup
 from multilang.services.job_summary import JobLifecycleSummary, JobSummaryBuilder
+from multilang.services.russian_phoneme_deck import (
+    DEFAULT_RUSSIAN_PHONEME_DECK_NAME,
+    export_russian_phoneme_deck,
+)
 from multilang.services.text_review import ReviewReport, TextReviewService
 from multilang.settings import Settings
 
 app = typer.Typer(help="Multilang operator CLI.")
 
-TEST_MODE_CARDS_PER_LEVEL = 10
+TEST_MODE_CARDS_PER_LEVEL = 3
+DEFAULT_KAIKKI_SOURCE_DIR = Path(".multilang/sources/kaikki")
 LOCAL_SMOKE_LANGUAGE = SupportedLanguage.EN
 LOCAL_SMOKE_FIXTURE_DIR = Path(".multilang/live-smoke-azure")
 LOCAL_SMOKE_WORDS = ("harbor", "lantern", "meadow")
@@ -350,19 +355,36 @@ def _print_review_report(report: ReviewReport) -> None:
         typer.echo(f"review_report={report.report_path}")
 
 
+def _default_kaikki_source_file(language_code: str) -> Path:
+    return DEFAULT_KAIKKI_SOURCE_DIR / f"kaikki-{language_code}.jsonl.gz"
+
+
+def _resolve_lexicon_source_file(request: GenerationRequest) -> Path | None:
+    if request.lexicon_source_file is not None:
+        return request.lexicon_source_file
+
+    source_path = _default_kaikki_source_file(request.language.value)
+    if source_path.exists():
+        return source_path
+
+    return None
+
+
 def _prepare_lexical_data(request: GenerationRequest, *, settings: Settings) -> None:
     lookup = KaikkiLookup(data_dir=settings.lexicon_data_dir)
     index_path = lookup.ensure_index(
         language_code=request.language.value,
-        source_path=request.lexicon_source_file,
+        source_path=_resolve_lexicon_source_file(request),
     )
     if index_path is not None:
         return
 
+    default_source = _default_kaikki_source_file(request.language.value)
     typer.echo(
         "lexical data is missing for language "
-        f"'{request.language.value}'. Re-run with --lexicon-source-file "
-        "<path-to-local-kaikki.jsonl.gz> to bootstrap the local cache."
+        f"'{request.language.value}'. Place the archive at {default_source} "
+        "or re-run with --lexicon-source-file <path-to-local-kaikki.jsonl.gz> "
+        "to bootstrap the local cache."
     )
     raise typer.Exit(code=1)
 
@@ -672,6 +694,26 @@ def create_app(
             typer.echo(str(exc))
             raise typer.Exit(code=1) from exc
 
+        typer.echo(f"artifact_path={result.output_path}")
+        typer.echo(f"card_count={result.card_count}")
+
+    @cli.command("export-russian-phonemes")
+    def export_russian_phonemes(
+        output_path: Annotated[
+            Path,
+            typer.Option(
+                "--output-path",
+                dir_okay=False,
+                writable=True,
+                help="Path for the Russian introductory phoneme .apkg deck.",
+            ),
+        ] = Settings().export_output_dir / "russian-phonemes.apkg",
+        deck_name: Annotated[
+            str,
+            typer.Option("--deck-name", help="Deck name for the Russian phoneme package."),
+        ] = DEFAULT_RUSSIAN_PHONEME_DECK_NAME,
+    ) -> None:
+        result = export_russian_phoneme_deck(output_path=output_path, deck_name=deck_name)
         typer.echo(f"artifact_path={result.output_path}")
         typer.echo(f"card_count={result.card_count}")
 
