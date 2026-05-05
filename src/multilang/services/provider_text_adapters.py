@@ -7,6 +7,7 @@ import re
 from collections.abc import Callable
 from typing import Any
 
+from multilang.security.redaction import redact_exception, redact_sensitive_text
 from multilang.services.text_generation import (
     SentenceGenerationRequest,
     SentenceGenerationResult,
@@ -92,6 +93,7 @@ class LiteLLMSentenceAdapter:
                 "source": "provider-text-generator",
                 "provider": "litellm",
                 "model": self._model,
+                **({"source_type": request.source_type} if request.source_type else {}),
             },
         )
 
@@ -170,7 +172,7 @@ class FallbackTranslationAdapter:
             result = self._fallback.translate_sentence(request)
             provenance = dict(result.provenance)
             provenance["fallback_from"] = type(self._primary).__name__
-            provenance["fallback_reason"] = str(exc)
+            provenance["fallback_reason"] = redact_exception(exc)
             return result.model_copy(update={"provenance": provenance})
 
 
@@ -189,6 +191,29 @@ def can_use_google_translate(settings: Settings) -> bool:
 def _sentence_prompt(request: SentenceGenerationRequest) -> str:
     target_name = _LANGUAGE_NAMES.get(request.target_language, request.target_language)
     definition = _clean_definition(request.definitions_html) or "No definition provided."
+    if request.source_type == "kindle-highlights":
+        context = redact_sensitive_text(request.highlight_context or "").strip()
+        lines = [
+            f"Target language: {target_name} ({request.target_language})",
+            f"Study form: {request.display_form}",
+            f"Lemma: {request.lemma}",
+            f"Definition context: {definition}",
+        ]
+        if context:
+            lines.append(f"Highlight context hint (redacted, for sense guidance only): {context}")
+        lines.extend(
+            [
+                "Rules:",
+                "- Write exactly one natural learner sentence in the target language.",
+                "- Include the study form or a normal inflection of the lemma.",
+                "- Keep the sentence between 6 and 16 words.",
+                "- Use the highlight context only to choose the sense; do not copy private text wholesale.",
+                "- Do not write a dictionary definition, translation, grammar note, or meta sentence.",
+                "- Do not use generic discussion templates, placeholder text, or phrases like 'the word'.",
+                "- Set uncertainty_notes to an empty array unless there is a real ambiguity.",
+            ]
+        )
+        return "\n".join(lines)
     return "\n".join(
         [
             f"Target language: {target_name} ({request.target_language})",

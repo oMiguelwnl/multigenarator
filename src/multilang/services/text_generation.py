@@ -17,6 +17,8 @@ class SentenceGenerationRequest(BaseModel):
     definitions_html: str | None = None
     target_language: str = Field(min_length=2)
     translation_target_language: str = Field(min_length=2)
+    source_type: str | None = None
+    highlight_context: str | None = None
 
     @classmethod
     def from_candidate(
@@ -24,6 +26,8 @@ class SentenceGenerationRequest(BaseModel):
         *,
         candidate: LexicalCardCandidate,
         deck_language: SupportedLanguage,
+        source_type: str | None = None,
+        highlight_context: str | None = None,
     ) -> "SentenceGenerationRequest":
         if candidate.grounding_status is not GroundingStatus.GROUNDED:
             raise ValueError("sentence generation requires a grounded lexical candidate")
@@ -33,6 +37,8 @@ class SentenceGenerationRequest(BaseModel):
             definitions_html=candidate.definitions_html,
             target_language=deck_language.value,
             translation_target_language=candidate.translation_target_language,
+            source_type=source_type,
+            highlight_context=highlight_context,
         )
 
 
@@ -117,6 +123,8 @@ class TextGenerationService:
         sentence_request = SentenceGenerationRequest.from_candidate(
             candidate=candidate,
             deck_language=deck_language,
+            source_type=source_type,
+            highlight_context=highlight_context,
         )
         sentence_result = self._sentence_adapter.generate_sentence(sentence_request)
 

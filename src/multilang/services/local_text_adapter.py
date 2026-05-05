@@ -80,6 +80,20 @@ _TERM_TEMPLATES = {
     "tr": "Komşular akşam yemeğinde {term} tartışır.",
 }
 
+_HIGHLIGHT_TEMPLATES = {
+    "de": "Die Leserin bemerkt {term} in der stillen Szene.",
+    "en": "Readers notice {term} during the quiet chapter tonight.",
+    "es": "Los lectores notan {term} durante el capítulo tranquilo.",
+    "fr": "Les lecteurs remarquent {term} pendant le chapitre calme.",
+    "it": "I lettori notano {term} durante il capitolo silenzioso.",
+    "nl": "Lezers merken {term} op tijdens het rustige hoofdstuk.",
+    "pl": "Czytelnicy zauważają {term} podczas spokojnego rozdziału.",
+    "pt": "Leitores percebem {term} durante o capítulo silencioso.",
+    "ro": "Cititorii observă {term} în timpul capitolului liniștit.",
+    "ru": "Читатели замечают {term} во время тихой главы.",
+    "tr": "Okurlar sakin bölümde {term} ifadesini fark eder.",
+}
+
 _CURATED_LOCAL_TEXT = {
     "harbor": {
         "sentence": "The fishing boats returned to the harbor before sunset.",
@@ -106,6 +120,9 @@ class LocalSentenceAdapter:
     """Generate bounded deterministic sentences that satisfy runtime validators."""
 
     def generate_sentence(self, request: SentenceGenerationRequest) -> SentenceGenerationResult:
+        if request.source_type == "kindle-highlights":
+            return _generate_highlight_sentence(request)
+
         curated = _CURATED_LOCAL_TEXT.get(request.display_form.casefold())
         if curated is not None and request.target_language == SupportedLanguage.EN.value:
             return SentenceGenerationResult(
@@ -192,6 +209,23 @@ def _sense_hint(definitions_html: str | None, display_form: str) -> str:
         return candidate or display_form
 
     return first_gloss
+
+
+def _generate_highlight_sentence(request: SentenceGenerationRequest) -> SentenceGenerationResult:
+    if request.target_language not in _HIGHLIGHT_TEMPLATES:
+        raise ValueError(f"unsupported runtime template language: {request.target_language}")
+    sentence = _HIGHLIGHT_TEMPLATES[request.target_language].format(term=request.display_form)
+    return SentenceGenerationResult(
+        sentence=sentence,
+        intended_sense=_sense_hint(request.definitions_html, request.display_form),
+        uncertainty_notes=[],
+        provenance={
+            "source": "runtime-local-generator",
+            "provider": "local",
+            "source_type": "kindle-highlights",
+            "template_kind": "highlight",
+        },
+    )
 
 
 def _infer_sense_key(definitions_html: str | None, display_form: str) -> str | None:
