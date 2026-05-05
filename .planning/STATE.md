@@ -3,15 +3,15 @@ gsd_state_version: 1.0
 milestone: v1.2
 milestone_name: Audit
 status: executing
-stopped_at: Phase 11 context gathered
-last_updated: "2026-05-05T17:40:45.138Z"
+stopped_at: Completed 11-highlight-pipeline-integration phase
+last_updated: "2026-05-05T17:50:06.624Z"
 last_activity: 2026-05-05 -- Phase 11 planning complete
 progress:
   total_phases: 9
-  completed_phases: 3
+  completed_phases: 4
   total_plans: 17
-  completed_plans: 13
-  percent: 76
+  completed_plans: 17
+  percent: 100
 ---
 
 # Project State
@@ -21,16 +21,16 @@ progress:
 See: .planning/PROJECT.md (updated 2026-05-03)
 
 **Core value:** Generate reliable, high-quality Anki cards for real vocabulary the learner needs to study, with accurate definitions, examples, translations where appropriate, and audio.  
-**Current focus:** Phase 10 — local-kindle-normalization-and-candidate-extraction
+**Current focus:** Phase 12 — highlight-generation-audio-and-qa
 
 ## Current Position
 
 Phase: 11
-Plan: Not started
-Status: Ready to execute
-Last activity: 2026-05-05 -- Phase 11 planning complete
+Plan: Complete
+Status: Phase complete
+Last activity: 2026-05-05 -- Phase 11 execution complete
 
-Progress: [#---------] 12%
+Progress: [██████████] 100%
 
 ## Performance Metrics
 
@@ -66,6 +66,10 @@ Progress: [#---------] 12%
 | Phase 10 P02 | unknown | 2 tasks | 3 files |
 | Phase 10 P03 | unknown | 2 tasks | 5 files |
 | Phase 10 P04 | unknown | 2 tasks | 2 files |
+| Phase 11-highlight-pipeline-integration P01 | unknown | 2 tasks | 4 files |
+| Phase 11-highlight-pipeline-integration P02 | unknown | 2 tasks | 4 files |
+| Phase 11-highlight-pipeline-integration P03 | unknown | 2 tasks | 4 files |
+| Phase 11-highlight-pipeline-integration P04 | unknown | 2 tasks | 5 files |
 
 ## Accumulated Context
 
@@ -91,6 +95,9 @@ Full decision history is in `.planning/PROJECT.md` and `.planning/milestones/v1.
 - [Phase 10]: Keep highlight candidate extraction provider-free and DB-free with deterministic in-module stopword filtering.
 - [Phase 10]: Expose Kindle highlights only through a count-only preview command while keeping generate --source kindle-highlights blocked until Phase 11.
 - [Phase 10]: Use synthetic fixture and count-only evidence to prove local Kindle normalization without committing private exports.
+- [Phase 11-highlight-pipeline-integration]: Highlight candidates use source content hash plus lemma hash instead of sequence-only keys.
+- [Phase 11-highlight-pipeline-integration]: Persist normalized highlight text only in private import records; manifests stay hash/count-only.
+- [Phase 11-highlight-pipeline-integration]: Public CLI accepts highlights while internal profile remains kindle-highlights.
 
 ### Pending Todos
 
@@ -119,6 +126,6 @@ Items acknowledged and carried forward from v1.0 milestone close:
 
 ## Session Continuity
 
-Last session: 2026-05-05T17:34:58.636Z
-Stopped at: Phase 11 context gathered
-Resume file: .planning/phases/11-highlight-pipeline-integration/11-CONTEXT.md
+Last session: 2026-05-05T17:50:06.616Z
+Stopped at: Completed 11-highlight-pipeline-integration phase
+Resume file: None

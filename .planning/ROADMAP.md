@@ -15,7 +15,7 @@ Phase 11: Highlight Pipeline Integration.
 - [x] **Phase 08: Card Quality Refresh** - Generated non-phonetics Anki cards have prominent Azure word audio, AI-generated IPA, readable spoken-form hints beside IPA, and the user-provided normal deck styling.
 - [x] **Phase 09: Source Profiles, Privacy, and Regression Boundary** - Existing frequency/custom decks stay stable while highlight mode, source profiles, and redaction boundaries are introduced.
 - [x] **Phase 10: Local Kindle Normalization and Candidate Extraction** - Local Kindle exports become deterministic normalized highlights and reviewable vocabulary candidates without external formatter dependency. (completed 2026-05-05)
-- [ ] **Phase 11: Highlight Pipeline Integration** - Highlight candidates enter the existing job, grounding, resume, and duplicate-prevention flow as a new deck mode.
+- [x] **Phase 11: Highlight Pipeline Integration** - Highlight candidates enter the existing job, grounding, resume, and duplicate-prevention flow as a new deck mode. (completed 2026-05-05)
 - [ ] **Phase 12: Highlight Generation, Audio, and QA** - Highlight cards receive privacy-aware text generation, richer concise examples, validation, and audio.
 - [ ] **Phase 13: Highlight Export and Template** - Highlight decks export with a dedicated note type, English fields, no Translation field, and responsive Definition-on-back cards.
 - [ ] **Phase 14: WebDAV Highlight Fetch Adapter** - Kindle highlight exports can be fetched securely from WebDAV with clear failures and idempotent import summaries.
@@ -98,10 +98,10 @@ Plans:
 
 Plans:
 
-- [ ] 11-01-PLAN.md — Define stable content-derived highlight import and candidate identity.
-- [ ] 11-02-PLAN.md — Persist private highlight records separately from safe import manifests.
-- [ ] 11-03-PLAN.md — Wire highlights through lexical grounding, job orchestration, resume, and duplicate prevention.
-- [ ] 11-04-PLAN.md — Expose public `generate --source highlights` and count-only lifecycle summaries.
+- [x] 11-01-PLAN.md — Define stable content-derived highlight import and candidate identity.
+- [x] 11-02-PLAN.md — Persist private highlight records separately from safe import manifests.
+- [x] 11-03-PLAN.md — Wire highlights through lexical grounding, job orchestration, resume, and duplicate prevention.
+- [x] 11-04-PLAN.md — Expose public `generate --source highlights` and count-only lifecycle summaries.
 
 ### Phase 12: Highlight Generation, Audio, and QA
 
@@ -178,7 +178,7 @@ Plans:
 | 08. Card Quality Refresh | 4/4 | Complete | 2026-05-02 |
 | 09. Source Profiles, Privacy, and Regression Boundary | 5/5 | Complete | 2026-05-04 |
 | 10. Local Kindle Normalization and Candidate Extraction | 4/4 | Complete    | 2026-05-05 |
-| 11. Highlight Pipeline Integration | 0/4 | Planned | - |
+| 11. Highlight Pipeline Integration | 4/4 | Complete   | 2026-05-05 |
 | 12. Highlight Generation, Audio, and QA | 0/TBD | Not started | - |
 | 13. Highlight Export and Template | 0/TBD | Not started | - |
 | 14. WebDAV Highlight Fetch Adapter | 0/TBD | Not started | - |

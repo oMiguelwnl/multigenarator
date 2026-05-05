@@ -14,7 +14,7 @@ Requirements for the current milestone. Each requirement maps to exactly one roa
 - [ ] **INGEST-01**: User can configure the Kindle WebDAV URL, username, and secret without editing source code or exposing credentials in logs or artifacts.
 - [ ] **INGEST-02**: User can fetch Kindle highlight exports from WebDAV with remote listing, file selection, and distinct auth, path, network, and empty-source failures.
 - [x] **INGEST-03**: User can process a local Kindle export file through the same normalization path used by WebDAV imports.
-- [ ] **INGEST-04**: User can rerun the same highlight import without creating duplicate cards, using content hashes, import manifests, and a visible import summary.
+- [x] **INGEST-04**: User can rerun the same highlight import without creating duplicate cards, using content hashes, import manifests, and a visible import summary.
 
 ### Local Kindle Normalization
 
@@ -30,7 +30,7 @@ Requirements for the current milestone. Each requirement maps to exactly one roa
 
 ### Highlight Deck Mode and Generation
 
-- [ ] **MODE-01**: User can generate a `highlights` deck mode alongside existing frequency-deck and custom word-list modes.
+- [x] **MODE-01**: User can generate a `highlights` deck mode alongside existing frequency-deck and custom word-list modes.
 - [x] **MODE-02**: Existing frequency-deck and custom word-list behavior remains unchanged when highlight mode is added.
 - [ ] **GEN-01**: User receives highlight cards with word or headword, IPA and spoken-pronunciation behavior, definition, example sentence, word audio, sentence audio, and blank `Image`.
 - [ ] **GEN-02**: User receives concise but grammatically richer highlight examples that include the target word and pass language and length validation.
@@ -89,14 +89,14 @@ Which phases cover which requirements. Updated during roadmap creation.
 | INGEST-01 | Phase 14 | Pending |
 | INGEST-02 | Phase 14 | Pending |
 | INGEST-03 | Phase 10 | Complete |
-| INGEST-04 | Phase 11 | Pending |
+| INGEST-04 | Phase 11 | Complete |
 | NORM-01 | Phase 10 | Complete |
 | NORM-02 | Phase 10 | Complete |
 | NORM-03 | Phase 10 | Complete |
 | CAND-01 | Phase 10 | Complete |
 | CAND-02 | Phase 10 | Complete |
 | CAND-03 | Phase 10 | Complete |
-| MODE-01 | Phase 11 | Pending |
+| MODE-01 | Phase 11 | Complete |
 | MODE-02 | Phase 09 | Complete |
 | GEN-01 | Phase 12 | Pending |
 | GEN-02 | Phase 12 | Pending |
