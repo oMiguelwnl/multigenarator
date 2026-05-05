@@ -24,8 +24,8 @@ Requirements for the current milestone. Each requirement maps to exactly one roa
 
 ### Candidate Extraction
 
-- [ ] **CAND-01**: User can extract target-language vocabulary candidates from normalized highlights for all existing supported languages.
-- [ ] **CAND-02**: User gets deterministic candidate filtering, duplicate detection, and first-seen ordering without treating every token as a card.
+- [x] **CAND-01**: User can extract target-language vocabulary candidates from normalized highlights for all existing supported languages.
+- [x] **CAND-02**: User gets deterministic candidate filtering, duplicate detection, and first-seen ordering without treating every token as a card.
 - [ ] **CAND-03**: User can review imported highlight count, extracted candidate count, rejected count, duplicate count, and planned card count before expensive generation.
 
 ### Highlight Deck Mode and Generation
@@ -93,8 +93,8 @@ Which phases cover which requirements. Updated during roadmap creation.
 | NORM-01 | Phase 10 | Complete |
 | NORM-02 | Phase 10 | Complete |
 | NORM-03 | Phase 10 | Complete |
-| CAND-01 | Phase 10 | Pending |
-| CAND-02 | Phase 10 | Pending |
+| CAND-01 | Phase 10 | Complete |
+| CAND-02 | Phase 10 | Complete |
 | CAND-03 | Phase 10 | Pending |
 | MODE-01 | Phase 11 | Pending |
 | MODE-02 | Phase 09 | Complete |
