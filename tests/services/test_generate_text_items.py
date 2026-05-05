@@ -26,12 +26,20 @@ from multilang.services.text_generation import (
 from multilang.services.text_validation import TextValidationResult
 
 
-def make_candidate(*, lemma: str = "wash", item_key: str = "line-1") -> LexicalCardCandidate:
+def make_candidate(
+    *,
+    lemma: str = "wash",
+    item_key: str = "line-1",
+    frequency_rank: int | None = None,
+    frequency_level: int | None = None,
+) -> LexicalCardCandidate:
     return LexicalCardCandidate(
         submitted_form=lemma,
         display_form=lemma,
         lemma=lemma,
         lemma_key=f"en:{lemma}",
+        frequency_rank=frequency_rank,
+        frequency_level=frequency_level,
         definitions_html=f"to {lemma}",
         definition_language="en",
         translation_target_language="pt",
@@ -521,3 +529,143 @@ def test_generate_text_items_flags_duplicate_sentence_across_cards() -> None:
     assert validation.calls[1]["disallowed_sentence_texts"] == {"i wash the cup at home"}
     assert validation.calls[2]["disallowed_sentence_texts"] == {"i wash the cup at home"}
     assert repository.saved_records[1].generation_status is TextGenerationStatus.REPAIRED
+
+
+def test_generate_text_items_uses_highlight_profile_validation_rules() -> None:
+    repository = FakeTextRepository(
+        candidates=[
+            PersistedCandidate(
+                id="lex-highlight-1",
+                item_key="highlight:abc123:wash",
+                candidate=make_candidate(item_key="highlight:abc123:wash"),
+                source_type="kindle-highlights",
+            )
+        ]
+    )
+    generation = FakeGenerationService(
+        bundles=[
+            make_bundle(
+                sentence="Readers wash the old cup carefully after the quiet chapter ends.",
+                translation="translation omitted by highlight export",
+            )
+        ]
+    )
+    validation = FakeValidationService(
+        results=[make_validation_result(status=ValidationStatus.PASSED, label=ConfidenceLabel.HIGH, score=0.94)]
+    )
+
+    service = GenerateTextItemsService(
+        job_repository=FakeJobRepository(),
+        lexical_repository=None,
+        text_repository=repository,
+        text_generation_service=generation,
+        text_validation_service=validation,
+        tatoeba_sentence_source=FakeTatoebaSentenceSource(fallback=None),
+    )
+
+    result = service.execute(job_id="job-highlight", deck_language=SupportedLanguage.EN)
+
+    assert result.accepted_items == 1
+    assert validation.calls[0]["require_translation"] is False
+    assert validation.calls[0]["min_sentence_tokens"] == 6
+    assert validation.calls[0]["max_sentence_tokens"] == 16
+
+
+def test_generate_text_items_preserves_frequency_and_word_list_profile_validation_rules() -> None:
+    repository = FakeTextRepository(
+        candidates=[
+            PersistedCandidate(
+                id="lex-frequency-1",
+                item_key="level-1-rank-0001",
+                candidate=make_candidate(
+                    item_key="level-1-rank-0001",
+                    frequency_rank=1,
+                    frequency_level=1,
+                ),
+                source_type="frequency",
+            ),
+            PersistedCandidate(
+                id="lex-word-list-1",
+                item_key="line-1",
+                candidate=make_candidate(item_key="line-1"),
+                source_type="word-list",
+            ),
+        ]
+    )
+    generation = FakeGenerationService(
+        bundles=[
+            make_bundle(sentence="I wash the cup at home.", translation="Eu lavo a xícara em casa."),
+            make_bundle(sentence="I wash the cup at home.", translation="Eu lavo a xícara em casa."),
+        ]
+    )
+    validation = FakeValidationService(
+        results=[
+            make_validation_result(status=ValidationStatus.PASSED, label=ConfidenceLabel.HIGH, score=0.95),
+            make_validation_result(status=ValidationStatus.PASSED, label=ConfidenceLabel.HIGH, score=0.95),
+        ]
+    )
+
+    service = GenerateTextItemsService(
+        job_repository=FakeJobRepository(),
+        lexical_repository=None,
+        text_repository=repository,
+        text_generation_service=generation,
+        text_validation_service=validation,
+        tatoeba_sentence_source=FakeTatoebaSentenceSource(fallback=None),
+    )
+
+    service.execute(job_id="job-existing", deck_language=SupportedLanguage.EN)
+
+    assert [call["require_translation"] for call in validation.calls] == [True, True]
+    assert [call["min_sentence_tokens"] for call in validation.calls] == [4, 4]
+    assert [call["max_sentence_tokens"] for call in validation.calls] == [12, 12]
+
+
+def test_generate_text_items_infers_source_profile_when_source_type_is_absent() -> None:
+    repository = FakeTextRepository(
+        candidates=[
+            PersistedCandidate(
+                id="lex-frequency-1",
+                item_key="level-1-rank-0001",
+                candidate=make_candidate(
+                    item_key="level-1-rank-0001",
+                    frequency_rank=1,
+                    frequency_level=1,
+                ),
+                source_type=None,
+            ),
+            PersistedCandidate(
+                id="lex-word-list-1",
+                item_key="line-1",
+                candidate=make_candidate(item_key="line-1"),
+                source_type=None,
+            ),
+        ]
+    )
+    generation = FakeGenerationService(
+        bundles=[
+            make_bundle(sentence="I wash the cup at home.", translation="Eu lavo a xícara em casa."),
+            make_bundle(sentence="I wash the cup at home.", translation="Eu lavo a xícara em casa."),
+        ]
+    )
+    validation = FakeValidationService(
+        results=[
+            make_validation_result(status=ValidationStatus.PASSED, label=ConfidenceLabel.HIGH, score=0.95),
+            make_validation_result(status=ValidationStatus.PASSED, label=ConfidenceLabel.HIGH, score=0.95),
+        ]
+    )
+
+    service = GenerateTextItemsService(
+        job_repository=FakeJobRepository(),
+        lexical_repository=None,
+        text_repository=repository,
+        text_generation_service=generation,
+        text_validation_service=validation,
+        tatoeba_sentence_source=FakeTatoebaSentenceSource(fallback=None),
+    )
+
+    service.execute(job_id="job-inferred", deck_language=SupportedLanguage.EN)
+
+    assert [call["require_translation"] for call in validation.calls] == [True, True]
+    assert [call["min_sentence_tokens"] for call in validation.calls] == [4, 4]
+    assert [call["max_sentence_tokens"] for call in validation.calls] == [12, 12]
