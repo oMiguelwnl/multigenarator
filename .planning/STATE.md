@@ -1,17 +1,17 @@
 ---
 gsd_state_version: 1.0
 milestone: v1.2
-milestone_name: Kindle Highlights and Template Refresh
-status: phase_09_completed
-stopped_at: Phase 09 complete; ready to plan Phase 10
-last_updated: "2026-05-04T13:02:07Z"
-last_activity: 2026-05-04 -- Phase 09 security gap T-09-02 closed; source-profile errors are privacy-safe and security status is verified.
+milestone_name: Audit
+status: executing
+stopped_at: Completed 10-01-PLAN.md
+last_updated: "2026-05-05T17:11:31.580Z"
+last_activity: 2026-05-05
 progress:
-  total_phases: 8
-  completed_phases: 1
-  total_plans: 5
-  completed_plans: 5
-  percent: 12
+  total_phases: 9
+  completed_phases: 2
+  total_plans: 13
+  completed_plans: 10
+  percent: 77
 ---
 
 # Project State
@@ -21,14 +21,14 @@ progress:
 See: .planning/PROJECT.md (updated 2026-05-03)
 
 **Core value:** Generate reliable, high-quality Anki cards for real vocabulary the learner needs to study, with accurate definitions, examples, translations where appropriate, and audio.  
-**Current focus:** Phase 10: Local Kindle Normalization and Candidate Extraction for v1.2 Kindle Highlights and Template Refresh
+**Current focus:** Phase 10 — local-kindle-normalization-and-candidate-extraction
 
 ## Current Position
 
-Phase: 10 - Local Kindle Normalization and Candidate Extraction  
-Plan: Not started  
-Status: Phase 09 complete with security gap closed; ready for Phase 10 planning  
-Last activity: 2026-05-04 - Phase 09 T-09-02 gap closure completed
+Phase: 10 (local-kindle-normalization-and-candidate-extraction) — EXECUTING
+Plan: 2 of 4
+Status: Ready to execute
+Last activity: 2026-05-05
 
 Progress: [#---------] 12%
 
@@ -61,6 +61,8 @@ Progress: [#---------] 12%
 - Last completed milestone work: Phase 08 Card Quality Refresh completed 2026-05-02.
 - Trend: v1.2 begins from a stable card-quality refresh but must protect existing frequency/custom flows while adding highlights.
 
+| Phase 10 P01 | unknown | 2 tasks | 5 files |
+
 ## Accumulated Context
 
 ### Decisions
@@ -81,6 +83,7 @@ Full decision history is in `.planning/PROJECT.md` and `.planning/milestones/v1.
 - Highlight exports must use a dedicated note model and omit `Translation`; mixed-source exports fail closed.
 - Future highlight/WebDAV diagnostics should use `multilang.security.redaction` before logging/reporting private data.
 - Unsupported source-profile errors omit rejected private/path-bearing input entirely and list only safe supported source keys.
+- [Phase 10]: Store Kindle parser provenance source paths as file names rather than absolute paths to avoid leaking private local paths.
 
 ### Pending Todos
 
@@ -109,6 +112,6 @@ Items acknowledged and carried forward from v1.0 milestone close:
 
 ## Session Continuity
 
-Last session: 2026-05-04T13:02:07Z  
-Stopped at: Phase 09 complete with T-09-02 closed; ready to plan Phase 10  
+Last session: 2026-05-05T17:11:31.571Z
+Stopped at: Completed 10-01-PLAN.md
 Resume file: None

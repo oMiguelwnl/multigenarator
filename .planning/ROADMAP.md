@@ -79,7 +79,7 @@ Plans:
 
 Plans:
 
-- [ ] 10-01-PLAN.md — Define local Kindle highlight contracts and deterministic HTML/text parsing.
+- [x] 10-01-PLAN.md — Define local Kindle highlight contracts and deterministic HTML/text parsing.
 - [ ] 10-02-PLAN.md — Extract deterministic filtered vocabulary candidates from normalized highlights.
 - [ ] 10-03-PLAN.md — Add a privacy-safe local Kindle import preview and count-only CLI command.
 - [ ] 10-04-PLAN.md — Prove the local parser-to-preview flow with integration and regression evidence.
@@ -170,7 +170,7 @@ Plans:
 |-------|----------------|--------|-----------|
 | 08. Card Quality Refresh | 4/4 | Complete | 2026-05-02 |
 | 09. Source Profiles, Privacy, and Regression Boundary | 5/5 | Complete | 2026-05-04 |
-| 10. Local Kindle Normalization and Candidate Extraction | 0/TBD | Not started | - |
+| 10. Local Kindle Normalization and Candidate Extraction | 1/4 | In Progress|  |
 | 11. Highlight Pipeline Integration | 0/TBD | Not started | - |
 | 12. Highlight Generation, Audio, and QA | 0/TBD | Not started | - |
 | 13. Highlight Export and Template | 0/TBD | Not started | - |

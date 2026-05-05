@@ -13,14 +13,14 @@ Requirements for the current milestone. Each requirement maps to exactly one roa
 
 - [ ] **INGEST-01**: User can configure the Kindle WebDAV URL, username, and secret without editing source code or exposing credentials in logs or artifacts.
 - [ ] **INGEST-02**: User can fetch Kindle highlight exports from WebDAV with remote listing, file selection, and distinct auth, path, network, and empty-source failures.
-- [ ] **INGEST-03**: User can process a local Kindle export file through the same normalization path used by WebDAV imports.
+- [x] **INGEST-03**: User can process a local Kindle export file through the same normalization path used by WebDAV imports.
 - [ ] **INGEST-04**: User can rerun the same highlight import without creating duplicate cards, using content hashes, import manifests, and a visible import summary.
 
 ### Local Kindle Normalization
 
-- [ ] **NORM-01**: User can normalize Kindle-exported HTML or text into deterministic highlight records without using the external Kindle Formatter website.
-- [ ] **NORM-02**: User keeps target-language characters, punctuation, record order, and source provenance through normalization.
-- [ ] **NORM-03**: User receives rejected-highlight reasons for unusable, malformed, empty, or unsafe highlight fragments, and failed imports do not proceed silently.
+- [x] **NORM-01**: User can normalize Kindle-exported HTML or text into deterministic highlight records without using the external Kindle Formatter website.
+- [x] **NORM-02**: User keeps target-language characters, punctuation, record order, and source provenance through normalization.
+- [x] **NORM-03**: User receives rejected-highlight reasons for unusable, malformed, empty, or unsafe highlight fragments, and failed imports do not proceed silently.
 
 ### Candidate Extraction
 
@@ -88,11 +88,11 @@ Which phases cover which requirements. Updated during roadmap creation.
 |-------------|-------|--------|
 | INGEST-01 | Phase 14 | Pending |
 | INGEST-02 | Phase 14 | Pending |
-| INGEST-03 | Phase 10 | Pending |
+| INGEST-03 | Phase 10 | Complete |
 | INGEST-04 | Phase 11 | Pending |
-| NORM-01 | Phase 10 | Pending |
-| NORM-02 | Phase 10 | Pending |
-| NORM-03 | Phase 10 | Pending |
+| NORM-01 | Phase 10 | Complete |
+| NORM-02 | Phase 10 | Complete |
+| NORM-03 | Phase 10 | Complete |
 | CAND-01 | Phase 10 | Pending |
 | CAND-02 | Phase 10 | Pending |
 | CAND-03 | Phase 10 | Pending |
