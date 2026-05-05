@@ -21,6 +21,8 @@ v1.0 provides the shipped CLI path for generation, review support, audio generat
 
 v1.1 Card Quality Refresh was executed through Phase 08 on 2026-05-02. The planning state records the phase as complete with targeted validation passing, but the milestone has not been archived in `.planning/MILESTONES.md` yet.
 
+v1.2 Phase 10 Local Kindle Normalization and Candidate Extraction was completed on 2026-05-05. Synthetic local Kindle HTML/text fixtures now parse locally, normalize into privacy-safe highlight records, extract deterministic vocabulary candidates, and expose a count-only preview command while keeping full highlight generation deferred to Phase 11.
+
 ## Current Milestone: v1.2 Kindle Highlights and Template Refresh
 
 **Goal:** Add a highlights-based deck mode that automatically imports Kindle highlights from WebDAV, normalizes them locally, generates Anki cards from reading-derived vocabulary, and updates highlight and phonetics card templates for the new study flow.
@@ -57,11 +59,11 @@ After v1.2, candidate directions from the archived v1 requirement seeds remain:
 - [x] User receives word and sentence audio through Azure-first synthesis or documented fallback behavior. _(v1.0)_
 - [x] User can export `.apkg`, CSV, and TSV artifacts with packaged playable audio references. _(v1.0)_
 - [x] User can resume, monitor, and rerun jobs without silent duplicate card creation. _(v1.0)_
+- [x] Normalize Kindle highlight exports locally into usable vocabulary candidates. _(v1.2 Phase 10)_
 
 ### Active
 
 - [ ] Add automatic Kindle highlights ingestion from WebDAV as a new deck input source.
-- [ ] Normalize Kindle highlight exports locally into usable vocabulary candidates.
 - [ ] Generate highlight-specific Anki cards without replacing the existing frequency-deck flow.
 - [ ] Add a responsive highlight deck template with `Definition` on the back and no `Translation` field.
 - [ ] Refresh the phonetics deck template while preserving required sentence translation behavior.
@@ -118,7 +120,7 @@ Known follow-up debt: full-suite collection drift remains in tests that import r
 | Freeze the Anki export contract around the requested ten fields and project card template | Stable field order, blank `Image`, hidden/revealed `Translation`, and playable packaged audio define whether exports are useful in Anki | Validated in v1.0 with automated tests and approved Anki Desktop import/audio verification. |
 | Treat milestone close as evidence-driven, not task-count driven | Stale artifacts can hide real gaps or false positives | Validated in Phase 7 with refreshed verification, requirements, and audit metadata. |
 | Add Kindle highlights as a new mode instead of replacing frequency decks | The learner wants reading-derived vocabulary while preserving the shipped frequency-deck path | Pending in v1.2. |
-| Normalize Kindle highlights locally instead of automating the external formatter website | A local formatter keeps generation reproducible, testable, and independent of a browser-only tool | Pending in v1.2. |
+| Normalize Kindle highlights locally instead of automating the external formatter website | A local formatter keeps generation reproducible, testable, and independent of a browser-only tool | Validated in v1.2 Phase 10 with local parser, candidate extraction, preview CLI, and regression evidence. |
 
 ## Evolution
 
@@ -140,4 +142,4 @@ This document evolves at phase transitions and milestone boundaries.
 4. Update Context with current state.
 
 ---
-*Last updated: 2026-05-03 after starting v1.2 milestone*
+*Last updated: 2026-05-05 after completing v1.2 Phase 10*
