@@ -116,3 +116,27 @@ def test_manifest_serialization_is_hash_and_count_only() -> None:
     assert private_sentence not in str(dumped)
     assert "source_path" not in dumped
     assert "raw_location" not in dumped
+
+
+def test_reordered_highlights_produce_same_sorted_item_keys() -> None:
+    first = _highlight("El jardín guarda una linterna", 0)
+    second = _highlight("La puerta conserva una llave", 1)
+
+    original = extract_highlight_candidates([first, second], language=SupportedLanguage.ES)
+    reordered = extract_highlight_candidates([second, first], language=SupportedLanguage.ES)
+
+    assert sorted(candidate.item_key for candidate in original.candidates) == sorted(
+        candidate.item_key for candidate in reordered.candidates
+    )
+
+
+def test_same_lemma_in_different_source_content_has_distinct_item_keys() -> None:
+    first = _highlight("El jardín guarda calma", 0)
+    second = _highlight("El jardín conserva memoria", 1)
+
+    result = extract_highlight_candidates([first, second], language=SupportedLanguage.ES)
+    jardin_candidates = [candidate for candidate in result.candidates if candidate.lemma_key == "jardín"]
+
+    assert len(jardin_candidates) == 2
+    assert len({candidate.source_content_hash for candidate in jardin_candidates}) == 2
+    assert len({candidate.item_key for candidate in jardin_candidates}) == 2
