@@ -47,7 +47,28 @@ class KindleParseResult(BaseModel):
     rejected: list[RejectedHighlight] = Field(default_factory=list)
 
 
+class HighlightCandidate(BaseModel):
+    """A reviewable vocabulary candidate extracted from normalized highlights."""
+
+    item_key: str = Field(min_length=1)
+    display_form: str = Field(min_length=1)
+    lemma_key: str = Field(min_length=1)
+    first_highlight_id: str = Field(min_length=1)
+    first_source_index: int = Field(ge=0)
+    occurrence_count: int = Field(ge=1)
+
+
+class HighlightCandidateExtractionResult(BaseModel):
+    """Candidate extraction output with deterministic filtering counters."""
+
+    candidates: list[HighlightCandidate] = Field(default_factory=list)
+    duplicate_count: int = Field(ge=0)
+    rejected_token_count: int = Field(ge=0)
+
+
 __all__ = [
+    "HighlightCandidate",
+    "HighlightCandidateExtractionResult",
     "HighlightProvenance",
     "KindleParseResult",
     "NormalizedHighlight",
