@@ -23,6 +23,8 @@ v1.1 Card Quality Refresh was executed through Phase 08 on 2026-05-02. The plann
 
 v1.2 Phase 10 Local Kindle Normalization and Candidate Extraction was completed on 2026-05-05. Synthetic local Kindle HTML/text fixtures now parse locally, normalize into privacy-safe highlight records, extract deterministic vocabulary candidates, and expose a count-only preview command while keeping full highlight generation deferred to Phase 11.
 
+v1.2 Phase 12 Highlight Generation, Audio, and QA was completed on 2026-05-05. Highlight examples now use source-profile validation and bounded redacted reading context, accepted highlight rows generate word and sentence audio, assembled highlight cards keep `Translation` learner-facing blank with blank `Image`, and source-aware QA reports prove privacy-safe behavior alongside existing frequency/custom regression evidence.
+
 ## Current Milestone: v1.2 Kindle Highlights and Template Refresh
 
 **Goal:** Add a highlights-based deck mode that automatically imports Kindle highlights from WebDAV, normalizes them locally, generates Anki cards from reading-derived vocabulary, and updates highlight and phonetics card templates for the new study flow.
@@ -60,11 +62,11 @@ After v1.2, candidate directions from the archived v1 requirement seeds remain:
 - [x] User can export `.apkg`, CSV, and TSV artifacts with packaged playable audio references. _(v1.0)_
 - [x] User can resume, monitor, and rerun jobs without silent duplicate card creation. _(v1.0)_
 - [x] Normalize Kindle highlight exports locally into usable vocabulary candidates. _(v1.2 Phase 10)_
+- [x] Generate privacy-safe highlight text/audio/card rows without replacing the existing frequency-deck or custom word-list flows. _(v1.2 Phase 12)_
 
 ### Active
 
 - [ ] Add automatic Kindle highlights ingestion from WebDAV as a new deck input source.
-- [ ] Generate highlight-specific Anki cards without replacing the existing frequency-deck flow.
 - [ ] Add a responsive highlight deck template with `Definition` on the back and no `Translation` field.
 - [ ] Refresh the phonetics deck template while preserving required sentence translation behavior.
 
@@ -121,6 +123,7 @@ Known follow-up debt: full-suite collection drift remains in tests that import r
 | Treat milestone close as evidence-driven, not task-count driven | Stale artifacts can hide real gaps or false positives | Validated in Phase 7 with refreshed verification, requirements, and audit metadata. |
 | Add Kindle highlights as a new mode instead of replacing frequency decks | The learner wants reading-derived vocabulary while preserving the shipped frequency-deck path | Pending in v1.2. |
 | Normalize Kindle highlights locally instead of automating the external formatter website | A local formatter keeps generation reproducible, testable, and independent of a browser-only tool | Validated in v1.2 Phase 10 with local parser, candidate extraction, preview CLI, and regression evidence. |
+| Keep highlight QA source-aware and privacy-safe | Raw reading text, paths, and book metadata may appear in private imports but must not leak to prompts/reports/artifacts | Validated in v1.2 Phase 12 with redacted context generation, source-aware review reports, and regression evidence. |
 
 ## Evolution
 
@@ -142,4 +145,4 @@ This document evolves at phase transitions and milestone boundaries.
 4. Update Context with current state.
 
 ---
-*Last updated: 2026-05-05 after completing v1.2 Phase 10*
+*Last updated: 2026-05-05 after completing v1.2 Phase 12*
