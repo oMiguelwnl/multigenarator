@@ -4,7 +4,7 @@ import hashlib
 
 import pytest
 
-from multilang.domain.highlights import HighlightProvenance, NormalizedHighlight
+from multilang.domain.highlights import HighlightImportManifest, HighlightProvenance, NormalizedHighlight
 from multilang.domain.jobs import SupportedLanguage
 from multilang.services.highlight_candidate_extraction import extract_highlight_candidates
 
@@ -31,6 +31,20 @@ def _highlight(text: str, index: int) -> NormalizedHighlight:
         text=text,
         provenance=HighlightProvenance(
             source_path="local_export.txt",
+            source_format="text",
+            source_index=index,
+            content_hash=content_hash,
+        ),
+    )
+
+
+def _highlight_with_path(text: str, index: int, source_path: str) -> NormalizedHighlight:
+    content_hash = hashlib.sha256(text.encode("utf-8")).hexdigest()
+    return NormalizedHighlight(
+        highlight_id=f"text-{index}-{content_hash[:12]}",
+        text=text,
+        provenance=HighlightProvenance(
+            source_path=source_path,
             source_format="text",
             source_index=index,
             content_hash=content_hash,
@@ -69,3 +83,36 @@ def test_extract_highlight_candidates_filters_noise_and_preserves_unicode_forms(
     assert result.candidates[0].occurrence_count == 2
     assert result.rejected_token_count >= 5
     assert result.duplicate_count == 1
+
+
+def test_candidate_exposes_stable_source_content_hash_without_private_text() -> None:
+    private_sentence = "El jardín secreto guarda una palabra privada"
+    result = extract_highlight_candidates(
+        [_highlight_with_path(private_sentence, 0, "first-export.txt")],
+        language=SupportedLanguage.ES,
+    )
+
+    candidate = next(candidate for candidate in result.candidates if candidate.lemma_key == "jardín")
+    expected_hash = hashlib.sha256(private_sentence.encode("utf-8")).hexdigest()
+
+    assert candidate.source_content_hash == expected_hash
+    assert len(candidate.source_content_hash) == 64
+    assert candidate.source_content_hash == candidate.source_content_hash.lower()
+    assert private_sentence not in str(candidate.model_dump())
+
+
+def test_manifest_serialization_is_hash_and_count_only() -> None:
+    private_sentence = "La carta privada nunca debe aparecer"
+    content_hash = hashlib.sha256(private_sentence.encode("utf-8")).hexdigest()
+    manifest = HighlightImportManifest(
+        import_content_hash=content_hash,
+        candidate_keys=["highlight-es-abcdef0123456789-fedcba9876543210"],
+        counts={"imported_highlights": 1, "extracted_candidates": 1},
+    )
+
+    dumped = manifest.model_dump()
+
+    assert dumped["import_content_hash"] == content_hash
+    assert private_sentence not in str(dumped)
+    assert "source_path" not in dumped
+    assert "raw_location" not in dumped
