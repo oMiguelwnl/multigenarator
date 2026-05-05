@@ -32,7 +32,7 @@ def make_text_record(*, item_key: str, review_status: ReviewStatus) -> TextQuali
     )
 
 
-def make_candidate(*, item_key: str) -> LexicalCardCandidate:
+def make_candidate(*, item_key: str, source_type: str | None = None) -> LexicalCardCandidate:
     return LexicalCardCandidate(
         submitted_form=item_key,
         display_form=item_key,
@@ -214,3 +214,43 @@ def test_generate_audio_items_service_tracks_fallback_and_failure_counters() -> 
     assert result.processed_items == 2
     assert result.fallback_items == 1
     assert result.failed_items == 1
+
+
+def test_generate_audio_items_service_creates_word_and_sentence_audio_for_highlights() -> None:
+    item_key = "highlight:abc:wash"
+    prepared_word = make_asset(item_key=item_key, asset_kind=AudioAssetKind.WORD, status=AudioSynthesisStatus.PENDING)
+    prepared_sentence = make_asset(item_key=item_key, asset_kind=AudioAssetKind.SENTENCE, status=AudioSynthesisStatus.PENDING)
+    synthesis = FakeAudioSynthesisService(
+        prepared={item_key: AudioSynthesisBundle(word_asset=prepared_word, sentence_asset=prepared_sentence)}
+    )
+    audio_repository = FakeAudioRepository()
+    job_repository = FakeJobRepository()
+    service = GenerateAudioItemsService(
+        job_repository=job_repository,
+        lexical_repository=FakeLexicalRepository(candidates={item_key: make_candidate(item_key=item_key)}),
+        text_repository=FakeTextRepository(accepted_records=[make_text_record(item_key=item_key, review_status=ReviewStatus.ACCEPTED)]),
+        audio_repository=audio_repository,
+        audio_synthesis_service=synthesis,
+    )
+
+    result = service.execute(job_id="job-1", deck_language=SupportedLanguage.EN)
+
+    assert result.processed_items == 2
+    assert {asset.asset_kind for asset in audio_repository.saved_assets} == {AudioAssetKind.WORD, AudioAssetKind.SENTENCE}
+    assert len(synthesis.synthesized) == 2
+    assert job_repository.successes == [("job-1", item_key, JobStage.SYNTHESIZE_AUDIO)]
+
+
+def test_generate_audio_items_service_skips_review_required_highlight_rows() -> None:
+    item_key = "highlight:abc:wash"
+    service = GenerateAudioItemsService(
+        job_repository=FakeJobRepository(),
+        lexical_repository=FakeLexicalRepository(candidates={item_key: make_candidate(item_key=item_key)}),
+        text_repository=FakeTextRepository(accepted_records=[]),
+        audio_repository=FakeAudioRepository(),
+        audio_synthesis_service=FakeAudioSynthesisService(prepared={}),
+    )
+
+    result = service.execute(job_id="job-1", deck_language=SupportedLanguage.EN)
+
+    assert result.processed_items == 0
