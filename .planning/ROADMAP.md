@@ -16,7 +16,7 @@ Phase 11: Highlight Pipeline Integration.
 - [x] **Phase 09: Source Profiles, Privacy, and Regression Boundary** - Existing frequency/custom decks stay stable while highlight mode, source profiles, and redaction boundaries are introduced.
 - [x] **Phase 10: Local Kindle Normalization and Candidate Extraction** - Local Kindle exports become deterministic normalized highlights and reviewable vocabulary candidates without external formatter dependency. (completed 2026-05-05)
 - [x] **Phase 11: Highlight Pipeline Integration** - Highlight candidates enter the existing job, grounding, resume, and duplicate-prevention flow as a new deck mode. (completed 2026-05-05)
-- [ ] **Phase 12: Highlight Generation, Audio, and QA** - Highlight cards receive privacy-aware text generation, richer concise examples, validation, and audio.
+- [x] **Phase 12: Highlight Generation, Audio, and QA** - Highlight cards receive privacy-aware text generation, richer concise examples, validation, and audio. (completed 2026-05-05)
 - [ ] **Phase 13: Highlight Export and Template** - Highlight decks export with a dedicated note type, English fields, no Translation field, and responsive Definition-on-back cards.
 - [ ] **Phase 14: WebDAV Highlight Fetch Adapter** - Kindle highlight exports can be fetched securely from WebDAV with clear failures and idempotent import summaries.
 - [ ] **Phase 15: Phonetics Template Refresh** - Phonetics cards use the supplied layout, sentence translation back reveal, Multilang colors, and no unused fields.
@@ -120,7 +120,7 @@ Plans:
 - [x] 12-01-PLAN.md — Apply highlight source-profile validation for richer examples without Translation dependency.
 - [x] 12-02-PLAN.md — Add minimized, redacted highlight context to provider/local example generation.
 - [x] 12-03-PLAN.md — Prove highlight card content, word audio, sentence audio, and blank Image assembly.
-- [ ] 12-04-PLAN.md — Add source-aware highlight QA reports and regression evidence.
+- [x] 12-04-PLAN.md — Add source-aware highlight QA reports and regression evidence.
 
 ### Phase 13: Highlight Export and Template
 
@@ -186,7 +186,7 @@ Plans:
 | 09. Source Profiles, Privacy, and Regression Boundary | 5/5 | Complete | 2026-05-04 |
 | 10. Local Kindle Normalization and Candidate Extraction | 4/4 | Complete    | 2026-05-05 |
 | 11. Highlight Pipeline Integration | 4/4 | Complete   | 2026-05-05 |
-| 12. Highlight Generation, Audio, and QA | 3/4 | In Progress|  |
+| 12. Highlight Generation, Audio, and QA | 4/4 | Complete   | 2026-05-05 |
 | 13. Highlight Export and Template | 0/TBD | Not started | - |
 | 14. WebDAV Highlight Fetch Adapter | 0/TBD | Not started | - |
 | 15. Phonetics Template Refresh | 0/TBD | Not started | - |
