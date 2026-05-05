@@ -11,6 +11,7 @@ from multilang.domain.audio import AudioAssetKind, AudioAssetRecord, AudioSynthe
 from multilang.domain.exporting import ExportCardIdentity, ExportCardRow
 from multilang.domain.jobs import SupportedLanguage
 from multilang.domain.lexicon import LexicalCardCandidate
+from multilang.domain.source_profiles import get_source_profile
 from multilang.domain.text_quality import TextQualityRecord
 
 
@@ -48,10 +49,12 @@ class AssembleExportCardsService:
             word_audio = self._require_audio(job_id=job_id, item_key=text_record.item_key, asset_kind=AudioAssetKind.WORD)
             sentence_audio = self._require_audio(job_id=job_id, item_key=text_record.item_key, asset_kind=AudioAssetKind.SENTENCE)
 
+            source_type = _candidate_source_type(lexical_candidate)
+            source_profile = get_source_profile(source_type)
             row = ExportCardRow(
                 identity=ExportCardIdentity(
                     language=deck_language,
-                    source_type=_candidate_source_type(lexical_candidate),
+                    source_type=source_type,
                     job_id=job_id,
                     item_key=text_record.item_key,
                     lemma_key=lexical_candidate.lemma_key,
@@ -62,7 +65,7 @@ class AssembleExportCardsService:
                 ipa=self._render_ipa(lexical_candidate.ipa, lexical_candidate.spoken_form),
                 definitions=self._render_definitions(lexical_candidate),
                 example_sentence=escape(text_record.example_sentence or ""),
-                translation=escape(text_record.translation_text or ""),
+                translation=escape(text_record.translation_text or "") if source_profile.exports_translation_field else "",
                 word_audio=self._to_sound_tag(word_audio),
                 sentence_audio=self._to_sound_tag(sentence_audio),
             )
