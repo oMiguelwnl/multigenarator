@@ -8,7 +8,7 @@
 
 ## Current Focus
 
-Phase 10: Local Kindle Normalization and Candidate Extraction.
+Phase 11: Highlight Pipeline Integration.
 
 ## Phases
 
@@ -94,7 +94,14 @@ Plans:
   2. User can rerun the same highlight import without duplicate cards because content hashes, candidate keys, and import manifests are stable.
   3. User sees a visible import summary showing what was reused, skipped as duplicate, newly planned, or blocked.
   4. User's highlight candidates preserve enough internal provenance for audit while using the existing grounding, job, and resume behavior.
-**Plans**: TBD
+**Plans**: 4 plans
+
+Plans:
+
+- [ ] 11-01-PLAN.md — Define stable content-derived highlight import and candidate identity.
+- [ ] 11-02-PLAN.md — Persist private highlight records separately from safe import manifests.
+- [ ] 11-03-PLAN.md — Wire highlights through lexical grounding, job orchestration, resume, and duplicate prevention.
+- [ ] 11-04-PLAN.md — Expose public `generate --source highlights` and count-only lifecycle summaries.
 
 ### Phase 12: Highlight Generation, Audio, and QA
 
@@ -164,14 +171,14 @@ Plans:
 |-----------|--------|-------|--------|---------|
 | v1.0 MVP | 1-7 | 34/34 | Complete | 2026-04-29 |
 | v1.1 Card Quality Refresh | 8 | 4/4 | Complete | 2026-05-02 |
-| v1.2 Kindle Highlights and Template Refresh | 9-16 | 5/5+TBD | In progress | - |
+| v1.2 Kindle Highlights and Template Refresh | 9-16 | 5/9+TBD | In progress | - |
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
 | 08. Card Quality Refresh | 4/4 | Complete | 2026-05-02 |
 | 09. Source Profiles, Privacy, and Regression Boundary | 5/5 | Complete | 2026-05-04 |
 | 10. Local Kindle Normalization and Candidate Extraction | 4/4 | Complete    | 2026-05-05 |
-| 11. Highlight Pipeline Integration | 0/TBD | Not started | - |
+| 11. Highlight Pipeline Integration | 0/4 | Planned | - |
 | 12. Highlight Generation, Audio, and QA | 0/TBD | Not started | - |
 | 13. Highlight Export and Template | 0/TBD | Not started | - |
 | 14. WebDAV Highlight Fetch Adapter | 0/TBD | Not started | - |
