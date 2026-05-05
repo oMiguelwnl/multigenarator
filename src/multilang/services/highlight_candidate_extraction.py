@@ -70,6 +70,7 @@ def extract_highlight_candidates(
             ordered_keys.append(lemma_key)
             candidates_by_key[lemma_key] = HighlightCandidate(
                 item_key=f"highlight-{language.value}-{len(ordered_keys):04d}-{lemma_key}",
+                source_content_hash=highlight.provenance.content_hash,
                 display_form=display_form,
                 lemma_key=lemma_key,
                 first_highlight_id=highlight.highlight_id,
