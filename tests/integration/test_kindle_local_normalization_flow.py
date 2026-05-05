@@ -73,7 +73,12 @@ def test_highlight_preview_does_not_enable_generation_side_effects() -> None:
         ["preview-kindle-highlights", "--language", "es", "--input-file", str(FIXTURE_DIR / "local_export.html")],
     )
     generate_result = runner.invoke(app, ["generate", "--language", "es", "--source", "kindle-highlights"])
+    public_generate_result = runner.invoke(
+        app,
+        ["generate", "--language", "es", "--source", "highlights", "--input-file", str(FIXTURE_DIR / "local_export.html")],
+    )
 
     assert preview_result.exit_code == 0
     assert generate_result.exit_code != 0
+    assert public_generate_result.exit_code == 1
     assert "generation called" not in preview_result.output

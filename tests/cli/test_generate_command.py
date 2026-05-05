@@ -16,6 +16,7 @@ from multilang.db.base import Base
 from multilang.services.audio_synthesis import AudioSynthesisAdapter, AudioSynthesisResponse
 from multilang.domain.jobs import GenerationRequest, SupportedLanguage
 from multilang.db.models import AudioAssetModel, GenerationJob
+from multilang.repositories.highlight_import_repository import HighlightImportRepository
 from multilang.repositories.job_repository import JobRepository
 from multilang.repositories.lexical_repository import LexicalRepository
 import multilang.runtime as runtime_module
@@ -113,6 +114,7 @@ def build_ingest_service(*, lookup_terms: list[str]) -> tuple[IngestLexicalItems
         job_service=GenerateJobService(JobRepository(session)),
         lexical_repo=LexicalRepository(session),
         grounding_service=LexicalGroundingService(lookup),
+        highlight_import_repo=HighlightImportRepository(session),
     )
     return service, session
 
@@ -120,6 +122,12 @@ def build_ingest_service(*, lookup_terms: list[str]) -> tuple[IngestLexicalItems
 def write_word_list(tmp_path: Path, *items: str) -> Path:
     path = tmp_path / "words.txt"
     path.write_text("\n".join(items), encoding="utf-8")
+    return path
+
+
+def write_highlight_export(tmp_path: Path, text: str = "The meadow keeps a lantern") -> Path:
+    path = tmp_path / "highlights.txt"
+    path.write_text(f"Synthetic Learner Reader\n- Your Highlight at Location 1\n{text}\n==========", encoding="utf-8")
     return path
 
 
@@ -194,6 +202,74 @@ def test_word_list_source_rejects_frequency_only_flags(tmp_path: Path) -> None:
 
     assert result.exit_code != 0
     assert "--test-mode is only valid when --source frequency" in result.output
+
+
+def test_generate_highlights_source_maps_to_internal_kindle_highlights(tmp_path: Path) -> None:
+    captured: list[GenerationRequest] = []
+    app = create_app(generate_executor=lambda request: captured.append(request))
+    source = write_highlight_export(tmp_path)
+
+    result = runner.invoke(
+        app,
+        ["generate", "--language", "en", "--source", "highlights", "--input-file", str(source)],
+    )
+
+    assert result.exit_code == 0
+    assert captured[0].source_type == "kindle-highlights"
+
+
+def test_public_kindle_highlights_source_remains_rejected() -> None:
+    app = create_app(generate_executor=lambda request: None)
+
+    result = runner.invoke(app, ["generate", "--language", "en", "--source", "kindle-highlights"])
+
+    assert result.exit_code != 0
+    assert "--source must be one of: frequency, word-list, highlights" in result.output
+
+
+def test_highlights_source_requires_input_file_and_rejects_frequency_flags() -> None:
+    app = create_app(generate_executor=lambda request: None)
+
+    missing = runner.invoke(app, ["generate", "--language", "en", "--source", "highlights"])
+    with_level = runner.invoke(
+        app,
+        ["generate", "--language", "en", "--source", "highlights", "--input-file", "x.txt", "--level", "1"],
+    )
+
+    assert missing.exit_code != 0
+    assert "--input-file is required when --source highlights" in missing.output
+    assert with_level.exit_code != 0
+    assert "--level is only valid when --source frequency" in with_level.output
+
+
+def test_generate_highlights_prints_count_only_lifecycle_summary(tmp_path: Path) -> None:
+    private_sentence = "The meadow keeps a lantern beside a private cottage"
+    source = write_highlight_export(tmp_path, private_sentence)
+    service, session = build_ingest_service(lookup_terms=["meadow"])
+    app = create_app(service=service)
+
+    result = runner.invoke(
+        app,
+        ["generate", "--language", "en", "--source", "highlights", "--input-file", str(source)],
+    )
+
+    session.close()
+
+    assert result.exit_code == 0
+    for counter in (
+        "imported_highlights=",
+        "rejected_highlights=",
+        "extracted_candidates=",
+        "duplicate_candidates=",
+        "reused_existing_candidates=",
+        "newly_planned_candidates=",
+        "blocked_candidates=",
+        "planned_cards=",
+    ):
+        assert counter in result.output
+    assert private_sentence not in result.output
+    assert str(source) not in result.output
+    assert "Synthetic Learner Reader" not in result.output
 
 
 def test_overwrite_requires_explicit_confirmation() -> None:

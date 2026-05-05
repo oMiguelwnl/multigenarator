@@ -82,4 +82,4 @@ def test_generate_source_kindle_highlights_remains_blocked() -> None:
     result = runner.invoke(app, ["generate", "--language", "es", "--source", "kindle-highlights"])
 
     assert result.exit_code != 0
-    assert "--source must be one of: frequency, word-list" in result.output
+    assert "--source must be one of: frequency, word-list, highlights" in result.output

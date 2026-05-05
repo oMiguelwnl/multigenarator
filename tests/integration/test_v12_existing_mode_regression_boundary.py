@@ -59,13 +59,18 @@ def test_custom_word_list_existing_mode_still_generates_audio_exports_without_hi
     assert HIGHLIGHT_NOTE_TYPE_NAME != MANUAL_NOTE_TYPE_NAME
 
 
-def test_cli_rejects_kindle_highlights_until_user_facing_mode_is_wired() -> None:
+def test_cli_accepts_public_highlights_but_rejects_internal_kindle_highlights() -> None:
     app = create_app(generate_executor=lambda request: None)
 
-    result = runner.invoke(
+    internal_result = runner.invoke(
         app,
         ["generate", "--language", "en", "--source", "kindle-highlights"],
     )
+    public_result = runner.invoke(
+        app,
+        ["generate", "--language", "en", "--source", "highlights", "--input-file", "local-export.txt"],
+    )
 
-    assert result.exit_code != 0
-    assert "--source must be one of: frequency, word-list" in result.output
+    assert internal_result.exit_code != 0
+    assert "--source must be one of: frequency, word-list, highlights" in internal_result.output
+    assert public_result.exit_code == 0
