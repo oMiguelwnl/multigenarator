@@ -61,6 +61,50 @@ def test_litellm_sentence_adapter_uses_openrouter_key_and_json_response() -> Non
     assert "Study form: в" in calls[0]["messages"][1]["content"]
 
 
+def test_litellm_highlight_prompt_uses_redacted_context_and_rules() -> None:
+    calls: list[dict[str, object]] = []
+
+    def fake_completion(**kwargs: object) -> dict[str, object]:
+        calls.append(kwargs)
+        return {
+            "choices": [
+                {
+                    "message": {
+                        "content": json.dumps(
+                            {
+                                "sentence": "Readers wash every cup before dawn.",
+                                "intended_sense": "reading context",
+                                "uncertainty_notes": [],
+                            }
+                        )
+                    }
+                }
+            ]
+        }
+
+    settings = Settings(_env_file=None, text_generation_model="openai/gpt-4o-mini", openrouter_api_key="router-key")
+    result = LiteLLMSentenceAdapter(settings, completion_func=fake_completion).generate_sentence(
+        SentenceGenerationRequest(
+            display_form="wash",
+            lemma="wash",
+            definitions_html="to wash",
+            target_language="en",
+            translation_target_language="pt",
+            source_type="kindle-highlights",
+            highlight_context="Readers wash every cup before dawn REDACTED",
+        )
+    )
+
+    prompt = calls[0]["messages"][1]["content"]
+    assert result.provenance["provider"] == "litellm"
+    assert result.provenance["source_type"] == "kindle-highlights"
+    assert "Highlight context hint" in prompt
+    assert "Readers wash every cup before dawn REDACTED" in prompt
+    assert "between 6 and 16 words" in prompt
+    assert "study form or a normal inflection" in prompt
+    assert "dav/private-export" not in prompt
+
+
 def test_deepl_translation_adapter_maps_target_language() -> None:
     class FakeResult:
         text = "I live in Moscow."

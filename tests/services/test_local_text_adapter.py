@@ -53,6 +53,27 @@ def test_generic_english_sentence_is_natural_and_validatable() -> None:
     assert not result.sentence.casefold().startswith("the word")
 
 
+def test_local_highlight_sentence_is_richer_and_source_aware() -> None:
+    result = LocalSentenceAdapter().generate_sentence(
+        SentenceGenerationRequest(
+            display_form="wash",
+            lemma="wash",
+            definitions_html="to wash",
+            target_language="en",
+            translation_target_language="pt",
+            source_type="kindle-highlights",
+            highlight_context="Readers wash every cup before dawn",
+        )
+    )
+
+    tokens = result.sentence.split()
+    assert "wash" in result.sentence.casefold()
+    assert 6 <= len(tokens) <= 16
+    assert "discuss wash" not in result.sentence.casefold()
+    assert result.provenance["source_type"] == "kindle-highlights"
+    assert result.provenance["template_kind"] == "highlight"
+
+
 def test_curated_smoke_terms_keep_portuguese_translations() -> None:
     sentence_adapter = LocalSentenceAdapter()
     translation_adapter = LocalTranslationAdapter()

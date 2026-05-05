@@ -756,3 +756,62 @@ def test_generate_text_items_sends_bounded_redacted_highlight_context() -> None:
     assert "Location: 123" not in context
     assert "dav/private-export" not in context
     assert len(context.split()) <= 24
+
+
+def test_generate_text_items_forwards_highlight_context_to_repair_attempts() -> None:
+    candidate = make_candidate(item_key="highlight:abc:wash")
+    candidate = candidate.model_copy(
+        update={
+            "provenance": candidate.provenance.model_copy(update={"notes": ["first_highlight_id=highlight-7"]})
+        }
+    )
+    repository = FakeTextRepository(
+        candidates=[
+            PersistedCandidate(
+                id="lex-highlight-1",
+                item_key="highlight:abc:wash",
+                candidate=candidate,
+                source_type="kindle-highlights",
+            )
+        ]
+    )
+    generation = FakeGenerationService(
+        bundles=[
+            make_bundle(sentence="Tiny wash clue.", translation="translation omitted by highlight export"),
+            make_bundle(
+                sentence="Readers wash every cup before the quiet chapter ends.",
+                translation="translation omitted by highlight export",
+            ),
+        ]
+    )
+    failed = make_validation_result(
+        status=ValidationStatus.FAILED,
+        label=ConfidenceLabel.LOW,
+        score=0.25,
+        flags=[ValidationFlag(code=ValidationFlagCode.SENTENCE_TOO_SHORT, detail="too short")],
+    )
+
+    service = GenerateTextItemsService(
+        job_repository=FakeJobRepository(),
+        lexical_repository=None,
+        text_repository=repository,
+        text_generation_service=generation,
+        text_validation_service=FakeValidationService(
+            results=[failed, make_validation_result(status=ValidationStatus.PASSED, label=ConfidenceLabel.HIGH, score=0.95)]
+        ),
+        tatoeba_sentence_source=FakeTatoebaSentenceSource(fallback=None),
+        highlight_import_repository=FakeHighlightImportRepository(
+            records={
+                ("job-highlight", "highlight-7"): FakeHighlightRecord(
+                    "highlight-7", "Readers wash every cup before dawn in the quiet chapter."
+                )
+            }
+        ),
+    )
+
+    service.execute(job_id="job-highlight", deck_language=SupportedLanguage.EN)
+
+    assert len(generation.request_metadata) == 2
+    assert generation.request_metadata[0] == generation.request_metadata[1]
+    assert generation.request_metadata[0]["source_type"] == "kindle-highlights"
+    assert "wash every cup" in str(generation.request_metadata[0]["highlight_context"])
