@@ -55,6 +55,61 @@ class GenerationJob(Base):
     deck_exports: Mapped[list["DeckExportModel"]] = relationship(
         back_populates="job", cascade="all, delete-orphan"
     )
+    highlight_import_records: Mapped[list["HighlightImportRecordModel"]] = relationship(
+        back_populates="job", cascade="all, delete-orphan"
+    )
+    highlight_import_manifest: Mapped["HighlightImportManifestModel | None"] = relationship(
+        back_populates="job", cascade="all, delete-orphan", uselist=False
+    )
+
+
+class HighlightImportRecordModel(Base):
+    """Private normalized highlight text for a generation job."""
+
+    __tablename__ = "highlight_import_records"
+    __table_args__ = (
+        UniqueConstraint("job_id", "highlight_id", name="uq_highlight_import_records_job_id_highlight_id"),
+    )
+
+    id: Mapped[str] = mapped_column(String(36), primary_key=True)
+    job_id: Mapped[str] = mapped_column(
+        ForeignKey("generation_jobs.id", ondelete="CASCADE"), nullable=False, index=True
+    )
+    import_content_hash: Mapped[str] = mapped_column(String(64), nullable=False, index=True)
+    highlight_id: Mapped[str] = mapped_column(String(255), nullable=False)
+    source_content_hash: Mapped[str] = mapped_column(String(64), nullable=False, index=True)
+    source_index: Mapped[int] = mapped_column(Integer, nullable=False)
+    normalized_text: Mapped[str] = mapped_column(Text, nullable=False)
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), nullable=False, server_default=func.now()
+    )
+    updated_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), nullable=False, server_default=func.now(), onupdate=func.now()
+    )
+
+    job: Mapped[GenerationJob] = relationship(back_populates="highlight_import_records")
+
+
+class HighlightImportManifestModel(Base):
+    """Safe hash/count-only highlight import manifest for a generation job."""
+
+    __tablename__ = "highlight_import_manifests"
+
+    id: Mapped[str] = mapped_column(String(36), primary_key=True)
+    job_id: Mapped[str] = mapped_column(
+        ForeignKey("generation_jobs.id", ondelete="CASCADE"), nullable=False, unique=True, index=True
+    )
+    import_content_hash: Mapped[str] = mapped_column(String(64), nullable=False, index=True)
+    candidate_keys: Mapped[list[str]] = mapped_column(JSON, nullable=False, default=list)
+    counts: Mapped[dict[str, int]] = mapped_column(JSON, nullable=False, default=dict)
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), nullable=False, server_default=func.now()
+    )
+    updated_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), nullable=False, server_default=func.now(), onupdate=func.now()
+    )
+
+    job: Mapped[GenerationJob] = relationship(back_populates="highlight_import_manifest")
 
 
 class GenerationItem(Base):
