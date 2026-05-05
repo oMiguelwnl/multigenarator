@@ -170,7 +170,7 @@ Plans:
 |-------|----------------|--------|-----------|
 | 08. Card Quality Refresh | 4/4 | Complete | 2026-05-02 |
 | 09. Source Profiles, Privacy, and Regression Boundary | 5/5 | Complete | 2026-05-04 |
-| 10. Local Kindle Normalization and Candidate Extraction | 4/4 | Complete   | 2026-05-05 |
+| 10. Local Kindle Normalization and Candidate Extraction | 4/4 | Complete    | 2026-05-05 |
 | 11. Highlight Pipeline Integration | 0/TBD | Not started | - |
 | 12. Highlight Generation, Audio, and QA | 0/TBD | Not started | - |
 | 13. Highlight Export and Template | 0/TBD | Not started | - |
