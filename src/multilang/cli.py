@@ -17,6 +17,7 @@ from multilang.repositories.text_repository import TextRepository
 from multilang.runtime import build_runtime_service
 from multilang.services.execution_report import JobExecutionReport
 from multilang.services.generate_job import GenerateJobResult, GenerateJobService
+from multilang.services.highlight_import_preview import build_highlight_import_preview
 from multilang.services.ingest_lexical_items import IngestLexicalItemsService
 from multilang.services.kaikki_lookup import KaikkiLookup
 from multilang.services.job_summary import JobLifecycleSummary, JobSummaryBuilder
@@ -489,6 +490,37 @@ def create_app(
             "uv run python -m multilang.cli generate --language en --source word-list "
             f"--input-file {words_path} --lexicon-source-file {archive_path}"
         )
+
+    @cli.command("preview-kindle-highlights")
+    def preview_kindle_highlights(
+        language: Annotated[
+            SupportedLanguage,
+            typer.Option("--language", help="Target language for candidate filtering."),
+        ],
+        input_file: Annotated[
+            Path,
+            typer.Option("--input-file", exists=False, dir_okay=False, help="Path to a local Kindle export."),
+        ],
+        planned_card_limit: Annotated[
+            int | None,
+            typer.Option("--planned-card-limit", min=0, help="Optional cap for planned preview cards."),
+        ] = None,
+    ) -> None:
+        try:
+            preview = build_highlight_import_preview(
+                input_file,
+                language=language,
+                planned_card_limit=planned_card_limit,
+            )
+        except ValueError as exc:
+            typer.echo(str(exc))
+            raise typer.Exit(code=1) from exc
+
+        typer.echo(f"imported_highlights={preview.imported_highlights}")
+        typer.echo(f"extracted_candidates={preview.extracted_candidates}")
+        typer.echo(f"rejected_highlights={preview.rejected_highlights}")
+        typer.echo(f"duplicate_candidates={preview.duplicate_candidates}")
+        typer.echo(f"planned_cards={preview.planned_cards}")
 
     @cli.command("generate")
     def generate(
