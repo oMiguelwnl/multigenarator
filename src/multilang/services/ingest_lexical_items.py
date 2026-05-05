@@ -3,13 +3,18 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
+from hashlib import sha256
 
+from multilang.domain.highlights import HighlightImportManifest
 from multilang.domain.jobs import GenerationRequest, JobStage, SupportedLanguage
 from multilang.domain.lexicon import GroundingStatus, LexicalCardCandidate
+from multilang.repositories.highlight_import_repository import HighlightImportRepository
 from multilang.repositories.lexical_repository import LexicalRepository
 from multilang.services.execution_report import JobExecutionReport
 from multilang.services.frequency_decks import LEVEL_WINDOWS, build_frequency_level
 from multilang.services.generate_job import GenerateJobService
+from multilang.services.highlight_candidate_extraction import extract_highlight_candidates
+from multilang.services.kindle_highlight_parser import parse_kindle_highlight_export
 from multilang.services.lexical_grounding import (
     LexicalGroundingService,
     build_lexical_grounding_service,
@@ -28,6 +33,14 @@ class IngestLexicalItemsResult:
     rejected_rows: int
     backfilled_candidates: int
     level_counts: dict[int, int]
+    imported_highlights: int = 0
+    rejected_highlights: int = 0
+    extracted_candidates: int = 0
+    duplicate_candidates: int = 0
+    reused_existing_items: int = 0
+    newly_planned_candidates: int = 0
+    blocked_candidates: int = 0
+    planned_cards: int = 0
 
 
 class IngestLexicalItemsService:
@@ -39,6 +52,7 @@ class IngestLexicalItemsService:
         lexical_repo: LexicalRepository,
         settings: Settings | None = None,
         grounding_service: LexicalGroundingService | None = None,
+        highlight_import_repo: HighlightImportRepository | None = None,
     ) -> None:
         self.job_service = job_service
         self.repository = job_service.repository
@@ -47,6 +61,7 @@ class IngestLexicalItemsService:
         self.grounding_service = grounding_service or build_lexical_grounding_service(
             self.settings.lexicon_data_dir
         )
+        self.highlight_import_repo = highlight_import_repo
 
     def execute(self, request: GenerationRequest) -> IngestLexicalItemsResult:
         """Execute lexical ingestion for the shipped runtime path."""
@@ -55,7 +70,114 @@ class IngestLexicalItemsService:
             return self._ingest_frequency_deck(request)
         if request.source_type == "word-list":
             return self._ingest_word_list(request)
+        if request.source_type == "kindle-highlights":
+            return self._ingest_highlights(request)
         raise ValueError(f"Unsupported source type: {request.source_type}")
+
+    def _ingest_highlights(self, request: GenerationRequest) -> IngestLexicalItemsResult:
+        if request.input_file is None:
+            raise ValueError("kindle-highlights requests require an input file")
+        if self.highlight_import_repo is None:
+            raise ValueError("kindle-highlights requests require a highlight import repository")
+
+        parsed = parse_kindle_highlight_export(request.input_file)
+        extraction = extract_highlight_candidates(parsed.highlights, language=request.language)
+        candidates_by_key = {candidate.item_key: candidate for candidate in extraction.candidates}
+        candidate_keys = [candidate.item_key for candidate in extraction.candidates]
+        import_content_hash = sha256(
+            "\n".join(sorted(highlight.provenance.content_hash for highlight in parsed.highlights)).encode("utf-8")
+        ).hexdigest()
+        orchestration = self.job_service.orchestrate(request, requested_item_keys=candidate_keys)
+        report = JobExecutionReport(
+            orchestration=orchestration,
+            progress_updates=[],
+            retried_item_keys=[],
+            failed_item_keys=[],
+        )
+        if orchestration.diagnostic is not None:
+            return IngestLexicalItemsResult(
+                report=report,
+                grounded_candidates=0,
+                pending_groundings=0,
+                rejected_rows=len(parsed.rejected),
+                backfilled_candidates=0,
+                level_counts={1: 0, 2: 0, 3: 0},
+                imported_highlights=len(parsed.highlights),
+                rejected_highlights=len(parsed.rejected),
+                extracted_candidates=len(extraction.candidates),
+                duplicate_candidates=extraction.duplicate_count,
+            )
+
+        self.highlight_import_repo.upsert_import_records(
+            orchestration.job_id,
+            import_content_hash,
+            parsed.highlights,
+        )
+        self.highlight_import_repo.upsert_import_manifest(
+            orchestration.job_id,
+            HighlightImportManifest(
+                import_content_hash=import_content_hash,
+                candidate_keys=candidate_keys,
+                counts={
+                    "imported_highlights": len(parsed.highlights),
+                    "rejected_highlights": len(parsed.rejected),
+                    "extracted_candidates": len(extraction.candidates),
+                    "duplicate_candidates": extraction.duplicate_count,
+                },
+            ),
+        )
+
+        candidate_rows: list[tuple[str, str, LexicalCardCandidate]] = []
+        grounded_item_keys: list[str] = []
+        blocked_candidates = 0
+        for item_key in orchestration.pending_item_keys:
+            highlight_candidate = candidates_by_key[item_key]
+            grounded = self.grounding_service.ground_highlight_candidate(
+                language=request.language,
+                candidate=highlight_candidate,
+            )
+            if grounded.grounding_status is not GroundingStatus.GROUNDED:
+                blocked_candidates += 1
+                continue
+            safe_provenance = grounded.provenance.model_copy(
+                update={
+                    "notes": [
+                        *grounded.provenance.notes,
+                        f"source_content_hash={highlight_candidate.source_content_hash}",
+                        f"first_source_index={highlight_candidate.first_source_index}",
+                        f"occurrence_count={highlight_candidate.occurrence_count}",
+                    ]
+                }
+            )
+            grounded = grounded.model_copy(update={"provenance": safe_provenance})
+            candidate_rows.append((item_key, highlight_candidate.source_content_hash, grounded))
+            grounded_item_keys.append(item_key)
+
+        self.lexical_repo.upsert_candidates(
+            job_id=orchestration.job_id,
+            run_key=orchestration.run_key,
+            source_type="kindle-highlights",
+            candidates=candidate_rows,
+        )
+        if grounded_item_keys:
+            self.repository.record_item_successes(
+                orchestration.job_id,
+                item_keys=grounded_item_keys,
+                completed_stage=JobStage.INGEST,
+            )
+        if grounded_item_keys or orchestration.skipped_item_keys:
+            self.repository.advance_job_to_stage(orchestration.job_id, JobStage.GENERATE_TEXT)
+
+        result = self._result_from_persisted_candidates(report=report)
+        result.imported_highlights = len(parsed.highlights)
+        result.rejected_highlights = len(parsed.rejected)
+        result.extracted_candidates = len(extraction.candidates)
+        result.duplicate_candidates = extraction.duplicate_count
+        result.reused_existing_items = len(orchestration.skipped_item_keys)
+        result.newly_planned_candidates = len(grounded_item_keys)
+        result.blocked_candidates = blocked_candidates
+        result.planned_cards = len(grounded_item_keys) + len(orchestration.skipped_item_keys)
+        return result
 
     def _ingest_frequency_deck(self, request: GenerationRequest) -> IngestLexicalItemsResult:
         """Ingest lexical items from a frequency deck with lexical backfill."""

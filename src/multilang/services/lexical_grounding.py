@@ -7,6 +7,7 @@ from html import escape
 from pathlib import Path
 from typing import Protocol
 
+from multilang.domain.highlights import HighlightCandidate
 from multilang.domain.jobs import SupportedLanguage
 from multilang.domain.lexicon import (
     DefinitionRecord,
@@ -90,6 +91,34 @@ class LexicalGroundingService:
                 "frequency_rank": candidate.frequency_rank,
                 "frequency_level": candidate.frequency_level,
             }
+        )
+
+    def ground_highlight_candidate(
+        self,
+        *,
+        language: SupportedLanguage,
+        candidate: HighlightCandidate,
+    ) -> LexicalCardCandidate:
+        record = self._lookup_record(language=language, term=candidate.lemma_key)
+        if record is None:
+            policy = policy_for_language(language)
+            return LexicalCardCandidate(
+                submitted_form=candidate.display_form,
+                display_form=candidate.display_form,
+                lemma=candidate.display_form,
+                lemma_key=candidate.lemma_key,
+                definition_language=policy.definition_language,
+                translation_target_language=policy.translation_target_language,
+                grounding_status=GroundingStatus.INSUFFICIENT,
+                warning_code="highlight_grounding_missing",
+                warning_detail="no authoritative lexical match for highlight candidate",
+                provenance=LexicalProvenance(source="kindle_highlight"),
+            )
+        return self._grounded_candidate(
+            language=language,
+            submitted_form=candidate.display_form,
+            display_form=candidate.display_form,
+            record=record,
         )
 
     def _lookup_record(self, *, language: SupportedLanguage, term: str) -> KaikkiRecord | None:

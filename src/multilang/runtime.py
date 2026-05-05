@@ -11,6 +11,7 @@ from sqlalchemy.orm import Session
 from multilang.db.base import Base
 from multilang.repositories.audio_repository import AudioRepository
 from multilang.repositories.export_repository import ExportRepository
+from multilang.repositories.highlight_import_repository import HighlightImportRepository
 from multilang.repositories.job_repository import JobRepository
 from multilang.repositories.lexical_repository import LexicalRepository
 from multilang.repositories.text_repository import TextRepository
@@ -273,6 +274,7 @@ def build_runtime_service(
     text_repository = TextRepository(session)
     audio_repository = AudioRepository(session)
     export_repository = ExportRepository(session)
+    highlight_import_repository = HighlightImportRepository(session)
     generate_job_service = GenerateJobService(job_repository)
     text_generation_service = TextGenerationService(
         sentence_adapter=_build_sentence_adapter(runtime_settings),
@@ -293,6 +295,7 @@ def build_runtime_service(
     return RuntimeGenerateService(
         job_service=generate_job_service,
         lexical_repo=lexical_repository,
+        highlight_import_repo=highlight_import_repository,
         settings=runtime_settings,
         text_repository=text_repository,
         audio_repository=audio_repository,
