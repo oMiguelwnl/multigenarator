@@ -34,7 +34,7 @@ Requirements for the current milestone. Each requirement maps to exactly one roa
 - [x] **MODE-02**: Existing frequency-deck and custom word-list behavior remains unchanged when highlight mode is added.
 - [x] **GEN-01**: User receives highlight cards with word or headword, IPA and spoken-pronunciation behavior, definition, example sentence, word audio, sentence audio, and blank `Image`.
 - [x] **GEN-02**: User receives concise but grammatically richer highlight examples that include the target word and pass language and length validation.
-- [ ] **GEN-03**: User's private highlight text is minimized or redacted in prompts, reports, and errors while preserving enough internal provenance for audit and sense or context use.
+- [x] **GEN-03**: User's private highlight text is minimized or redacted in prompts, reports, and errors while preserving enough internal provenance for audit and sense or context use.
 
 ### Highlight Export and Template
 
@@ -100,7 +100,7 @@ Which phases cover which requirements. Updated during roadmap creation.
 | MODE-02 | Phase 09 | Complete |
 | GEN-01 | Phase 12 | Complete |
 | GEN-02 | Phase 12 | Complete |
-| GEN-03 | Phase 12 | Pending |
+| GEN-03 | Phase 12 | Complete |
 | EXPORT-01 | Phase 13 | Pending |
 | EXPORT-02 | Phase 13 | Pending |
 | EXPORT-03 | Phase 13 | Pending |

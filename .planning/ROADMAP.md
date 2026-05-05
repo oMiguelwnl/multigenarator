@@ -118,7 +118,7 @@ Plans:
 Plans:
 
 - [x] 12-01-PLAN.md — Apply highlight source-profile validation for richer examples without Translation dependency.
-- [ ] 12-02-PLAN.md — Add minimized, redacted highlight context to provider/local example generation.
+- [x] 12-02-PLAN.md — Add minimized, redacted highlight context to provider/local example generation.
 - [ ] 12-03-PLAN.md — Prove highlight card content, word audio, sentence audio, and blank Image assembly.
 - [ ] 12-04-PLAN.md — Add source-aware highlight QA reports and regression evidence.
 
@@ -186,7 +186,7 @@ Plans:
 | 09. Source Profiles, Privacy, and Regression Boundary | 5/5 | Complete | 2026-05-04 |
 | 10. Local Kindle Normalization and Candidate Extraction | 4/4 | Complete    | 2026-05-05 |
 | 11. Highlight Pipeline Integration | 4/4 | Complete   | 2026-05-05 |
-| 12. Highlight Generation, Audio, and QA | 1/4 | In Progress|  |
+| 12. Highlight Generation, Audio, and QA | 2/4 | In Progress|  |
 | 13. Highlight Export and Template | 0/TBD | Not started | - |
 | 14. WebDAV Highlight Fetch Adapter | 0/TBD | Not started | - |
 | 15. Phonetics Template Refresh | 0/TBD | Not started | - |
