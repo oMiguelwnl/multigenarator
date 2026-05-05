@@ -8,7 +8,7 @@
 
 ## Current Focus
 
-Phase 09: Source Profiles, Privacy, and Regression Boundary.
+Phase 10: Local Kindle Normalization and Candidate Extraction.
 
 ## Phases
 
@@ -75,7 +75,14 @@ Plans:
   3. User receives clear rejected-highlight reasons for unusable, malformed, empty, unsafe, or language-mismatched fragments instead of silent continuation.
   4. User receives deterministic vocabulary candidates for all supported languages with duplicate filtering and first-seen ordering.
   5. User can review imported highlight count, extracted candidate count, rejected count, duplicate count, and planned card count before expensive generation.
-**Plans**: TBD
+**Plans**: 4 plans
+
+Plans:
+
+- [ ] 10-01-PLAN.md — Define local Kindle highlight contracts and deterministic HTML/text parsing.
+- [ ] 10-02-PLAN.md — Extract deterministic filtered vocabulary candidates from normalized highlights.
+- [ ] 10-03-PLAN.md — Add a privacy-safe local Kindle import preview and count-only CLI command.
+- [ ] 10-04-PLAN.md — Prove the local parser-to-preview flow with integration and regression evidence.
 
 ### Phase 11: Highlight Pipeline Integration
 
