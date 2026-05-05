@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass, field
+from types import SimpleNamespace
 
 import pytest
 
@@ -191,6 +192,39 @@ def test_assemble_export_cards_renders_ai_ipa_with_spoken_form() -> None:
     row = service.execute(job_id="job-1", deck_language=SupportedLanguage.EN).cards[0]
 
     assert row.ipa == "/ˈkaza/ (KA-za)"
+
+
+def test_assemble_export_cards_builds_highlight_row_without_translation_field() -> None:
+    highlight_payload = make_candidate(item_key="wash", ipa="/wɑʃ/", spoken_form="wash").model_dump()
+    highlight_payload.update({"source_type": "kindle-highlights", "frequency_rank": None, "frequency_level": None})
+    highlight_candidate = SimpleNamespace(**highlight_payload)
+    service, _ = build_service(
+        accepted_records=[
+            make_text_record(
+                item_key="wash",
+                example_sentence="Readers wash every cup before the quiet chapter ends.",
+                translation_text="Provider translation should not become learner-facing.",
+            )
+        ],
+        candidates={"wash": highlight_candidate},
+        assets={
+            ("wash", AudioAssetKind.WORD.value): make_asset(item_key="wash", asset_kind=AudioAssetKind.WORD, storage_path="wash-word.mp3"),
+            ("wash", AudioAssetKind.SENTENCE.value): make_asset(item_key="wash", asset_kind=AudioAssetKind.SENTENCE, storage_path="wash-sentence.mp3"),
+        },
+    )
+
+    row = service.execute(job_id="job-1", deck_language=SupportedLanguage.EN).cards[0]
+    mapping = row.ordered_field_mapping()
+
+    assert tuple(mapping) == ("SortIndex", "Word", "IPA", "word_audio", "Example Sentence", "sentence_audio", "Definition", "Image")
+    assert row.identity.source_type == "kindle-highlights"
+    assert row.word == "wash"
+    assert row.ipa == "/wɑʃ/ (wash)"
+    assert row.translation == ""
+    assert "Translation" not in mapping
+    assert mapping["Image"] == ""
+    assert mapping["word_audio"] == "[sound:wash-word.mp3]"
+    assert mapping["sentence_audio"] == "[sound:wash-sentence.mp3]"
 
 
 def test_assemble_export_cards_joins_definitions_with_br_and_preserves_image_blank() -> None:
