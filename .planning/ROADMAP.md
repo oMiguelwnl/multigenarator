@@ -14,7 +14,7 @@ Phase 10: Local Kindle Normalization and Candidate Extraction.
 
 - [x] **Phase 08: Card Quality Refresh** - Generated non-phonetics Anki cards have prominent Azure word audio, AI-generated IPA, readable spoken-form hints beside IPA, and the user-provided normal deck styling.
 - [x] **Phase 09: Source Profiles, Privacy, and Regression Boundary** - Existing frequency/custom decks stay stable while highlight mode, source profiles, and redaction boundaries are introduced.
-- [ ] **Phase 10: Local Kindle Normalization and Candidate Extraction** - Local Kindle exports become deterministic normalized highlights and reviewable vocabulary candidates without external formatter dependency.
+- [x] **Phase 10: Local Kindle Normalization and Candidate Extraction** - Local Kindle exports become deterministic normalized highlights and reviewable vocabulary candidates without external formatter dependency. (completed 2026-05-05)
 - [ ] **Phase 11: Highlight Pipeline Integration** - Highlight candidates enter the existing job, grounding, resume, and duplicate-prevention flow as a new deck mode.
 - [ ] **Phase 12: Highlight Generation, Audio, and QA** - Highlight cards receive privacy-aware text generation, richer concise examples, validation, and audio.
 - [ ] **Phase 13: Highlight Export and Template** - Highlight decks export with a dedicated note type, English fields, no Translation field, and responsive Definition-on-back cards.
@@ -82,7 +82,7 @@ Plans:
 - [x] 10-01-PLAN.md — Define local Kindle highlight contracts and deterministic HTML/text parsing.
 - [x] 10-02-PLAN.md — Extract deterministic filtered vocabulary candidates from normalized highlights.
 - [x] 10-03-PLAN.md — Add a privacy-safe local Kindle import preview and count-only CLI command.
-- [ ] 10-04-PLAN.md — Prove the local parser-to-preview flow with integration and regression evidence.
+- [x] 10-04-PLAN.md — Prove the local parser-to-preview flow with integration and regression evidence.
 
 ### Phase 11: Highlight Pipeline Integration
 
@@ -170,7 +170,7 @@ Plans:
 |-------|----------------|--------|-----------|
 | 08. Card Quality Refresh | 4/4 | Complete | 2026-05-02 |
 | 09. Source Profiles, Privacy, and Regression Boundary | 5/5 | Complete | 2026-05-04 |
-| 10. Local Kindle Normalization and Candidate Extraction | 3/4 | In Progress|  |
+| 10. Local Kindle Normalization and Candidate Extraction | 4/4 | Complete   | 2026-05-05 |
 | 11. Highlight Pipeline Integration | 0/TBD | Not started | - |
 | 12. Highlight Generation, Audio, and QA | 0/TBD | Not started | - |
 | 13. Highlight Export and Template | 0/TBD | Not started | - |
