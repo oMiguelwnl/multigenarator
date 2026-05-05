@@ -6,6 +6,7 @@ import re
 from dataclasses import dataclass
 from typing import Any, Protocol
 
+from multilang.domain.source_profiles import get_source_profile
 from multilang.domain.jobs import JobStage, SupportedLanguage
 from multilang.domain.lexicon import GroundingStatus, LexicalCardCandidate, LexicalProvenance
 from multilang.domain.text_quality import (
@@ -78,8 +79,11 @@ class GenerateTextItemsService:
         for persisted_candidate in self.text_repository.list_generation_candidates(job_id):
             candidate_id = getattr(persisted_candidate, "id")
             item_key = getattr(persisted_candidate, "item_key")
-            source_type = getattr(persisted_candidate, "source_type", None)
             lexical_candidate = self._to_candidate(persisted_candidate)
+            source_type = self._resolve_source_type(
+                getattr(persisted_candidate, "source_type", None),
+                candidate=lexical_candidate,
+            )
 
             generated_bundle = self.text_generation_service.generate_bundle(
                 candidate=lexical_candidate,
@@ -142,6 +146,7 @@ class GenerateTextItemsService:
         source_type: str | None = None,
         deck_language: SupportedLanguage,
     ) -> TextValidationResult:
+        source_profile = get_source_profile(self._resolve_source_type(source_type, candidate=candidate))
         validation = self.text_validation_service.validate(
             sentence=bundle.sentence,
             translation=bundle.translation,
@@ -149,12 +154,14 @@ class GenerateTextItemsService:
             lemma=candidate.lemma,
             definitions_html=candidate.definitions_html,
             disallowed_sentence_texts=set(seen_sentences or set()),
-            require_translation=source_type != "word-list",
+            require_translation=source_profile.requires_translation_validation,
+            min_sentence_tokens=source_profile.min_sentence_tokens,
+            max_sentence_tokens=source_profile.max_sentence_tokens,
         )
         return _gate_frequency_local_templates(
             validation=validation,
             bundle=bundle,
-            source_type=source_type,
+            source_type=source_profile.source_type,
             deck_language=deck_language,
         )
 
@@ -298,6 +305,14 @@ class GenerateTextItemsService:
             warning_detail=getattr(persisted_candidate, "warning_detail"),
             provenance=LexicalProvenance.model_validate(getattr(persisted_candidate, "provenance")),
         )
+
+    @staticmethod
+    def _resolve_source_type(source_type: str | None, *, candidate: LexicalCardCandidate) -> str:
+        if source_type:
+            return source_type
+        if candidate.frequency_rank is not None or candidate.frequency_level is not None:
+            return "frequency"
+        return "word-list"
 
 
 def _gate_frequency_local_templates(
