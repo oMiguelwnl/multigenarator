@@ -143,6 +143,7 @@ class FakeJobRepository:
 class FakeGenerationService:
     bundles: list[GeneratedTextBundle]
     calls: list[tuple[LexicalCardCandidate, SupportedLanguage]] = field(default_factory=list)
+    request_metadata: list[dict[str, object]] = field(default_factory=list)
     fallback_calls: list[tuple[LexicalCardCandidate, SupportedLanguage, SentenceGenerationFallback]] = field(
         default_factory=list
     )
@@ -152,8 +153,11 @@ class FakeGenerationService:
         *,
         candidate: LexicalCardCandidate,
         deck_language: SupportedLanguage,
+        source_type: str | None = None,
+        highlight_context: str | None = None,
     ) -> GeneratedTextBundle:
         self.calls.append((candidate, deck_language))
+        self.request_metadata.append({"source_type": source_type, "highlight_context": highlight_context})
         return self.bundles.pop(0)
 
     def generate_bundle_from_fallback(
@@ -162,9 +166,26 @@ class FakeGenerationService:
         candidate: LexicalCardCandidate,
         deck_language: SupportedLanguage,
         fallback: SentenceGenerationFallback,
+        source_type: str | None = None,
+        highlight_context: str | None = None,
     ) -> GeneratedTextBundle:
         self.fallback_calls.append((candidate, deck_language, fallback))
+        self.request_metadata.append({"source_type": source_type, "highlight_context": highlight_context})
         return self.bundles.pop(0)
+
+
+@dataclass
+class FakeHighlightRecord:
+    highlight_id: str
+    normalized_text: str
+
+
+@dataclass
+class FakeHighlightImportRepository:
+    records: dict[tuple[str, str], FakeHighlightRecord]
+
+    def get_private_record(self, job_id: str, highlight_id: str) -> FakeHighlightRecord | None:
+        return self.records.get((job_id, highlight_id))
 
 
 @dataclass
@@ -669,3 +690,69 @@ def test_generate_text_items_infers_source_profile_when_source_type_is_absent() 
     assert [call["require_translation"] for call in validation.calls] == [True, True]
     assert [call["min_sentence_tokens"] for call in validation.calls] == [4, 4]
     assert [call["max_sentence_tokens"] for call in validation.calls] == [12, 12]
+
+
+def test_generate_text_items_sends_bounded_redacted_highlight_context() -> None:
+    private_text = (
+        "Book: Secret Novel\n"
+        "The quiet room held a silver basin while readers wash every cup before dawn. "
+        "This extra private paragraph must not be copied wholesale into provider prompts. "
+        "Location: 123\n"
+        "https://reader.example/dav/private-export"
+    )
+    candidate = make_candidate(item_key="highlight:abc:wash")
+    candidate = candidate.model_copy(
+        update={
+            "provenance": candidate.provenance.model_copy(
+                update={
+                    "notes": [
+                        "first_highlight_id=highlight-7",
+                        f"source_content_hash={'a' * 64}",
+                    ]
+                }
+            )
+        }
+    )
+    repository = FakeTextRepository(
+        candidates=[
+            PersistedCandidate(
+                id="lex-highlight-1",
+                item_key="highlight:abc:wash",
+                candidate=candidate,
+                source_type="kindle-highlights",
+            )
+        ]
+    )
+    generation = FakeGenerationService(
+        bundles=[
+            make_bundle(
+                sentence="Readers wash every cup before the quiet chapter ends.",
+                translation="translation omitted by highlight export",
+            )
+        ]
+    )
+
+    service = GenerateTextItemsService(
+        job_repository=FakeJobRepository(),
+        lexical_repository=None,
+        text_repository=repository,
+        text_generation_service=generation,
+        text_validation_service=FakeValidationService(
+            results=[make_validation_result(status=ValidationStatus.PASSED, label=ConfidenceLabel.HIGH, score=0.95)]
+        ),
+        tatoeba_sentence_source=FakeTatoebaSentenceSource(fallback=None),
+        highlight_import_repository=FakeHighlightImportRepository(
+            records={("job-highlight", "highlight-7"): FakeHighlightRecord("highlight-7", private_text)}
+        ),
+    )
+
+    service.execute(job_id="job-highlight", deck_language=SupportedLanguage.EN)
+
+    metadata = generation.request_metadata[0]
+    context = str(metadata["highlight_context"])
+    assert metadata["source_type"] == "kindle-highlights"
+    assert "readers wash every cup before dawn" in context.casefold()
+    assert "Secret Novel" not in context
+    assert "Location: 123" not in context
+    assert "dav/private-export" not in context
+    assert len(context.split()) <= 24

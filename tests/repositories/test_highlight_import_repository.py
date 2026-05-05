@@ -72,6 +72,26 @@ def test_upsert_import_records_stores_private_text_idempotently() -> None:
     assert session.execute(text("SELECT COUNT(*) FROM highlight_import_records")).scalar_one() == 1
 
 
+def test_get_private_record_fetches_by_job_and_highlight_id() -> None:
+    repository, job_repository, _ = build_repositories()
+    job = job_repository.create_job(
+        request=make_request(), run_key="es:kindle-highlights:items:abc", source_fingerprint="items:abc", total_items=2
+    )
+    other_job = job_repository.create_job(
+        request=make_request(), run_key="es:kindle-highlights:items:def", source_fingerprint="items:def", total_items=1
+    )
+    import_hash = hashlib.sha256(b"import").hexdigest()
+    repository.upsert_import_records(job.id, import_hash, [make_highlight("first private text", 0), make_highlight("second private text", 1)])
+    repository.upsert_import_records(other_job.id, import_hash, [make_highlight("other private text", 0)])
+
+    record = repository.get_private_record(job.id, "highlight-1")
+
+    assert record is not None
+    assert record.normalized_text == "second private text"
+    assert repository.get_private_record(job.id, "missing") is None
+    assert repository.get_private_record(other_job.id, "highlight-1") is None
+
+
 def test_upsert_import_manifest_is_safe_and_idempotent() -> None:
     repository, job_repository, _ = build_repositories()
     job = job_repository.create_job(
