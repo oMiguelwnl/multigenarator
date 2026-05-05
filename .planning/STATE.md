@@ -3,15 +3,15 @@ gsd_state_version: 1.0
 milestone: v1.2
 milestone_name: Audit
 status: executing
-stopped_at: Completed 11-highlight-pipeline-integration phase
-last_updated: "2026-05-05T17:50:06.624Z"
-last_activity: 2026-05-05 -- Phase 11 planning complete
+stopped_at: Completed 12-01-PLAN.md
+last_updated: "2026-05-05T18:03:27.717Z"
+last_activity: 2026-05-05
 progress:
   total_phases: 9
   completed_phases: 4
-  total_plans: 17
-  completed_plans: 17
-  percent: 100
+  total_plans: 21
+  completed_plans: 18
+  percent: 86
 ---
 
 # Project State
@@ -25,10 +25,10 @@ See: .planning/PROJECT.md (updated 2026-05-03)
 
 ## Current Position
 
-Phase: 11
-Plan: Complete
-Status: Phase complete
-Last activity: 2026-05-05 -- Phase 11 execution complete
+Phase: 12 (highlight-generation-audio-and-qa) — EXECUTING
+Plan: 2 of 4
+Status: Ready to execute
+Last activity: 2026-05-05
 
 Progress: [██████████] 100%
 
@@ -70,6 +70,7 @@ Progress: [██████████] 100%
 | Phase 11-highlight-pipeline-integration P02 | unknown | 2 tasks | 4 files |
 | Phase 11-highlight-pipeline-integration P03 | unknown | 2 tasks | 4 files |
 | Phase 11-highlight-pipeline-integration P04 | unknown | 2 tasks | 5 files |
+| Phase 12-highlight-generation-audio-and-qa P01 | 18min | 2 tasks | 4 files |
 
 ## Accumulated Context
 
@@ -98,6 +99,7 @@ Full decision history is in `.planning/PROJECT.md` and `.planning/milestones/v1.
 - [Phase 11-highlight-pipeline-integration]: Highlight candidates use source content hash plus lemma hash instead of sequence-only keys.
 - [Phase 11-highlight-pipeline-integration]: Persist normalized highlight text only in private import records; manifests stay hash/count-only.
 - [Phase 11-highlight-pipeline-integration]: Public CLI accepts highlights while internal profile remains kindle-highlights.
+- [Phase 12-highlight-generation-audio-and-qa]: Validation behavior is resolved through SourceProfile contracts before deterministic checks, including translation-required and sentence-token policies.
 
 ### Pending Todos
 
@@ -126,6 +128,6 @@ Items acknowledged and carried forward from v1.0 milestone close:
 
 ## Session Continuity
 
-Last session: 2026-05-05T17:50:06.616Z
-Stopped at: Completed 11-highlight-pipeline-integration phase
+Last session: 2026-05-05T18:03:27.709Z
+Stopped at: Completed 12-01-PLAN.md
 Resume file: None
