@@ -256,16 +256,17 @@ def _validate_request(request: GenerationRequest, *, test_mode: bool = False) ->
     if request.source_type == "frequency" and request.level is None:
         # Allow None level for frequency - indicates full 3-level deck build
         pass
-    if request.source_type == "word-list" and request.input_file is None:
-        raise typer.BadParameter("--input-file is required when --source word-list")
+    if request.source_type in {"word-list", "kindle-highlights"} and request.input_file is None:
+        source_name = "highlights" if request.source_type == "kindle-highlights" else "word-list"
+        raise typer.BadParameter(f"--input-file is required when --source {source_name}")
     if request.source_type != "frequency" and request.level is not None:
         raise typer.BadParameter("--level is only valid when --source frequency")
     if request.source_type != "frequency" and test_mode:
         raise typer.BadParameter("--test-mode is only valid when --source frequency")
     if request.source_type != "frequency" and request.cards_per_level is not None:
         raise typer.BadParameter("--cards-per-level is only valid when --source frequency")
-    if request.source_type != "word-list" and request.input_file is not None:
-        raise typer.BadParameter("--input-file is only valid when --source word-list")
+    if request.source_type not in {"word-list", "kindle-highlights"} and request.input_file is not None:
+        raise typer.BadParameter("--input-file is only valid when --source word-list or highlights")
     if request.yes_overwrite and not request.overwrite:
         raise typer.BadParameter("--yes-overwrite requires --overwrite")
 
@@ -530,7 +531,7 @@ def create_app(
         ],
         source: Annotated[
             str,
-            typer.Option("--source", help="Input mode: frequency or word-list."),
+            typer.Option("--source", help="Input mode: frequency, word-list, or highlights."),
         ],
         level: Annotated[
             int | None,
@@ -592,16 +593,17 @@ def create_app(
             ),
         ] = None,
     ) -> None:
-        if source not in {"frequency", "word-list"}:
-            raise typer.BadParameter("--source must be one of: frequency, word-list")
+        if source not in {"frequency", "word-list", "highlights"}:
+            raise typer.BadParameter("--source must be one of: frequency, word-list, highlights")
 
         resolved_cards_per_level = cards_per_level
         if source == "frequency" and test_mode and resolved_cards_per_level is None:
             resolved_cards_per_level = TEST_MODE_CARDS_PER_LEVEL
+        internal_source = "kindle-highlights" if source == "highlights" else source
 
         request = GenerationRequest(
             language=language,
-            source_type=source,
+            source_type=internal_source,
             level=level,
             cards_per_level=resolved_cards_per_level,
             input_file=input_file,
@@ -633,6 +635,15 @@ def create_app(
             typer.echo(f"level_2_candidates={lexical_result.level_counts.get(2, 0)}")
             typer.echo(f"level_3_candidates={lexical_result.level_counts.get(3, 0)}")
             typer.echo(f"backfilled_candidates={lexical_result.backfilled_candidates}")
+            if request.source_type == "kindle-highlights":
+                typer.echo(f"imported_highlights={lexical_result.imported_highlights}")
+                typer.echo(f"rejected_highlights={lexical_result.rejected_highlights}")
+                typer.echo(f"extracted_candidates={lexical_result.extracted_candidates}")
+                typer.echo(f"duplicate_candidates={lexical_result.duplicate_candidates}")
+                typer.echo(f"reused_existing_candidates={lexical_result.reused_existing_items}")
+                typer.echo(f"newly_planned_candidates={lexical_result.newly_planned_candidates}")
+                typer.echo(f"blocked_candidates={lexical_result.blocked_candidates}")
+                typer.echo(f"planned_cards={lexical_result.planned_cards}")
             if hasattr(resolved_service, "generate_text"):
                 if regenerate_item_key is not None:
                     text_result = resolved_service.regenerate_text_item(

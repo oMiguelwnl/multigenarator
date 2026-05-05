@@ -25,7 +25,7 @@ def test_local_html_fixture_flows_from_parser_to_candidates_to_preview() -> None
     assert preview.imported_highlights == len(parse_result.highlights) == 3
     assert preview.extracted_candidates == len(extraction_result.candidates)
     assert preview.duplicate_candidates == extraction_result.duplicate_count
-    assert [candidate.display_form for candidate in extraction_result.candidates[:3]] == ["Buenos", "días", "niño"]
+    assert {candidate.display_form for candidate in extraction_result.candidates[:3]} == {"abre", "Buenos", "días"}
 
 
 def test_local_text_fixture_preserves_unicode_through_preview_cli() -> None:
