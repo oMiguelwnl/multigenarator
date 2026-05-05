@@ -204,3 +204,48 @@ def test_validation_rejects_duplicate_sentence_within_job() -> None:
 
     assert result.validation_status is ValidationStatus.FAILED
     assert ValidationFlagCode.DUPLICATE_SENTENCE in {flag.code for flag in result.validation_flags}
+
+
+def test_validation_uses_configurable_highlight_min_sentence_tokens() -> None:
+    result = build_service().validate(
+        sentence=build_sentence(text="Readers quietly revisit wash pages."),
+        translation=build_translation(text="translation omitted by highlight export"),
+        display_form="wash",
+        lemma="wash",
+        definitions_html="to wash",
+        require_translation=False,
+        min_sentence_tokens=6,
+        max_sentence_tokens=16,
+    )
+
+    assert result.validation_status is ValidationStatus.FAILED
+    assert ValidationFlagCode.SENTENCE_TOO_SHORT in {flag.code for flag in result.validation_flags}
+
+
+def test_validation_preserves_default_frequency_sentence_maximum() -> None:
+    result = build_service().validate(
+        sentence=build_sentence(text="I wash the old ceramic cup at home before breakfast every single morning."),
+        translation=build_translation(text="Eu lavo a xícara antiga de cerâmica em casa antes do café."),
+        display_form="wash",
+        lemma="wash",
+        definitions_html="to wash",
+    )
+
+    assert result.validation_status is ValidationStatus.FAILED
+    assert ValidationFlagCode.SENTENCE_TOO_LONG in {flag.code for flag in result.validation_flags}
+
+
+def test_validation_accepts_configurable_highlight_max_sentence_tokens() -> None:
+    result = build_service().validate(
+        sentence=build_sentence(text="Readers wash the old cup carefully after the quiet morning chapter ends."),
+        translation=build_translation(text="translation omitted by highlight export"),
+        display_form="wash",
+        lemma="wash",
+        definitions_html="to wash",
+        require_translation=False,
+        min_sentence_tokens=6,
+        max_sentence_tokens=16,
+    )
+
+    assert result.validation_status is ValidationStatus.PASSED
+    assert ValidationFlagCode.SENTENCE_TOO_LONG not in {flag.code for flag in result.validation_flags}
