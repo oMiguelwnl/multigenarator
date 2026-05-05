@@ -116,7 +116,7 @@ def test_build_review_report_writes_deterministic_json_artifact(tmp_path: Path) 
     report = service.build_review_report(job_id="job-123", output_path=tmp_path / "review.json")
 
     assert report.report_path == tmp_path / "review.json"
-    assert report.report_path.read_text() == "".join(
+    assert report.report_path.read_text(encoding="utf-8") == "".join(
         [
             "{\n",
             '  "job_id": "job-123",\n',

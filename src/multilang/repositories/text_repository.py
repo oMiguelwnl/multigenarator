@@ -108,6 +108,17 @@ class TextRepository:
         )
         return [self._to_domain(row) for row in rows]
 
+    def get_source_metadata_for_item(self, job_id: str, item_key: str) -> dict[str, object] | None:
+        row = self.session.execute(
+            select(LexicalCandidate.source_type, LexicalCandidate.item_key).where(
+                LexicalCandidate.job_id == job_id,
+                LexicalCandidate.item_key == item_key,
+            )
+        ).first()
+        if row is None:
+            return None
+        return {"source_type": row[0], "item_key": row[1]}
+
     def list_accepted_records(self, job_id: str) -> list[TextQualityRecord]:
         rows = self.session.scalars(
             select(TextQualityRecordModel)

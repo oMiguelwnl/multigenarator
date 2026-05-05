@@ -7,7 +7,9 @@ from pathlib import Path
 
 from pydantic import BaseModel, Field
 
+from multilang.domain.source_profiles import get_source_profile
 from multilang.domain.text_quality import ConfidenceLabel, TextQualityRecord
+from multilang.security.redaction import redact_sensitive_text
 
 
 class ReviewReportItem(BaseModel):
@@ -16,7 +18,9 @@ class ReviewReportItem(BaseModel):
     item_key: str = Field(min_length=1)
     job_id: str = Field(min_length=1)
     review_reason: str | None = None
+    source_type: str = "word-list"
     translation_text: str | None = None
+    translation_required: bool = True
     validation_flags: list[str] = Field(default_factory=list)
 
 
@@ -49,15 +53,30 @@ class TextReviewService:
         return report
 
     def _to_item(self, record: TextQualityRecord) -> ReviewReportItem:
+        source_type = self._source_type_for(record)
+        source_profile = get_source_profile(source_type)
         return ReviewReportItem(
             job_id=record.job_id,
             item_key=record.item_key,
-            example_sentence=record.example_sentence,
-            translation_text=record.translation_text,
+            example_sentence=redact_sensitive_text(record.example_sentence or "") or None,
+            translation_text=redact_sensitive_text(record.translation_text or "") or None,
             confidence_label=record.confidence_label,
             validation_flags=[flag.code.value for flag in record.validation_flags],
             review_reason=record.review_reason,
+            source_type=source_type,
+            translation_required=source_profile.requires_translation_validation,
         )
+
+    def _source_type_for(self, record: TextQualityRecord) -> str:
+        metadata_getter = getattr(self.text_repository, "get_source_metadata_for_item", None)
+        if metadata_getter is not None:
+            metadata = metadata_getter(record.job_id, record.item_key) or {}
+            source_type = metadata.get("source_type")
+            if source_type:
+                return str(source_type)
+        if record.item_key.startswith("level-"):
+            return "frequency"
+        return "word-list"
 
     def _sort_key(self, item: ReviewReportItem) -> tuple[int, int, int, str]:
         return (

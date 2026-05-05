@@ -307,6 +307,7 @@ def build_runtime_service(
             text_generation_service=text_generation_service,
             text_validation_service=text_validation_service,
             tatoeba_sentence_source=tatoeba_sentence_source,
+            highlight_import_repository=highlight_import_repository,
         ),
         regenerate_text_item_service=RegenerateTextItemService(
             job_repository=job_repository,

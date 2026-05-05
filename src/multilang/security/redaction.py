@@ -16,7 +16,7 @@ _TEXT_PATTERNS = (
     re.compile(r"(?i)\b(password|passwd|username|user|secret|token|api[_-]?key)(\s*[=:]\s*)([^\s,;&]+)"),
     re.compile(r"(?i)https?://[^\s]+/dav[^\s]*"),
     re.compile(r"(?i)(?:^|(?<=\s))\.?/?\.multilang/highlights/raw/[^\s]+"),
-    re.compile(r"(?im)^(Title|Author|Book|Location)(\s*:\s*)([^\r\n]*)"),
+    re.compile(r"(?im)\b(Title|Author|Book|Location)(\s*:\s*)([^\r\n]*)"),
 )
 
 
