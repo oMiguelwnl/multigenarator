@@ -113,7 +113,14 @@ Plans:
   2. User receives concise but grammatically richer highlight examples that include the target word and pass language and length validation.
   3. User's private highlight text is minimized or redacted in prompts, reports, and errors while preserving internal source provenance for audit and sense/context use.
   4. User can distinguish highlight generation QA outcomes from frequency/custom QA outcomes in review evidence.
-**Plans**: TBD
+**Plans**: 4 plans
+
+Plans:
+
+- [ ] 12-01-PLAN.md — Apply highlight source-profile validation for richer examples without Translation dependency.
+- [ ] 12-02-PLAN.md — Add minimized, redacted highlight context to provider/local example generation.
+- [ ] 12-03-PLAN.md — Prove highlight card content, word audio, sentence audio, and blank Image assembly.
+- [ ] 12-04-PLAN.md — Add source-aware highlight QA reports and regression evidence.
 
 ### Phase 13: Highlight Export and Template
 
