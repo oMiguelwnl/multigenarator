@@ -8,7 +8,7 @@
 
 ## Current Focus
 
-Phase 11: Highlight Pipeline Integration.
+Phase 14: WebDAV Highlight Fetch Adapter.
 
 ## Phases
 
