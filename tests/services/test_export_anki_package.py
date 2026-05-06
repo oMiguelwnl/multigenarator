@@ -9,6 +9,7 @@ import pytest
 
 from multilang.domain.exporting import ExportCardIdentity, ExportCardRow
 from multilang.domain.jobs import SupportedLanguage
+from multilang.services import card_template_loader
 from multilang.services.export_anki_package import (
     DECK_ID,
     HIGHLIGHT_MODEL_ID,
@@ -142,9 +143,51 @@ def test_build_highlight_model_uses_dedicated_identity_and_fields() -> None:
         "Definition",
         "Image",
     ]
-    assert "{{Translation}}" not in "".join(
-        [model.templates[0]["qfmt"], model.templates[0]["afmt"]]
-    ) or "Translation" not in [field["name"] for field in model.fields]
+    template_markup = model.templates[0]["qfmt"] + model.templates[0]["afmt"]
+    assert "{{Word}}" in model.templates[0]["qfmt"]
+    assert "{{Definition}}" in model.templates[0]["afmt"]
+    assert "{{FrontSide}}" in model.templates[0]["afmt"]
+    assert "{{Translation}}" not in template_markup
+    assert "highlight-card" in model.templates[0]["qfmt"]
+    assert "highlight-definition-answer" in model.templates[0]["afmt"]
+    assert "--multilang-blue" in model.css
+
+
+def test_build_highlight_model_rejects_malformed_template_before_model_return(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    (tmp_path / "CARD_TEMPLATE.md").write_text(
+        Path("CARD_TEMPLATE.md").read_text(encoding="utf-8"),
+        encoding="utf-8",
+    )
+    (tmp_path / "HIGHLIGHT_CARD_TEMPLATE.md").write_text(
+        """
+# Bad Highlight Template
+
+## Front Template
+
+```html
+{{Word}} {{Dangling Field}}
+```
+
+## Back Template
+
+```html
+{{FrontSide}} {{Definition}}
+```
+
+## Styling (CSS)
+
+```css
+.highlight-card { color: blue; }
+```
+""",
+        encoding="utf-8",
+    )
+    monkeypatch.setattr(card_template_loader, "PROJECT_ROOT", tmp_path)
+
+    with pytest.raises(ExportAnkiPackageError, match="card template references fields"):
+        build_multilang_model(source_type="kindle-highlights")
 
 
 def test_build_multilang_note_reuses_deterministic_guid_across_mutable_content_changes() -> None:
