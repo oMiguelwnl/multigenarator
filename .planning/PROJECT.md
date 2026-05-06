@@ -25,6 +25,8 @@ v1.2 Phase 10 Local Kindle Normalization and Candidate Extraction was completed 
 
 v1.2 Phase 12 Highlight Generation, Audio, and QA was completed on 2026-05-05. Highlight examples now use source-profile validation and bounded redacted reading context, accepted highlight rows generate word and sentence audio, assembled highlight cards keep `Translation` learner-facing blank with blank `Image`, and source-aware QA reports prove privacy-safe behavior alongside existing frequency/custom regression evidence.
 
+v1.2 Phase 13 Highlight Export and Template was completed on 2026-05-06. Highlight APKG, CSV, and TSV exports now use a dedicated `Multilang::Highlight Card` note type with exact English fields, no `Translation`, a responsive Definition-on-back template, fail-closed media/template validation, and regression evidence preserving existing frequency and word-list export behavior.
+
 ## Current Milestone: v1.2 Kindle Highlights and Template Refresh
 
 **Goal:** Add a highlights-based deck mode that automatically imports Kindle highlights from WebDAV, normalizes them locally, generates Anki cards from reading-derived vocabulary, and updates highlight and phonetics card templates for the new study flow.
@@ -63,11 +65,11 @@ After v1.2, candidate directions from the archived v1 requirement seeds remain:
 - [x] User can resume, monitor, and rerun jobs without silent duplicate card creation. _(v1.0)_
 - [x] Normalize Kindle highlight exports locally into usable vocabulary candidates. _(v1.2 Phase 10)_
 - [x] Generate privacy-safe highlight text/audio/card rows without replacing the existing frequency-deck or custom word-list flows. _(v1.2 Phase 12)_
+- [x] Add a responsive highlight deck template with `Definition` on the back and no `Translation` field. _(v1.2 Phase 13)_
 
 ### Active
 
 - [ ] Add automatic Kindle highlights ingestion from WebDAV as a new deck input source.
-- [ ] Add a responsive highlight deck template with `Definition` on the back and no `Translation` field.
 - [ ] Refresh the phonetics deck template while preserving required sentence translation behavior.
 
 ### Out of Scope
@@ -124,6 +126,7 @@ Known follow-up debt: full-suite collection drift remains in tests that import r
 | Add Kindle highlights as a new mode instead of replacing frequency decks | The learner wants reading-derived vocabulary while preserving the shipped frequency-deck path | Pending in v1.2. |
 | Normalize Kindle highlights locally instead of automating the external formatter website | A local formatter keeps generation reproducible, testable, and independent of a browser-only tool | Validated in v1.2 Phase 10 with local parser, candidate extraction, preview CLI, and regression evidence. |
 | Keep highlight QA source-aware and privacy-safe | Raw reading text, paths, and book metadata may appear in private imports but must not leak to prompts/reports/artifacts | Validated in v1.2 Phase 12 with redacted context generation, source-aware review reports, and regression evidence. |
+| Use a dedicated highlight note type and template | Highlight cards need English fields, no Translation, Definition on the back, responsive styling, and no leakage into frequency or word-list decks | Validated in v1.2 Phase 13 with APKG/CSV/TSV export evidence and regression coverage. |
 
 ## Evolution
 
@@ -145,4 +148,4 @@ This document evolves at phase transitions and milestone boundaries.
 4. Update Context with current state.
 
 ---
-*Last updated: 2026-05-05 after completing v1.2 Phase 12*
+*Last updated: 2026-05-06 after completing v1.2 Phase 13*
