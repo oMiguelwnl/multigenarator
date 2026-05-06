@@ -165,7 +165,10 @@ class GenerateTextItemsService:
             lemma=candidate.lemma,
             definitions_html=candidate.definitions_html,
             disallowed_sentence_texts=set(seen_sentences or set()),
-            require_translation=source_profile.requires_translation_validation,
+            require_translation=(
+                source_profile.requires_translation_validation
+                and candidate.translation_target_language != deck_language.value
+            ),
             min_sentence_tokens=source_profile.min_sentence_tokens,
             max_sentence_tokens=source_profile.max_sentence_tokens,
         )
