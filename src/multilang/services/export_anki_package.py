@@ -10,6 +10,7 @@ import genanki
 
 from multilang.domain.exporting import ExportCardRow, export_field_names_for_source_type
 from multilang.domain.source_profiles import get_source_profile
+from multilang.services.card_template_loader import load_card_template
 
 MODEL_ID = 1_602_300_501
 DECK_ID = 1_602_300_502
@@ -20,10 +21,6 @@ HIGHLIGHT_MODEL_ID = 1_602_300_504
 HIGHLIGHT_NOTE_TYPE_NAME = "Multilang::Highlight Card"
 
 _SOUND_TAG_RE = re.compile(r"^\[sound:(?P<name>[^\]]+)\]$")
-_SECTION_RE = re.compile(
-    r"## Front Template\s+```html\n(?P<front>.*?)```.*?## Back Template\s+```html\n(?P<back>.*?)```.*?## Styling \(CSS\)\s+```css\n(?P<css>.*?)```",
-    re.DOTALL,
-)
 
 
 class ExportAnkiPackageError(ValueError):
@@ -44,8 +41,11 @@ class MultilangNote(genanki.Note):
 
 
 def build_multilang_model(*, source_type: str = "frequency") -> genanki.Model:
-    template = _load_project_card_template(source_type=source_type)
     profile = get_source_profile(source_type)
+    try:
+        template = load_card_template(source_type=profile.source_type)
+    except ValueError as exc:
+        raise ExportAnkiPackageError(str(exc)) from exc
     model_id = {
         "frequency": MODEL_ID,
         "word-list": MANUAL_MODEL_ID,
@@ -58,11 +58,11 @@ def build_multilang_model(*, source_type: str = "frequency") -> genanki.Model:
         templates=[
             {
                 "name": "Card 1",
-                "qfmt": template["front"],
-                "afmt": template["back"],
+                "qfmt": template.front,
+                "afmt": template.back,
             }
         ],
-        css=template["css"],
+        css=template.css,
     )
 
 
@@ -130,15 +130,6 @@ def _require_media_file(sound_tag: str, *, media_index: dict[str, Path]) -> Path
     if media_path.name != match.group("name"):
         raise ExportAnkiPackageError(f"media basename mismatch for {match.group('name')}")
     return media_path
-
-
-def _load_project_card_template(*, source_type: str = "frequency") -> dict[str, str]:
-    template_path = Path(__file__).resolve().parents[3] / "CARD_TEMPLATE.md"
-    content = template_path.read_text(encoding="utf-8")
-    match = _SECTION_RE.search(content)
-    if match is None:
-        raise ExportAnkiPackageError(f"unable to parse card template from {template_path}")
-    return {name: match.group(name).strip() for name in ("front", "back", "css")}
 
 
 __all__ = [
