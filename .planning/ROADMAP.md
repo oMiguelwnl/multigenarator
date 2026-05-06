@@ -17,7 +17,7 @@ Phase 11: Highlight Pipeline Integration.
 - [x] **Phase 10: Local Kindle Normalization and Candidate Extraction** - Local Kindle exports become deterministic normalized highlights and reviewable vocabulary candidates without external formatter dependency. (completed 2026-05-05)
 - [x] **Phase 11: Highlight Pipeline Integration** - Highlight candidates enter the existing job, grounding, resume, and duplicate-prevention flow as a new deck mode. (completed 2026-05-05)
 - [x] **Phase 12: Highlight Generation, Audio, and QA** - Highlight cards receive privacy-aware text generation, richer concise examples, validation, and audio. (completed 2026-05-05)
-- [ ] **Phase 13: Highlight Export and Template** - Highlight decks export with a dedicated note type, English fields, no Translation field, and responsive Definition-on-back cards.
+- [x] **Phase 13: Highlight Export and Template** - Highlight decks export with a dedicated note type, English fields, no Translation field, and responsive Definition-on-back cards. (completed 2026-05-06)
 - [ ] **Phase 14: WebDAV Highlight Fetch Adapter** - Kindle highlight exports can be fetched securely from WebDAV with clear failures and idempotent import summaries.
 - [ ] **Phase 15: Phonetics Template Refresh** - Phonetics cards use the supplied layout, sentence translation back reveal, Multilang colors, and no unused fields.
 - [ ] **Phase 16: End-to-End v1.2 Audit** - Local Kindle highlights, highlight export, phonetics export, and existing-mode regressions are proven with evidence.
@@ -139,7 +139,7 @@ Plans:
 
 - [x] 13-01-PLAN.md — Create the dedicated highlight template and source-aware template validation.
 - [x] 13-02-PLAN.md — Wire the validated highlight template into APKG export with media and mixed-source safety.
-- [ ] 13-03-PLAN.md — Prove strict highlight CSV/TSV/APKG export evidence and existing-mode regression boundaries.
+- [x] 13-03-PLAN.md — Prove strict highlight CSV/TSV/APKG export evidence and existing-mode regression boundaries.
 
 ### Phase 14: WebDAV Highlight Fetch Adapter
 
@@ -193,7 +193,7 @@ Plans:
 | 10. Local Kindle Normalization and Candidate Extraction | 4/4 | Complete    | 2026-05-05 |
 | 11. Highlight Pipeline Integration | 4/4 | Complete   | 2026-05-05 |
 | 12. Highlight Generation, Audio, and QA | 4/4 | Complete    | 2026-05-05 |
-| 13. Highlight Export and Template | 2/3 | In Progress|  |
+| 13. Highlight Export and Template | 3/3 | Complete   | 2026-05-06 |
 | 14. WebDAV Highlight Fetch Adapter | 0/TBD | Not started | - |
 | 15. Phonetics Template Refresh | 0/TBD | Not started | - |
 | 16. End-to-End v1.2 Audit | 0/TBD | Not started | - |
