@@ -2,16 +2,16 @@
 gsd_state_version: 1.0
 milestone: v1.2
 milestone_name: Audit
-status: verifying
-stopped_at: Phase 13 context gathered
-last_updated: "2026-05-06T17:18:22.268Z"
-last_activity: 2026-05-05
+status: executing
+stopped_at: Completed 13-01-PLAN.md
+last_updated: "2026-05-06T17:28:23.722Z"
+last_activity: 2026-05-06
 progress:
   total_phases: 9
   completed_phases: 5
-  total_plans: 21
-  completed_plans: 21
-  percent: 100
+  total_plans: 24
+  completed_plans: 22
+  percent: 92
 ---
 
 # Project State
@@ -21,14 +21,14 @@ progress:
 See: .planning/PROJECT.md (updated 2026-05-03)
 
 **Core value:** Generate reliable, high-quality Anki cards for real vocabulary the learner needs to study, with accurate definitions, examples, translations where appropriate, and audio.  
-**Current focus:** Phase 12 — highlight-generation-audio-and-qa
+**Current focus:** Phase 13 — highlight-export-and-template
 
 ## Current Position
 
-Phase: 13
-Plan: Not started
-Status: Phase complete — ready for verification
-Last activity: 2026-05-05
+Phase: 13 (highlight-export-and-template) — EXECUTING
+Plan: 2 of 3
+Status: Ready to execute
+Last activity: 2026-05-06
 
 Progress: [██████████] 100%
 
@@ -75,6 +75,7 @@ Progress: [██████████] 100%
 | Phase 12-highlight-generation-audio-and-qa P02 | 22min | 2 tasks | 10 files |
 | Phase 12-highlight-generation-audio-and-qa P03 | 15min | 2 tasks | 4 files |
 | Phase 12-highlight-generation-audio-and-qa P04 | 18min | 2 tasks | 6 files |
+| Phase 13-highlight-export-and-template P01 | 3min | 2 tasks | 3 files |
 
 ## Accumulated Context
 
@@ -108,6 +109,8 @@ Full decision history is in `.planning/PROJECT.md` and `.planning/milestones/v1.
 - [Phase 12-highlight-generation-audio-and-qa]: Provider and local highlight generation carry source_type metadata so downstream QA can distinguish highlight output.
 - [Phase 12-highlight-generation-audio-and-qa]: Highlight export rows use source profile export policy to blank Translation while preserving audio, IPA/spoken form, definitions, sentence, and Image.
 - [Phase 12-highlight-generation-audio-and-qa]: Review reports include safe source_type and translation_required fields while redacting text fields before serialization.
+- [Phase 13-highlight-export-and-template]: Keep normal frequency and word-list templates on CARD_TEMPLATE.md while routing kindle-highlights to HIGHLIGHT_CARD_TEMPLATE.md through SourceProfile.template_name.
+- [Phase 13-highlight-export-and-template]: Validate template references against the resolved export field tuple and allow only FrontSide as a non-field Anki helper.
 
 ### Pending Todos
 
@@ -136,6 +139,6 @@ Items acknowledged and carried forward from v1.0 milestone close:
 
 ## Session Continuity
 
-Last session: 2026-05-06T17:18:22.263Z
-Stopped at: Phase 13 context gathered
-Resume file: .planning/phases/13-highlight-export-and-template/13-CONTEXT.md
+Last session: 2026-05-06T17:28:23.713Z
+Stopped at: Completed 13-01-PLAN.md
+Resume file: None

@@ -137,7 +137,7 @@ Plans:
 
 Plans:
 
-- [ ] 13-01-PLAN.md — Create the dedicated highlight template and source-aware template validation.
+- [x] 13-01-PLAN.md — Create the dedicated highlight template and source-aware template validation.
 - [ ] 13-02-PLAN.md — Wire the validated highlight template into APKG export with media and mixed-source safety.
 - [ ] 13-03-PLAN.md — Prove strict highlight CSV/TSV/APKG export evidence and existing-mode regression boundaries.
 
@@ -193,7 +193,7 @@ Plans:
 | 10. Local Kindle Normalization and Candidate Extraction | 4/4 | Complete    | 2026-05-05 |
 | 11. Highlight Pipeline Integration | 4/4 | Complete   | 2026-05-05 |
 | 12. Highlight Generation, Audio, and QA | 4/4 | Complete    | 2026-05-05 |
-| 13. Highlight Export and Template | 0/TBD | Not started | - |
+| 13. Highlight Export and Template | 1/3 | In Progress|  |
 | 14. WebDAV Highlight Fetch Adapter | 0/TBD | Not started | - |
 | 15. Phonetics Template Refresh | 0/TBD | Not started | - |
 | 16. End-to-End v1.2 Audit | 0/TBD | Not started | - |
