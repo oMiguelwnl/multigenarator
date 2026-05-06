@@ -1,16 +1,18 @@
 ---
 phase: 13-highlight-export-and-template
-reviewed: 2026-05-06T17:40:40Z
+reviewed: 2026-05-06T18:02:28Z
 depth: standard
-files_reviewed: 7
+files_reviewed: 9
 files_reviewed_list:
   - HIGHLIGHT_CARD_TEMPLATE.md
   - src/multilang/services/card_template_loader.py
   - src/multilang/services/export_anki_package.py
+  - src/multilang/services/generate_text_items.py
   - tests/services/test_card_template_loader.py
   - tests/services/test_export_anki_package.py
   - tests/services/test_export_tabular_bundle.py
   - tests/integration/test_highlight_export_artifacts.py
+  - tests/services/test_generate_text_items.py
 findings:
   critical: 0
   warning: 0
@@ -21,28 +23,26 @@ status: clean
 
 # Phase 13: Code Review Report
 
-**Reviewed:** 2026-05-06T17:40:40Z
+**Reviewed:** 2026-05-06T18:02:28Z
 **Depth:** standard
-**Files Reviewed:** 7
+**Files Reviewed:** 9
 **Status:** clean
-
-## Findings
-
-No findings. Critical, warning, and info counts are all zero.
 
 ## Summary
 
-Re-reviewed the highlight card template, template loading/validation, APKG export path, and related service and integration tests after the CR-01 fix. The previous unsafe highlight definition-list renderer has been corrected: definitions are read via `innerText` and generated list items are assigned with `textContent`, with regression coverage asserting `innerHTML` is not used for source parsing or item assignment.
+Re-reviewed the Phase 13 highlight export/template source scope after WR-01 fix commit `3a5537a`, including the fixed same-language translation validation gate in `src/multilang/services/generate_text_items.py` and the added regression coverage in `tests/services/test_generate_text_items.py`.
+
+The previous WR-01 finding is resolved: same-language translation validation is now bypassed only for `word-list` candidates, while same-language `frequency` candidates continue to require translation validation. The highlight template/export paths remain fail-closed for unsupported template fields, omit translation/private fields from highlight artifacts, and use safe text handling for rendered definition list items.
 
 All reviewed files meet quality standards. No issues found.
 
 ## Verification
 
-- `python -m pytest tests/services/test_card_template_loader.py tests/services/test_export_anki_package.py tests/services/test_export_tabular_bundle.py tests/integration/test_highlight_export_artifacts.py` — 42 passed
-- `uv run pytest ...` was attempted first, but `uv` is not available in this environment.
+- Focused verification run during review: `python -m pytest tests/services/test_generate_text_items.py` — 13 passed.
+- Requester-reported focused regression suite: 39 passed.
 
 ---
 
-_Reviewed: 2026-05-06T17:40:40Z_
+_Reviewed: 2026-05-06T18:02:28Z_
 _Reviewer: the agent (gsd-code-reviewer)_
 _Depth: standard_
