@@ -132,8 +132,14 @@ Plans:
   2. User sees highlight card fronts with prompt-side content only and card backs with `{{FrontSide}}`, an answer divider, and `Definition`.
   3. User sees centered, responsive, Multilang-colored highlight cards with safe packaged media references.
   4. User receives export validation that no highlight template contains dangling field references or mixed-source note model collisions.
-**Plans**: TBD
+**Plans**: 3 plans
 **UI hint**: yes
+
+Plans:
+
+- [ ] 13-01-PLAN.md — Create the dedicated highlight template and source-aware template validation.
+- [ ] 13-02-PLAN.md — Wire the validated highlight template into APKG export with media and mixed-source safety.
+- [ ] 13-03-PLAN.md — Prove strict highlight CSV/TSV/APKG export evidence and existing-mode regression boundaries.
 
 ### Phase 14: WebDAV Highlight Fetch Adapter
 
