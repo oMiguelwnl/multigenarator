@@ -193,7 +193,7 @@ Plans:
 | 10. Local Kindle Normalization and Candidate Extraction | 4/4 | Complete    | 2026-05-05 |
 | 11. Highlight Pipeline Integration | 4/4 | Complete   | 2026-05-05 |
 | 12. Highlight Generation, Audio, and QA | 4/4 | Complete    | 2026-05-05 |
-| 13. Highlight Export and Template | 3/3 | Complete   | 2026-05-06 |
+| 13. Highlight Export and Template | 3/3 | Complete    | 2026-05-06 |
 | 14. WebDAV Highlight Fetch Adapter | 0/TBD | Not started | - |
 | 15. Phonetics Template Refresh | 0/TBD | Not started | - |
 | 16. End-to-End v1.2 Audit | 0/TBD | Not started | - |
