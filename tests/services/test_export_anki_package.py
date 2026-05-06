@@ -3,6 +3,8 @@
 from __future__ import annotations
 
 import zipfile
+import json
+import sqlite3
 from pathlib import Path
 
 import pytest
@@ -232,9 +234,52 @@ def test_export_anki_package_bundles_referenced_media_and_sound_basenames(tmp_pa
         assert any(name.isdigit() for name in archive.namelist())
 
 
+def test_export_highlight_anki_package_uses_highlight_model_and_bundles_media(
+    tmp_path: Path,
+) -> None:
+    word_media = write_media_file(tmp_path / "audio" / "run-word.mp3")
+    sentence_media = write_media_file(tmp_path / "audio" / "run-sentence.mp3")
+    row = make_row(item_key="run", sort_index=1, source_type="kindle-highlights")
+    output_path = tmp_path / "highlight.apkg"
+
+    result = export_anki_package(
+        rows=[row],
+        media_index={row.word_audio: word_media, row.sentence_audio: sentence_media},
+        output_path=output_path,
+        deck_name="English::Highlights",
+    )
+
+    assert result.output_path == output_path
+    assert result.card_count == 1
+    assert result.media_files == [word_media, sentence_media]
+    with zipfile.ZipFile(output_path) as archive:
+        names = archive.namelist()
+        assert "collection.anki2" in names
+        assert "media" in names
+        media_manifest = json.loads(archive.read("media").decode("utf-8"))
+        assert sorted(media_manifest.values()) == ["run-sentence.mp3", "run-word.mp3"]
+        collection_path = tmp_path / "collection.anki2"
+        collection_path.write_bytes(archive.read("collection.anki2"))
+    with sqlite3.connect(collection_path) as connection:
+        models = json.loads(connection.execute("select models from col").fetchone()[0])
+    highlight_model = models[str(HIGHLIGHT_MODEL_ID)]
+    assert highlight_model["name"] == HIGHLIGHT_NOTE_TYPE_NAME
+    assert [field["name"] for field in highlight_model["flds"]] == [
+        "SortIndex",
+        "Word",
+        "IPA",
+        "word_audio",
+        "Example Sentence",
+        "sentence_audio",
+        "Definition",
+        "Image",
+    ]
+
+
 def test_export_anki_package_rejects_missing_media_before_writing(tmp_path: Path) -> None:
     row = make_row(item_key="run", sort_index=1)
     missing_media = tmp_path / "missing" / "run-word.mp3"
+    output_path = tmp_path / "deck.apkg"
 
     with pytest.raises(ExportAnkiPackageError, match="missing media file"):
         export_anki_package(
@@ -243,9 +288,66 @@ def test_export_anki_package_rejects_missing_media_before_writing(tmp_path: Path
                 row.word_audio: missing_media,
                 row.sentence_audio: write_media_file(tmp_path / "audio" / "run-sentence.mp3"),
             },
-            output_path=tmp_path / "deck.apkg",
+            output_path=output_path,
             deck_name="English::Level 1",
         )
+    assert not output_path.exists()
+
+
+@pytest.mark.parametrize(
+    ("word_audio", "sentence_audio", "media_paths", "error"),
+    [
+        (
+            "[sound:run-word.mp3]",
+            "[sound:run-sentence.mp3]",
+            {"[sound:run-word.mp3]": "run-word.mp3"},
+            "missing media file",
+        ),
+        (
+            "run-word.mp3",
+            "[sound:run-sentence.mp3]",
+            {"run-word.mp3": "run-word.mp3", "[sound:run-sentence.mp3]": "run-sentence.mp3"},
+            "invalid sound reference",
+        ),
+        (
+            "[sound:run-word.mp3]",
+            "[sound:run-sentence.mp3]",
+            {
+                "[sound:run-word.mp3]": "different-word.mp3",
+                "[sound:run-sentence.mp3]": "run-sentence.mp3",
+            },
+            "media basename mismatch",
+        ),
+    ],
+)
+def test_export_highlight_package_rejects_broken_media_before_writing(
+    tmp_path: Path,
+    word_audio: str,
+    sentence_audio: str,
+    media_paths: dict[str, str],
+    error: str,
+) -> None:
+    row = make_row(
+        item_key="run",
+        sort_index=1,
+        source_type="kindle-highlights",
+        word_audio=word_audio,
+        sentence_audio=sentence_audio,
+    )
+    media_index = {
+        sound_tag: write_media_file(tmp_path / "audio" / basename)
+        for sound_tag, basename in media_paths.items()
+    }
+    output_path = tmp_path / "broken-highlight.apkg"
+
+    with pytest.raises(ExportAnkiPackageError, match=error):
+        export_anki_package(
+            rows=[row],
+            media_index=media_index,
+            output_path=output_path,
+            deck_name="English::Highlights",
+        )
+    assert not output_path.exists()
 
 
 def test_export_anki_package_rejects_mixed_source_types(tmp_path: Path) -> None:
@@ -259,3 +361,21 @@ def test_export_anki_package_rejects_mixed_source_types(tmp_path: Path) -> None:
             output_path=tmp_path / "mixed.apkg",
             deck_name="Mixed",
         )
+
+
+@pytest.mark.parametrize("other_source", ["frequency", "word-list"])
+def test_export_anki_package_rejects_highlight_mixed_with_existing_modes(
+    tmp_path: Path, other_source: str
+) -> None:
+    highlight = make_row(item_key="run", sort_index=1, source_type="kindle-highlights")
+    other = make_row(item_key="walk", sort_index=2, source_type=other_source)
+    output_path = tmp_path / "mixed-highlight.apkg"
+
+    with pytest.raises(ExportAnkiPackageError, match="cannot export mixed source types in one note model"):
+        export_anki_package(
+            rows=[highlight, other],
+            media_index={},
+            output_path=output_path,
+            deck_name="Mixed",
+        )
+    assert not output_path.exists()
