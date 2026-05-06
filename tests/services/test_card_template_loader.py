@@ -139,3 +139,44 @@ def test_load_card_template_routes_highlights_to_highlight_template(
     assert template.source_template_name == "highlight_card"
     assert "{{Word}}" in template.front
     assert "{{Translation}}" not in template.front + template.back
+
+
+def test_project_highlight_template_front_contains_prompt_side_content_only() -> None:
+    template = load_card_template(source_type="kindle-highlights")
+
+    assert "{{Word}}" in template.front
+    assert "{{#IPA}}{{IPA}}{{/IPA}}" in template.front
+    assert "{{word_audio}}" in template.front
+    assert "{{Example Sentence}}" in template.front
+    assert "{{sentence_audio}}" in template.front
+    assert "{{#Image}}" in template.front
+    assert "{{Image}}" in template.front
+    assert "{{/Image}}" in template.front
+    assert "{{Translation}}" not in template.front + template.back
+
+
+def test_project_highlight_template_back_reuses_frontside_and_reveals_definition_only() -> None:
+    template = load_card_template(source_type="kindle-highlights")
+    back_without_frontside = template.back.replace("{{FrontSide}}", "")
+
+    assert "{{FrontSide}}" in template.back
+    assert template.back.count('id="answer"') == 1
+    assert "Definition" in template.back
+    assert "{{Definition}}" in template.back
+    assert "{{word_audio}}" not in back_without_frontside
+    assert "{{sentence_audio}}" not in back_without_frontside
+    assert "autoplay" not in template.back.lower()
+    assert "{{Translation}}" not in template.back
+
+
+def test_project_highlight_template_css_is_centered_responsive_and_scroll_safe() -> None:
+    template = load_card_template(source_type="kindle-highlights")
+    css = template.css
+
+    assert "--multilang-blue" in css
+    assert "#2563eb" in css or "#1d4ed8" in css
+    assert "max-width" in css
+    assert "width: min(" in css or "width: 100%" in css
+    assert "margin: 0 auto" in css
+    assert "overflow-y: auto" in css
+    assert "overflow-x: hidden" in css
