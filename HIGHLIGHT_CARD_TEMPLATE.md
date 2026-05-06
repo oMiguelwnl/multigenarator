@@ -49,8 +49,8 @@ Dedicated Anki note type template for Kindle highlight vocabulary cards.
     if (!source || !list) {
       return;
     }
-    var definitions = source.innerHTML
-      .split(/<br\s*\/?\s*>/i)
+    var definitions = source.innerText
+      .split(/\n+/)
       .map(function (item) { return item.trim(); })
       .filter(Boolean);
     if (definitions.length <= 1) {
@@ -60,7 +60,7 @@ Dedicated Anki note type template for Kindle highlight vocabulary cards.
     source.style.display = "none";
     definitions.forEach(function (definition) {
       var item = document.createElement("li");
-      item.innerHTML = definition;
+      item.textContent = definition;
       list.appendChild(item);
     });
   })();

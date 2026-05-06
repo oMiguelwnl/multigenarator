@@ -169,6 +169,17 @@ def test_project_highlight_template_back_reuses_frontside_and_reveals_definition
     assert "{{Translation}}" not in template.back
 
 
+def test_project_highlight_template_definition_list_treats_items_as_text() -> None:
+    template = load_card_template(source_type="kindle-highlights")
+    malicious_definition = "<img src=x onerror=alert(1)>"
+
+    assert malicious_definition.startswith("<img")
+    assert "source.innerText" in template.back
+    assert "item.textContent = definition" in template.back
+    assert "source.innerHTML" not in template.back
+    assert "item.innerHTML" not in template.back
+
+
 def test_project_highlight_template_css_is_centered_responsive_and_scroll_safe() -> None:
     template = load_card_template(source_type="kindle-highlights")
     css = template.css
