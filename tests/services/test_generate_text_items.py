@@ -32,6 +32,7 @@ def make_candidate(
     item_key: str = "line-1",
     frequency_rank: int | None = None,
     frequency_level: int | None = None,
+    translation_target_language: str = "pt",
 ) -> LexicalCardCandidate:
     return LexicalCardCandidate(
         submitted_form=lemma,
@@ -42,7 +43,7 @@ def make_candidate(
         frequency_level=frequency_level,
         definitions_html=f"to {lemma}",
         definition_language="en",
-        translation_target_language="pt",
+        translation_target_language=translation_target_language,
         grounding_status=GroundingStatus.GROUNDED,
         provenance=LexicalProvenance(
             source="kaikki",
@@ -640,6 +641,55 @@ def test_generate_text_items_preserves_frequency_and_word_list_profile_validatio
     assert [call["require_translation"] for call in validation.calls] == [True, True]
     assert [call["min_sentence_tokens"] for call in validation.calls] == [4, 4]
     assert [call["max_sentence_tokens"] for call in validation.calls] == [12, 12]
+
+
+def test_generate_text_items_skips_same_language_translation_only_for_word_list() -> None:
+    repository = FakeTextRepository(
+        candidates=[
+            PersistedCandidate(
+                id="lex-frequency-1",
+                item_key="level-1-rank-0001",
+                candidate=make_candidate(
+                    item_key="level-1-rank-0001",
+                    frequency_rank=1,
+                    frequency_level=1,
+                    translation_target_language="en",
+                ),
+                source_type="frequency",
+            ),
+            PersistedCandidate(
+                id="lex-word-list-1",
+                item_key="line-1",
+                candidate=make_candidate(item_key="line-1", translation_target_language="en"),
+                source_type="word-list",
+            ),
+        ]
+    )
+    generation = FakeGenerationService(
+        bundles=[
+            make_bundle(sentence="I wash the cup at home.", translation="I wash the cup at home."),
+            make_bundle(sentence="I wash the cup at home.", translation="I wash the cup at home."),
+        ]
+    )
+    validation = FakeValidationService(
+        results=[
+            make_validation_result(status=ValidationStatus.PASSED, label=ConfidenceLabel.HIGH, score=0.95),
+            make_validation_result(status=ValidationStatus.PASSED, label=ConfidenceLabel.HIGH, score=0.95),
+        ]
+    )
+
+    service = GenerateTextItemsService(
+        job_repository=FakeJobRepository(),
+        lexical_repository=None,
+        text_repository=repository,
+        text_generation_service=generation,
+        text_validation_service=validation,
+        tatoeba_sentence_source=FakeTatoebaSentenceSource(fallback=None),
+    )
+
+    service.execute(job_id="job-same-language", deck_language=SupportedLanguage.EN)
+
+    assert [call["require_translation"] for call in validation.calls] == [True, False]
 
 
 def test_generate_text_items_infers_source_profile_when_source_type_is_absent() -> None:

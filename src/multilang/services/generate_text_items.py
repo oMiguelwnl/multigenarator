@@ -158,6 +158,14 @@ class GenerateTextItemsService:
         deck_language: SupportedLanguage,
     ) -> TextValidationResult:
         source_profile = get_source_profile(self._resolve_source_type(source_type, candidate=candidate))
+        is_same_language_word_list = (
+            source_profile.source_type == "word-list"
+            and candidate.translation_target_language == deck_language.value
+        )
+        require_translation = (
+            source_profile.requires_translation_validation
+            and not is_same_language_word_list
+        )
         validation = self.text_validation_service.validate(
             sentence=bundle.sentence,
             translation=bundle.translation,
@@ -165,10 +173,7 @@ class GenerateTextItemsService:
             lemma=candidate.lemma,
             definitions_html=candidate.definitions_html,
             disallowed_sentence_texts=set(seen_sentences or set()),
-            require_translation=(
-                source_profile.requires_translation_validation
-                and candidate.translation_target_language != deck_language.value
-            ),
+            require_translation=require_translation,
             min_sentence_tokens=source_profile.min_sentence_tokens,
             max_sentence_tokens=source_profile.max_sentence_tokens,
         )
