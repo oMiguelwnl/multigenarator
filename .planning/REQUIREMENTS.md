@@ -38,7 +38,7 @@ Requirements for the current milestone. Each requirement maps to exactly one roa
 
 ### Highlight Export and Template
 
-- [ ] **EXPORT-01**: User can export highlight decks to APKG, CSV, and TSV with a dedicated highlight note type, exact English field names, and no `Translation` field.
+- [x] **EXPORT-01**: User can export highlight decks to APKG, CSV, and TSV with a dedicated highlight note type, exact English field names, and no `Translation` field.
 - [x] **EXPORT-02**: User sees highlight card fronts with prompt-side content only and backs with `{{FrontSide}}`, an answer divider, and `Definition`.
 - [x] **EXPORT-03**: User gets centered, responsive, Multilang-colored highlight templates with safe packaged media references and no dangling field references.
 
@@ -101,7 +101,7 @@ Which phases cover which requirements. Updated during roadmap creation.
 | GEN-01 | Phase 12 | Complete |
 | GEN-02 | Phase 12 | Complete |
 | GEN-03 | Phase 12 | Complete |
-| EXPORT-01 | Phase 13 | Pending |
+| EXPORT-01 | Phase 13 | Complete |
 | EXPORT-02 | Phase 13 | Complete |
 | EXPORT-03 | Phase 13 | Complete |
 | PHON-01 | Phase 15 | Pending |
