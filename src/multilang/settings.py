@@ -66,6 +66,11 @@ class Settings(BaseSettings):
     azure_speech_output_format: AudioOutputFormat = "audio-24khz-48kbitrate-mono-mp3"
     audio_storage_dir: Path = Path(".multilang/audio")
     export_output_dir: Path = Path(".multilang/exports")
+    webdav_url: str | None = None
+    webdav_username: str | None = None
+    webdav_secret: str | None = None
+    webdav_timeout_seconds: float = 30.0
+    webdav_cache_dir: Path = Path(".multilang/highlights/cache")
     audio_voice_registry_version: str = VOICE_REGISTRY_VERSION
     tatoeba_enabled: bool = True
     supported_languages: list[SupportedLanguageCode] = Field(
