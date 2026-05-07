@@ -151,7 +151,14 @@ Plans:
   2. User can list remote Kindle highlight exports, select a file, and fetch it into the same local normalization path used by file imports.
   3. User receives distinct auth, path, network, malformed response, and empty-source failure messages.
   4. User can rerun WebDAV fetches against unchanged content and see an idempotent, redacted sync summary.
-**Plans**: TBD
+**Plans**: 4 plans
+
+Plans:
+
+- [ ] 14-01-PLAN.md — Define env-only WebDAV settings and redaction-safe domain contracts.
+- [ ] 14-02-PLAN.md — Implement the injectable WebDAV listing/fetch adapter with private content-hash cache writes.
+- [ ] 14-03-PLAN.md — Expose safe list/fetch CLI commands that reuse local highlight preview counts.
+- [ ] 14-04-PLAN.md — Wire WebDAV remote fetch into `generate --source highlights` and record idempotency/privacy evidence.
 
 ### Phase 15: Phonetics Template Refresh
 
