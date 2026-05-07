@@ -83,7 +83,7 @@ def test_missing_config_fails_before_request(tmp_path: Path) -> None:
 
 
 @pytest.mark.parametrize(
-    (status, code),
+    ("status", "code"),
     [(401, WebDAVFailureCode.AUTH), (403, WebDAVFailureCode.AUTH), (404, WebDAVFailureCode.PATH_NOT_FOUND)],
 )
 def test_list_exports_maps_status_failures(tmp_path: Path, status: int, code: WebDAVFailureCode) -> None:
@@ -119,7 +119,7 @@ def test_fetch_export_writes_content_hash_cache_file(tmp_path: Path) -> None:
 
     result = service.fetch_export("/dav/private/export.html")
 
-    assert result.content_hash == "dcb7bc9ddbfaa67a1dcefc53dc431822ad95803a7d5244da9a9a63eaab3e4682"
+    assert result.content_hash == "97a4f37e79c25ccaeac3823520dcd78721b018b6706e20da0b9a7469494aba69"
     assert result.cached_path == settings(tmp_path).webdav_cache_dir / f"{result.content_hash}.html"
     assert result.cached_path.read_bytes() == body
     assert result.size_bytes == len(body)
