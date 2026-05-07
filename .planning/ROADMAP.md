@@ -8,7 +8,7 @@
 
 ## Current Focus
 
-Phase 14: WebDAV Highlight Fetch Adapter.
+Phase 16: End-to-End v1.2 Audit.
 
 ## Phases
 
@@ -20,7 +20,8 @@ Phase 14: WebDAV Highlight Fetch Adapter.
 - [x] **Phase 13: Highlight Export and Template** - Highlight decks export with a dedicated note type, English fields, no Translation field, and responsive Definition-on-back cards. (completed 2026-05-06)
 - [x] **Phase 14: WebDAV Highlight Fetch Adapter** - Kindle highlight exports can be fetched securely from WebDAV with clear failures and idempotent import summaries.
  (completed 2026-05-07)
-- [ ] **Phase 15: Phonetics Template Refresh** - Phonetics cards use the supplied layout, sentence translation back reveal, Multilang colors, and no unused fields.
+- [x] **Phase 15: Phonetics Template Refresh** - Phonetics cards use the supplied layout, sentence translation back reveal, Multilang colors, and no unused fields.
+ (completed 2026-05-07)
 - [ ] **Phase 16: End-to-End v1.2 Audit** - Local Kindle highlights, highlight export, phonetics export, and existing-mode regressions are proven with evidence.
 
 ## Phase Details
@@ -171,8 +172,13 @@ Plans:
   2. User sees `Sentence Translation` revealed on the phonetics card back using Multilang colors.
   3. User receives phonetics exports without `Notes`, `is_priming`, or `is_sentence` fields or dangling references.
   4. User can still play existing Russian phonetics letter, word, and sentence audio after the template refresh.
-**Plans**: TBD
+**Plans**: 2 plans complete
 **UI hint**: yes
+
+Plans:
+
+- [x] 15-01-PLAN.md — Refresh the phonetics-only field contract, front/back template, CSS, and focused tests.
+- [x] 15-02-PLAN.md — Add export-level evidence and human Anki verification for the refreshed phonetics template.
 
 ### Phase 16: End-to-End v1.2 Audit
 
@@ -192,7 +198,7 @@ Plans:
 |-----------|--------|-------|--------|---------|
 | v1.0 MVP | 1-7 | 34/34 | Complete | 2026-04-29 |
 | v1.1 Card Quality Refresh | 8 | 4/4 | Complete | 2026-05-02 |
-| v1.2 Kindle Highlights and Template Refresh | 9-16 | 6/9+TBD | In progress | - |
+| v1.2 Kindle Highlights and Template Refresh | 9-16 | 26/26+TBD | In progress | - |
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
@@ -203,5 +209,5 @@ Plans:
 | 12. Highlight Generation, Audio, and QA | 4/4 | Complete    | 2026-05-05 |
 | 13. Highlight Export and Template | 3/3 | Complete    | 2026-05-06 |
 | 14. WebDAV Highlight Fetch Adapter | 4/4 | Complete | 2026-05-07 |
-| 15. Phonetics Template Refresh | 0/TBD | Not started | - |
+| 15. Phonetics Template Refresh | 2/2 | Complete | 2026-05-07 |
 | 16. End-to-End v1.2 Audit | 0/TBD | Not started | - |

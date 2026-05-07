@@ -8,7 +8,7 @@ uv run pytest tests/services/test_russian_phoneme_deck.py tests/integration/test
 
 ## Result
 
-PASS — `5 passed in 0.52s` during execution.
+PASS — `5 passed in 0.54s` after final verification.
 
 ## Final Field Contract
 
@@ -48,6 +48,8 @@ The integration test calls `export_russian_phoneme_deck()` with a temporary APKG
 ## Checkpoint-Backed Visual Behavior
 
 After human checkpoint clarification, the literal text `Sentence Translation` is not shown on the front. The refreshed template follows the v1 reveal pattern: the front carries the `Sentence Translation` field in a hidden `#sentenceTranslation` element, and the back uses `{{FrontSide}}` plus a small script to reveal that existing hidden content. Formatting and colors are inspired by `fonetico.md`'s neutral/purple palette, including the audio button, hint, divider, card surface, header, and sentence translation variables.
+
+The user approved `.multilang/tmp/russian-phonemes-refresh-check-v3.apkg` at the human verification checkpoint: front hides both the literal label and actual translation, back reveals the actual translation, and styling follows the supplied neutral/purple phonetics reference.
 
 ## Audio Preservation Evidence
 

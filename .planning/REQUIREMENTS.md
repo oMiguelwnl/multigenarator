@@ -44,9 +44,9 @@ Requirements for the current milestone. Each requirement maps to exactly one roa
 
 ### Phonetics Template Refresh
 
-- [ ] **PHON-01**: User sees phonetics card fronts using the provided layout for spellings, sound, letter audio, example word, word audio, word translation, example sentence, and sentence audio.
-- [ ] **PHON-02**: User sees `Sentence Translation` revealed on the phonetics card back, using Multilang colors.
-- [ ] **PHON-03**: User receives phonetics exports without `Notes`, `is_priming`, or `is_sentence` fields or references while existing Russian phonetics audio behavior remains working.
+- [x] **PHON-01**: User sees phonetics card fronts using the provided layout for spellings, sound, letter audio, example word, word audio, word translation, example sentence, and sentence audio.
+- [x] **PHON-02**: User sees `Sentence Translation` revealed on the phonetics card back, using Multilang colors.
+- [x] **PHON-03**: User receives phonetics exports without `Notes`, `is_priming`, or `is_sentence` fields or references while existing Russian phonetics audio behavior remains working.
 
 ### Regression, Security, and Evidence
 
@@ -104,9 +104,9 @@ Which phases cover which requirements. Updated during roadmap creation.
 | EXPORT-01 | Phase 13 | Complete |
 | EXPORT-02 | Phase 13 | Complete |
 | EXPORT-03 | Phase 13 | Complete |
-| PHON-01 | Phase 15 | Pending |
-| PHON-02 | Phase 15 | Pending |
-| PHON-03 | Phase 15 | Pending |
+| PHON-01 | Phase 15 | Complete |
+| PHON-02 | Phase 15 | Complete |
+| PHON-03 | Phase 15 | Complete |
 | SEC-01 | Phase 09 | Complete |
 | SEC-02 | Phase 09 | Complete |
 | EVID-01 | Phase 16 | Pending |
@@ -120,4 +120,4 @@ Which phases cover which requirements. Updated during roadmap creation.
 
 ---
 *Requirements defined: 2026-05-03*  
-*Last updated: 2026-05-07 after Phase 14 completion*
+*Last updated: 2026-05-07 after Phase 15 completion*

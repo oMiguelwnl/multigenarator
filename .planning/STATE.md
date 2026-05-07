@@ -4,14 +4,14 @@ milestone: v1.2
 milestone_name: Audit
 status: executing
 stopped_at: None
-last_updated: "2026-05-07T13:52:31Z"
-last_activity: 2026-05-07 -- Phase 14 completed
+last_updated: "2026-05-07T14:32:59Z"
+last_activity: 2026-05-07 -- Phase 15 completed
 progress:
   total_phases: 9
-  completed_phases: 7
-  total_plans: 28
-  completed_plans: 28
-  percent: 90
+  completed_phases: 8
+  total_plans: 30
+  completed_plans: 30
+  percent: 94
 ---
 
 # Project State
@@ -21,22 +21,22 @@ progress:
 See: .planning/PROJECT.md (updated 2026-05-06)
 
 **Core value:** Generate reliable, high-quality Anki cards for real vocabulary the learner needs to study, with accurate definitions, examples, translations where appropriate, and audio.  
-**Current focus:** Phase 15 — Phonetics Template Refresh
+**Current focus:** Phase 16 — End-to-End v1.2 Audit
 
 ## Current Position
 
-Phase: 15
+Phase: 16
 Plan: Not started
 Status: Ready to plan
-Last activity: 2026-05-07 -- Phase 14 completed
+Last activity: 2026-05-07 -- Phase 15 completed
 
-Progress: [██████████] 100%
+Progress: [█████████░] 94%
 
 ## Performance Metrics
 
 **Velocity:**
 
-- Total plans completed: 50
+- Total plans completed: 52
 - v1.0 plans completed: 34
 - v1.1 plans completed: 4
 - Best-effort task count from v1.0 summaries: 68
@@ -83,6 +83,8 @@ Progress: [██████████] 100%
 | Phase 14-webdav-highlight-fetch-adapter P02 | 25min | 2 tasks | 2 files |
 | Phase 14-webdav-highlight-fetch-adapter P03 | 25min | 2 tasks | 2 files |
 | Phase 14-webdav-highlight-fetch-adapter P04 | 25min | 2 tasks | 4 files |
+| Phase 15-phonetics-template-refresh P01 | 12min | 2 tasks | 3 files |
+| Phase 15-phonetics-template-refresh P02 | 28min | 3 tasks | 4 files |
 
 ## Accumulated Context
 
@@ -126,6 +128,8 @@ Full decision history is in `.planning/PROJECT.md` and `.planning/milestones/v1.
 - [Phase 14-webdav-highlight-fetch-adapter]: WebDAV list/fetch behavior is isolated behind an injectable transport so tests and evidence never require live credentials.
 - [Phase 14-webdav-highlight-fetch-adapter]: Fetched WebDAV exports are cached under ignored `.multilang/highlights/cache/` using SHA-256 content identity before entering the existing Kindle highlight parser/ingest path.
 - [Phase 14-webdav-highlight-fetch-adapter]: `--webdav-remote-path` is valid only with public `--source highlights` and mutually exclusive with local `--input-file`.
+- [Phase 15-phonetics-template-refresh]: Russian phonetics exports use a refreshed nine-field note contract while keeping `sort_index` internal for ordering and GUIDs.
+- [Phase 15-phonetics-template-refresh]: Phonetics sentence translation follows the v1 hidden-front and `{{FrontSide}}` back-reveal pattern, with neutral/purple styling inspired by `fonetico.md`.
 
 ### Pending Todos
 
@@ -154,6 +158,6 @@ Items acknowledged and carried forward from v1.0 milestone close:
 
 ## Session Continuity
 
-Last session: 2026-05-07T13:52:31Z
-Stopped at: Completed 14-04-PLAN.md
+Last session: 2026-05-07T14:32:59Z
+Stopped at: Completed 15-02-PLAN.md
 Resume file: None
