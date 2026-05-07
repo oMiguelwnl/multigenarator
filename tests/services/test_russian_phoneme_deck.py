@@ -9,6 +9,7 @@ from pathlib import Path
 from multilang.services.russian_phoneme_deck import (
     PHONEME_FIELD_NAMES,
     RUSSIAN_PHONEME_CARDS,
+    RussianPhonemeCard,
     build_russian_phoneme_model,
     build_russian_phoneme_note,
     export_russian_phoneme_deck,
@@ -28,34 +29,75 @@ def test_russian_phoneme_cards_are_ordered_and_have_unique_sentence_words() -> N
 
 def test_build_russian_phoneme_model_uses_intro_template() -> None:
     model = build_russian_phoneme_model()
-    note = build_russian_phoneme_note(RUSSIAN_PHONEME_CARDS[0], model=model)
+    audio_card = RussianPhonemeCard(
+        sort_index=999,
+        letters="ж",
+        ipa="/ʐ/",
+        example_word="жук",
+        example_word_translation="beetle",
+        example_sentence="Женя жарит жёлтый желудь.",
+        example_sentence_translation="Zhenya fries a yellow acorn.",
+        letter_audio="[sound:letter.mp3]",
+        word_audio="[sound:word.mp3]",
+        sentence_audio="[sound:sentence.mp3]",
+    )
+    note = build_russian_phoneme_note(audio_card, model=model)
 
     assert [field["name"] for field in model.fields] == [
-        "SortIndex",
         "Spellings",
-        "IPA",
+        "Sound",
         "letter_audio",
         "Example Word",
         "word_audio",
         "Word Translation",
-        "Definitions",
-        "Exemple Sentence",
+        "Example Sentence",
         "sentence_audio",
-        "Translation",
-        "image",
+        "Sentence Translation",
     ]
     assert tuple(field["name"] for field in model.fields) == PHONEME_FIELD_NAMES
-    assert "The letter(s) is:" in model.templates[0]["qfmt"]
-    assert "{{Spellings}}" in model.templates[0]["qfmt"]
-    assert "{{letter_audio}}" in model.templates[0]["qfmt"]
-    assert "{{Exemple Sentence}}" in model.templates[0]["qfmt"]
-    assert "document.getElementById" in model.templates[0]["afmt"]
-    assert ".russianCard .ruLetterPanel" in model.css
-    assert note.fields[1] == "а"
-    assert note.fields[2] == "/a/"
-    assert note.fields[7]
-    assert note.fields[8] == "Анна нашла карту."
-    assert note.fields[10] == "Anna found a map."
+    front = model.templates[0]["qfmt"]
+    back = model.templates[0]["afmt"]
+    forbidden_references = (
+        "Notes",
+        "is_priming",
+        "is_sentence",
+        "Definitions",
+        "image",
+        "IPA",
+        "Exemple Sentence",
+        "Translation",
+    )
+
+    for field_reference in (
+        "Spellings",
+        "Sound",
+        "letter_audio",
+        "Example Word",
+        "word_audio",
+        "Word Translation",
+        "Example Sentence",
+        "sentence_audio",
+    ):
+        assert f"{{{{{field_reference}}}}}" in front
+    assert "{{hint:Sentence Translation}}" not in front
+    assert "{{FrontSide}}" in back
+    assert "{{Sentence Translation}}" in back
+    assert "sentenceTranslation" in back
+    for forbidden_reference in forbidden_references:
+        assert forbidden_reference not in front
+        assert forbidden_reference not in back
+    assert "--color-multilang-primary" in model.css
+    assert note.fields == [
+        "ж",
+        "/ʐ/",
+        "[sound:letter.mp3]",
+        "жук",
+        "[sound:word.mp3]",
+        "beetle",
+        "Женя жарит жёлтый желудь.",
+        "[sound:sentence.mp3]",
+        "Zhenya fries a yellow acorn.",
+    ]
 
 
 def test_export_russian_phoneme_deck_writes_apkg(tmp_path: Path) -> None:
