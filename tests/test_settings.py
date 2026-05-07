@@ -44,3 +44,29 @@ def test_settings_load_local_dotenv_file(tmp_path: Path, monkeypatch) -> None:
 
     assert settings.database_url == "sqlite+pysqlite:///dotenv.db"
     assert settings.default_retry_attempts == 7
+
+
+def test_webdav_settings_default_to_unconfigured() -> None:
+    settings = Settings(_env_file=None)
+
+    assert settings.webdav_url is None
+    assert settings.webdav_username is None
+    assert settings.webdav_secret is None
+    assert settings.webdav_timeout_seconds == 30.0
+    assert settings.webdav_cache_dir == Path(".multilang/highlights/cache")
+
+
+def test_webdav_settings_load_multilang_environment(monkeypatch) -> None:
+    monkeypatch.setenv("MULTILANG_WEBDAV_URL", "https://example.invalid/dav/")
+    monkeypatch.setenv("MULTILANG_WEBDAV_USERNAME", "reader")
+    monkeypatch.setenv("MULTILANG_WEBDAV_SECRET", "reader-secret")
+    monkeypatch.setenv("MULTILANG_WEBDAV_TIMEOUT_SECONDS", "12.5")
+    monkeypatch.setenv("MULTILANG_WEBDAV_CACHE_DIR", ".multilang/highlights/cache/custom")
+
+    settings = Settings(_env_file=None)
+
+    assert settings.webdav_url == "https://example.invalid/dav/"
+    assert settings.webdav_username == "reader"
+    assert settings.webdav_secret == "reader-secret"
+    assert settings.webdav_timeout_seconds == 12.5
+    assert settings.webdav_cache_dir == Path(".multilang/highlights/cache/custom")
