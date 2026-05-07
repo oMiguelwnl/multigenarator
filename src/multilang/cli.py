@@ -631,6 +631,13 @@ def create_app(
             Path | None,
             typer.Option("--input-file", exists=False, dir_okay=False, help="Path to a word list."),
         ] = None,
+        webdav_remote_path: Annotated[
+            str | None,
+            typer.Option(
+                "--webdav-remote-path",
+                help="Explicit WebDAV remote Kindle export path for --source highlights.",
+            ),
+        ] = None,
         lexicon_source_file: Annotated[
             Path | None,
             typer.Option(
@@ -674,11 +681,24 @@ def create_app(
     ) -> None:
         if source not in {"frequency", "word-list", "highlights"}:
             raise typer.BadParameter("--source must be one of: frequency, word-list, highlights")
+        if webdav_remote_path is not None and source != "highlights":
+            raise typer.BadParameter("--webdav-remote-path is only valid when --source highlights")
+        if webdav_remote_path is not None and input_file is not None:
+            raise typer.BadParameter("--input-file and --webdav-remote-path are mutually exclusive")
 
         resolved_cards_per_level = cards_per_level
         if source == "frequency" and test_mode and resolved_cards_per_level is None:
             resolved_cards_per_level = TEST_MODE_CARDS_PER_LEVEL
         internal_source = "kindle-highlights" if source == "highlights" else source
+        if webdav_remote_path is not None:
+            try:
+                fetch_result = resolve_webdav_service().fetch_export(webdav_remote_path)
+            except WebDAVError as exc:
+                _print_webdav_error(exc)
+                raise typer.Exit(code=1) from exc
+            input_file = fetch_result.cached_path
+            typer.echo(f"webdav_content_hash={fetch_result.content_hash}")
+            typer.echo(f"webdav_size_bytes={fetch_result.size_bytes}")
 
         request = GenerationRequest(
             language=language,
