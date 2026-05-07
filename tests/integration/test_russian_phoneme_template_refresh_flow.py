@@ -46,6 +46,8 @@ def test_russian_phoneme_template_refresh_exports_apkg_with_safe_references(tmp_
     with zipfile.ZipFile(output_path) as archive:
         assert "collection.anki2" in archive.namelist()
     assert tuple(field["name"] for field in model.fields) == PHONEME_FIELD_NAMES
+    assert "{{hint:Sentence Translation}}" in template["qfmt"]
+    assert "{{Sentence Translation}}" in template["afmt"]
     assert _template_references(template["qfmt"]) <= allowed_references
     assert _template_references(template["afmt"]) <= allowed_references
     assert _template_references(template["qfmt"]).isdisjoint(_FORBIDDEN_REFERENCES)

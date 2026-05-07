@@ -86,7 +86,7 @@ def test_build_russian_phoneme_model_uses_intro_template() -> None:
         "sentence_audio",
     ):
         assert f"{{{{{field_reference}}}}}" in front
-    assert "{{hint:Sentence Translation}}" not in front
+    assert "{{hint:Sentence Translation}}" in front
     assert "{{FrontSide}}" in back
     assert "{{Sentence Translation}}" in back
     assert "sentenceTranslation" in back

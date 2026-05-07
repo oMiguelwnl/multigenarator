@@ -54,7 +54,9 @@ Template used only by the introductory Russian phoneme deck.
         <span class="exampleWord">{{Example Sentence}}</span>
         <span class="wordAudioButton"> {{sentence_audio}} </span>
       </div>
-      <div id="sentenceTranslation" class="sentenceTranslation backOnly" aria-hidden="true"></div>
+      <div id="sentenceTranslation" class="sentenceTranslation">
+        {{hint:Sentence Translation}}
+      </div>
     </div>
   </div>
 </div>
@@ -70,8 +72,6 @@ Template used only by the introductory Russian phoneme deck.
     var translation = document.getElementById("sentenceTranslation");
     if (translation) {
       translation.textContent = "{{Sentence Translation}}";
-      translation.classList.remove("backOnly");
-      translation.removeAttribute("aria-hidden");
     }
   })();
 </script>
@@ -256,6 +256,5 @@ body {
 .replay-button svg path { fill: var(--color-multilang-primary); }
 .replay-button svg circle { fill: none; stroke: none; }
 
-.backOnly { display: none; }
 .backRevealFallback { margin-top: 12px; }
 ```

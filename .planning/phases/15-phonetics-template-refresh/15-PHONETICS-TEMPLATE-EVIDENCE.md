@@ -45,6 +45,10 @@ Automated service and integration tests assert the refreshed model/template does
 
 The integration test calls `export_russian_phoneme_deck()` with a temporary APKG path, verifies the package contains `collection.anki2`, and confirms the reported card count equals the full static Russian phoneme card set.
 
+## Screenshot-Backed Visual Behavior
+
+After human checkpoint feedback from `foto1.png` and `foto2.png`, the template front preserves the visible `{{hint:Sentence Translation}}` area under the example sentence, and the back replaces that same area with the actual `Sentence Translation` value using the Multilang sentence translation styling.
+
 ## Audio Preservation Evidence
 
 A synthetic `RussianPhonemeCard` carrying `[sound:letter.mp3]`, `[sound:word.mp3]`, and `[sound:sentence.mp3]` is exported into the expected `letter_audio`, `word_audio`, and `sentence_audio` positions. The front template contains all three audio field references, preserving existing Russian phonetics audio rendering behavior.
