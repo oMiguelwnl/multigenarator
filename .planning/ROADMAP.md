@@ -18,7 +18,8 @@ Phase 14: WebDAV Highlight Fetch Adapter.
 - [x] **Phase 11: Highlight Pipeline Integration** - Highlight candidates enter the existing job, grounding, resume, and duplicate-prevention flow as a new deck mode. (completed 2026-05-05)
 - [x] **Phase 12: Highlight Generation, Audio, and QA** - Highlight cards receive privacy-aware text generation, richer concise examples, validation, and audio. (completed 2026-05-05)
 - [x] **Phase 13: Highlight Export and Template** - Highlight decks export with a dedicated note type, English fields, no Translation field, and responsive Definition-on-back cards. (completed 2026-05-06)
-- [ ] **Phase 14: WebDAV Highlight Fetch Adapter** - Kindle highlight exports can be fetched securely from WebDAV with clear failures and idempotent import summaries.
+- [x] **Phase 14: WebDAV Highlight Fetch Adapter** - Kindle highlight exports can be fetched securely from WebDAV with clear failures and idempotent import summaries.
+ (completed 2026-05-07)
 - [ ] **Phase 15: Phonetics Template Refresh** - Phonetics cards use the supplied layout, sentence translation back reveal, Multilang colors, and no unused fields.
 - [ ] **Phase 16: End-to-End v1.2 Audit** - Local Kindle highlights, highlight export, phonetics export, and existing-mode regressions are proven with evidence.
 
@@ -75,7 +76,7 @@ Plans:
   3. User receives clear rejected-highlight reasons for unusable, malformed, empty, unsafe, or language-mismatched fragments instead of silent continuation.
   4. User receives deterministic vocabulary candidates for all supported languages with duplicate filtering and first-seen ordering.
   5. User can review imported highlight count, extracted candidate count, rejected count, duplicate count, and planned card count before expensive generation.
-**Plans**: 4 plans
+**Plans**: 4 plans complete
 
 Plans:
 
@@ -155,10 +156,10 @@ Plans:
 
 Plans:
 
-- [ ] 14-01-PLAN.md — Define env-only WebDAV settings and redaction-safe domain contracts.
-- [ ] 14-02-PLAN.md — Implement the injectable WebDAV listing/fetch adapter with private content-hash cache writes.
-- [ ] 14-03-PLAN.md — Expose safe list/fetch CLI commands that reuse local highlight preview counts.
-- [ ] 14-04-PLAN.md — Wire WebDAV remote fetch into `generate --source highlights` and record idempotency/privacy evidence.
+- [x] 14-01-PLAN.md — Define env-only WebDAV settings and redaction-safe domain contracts.
+- [x] 14-02-PLAN.md — Implement the injectable WebDAV listing/fetch adapter with private content-hash cache writes.
+- [x] 14-03-PLAN.md — Expose safe list/fetch CLI commands that reuse local highlight preview counts.
+- [x] 14-04-PLAN.md — Wire WebDAV remote fetch into `generate --source highlights` and record idempotency/privacy evidence.
 
 ### Phase 15: Phonetics Template Refresh
 
@@ -191,7 +192,7 @@ Plans:
 |-----------|--------|-------|--------|---------|
 | v1.0 MVP | 1-7 | 34/34 | Complete | 2026-04-29 |
 | v1.1 Card Quality Refresh | 8 | 4/4 | Complete | 2026-05-02 |
-| v1.2 Kindle Highlights and Template Refresh | 9-16 | 5/9+TBD | In progress | - |
+| v1.2 Kindle Highlights and Template Refresh | 9-16 | 6/9+TBD | In progress | - |
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
@@ -201,6 +202,6 @@ Plans:
 | 11. Highlight Pipeline Integration | 4/4 | Complete   | 2026-05-05 |
 | 12. Highlight Generation, Audio, and QA | 4/4 | Complete    | 2026-05-05 |
 | 13. Highlight Export and Template | 3/3 | Complete    | 2026-05-06 |
-| 14. WebDAV Highlight Fetch Adapter | 0/TBD | Not started | - |
+| 14. WebDAV Highlight Fetch Adapter | 4/4 | Complete | 2026-05-07 |
 | 15. Phonetics Template Refresh | 0/TBD | Not started | - |
 | 16. End-to-End v1.2 Audit | 0/TBD | Not started | - |

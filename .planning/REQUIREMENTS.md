@@ -11,8 +11,8 @@ Requirements for the current milestone. Each requirement maps to exactly one roa
 
 ### Kindle/WebDAV Ingestion
 
-- [ ] **INGEST-01**: User can configure the Kindle WebDAV URL, username, and secret without editing source code or exposing credentials in logs or artifacts.
-- [ ] **INGEST-02**: User can fetch Kindle highlight exports from WebDAV with remote listing, file selection, and distinct auth, path, network, and empty-source failures.
+- [x] **INGEST-01**: User can configure the Kindle WebDAV URL, username, and secret without editing source code or exposing credentials in logs or artifacts.
+- [x] **INGEST-02**: User can fetch Kindle highlight exports from WebDAV with remote listing, file selection, and distinct auth, path, network, and empty-source failures.
 - [x] **INGEST-03**: User can process a local Kindle export file through the same normalization path used by WebDAV imports.
 - [x] **INGEST-04**: User can rerun the same highlight import without creating duplicate cards, using content hashes, import manifests, and a visible import summary.
 
@@ -86,8 +86,8 @@ Which phases cover which requirements. Updated during roadmap creation.
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| INGEST-01 | Phase 14 | Pending |
-| INGEST-02 | Phase 14 | Pending |
+| INGEST-01 | Phase 14 | Complete |
+| INGEST-02 | Phase 14 | Complete |
 | INGEST-03 | Phase 10 | Complete |
 | INGEST-04 | Phase 11 | Complete |
 | NORM-01 | Phase 10 | Complete |
@@ -120,4 +120,4 @@ Which phases cover which requirements. Updated during roadmap creation.
 
 ---
 *Requirements defined: 2026-05-03*  
-*Last updated: 2026-05-04 after Phase 09 completion*
+*Last updated: 2026-05-07 after Phase 14 completion*

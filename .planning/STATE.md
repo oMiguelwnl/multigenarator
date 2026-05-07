@@ -3,15 +3,15 @@ gsd_state_version: 1.0
 milestone: v1.2
 milestone_name: Audit
 status: executing
-stopped_at: Phase 14 context gathered
-last_updated: "2026-05-07T13:27:13.350Z"
-last_activity: 2026-05-07 -- Phase 14 planning complete
+stopped_at: None
+last_updated: "2026-05-07T13:52:31Z"
+last_activity: 2026-05-07 -- Phase 14 completed
 progress:
   total_phases: 9
-  completed_phases: 6
+  completed_phases: 7
   total_plans: 28
-  completed_plans: 24
-  percent: 86
+  completed_plans: 28
+  percent: 90
 ---
 
 # Project State
@@ -21,14 +21,14 @@ progress:
 See: .planning/PROJECT.md (updated 2026-05-06)
 
 **Core value:** Generate reliable, high-quality Anki cards for real vocabulary the learner needs to study, with accurate definitions, examples, translations where appropriate, and audio.  
-**Current focus:** Phase 14 — WebDAV Highlight Fetch Adapter
+**Current focus:** Phase 15 — Phonetics Template Refresh
 
 ## Current Position
 
-Phase: 14
+Phase: 15
 Plan: Not started
-Status: Ready to execute
-Last activity: 2026-05-07 -- Phase 14 planning complete
+Status: Ready to plan
+Last activity: 2026-05-07 -- Phase 14 completed
 
 Progress: [██████████] 100%
 
@@ -79,6 +79,10 @@ Progress: [██████████] 100%
 | Phase 13-highlight-export-and-template P01 | 3min | 2 tasks | 3 files |
 | Phase 13-highlight-export-and-template P02 | 2min | 2 tasks | 2 files |
 | Phase 13-highlight-export-and-template P03 | 2min | 2 tasks | 3 files |
+| Phase 14-webdav-highlight-fetch-adapter P01 | 25min | 2 tasks | 5 files |
+| Phase 14-webdav-highlight-fetch-adapter P02 | 25min | 2 tasks | 2 files |
+| Phase 14-webdav-highlight-fetch-adapter P03 | 25min | 2 tasks | 2 files |
+| Phase 14-webdav-highlight-fetch-adapter P04 | 25min | 2 tasks | 4 files |
 
 ## Accumulated Context
 
@@ -118,6 +122,10 @@ Full decision history is in `.planning/PROJECT.md` and `.planning/milestones/v1.
 - [Phase 13-highlight-export-and-template]: Template loader validation errors are surfaced as ExportAnkiPackageError at the APKG boundary for clear pre-write failure behavior.
 - [Phase 13-highlight-export-and-template]: Treat highlight CSV/TSV import metadata as a strict contract equal to APKG template/model wiring.
 - [Phase 13-highlight-export-and-template]: Use synthetic highlight rows and local temporary audio for evidence so export tests do not leak private reading text or paths.
+- [Phase 14-webdav-highlight-fetch-adapter]: WebDAV credentials are env-only settings; no CLI username or secret flags are exposed.
+- [Phase 14-webdav-highlight-fetch-adapter]: WebDAV list/fetch behavior is isolated behind an injectable transport so tests and evidence never require live credentials.
+- [Phase 14-webdav-highlight-fetch-adapter]: Fetched WebDAV exports are cached under ignored `.multilang/highlights/cache/` using SHA-256 content identity before entering the existing Kindle highlight parser/ingest path.
+- [Phase 14-webdav-highlight-fetch-adapter]: `--webdav-remote-path` is valid only with public `--source highlights` and mutually exclusive with local `--input-file`.
 
 ### Pending Todos
 
@@ -146,6 +154,6 @@ Items acknowledged and carried forward from v1.0 milestone close:
 
 ## Session Continuity
 
-Last session: 2026-05-06T18:20:35.246Z
-Stopped at: Phase 14 context gathered
-Resume file: .planning/phases/14-webdav-highlight-fetch-adapter/14-CONTEXT.md
+Last session: 2026-05-07T13:52:31Z
+Stopped at: Completed 14-04-PLAN.md
+Resume file: None
