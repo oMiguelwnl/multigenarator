@@ -14,18 +14,15 @@ PHONEME_DECK_ID = 1_602_300_602
 PHONEME_NOTE_TYPE_NAME = "Multilang::Russian Phoneme"
 DEFAULT_RUSSIAN_PHONEME_DECK_NAME = "Multilang Russian::Intro Phonemes"
 PHONEME_FIELD_NAMES = (
-    "SortIndex",
     "Spellings",
-    "IPA",
+    "Sound",
     "letter_audio",
     "Example Word",
     "word_audio",
     "Word Translation",
-    "Definitions",
-    "Exemple Sentence",
+    "Example Sentence",
     "sentence_audio",
-    "Translation",
-    "image",
+    "Sentence Translation",
 )
 _TEMPLATE_SECTION_RE = re.compile(
     r"## Front Template\s+```html\n(?P<front>.*?)```.*?"
@@ -44,7 +41,9 @@ class RussianPhonemeCard:
     example_word_translation: str
     example_sentence: str
     example_sentence_translation: str
-    definitions: str | None = None
+    letter_audio: str = ""
+    word_audio: str = ""
+    sentence_audio: str = ""
 
     @property
     def guid(self) -> str:
@@ -163,24 +162,17 @@ def export_russian_phoneme_deck(
 
 def _phoneme_card_fields(card: RussianPhonemeCard) -> list[str]:
     values = {
-        "SortIndex": str(card.sort_index),
         "Spellings": card.letters,
-        "IPA": card.ipa,
-        "letter_audio": "",
+        "Sound": card.ipa,
+        "letter_audio": card.letter_audio,
         "Example Word": card.example_word,
-        "word_audio": "",
+        "word_audio": card.word_audio,
         "Word Translation": card.example_word_translation,
-        "Definitions": card.definitions or _default_definition(card),
-        "Exemple Sentence": card.example_sentence,
-        "sentence_audio": "",
-        "Translation": card.example_sentence_translation,
-        "image": "",
+        "Example Sentence": card.example_sentence,
+        "sentence_audio": card.sentence_audio,
+        "Sentence Translation": card.example_sentence_translation,
     }
     return [values[field_name] for field_name in PHONEME_FIELD_NAMES]
-
-
-def _default_definition(card: RussianPhonemeCard) -> str:
-    return f"Russian spelling {card.letters} is practiced here with the sound {card.ipa}."
 
 
 def _load_russian_phoneme_template() -> dict[str, str]:

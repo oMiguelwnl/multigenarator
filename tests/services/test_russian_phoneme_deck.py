@@ -16,6 +16,13 @@ from multilang.services.russian_phoneme_deck import (
 )
 
 
+_FIELD_REFERENCE_RE = re.compile(r"{{[#/^]?([^}:]+)}}|{{hint:([^}]+)}}")
+
+
+def _template_references(template: str) -> set[str]:
+    return {match.group(1) or match.group(2) for match in _FIELD_REFERENCE_RE.finditer(template)}
+
+
 def test_russian_phoneme_cards_are_ordered_and_have_unique_sentence_words() -> None:
     assert len(RUSSIAN_PHONEME_CARDS) >= 40
     assert [card.sort_index for card in RUSSIAN_PHONEME_CARDS] == list(
@@ -57,7 +64,7 @@ def test_build_russian_phoneme_model_uses_intro_template() -> None:
     assert tuple(field["name"] for field in model.fields) == PHONEME_FIELD_NAMES
     front = model.templates[0]["qfmt"]
     back = model.templates[0]["afmt"]
-    forbidden_references = (
+    forbidden_references = {
         "Notes",
         "is_priming",
         "is_sentence",
@@ -66,7 +73,7 @@ def test_build_russian_phoneme_model_uses_intro_template() -> None:
         "IPA",
         "Exemple Sentence",
         "Translation",
-    )
+    }
 
     for field_reference in (
         "Spellings",
@@ -83,9 +90,8 @@ def test_build_russian_phoneme_model_uses_intro_template() -> None:
     assert "{{FrontSide}}" in back
     assert "{{Sentence Translation}}" in back
     assert "sentenceTranslation" in back
-    for forbidden_reference in forbidden_references:
-        assert forbidden_reference not in front
-        assert forbidden_reference not in back
+    assert _template_references(front).isdisjoint(forbidden_references)
+    assert _template_references(back).isdisjoint(forbidden_references)
     assert "--color-multilang-primary" in model.css
     assert note.fields == [
         "ж",

@@ -4,33 +4,31 @@ Template used only by the introductory Russian phoneme deck.
 
 ## Fields
 
-- SortIndex
 - Spellings
-- IPA
+- Sound
 - letter_audio
 - Example Word
 - word_audio
 - Word Translation
-- Definitions
-- Exemple Sentence
+- Example Sentence
 - sentence_audio
-- Translation
-- image
+- Sentence Translation
 
 ## Front Template
 
 ```html
-<div class="customCard cardBack russianCard">
-  <div class="horizontalPadding">
-    <div class="ruLetterPanel">
-      <div class="header">The letter(s) is:</div>
-      <div class="ruLetterValue">{{Spellings}}</div>
+<div class="customCard cardBack phonemeCard">
+  <div class="targetWordContainer">
+    <div class="targetWordBox">
+      <div class="hint">The letter(s) is:</div>
+      <span class="targetIPA"> {{Spellings}} </span>
     </div>
-
-    <div class="ruSoundRow centerVertically">
-      <span class="ruSoundLabel">sounds like:</span>
-      <span class="ipa">{{IPA}}</span>
-      <span class="ruAudioButton">{{letter_audio}}</span>
+    <div class="row centerVertically" style="margin-bottom: -8px">
+      <div class="hint">Sounds like:</div>
+      <div class="indent centerVertically">
+        <span class="targetIPA"> {{Sound}} </span>
+        <span class="wordAudioButton"> {{letter_audio}} </span>
+      </div>
     </div>
   </div>
 
@@ -38,21 +36,12 @@ Template used only by the introductory Russian phoneme deck.
 
   <div class="horizontalPadding">
     <div class="header">example word:</div>
-    <div class="ruExampleRow centerVertically">
-      <span class="ruExampleWord">{{Example Word}}</span>
-      <span class="wordAudioButtonBack">{{word_audio}}</span>
-      <span class="ruExampleTranslation">{{Word Translation}}</span>
-    </div>
-  </div>
-
-  <div class="dividerLine"></div>
-
-  <div class="horizontalPadding">
-    <div class="header">definition:</div>
-    <div class="indent">
-      <ul class="definitionsList">
-        {{#Definitions}}<li>{{Definitions}}</li>{{/Definitions}}
-      </ul>
+    <div class="centerVertically wrap" style="margin-top: -8px">
+      <div class="indent centerVertically">
+        <span class="exampleWord"> {{Example Word}} </span>
+        <span class="wordAudioButton"> {{word_audio}} </span>
+      </div>
+      <div class="sentenceTranslation">{{Word Translation}}</div>
     </div>
   </div>
 
@@ -60,18 +49,14 @@ Template used only by the introductory Russian phoneme deck.
 
   <div class="horizontalPadding">
     <div class="header">example sentence:</div>
-    <div class="ruSentenceRow centerVertically">
-      <span>{{Exemple Sentence}}</span>
-      <span class="sentenceAudioButton">{{sentence_audio}}</span>
-    </div>
-    <div class="sentenceTranslation" id="translation" style="display: none">
-      {{Translation}}
+    <div class="indent">
+      <div class="centerVertically wrap">
+        <span class="exampleWord">{{Example Sentence}}</span>
+        <span class="wordAudioButton"> {{sentence_audio}} </span>
+      </div>
+      <div id="sentenceTranslation" class="sentenceTranslation backOnly" aria-hidden="true"></div>
     </div>
   </div>
-
-  {{#image}}
-  <div class="image">{{image}}</div>
-  {{/image}}
 </div>
 ```
 
@@ -81,17 +66,28 @@ Template used only by the introductory Russian phoneme deck.
 {{FrontSide}}
 
 <script>
-  document.getElementById("translation").style.display = "block";
+  (function () {
+    var translation = document.getElementById("sentenceTranslation");
+    if (translation) {
+      translation.textContent = "{{Sentence Translation}}";
+      translation.classList.remove("backOnly");
+      translation.removeAttribute("aria-hidden");
+    }
+  })();
 </script>
+<noscript>
+  <div class="customCard cardBack phonemeCard backRevealFallback">
+    <div class="horizontalPadding">
+      <div class="header">sentence translation:</div>
+      <div class="sentenceTranslation">{{Sentence Translation}}</div>
+    </div>
+  </div>
+</noscript>
 ```
 
 ## Styling (CSS)
 
 ```css
-/*
-DE1K Variables - Russian Palette
-*/
-
 :root {
   --max-width-card: 400px;
   --font-size-card: 18px;
@@ -99,145 +95,31 @@ DE1K Variables - Russian Palette
   --font-size-exampleWord: 22px;
   --font-size-targetIPA: 32px;
   --font-size-header: 16px;
-  --font-size-irregular-form: 16px;
-
-  --color-text-primary: #16213b;
-  --color-nightMode-text-primary: #edf2ff;
-  --color-card-background: #fcfdff;
-  --color-nightMode-card-background: #101a2f;
-  --color-box-shadow: rgba(22, 55, 110, 0.16);
-  --color-audio-button: #2f5fbf;
-  --color-list-bullets: #4a6fb3;
-  --color-irregular-form-background: #ecf2ff;
-  --color-nightMode-irregular-form-background: #1e304f;
-  --color-irregular-form-border: #cbd8f2;
-  --color-nightMode-irregular-form-border: #4c699f;
-  --color-nightMode-irregular-form-text: rgba(233, 241, 255, 0.86);
-  --color-hint: #5d6d8d;
-  --color-nightMode-hint: #a6b9dd;
-  --color-sentence-translation: #4d628b;
-  --color-nightMode-sentence-translation: #b6c7e7;
-  --color-header: #35558f;
-  --color-nightMode-header: rgba(170, 193, 233, 0.78);
-  --color-divider: #d8e2f6;
-  --color-nightMode-divider: #2a3d61;
-  --color-box-background: #f2f6ff;
-  --color-nightMode-box-background: #14233f;
-  --color-ru-accent-blue: #2f5fbf;
-  --color-ru-accent-secondary: #4a6fb3;
-  --color-nightMode-ru-accent-blue: #87adff;
-  --color-nightMode-ru-accent-secondary: #a9c3ff;
-}
-
-p {
-  display: block;
-  margin-block-start: 1em;
-  margin-block-end: 1em;
-  margin-inline-start: 0px;
-  margin-inline-end: 0px;
-}
-
-div { display: block; }
-
-body {
-  display: block;
-  line-height: 1.187;
-  overscroll-behavior: none;
-  margin: 0 !important;
-  overflow-wrap: break-word;
-}
-
-html {
-  display: block;
-  color: -internal-root-color;
-}
-
-span, applet, object, iframe,
-h1, h2, h3, h4, h5, h6,
-blockquote, pre, a, abbr, acronym, address, big, cite, code,
-del, dfn, em, img, ins, kbd, q, s, samp, small, strike, strong,
-sub, sup, tt, var, b, u, i, center,
-dl, dt, dd, ol, ul, li,
-fieldset, form, label, legend,
-table, caption, tbody, tfoot, thead, tr, th, td,
-article, aside, canvas, details, embed,
-figure, figcaption, footer, header, hgroup,
-menu, nav, output, ruby, section, summary,
-time, mark, audio, video {
-  margin: 0;
-  padding: 0;
-  border: 0;
-  font-size: 100%;
-  font: inherit;
-  vertical-align: baseline;
-}
-
-article, aside, details, figcaption, figure,
-footer, header, hgroup, menu, nav, section {
-  display: block;
-}
-
-ol, ul { list-style: none; }
-
-blockquote, q { quotes: none; }
-
-blockquote:before,
-blockquote:after,
-q:before,
-q:after {
-  content: "";
-  content: none;
-}
-
-table {
-  border-collapse: collapse;
-  border-spacing: 0;
+  --color-multilang-primary: #2f5fbf;
+  --color-multilang-secondary: #4a6fb3;
+  --color-multilang-background: #fcfdff;
+  --color-multilang-surface: #f2f6ff;
+  --color-multilang-text: #16213b;
+  --color-multilang-muted: #5d6d8d;
+  --color-multilang-divider: #d8e2f6;
+  --color-multilang-shadow: rgba(22, 55, 110, 0.16);
+  --color-nightMode-multilang-primary: #87adff;
+  --color-nightMode-multilang-secondary: #a9c3ff;
+  --color-nightMode-multilang-background: #101a2f;
+  --color-nightMode-multilang-surface: #14233f;
+  --color-nightMode-multilang-text: #edf2ff;
+  --color-nightMode-multilang-muted: #a6b9dd;
+  --color-nightMode-multilang-divider: #2a3d61;
 }
 
 * { box-sizing: border-box; }
 
-body.nightMode::-webkit-scrollbar { background: #16213b; }
-body.nightMode::-webkit-scrollbar:horizontal { height: 12px; }
-body.nightMode::-webkit-scrollbar:vertical { width: 12px; }
-body.nightMode::-webkit-scrollbar-thumb {
-  background: #4c699f;
-  border-radius: 8px;
+body {
+  line-height: 1.187;
+  margin: 0 !important;
+  overflow-wrap: break-word;
+  overscroll-behavior: none;
 }
-body.nightMode::-webkit-scrollbar-thumb:horizontal { min-width: 50px; }
-body.nightMode::-webkit-scrollbar-thumb:vertical { min-height: 50px; }
-
-#_flag {
-  position: fixed;
-  right: 10px;
-  top: 0;
-  font-size: 30px;
-  display: none;
-  -webkit-text-stroke-width: 1px;
-  -webkit-text-stroke-color: black;
-}
-
-#_mark {
-  position: fixed;
-  left: 10px;
-  top: 0;
-  font-size: 30px;
-  color: yellow;
-  display: none;
-  -webkit-text-stroke-width: 1px;
-  -webkit-text-stroke-color: black;
-}
-
-#typeans {
-  width: 100%;
-  box-sizing: border-box;
-}
-
-.typeGood { background: #0f0; }
-.typeBad { background: #f00; }
-.typeMissed { background: #ccc; }
-.nightMode .latex { filter: invert(100%); }
-.drawing { zoom: 50%; }
-.nightMode img.drawing { filter: invert(1) hue-rotate(180deg); }
 
 .card { padding: 16px; }
 
@@ -247,23 +129,21 @@ body.nightMode::-webkit-scrollbar-thumb:vertical { min-height: 50px; }
   display: flex;
   justify-content: center;
   align-items: center;
-  background-color: var(--color-card-background);
-  box-shadow:
-    0 5px 22px var(--color-box-shadow),
-    0 1px 4px rgba(22, 55, 110, 0.08);
+  background-color: var(--color-multilang-background);
+  box-shadow: 0 5px 22px var(--color-multilang-shadow), 0 1px 4px rgba(22, 55, 110, 0.08);
   border-radius: 8px;
-  border-top: 4px solid var(--color-ru-accent-blue);
+  border-top: 4px solid var(--color-multilang-primary);
   min-height: 200px;
   max-width: var(--max-width-card);
   font-weight: 500;
   font-size: var(--font-size-card);
   font-family: "Inter", sans-serif;
-  color: var(--color-text-primary);
+  color: var(--color-multilang-text);
 }
 
 .nightMode .customCard {
-  color: var(--color-nightMode-text-primary);
-  background-color: var(--color-nightMode-card-background);
+  color: var(--color-nightMode-multilang-text);
+  background-color: var(--color-nightMode-multilang-background);
 }
 
 .cardBack {
@@ -289,146 +169,64 @@ body.nightMode::-webkit-scrollbar-thumb:vertical { min-height: 50px; }
   align-self: stretch;
   gap: 16px;
   padding: 16px;
-  background-color: var(--color-box-background);
-  border: 1px solid var(--color-divider);
+  background-color: var(--color-multilang-surface);
+  border: 1px solid var(--color-multilang-divider);
   border-radius: 8px;
 }
 
 .nightMode .targetWordBox {
-  background-color: var(--color-nightMode-box-background);
-  border: 1px solid var(--color-nightMode-divider);
-}
-
-.targetWord {
-  font-size: var(--font-size-targetWord);
-  font-weight: 600;
-}
-
-.wordBlock {
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
+  background-color: var(--color-nightMode-multilang-surface);
+  border-color: var(--color-nightMode-multilang-divider);
 }
 
 .targetIPA {
   font-family: "Charis SIL", serif;
   font-size: var(--font-size-targetIPA);
   font-weight: 600;
-  padding-bottom: 2px;
+  color: var(--color-multilang-primary);
 }
 
-.exampleWord { font-size: var(--font-size-exampleWord); }
-
-.ipa {
-  font-size: 24px;
-  color: var(--color-header);
-  margin-left: 2px;
-  font-weight: 500;
+.exampleWord {
+  font-size: var(--font-size-exampleWord);
+  font-weight: 600;
 }
-
-.definitionsList {
-  list-style: none;
-  margin: 0;
-  padding: 0 0 0 16px;
-}
-
-.definitionsList li {
-  margin-bottom: 6px;
-  line-height: 1.5;
-}
-
-.definitionsList li::before {
-  content: "\2022";
-  color: var(--color-list-bullets);
-  display: inline-block;
-  width: 8px;
-  margin-right: 5px;
-  margin-left: -16px;
-  font-size: 22px;
-}
-
-.wordAudioButtonFront {
-  position: absolute;
-  top: 21px;
-  right: 22px;
-}
-
-.wordAudioButtonBack { margin-left: 8px; }
-.wordAudioButton { margin-left: -8px; }
-.replay-button { padding: 9px; }
-.replay-button svg { width: 26px; height: 26px; }
-.replay-button svg path { fill: var(--color-audio-button); }
-.replay-button svg circle { fill: none; stroke: none; }
-
-.irregularFormsContainer {
-  display: flex;
-  flex-wrap: wrap;
-  margin-top: 12px;
-}
-
-.irregularForm {
-  background-color: var(--color-irregular-form-background);
-  border: 0.5px solid var(--color-irregular-form-border);
-  border-radius: 40px;
-  font-size: var(--font-size-irregular-form);
-  padding: 3px 12px 5px;
-  margin-right: 10px;
-  margin-bottom: 8px;
-}
-
-.nightMode .irregularForm {
-  color: var(--color-nightMode-irregular-form-text);
-  background-color: var(--color-nightMode-irregular-form-background);
-  border-color: var(--color-nightMode-irregular-form-border);
-}
-
-.image {
-  border-top: 1px solid var(--color-divider);
-  border-bottom: 1px solid var(--color-divider);
-  margin-top: 16px;
-  width: 100%;
-  height: 210px;
-}
-
-.image img {
-  object-fit: contain;
-  width: 100% !important;
-  height: 100% !important;
-  max-width: 100% !important;
-  max-height: 100% !important;
-}
-
-.hint { color: var(--color-hint); }
-.nightMode .hint { color: var(--color-nightMode-hint); }
-
-.sentenceTranslation {
-  color: var(--color-sentence-translation);
-  font-weight: 400;
-  font-style: italic;
-  padding-right: 15px;
-  padding-top: 8px;
-}
-
-.nightMode .sentenceTranslation { color: var(--color-nightMode-sentence-translation); }
 
 .header {
-  color: var(--color-header);
+  color: var(--color-multilang-secondary);
   font-size: var(--font-size-header);
   font-weight: 400;
   margin-top: 8px;
   margin-bottom: 8px;
 }
 
-.nightMode .header { color: var(--color-nightMode-header); }
+.hint {
+  color: var(--color-multilang-muted);
+  font-size: var(--font-size-header);
+}
+
+.sentenceTranslation {
+  color: var(--color-multilang-secondary);
+  font-weight: 400;
+  font-style: italic;
+  padding-right: 15px;
+  padding-top: 8px;
+}
+
+.nightMode .targetIPA,
+.nightMode .replay-button svg path { fill: var(--color-nightMode-multilang-primary); }
+
+.nightMode .header,
+.nightMode .sentenceTranslation { color: var(--color-nightMode-multilang-secondary); }
+.nightMode .hint { color: var(--color-nightMode-multilang-muted); }
 
 .dividerLine {
   width: 100%;
-  border-bottom: 1px solid var(--color-divider);
+  border-bottom: 1px solid var(--color-multilang-divider);
   margin-top: 8px;
   margin-bottom: 8px;
 }
 
-.nightMode .dividerLine { border-color: var(--color-nightMode-divider); }
+.nightMode .dividerLine { border-color: var(--color-nightMode-multilang-divider); }
 
 .horizontalPadding {
   width: 100%;
@@ -436,6 +234,7 @@ body.nightMode::-webkit-scrollbar-thumb:vertical { min-height: 50px; }
   padding-right: 16px;
 }
 
+.row { display: flex; }
 .indent { padding-left: 12px; }
 
 .centerVertically {
@@ -443,82 +242,20 @@ body.nightMode::-webkit-scrollbar-thumb:vertical { min-height: 50px; }
   align-items: center;
 }
 
-.russianCard .ruLetterPanel {
-  display: block;
-  border: 1px solid var(--color-ru-accent-blue);
-  border-radius: 10px;
-  padding: 12px 12px 14px;
-  background-color: var(--color-box-background);
-}
-
-.nightMode .russianCard .ruLetterPanel {
-  background-color: var(--color-nightMode-box-background);
-  border-color: var(--color-nightMode-ru-accent-blue);
-  margin-top: 10px;
-}
-
-.russianCard .ruLetterPanel .header {
-  margin: 0 0 12px 0;
-  font-weight: 400;
-  letter-spacing: normal;
-  text-transform: none;
-  text-align: left;
-}
-
-.nightMode .russianCard .ruLetterPanel .header { color: var(--color-nightMode-hint); }
-
-.russianCard .ruLetterValue {
-  display: block;
-  margin: 0;
-  font-size: 52px;
-  font-weight: 700;
-  color: var(--color-ru-accent-blue);
-  line-height: 1;
-  text-align: center;
-}
-
-.nightMode .russianCard .ruLetterValue { color: var(--color-nightMode-ru-accent-blue); }
-
-.russianCard .ruSoundRow {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  margin-top: 14px;
-  margin-bottom: 0;
-}
-
-.russianCard .ruSoundLabel {
-  color: var(--color-ru-accent-secondary);
-  font-weight: 600;
-}
-
-.nightMode .russianCard .ruSoundLabel { color: var(--color-nightMode-ru-accent-secondary); }
-
-.russianCard .ruExampleRow {
-  display: flex;
-  align-items: center;
+.wrap {
+  flex-wrap: wrap;
   gap: 8px;
-  flex-wrap: wrap;
 }
 
-.russianCard .ruExampleWord {
-  font-size: 30px;
-  font-weight: 700;
-  color: var(--color-ru-accent-blue);
-}
+.wordAudioButton,
+.wordAudioButtonBack,
+.sentenceAudioButton { margin-left: 8px; }
 
-.nightMode .russianCard .ruExampleWord { color: var(--color-nightMode-ru-accent-blue); }
+.replay-button { padding: 9px; }
+.replay-button svg { width: 26px; height: 26px; }
+.replay-button svg path { fill: var(--color-multilang-primary); }
+.replay-button svg circle { fill: none; stroke: none; }
 
-.russianCard .ruExampleTranslation {
-  color: var(--color-ru-accent-secondary);
-  font-style: italic;
-  margin-left: 2px;
-}
-
-.nightMode .russianCard .ruExampleTranslation { color: var(--color-nightMode-ru-accent-secondary); }
-
-.russianCard .ruSentenceRow {
-  gap: 6px;
-  flex-wrap: wrap;
-}
+.backOnly { display: none; }
+.backRevealFallback { margin-top: 12px; }
 ```
