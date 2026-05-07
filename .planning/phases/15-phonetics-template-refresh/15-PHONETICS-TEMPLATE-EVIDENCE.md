@@ -45,9 +45,9 @@ Automated service and integration tests assert the refreshed model/template does
 
 The integration test calls `export_russian_phoneme_deck()` with a temporary APKG path, verifies the package contains `collection.anki2`, and confirms the reported card count equals the full static Russian phoneme card set.
 
-## Screenshot-Backed Visual Behavior
+## Checkpoint-Backed Visual Behavior
 
-After human checkpoint feedback from `foto1.png` and `foto2.png`, the template front preserves the visible `{{hint:Sentence Translation}}` area under the example sentence, and the back replaces that same area with the actual `Sentence Translation` value using the Multilang sentence translation styling.
+After human checkpoint clarification, the literal text `Sentence Translation` is not shown on the front. The refreshed template follows the v1 reveal pattern: the front carries the `Sentence Translation` field in a hidden `#sentenceTranslation` element, and the back uses `{{FrontSide}}` plus a small script to reveal that existing hidden content. Formatting and colors are inspired by `fonetico.md`'s neutral/purple palette, including the audio button, hint, divider, card surface, header, and sentence translation variables.
 
 ## Audio Preservation Evidence
 

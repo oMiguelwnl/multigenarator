@@ -54,8 +54,8 @@ Template used only by the introductory Russian phoneme deck.
         <span class="exampleWord">{{Example Sentence}}</span>
         <span class="wordAudioButton"> {{sentence_audio}} </span>
       </div>
-      <div id="sentenceTranslation" class="sentenceTranslation">
-        {{hint:Sentence Translation}}
+      <div id="sentenceTranslation" class="sentenceTranslation indent" style="display:none;">
+        {{Sentence Translation}}
       </div>
     </div>
   </div>
@@ -69,10 +69,7 @@ Template used only by the introductory Russian phoneme deck.
 
 <script>
   (function () {
-    var translation = document.getElementById("sentenceTranslation");
-    if (translation) {
-      translation.textContent = "{{Sentence Translation}}";
-    }
+    document.getElementById("sentenceTranslation").style.display = "block";
   })();
 </script>
 <noscript>
@@ -95,21 +92,22 @@ Template used only by the introductory Russian phoneme deck.
   --font-size-exampleWord: 22px;
   --font-size-targetIPA: 32px;
   --font-size-header: 16px;
-  --color-multilang-primary: #2f5fbf;
-  --color-multilang-secondary: #4a6fb3;
-  --color-multilang-background: #fcfdff;
-  --color-multilang-surface: #f2f6ff;
-  --color-multilang-text: #16213b;
-  --color-multilang-muted: #5d6d8d;
-  --color-multilang-divider: #d8e2f6;
-  --color-multilang-shadow: rgba(22, 55, 110, 0.16);
-  --color-nightMode-multilang-primary: #87adff;
-  --color-nightMode-multilang-secondary: #a9c3ff;
-  --color-nightMode-multilang-background: #101a2f;
-  --color-nightMode-multilang-surface: #14233f;
-  --color-nightMode-multilang-text: #edf2ff;
-  --color-nightMode-multilang-muted: #a6b9dd;
-  --color-nightMode-multilang-divider: #2a3d61;
+  --color-text-primary: #18191f;
+  --color-nightMode-text-primary: #fbfafe;
+  --color-card-background: #ffffff;
+  --color-nightMode-card-background: #0b0716;
+  --color-box-shadow: rgba(18, 62, 119, 0.1);
+  --color-audio-button: #8369ed;
+  --color-hint: #6b7280;
+  --color-nightMode-hint: #9ca3af;
+  --color-sentence-translation: #6b7280;
+  --color-nightMode-sentence-translation: #9ca3af;
+  --color-header: #9ca3af;
+  --color-nightMode-header: rgba(255, 255, 255, 0.5);
+  --color-divider: #e5e7eb;
+  --color-nightMode-divider: #1f2937;
+  --color-box-background: #f3f4f6;
+  --color-nightMode-box-background: #130c22;
 }
 
 * { box-sizing: border-box; }
@@ -129,21 +127,20 @@ body {
   display: flex;
   justify-content: center;
   align-items: center;
-  background-color: var(--color-multilang-background);
-  box-shadow: 0 5px 22px var(--color-multilang-shadow), 0 1px 4px rgba(22, 55, 110, 0.08);
+  background-color: var(--color-card-background);
+  box-shadow: 1px 3px 10px var(--color-box-shadow);
   border-radius: 8px;
-  border-top: 4px solid var(--color-multilang-primary);
   min-height: 200px;
   max-width: var(--max-width-card);
   font-weight: 500;
   font-size: var(--font-size-card);
   font-family: "Inter", sans-serif;
-  color: var(--color-multilang-text);
+  color: var(--color-text-primary);
 }
 
 .nightMode .customCard {
-  color: var(--color-nightMode-multilang-text);
-  background-color: var(--color-nightMode-multilang-background);
+  color: var(--color-nightMode-text-primary);
+  background-color: var(--color-nightMode-card-background);
 }
 
 .cardBack {
@@ -169,21 +166,20 @@ body {
   align-self: stretch;
   gap: 16px;
   padding: 16px;
-  background-color: var(--color-multilang-surface);
-  border: 1px solid var(--color-multilang-divider);
+  background-color: var(--color-box-background);
+  border: 1px solid var(--color-divider);
   border-radius: 8px;
 }
 
 .nightMode .targetWordBox {
-  background-color: var(--color-nightMode-multilang-surface);
-  border-color: var(--color-nightMode-multilang-divider);
+  background-color: var(--color-nightMode-box-background);
+  border-color: var(--color-nightMode-divider);
 }
 
 .targetIPA {
   font-family: "Charis SIL", serif;
   font-size: var(--font-size-targetIPA);
   font-weight: 600;
-  color: var(--color-multilang-primary);
 }
 
 .exampleWord {
@@ -192,7 +188,7 @@ body {
 }
 
 .header {
-  color: var(--color-multilang-secondary);
+  color: var(--color-header);
   font-size: var(--font-size-header);
   font-weight: 400;
   margin-top: 8px;
@@ -200,33 +196,32 @@ body {
 }
 
 .hint {
-  color: var(--color-multilang-muted);
+  color: var(--color-hint);
   font-size: var(--font-size-header);
 }
 
 .sentenceTranslation {
-  color: var(--color-multilang-secondary);
+  color: var(--color-sentence-translation);
   font-weight: 400;
   font-style: italic;
   padding-right: 15px;
   padding-top: 8px;
 }
 
-.nightMode .targetIPA,
-.nightMode .replay-button svg path { fill: var(--color-nightMode-multilang-primary); }
+.nightMode .replay-button svg path { fill: var(--color-audio-button); }
 
 .nightMode .header,
-.nightMode .sentenceTranslation { color: var(--color-nightMode-multilang-secondary); }
-.nightMode .hint { color: var(--color-nightMode-multilang-muted); }
+.nightMode .sentenceTranslation { color: var(--color-nightMode-sentence-translation); }
+.nightMode .hint { color: var(--color-nightMode-hint); }
 
 .dividerLine {
   width: 100%;
-  border-bottom: 1px solid var(--color-multilang-divider);
+  border-bottom: 1px solid var(--color-divider);
   margin-top: 8px;
   margin-bottom: 8px;
 }
 
-.nightMode .dividerLine { border-color: var(--color-nightMode-multilang-divider); }
+.nightMode .dividerLine { border-color: var(--color-nightMode-divider); }
 
 .horizontalPadding {
   width: 100%;
@@ -253,7 +248,7 @@ body {
 
 .replay-button { padding: 9px; }
 .replay-button svg { width: 26px; height: 26px; }
-.replay-button svg path { fill: var(--color-multilang-primary); }
+.replay-button svg path { fill: var(--color-audio-button); }
 .replay-button svg circle { fill: none; stroke: none; }
 
 .backRevealFallback { margin-top: 12px; }
