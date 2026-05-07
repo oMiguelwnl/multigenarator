@@ -15,6 +15,7 @@ _TEXT_PATTERNS = (
     re.compile(r"(?i)\b(Bearer|Basic)\s+[^\s,;]+"),
     re.compile(r"(?i)\b(password|passwd|username|user|secret|token|api[_-]?key)(\s*[=:]\s*)([^\s,;&]+)"),
     re.compile(r"(?i)https?://[^\s]+/dav[^\s]*"),
+    re.compile(r"(?i)(?:^|(?<=\s))/dav/[^\s]+"),
     re.compile(r"(?i)(?:^|(?<=\s))\.?/?\.multilang/highlights/raw/[^\s]+"),
     re.compile(r"(?im)\b(Title|Author|Book|Location)(\s*:\s*)([^\r\n]*)"),
 )
@@ -36,7 +37,8 @@ def redact_sensitive_text(text: str, *, extra_terms: Iterable[str] = ()) -> str:
     )
     redacted = _TEXT_PATTERNS[3].sub(SENSITIVE_VALUE_REDACTION, redacted)
     redacted = _TEXT_PATTERNS[4].sub(SENSITIVE_VALUE_REDACTION, redacted)
-    redacted = _TEXT_PATTERNS[5].sub(
+    redacted = _TEXT_PATTERNS[5].sub(SENSITIVE_VALUE_REDACTION, redacted)
+    redacted = _TEXT_PATTERNS[6].sub(
         lambda match: f"{match.group(1)}{match.group(2)}{SENSITIVE_VALUE_REDACTION}",
         redacted,
     )
