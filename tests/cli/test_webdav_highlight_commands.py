@@ -77,7 +77,13 @@ def test_fetch_webdav_highlights_fetches_explicit_path_and_prints_preview(tmp_pa
     cached = tmp_path / "cache" / "abc.html"
     cached.parent.mkdir()
     cached.write_text(
-        "Synthetic Learner Reader\n- Your Highlight at Location 1\nEl jardín secreto brilla\n==========",
+        """
+        <!doctype html><html><body>
+        <div class="bookTitle">Synthetic Learner Reader</div>
+        <div class="noteHeading">Highlight (<span>Location 1</span>)</div>
+        <div class="noteText">El jardín secreto brilla</div>
+        </body></html>
+        """,
         encoding="utf-8",
     )
     service = FakeWebDAVService(

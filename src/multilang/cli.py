@@ -12,6 +12,7 @@ import typer
 
 from multilang.domain.jobs import GenerationRequest, JobProgressSnapshot, SupportedLanguage
 from multilang.domain.exporting import ExportArtifactFormat
+from multilang.domain.webdav import WebDAVError, WebDAVFailureCode, WebDAVFetchResult, WebDAVRemoteCandidate
 from multilang.progress import ProgressRenderer
 from multilang.repositories.text_repository import TextRepository
 from multilang.runtime import build_runtime_service
@@ -26,6 +27,7 @@ from multilang.services.russian_phoneme_deck import (
     export_russian_phoneme_deck,
 )
 from multilang.services.text_review import ReviewReport, TextReviewService
+from multilang.services.webdav_highlight_fetch import WebDAVHighlightFetchService
 from multilang.settings import Settings
 
 app = typer.Typer(help="Multilang operator CLI.")
@@ -42,6 +44,7 @@ RequestedItemKeysLoader = Callable[[GenerationRequest], list[str]]
 ItemProcessor = Callable[[str], None]
 ProgressSink = Callable[[str], None]
 ReviewReportBuilder = Callable[..., ReviewReport]
+WebDAVServiceFactory = Callable[[], Any]
 
 
 def default_conflict_checker(_: GenerationRequest) -> bool:
@@ -357,6 +360,26 @@ def _print_review_report(report: ReviewReport) -> None:
         typer.echo(f"review_report={report.report_path}")
 
 
+def _print_webdav_error(exc: WebDAVError) -> None:
+    typer.echo(f"webdav_error={exc.code.value}")
+    detail = str(exc)
+    if detail:
+        typer.echo(f"webdav_error_detail={detail}")
+
+
+def _print_highlight_preview_counts(input_file: Path, *, language: SupportedLanguage, planned_card_limit: int | None) -> None:
+    preview = build_highlight_import_preview(
+        input_file,
+        language=language,
+        planned_card_limit=planned_card_limit,
+    )
+    typer.echo(f"imported_highlights={preview.imported_highlights}")
+    typer.echo(f"extracted_candidates={preview.extracted_candidates}")
+    typer.echo(f"rejected_highlights={preview.rejected_highlights}")
+    typer.echo(f"duplicate_candidates={preview.duplicate_candidates}")
+    typer.echo(f"planned_cards={preview.planned_cards}")
+
+
 def _default_kaikki_source_file(language_code: str) -> Path:
     return DEFAULT_KAIKKI_SOURCE_DIR / f"kaikki-{language_code}.jsonl.gz"
 
@@ -441,6 +464,7 @@ def create_app(
     generate_executor: GenerateExecutor | None = None,
     service: GenerateJobService | IngestLexicalItemsService | None = None,
     review_report_builder: ReviewReportBuilder | None = None,
+    webdav_service_factory: WebDAVServiceFactory | None = None,
 ) -> typer.Typer:
     """Build the CLI application with injectable collaborators for tests."""
 
@@ -459,6 +483,11 @@ def create_app(
         if generate_executor is not None:
             return generate_executor
         raise RuntimeError("unable to resolve generate executor")
+
+    def resolve_webdav_service() -> Any:
+        if webdav_service_factory is not None:
+            return webdav_service_factory()
+        return WebDAVHighlightFetchService.from_settings(Settings())
 
     @cli.callback()
     def main() -> None:
@@ -522,6 +551,56 @@ def create_app(
         typer.echo(f"rejected_highlights={preview.rejected_highlights}")
         typer.echo(f"duplicate_candidates={preview.duplicate_candidates}")
         typer.echo(f"planned_cards={preview.planned_cards}")
+
+    @cli.command("list-webdav-highlights")
+    def list_webdav_highlights() -> None:
+        try:
+            candidates: list[WebDAVRemoteCandidate] = resolve_webdav_service().list_exports()
+        except WebDAVError as exc:
+            _print_webdav_error(exc)
+            raise typer.Exit(code=1) from exc
+
+        for candidate in candidates:
+            size = "" if candidate.size_bytes is None else str(candidate.size_bytes)
+            modified = "" if candidate.modified_at is None else candidate.modified_at
+            typer.echo(
+                f"candidate={candidate.safe_name} suffix={candidate.suffix} "
+                f"size_bytes={size} modified_at={modified}"
+            )
+
+    @cli.command("fetch-webdav-highlights")
+    def fetch_webdav_highlights(
+        language: Annotated[
+            SupportedLanguage,
+            typer.Option("--language", help="Target language for candidate filtering."),
+        ],
+        remote_path: Annotated[
+            str,
+            typer.Option("--remote-path", help="Explicit WebDAV remote Kindle export path."),
+        ],
+        planned_card_limit: Annotated[
+            int | None,
+            typer.Option("--planned-card-limit", min=0, help="Optional cap for planned preview cards."),
+        ] = None,
+    ) -> None:
+        try:
+            fetch_result: WebDAVFetchResult = resolve_webdav_service().fetch_export(remote_path)
+            typer.echo(f"webdav_content_hash={fetch_result.content_hash}")
+            typer.echo(f"webdav_cached_file={fetch_result.cached_path}")
+            typer.echo(f"webdav_size_bytes={fetch_result.size_bytes}")
+            _print_highlight_preview_counts(
+                fetch_result.cached_path,
+                language=language,
+                planned_card_limit=planned_card_limit,
+            )
+        except WebDAVError as exc:
+            _print_webdav_error(exc)
+            raise typer.Exit(code=1) from exc
+        except ValueError as exc:
+            message = str(exc)
+            code = "empty_source" if "empty" in message.lower() else "malformed_response"
+            _print_webdav_error(WebDAVError(WebDAVFailureCode(code), message))
+            raise typer.Exit(code=1) from exc
 
     @cli.command("generate")
     def generate(
