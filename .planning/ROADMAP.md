@@ -4,7 +4,7 @@
 
 - [x] **v1.0 MVP** - Phases 1-7 shipped 2026-04-29. Archive: [v1.0-ROADMAP.md](./milestones/v1.0-ROADMAP.md). Requirements: [v1.0-REQUIREMENTS.md](./milestones/v1.0-REQUIREMENTS.md).
 - [x] **v1.1 Card Quality Refresh** - Phase 08 completed 2026-05-02 with audio prominence, AI-generated pronunciation, spoken-form display, and normal deck CSS refresh from `total.md`.
-- [ ] **v1.2 Kindle Highlights and Template Refresh** - Add Kindle highlight ingestion, local normalization, highlight cards/export, WebDAV fetch, phonetics template refresh, and evidence that existing modes still work.
+- [x] **v1.2 Kindle Highlights and Template Refresh** - Add Kindle highlight ingestion, local normalization, highlight cards/export, WebDAV fetch, phonetics template refresh, and evidence that existing modes still work.
 
 ## Current Focus
 
@@ -22,7 +22,8 @@ Phase 16: End-to-End v1.2 Audit.
  (completed 2026-05-07)
 - [x] **Phase 15: Phonetics Template Refresh** - Phonetics cards use the supplied layout, sentence translation back reveal, Multilang colors, and no unused fields.
  (completed 2026-05-07)
-- [ ] **Phase 16: End-to-End v1.2 Audit** - Local Kindle highlights, highlight export, phonetics export, and existing-mode regressions are proven with evidence.
+- [x] **Phase 16: End-to-End v1.2 Audit** - Local Kindle highlights, highlight export, phonetics export, and existing-mode regressions are proven with evidence.
+ (completed 2026-05-08)
 
 ## Phase Details
 
@@ -196,7 +197,7 @@ Plans:
 
 - [x] 16-01-PLAN.md — Prove a representative local Kindle fixture becomes highlight cards and APKG/CSV/TSV artifacts.
 - [x] 16-02-PLAN.md — Prove refreshed phonetics export evidence and existing frequency/custom regression boundaries.
-- [ ] 16-03-PLAN.md — Create the final v1.2 audit evidence artifact with requirement coverage, privacy checks, and caveats.
+- [x] 16-03-PLAN.md — Create the final v1.2 audit evidence artifact with requirement coverage, privacy checks, and caveats.
 
 ## Progress
 
@@ -204,7 +205,7 @@ Plans:
 |-----------|--------|-------|--------|---------|
 | v1.0 MVP | 1-7 | 34/34 | Complete | 2026-04-29 |
 | v1.1 Card Quality Refresh | 8 | 4/4 | Complete | 2026-05-02 |
-| v1.2 Kindle Highlights and Template Refresh | 9-16 | 28/29 | In progress | - |
+| v1.2 Kindle Highlights and Template Refresh | 9-16 | 29/29 | Complete | 2026-05-08 |
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
@@ -216,4 +217,4 @@ Plans:
 | 13. Highlight Export and Template | 3/3 | Complete    | 2026-05-06 |
 | 14. WebDAV Highlight Fetch Adapter | 4/4 | Complete | 2026-05-07 |
 | 15. Phonetics Template Refresh | 2/2 | Complete | 2026-05-07 |
-| 16. End-to-End v1.2 Audit | 2/3 | In progress | - |
+| 16. End-to-End v1.2 Audit | 3/3 | Complete | 2026-05-08 |

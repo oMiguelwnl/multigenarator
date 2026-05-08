@@ -4,14 +4,14 @@ milestone: v1.2
 milestone_name: Audit
 status: executing
 stopped_at: None
-last_updated: "2026-05-08T12:44:04Z"
-last_activity: 2026-05-08 -- Phase 16 Plan 02 completed
+last_updated: "2026-05-08T12:47:27Z"
+last_activity: 2026-05-08 -- Phase 16 Plan 03 completed; v1.2 audit complete
 progress:
   total_phases: 9
-  completed_phases: 8
+  completed_phases: 9
   total_plans: 30
-  completed_plans: 32
-  percent: 99
+  completed_plans: 33
+  percent: 100
 ---
 
 # Project State
@@ -26,11 +26,11 @@ See: .planning/PROJECT.md (updated 2026-05-06)
 ## Current Position
 
 Phase: 16
-Plan: 03
-Status: Executing Phase 16
-Last activity: 2026-05-08 -- Phase 16 Plan 02 completed
+Plan: Complete
+Status: v1.2 audit complete
+Last activity: 2026-05-08 -- Phase 16 Plan 03 completed; v1.2 audit complete
 
-Progress: [██████████] 99%
+Progress: [██████████] 100%
 
 ## Performance Metrics
 
@@ -87,6 +87,7 @@ Progress: [██████████] 99%
 | Phase 15-phonetics-template-refresh P02 | 28min | 3 tasks | 4 files |
 | Phase 16-end-to-end-v12-audit P01 | 3min | 2 tasks | 1 file |
 | Phase 16-end-to-end-v12-audit P02 | 4min | 2 tasks | 1 file |
+| Phase 16-end-to-end-v12-audit P03 | 2min | 2 tasks | 2 files |
 
 ## Accumulated Context
 
@@ -134,6 +135,7 @@ Full decision history is in `.planning/PROJECT.md` and `.planning/milestones/v1.
 - [Phase 15-phonetics-template-refresh]: Phonetics sentence translation follows the v1 hidden-front and `{{FrontSide}}` back-reveal pattern, with neutral/purple styling inspired by `fonetico.md`.
 - [Phase 16-end-to-end-v12-audit]: Local highlight audit evidence uses only synthetic Kindle fixtures, tmp_path media, and deterministic fakes while tying APKG/CSV/TSV assertions to the same assembled highlight row.
 - [Phase 16-end-to-end-v12-audit]: Final audit wrappers re-execute phonetics, frequency, custom, CLI, and highlight privacy evidence while asserting source field tuples and note types remain isolated.
+- [Phase 16-end-to-end-v12-audit]: Final v1.2 audit evidence is scanner-readable and self-tested for 24/24 requirement coverage, command references, privacy marker exclusions, pass signals, and caveats.
 
 ### Pending Todos
 
@@ -162,6 +164,6 @@ Items acknowledged and carried forward from v1.0 milestone close:
 
 ## Session Continuity
 
-Last session: 2026-05-08T12:44:04Z
-Stopped at: Completed 16-02-PLAN.md
+Last session: 2026-05-08T12:47:27Z
+Stopped at: Completed 16-03-PLAN.md; v1.2 audit complete
 Resume file: None
