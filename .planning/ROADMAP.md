@@ -195,7 +195,7 @@ Plans:
 Plans:
 
 - [x] 16-01-PLAN.md — Prove a representative local Kindle fixture becomes highlight cards and APKG/CSV/TSV artifacts.
-- [ ] 16-02-PLAN.md — Prove refreshed phonetics export evidence and existing frequency/custom regression boundaries.
+- [x] 16-02-PLAN.md — Prove refreshed phonetics export evidence and existing frequency/custom regression boundaries.
 - [ ] 16-03-PLAN.md — Create the final v1.2 audit evidence artifact with requirement coverage, privacy checks, and caveats.
 
 ## Progress
@@ -204,7 +204,7 @@ Plans:
 |-----------|--------|-------|--------|---------|
 | v1.0 MVP | 1-7 | 34/34 | Complete | 2026-04-29 |
 | v1.1 Card Quality Refresh | 8 | 4/4 | Complete | 2026-05-02 |
-| v1.2 Kindle Highlights and Template Refresh | 9-16 | 27/29 | In progress | - |
+| v1.2 Kindle Highlights and Template Refresh | 9-16 | 28/29 | In progress | - |
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
@@ -216,4 +216,4 @@ Plans:
 | 13. Highlight Export and Template | 3/3 | Complete    | 2026-05-06 |
 | 14. WebDAV Highlight Fetch Adapter | 4/4 | Complete | 2026-05-07 |
 | 15. Phonetics Template Refresh | 2/2 | Complete | 2026-05-07 |
-| 16. End-to-End v1.2 Audit | 1/3 | In progress | - |
+| 16. End-to-End v1.2 Audit | 2/3 | In progress | - |
