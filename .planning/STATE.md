@@ -4,14 +4,14 @@ milestone: v1.2
 milestone_name: Audit
 status: executing
 stopped_at: None
-last_updated: "2026-05-07T14:32:59Z"
-last_activity: 2026-05-07 -- Phase 15 completed
+last_updated: "2026-05-08T12:37:19Z"
+last_activity: 2026-05-08 -- Phase 16 Plan 01 completed
 progress:
   total_phases: 9
   completed_phases: 8
   total_plans: 30
-  completed_plans: 30
-  percent: 94
+  completed_plans: 31
+  percent: 97
 ---
 
 # Project State
@@ -26,11 +26,11 @@ See: .planning/PROJECT.md (updated 2026-05-06)
 ## Current Position
 
 Phase: 16
-Plan: Not started
-Status: Ready to plan
-Last activity: 2026-05-07 -- Phase 15 completed
+Plan: 02
+Status: Executing Phase 16
+Last activity: 2026-05-08 -- Phase 16 Plan 01 completed
 
-Progress: [█████████░] 94%
+Progress: [██████████] 97%
 
 ## Performance Metrics
 
@@ -85,6 +85,7 @@ Progress: [█████████░] 94%
 | Phase 14-webdav-highlight-fetch-adapter P04 | 25min | 2 tasks | 4 files |
 | Phase 15-phonetics-template-refresh P01 | 12min | 2 tasks | 3 files |
 | Phase 15-phonetics-template-refresh P02 | 28min | 3 tasks | 4 files |
+| Phase 16-end-to-end-v12-audit P01 | 3min | 2 tasks | 1 file |
 
 ## Accumulated Context
 
@@ -130,6 +131,7 @@ Full decision history is in `.planning/PROJECT.md` and `.planning/milestones/v1.
 - [Phase 14-webdav-highlight-fetch-adapter]: `--webdav-remote-path` is valid only with public `--source highlights` and mutually exclusive with local `--input-file`.
 - [Phase 15-phonetics-template-refresh]: Russian phonetics exports use a refreshed nine-field note contract while keeping `sort_index` internal for ordering and GUIDs.
 - [Phase 15-phonetics-template-refresh]: Phonetics sentence translation follows the v1 hidden-front and `{{FrontSide}}` back-reveal pattern, with neutral/purple styling inspired by `fonetico.md`.
+- [Phase 16-end-to-end-v12-audit]: Local highlight audit evidence uses only synthetic Kindle fixtures, tmp_path media, and deterministic fakes while tying APKG/CSV/TSV assertions to the same assembled highlight row.
 
 ### Pending Todos
 
@@ -158,6 +160,6 @@ Items acknowledged and carried forward from v1.0 milestone close:
 
 ## Session Continuity
 
-Last session: 2026-05-07T14:32:59Z
-Stopped at: Completed 15-02-PLAN.md
+Last session: 2026-05-08T12:37:19Z
+Stopped at: Completed 16-01-PLAN.md
 Resume file: None

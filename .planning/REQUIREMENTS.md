@@ -52,7 +52,7 @@ Requirements for the current milestone. Each requirement maps to exactly one roa
 
 - [x] **SEC-01**: User's WebDAV credentials, raw highlight files, book metadata, and private reading text are excluded from commits and redacted from logs and errors.
 - [x] **SEC-02**: User gets tests proving existing frequency and custom generation, audio, and export contracts still work after v1.2 changes.
-- [ ] **EVID-01**: User gets end-to-end evidence that a local Kindle fixture can become generated highlight cards and importable Anki exports, plus phonetics template export evidence.
+- [x] **EVID-01**: User gets end-to-end evidence that a local Kindle fixture can become generated highlight cards and importable Anki exports, plus phonetics template export evidence.
 
 ## Future Requirements
 
@@ -109,7 +109,7 @@ Which phases cover which requirements. Updated during roadmap creation.
 | PHON-03 | Phase 15 | Complete |
 | SEC-01 | Phase 09 | Complete |
 | SEC-02 | Phase 09 | Complete |
-| EVID-01 | Phase 16 | Pending |
+| EVID-01 | Phase 16 | Complete |
 
 **Coverage:**
 
@@ -120,4 +120,4 @@ Which phases cover which requirements. Updated during roadmap creation.
 
 ---
 *Requirements defined: 2026-05-03*  
-*Last updated: 2026-05-07 after Phase 15 completion*
+*Last updated: 2026-05-08 after Phase 16 Plan 01 completion*

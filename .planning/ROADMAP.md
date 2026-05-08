@@ -190,7 +190,13 @@ Plans:
   2. User receives phonetics template export evidence showing the refreshed field set, layout behavior, and audio references.
   3. User receives regression evidence that existing frequency and custom generation, audio, and export contracts still pass after all v1.2 changes.
   4. User receives a final audit summary showing no unmapped v1.2 requirements, no known secret leaks, and clear remaining caveats.
-**Plans**: TBD
+**Plans**: 3 plans
+
+Plans:
+
+- [x] 16-01-PLAN.md — Prove a representative local Kindle fixture becomes highlight cards and APKG/CSV/TSV artifacts.
+- [ ] 16-02-PLAN.md — Prove refreshed phonetics export evidence and existing frequency/custom regression boundaries.
+- [ ] 16-03-PLAN.md — Create the final v1.2 audit evidence artifact with requirement coverage, privacy checks, and caveats.
 
 ## Progress
 
@@ -198,7 +204,7 @@ Plans:
 |-----------|--------|-------|--------|---------|
 | v1.0 MVP | 1-7 | 34/34 | Complete | 2026-04-29 |
 | v1.1 Card Quality Refresh | 8 | 4/4 | Complete | 2026-05-02 |
-| v1.2 Kindle Highlights and Template Refresh | 9-16 | 26/26+TBD | In progress | - |
+| v1.2 Kindle Highlights and Template Refresh | 9-16 | 27/29 | In progress | - |
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
@@ -210,4 +216,4 @@ Plans:
 | 13. Highlight Export and Template | 3/3 | Complete    | 2026-05-06 |
 | 14. WebDAV Highlight Fetch Adapter | 4/4 | Complete | 2026-05-07 |
 | 15. Phonetics Template Refresh | 2/2 | Complete | 2026-05-07 |
-| 16. End-to-End v1.2 Audit | 0/TBD | Not started | - |
+| 16. End-to-End v1.2 Audit | 1/3 | In progress | - |
