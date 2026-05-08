@@ -2,6 +2,10 @@
 
 from __future__ import annotations
 
+import csv
+import json
+import sqlite3
+import zipfile
 from dataclasses import dataclass, field
 from pathlib import Path
 
@@ -19,6 +23,7 @@ from multilang.domain.audio import (
     AudioSynthesisStatus,
     NormalizedTtsInput,
 )
+from multilang.domain.exporting import ExportArtifactFormat, HIGHLIGHT_EXPORT_CARD_FIELD_NAMES
 from multilang.domain.jobs import GenerationRequest, JobStage, SupportedLanguage
 from multilang.domain.text_quality import (
     ConfidenceLabel,
@@ -33,6 +38,8 @@ from multilang.repositories.job_repository import JobRepository
 from multilang.repositories.lexical_repository import LexicalRepository
 from multilang.services.assemble_export_cards import AssembleExportCardsService
 from multilang.services.audio_synthesis import AudioSynthesisBundle
+from multilang.services.export_anki_package import HIGHLIGHT_MODEL_ID, HIGHLIGHT_NOTE_TYPE_NAME, export_anki_package
+from multilang.services.export_tabular_bundle import write_export_tabular_bundle
 from multilang.services.generate_audio_items import GenerateAudioItemsService
 from multilang.services.generate_job import GenerateJobService
 from multilang.services.ingest_lexical_items import IngestLexicalItemsService
@@ -204,6 +211,18 @@ class ExportRepo:
         return record
 
 
+def write_synthetic_media(tmp_path: Path, file_name: str) -> Path:
+    media_path = tmp_path / "media" / file_name
+    media_path.parent.mkdir(parents=True, exist_ok=True)
+    media_path.write_bytes(b"ID3-phase16-highlight-audit-audio")
+    return media_path
+
+
+def sound_file_name(sound_tag: str) -> str:
+    assert sound_tag.startswith("[sound:") and sound_tag.endswith("]")
+    return sound_tag.removeprefix("[sound:").removesuffix("]")
+
+
 def test_local_kindle_fixture_ingests_generates_audio_and_assembles_highlight_card(tmp_path: Path) -> None:
     fixture_path = write_synthetic_kindle_fixture(tmp_path)
     ingest_service, lexical_repo, session = build_ingest_service()
@@ -249,5 +268,66 @@ def test_local_kindle_fixture_ingests_generates_audio_and_assembles_highlight_ca
     assert mapping["Image"] == ""
     assert mapping["word_audio"].startswith("[sound:")
     assert mapping["sentence_audio"].startswith("[sound:")
+
+    word_media = write_synthetic_media(tmp_path, sound_file_name(row.word_audio))
+    sentence_media = write_synthetic_media(tmp_path, sound_file_name(row.sentence_audio))
+    apkg_path = tmp_path / "local-highlight-audit.apkg"
+    apkg_result = export_anki_package(
+        rows=[row],
+        media_index={row.word_audio: word_media, row.sentence_audio: sentence_media},
+        output_path=apkg_path,
+        deck_name="Spanish::Synthetic Highlights",
+    )
+    csv_result = write_export_tabular_bundle(
+        rows=[row],
+        export_format=ExportArtifactFormat.CSV,
+        output_dir=tmp_path / "csv",
+        deck_name="Spanish::Synthetic Highlights",
+        note_type_name=HIGHLIGHT_NOTE_TYPE_NAME,
+    )
+    tsv_result = write_export_tabular_bundle(
+        rows=[row],
+        export_format=ExportArtifactFormat.TSV,
+        output_dir=tmp_path / "tsv",
+        deck_name="Spanish::Synthetic Highlights",
+        note_type_name=HIGHLIGHT_NOTE_TYPE_NAME,
+    )
+
+    assert apkg_result.output_path == apkg_path
+    assert apkg_result.card_count == 1
+    assert apkg_result.media_files == [word_media, sentence_media]
+    with zipfile.ZipFile(apkg_path) as archive:
+        assert "collection.anki2" in archive.namelist()
+        assert "media" in archive.namelist()
+        media_manifest = json.loads(archive.read("media").decode("utf-8"))
+        assert sorted(media_manifest.values()) == sorted([word_media.name, sentence_media.name])
+        collection_path = tmp_path / "collection.anki2"
+        collection_path.write_bytes(archive.read("collection.anki2"))
+
+    with sqlite3.connect(collection_path) as connection:
+        models = json.loads(connection.execute("select models from col").fetchone()[0])
+    highlight_model = models[str(HIGHLIGHT_MODEL_ID)]
+    assert highlight_model["name"] == HIGHLIGHT_NOTE_TYPE_NAME
+    assert [field["name"] for field in highlight_model["flds"]] == list(HIGHLIGHT_EXPORT_CARD_FIELD_NAMES)
+
+    csv_lines = csv_result.output_path.read_text(encoding="utf-8").splitlines()
+    tsv_lines = tsv_result.output_path.read_text(encoding="utf-8").splitlines()
+    csv_row = list(csv.reader(csv_lines[5:]))[0]
+    tsv_row = list(csv.reader(tsv_lines[5:], delimiter="\t"))[0]
+    expected_metadata = [
+        (csv_lines, "#separator:Comma", ","),
+        (tsv_lines, "#separator:Tab", "\t"),
+    ]
+    for lines, separator, delimiter in expected_metadata:
+        assert lines[:5] == [
+            separator,
+            "#html:true",
+            f"#notetype:{HIGHLIGHT_NOTE_TYPE_NAME}",
+            "#deck:Spanish::Synthetic Highlights",
+            "#columns:" + delimiter.join(HIGHLIGHT_EXPORT_CARD_FIELD_NAMES),
+        ]
+        assert "Translation" not in lines[4]
+    assert csv_row == tsv_row
+    assert csv_row == [str(mapping[field]) for field in HIGHLIGHT_EXPORT_CARD_FIELD_NAMES]
 
     session.close()
