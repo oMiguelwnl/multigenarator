@@ -107,7 +107,7 @@ def test_write_export_tabular_bundle_round_trips_non_latin_text_and_br_values(tm
     assert parsed_rows[0][4] == "значение<br>ещё одно"
 
 
-def test_write_export_tabular_bundle_preserves_translation_for_manual_word_lists(tmp_path: Path) -> None:
+def test_write_export_tabular_bundle_uses_highlight_fields_for_manual_word_lists(tmp_path: Path) -> None:
     output = write_export_tabular_bundle(
         rows=[
             make_row(
@@ -127,8 +127,17 @@ def test_write_export_tabular_bundle_preserves_translation_for_manual_word_lists
     content = output.output_path.read_text(encoding="utf-8")
     parsed_rows = list(csv.reader(content.splitlines()[5:], delimiter="\t"))
 
-    assert "\tTranslation\t" in content.splitlines()[4]
-    assert parsed_rows[0][6] == "world"
+    assert content.splitlines()[4] == "#columns:" + "\t".join(HIGHLIGHT_EXPORT_CARD_FIELD_NAMES)
+    assert "Translation" not in content.splitlines()[4]
+    assert parsed_rows[0] == [
+        "1",
+        "мир",
+        "/мир/",
+        "Пример, мир<br>в строке два",
+        "[sound:мир-sentence.mp3]",
+        "значение",
+        "",
+    ]
     assert content.splitlines()[2] == "#notetype:Multilang::Manual Card"
 
 
@@ -159,7 +168,7 @@ def test_write_highlight_tsv_uses_strict_anki_headers(tmp_path: Path) -> None:
         "#columns:" + "\t".join(HIGHLIGHT_EXPORT_CARD_FIELD_NAMES),
     ]
     assert lines[4] == (
-        "#columns:SortIndex\tWord\tIPA\tword_audio\tExample Sentence\t"
+        "#columns:SortIndex\tWord\tIPA\tExample Sentence\t"
         "sentence_audio\tDefinition\tImage"
     )
 
@@ -216,7 +225,6 @@ def test_write_highlight_rows_serialize_safe_fields_and_blank_image(tmp_path: Pa
             "2",
             "ponte",
             "/ponte/",
-            "[sound:ponte.mp3]",
             "Пример, ponte<br>в строке два",
             "[sound:ponte-sentence.mp3]",
             "bridge definition",

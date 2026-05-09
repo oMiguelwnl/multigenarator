@@ -783,16 +783,16 @@ def test_generate_command_default_runtime_reports_audio_counters(tmp_path: Path,
     )
 
     assert first_result.exit_code == 0
-    assert "audio_processed_items=2" in first_result.output
+    assert "audio_processed_items=1" in first_result.output
     assert "audio_reused_items=0" in first_result.output
-    assert "fallback_audio_items=2" in first_result.output
+    assert "fallback_audio_items=1" in first_result.output
     assert "failed_audio_items=0" in first_result.output
     assert second_result.exit_code == 0
-    assert "audio_processed_items=2" in second_result.output
-    assert "audio_reused_items=2" in second_result.output
+    assert "audio_processed_items=1" in second_result.output
+    assert "audio_reused_items=1" in second_result.output
     assert len(FakeAzureSpeechAdapter.instances) == 1
     assert service.repository.session.scalar(select(GenerationJob.id)) is not None
-    assert service.repository.session.scalar(select(func.count()).select_from(AudioAssetModel)) == 2
+    assert service.repository.session.scalar(select(func.count()).select_from(AudioAssetModel)) == 1
 
 
 def test_generate_command_reports_failed_audio_when_no_approved_voice_exists(
@@ -830,5 +830,5 @@ def test_generate_command_reports_failed_audio_when_no_approved_voice_exists(
     )
 
     assert result.exit_code == 0
-    assert "audio_processed_items=2" in result.output
-    assert "failed_audio_items=2" in result.output
+    assert "audio_processed_items=1" in result.output
+    assert "failed_audio_items=1" in result.output

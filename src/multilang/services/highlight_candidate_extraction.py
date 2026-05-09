@@ -13,9 +13,13 @@ from multilang.domain.highlights import (
     NormalizedHighlight,
 )
 from multilang.domain.jobs import SupportedLanguage
+from multilang.services.word_list_parser import split_dense_word_list_line
 
 
 _TOKEN_RE = re.compile(r"[^\W\d_]+(?:['’-][^\W\d_]+)*", re.UNICODE)
+_QUOTED_PHRASE_RE = re.compile(
+    r'"(?P<double>[^"]+)"|“(?P<curly_double>[^”]+)”|\'(?P<single>[^\']+)\'|‘(?P<curly_single>[^’]+)’'
+)
 _URL_RE = re.compile(r"(?i)\b(?:https?://|www\.)\S+")
 _WEB_NOISE = {"http", "https", "www", "nbsp", "com", "org", "net", "example", "test"}
 _STOPWORDS: dict[SupportedLanguage, set[str]] = {
@@ -52,32 +56,54 @@ def extract_highlight_candidates(
             if _URL_RE.match(raw_token) or any(character.isdigit() for character in raw_token):
                 rejected_token_count += 1
 
-        for match in _TOKEN_RE.finditer(text_without_urls):
+        dense_entries = split_dense_word_list_line(text_without_urls)
+        if dense_entries:
+            for entry in dense_entries:
+                display_form = _normalize_phrase_display(entry)
+                lemma_key = _lemma_key(display_form)
+                if not _is_usable_entry(display_form, lemma_key=lemma_key, stopwords=stopwords):
+                    rejected_token_count += 1
+                    continue
+                duplicate_count += _record_candidate(
+                    candidates_by_key,
+                    language=language,
+                    highlight=highlight,
+                    display_form=display_form,
+                    lemma_key=lemma_key,
+                )
+            continue
+
+        consumed_spans: list[tuple[int, int]] = []
+        for match in _QUOTED_PHRASE_RE.finditer(text_without_urls):
+            phrase = next(group for group in match.groups() if group is not None)
+            display_form = _normalize_phrase_display(phrase)
+            lemma_key = _lemma_key(display_form)
+            if not _is_usable_phrase(display_form, lemma_key=lemma_key, stopwords=stopwords):
+                continue
+            duplicate_count += _record_candidate(
+                candidates_by_key,
+                language=language,
+                highlight=highlight,
+                display_form=display_form,
+                lemma_key=lemma_key,
+            )
+            consumed_spans.append(match.span())
+
+        text_for_tokens = _blank_spans(text_without_urls, consumed_spans)
+
+        for match in _TOKEN_RE.finditer(text_for_tokens):
             display_form = _trim_internal_token(match.group(0))
             lemma_key = _lemma_key(display_form)
             if not _is_usable_token(display_form, lemma_key=lemma_key, stopwords=stopwords):
                 rejected_token_count += 1
                 continue
 
-            candidate_key = (highlight.provenance.content_hash, lemma_key)
-            if candidate_key in candidates_by_key:
-                duplicate_count += 1
-                existing = candidates_by_key[candidate_key]
-                candidates_by_key[candidate_key] = existing.model_copy(
-                    update={"occurrence_count": existing.occurrence_count + 1}
-                )
-                continue
-
-            lemma_hash = sha256(lemma_key.encode("utf-8")).hexdigest()[:16]
-            source_hash = highlight.provenance.content_hash[:16]
-            candidates_by_key[candidate_key] = HighlightCandidate(
-                item_key=f"highlight-{language.value}-{source_hash}-{lemma_hash}",
-                source_content_hash=highlight.provenance.content_hash,
+            duplicate_count += _record_candidate(
+                candidates_by_key,
+                language=language,
+                highlight=highlight,
                 display_form=display_form,
                 lemma_key=lemma_key,
-                first_highlight_id=highlight.highlight_id,
-                first_source_index=highlight.provenance.source_index,
-                occurrence_count=1,
             )
 
     return HighlightCandidateExtractionResult(
@@ -102,6 +128,10 @@ def _trim_internal_token(token: str) -> str:
     return token.strip("'’-—-")
 
 
+def _normalize_phrase_display(phrase: str) -> str:
+    return " ".join(phrase.split()).strip("'’—- ")
+
+
 def _lemma_key(token: str) -> str:
     normalized = unicodedata.normalize("NFKC", token)
     return " ".join(normalized.casefold().split())
@@ -124,6 +154,68 @@ def _is_usable_token(token: str, *, lemma_key: str, stopwords: set[str]) -> bool
                 continue
         return False
     return True
+
+
+def _is_usable_phrase(phrase: str, *, lemma_key: str, stopwords: set[str]) -> bool:
+    parts = lemma_key.split()
+    if len(parts) < 2:
+        return False
+    if any(part in stopwords or part in _WEB_NOISE for part in parts):
+        # Function-word-containing phrases are still useful if at least two
+        # lexical words remain, e.g. "Robe de soie".
+        lexical_parts = [part for part in parts if part not in stopwords and part not in _WEB_NOISE]
+        if len(lexical_parts) < 2:
+            return False
+    return all(
+        _is_usable_token(part, lemma_key=_lemma_key(part), stopwords=set())
+        for part in phrase.split()
+    )
+
+
+def _is_usable_entry(entry: str, *, lemma_key: str, stopwords: set[str]) -> bool:
+    if " " in lemma_key:
+        return _is_usable_phrase(entry, lemma_key=lemma_key, stopwords=stopwords)
+    return _is_usable_token(entry, lemma_key=lemma_key, stopwords=stopwords)
+
+
+def _blank_spans(text: str, spans: Sequence[tuple[int, int]]) -> str:
+    if not spans:
+        return text
+    characters = list(text)
+    for start, end in spans:
+        for index in range(start, end):
+            characters[index] = " "
+    return "".join(characters)
+
+
+def _record_candidate(
+    candidates_by_key: dict[tuple[str, str], HighlightCandidate],
+    *,
+    language: SupportedLanguage,
+    highlight: NormalizedHighlight,
+    display_form: str,
+    lemma_key: str,
+) -> int:
+    candidate_key = (highlight.provenance.content_hash, lemma_key)
+    if candidate_key in candidates_by_key:
+        existing = candidates_by_key[candidate_key]
+        candidates_by_key[candidate_key] = existing.model_copy(
+            update={"occurrence_count": existing.occurrence_count + 1}
+        )
+        return 1
+
+    lemma_hash = sha256(lemma_key.encode("utf-8")).hexdigest()[:16]
+    source_hash = highlight.provenance.content_hash[:16]
+    candidates_by_key[candidate_key] = HighlightCandidate(
+        item_key=f"highlight-{language.value}-{source_hash}-{lemma_hash}",
+        source_content_hash=highlight.provenance.content_hash,
+        display_form=display_form,
+        lemma_key=lemma_key,
+        first_highlight_id=highlight.highlight_id,
+        first_source_index=highlight.provenance.source_index,
+        occurrence_count=1,
+    )
+    return 0
 
 
 __all__ = ["extract_highlight_candidates"]

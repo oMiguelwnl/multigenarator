@@ -67,31 +67,24 @@ def test_export_contract_uses_exact_field_order() -> None:
     assert tuple(row.model_dump(by_alias=True, exclude={"identity", "note_guid"}).keys()) == EXPORT_CARD_FIELD_NAMES
 
 
-def test_manual_word_list_export_preserves_fixed_translation_field() -> None:
+def test_manual_word_list_export_uses_highlight_field_contract() -> None:
     row = make_row(identity=make_identity(), translation="Eu corro.")
     manual_identity = row.identity.model_copy(update={"source_type": "word-list"})
     manual_row = row.model_copy(update={"identity": manual_identity})
 
-    assert MANUAL_EXPORT_CARD_FIELD_NAMES == (
-        "SortIndex",
-        "word",
-        "Front of Card",
-        "IPA",
-        "Definitions",
-        "Example Sentence",
-        "Translation",
-        "word_audio",
-        "sentence_audio",
-        "Image",
-    )
-    assert manual_row.ordered_field_mapping()["Translation"] == "Eu corro."
+    assert MANUAL_EXPORT_CARD_FIELD_NAMES == HIGHLIGHT_EXPORT_CARD_FIELD_NAMES
+    mapping = manual_row.ordered_field_mapping()
+    assert tuple(mapping) == HIGHLIGHT_EXPORT_CARD_FIELD_NAMES
+    assert mapping["Word"] == "run"
+    assert mapping["Definition"] == "to move quickly<br>to operate"
+    assert "Translation" not in mapping
 
 
 def test_export_field_names_are_source_profile_aware_for_existing_modes() -> None:
     assert export_field_names_for_source_type("frequency") == FREQUENCY_EXPORT_CARD_FIELD_NAMES
     assert export_field_names_for_source_type("word-list") == MANUAL_EXPORT_CARD_FIELD_NAMES
     assert "Translation" in export_field_names_for_source_type("frequency")
-    assert "Translation" in export_field_names_for_source_type("word-list")
+    assert "Translation" not in export_field_names_for_source_type("word-list")
 
 
 def test_highlight_export_field_names_omit_translation_and_use_highlight_aliases() -> None:
@@ -100,7 +93,6 @@ def test_highlight_export_field_names_omit_translation_and_use_highlight_aliases
         "SortIndex",
         "Word",
         "IPA",
-        "word_audio",
         "Example Sentence",
         "sentence_audio",
         "Definition",

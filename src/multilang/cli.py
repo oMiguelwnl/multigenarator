@@ -24,6 +24,7 @@ from multilang.services.kaikki_lookup import KaikkiLookup
 from multilang.services.job_summary import JobLifecycleSummary, JobSummaryBuilder
 from multilang.services.russian_phoneme_deck import (
     DEFAULT_RUSSIAN_PHONEME_DECK_NAME,
+    RUSSIAN_PHONEME_CARDS,
     export_russian_phoneme_deck,
 )
 from multilang.services.text_review import ReviewReport, TextReviewService
@@ -854,8 +855,13 @@ def create_app(
             str,
             typer.Option("--deck-name", help="Deck name for the Russian phoneme package."),
         ] = DEFAULT_RUSSIAN_PHONEME_DECK_NAME,
+        limit: Annotated[
+            int | None,
+            typer.Option("--limit", min=1, help="Export only the first N Russian phoneme cards."),
+        ] = None,
     ) -> None:
-        result = export_russian_phoneme_deck(output_path=output_path, deck_name=deck_name)
+        cards = RUSSIAN_PHONEME_CARDS[:limit] if limit is not None else RUSSIAN_PHONEME_CARDS
+        result = export_russian_phoneme_deck(output_path=output_path, deck_name=deck_name, cards=cards)
         typer.echo(f"artifact_path={result.output_path}")
         typer.echo(f"card_count={result.card_count}")
 

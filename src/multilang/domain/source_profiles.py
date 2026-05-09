@@ -32,11 +32,11 @@ SOURCE_PROFILES: dict[SourceType, SourceProfile] = {
     "word-list": SourceProfile(
         source_type="word-list",
         requires_translation_validation=True,
-        exports_translation_field=True,
+        exports_translation_field=False,
         min_sentence_tokens=4,
         max_sentence_tokens=12,
         note_type_name="Multilang::Manual Card",
-        template_name="normal_card",
+        template_name="highlight_card",
     ),
     "kindle-highlights": SourceProfile(
         source_type="kindle-highlights",

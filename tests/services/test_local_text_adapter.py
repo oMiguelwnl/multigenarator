@@ -121,6 +121,19 @@ def test_translation_is_not_source_or_definition_copy() -> None:
     assert translation.translation.casefold() != "definition for alpha"
 
 
+def test_local_translation_adapter_localizes_definition_requests() -> None:
+    result = LocalTranslationAdapter().translate_sentence(
+        SentenceTranslationRequest(
+            sentence="noun: definition for casa",
+            translation_target_language="es",
+            template_kind="definition",
+        )
+    )
+
+    assert result.translation == "sustantivo: definición de casa"
+    assert result.provenance["source"] == "runtime-local-definition-translator"
+
+
 def test_text_generation_service_accepts_representative_grounded_candidates() -> None:
     service = TextGenerationService(
         sentence_adapter=LocalSentenceAdapter(),

@@ -93,6 +93,8 @@ def test_build_multilang_model_uses_project_card_template_sections() -> None:
     assert '<div id="translation" class="sentenceTranslation indent" style="display:none;">' in model.templates[0]["qfmt"]
     assert '<div class="header">Definition:</div>' in model.templates[0]["qfmt"]
     assert 'definitionsList' in model.templates[0]["qfmt"]
+    assert model.templates[0]["qfmt"].index('definitionsList') < model.templates[0]["qfmt"].index('{{Image}}')
+    assert model.templates[0]["qfmt"].index('{{Image}}') < model.templates[0]["qfmt"].index('<div class="header">example:</div>')
     assert 'document.getElementById("translation").style.display = "block";' in model.templates[0]["afmt"]
     assert "--max-width-card: 400px;" in model.css
     assert "--color-nightMode-card-background: #0a1628;" in model.css
@@ -109,25 +111,26 @@ def test_normal_deck_css_does_not_update_russian_phoneme_template() -> None:
     assert "--max-width-card: 400px;" not in phoneme_deck_source
 
 
-def test_build_manual_word_list_model_preserves_fixed_translation_field() -> None:
+def test_build_manual_word_list_model_uses_highlight_template_contract() -> None:
     model = build_multilang_model(source_type="word-list")
 
     assert MANUAL_MODEL_ID > 0
     assert model.name == MANUAL_NOTE_TYPE_NAME
     assert [field["name"] for field in model.fields] == [
         "SortIndex",
-        "word",
-        "Front of Card",
+        "Word",
         "IPA",
-        "Definitions",
         "Example Sentence",
-        "Translation",
-        "word_audio",
         "sentence_audio",
+        "Definition",
         "Image",
     ]
-    assert "{{Translation}}" in model.templates[0]["qfmt"]
-    assert "translation" in model.templates[0]["afmt"].casefold()
+    assert "{{Translation}}" not in model.templates[0]["qfmt"] + model.templates[0]["afmt"]
+    assert "{{Image}}" not in model.templates[0]["qfmt"]
+    assert "{{Image}}" in model.templates[0]["afmt"]
+    assert model.templates[0]["afmt"].index("{{Definition}}") < model.templates[0]["afmt"].index("{{Image}}")
+    assert 'class="card"' in model.templates[0]["qfmt"]
+    assert 'class="meaning"' in model.templates[0]["afmt"]
 
 
 def test_build_highlight_model_uses_dedicated_identity_and_fields() -> None:
@@ -139,7 +142,6 @@ def test_build_highlight_model_uses_dedicated_identity_and_fields() -> None:
         "SortIndex",
         "Word",
         "IPA",
-        "word_audio",
         "Example Sentence",
         "sentence_audio",
         "Definition",
@@ -150,19 +152,24 @@ def test_build_highlight_model_uses_dedicated_identity_and_fields() -> None:
     assert "{{Definition}}" in model.templates[0]["afmt"]
     assert "{{FrontSide}}" in model.templates[0]["afmt"]
     assert "{{Translation}}" not in template_markup
-    assert "highlight-card" in model.templates[0]["qfmt"]
-    assert "highlight-definition-answer" in model.templates[0]["afmt"]
-    assert "--multilang-blue" in model.css
+    assert "{{Image}}" not in model.templates[0]["qfmt"]
+    assert "{{Image}}" in model.templates[0]["afmt"]
+    assert model.templates[0]["afmt"].index("{{Definition}}") < model.templates[0]["afmt"].index("{{Image}}")
+    assert 'class="card"' in model.templates[0]["qfmt"]
+    assert 'class="meaning"' in model.templates[0]["afmt"]
+    assert ".audio-controls" in model.css
 
 
 def test_build_highlight_model_rejects_malformed_template_before_model_return(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
-    (tmp_path / "CARD_TEMPLATE.md").write_text(
-        Path("CARD_TEMPLATE.md").read_text(encoding="utf-8"),
+    template_dir = tmp_path / "templates"
+    template_dir.mkdir()
+    (template_dir / "normal_card.md").write_text(
+        Path("templates/normal_card.md").read_text(encoding="utf-8"),
         encoding="utf-8",
     )
-    (tmp_path / "HIGHLIGHT_CARD_TEMPLATE.md").write_text(
+    (template_dir / "highlight_card.md").write_text(
         """
 # Bad Highlight Template
 
@@ -237,27 +244,26 @@ def test_export_anki_package_bundles_referenced_media_and_sound_basenames(tmp_pa
 def test_export_highlight_anki_package_uses_highlight_model_and_bundles_media(
     tmp_path: Path,
 ) -> None:
-    word_media = write_media_file(tmp_path / "audio" / "run-word.mp3")
     sentence_media = write_media_file(tmp_path / "audio" / "run-sentence.mp3")
     row = make_row(item_key="run", sort_index=1, source_type="kindle-highlights")
     output_path = tmp_path / "highlight.apkg"
 
     result = export_anki_package(
         rows=[row],
-        media_index={row.word_audio: word_media, row.sentence_audio: sentence_media},
+        media_index={row.sentence_audio: sentence_media},
         output_path=output_path,
         deck_name="English::Highlights",
     )
 
     assert result.output_path == output_path
     assert result.card_count == 1
-    assert result.media_files == [word_media, sentence_media]
+    assert result.media_files == [sentence_media]
     with zipfile.ZipFile(output_path) as archive:
         names = archive.namelist()
         assert "collection.anki2" in names
         assert "media" in names
         media_manifest = json.loads(archive.read("media").decode("utf-8"))
-        assert sorted(media_manifest.values()) == ["run-sentence.mp3", "run-word.mp3"]
+        assert sorted(media_manifest.values()) == ["run-sentence.mp3"]
         collection_path = tmp_path / "collection.anki2"
         collection_path.write_bytes(archive.read("collection.anki2"))
     with sqlite3.connect(collection_path) as connection:
@@ -268,7 +274,6 @@ def test_export_highlight_anki_package_uses_highlight_model_and_bundles_media(
         "SortIndex",
         "Word",
         "IPA",
-        "word_audio",
         "Example Sentence",
         "sentence_audio",
         "Definition",
@@ -295,26 +300,22 @@ def test_export_anki_package_rejects_missing_media_before_writing(tmp_path: Path
 
 
 @pytest.mark.parametrize(
-    ("word_audio", "sentence_audio", "media_paths", "error"),
+    ("sentence_audio", "media_paths", "error"),
     [
         (
-            "[sound:run-word.mp3]",
             "[sound:run-sentence.mp3]",
-            {"[sound:run-word.mp3]": "run-word.mp3"},
+            {},
             "missing media file",
         ),
         (
-            "run-word.mp3",
-            "[sound:run-sentence.mp3]",
-            {"run-word.mp3": "run-word.mp3", "[sound:run-sentence.mp3]": "run-sentence.mp3"},
+            "run-sentence.mp3",
+            {"run-sentence.mp3": "run-sentence.mp3"},
             "invalid sound reference",
         ),
         (
-            "[sound:run-word.mp3]",
             "[sound:run-sentence.mp3]",
             {
-                "[sound:run-word.mp3]": "different-word.mp3",
-                "[sound:run-sentence.mp3]": "run-sentence.mp3",
+                "[sound:run-sentence.mp3]": "different-sentence.mp3",
             },
             "media basename mismatch",
         ),
@@ -322,7 +323,6 @@ def test_export_anki_package_rejects_missing_media_before_writing(tmp_path: Path
 )
 def test_export_highlight_package_rejects_broken_media_before_writing(
     tmp_path: Path,
-    word_audio: str,
     sentence_audio: str,
     media_paths: dict[str, str],
     error: str,
@@ -331,7 +331,6 @@ def test_export_highlight_package_rejects_broken_media_before_writing(
         item_key="run",
         sort_index=1,
         source_type="kindle-highlights",
-        word_audio=word_audio,
         sentence_audio=sentence_audio,
     )
     media_index = {

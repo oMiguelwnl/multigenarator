@@ -8,7 +8,7 @@ from pathlib import Path
 import re
 
 from multilang.domain.audio import AudioAssetKind, AudioAssetRecord, AudioSynthesisStatus
-from multilang.domain.exporting import ExportCardIdentity, ExportCardRow
+from multilang.domain.exporting import ExportCardIdentity, ExportCardRow, export_field_names_for_source_type
 from multilang.domain.jobs import SupportedLanguage
 from multilang.domain.lexicon import LexicalCardCandidate
 from multilang.domain.source_profiles import get_source_profile
@@ -46,11 +46,15 @@ class AssembleExportCardsService:
                     f"missing lexical candidate for item {text_record.item_key} in job {job_id}"
                 )
 
-            word_audio = self._require_audio(job_id=job_id, item_key=text_record.item_key, asset_kind=AudioAssetKind.WORD)
-            sentence_audio = self._require_audio(job_id=job_id, item_key=text_record.item_key, asset_kind=AudioAssetKind.SENTENCE)
-
             source_type = _candidate_source_type(lexical_candidate)
             source_profile = get_source_profile(source_type)
+            field_names = export_field_names_for_source_type(source_type)
+            word_audio = (
+                self._require_audio(job_id=job_id, item_key=text_record.item_key, asset_kind=AudioAssetKind.WORD)
+                if "word_audio" in field_names
+                else None
+            )
+            sentence_audio = self._require_audio(job_id=job_id, item_key=text_record.item_key, asset_kind=AudioAssetKind.SENTENCE)
             row = ExportCardRow(
                 identity=ExportCardIdentity(
                     language=deck_language,
@@ -66,7 +70,7 @@ class AssembleExportCardsService:
                 definitions=self._render_definitions(lexical_candidate),
                 example_sentence=escape(text_record.example_sentence or ""),
                 translation=escape(text_record.translation_text or "") if source_profile.exports_translation_field else "",
-                word_audio=self._to_sound_tag(word_audio),
+                word_audio=self._to_sound_tag(word_audio) if word_audio is not None else "",
                 sentence_audio=self._to_sound_tag(sentence_audio),
             )
             cards.append(self.export_repository.upsert_card_snapshot(row))

@@ -60,15 +60,15 @@ def test_frequency_existing_mode_still_generates_audio_exports_and_uses_default_
     assert HIGHLIGHT_NOTE_TYPE_NAME != NOTE_TYPE_NAME
 
 
-def test_custom_word_list_existing_mode_still_generates_audio_exports_without_highlight_fields(
+def test_custom_word_list_existing_mode_generates_audio_exports_with_highlight_template_fields(
     tmp_path: Path,
     monkeypatch,
 ) -> None:
     _custom_e2e.test_custom_word_list_generates_audio_and_exports_all_formats(tmp_path, monkeypatch)
 
     assert MANUAL_NOTE_TYPE_NAME == "Multilang::Manual Card"
-    assert "Translation" in MANUAL_EXPORT_CARD_FIELD_NAMES
-    assert MANUAL_EXPORT_CARD_FIELD_NAMES != HIGHLIGHT_EXPORT_CARD_FIELD_NAMES
+    assert "Translation" not in MANUAL_EXPORT_CARD_FIELD_NAMES
+    assert MANUAL_EXPORT_CARD_FIELD_NAMES == HIGHLIGHT_EXPORT_CARD_FIELD_NAMES
     assert HIGHLIGHT_NOTE_TYPE_NAME != MANUAL_NOTE_TYPE_NAME
 
 

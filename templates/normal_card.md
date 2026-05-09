@@ -28,6 +28,10 @@ Import these into your Anki note type under **Card Template → Front / Back / S
     </div>
   </div>
 
+  {{#Image}}
+  <div class="image">{{Image}}</div>
+  {{/Image}}
+
   <div class="dividerLine"></div>
 
   <div class="horizontalPadding">
@@ -41,9 +45,6 @@ Import these into your Anki note type under **Card Template → Front / Back / S
     </div>
   </div>
 
-  {{#Image}}
-  <div class="image">{{Image}}</div>
-  {{/Image}}
 </div>
 ```
 
@@ -437,6 +438,6 @@ body {
 ## Notes
 
 - The `Translation` field is **hidden on the front** and revealed on the back via the inline `<script>` tag.
-- The `Image` field renders only when populated — the `{{#Image}}...{{/Image}}` conditional keeps the card clean when blank.
+- The `Image` field renders directly below the definition when populated — the `{{#Image}}...{{/Image}}` conditional keeps the card clean when blank.
 - The `IPA` field also uses a conditional block: if empty, no phonetic line is shown.
 - Audio fields (`word_audio`, `sentence_audio`) use Anki's built-in `[sound:filename.mp3]` syntax, which is injected automatically by `genanki` during deck assembly.

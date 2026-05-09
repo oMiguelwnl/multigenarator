@@ -49,12 +49,15 @@ def test_russian_phoneme_template_refresh_exports_apkg_with_safe_references(tmp_
     assert "{{hint:Sentence Translation}}" not in template["qfmt"]
     assert "{{Sentence Translation}}" in template["qfmt"]
     assert 'style="display:none;"' in template["qfmt"]
+    assert 'id="sentenceTranslation" class="sentenceTranslation"' in template["qfmt"]
     assert "{{Sentence Translation}}" in template["afmt"]
     assert 'document.getElementById("sentenceTranslation").style.display = "block"' in template["afmt"]
     assert _template_references(template["qfmt"]) <= allowed_references
     assert _template_references(template["afmt"]) <= allowed_references
     assert _template_references(template["qfmt"]).isdisjoint(_FORBIDDEN_REFERENCES)
     assert _template_references(template["afmt"]).isdisjoint(_FORBIDDEN_REFERENCES)
+    assert "pronunciationHighlight" not in template["qfmt"]
+    assert ".pronunciationHighlight" not in model.css
 
 
 def test_russian_phoneme_template_refresh_preserves_audio_fields_on_visible_front() -> None:
@@ -79,6 +82,7 @@ def test_russian_phoneme_template_refresh_preserves_audio_fields_on_visible_fron
     assert "{{letter_audio}}" in qfmt
     assert "{{word_audio}}" in qfmt
     assert "{{sentence_audio}}" in qfmt
+    assert "pronunciationHighlight" not in qfmt
     assert note.fields[2] == "[sound:letter.mp3]"
     assert note.fields[4] == "[sound:word.mp3]"
     assert note.fields[7] == "[sound:sentence.mp3]"

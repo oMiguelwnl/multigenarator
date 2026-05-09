@@ -6,6 +6,7 @@ from dataclasses import dataclass
 from typing import Any
 
 from multilang.domain.audio import AudioAssetRecord, AudioSynthesisStatus
+from multilang.domain.exporting import export_field_names_for_source_type
 from multilang.domain.jobs import JobStage, SupportedLanguage
 
 
@@ -56,7 +57,12 @@ class GenerateAudioItemsService:
                 display_word=getattr(lexical_candidate, "display_form"),
                 text_record=text_record,
             )
-            assets = [prepared_bundle.word_asset, prepared_bundle.sentence_asset]
+            field_names = export_field_names_for_source_type(_candidate_source_type(lexical_candidate))
+            assets = []
+            if "word_audio" in field_names:
+                assets.append(prepared_bundle.word_asset)
+            if "sentence_audio" in field_names:
+                assets.append(prepared_bundle.sentence_asset)
 
             for prepared_asset in assets:
                 final_asset, reused = self._materialize_asset(prepared_asset)
@@ -98,6 +104,15 @@ class GenerateAudioItemsService:
             return prepared_asset, False
 
         return self.audio_synthesis_service.synthesize_prepared_asset(prepared_asset), False
+
+
+def _candidate_source_type(candidate: object) -> str:
+    source_type = getattr(candidate, "source_type", None)
+    if source_type:
+        return str(source_type)
+    if getattr(candidate, "frequency_rank", None) is not None or getattr(candidate, "frequency_level", None) is not None:
+        return "frequency"
+    return "word-list"
 
 
 __all__ = ["GenerateAudioItemsResult", "GenerateAudioItemsService"]

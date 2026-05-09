@@ -110,7 +110,7 @@ def test_custom_word_list_generates_audio_and_exports_all_formats(tmp_path: Path
     assert "grounded_candidates=2" in generate_result.output
     assert "accepted_text_items=2" in generate_result.output
     assert "review_required_text_items=0" in generate_result.output
-    assert "audio_processed_items=4" in generate_result.output
+    assert "audio_processed_items=2" in generate_result.output
 
     session = Session(create_engine(f"sqlite+pysqlite:///{database_path}"))
     try:
@@ -118,7 +118,7 @@ def test_custom_word_list_generates_audio_and_exports_all_formats(tmp_path: Path
         assert job is not None
         assert session.scalar(select(func.count()).select_from(GenerationJob)) == 1
         assert session.scalar(select(func.count()).select_from(TextQualityRecordModel)) == 2
-        assert session.scalar(select(func.count()).select_from(AudioAssetModel)) == 4
+        assert session.scalar(select(func.count()).select_from(AudioAssetModel)) == 2
         text_rows = list(session.scalars(select(TextQualityRecordModel).order_by(TextQualityRecordModel.item_key.asc())))
         assert {row.review_status for row in text_rows} == {"accepted"}
         audio_assets = list(session.scalars(select(AudioAssetModel)))

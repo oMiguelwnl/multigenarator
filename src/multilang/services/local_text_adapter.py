@@ -168,6 +168,12 @@ class LocalTranslationAdapter:
     """Translate local templates without copying source or definition text."""
 
     def translate_sentence(self, request: SentenceTranslationRequest) -> SentenceTranslationResult:
+        if request.template_kind == "definition":
+            return SentenceTranslationResult(
+                translation=_translate_definition_text(request.sentence, request.translation_target_language),
+                provenance={"source": "runtime-local-definition-translator", "provider": "local"},
+            )
+
         if request.template_kind and request.template_kind.startswith("curated:"):
             curated = _CURATED_LOCAL_TEXT.get(request.template_kind.split(":", 1)[1])
             if curated is not None:
@@ -242,6 +248,55 @@ def _localized_sense(sense_hint: str | None, *, language: str) -> str:
 
     sense_key = _SENSE_ALIASES.get(sense_hint.casefold(), sense_hint.casefold())
     return _SENSE_TRANSLATIONS.get(sense_key, {}).get(language, sense_hint)
+
+
+_DEFINITION_LABELS = {
+    "de": {"noun": "Substantiv", "verb": "Verb", "adjective": "Adjektiv", "adverb": "Adverb"},
+    "en": {"noun": "noun", "verb": "verb", "adjective": "adjective", "adverb": "adverb"},
+    "es": {"noun": "sustantivo", "verb": "verbo", "adjective": "adjetivo", "adverb": "adverbio"},
+    "fr": {"noun": "nom", "verb": "verbe", "adjective": "adjectif", "adverb": "adverbe"},
+    "it": {"noun": "sostantivo", "verb": "verbo", "adjective": "aggettivo", "adverb": "avverbio"},
+    "nl": {"noun": "zelfstandig naamwoord", "verb": "werkwoord", "adjective": "bijvoeglijk naamwoord", "adverb": "bijwoord"},
+    "pl": {"noun": "rzeczownik", "verb": "czasownik", "adjective": "przymiotnik", "adverb": "przysłówek"},
+    "pt": {"noun": "substantivo", "verb": "verbo", "adjective": "adjetivo", "adverb": "advérbio"},
+    "ro": {"noun": "substantiv", "verb": "verb", "adjective": "adjectiv", "adverb": "adverb"},
+    "ru": {"noun": "существительное", "verb": "глагол", "adjective": "прилагательное", "adverb": "наречие"},
+    "tr": {"noun": "isim", "verb": "fiil", "adjective": "sıfat", "adverb": "zarf"},
+}
+
+
+def _translate_definition_text(text: str, language: str) -> str:
+    if language == "en":
+        return text
+
+    label, separator, meaning = text.partition(":")
+    normalized_label = label.casefold().strip()
+    translated_label = _DEFINITION_LABELS.get(language, {}).get(normalized_label, label.strip())
+    translated_meaning = _translate_definition_meaning(meaning.strip() if separator else text, language)
+    return f"{translated_label}: {translated_meaning}" if separator else translated_meaning
+
+
+def _translate_definition_meaning(meaning: str, language: str) -> str:
+    normalized = meaning.casefold().strip()
+    if normalized.startswith("definition for "):
+        term = meaning.removeprefix("definition for ").strip()
+        prefixes = {
+            "de": "Definition für",
+            "es": "definición de",
+            "fr": "définition de",
+            "it": "definizione di",
+            "nl": "definitie van",
+            "pl": "definicja słowa",
+            "pt": "definição de",
+            "ro": "definiție pentru",
+            "ru": "определение для",
+            "tr": "tanımı",
+        }
+        return f"{prefixes.get(language, 'definition for')} {term}".strip()
+    if normalized.startswith("to "):
+        sense = normalized.removeprefix("to ").strip()
+        return _localized_sense(sense, language=language)
+    return meaning
 
 
 def _first_gloss(definitions_html: str | None) -> str:

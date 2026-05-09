@@ -20,8 +20,8 @@ _SECTION_RE = re.compile(
 _ANKI_REFERENCE_RE = re.compile(r"{{\s*(?P<prefix>[#/^]?)(?P<name>[^{}]+?)\s*}}")
 _ALLOWED_NON_FIELD_HELPERS = frozenset({"FrontSide"})
 _TEMPLATE_FILES = {
-    "normal_card": "CARD_TEMPLATE.md",
-    "highlight_card": "HIGHLIGHT_CARD_TEMPLATE.md",
+    "normal_card": Path("templates/normal_card.md"),
+    "highlight_card": Path("templates/highlight_card.md"),
 }
 
 
@@ -37,8 +37,7 @@ def load_card_template(source_type: str) -> CardTemplate:
     """Load and validate the card template selected by a source profile."""
 
     profile = get_source_profile(source_type)
-    template_file_name = _TEMPLATE_FILES[profile.template_name]
-    template_path = PROJECT_ROOT / template_file_name
+    template_path = PROJECT_ROOT / _TEMPLATE_FILES[profile.template_name]
     content = template_path.read_text(encoding="utf-8")
     template = _parse_card_template(
         content,

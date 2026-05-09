@@ -78,7 +78,7 @@ def test_phase16_existing_mode_audit_reexecutes_regression_boundaries(
         tmp_path / "frequency",
         monkeypatch,
     )
-    existing_mode_evidence.test_custom_word_list_existing_mode_still_generates_audio_exports_without_highlight_fields(
+    existing_mode_evidence.test_custom_word_list_existing_mode_generates_audio_exports_with_highlight_template_fields(
         tmp_path / "custom",
         monkeypatch,
     )
@@ -88,9 +88,10 @@ def test_phase16_existing_mode_audit_reexecutes_regression_boundaries(
     )
 
     assert "Translation" in FREQUENCY_EXPORT_CARD_FIELD_NAMES
-    assert "Translation" in MANUAL_EXPORT_CARD_FIELD_NAMES
+    assert "Translation" not in MANUAL_EXPORT_CARD_FIELD_NAMES
     assert "Translation" not in HIGHLIGHT_EXPORT_CARD_FIELD_NAMES
-    assert FREQUENCY_EXPORT_CARD_FIELD_NAMES == MANUAL_EXPORT_CARD_FIELD_NAMES
+    assert FREQUENCY_EXPORT_CARD_FIELD_NAMES != MANUAL_EXPORT_CARD_FIELD_NAMES
+    assert MANUAL_EXPORT_CARD_FIELD_NAMES == HIGHLIGHT_EXPORT_CARD_FIELD_NAMES
     assert HIGHLIGHT_EXPORT_CARD_FIELD_NAMES != FREQUENCY_EXPORT_CARD_FIELD_NAMES
     assert {NOTE_TYPE_NAME, MANUAL_NOTE_TYPE_NAME, HIGHLIGHT_NOTE_TYPE_NAME} == {
         "Multilang::Card",

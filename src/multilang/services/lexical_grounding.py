@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import re
-from html import escape
+from html import escape, unescape
 from pathlib import Path
 from typing import Protocol
 
@@ -20,6 +20,7 @@ from multilang.domain.lexicon import (
 from multilang.services.kaikki_lookup import KaikkiRecord, normalize_lexical_key
 from multilang.services.kaikki_lookup import KaikkiLookup
 from multilang.services.provider_pronunciation_adapters import PronunciationGenerationRequest
+from multilang.services.text_generation import SentenceTranslationRequest, SentenceTranslationResult
 from multilang.services.word_list_parser import ParsedWordListItem
 
 
@@ -33,12 +34,22 @@ class PronunciationGenerator(Protocol):
     def generate_pronunciation(self, request: PronunciationGenerationRequest) -> object: ...
 
 
+class DefinitionTranslator(Protocol):
+    def translate_sentence(self, request: SentenceTranslationRequest) -> SentenceTranslationResult: ...
+
+
 class LexicalGroundingService:
     """Ground parsed lexical inputs against authoritative cached lookups."""
 
-    def __init__(self, lookup: object, pronunciation_generator: PronunciationGenerator | None = None) -> None:
+    def __init__(
+        self,
+        lookup: object,
+        pronunciation_generator: PronunciationGenerator | None = None,
+        definition_translator: DefinitionTranslator | None = None,
+    ) -> None:
         self._lookup = lookup
         self._pronunciation_generator = pronunciation_generator
+        self._definition_translator = definition_translator
 
     def ground_word_list_item(
         self,
@@ -54,6 +65,7 @@ class LexicalGroundingService:
             submitted_form=item.submitted_form,
             display_form=item.display_form,
             record=record,
+            definition_language=language.value,
         )
         return candidate.model_copy(
             update={
@@ -119,6 +131,7 @@ class LexicalGroundingService:
             submitted_form=candidate.display_form,
             display_form=candidate.display_form,
             record=record,
+            definition_language=language.value,
         )
 
     def _lookup_record(self, *, language: SupportedLanguage, term: str) -> KaikkiRecord | None:
@@ -131,12 +144,18 @@ class LexicalGroundingService:
         submitted_form: str,
         display_form: str,
         record: KaikkiRecord,
+        definition_language: str | None = None,
     ) -> LexicalCardCandidate:
         policy = policy_for_language(language)
+        resolved_definition_language = definition_language or policy.definition_language
         learner_display_form = self._select_display_form(default=display_form, record=record)
         definitions_html = self._format_definitions(
             record.definitions,
             part_of_speech=record.part_of_speech,
+        )
+        definitions_html = self._translate_definitions_html(
+            definitions_html,
+            target_language=resolved_definition_language,
         )
         ipa = record.ipa
         spoken_form: str | None = learner_display_form if record.ipa else None
@@ -144,7 +163,7 @@ class LexicalGroundingService:
         notes: list[str] = []
         if record.ipa is None:
             notes.append("authoritative IPA missing in lexical source")
-        if self._pronunciation_generator is not None:
+        if self._pronunciation_generator is not None and record.ipa is None:
             pronunciation = self._pronunciation_generator.generate_pronunciation(
                 PronunciationGenerationRequest(
                     target_language=language.value,
@@ -167,7 +186,7 @@ class LexicalGroundingService:
             lemma=record.lemma,
             lemma_key=normalize_lexical_key(record.lemma),
             definitions_html=definitions_html,
-            definition_language=policy.definition_language,
+            definition_language=resolved_definition_language,
             ipa=ipa,
             spoken_form=spoken_form,
             translation_target_language=policy.translation_target_language,
@@ -183,6 +202,25 @@ class LexicalGroundingService:
                 notes=notes,
             ),
         )
+
+    def _translate_definitions_html(self, definitions_html: str | None, *, target_language: str) -> str | None:
+        if not definitions_html or target_language == "en" or self._definition_translator is None:
+            return definitions_html
+
+        translated_parts: list[str] = []
+        for part in re.split(r"<br\s*/?>", definitions_html):
+            cleaned = " ".join(unescape(part).split())
+            if not cleaned:
+                continue
+            result = self._definition_translator.translate_sentence(
+                SentenceTranslationRequest(
+                    sentence=cleaned,
+                    translation_target_language=target_language,
+                    template_kind="definition",
+                )
+            )
+            translated_parts.append(escape(result.translation.strip()))
+        return "<br>".join(translated_parts) or definitions_html
 
     def _pending_candidate(
         self,

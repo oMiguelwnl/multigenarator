@@ -16,7 +16,12 @@ from multilang.repositories.job_repository import JobRepository
 from multilang.repositories.lexical_repository import LexicalRepository
 from multilang.repositories.text_repository import TextRepository
 from multilang.domain.audio import AudioAssetKind
-from multilang.domain.exporting import ExportArtifactFormat, ExportArtifactStatus, ExportDeckArtifact
+from multilang.domain.exporting import (
+    ExportArtifactFormat,
+    ExportArtifactStatus,
+    ExportDeckArtifact,
+    export_field_names_for_source_type,
+)
 from multilang.services.azure_speech_adapter import AzureSpeechAdapter
 from multilang.services.audio_synthesis import (
     AudioSynthesisAdapter,
@@ -29,6 +34,8 @@ from multilang.services.generate_job import GenerateJobService
 from multilang.services.generate_audio_items import GenerateAudioItemsService
 from multilang.services.generate_text_items import GenerateTextItemsService
 from multilang.services.ingest_lexical_items import IngestLexicalItemsService
+from multilang.services.kaikki_lookup import KaikkiLookup
+from multilang.services.lexical_grounding import LexicalGroundingService
 from multilang.services.local_text_adapter import LocalSentenceAdapter, LocalTranslationAdapter
 from multilang.services.provider_text_adapters import (
     DeepLTranslationAdapter,
@@ -209,16 +216,21 @@ class RuntimeGenerateService(IngestLexicalItemsService):
     def _build_media_index(self, rows: list[object]) -> dict[str, Path]:
         media_index: dict[str, Path] = {}
         for row in rows:
-            word_asset = self.audio_repository.get_asset(row.identity.job_id, row.identity.item_key, AudioAssetKind.WORD)
-            sentence_asset = self.audio_repository.get_asset(row.identity.job_id, row.identity.item_key, AudioAssetKind.SENTENCE)
-            if word_asset is None or sentence_asset is None:
-                raise ValueError(f"missing required audio for item {row.identity.item_key}")
-            word_path = Path(word_asset.provenance.storage_path)
-            sentence_path = Path(sentence_asset.provenance.storage_path)
-            _validate_media_reference(sound_tag=row.word_audio, media_path=word_path)
-            _validate_media_reference(sound_tag=row.sentence_audio, media_path=sentence_path)
-            media_index[row.word_audio] = word_path
-            media_index[row.sentence_audio] = sentence_path
+            field_names = export_field_names_for_source_type(row.identity.source_type)
+            if "word_audio" in field_names:
+                word_asset = self.audio_repository.get_asset(row.identity.job_id, row.identity.item_key, AudioAssetKind.WORD)
+                if word_asset is None:
+                    raise ValueError(f"missing required word audio for item {row.identity.item_key}")
+                word_path = Path(word_asset.provenance.storage_path)
+                _validate_media_reference(sound_tag=row.word_audio, media_path=word_path)
+                media_index[row.word_audio] = word_path
+            if "sentence_audio" in field_names:
+                sentence_asset = self.audio_repository.get_asset(row.identity.job_id, row.identity.item_key, AudioAssetKind.SENTENCE)
+                if sentence_asset is None:
+                    raise ValueError(f"missing required sentence audio for item {row.identity.item_key}")
+                sentence_path = Path(sentence_asset.provenance.storage_path)
+                _validate_media_reference(sound_tag=row.sentence_audio, media_path=sentence_path)
+                media_index[row.sentence_audio] = sentence_path
         return media_index
 
 
@@ -276,9 +288,10 @@ def build_runtime_service(
     export_repository = ExportRepository(session)
     highlight_import_repository = HighlightImportRepository(session)
     generate_job_service = GenerateJobService(job_repository)
+    translation_adapter = _build_translation_adapter(runtime_settings)
     text_generation_service = TextGenerationService(
         sentence_adapter=_build_sentence_adapter(runtime_settings),
-        translation_adapter=_build_translation_adapter(runtime_settings),
+        translation_adapter=translation_adapter,
     )
     text_validation_service = TextValidationService()
     tatoeba_sentence_source = TatoebaSentenceSource(
@@ -297,6 +310,10 @@ def build_runtime_service(
         lexical_repo=lexical_repository,
         highlight_import_repo=highlight_import_repository,
         settings=runtime_settings,
+        grounding_service=LexicalGroundingService(
+            lookup=KaikkiLookup(data_dir=runtime_settings.lexicon_data_dir),
+            definition_translator=translation_adapter,
+        ),
         text_repository=text_repository,
         audio_repository=audio_repository,
         export_repository=export_repository,

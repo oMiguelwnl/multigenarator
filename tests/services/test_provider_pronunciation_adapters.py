@@ -52,6 +52,7 @@ def test_litellm_pronunciation_adapter_uses_json_response() -> None:
     assert "Display form: casa" in prompt
     assert "Lemma: casa" in prompt
     assert "Definitions: noun: house" in prompt
+    assert "Display form exactly" in prompt
     assert "ipa, spoken_form, uncertainty_notes" in prompt
 
 

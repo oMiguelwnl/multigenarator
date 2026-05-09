@@ -188,12 +188,13 @@ def test_highlight_generation_audio_and_card_flow() -> None:
 
     row = card_result.cards[0]
     mapping = row.ordered_field_mapping()
-    assert audio_result.processed_items == 2
-    assert {asset.asset_kind for asset in audio_repo.assets.values()} == {AudioAssetKind.WORD, AudioAssetKind.SENTENCE}
+    assert audio_result.processed_items == 1
+    assert {asset.asset_kind for asset in audio_repo.assets.values()} == {AudioAssetKind.SENTENCE}
     assert row.identity.source_type == "kindle-highlights"
     assert row.word == "wash"
     assert row.translation == ""
     assert mapping["Image"] == ""
     assert "Translation" not in mapping
-    assert mapping["word_audio"].startswith("[sound:")
+    assert row.word_audio == ""
+    assert "word_audio" not in mapping
     assert mapping["sentence_audio"].startswith("[sound:")

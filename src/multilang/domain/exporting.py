@@ -22,18 +22,17 @@ FREQUENCY_EXPORT_CARD_FIELD_NAMES = (
     "sentence_audio",
     "Image",
 )
-MANUAL_EXPORT_CARD_FIELD_NAMES = FREQUENCY_EXPORT_CARD_FIELD_NAMES
-EXPORT_CARD_FIELD_NAMES = FREQUENCY_EXPORT_CARD_FIELD_NAMES
 HIGHLIGHT_EXPORT_CARD_FIELD_NAMES = (
     "SortIndex",
     "Word",
     "IPA",
-    "word_audio",
     "Example Sentence",
     "sentence_audio",
     "Definition",
     "Image",
 )
+MANUAL_EXPORT_CARD_FIELD_NAMES = HIGHLIGHT_EXPORT_CARD_FIELD_NAMES
+EXPORT_CARD_FIELD_NAMES = FREQUENCY_EXPORT_CARD_FIELD_NAMES
 
 
 class ExportArtifactFormat(str, Enum):

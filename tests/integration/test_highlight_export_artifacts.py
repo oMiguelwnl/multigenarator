@@ -47,7 +47,6 @@ def make_highlight_row() -> ExportCardRow:
         definitions="a place where someone lives",
         example_sentence="A casa fica perto do rio.",
         translation="must not appear in highlight export artifacts",
-        word_audio="[sound:casa-word.mp3]",
         sentence_audio="[sound:casa-sentence.mp3]",
     )
 
@@ -56,26 +55,25 @@ def test_highlight_export_artifacts_use_dedicated_model_fields_and_safe_media(
     tmp_path: Path,
 ) -> None:
     row = make_highlight_row()
-    word_media = write_media_file(tmp_path / "audio" / "casa-word.mp3")
     sentence_media = write_media_file(tmp_path / "audio" / "casa-sentence.mp3")
     apkg_path = tmp_path / "highlight.apkg"
 
     result = export_anki_package(
         rows=[row],
-        media_index={row.word_audio: word_media, row.sentence_audio: sentence_media},
+        media_index={row.sentence_audio: sentence_media},
         output_path=apkg_path,
         deck_name="Portuguese::Highlights",
     )
 
     assert result.output_path == apkg_path
     assert result.card_count == 1
-    assert result.media_files == [word_media, sentence_media]
+    assert result.media_files == [sentence_media]
     assert apkg_path.exists()
     with zipfile.ZipFile(apkg_path) as archive:
         assert "collection.anki2" in archive.namelist()
         assert "media" in archive.namelist()
         media_manifest = json.loads(archive.read("media").decode("utf-8"))
-        assert sorted(media_manifest.values()) == ["casa-sentence.mp3", "casa-word.mp3"]
+        assert sorted(media_manifest.values()) == ["casa-sentence.mp3"]
         collection_path = tmp_path / "collection.anki2"
         collection_path.write_bytes(archive.read("collection.anki2"))
 
@@ -143,7 +141,6 @@ def test_highlight_csv_and_tsv_headers_match_strict_anki_import_metadata(
         "1",
         "casa",
         "/ˈka.zɐ/",
-        "[sound:casa-word.mp3]",
         "A casa fica perto do rio.",
         "[sound:casa-sentence.mp3]",
         "a place where someone lives",

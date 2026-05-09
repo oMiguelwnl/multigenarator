@@ -132,7 +132,7 @@ def test_generate_command_default_runtime_uses_azure_audio_adapter(
         job = session.scalar(select(GenerationJob))
         assert job is not None
         first_assets = list(session.scalars(select(AudioAssetModel).order_by(AudioAssetModel.asset_kind.asc())))
-        assert len(first_assets) == 2
+        assert len(first_assets) == 1
         first_paths = [asset.storage_path for asset in first_assets]
 
         second_result = runner.invoke(
@@ -151,17 +151,17 @@ def test_generate_command_default_runtime_uses_azure_audio_adapter(
         )
 
         assert second_result.exit_code == 0
-        assert "audio_reused_items=2" in second_result.output
+        assert "audio_reused_items=1" in second_result.output
         session.expire_all()
         second_assets = list(session.scalars(select(AudioAssetModel).order_by(AudioAssetModel.asset_kind.asc())))
-        assert len(second_assets) == 2
+        assert len(second_assets) == 1
         assert [asset.storage_path for asset in second_assets] == first_paths
-        assert session.scalar(select(func.count()).select_from(AudioAssetModel)) == 2
+        assert session.scalar(select(func.count()).select_from(AudioAssetModel)) == 1
         for asset in second_assets:
             assert Path(asset.storage_path).read_bytes().startswith(b"ID3")
     finally:
         session.close()
 
     assert first_result.exit_code == 0
-    assert "audio_processed_items=2" in first_result.output
+    assert "audio_processed_items=1" in first_result.output
     assert len(FakeAzureSpeechAdapter.instances) == 1

@@ -102,6 +102,7 @@ def _pronunciation_prompt(request: PronunciationGenerationRequest) -> str:
             f"Display form: {request.display_form}",
             f"Lemma: {request.lemma}",
             f"Definitions: {definition}",
+            "Generate pronunciation for the Display form exactly; do not switch to the lemma, translation, or a related word.",
             "Return JSON keys ipa, spoken_form, uncertainty_notes.",
             "Use IPA for ipa and a learner-readable pronunciation for spoken_form.",
         ]

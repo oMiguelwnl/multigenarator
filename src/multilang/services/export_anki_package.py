@@ -114,10 +114,13 @@ def _row_fields(row: ExportCardRow, *, field_names: tuple[str, ...]) -> list[str
 
 
 def _resolve_media_files(*, row: ExportCardRow, media_index: dict[str, Path]) -> list[Path]:
-    return [
-        _require_media_file(row.word_audio, media_index=media_index),
-        _require_media_file(row.sentence_audio, media_index=media_index),
-    ]
+    field_names = export_field_names_for_source_type(row.identity.source_type)
+    media_files: list[Path] = []
+    if "word_audio" in field_names:
+        media_files.append(_require_media_file(row.word_audio, media_index=media_index))
+    if "sentence_audio" in field_names:
+        media_files.append(_require_media_file(row.sentence_audio, media_index=media_index))
+    return media_files
 
 
 def _require_media_file(sound_tag: str, *, media_index: dict[str, Path]) -> Path:

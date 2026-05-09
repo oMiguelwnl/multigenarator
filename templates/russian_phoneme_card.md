@@ -25,10 +25,8 @@ Template used only by the introductory Russian phoneme deck.
     </div>
     <div class="row centerVertically" style="margin-bottom: -8px">
       <div class="hint">Sounds like:</div>
-      <div class="indent centerVertically">
-        <span class="targetIPA"> {{Sound}} </span>
-        <span class="wordAudioButton"> {{letter_audio}} </span>
-      </div>
+      <span class="targetIPA indent"> {{Sound}} </span>
+      <span class="wordAudioButton"> {{letter_audio}} </span>
     </div>
   </div>
 
@@ -37,10 +35,8 @@ Template used only by the introductory Russian phoneme deck.
   <div class="horizontalPadding">
     <div class="header">example word:</div>
     <div class="centerVertically wrap" style="margin-top: -8px">
-      <div class="indent centerVertically">
-        <span class="exampleWord"> {{Example Word}} </span>
-        <span class="wordAudioButton"> {{word_audio}} </span>
-      </div>
+      <span class="exampleWord indent"> {{Example Word}} </span>
+      <span class="wordAudioButton"> {{word_audio}} </span>
       <div class="sentenceTranslation">{{Word Translation}}</div>
     </div>
   </div>
@@ -54,7 +50,7 @@ Template used only by the introductory Russian phoneme deck.
         <span class="exampleWord">{{Example Sentence}}</span>
         <span class="wordAudioButton"> {{sentence_audio}} </span>
       </div>
-      <div id="sentenceTranslation" class="sentenceTranslation indent" style="display:none;">
+      <div id="sentenceTranslation" class="sentenceTranslation" style="display:none;">
         {{Sentence Translation}}
       </div>
     </div>

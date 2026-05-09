@@ -44,6 +44,81 @@ def test_parse_word_list_emits_blank_and_duplicate_diagnostics(tmp_path: Path) -
     assert "line 1" in result.warnings[1].detail
 
 
+def test_parse_word_list_splits_loose_lines_and_preserves_quoted_phrases(tmp_path: Path) -> None:
+    word_list = _write_text(
+        tmp_path / "words.md",
+        'alpha "Robe de soie" bravo "Frais ruban"\n',
+    )
+
+    result = parse_word_list(word_list)
+
+    assert [item.display_form for item in result.items] == [
+        "alpha",
+        "Robe de soie",
+        "bravo",
+        "Frais ruban",
+    ]
+    assert [item.item_key for item in result.items] == [
+        "alpha",
+        "robe de soie",
+        "bravo",
+        "frais ruban",
+    ]
+    assert [item.line_number for item in result.items] == [1, 1, 1, 1]
+
+
+def test_parse_word_list_keeps_comma_separated_multiword_entries_together(tmp_path: Path) -> None:
+    word_list = _write_text(
+        tmp_path / "words.md",
+        "- Robe de soie, Frais ruban; carte postale\n",
+    )
+
+    result = parse_word_list(word_list)
+
+    assert [item.display_form for item in result.items] == [
+        "Robe de soie",
+        "Frais ruban",
+        "carte postale",
+    ]
+
+
+def test_parse_word_list_splits_dense_titlecase_line_and_preserves_lowercase_phrase_parts(
+    tmp_path: Path,
+) -> None:
+    word_list = _write_text(
+        tmp_path / "words.md",
+        "Loge Aplomb Remercia Canne Noue Étoiles Soupçonnée Fouiller Établi Vernis "
+        "Éphémère Duvet Ôte Commencement Aisance Soins Robe de soie Guimpe "
+        "Dentelle Soulier Frais ruban\n",
+    )
+
+    result = parse_word_list(word_list)
+
+    assert [item.display_form for item in result.items] == [
+        "Loge",
+        "Aplomb",
+        "Remercia",
+        "Canne",
+        "Noue",
+        "Étoiles",
+        "Soupçonnée",
+        "Fouiller",
+        "Établi",
+        "Vernis",
+        "Éphémère",
+        "Duvet",
+        "Ôte",
+        "Commencement",
+        "Aisance",
+        "Soins",
+        "Robe de soie",
+        "Guimpe",
+        "Dentelle",
+        "Soulier",
+        "Frais ruban",
+    ]
+
+
 def test_parse_word_list_rejects_non_utf8_input(tmp_path: Path) -> None:
     word_list = tmp_path / "words.txt"
     word_list.write_bytes("olá".encode("latin-1"))

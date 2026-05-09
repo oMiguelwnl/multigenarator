@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass, field
+from types import SimpleNamespace
 
 from multilang.domain.audio import AudioAssetKind, AudioAssetRecord, AudioFormat, AudioProvenance, AudioProvider, AudioSynthesisStatus, NormalizedTtsInput
 from multilang.domain.jobs import JobStage, SupportedLanguage
@@ -32,18 +33,23 @@ def make_text_record(*, item_key: str, review_status: ReviewStatus) -> TextQuali
     )
 
 
-def make_candidate(*, item_key: str, source_type: str | None = None) -> LexicalCardCandidate:
-    return LexicalCardCandidate(
+def make_candidate(*, item_key: str, source_type: str = "frequency") -> object:
+    candidate = LexicalCardCandidate(
         submitted_form=item_key,
         display_form=item_key,
         lemma=item_key,
         lemma_key=f"en:{item_key}",
+        frequency_rank=1 if source_type == "frequency" else None,
+        frequency_level=1 if source_type == "frequency" else None,
         definitions_html=f"definition for {item_key}",
         definition_language="en",
         translation_target_language="pt",
         grounding_status=GroundingStatus.GROUNDED,
         provenance=LexicalProvenance(source="kaikki", definition=DefinitionRecord(source="kaikki", value=f"definition for {item_key}")),
     )
+    if source_type == "frequency":
+        return candidate
+    return SimpleNamespace(**candidate.model_dump(), source_type=source_type)
 
 
 def make_asset(*, item_key: str, asset_kind: AudioAssetKind, status: AudioSynthesisStatus, fallback_used: bool = False) -> AudioAssetRecord:
@@ -84,9 +90,9 @@ class FakeTextRepository:
 
 @dataclass
 class FakeLexicalRepository:
-    candidates: dict[str, LexicalCardCandidate]
+    candidates: dict[str, object]
 
-    def get_candidate_for_item(self, job_id: str, item_key: str) -> LexicalCardCandidate | None:
+    def get_candidate_for_item(self, job_id: str, item_key: str) -> object | None:
         return self.candidates.get(item_key)
 
 
@@ -216,7 +222,7 @@ def test_generate_audio_items_service_tracks_fallback_and_failure_counters() -> 
     assert result.failed_items == 1
 
 
-def test_generate_audio_items_service_creates_word_and_sentence_audio_for_highlights() -> None:
+def test_generate_audio_items_service_creates_only_sentence_audio_for_highlights() -> None:
     item_key = "highlight:abc:wash"
     prepared_word = make_asset(item_key=item_key, asset_kind=AudioAssetKind.WORD, status=AudioSynthesisStatus.PENDING)
     prepared_sentence = make_asset(item_key=item_key, asset_kind=AudioAssetKind.SENTENCE, status=AudioSynthesisStatus.PENDING)
@@ -227,7 +233,7 @@ def test_generate_audio_items_service_creates_word_and_sentence_audio_for_highli
     job_repository = FakeJobRepository()
     service = GenerateAudioItemsService(
         job_repository=job_repository,
-        lexical_repository=FakeLexicalRepository(candidates={item_key: make_candidate(item_key=item_key)}),
+        lexical_repository=FakeLexicalRepository(candidates={item_key: make_candidate(item_key=item_key, source_type="kindle-highlights")}),
         text_repository=FakeTextRepository(accepted_records=[make_text_record(item_key=item_key, review_status=ReviewStatus.ACCEPTED)]),
         audio_repository=audio_repository,
         audio_synthesis_service=synthesis,
@@ -235,9 +241,10 @@ def test_generate_audio_items_service_creates_word_and_sentence_audio_for_highli
 
     result = service.execute(job_id="job-1", deck_language=SupportedLanguage.EN)
 
-    assert result.processed_items == 2
-    assert {asset.asset_kind for asset in audio_repository.saved_assets} == {AudioAssetKind.WORD, AudioAssetKind.SENTENCE}
-    assert len(synthesis.synthesized) == 2
+    assert result.processed_items == 1
+    assert {asset.asset_kind for asset in audio_repository.saved_assets} == {AudioAssetKind.SENTENCE}
+    assert len(synthesis.synthesized) == 1
+    assert synthesis.synthesized[0].asset_kind is AudioAssetKind.SENTENCE
     assert job_repository.successes == [("job-1", item_key, JobStage.SYNTHESIZE_AUDIO)]
 
 

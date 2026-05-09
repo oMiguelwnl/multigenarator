@@ -261,20 +261,20 @@ def test_local_kindle_fixture_ingests_generates_audio_and_assembles_highlight_ca
     assert ingest_result.planned_cards == 1
     assert str(fixture_path) not in repr(ingest_result.report)
     assert "webdav" not in repr(ingest_result.report).casefold()
-    assert audio_result.processed_items == 2
+    assert audio_result.processed_items == 1
     assert row.identity.source_type == "kindle-highlights"
     assert row.translation == ""
     assert "Translation" not in mapping
     assert mapping["Image"] == ""
-    assert mapping["word_audio"].startswith("[sound:")
+    assert row.word_audio == ""
+    assert "word_audio" not in mapping
     assert mapping["sentence_audio"].startswith("[sound:")
 
-    word_media = write_synthetic_media(tmp_path, sound_file_name(row.word_audio))
     sentence_media = write_synthetic_media(tmp_path, sound_file_name(row.sentence_audio))
     apkg_path = tmp_path / "local-highlight-audit.apkg"
     apkg_result = export_anki_package(
         rows=[row],
-        media_index={row.word_audio: word_media, row.sentence_audio: sentence_media},
+        media_index={row.sentence_audio: sentence_media},
         output_path=apkg_path,
         deck_name="Spanish::Synthetic Highlights",
     )
@@ -295,12 +295,12 @@ def test_local_kindle_fixture_ingests_generates_audio_and_assembles_highlight_ca
 
     assert apkg_result.output_path == apkg_path
     assert apkg_result.card_count == 1
-    assert apkg_result.media_files == [word_media, sentence_media]
+    assert apkg_result.media_files == [sentence_media]
     with zipfile.ZipFile(apkg_path) as archive:
         assert "collection.anki2" in archive.namelist()
         assert "media" in archive.namelist()
         media_manifest = json.loads(archive.read("media").decode("utf-8"))
-        assert sorted(media_manifest.values()) == sorted([word_media.name, sentence_media.name])
+        assert sorted(media_manifest.values()) == [sentence_media.name]
         collection_path = tmp_path / "collection.anki2"
         collection_path.write_bytes(archive.read("collection.anki2"))
 

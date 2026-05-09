@@ -34,6 +34,16 @@ def test_russian_phoneme_cards_are_ordered_and_have_unique_sentence_words() -> N
         assert len(words) == len(set(words)), card.example_sentence
 
 
+def test_russian_phoneme_example_sentences_contain_exact_example_word() -> None:
+    for card in RUSSIAN_PHONEME_CARDS:
+        words = re.findall(r"[А-Яа-яЁё]+", card.example_sentence.casefold())
+
+        assert card.example_word.casefold() in words, (
+            card.example_word,
+            card.example_sentence,
+        )
+
+
 def test_build_russian_phoneme_model_uses_intro_template() -> None:
     model = build_russian_phoneme_model()
     audio_card = RussianPhonemeCard(
@@ -90,12 +100,15 @@ def test_build_russian_phoneme_model_uses_intro_template() -> None:
     assert "{{Sentence Translation}}" in front
     assert 'id="sentenceTranslation"' in front
     assert 'style="display:none;"' in front
+    assert 'id="sentenceTranslation" class="sentenceTranslation"' in front
     assert "{{FrontSide}}" in back
     assert "{{Sentence Translation}}" in back
     assert 'document.getElementById("sentenceTranslation").style.display = "block"' in back
     assert _template_references(front).isdisjoint(forbidden_references)
     assert _template_references(back).isdisjoint(forbidden_references)
     assert "--color-audio-button: #8369ed" in model.css
+    assert "pronunciationHighlight" not in front
+    assert ".pronunciationHighlight" not in model.css
     assert note.fields == [
         "ж",
         "/ʐ/",
@@ -116,5 +129,19 @@ def test_export_russian_phoneme_deck_writes_apkg(tmp_path: Path) -> None:
 
     assert result.output_path == output_path
     assert result.card_count == len(RUSSIAN_PHONEME_CARDS)
+    with zipfile.ZipFile(output_path) as archive:
+        assert "collection.anki2" in archive.namelist()
+
+
+def test_export_russian_phoneme_deck_can_write_visual_check_subset(tmp_path: Path) -> None:
+    output_path = tmp_path / "russian-phonemes-visual-check.apkg"
+    cards = RUSSIAN_PHONEME_CARDS[:4]
+
+    result = export_russian_phoneme_deck(output_path=output_path, cards=cards)
+
+    assert result.output_path == output_path
+    assert result.card_count == 4
+    assert all("ь" not in card.letters and "ъ" not in card.letters for card in cards)
+    assert all(card.ipa.startswith("/") and card.ipa.endswith("/") for card in cards)
     with zipfile.ZipFile(output_path) as archive:
         assert "collection.anki2" in archive.namelist()

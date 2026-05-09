@@ -85,6 +85,33 @@ def test_extract_highlight_candidates_filters_noise_and_preserves_unicode_forms(
     assert result.duplicate_count == 1
 
 
+def test_extract_highlight_candidates_preserves_quoted_multiword_expressions() -> None:
+    text = 'Le carnet contient "Robe de soie" et "Frais ruban" pour demain'
+
+    result = extract_highlight_candidates([_highlight(text, 0)], language=SupportedLanguage.FR)
+
+    assert "Robe de soie" in {candidate.display_form for candidate in result.candidates}
+    assert "Frais ruban" in {candidate.display_form for candidate in result.candidates}
+    assert "robe" not in {candidate.lemma_key for candidate in result.candidates}
+    assert "soie" not in {candidate.lemma_key for candidate in result.candidates}
+
+
+def test_extract_highlight_candidates_splits_dense_word_list_highlight() -> None:
+    text = "Loge Aplomb Robe de soie Guimpe Frais ruban"
+
+    result = extract_highlight_candidates([_highlight(text, 0)], language=SupportedLanguage.FR)
+
+    assert {candidate.display_form for candidate in result.candidates} == {
+        "Loge",
+        "Aplomb",
+        "Robe de soie",
+        "Guimpe",
+        "Frais ruban",
+    }
+    assert "robe" not in {candidate.lemma_key for candidate in result.candidates}
+    assert "soie" not in {candidate.lemma_key for candidate in result.candidates}
+
+
 def test_candidate_exposes_stable_source_content_hash_without_private_text() -> None:
     private_sentence = "El jardín secreto guarda una palabra privada"
     result = extract_highlight_candidates(
