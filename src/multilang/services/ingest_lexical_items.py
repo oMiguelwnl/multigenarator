@@ -341,7 +341,7 @@ class IngestLexicalItemsService:
     ) -> tuple[list[LexicalCardCandidate], int]:
         rejected_lemmas: set[str] = set()
 
-        for _ in range(10):
+        for _ in range(20):
             candidates = build_frequency_level(
                 language,
                 level=level,

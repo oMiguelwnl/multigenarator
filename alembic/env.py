@@ -2,20 +2,22 @@
 
 from __future__ import annotations
 
+import os
 from logging.config import fileConfig
 
 from alembic import context
 from sqlalchemy import engine_from_config, pool
 
 from multilang.db.base import Base
-from multilang.settings import Settings
 
 # Import ORM models so metadata is populated for autogeneration and checks.
 from multilang.db import models as _models  # noqa: F401
 
 config = context.config
 
-config.set_main_option("sqlalchemy.url", Settings().database_url)
+database_url = os.environ.get("MULTILANG_DATABASE_URL")
+if database_url:
+    config.set_main_option("sqlalchemy.url", database_url)
 
 if config.config_file_name is not None:
     fileConfig(config.config_file_name)

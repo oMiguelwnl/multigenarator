@@ -70,3 +70,21 @@ def test_webdav_settings_load_multilang_environment(monkeypatch) -> None:
     assert settings.webdav_secret == "reader-secret"
     assert settings.webdav_timeout_seconds == 12.5
     assert settings.webdav_cache_dir == Path(".multilang/highlights/cache/custom")
+
+
+def test_openrouter_uses_project_prefixed_environment(monkeypatch) -> None:
+    monkeypatch.setenv("OPENROUTER_API_KEY", "global-old-key")
+    monkeypatch.setenv("MULTILANG_OPENROUTER_API_KEY", "project-new-key")
+
+    settings = Settings(_env_file=None)
+
+    assert settings.openrouter_api_key == "project-new-key"
+
+
+def test_openrouter_ignores_unprefixed_environment(monkeypatch) -> None:
+    monkeypatch.setenv("OPENROUTER_API_KEY", "global-old-key")
+    monkeypatch.delenv("MULTILANG_OPENROUTER_API_KEY", raising=False)
+
+    settings = Settings(_env_file=None)
+
+    assert settings.openrouter_api_key is None

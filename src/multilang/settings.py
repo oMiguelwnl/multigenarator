@@ -53,10 +53,7 @@ class Settings(BaseSettings):
         default=None,
         validation_alias=AliasChoices("MULTILANG_OPENAI_API_KEY", "OPENAI_API_KEY"),
     )
-    openrouter_api_key: str | None = Field(
-        default=None,
-        validation_alias=AliasChoices("MULTILANG_OPENROUTER_API_KEY", "OPENROUTER_API_KEY"),
-    )
+    openrouter_api_key: str | None = None
     deepl_api_key: str | None = Field(
         default=None,
         validation_alias=AliasChoices("MULTILANG_DEEPL_API_KEY", "DEEPL_API_KEY"),
