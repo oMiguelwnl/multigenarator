@@ -1,15 +1,48 @@
+# Python bytecode and test/tool caches
 __pycache__/
 *.py[cod]
 .pytest_cache/
+.ruff_cache/
+.mypy_cache/
+.pytype/
+.tox/
+.nox/
+.hypothesis/
+.coverage
+.coverage.*
+htmlcov/
+
+# Python build/package artifacts
+build/
+dist/
+*.egg-info/
+*.egg
+pip-wheel-metadata/
+
+# Local virtualenv and secrets
 .venv/
 .env
 .env.*
 !.env.example
+webdav-secrets*.json
+
+# Editor, OS, and local tool state
+.zed/
+.vscode/
+.idea/
+.DS_Store
+.cache/
+*.log
+
+# Local runtime data, downloaded sources, generated audio, reviews, and exports
 .multilang/
-.multilang/highlights/raw/
-.multilang/highlights/cache/
-.multilang/highlights/sync/
+*.apkg
+*.mp3
+*.wav
+*.sqlite
+*.sqlite3
+*.db
+
+# Local Kindle/WebDAV imports that may contain private reading data
 kindle-highlights*.html
 kindle-highlights*.txt
-webdav-secrets*.json
-.multilang/

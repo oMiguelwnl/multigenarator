@@ -163,10 +163,10 @@ def test_build_highlight_model_uses_dedicated_identity_and_fields() -> None:
 def test_build_highlight_model_rejects_malformed_template_before_model_return(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
-    template_dir = tmp_path / "templates"
-    template_dir.mkdir()
+    template_dir = tmp_path / "src" / "multilang" / "templates"
+    template_dir.mkdir(parents=True)
     (template_dir / "normal_card.md").write_text(
-        Path("templates/normal_card.md").read_text(encoding="utf-8"),
+        Path("src/multilang/templates/normal_card.md").read_text(encoding="utf-8"),
         encoding="utf-8",
     )
     (template_dir / "highlight_card.md").write_text(
@@ -193,7 +193,7 @@ def test_build_highlight_model_rejects_malformed_template_before_model_return(
 """,
         encoding="utf-8",
     )
-    monkeypatch.setattr(card_template_loader, "PROJECT_ROOT", tmp_path)
+    monkeypatch.setattr(card_template_loader, "TEMPLATE_ROOT", template_dir)
 
     with pytest.raises(ExportAnkiPackageError, match="card template references fields"):
         build_multilang_model(source_type="kindle-highlights")

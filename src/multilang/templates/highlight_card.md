@@ -68,16 +68,17 @@ body {
 .back-card {
   text-align: center;
   color: #e0e0e0;
-  background-color: #121212;
-  padding: 18px 5px 5px;
+  background: #121212;
+  padding: 18px 12px 20px;
   border-radius: 15px;
-  border: 1px solid #222;
-  width: 100%;
-  font-family: serif;
+  border: 1px solid #242424;
+  width: min(100%, 480px);
+  font-family: Georgia, "Times New Roman", serif;
   margin: 0 auto;
   box-sizing: border-box;
   overflow-x: hidden;
   overflow-y: auto;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.32);
 }
 
 .back-card > .card {
@@ -85,6 +86,8 @@ body {
   border: 0;
   border-radius: 0;
   padding: 0;
+  width: 100%;
+  box-shadow: none;
 }
 
 .word {
@@ -99,7 +102,7 @@ body {
 .ipa {
   font-size: 20px;
   color: #aaa;
-  font-family: serif;
+  font-family: Georgia, "Times New Roman", serif;
   margin-bottom: 8px;
 }
 
@@ -122,31 +125,49 @@ body {
 }
 
 .audio-controls {
-  margin: 15px 0;
+  margin: 20px 0 18px;
   display: flex;
   justify-content: center;
   align-items: center;
   gap: 12px;
 }
 
-.replay-button {
-  background: rgba(76, 175, 80, 0.2);
-  border: none;
-  color: #4CAF50;
-  font-size: 24px;
-  width: 42px;
-  height: 42px;
+.audio-controls span {
+  display: inline-flex;
+  line-height: 0;
+}
+
+.audio-controls .replay-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: #f8f8f2;
+  border: 2px solid rgba(76, 175, 80, 0.28);
+  color: #263128;
+  font-size: 0;
+  line-height: 0;
+  width: 40px;
+  height: 40px;
+  padding: 0;
+  margin: 0;
   border-radius: 50%;
   cursor: pointer;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.35);
 }
 
-.replay-button svg {
-  width: 24px;
-  height: 24px;
+.audio-controls .replay-button svg {
+  display: none;
 }
 
-.replay-button svg path {
-  fill: #4CAF50;
+.audio-controls .replay-button::before {
+  content: "";
+  display: block;
+  width: 0;
+  height: 0;
+  border-top: 10px solid transparent;
+  border-bottom: 10px solid transparent;
+  border-left: 15px solid #263128;
+  margin-left: 4px;
 }
 
 .image-container img {
@@ -162,7 +183,7 @@ body {
   border: none;
   height: 1px;
   background: linear-gradient(to right, transparent, #333, transparent);
-  margin: 20px 10%;
+  margin: 20px 10% 22px;
 }
 
 .answer-divider {

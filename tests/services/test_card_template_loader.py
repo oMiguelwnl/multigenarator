@@ -58,18 +58,19 @@ HIGHLIGHT_TEMPLATE = """
 """
 
 
-def _write_templates(root: Path) -> None:
-    template_dir = root / "templates"
-    template_dir.mkdir()
+def _write_templates(root: Path) -> Path:
+    template_dir = root / "src" / "multilang" / "templates"
+    template_dir.mkdir(parents=True)
     (template_dir / "normal_card.md").write_text(NORMAL_TEMPLATE, encoding="utf-8")
     (template_dir / "highlight_card.md").write_text(HIGHLIGHT_TEMPLATE, encoding="utf-8")
+    return template_dir
 
 
 def test_load_card_template_keeps_normal_template_and_translation_field(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
-    _write_templates(tmp_path)
-    monkeypatch.setattr("multilang.services.card_template_loader.PROJECT_ROOT", tmp_path)
+    template_dir = _write_templates(tmp_path)
+    monkeypatch.setattr("multilang.services.card_template_loader.TEMPLATE_ROOT", template_dir)
 
     template = load_card_template(source_type="frequency")
 
@@ -132,8 +133,8 @@ def test_validate_template_references_allows_frontside_and_conditionals() -> Non
 def test_load_card_template_routes_highlights_to_highlight_template(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
-    _write_templates(tmp_path)
-    monkeypatch.setattr("multilang.services.card_template_loader.PROJECT_ROOT", tmp_path)
+    template_dir = _write_templates(tmp_path)
+    monkeypatch.setattr("multilang.services.card_template_loader.TEMPLATE_ROOT", template_dir)
 
     template = load_card_template(source_type="kindle-highlights")
 
@@ -145,8 +146,8 @@ def test_load_card_template_routes_highlights_to_highlight_template(
 def test_load_card_template_routes_word_lists_to_highlight_template(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
-    _write_templates(tmp_path)
-    monkeypatch.setattr("multilang.services.card_template_loader.PROJECT_ROOT", tmp_path)
+    template_dir = _write_templates(tmp_path)
+    monkeypatch.setattr("multilang.services.card_template_loader.TEMPLATE_ROOT", template_dir)
 
     template = load_card_template(source_type="word-list")
 

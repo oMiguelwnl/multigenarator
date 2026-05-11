@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
+from importlib.resources import files
 from pathlib import Path
 from hashlib import sha256
 import re
@@ -177,7 +178,7 @@ def _phoneme_card_fields(card: RussianPhonemeCard) -> list[str]:
 
 
 def _load_russian_phoneme_template() -> dict[str, str]:
-    template_path = Path(__file__).resolve().parents[3] / "templates" / "russian_phoneme_card.md"
+    template_path = files("multilang").joinpath("templates", "russian_phoneme_card.md")
     content = template_path.read_text(encoding="utf-8")
     match = _TEMPLATE_SECTION_RE.search(content)
     if match is None:

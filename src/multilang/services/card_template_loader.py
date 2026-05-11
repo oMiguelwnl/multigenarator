@@ -3,13 +3,14 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
-from pathlib import Path
+from importlib.resources import files
+from importlib.resources.abc import Traversable
 import re
 
 from multilang.domain.exporting import export_field_names_for_source_type
 from multilang.domain.source_profiles import get_source_profile
 
-PROJECT_ROOT = Path(__file__).resolve().parents[3]
+TEMPLATE_ROOT: Traversable = files("multilang").joinpath("templates")
 
 _SECTION_RE = re.compile(
     r"## Front Template\s+```html\n(?P<front>.*?)```.*?"
@@ -20,8 +21,8 @@ _SECTION_RE = re.compile(
 _ANKI_REFERENCE_RE = re.compile(r"{{\s*(?P<prefix>[#/^]?)(?P<name>[^{}]+?)\s*}}")
 _ALLOWED_NON_FIELD_HELPERS = frozenset({"FrontSide"})
 _TEMPLATE_FILES = {
-    "normal_card": Path("templates/normal_card.md"),
-    "highlight_card": Path("templates/highlight_card.md"),
+    "normal_card": "normal_card.md",
+    "highlight_card": "highlight_card.md",
 }
 
 
@@ -37,7 +38,7 @@ def load_card_template(source_type: str) -> CardTemplate:
     """Load and validate the card template selected by a source profile."""
 
     profile = get_source_profile(source_type)
-    template_path = PROJECT_ROOT / _TEMPLATE_FILES[profile.template_name]
+    template_path = TEMPLATE_ROOT.joinpath(_TEMPLATE_FILES[profile.template_name])
     content = template_path.read_text(encoding="utf-8")
     template = _parse_card_template(
         content,
@@ -71,7 +72,7 @@ def validate_template_references(template: CardTemplate, field_names: tuple[str,
 
 
 def _parse_card_template(
-    content: str, *, template_path: Path, source_template_name: str
+    content: str, *, template_path: Traversable, source_template_name: str
 ) -> CardTemplate:
     match = _SECTION_RE.search(content)
     if match is None:
