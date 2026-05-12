@@ -33,8 +33,8 @@ Phase 17: Deck Quality Audit and Issue Reports.
   4. User can run the audit with confidence that the original APKG is not mutated.
 **Plans**: 3 plans
 Plans:
-- [ ] 17-01-PLAN.md — Build non-mutating APKG reader and Definition issue detector.
-- [ ] 17-02-PLAN.md — Write reproducible JSON and Markdown audit reports.
+- [x] 17-01-PLAN.md — Build non-mutating APKG reader and Definition issue detector.
+- [x] 17-02-PLAN.md — Write reproducible JSON and Markdown audit reports.
 - [ ] 17-03-PLAN.md — Add `audit-deck` CLI command and deck-specific evidence gate.
 
 ### Phase 18: Text Field Remediation
@@ -97,7 +97,7 @@ Plans:
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
-| 17. Deck Quality Audit and Issue Reports | 0/3 | Planned | - |
+| 17. Deck Quality Audit and Issue Reports | 2/3 | In Progress|  |
 | 18. Text Field Remediation | 0/TBD | Not started | - |
 | 19. Normal Card Export and Responsive Template | 0/TBD | Not started | - |
 | 20. Word Audio Integrity Gate | 0/TBD | Not started | - |
