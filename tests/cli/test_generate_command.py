@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-import gzip
 import json
 from pathlib import Path
 from typing import ClassVar
@@ -24,7 +23,7 @@ from multilang.runtime import build_runtime_service
 from multilang.services.generate_job import GenerateJobService
 from multilang.services.input_fingerprint import build_run_key
 from multilang.services.ingest_lexical_items import IngestLexicalItemsService
-from multilang.services.kaikki_lookup import KaikkiRecord
+from multilang.services.lexical_lookup import LexicalRecord
 from multilang.services.lexical_grounding import LexicalGroundingService
 from multilang.services.text_review import ReviewReport, ReviewReportItem
 from multilang.settings import Settings
@@ -87,10 +86,10 @@ def build_service() -> tuple[GenerateJobService, Session]:
 
 
 class StubLookup:
-    def __init__(self, mapping: dict[str, KaikkiRecord]) -> None:
+    def __init__(self, mapping: dict[str, LexicalRecord]) -> None:
         self._mapping = mapping
 
-    def lookup(self, *, language_code: str, term: str) -> KaikkiRecord | None:
+    def lookup(self, *, language_code: str, term: str) -> LexicalRecord | None:
         return self._mapping.get(term.casefold())
 
 
@@ -100,7 +99,7 @@ def build_ingest_service(*, lookup_terms: list[str]) -> tuple[IngestLexicalItems
     session = Session(engine)
     lookup = StubLookup(
         {
-            term.casefold(): KaikkiRecord(
+            term.casefold(): LexicalRecord(
                 term=term,
                 display_form=term,
                 lemma=term,
@@ -131,16 +130,8 @@ def write_highlight_export(tmp_path: Path, text: str = "The meadow keeps a lante
     return path
 
 
-def write_kaikki_archive(path: Path, rows: list[dict[str, object]]) -> Path:
-    with gzip.open(path, "wt", encoding="utf-8") as handle:
-        for row in rows:
-            handle.write(json.dumps(row, ensure_ascii=False))
-            handle.write("\n")
-    return path
-
-
 def write_lookup_index(tmp_path: Path, *terms: str) -> Path:
-    index_path = tmp_path / "lexicon" / "en" / "kaikki-index.json"
+    index_path = tmp_path / "lexicon" / "en" / "lexical-index.json"
     index_path.parent.mkdir(parents=True, exist_ok=True)
     index_path.write_text(
         json.dumps(
@@ -151,7 +142,7 @@ def write_lookup_index(tmp_path: Path, *terms: str) -> Path:
                     "lemma": term,
                     "definitions": [f"definition for {term}"],
                     "ipa": f"/{term}/",
-                    "source": "kaikki",
+                    "source": "manual",
                 }
                 for term in terms
             }
@@ -577,53 +568,10 @@ def test_generate_word_list_command_reports_pending_groundings(tmp_path: Path) -
     assert "completed_items=2" in result.output
 
 
-def test_generate_command_bootstraps_missing_lexicon_from_explicit_source_file(
-    monkeypatch, tmp_path: Path
-) -> None:
-    database_path = tmp_path / "bootstrap.db"
-    lexicon_dir = tmp_path / "lexicon"
-    source_file = write_kaikki_archive(
-        tmp_path / "kaikki-en.jsonl.gz",
-        [{"word": "hello", "lang_code": "en", "senses": [{"glosses": ["hello"]}]}],
-    )
+def test_generate_command_uses_existing_manual_lexicon_cache(monkeypatch, tmp_path: Path) -> None:
+    database_path = tmp_path / "manual-cache.db"
+    lexicon_dir = write_lookup_index(tmp_path, "hello")
 
-    monkeypatch.setenv("MULTILANG_DATABASE_URL", f"sqlite+pysqlite:///{database_path}")
-    monkeypatch.setenv("MULTILANG_LEXICON_DATA_DIR", str(lexicon_dir))
-
-    app = create_app()
-    result = runner.invoke(
-        app,
-        [
-            "generate",
-            "--language",
-            "en",
-            "--source",
-            "word-list",
-            "--input-file",
-            str(write_word_list(tmp_path, "hello")),
-            "--lexicon-source-file",
-            str(source_file),
-        ],
-    )
-
-    assert result.exit_code == 0
-    assert (lexicon_dir / "en" / "kaikki-index.json").exists()
-    assert "grounded_candidates=1" in result.output
-
-
-def test_generate_command_bootstraps_missing_lexicon_from_default_source_file(
-    monkeypatch, tmp_path: Path
-) -> None:
-    database_path = tmp_path / "bootstrap-default.db"
-    lexicon_dir = tmp_path / "lexicon"
-    source_dir = tmp_path / ".multilang" / "sources" / "kaikki"
-    source_dir.mkdir(parents=True)
-    write_kaikki_archive(
-        source_dir / "kaikki-en.jsonl.gz",
-        [{"word": "hello", "lang_code": "en", "senses": [{"glosses": ["hello"]}]}],
-    )
-
-    monkeypatch.chdir(tmp_path)
     monkeypatch.setenv("MULTILANG_DATABASE_URL", f"sqlite+pysqlite:///{database_path}")
     monkeypatch.setenv("MULTILANG_LEXICON_DATA_DIR", str(lexicon_dir))
 
@@ -642,7 +590,7 @@ def test_generate_command_bootstraps_missing_lexicon_from_default_source_file(
     )
 
     assert result.exit_code == 0
-    assert (lexicon_dir / "en" / "kaikki-index.json").exists()
+    assert (lexicon_dir / "en" / "lexical-index.json").exists()
     assert "grounded_candidates=1" in result.output
 
 
@@ -673,7 +621,7 @@ def test_generate_command_fails_fast_when_lexical_data_is_missing(
 
     assert result.exit_code == 1
     assert "lexical data is missing for language 'en'" in result.output
-    assert "--lexicon-source-file" in result.output
+    assert "lexical-index.json" in result.output
     assert "grounded_candidates=" not in result.output
 
 

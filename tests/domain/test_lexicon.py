@@ -30,9 +30,9 @@ def test_candidate_keeps_submitted_and_lemma_values() -> None:
         warning_code=None,
         warning_detail=None,
         provenance=LexicalProvenance(
-            source="kaikki",
-            definition=DefinitionRecord(source="kaikki", value="to speak"),
-            pronunciation=PronunciationRecord(source="kaikki", value="/aˈβlaɾ/"),
+            source="manual",
+            definition=DefinitionRecord(source="manual", value="to speak"),
+            pronunciation=PronunciationRecord(source="manual", value="/aˈβlaɾ/"),
         ),
     )
 

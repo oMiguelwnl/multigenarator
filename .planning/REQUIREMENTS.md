@@ -68,28 +68,28 @@ Which phases cover which requirements. Updated during roadmap creation.
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| AUDIT-01 | TBD | Pending |
-| AUDIT-02 | TBD | Pending |
-| AUDIT-03 | TBD | Pending |
-| IPA-01 | TBD | Pending |
-| DEF-01 | TBD | Pending |
-| DEF-02 | TBD | Pending |
-| TRNS-01 | TBD | Pending |
-| TMPL-01 | TBD | Pending |
-| TMPL-02 | TBD | Pending |
-| TMPL-03 | TBD | Pending |
-| AUD-01 | TBD | Pending |
-| AUD-02 | TBD | Pending |
-| VAL-01 | TBD | Pending |
-| VAL-02 | TBD | Pending |
-| VAL-03 | TBD | Pending |
+| AUDIT-01 | Phase 17 | Pending |
+| AUDIT-02 | Phase 17 | Pending |
+| AUDIT-03 | Phase 17 | Pending |
+| IPA-01 | Phase 18 | Pending |
+| DEF-01 | Phase 18 | Pending |
+| DEF-02 | Phase 18 | Pending |
+| TRNS-01 | Phase 18 | Pending |
+| TMPL-01 | Phase 19 | Pending |
+| TMPL-02 | Phase 19 | Pending |
+| TMPL-03 | Phase 19 | Pending |
+| AUD-01 | Phase 20 | Pending |
+| AUD-02 | Phase 20 | Pending |
+| VAL-01 | Phase 21 | Pending |
+| VAL-02 | Phase 21 | Pending |
+| VAL-03 | Phase 21 | Pending |
 
 **Coverage:**
 
 - v1.3 requirements: 15 total
-- Mapped to phases: 0
-- Unmapped: 15 pending roadmap
+- Mapped to phases: 15
+- Unmapped: 0
 
 ---
 *Requirements defined: 2026-05-12*  
-*Last updated: 2026-05-12 after initial v1.3 definition*
+*Last updated: 2026-05-12 after v1.3 roadmap creation*

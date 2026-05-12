@@ -52,7 +52,7 @@ def write_word_list(tmp_path: Path, *items: str) -> Path:
 
 
 def write_lookup_index(tmp_path: Path, *terms: str) -> Path:
-    index_path = tmp_path / "lexicon" / "en" / "kaikki-index.json"
+    index_path = tmp_path / "lexicon" / "en" / "lexical-index.json"
     index_path.parent.mkdir(parents=True, exist_ok=True)
     index_path.write_text(
         json.dumps(
@@ -64,7 +64,7 @@ def write_lookup_index(tmp_path: Path, *terms: str) -> Path:
                     "definitions": [f"definition for {term}"],
                     "part_of_speech": "noun",
                     "ipa": f"/{term}/",
-                    "source": "kaikki",
+                    "source": "manual",
                 }
                 for term in terms
             }

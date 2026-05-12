@@ -14,7 +14,7 @@ from multilang.repositories.job_repository import JobRepository
 from multilang.repositories.lexical_repository import LexicalRepository
 from multilang.services.generate_job import GenerateJobService
 from multilang.services.ingest_lexical_items import IngestLexicalItemsService
-from multilang.services.kaikki_lookup import KaikkiRecord
+from multilang.services.lexical_lookup import LexicalRecord
 from multilang.services.lexical_grounding import LexicalGroundingService
 
 
@@ -22,14 +22,14 @@ PRIVATE_SENTENCE = "El jardín secreto guarda una llave brillante"
 
 
 class FakeLookup:
-    def __init__(self, records: dict[str, KaikkiRecord] | None = None) -> None:
+    def __init__(self, records: dict[str, LexicalRecord] | None = None) -> None:
         self.records = records or {}
 
-    def lookup(self, *, language_code: str, term: str) -> KaikkiRecord | None:
+    def lookup(self, *, language_code: str, term: str) -> LexicalRecord | None:
         return self.records.get(term)
 
 
-def build_service(records: dict[str, KaikkiRecord] | None = None) -> tuple[IngestLexicalItemsService, Session]:
+def build_service(records: dict[str, LexicalRecord] | None = None) -> tuple[IngestLexicalItemsService, Session]:
     engine = create_engine("sqlite+pysqlite:///:memory:")
     Base.metadata.create_all(engine)
     session = Session(engine)
@@ -43,15 +43,15 @@ def build_service(records: dict[str, KaikkiRecord] | None = None) -> tuple[Inges
     return service, session
 
 
-def record(term: str) -> KaikkiRecord:
-    return KaikkiRecord(
+def record(term: str) -> LexicalRecord:
+    return LexicalRecord(
         term=term,
         display_form=term,
         lemma=term,
         definitions=[f"a learner definition for {term}"],
         part_of_speech="noun",
         ipa="/x/",
-        source="kaikki",
+        source="manual",
     )
 
 

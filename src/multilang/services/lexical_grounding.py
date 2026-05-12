@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import re
-from html import escape, unescape
+from html import escape
 from pathlib import Path
 from typing import Protocol
 
@@ -17,25 +17,24 @@ from multilang.domain.lexicon import (
     PronunciationRecord,
     policy_for_language,
 )
-from multilang.services.kaikki_lookup import KaikkiRecord, normalize_lexical_key
-from multilang.services.kaikki_lookup import KaikkiLookup
+from multilang.services.lexical_lookup import LexicalLookup, LexicalRecord, normalize_lexical_key
 from multilang.services.provider_pronunciation_adapters import PronunciationGenerationRequest
-from multilang.services.text_generation import SentenceTranslationRequest, SentenceTranslationResult
+from multilang.services.text_generation import DefinitionGenerationRequest, DefinitionGenerationResult
 from multilang.services.word_list_parser import ParsedWordListItem
 
 
 def build_lexical_grounding_service(lexicon_data_dir: str | Path) -> "LexicalGroundingService":
-    """Create the runtime grounding service backed by the cached Kaikki lookup."""
+    """Create the runtime grounding service backed by the cached lexical lookup."""
 
-    return LexicalGroundingService(lookup=KaikkiLookup(data_dir=lexicon_data_dir))
+    return LexicalGroundingService(lookup=LexicalLookup(data_dir=lexicon_data_dir))
 
 
 class PronunciationGenerator(Protocol):
     def generate_pronunciation(self, request: PronunciationGenerationRequest) -> object: ...
 
 
-class DefinitionTranslator(Protocol):
-    def translate_sentence(self, request: SentenceTranslationRequest) -> SentenceTranslationResult: ...
+class DefinitionGenerator(Protocol):
+    def generate_definition(self, request: DefinitionGenerationRequest) -> DefinitionGenerationResult: ...
 
 
 class LexicalGroundingService:
@@ -45,11 +44,11 @@ class LexicalGroundingService:
         self,
         lookup: object,
         pronunciation_generator: PronunciationGenerator | None = None,
-        definition_translator: DefinitionTranslator | None = None,
+        definition_generator: DefinitionGenerator | None = None,
     ) -> None:
         self._lookup = lookup
         self._pronunciation_generator = pronunciation_generator
-        self._definition_translator = definition_translator
+        self._definition_generator = definition_generator
 
     def ground_word_list_item(
         self,
@@ -134,7 +133,7 @@ class LexicalGroundingService:
             definition_language=language.value,
         )
 
-    def _lookup_record(self, *, language: SupportedLanguage, term: str) -> KaikkiRecord | None:
+    def _lookup_record(self, *, language: SupportedLanguage, term: str) -> LexicalRecord | None:
         return self._lookup.lookup(language_code=language.value, term=term)
 
     def _grounded_candidate(
@@ -143,23 +142,22 @@ class LexicalGroundingService:
         language: SupportedLanguage,
         submitted_form: str,
         display_form: str,
-        record: KaikkiRecord,
+        record: LexicalRecord,
         definition_language: str | None = None,
     ) -> LexicalCardCandidate:
         policy = policy_for_language(language)
         resolved_definition_language = definition_language or policy.definition_language
         learner_display_form = self._select_display_form(default=display_form, record=record)
-        definitions_html = self._format_definitions(
-            record.definitions,
+        definition_result = self._generate_definition(
+            display_form=learner_display_form,
+            lemma=record.lemma,
+            target_language=resolved_definition_language,
             part_of_speech=record.part_of_speech,
         )
-        definitions_html = self._translate_definitions_html(
-            definitions_html,
-            target_language=resolved_definition_language,
-        )
+        definitions_html = definition_result.definitions_html if definition_result is not None else None
         ipa = record.ipa
         spoken_form: str | None = learner_display_form if record.ipa else None
-        pronunciation_source = "kaikki" if record.ipa else "kaikki_missing"
+        pronunciation_source = record.source if record.ipa else f"{record.source}_missing"
         notes: list[str] = []
         if record.ipa is None:
             notes.append("authoritative IPA missing in lexical source")
@@ -193,7 +191,15 @@ class LexicalGroundingService:
             grounding_status=GroundingStatus.GROUNDED,
             provenance=LexicalProvenance(
                 source=record.source,
-                definition=DefinitionRecord(source=record.source, value=definitions_html, fallback_used=False),
+                definition=(
+                    DefinitionRecord(
+                        source=str(definition_result.provenance.get("source", "definition-generator")),
+                        value=definitions_html,
+                        fallback_used=False,
+                    )
+                    if definition_result is not None
+                    else None
+                ),
                 pronunciation=PronunciationRecord(
                     source=pronunciation_source,
                     value=ipa,
@@ -203,24 +209,24 @@ class LexicalGroundingService:
             ),
         )
 
-    def _translate_definitions_html(self, definitions_html: str | None, *, target_language: str) -> str | None:
-        if not definitions_html or target_language == "en" or self._definition_translator is None:
-            return definitions_html
-
-        translated_parts: list[str] = []
-        for part in re.split(r"<br\s*/?>", definitions_html):
-            cleaned = " ".join(unescape(part).split())
-            if not cleaned:
-                continue
-            result = self._definition_translator.translate_sentence(
-                SentenceTranslationRequest(
-                    sentence=cleaned,
-                    translation_target_language=target_language,
-                    template_kind="definition",
-                )
+    def _generate_definition(
+        self,
+        *,
+        display_form: str,
+        lemma: str,
+        target_language: str,
+        part_of_speech: str | None,
+    ) -> DefinitionGenerationResult | None:
+        if self._definition_generator is None:
+            return None
+        return self._definition_generator.generate_definition(
+            DefinitionGenerationRequest(
+                display_form=display_form,
+                lemma=lemma,
+                target_language=target_language,
+                part_of_speech=part_of_speech,
             )
-            translated_parts.append(escape(result.translation.strip()))
-        return "<br>".join(translated_parts) or definitions_html
+        )
 
     def _pending_candidate(
         self,
@@ -263,7 +269,7 @@ class LexicalGroundingService:
         )
 
     @staticmethod
-    def _select_display_form(*, default: str, record: KaikkiRecord) -> str:
+    def _select_display_form(*, default: str, record: LexicalRecord) -> str:
         candidate = record.display_form.strip()
         if not candidate:
             return default
@@ -368,7 +374,7 @@ _FORM_OF_TERMS = {
 
 
 def _is_frequency_card_worthy(
-    record: KaikkiRecord,
+    record: LexicalRecord,
     *,
     candidate: LexicalCardCandidate,
     language: SupportedLanguage,
@@ -379,7 +385,7 @@ def _is_frequency_card_worthy(
         and record.lemma != record.lemma.casefold()
     ):
         return False
-    return any(_is_substantive_definition(definition) for definition in record.definitions)
+    return True
 
 
 def _is_substantive_definition(definition: str) -> bool:

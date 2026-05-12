@@ -60,8 +60,8 @@ def make_candidate(
         translation_target_language="pt",
         grounding_status=GroundingStatus.GROUNDED,
         provenance=LexicalProvenance(
-            source="kaikki",
-            definition=DefinitionRecord(source="kaikki", value=definitions_html),
+            source="manual",
+            definition=DefinitionRecord(source="manual", value=definitions_html),
         ),
     )
 

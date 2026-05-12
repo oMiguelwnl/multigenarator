@@ -43,22 +43,23 @@ from multilang.services.export_tabular_bundle import write_export_tabular_bundle
 from multilang.services.generate_audio_items import GenerateAudioItemsService
 from multilang.services.generate_job import GenerateJobService
 from multilang.services.ingest_lexical_items import IngestLexicalItemsService
-from multilang.services.kaikki_lookup import KaikkiRecord
+from multilang.services.lexical_lookup import LexicalRecord
 from multilang.services.lexical_grounding import LexicalGroundingService
+from multilang.services.local_text_adapter import LocalSentenceAdapter
 
 
 class FakeLookup:
     """Deterministic lexical grounding for the synthetic local fixture."""
 
-    def lookup(self, *, language_code: str, term: str) -> KaikkiRecord | None:
+    def lookup(self, *, language_code: str, term: str) -> LexicalRecord | None:
         if language_code == "es" and term == "jardín":
-            return KaikkiRecord(
+            return LexicalRecord(
                 term="jardín",
                 display_form="jardín",
                 lemma="jardín",
                 definitions=["noun: a cultivated outdoor place with plants"],
                 ipa="/xaɾˈðin/",
-                source="kaikki-test-fixture",
+                source="manual-test-fixture",
             )
         return None
 
@@ -71,7 +72,7 @@ def build_ingest_service() -> tuple[IngestLexicalItemsService, LexicalRepository
     service = IngestLexicalItemsService(
         job_service=GenerateJobService(JobRepository(session)),
         lexical_repo=lexical_repo,
-        grounding_service=LexicalGroundingService(FakeLookup()),
+        grounding_service=LexicalGroundingService(FakeLookup(), definition_generator=LocalSentenceAdapter()),
         highlight_import_repo=HighlightImportRepository(session),
     )
     return service, lexical_repo, session

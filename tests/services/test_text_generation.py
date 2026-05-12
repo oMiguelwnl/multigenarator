@@ -34,8 +34,8 @@ def build_candidate() -> LexicalCardCandidate:
         translation_target_language="en",
         grounding_status=GroundingStatus.GROUNDED,
         provenance=LexicalProvenance(
-            source="kaikki",
-            definition=DefinitionRecord(source="kaikki", value="to wash<br>to wash oneself"),
+            source="manual",
+            definition=DefinitionRecord(source="manual", value="to wash<br>to wash oneself"),
         ),
     )
 

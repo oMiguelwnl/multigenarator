@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 from collections.abc import Callable
-import gzip
 import json
 from pathlib import Path
 from typing import Annotated, Any
@@ -20,7 +19,7 @@ from multilang.services.execution_report import JobExecutionReport
 from multilang.services.generate_job import GenerateJobResult, GenerateJobService
 from multilang.services.highlight_import_preview import build_highlight_import_preview
 from multilang.services.ingest_lexical_items import IngestLexicalItemsService
-from multilang.services.kaikki_lookup import KaikkiLookup
+from multilang.services.lexical_lookup import LexicalLookup, normalize_lexical_key
 from multilang.services.job_summary import JobLifecycleSummary, JobSummaryBuilder
 from multilang.services.russian_phoneme_deck import (
     DEFAULT_RUSSIAN_PHONEME_DECK_NAME,
@@ -34,7 +33,6 @@ from multilang.settings import Settings
 app = typer.Typer(help="Multilang operator CLI.")
 
 TEST_MODE_CARDS_PER_LEVEL = 3
-DEFAULT_KAIKKI_SOURCE_DIR = Path(".multilang/sources/kaikki")
 LOCAL_SMOKE_LANGUAGE = SupportedLanguage.EN
 LOCAL_SMOKE_FIXTURE_DIR = Path(".multilang/live-smoke-azure")
 LOCAL_SMOKE_WORDS = ("harbor", "lantern", "meadow")
@@ -381,82 +379,53 @@ def _print_highlight_preview_counts(input_file: Path, *, language: SupportedLang
     typer.echo(f"planned_cards={preview.planned_cards}")
 
 
-def _default_kaikki_source_file(language_code: str) -> Path:
-    return DEFAULT_KAIKKI_SOURCE_DIR / f"kaikki-{language_code}.jsonl.gz"
-
-
-def _resolve_lexicon_source_file(request: GenerationRequest) -> Path | None:
-    if request.lexicon_source_file is not None:
-        return request.lexicon_source_file
-
-    source_path = _default_kaikki_source_file(request.language.value)
-    if source_path.exists():
-        return source_path
-
-    return None
-
-
 def _prepare_lexical_data(request: GenerationRequest, *, settings: Settings) -> None:
-    lookup = KaikkiLookup(data_dir=settings.lexicon_data_dir)
-    index_path = lookup.ensure_index(
-        language_code=request.language.value,
-        source_path=_resolve_lexicon_source_file(request),
-    )
-    if index_path is not None:
+    lookup = LexicalLookup(data_dir=settings.lexicon_data_dir)
+    if lookup.has_index(language_code=request.language.value):
         return
 
-    default_source = _default_kaikki_source_file(request.language.value)
+    index_path = lookup.index_path(language_code=request.language.value)
     typer.echo(
         "lexical data is missing for language "
-        f"'{request.language.value}'. Place the archive at {default_source} "
-        "or re-run with --lexicon-source-file <path-to-local-kaikki.jsonl.gz> "
-        "to bootstrap the local cache."
+        f"'{request.language.value}'. Create a lexical cache at {index_path} "
+        "before running generation."
     )
     raise typer.Exit(code=1)
 
 
-def _local_smoke_archive_rows() -> list[dict[str, object]]:
-    return [
-        {
-            "word": "harbor",
-            "lang_code": LOCAL_SMOKE_LANGUAGE.value,
-            "senses": [{"glosses": ["a sheltered place where boats can anchor safely"]}],
-            "sounds": [{"ipa": "/ˈhɑrbər/"}],
-        },
-        {
-            "word": "lantern",
-            "lang_code": LOCAL_SMOKE_LANGUAGE.value,
-            "senses": [{"glosses": ["a portable light protected by a transparent case"]}],
-            "sounds": [{"ipa": "/ˈlæntərn/"}],
-        },
-        {
-            "word": "meadow",
-            "lang_code": LOCAL_SMOKE_LANGUAGE.value,
-            "senses": [{"glosses": ["a field of grass and wildflowers"]}],
-            "sounds": [{"ipa": "/ˈmɛdoʊ/"}],
-        },
+def _local_smoke_lexical_rows() -> dict[str, dict[str, object]]:
+    rows = [
+        ("harbor", "a sheltered place where boats can anchor safely", "/harbor/"),
+        ("lantern", "a portable light protected by a transparent case", "/lantern/"),
+        ("meadow", "a field of grass and wildflowers", "/meadow/"),
     ]
+    return {
+        normalize_lexical_key(term): {
+            "term": term,
+            "display_form": term,
+            "lemma": term,
+            "definitions": [definition],
+            "ipa": ipa,
+            "source": "manual",
+        }
+        for term, definition, ipa in rows
+    }
 
 
-def _write_local_smoke_assets(output_dir: Path) -> tuple[Path, Path, Path]:
+def _write_local_smoke_assets(output_dir: Path) -> tuple[Path, Path]:
     output_dir.mkdir(parents=True, exist_ok=True)
-
-    archive_path = output_dir / f"kaikki-{LOCAL_SMOKE_LANGUAGE.value}.jsonl.gz"
-    with gzip.open(archive_path, "wt", encoding="utf-8") as handle:
-        for row in _local_smoke_archive_rows():
-            handle.write(json.dumps(row, ensure_ascii=False))
-            handle.write("\n")
 
     words_path = output_dir / "words.txt"
     words_path.write_text("\n".join(LOCAL_SMOKE_WORDS), encoding="utf-8")
 
-    lookup = KaikkiLookup(data_dir=output_dir / "lexicon")
-    index_path = lookup.build_index(
-        language_code=LOCAL_SMOKE_LANGUAGE.value,
-        source_path=archive_path,
-        force_refresh=True,
+    lookup = LexicalLookup(data_dir=output_dir / "lexicon")
+    index_path = lookup.index_path(language_code=LOCAL_SMOKE_LANGUAGE.value)
+    index_path.parent.mkdir(parents=True, exist_ok=True)
+    index_path.write_text(
+        json.dumps(_local_smoke_lexical_rows(), ensure_ascii=False, indent=2, sort_keys=True),
+        encoding="utf-8",
     )
-    return archive_path, words_path, index_path
+    return words_path, index_path
 
 
 def create_app(
@@ -509,8 +478,7 @@ def create_app(
             ),
         ] = LOCAL_SMOKE_FIXTURE_DIR,
     ) -> None:
-        archive_path, words_path, index_path = _write_local_smoke_assets(output_dir)
-        typer.echo(f"archive={archive_path}")
+        words_path, index_path = _write_local_smoke_assets(output_dir)
         typer.echo(f"words={words_path}")
         typer.echo(f"index={index_path}")
         typer.echo(
@@ -519,7 +487,7 @@ def create_app(
             f"MULTILANG_LEXICON_DATA_DIR={output_dir / 'lexicon'} "
             f"MULTILANG_AUDIO_STORAGE_DIR={output_dir / 'audio'} "
             "uv run python -m multilang.cli generate --language en --source word-list "
-            f"--input-file {words_path} --lexicon-source-file {archive_path}"
+            f"--input-file {words_path}"
         )
 
     @cli.command("preview-kindle-highlights")
@@ -639,15 +607,6 @@ def create_app(
                 help="Explicit WebDAV remote Kindle export path for --source highlights.",
             ),
         ] = None,
-        lexicon_source_file: Annotated[
-            Path | None,
-            typer.Option(
-                "--lexicon-source-file",
-                exists=True,
-                dir_okay=False,
-                help="Local Kaikki .jsonl.gz archive used to bootstrap lexical cache data.",
-            ),
-        ] = None,
         resume: Annotated[
             str | None,
             typer.Option("--resume", help="Resume an existing job by id."),
@@ -707,7 +666,6 @@ def create_app(
             level=level,
             cards_per_level=resolved_cards_per_level,
             input_file=input_file,
-            lexicon_source_file=lexicon_source_file,
             resume_job_id=resume,
             overwrite=overwrite,
             yes_overwrite=yes_overwrite,

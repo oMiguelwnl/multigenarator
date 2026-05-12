@@ -42,6 +42,18 @@ class SentenceGenerationRequest(BaseModel):
         )
 
 
+class DefinitionGenerationRequest(BaseModel):
+    display_form: str = Field(min_length=1)
+    lemma: str = Field(min_length=1)
+    target_language: str = Field(min_length=2)
+    part_of_speech: str | None = None
+
+
+class DefinitionGenerationResult(BaseModel):
+    definitions_html: str = Field(min_length=1)
+    provenance: dict[str, Any] = Field(default_factory=dict)
+
+
 class SentenceGenerationResult(BaseModel):
     sentence: str = Field(min_length=1)
     intended_sense: str | None = None
@@ -194,6 +206,10 @@ class SentenceTranslationAdapter(Protocol):
     def translate_sentence(self, request: SentenceTranslationRequest) -> SentenceTranslationResult: ...
 
 
+class DefinitionGenerationAdapter(Protocol):
+    def generate_definition(self, request: DefinitionGenerationRequest) -> DefinitionGenerationResult: ...
+
+
 def _normalize_provenance(payload: dict[str, Any]) -> TextProvenance:
     metadata = dict(payload)
     provider = metadata.pop("provider", None)
@@ -210,6 +226,9 @@ def _normalize_provenance(payload: dict[str, Any]) -> TextProvenance:
 
 
 __all__ = [
+    "DefinitionGenerationAdapter",
+    "DefinitionGenerationRequest",
+    "DefinitionGenerationResult",
     "GeneratedSentence",
     "SentenceGenerationFallback",
     "GeneratedTextBundle",

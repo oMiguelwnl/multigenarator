@@ -12,22 +12,22 @@ from multilang.repositories.job_repository import JobRepository
 from multilang.repositories.lexical_repository import LexicalRepository
 from multilang.services.generate_job import GenerateJobService
 from multilang.services.ingest_lexical_items import IngestLexicalItemsService
-from multilang.services.kaikki_lookup import KaikkiRecord
+from multilang.services.lexical_lookup import LexicalRecord
 from multilang.services.lexical_grounding import LexicalGroundingService
 from multilang.services.webdav_highlight_fetch import WebDAVHighlightFetchService, WebDAVResponse
 from multilang.settings import Settings
 
 
 class FakeLookup:
-    def lookup(self, *, language_code: str, term: str) -> KaikkiRecord | None:
+    def lookup(self, *, language_code: str, term: str) -> LexicalRecord | None:
         if term == "jardín":
-            return KaikkiRecord(
+            return LexicalRecord(
                 term="jardín",
                 display_form="jardín",
                 lemma="jardín",
                 definitions=["learner definition for jardín"],
                 ipa="/x/",
-                source="kaikki",
+                source="manual",
             )
         return None
 

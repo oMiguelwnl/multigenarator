@@ -6,6 +6,8 @@ import re
 
 from multilang.domain.jobs import SupportedLanguage
 from multilang.services.text_generation import (
+    DefinitionGenerationRequest,
+    DefinitionGenerationResult,
     SentenceGenerationRequest,
     SentenceGenerationResult,
     SentenceTranslationRequest,
@@ -118,6 +120,13 @@ _CURATED_LOCAL_TEXT = {
 
 class LocalSentenceAdapter:
     """Generate bounded deterministic sentences that satisfy runtime validators."""
+
+    def generate_definition(self, request: DefinitionGenerationRequest) -> DefinitionGenerationResult:
+        label = _definition_label(request.part_of_speech)
+        return DefinitionGenerationResult(
+            definitions_html=f"{label}: learner definition for {request.lemma}",
+            provenance={"source": "runtime-local-definition-generator", "provider": "local"},
+        )
 
     def generate_sentence(self, request: SentenceGenerationRequest) -> SentenceGenerationResult:
         if request.source_type == "kindle-highlights":
@@ -263,6 +272,13 @@ _DEFINITION_LABELS = {
     "ru": {"noun": "существительное", "verb": "глагол", "adjective": "прилагательное", "adverb": "наречие"},
     "tr": {"noun": "isim", "verb": "fiil", "adjective": "sıfat", "adverb": "zarf"},
 }
+
+
+def _definition_label(value: str | None) -> str:
+    if value is None:
+        return "term"
+    normalized = " ".join(value.replace("-", " ").replace("_", " ").casefold().split())
+    return _DEFINITION_LABELS["en"].get(normalized, normalized or "term")
 
 
 def _translate_definition_text(text: str, language: str) -> str:

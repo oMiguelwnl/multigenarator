@@ -9,6 +9,8 @@ from typing import Any
 
 from multilang.security.redaction import redact_exception, redact_sensitive_text
 from multilang.services.text_generation import (
+    DefinitionGenerationRequest,
+    DefinitionGenerationResult,
     SentenceGenerationRequest,
     SentenceGenerationResult,
     SentenceTranslationRequest,
@@ -54,9 +56,12 @@ _DEEPL_TARGET_LANGUAGES = {
 _SYSTEM_PROMPT = """You create one natural learner example sentence for an Anki vocabulary card.
 Return only a JSON object with keys: sentence, intended_sense, uncertainty_notes."""
 
+_DEFINITION_SYSTEM_PROMPT = """You create concise learner dictionary definitions for Anki vocabulary cards.
+Return only a JSON object with key: definitions_html."""
+
 
 class LiteLLMSentenceAdapter:
-    """Generate natural example sentences through LiteLLM."""
+    """Generate natural example sentences and learner definitions through LiteLLM."""
 
     def __init__(
         self,
@@ -94,6 +99,31 @@ class LiteLLMSentenceAdapter:
                 "provider": "litellm",
                 "model": self._model,
                 **({"source_type": request.source_type} if request.source_type else {}),
+            },
+        )
+
+    def generate_definition(self, request: DefinitionGenerationRequest) -> DefinitionGenerationResult:
+        response = self._completion(
+            model=self._model,
+            messages=[
+                {"role": "system", "content": _DEFINITION_SYSTEM_PROMPT},
+                {"role": "user", "content": _definition_prompt(request)},
+            ],
+            temperature=0.2,
+            response_format={"type": "json_object"},
+            **({"api_key": self._api_key} if self._api_key else {}),
+        )
+        payload = _json_payload_from_response(response)
+        definitions_html = str(payload.get("definitions_html") or "").strip()
+        if not definitions_html:
+            raise ValueError("LiteLLM definition response did not include definitions_html")
+
+        return DefinitionGenerationResult(
+            definitions_html=definitions_html,
+            provenance={
+                "source": "provider-definition-generator",
+                "provider": "litellm",
+                "model": self._model,
             },
         )
 
@@ -229,6 +259,27 @@ def _sentence_prompt(request: SentenceGenerationRequest) -> str:
             "- Set uncertainty_notes to an empty array unless there is a real ambiguity.",
         ]
     )
+
+
+def _definition_prompt(request: DefinitionGenerationRequest) -> str:
+    target_name = _LANGUAGE_NAMES.get(request.target_language, request.target_language)
+    lines = [
+        f"Definition language: {target_name} ({request.target_language})",
+        f"Study form: {request.display_form}",
+        f"Lemma: {request.lemma}",
+    ]
+    if request.part_of_speech:
+        lines.append(f"Part of speech: {request.part_of_speech}")
+    lines.extend(
+        [
+            "Rules:",
+            "- Generate the definition from your language knowledge, not from a supplied cache definition.",
+            "- Return one concise learner-friendly definition.",
+            "- Format definitions_html exactly as '[part of speech]: [meaning]'.",
+            "- Use plain text only; do not include lists, examples, translations, or extra HTML except <br> between multiple senses if necessary.",
+        ]
+    )
+    return "\n".join(lines)
 
 
 def _clean_definition(value: str | None) -> str:

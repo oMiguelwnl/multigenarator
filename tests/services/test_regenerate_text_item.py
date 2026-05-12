@@ -32,8 +32,8 @@ def make_candidate(*, lemma: str = "wash", item_key: str = "line-1") -> LexicalC
         translation_target_language="pt",
         grounding_status=GroundingStatus.GROUNDED,
         provenance=LexicalProvenance(
-            source="kaikki",
-            definition=DefinitionRecord(source="kaikki", value=f"to {lemma}"),
+            source="manual",
+            definition=DefinitionRecord(source="manual", value=f"to {lemma}"),
             notes=[item_key],
         ),
     )

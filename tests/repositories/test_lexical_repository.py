@@ -48,9 +48,9 @@ def make_candidate(
         warning_code=warning_code,
         warning_detail="Need lexical review" if warning_code else None,
         provenance=LexicalProvenance(
-            source="kaikki" if status is GroundingStatus.GROUNDED else "user-input",
+            source="manual" if status is GroundingStatus.GROUNDED else "user-input",
             definition=DefinitionRecord(
-                source="kaikki" if status is GroundingStatus.GROUNDED else "fallback",
+                source="manual" if status is GroundingStatus.GROUNDED else "fallback",
                 value="to move swiftly on foot",
                 fallback_used=status is not GroundingStatus.GROUNDED,
             ),

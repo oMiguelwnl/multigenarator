@@ -34,7 +34,7 @@ from multilang.services.generate_job import GenerateJobService
 from multilang.services.generate_audio_items import GenerateAudioItemsService
 from multilang.services.generate_text_items import GenerateTextItemsService
 from multilang.services.ingest_lexical_items import IngestLexicalItemsService
-from multilang.services.kaikki_lookup import KaikkiLookup
+from multilang.services.lexical_lookup import LexicalLookup
 from multilang.services.lexical_grounding import LexicalGroundingService
 from multilang.services.local_text_adapter import LocalSentenceAdapter, LocalTranslationAdapter
 from multilang.services.provider_text_adapters import (
@@ -330,8 +330,9 @@ def build_runtime_service(
     highlight_import_repository = HighlightImportRepository(session)
     generate_job_service = GenerateJobService(job_repository)
     translation_adapter = _build_translation_adapter(runtime_settings)
+    sentence_adapter = _build_sentence_adapter(runtime_settings)
     text_generation_service = TextGenerationService(
-        sentence_adapter=_build_sentence_adapter(runtime_settings),
+        sentence_adapter=sentence_adapter,
         translation_adapter=translation_adapter,
     )
     text_validation_service = TextValidationService()
@@ -352,8 +353,8 @@ def build_runtime_service(
         highlight_import_repo=highlight_import_repository,
         settings=runtime_settings,
         grounding_service=LexicalGroundingService(
-            lookup=KaikkiLookup(data_dir=runtime_settings.lexicon_data_dir),
-            definition_translator=translation_adapter,
+            lookup=LexicalLookup(data_dir=runtime_settings.lexicon_data_dir),
+            definition_generator=sentence_adapter,
         ),
         text_repository=text_repository,
         audio_repository=audio_repository,

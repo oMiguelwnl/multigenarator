@@ -45,7 +45,7 @@ def make_candidate(*, item_key: str, source_type: str = "frequency") -> object:
         definition_language="en",
         translation_target_language="pt",
         grounding_status=GroundingStatus.GROUNDED,
-        provenance=LexicalProvenance(source="kaikki", definition=DefinitionRecord(source="kaikki", value=f"definition for {item_key}")),
+        provenance=LexicalProvenance(source="manual", definition=DefinitionRecord(source="manual", value=f"definition for {item_key}")),
     )
     if source_type == "frequency":
         return candidate

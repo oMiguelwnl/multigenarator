@@ -4,200 +4,83 @@
 
 - [x] **v1.0 MVP** - Phases 1-7 shipped 2026-04-29. Archive: [v1.0-ROADMAP.md](./milestones/v1.0-ROADMAP.md). Requirements: [v1.0-REQUIREMENTS.md](./milestones/v1.0-REQUIREMENTS.md).
 - [x] **v1.1 Card Quality Refresh** - Phase 08 completed 2026-05-02 with audio prominence, AI-generated pronunciation, spoken-form display, and normal deck CSS refresh from `total.md`.
-- [x] **v1.2 Kindle Highlights and Template Refresh** - Add Kindle highlight ingestion, local normalization, highlight cards/export, WebDAV fetch, phonetics template refresh, and evidence that existing modes still work.
+- [x] **v1.2 Kindle Highlights and Template Refresh** - Phases 09-16 completed 2026-05-08 with local Kindle highlights, highlight export, WebDAV fetch, phonetics template refresh, and end-to-end evidence.
+- [ ] **v1.3 Card Quality Remediation and Deck Validation** - Phases 17-21 fix known generated-card defects and harden deck validation before export.
 
 ## Current Focus
 
-Phase 16: End-to-End v1.2 Audit.
+Phase 17: Deck Quality Audit and Issue Reports.
 
 ## Phases
 
-- [x] **Phase 08: Card Quality Refresh** - Generated non-phonetics Anki cards have prominent Azure word audio, AI-generated IPA, readable spoken-form hints beside IPA, and the user-provided normal deck styling.
-- [x] **Phase 09: Source Profiles, Privacy, and Regression Boundary** - Existing frequency/custom decks stay stable while highlight mode, source profiles, and redaction boundaries are introduced.
-- [x] **Phase 10: Local Kindle Normalization and Candidate Extraction** - Local Kindle exports become deterministic normalized highlights and reviewable vocabulary candidates without external formatter dependency. (completed 2026-05-05)
-- [x] **Phase 11: Highlight Pipeline Integration** - Highlight candidates enter the existing job, grounding, resume, and duplicate-prevention flow as a new deck mode. (completed 2026-05-05)
-- [x] **Phase 12: Highlight Generation, Audio, and QA** - Highlight cards receive privacy-aware text generation, richer concise examples, validation, and audio. (completed 2026-05-05)
-- [x] **Phase 13: Highlight Export and Template** - Highlight decks export with a dedicated note type, English fields, no Translation field, and responsive Definition-on-back cards. (completed 2026-05-06)
-- [x] **Phase 14: WebDAV Highlight Fetch Adapter** - Kindle highlight exports can be fetched securely from WebDAV with clear failures and idempotent import summaries.
- (completed 2026-05-07)
-- [x] **Phase 15: Phonetics Template Refresh** - Phonetics cards use the supplied layout, sentence translation back reveal, Multilang colors, and no unused fields.
- (completed 2026-05-07)
-- [x] **Phase 16: End-to-End v1.2 Audit** - Local Kindle highlights, highlight export, phonetics export, and existing-mode regressions are proven with evidence.
- (completed 2026-05-08)
+- [ ] **Phase 17: Deck Quality Audit and Issue Reports** - Generated APKGs can be audited non-destructively for normalized card-quality defects with actionable reports.
+- [ ] **Phase 18: Text Field Remediation** - IPA, Definition, and Translation values are corrected to learner-safe meanings, pronunciations, and sentence translations.
+- [ ] **Phase 19: Normal Card Export and Responsive Template** - Normal card exports remove `Front of Card` while preserving responsive sentence-audio layout and isolating other templates.
+- [ ] **Phase 20: Word Audio Integrity Gate** - Word audio mismatches are detected and repaired, regenerated, or blocked before exported cards reach the user.
+- [ ] **Phase 21: Validation Fixtures and Milestone Evidence** - Validators, normalized issue fixtures, and final evidence prove defects do not recur across deck modes.
 
 ## Phase Details
 
-### Phase 08: Card Quality Refresh
+### Phase 17: Deck Quality Audit and Issue Reports
 
-**Goal**: Generated non-phonetics Anki cards have prominent Azure word audio, AI-generated IPA, readable spoken-form hints beside IPA, and the user-provided normal deck styling.  
-**Depends on**: Phase 5, Phase 6  
-**Requirements**: QUAL-AUDIO-01, QUAL-PRON-01, QUAL-PRON-02, QUAL-THEME-01  
+**Goal**: User can inspect generated APKG decks for known normalized quality defects without changing the original deck.  
+**Depends on**: Phase 16  
+**Requirements**: AUDIT-01, AUDIT-02, AUDIT-03  
 **Success Criteria** (what must be TRUE):
-  1. User hears prominent Azure word audio on generated non-phonetics cards while sentence audio remains usable.
-  2. User sees AI-generated IPA rather than Kaikki IPA on generated card candidates.
-  3. User sees spoken-form hints next to IPA on exported generated cards.
-  4. User sees the supplied normal deck CSS without changes to the phonetics deck.
-**Plans**: 4 plans complete
+  1. User can audit a generated APKG, including `dbda4eb2-f0ec-402b-864f-48cdcf982b09.apkg`, and see defects grouped by note/card identifier and field.
+  2. User can identify every audited card whose `Definition` is grammatical metadata, an inflection description, or an incorrect semantic sense.
+  3. User receives both human-readable and machine-readable audit output that is reproducible across reruns.
+  4. User can run the audit with confidence that the original APKG is not mutated.
+**Plans**: TBD
 
-Plans:
+### Phase 18: Text Field Remediation
 
-- [x] 08-01-PLAN.md — Add Azure SSML prominence for word audio while preserving sentence audio behavior.
-- [x] 08-02-PLAN.md — Add AI pronunciation generation and replace Kaikki IPA for generated card candidates.
-- [x] 08-03-PLAN.md — Persist spoken form and export `/ipa/ (spoken-form)` on every generated card.
-- [x] 08-04-PLAN.md — Apply the supplied normal deck CSS without changing the phonetics deck.
+**Goal**: User receives corrected learner-facing text fields before cards are exported.  
+**Depends on**: Phase 17  
+**Requirements**: IPA-01, DEF-01, DEF-02, TRNS-01  
+**Success Criteria** (what must be TRUE):
+  1. User sees `IPA` values containing only phonetic transcription, or the word itself only when pronunciation cannot be determined confidently.
+  2. User receives English semantic definitions for generated words and inflected forms instead of grammatical case or `inflection of` metadata.
+  3. User receives corrected definitions for known wrong senses, including `дости́чь` as “to achieve, to attain, to reach”.
+  4. User sees `Translation` values that translate the full `Example Sentence`, not the isolated `Word`.
+**Plans**: TBD
+
+### Phase 19: Normal Card Export and Responsive Template
+
+**Goal**: Normal generated-card exports use the revised field contract and responsive layout without affecting highlight or phonetics cards.  
+**Depends on**: Phase 18  
+**Requirements**: TMPL-01, TMPL-02, TMPL-03  
+**Success Criteria** (what must be TRUE):
+  1. User receives normal APKG, CSV, and TSV exports with no redundant `Front of Card` field or dangling template reference.
+  2. User sees `sentence_audio` visually beside `Example Sentence` on normal cards at desktop and mobile card widths.
+  3. User keeps highlight template behavior unchanged after the normal-card schema and CSS changes.
+  4. User keeps phonetics template behavior unchanged after the normal-card schema and CSS changes.
+**Plans**: TBD
 **UI hint**: yes
 
-### Phase 09: Source Profiles, Privacy, and Regression Boundary
+### Phase 20: Word Audio Integrity Gate
 
-**Goal**: Existing generation modes remain stable while highlight-specific behavior and privacy rules become explicit boundaries.  
-**Depends on**: Phase 08  
-**Requirements**: MODE-02, SEC-01, SEC-02  
+**Goal**: User only receives exported cards whose `word_audio` matches the card `Word`, or a clear validation block when it cannot be fixed.  
+**Depends on**: Phase 19  
+**Requirements**: AUD-01, AUD-02  
 **Success Criteria** (what must be TRUE):
-  1. User can still generate frequency decks with the existing field, audio, and export contracts after highlight source support is introduced.
-  2. User can still generate custom word-list decks without highlight note types, fields, or sentence rules leaking into that flow.
-  3. User's WebDAV credentials, raw highlight files, book metadata, and private reading text are redacted from logs, errors, reports, and commit candidates.
-  4. User receives regression test evidence that existing frequency and custom generation, audio, and export contracts still work before highlight work proceeds.
-**Plans**: 5 plans complete
+  1. User can detect cards where the `word_audio` synthesis text or stored manifest does not exactly match the card `Word`.
+  2. User receives repaired or regenerated `word_audio` when a mismatch can be safely corrected.
+  3. User receives a clear validation error that blocks export when a word-audio mismatch cannot be repaired.
+**Plans**: TBD
 
-Plans:
+### Phase 21: Validation Fixtures and Milestone Evidence
 
-- [x] 09-01-PLAN.md — Define explicit source-profile contracts while preserving existing generation modes.
-- [x] 09-02-PLAN.md — Apply source-profile boundaries to export field and note-type selection.
-- [x] 09-03-PLAN.md — Add privacy redaction helpers and local artifact ignore rules.
-- [x] 09-04-PLAN.md — Create v1.2 existing-mode regression evidence before highlight work proceeds.
-- [x] 09-05-PLAN.md — Close the T-09-02 privacy leak in unsupported source-profile errors.
-
-### Phase 10: Local Kindle Normalization and Candidate Extraction
-
-**Goal**: A local Kindle export file can become deterministic normalized highlights and reviewable target-language vocabulary candidates.  
-**Depends on**: Phase 09  
-**Requirements**: INGEST-03, NORM-01, NORM-02, NORM-03, CAND-01, CAND-02, CAND-03  
+**Goal**: User receives repeatable validation and evidence that the normalized issue catalog is covered and existing deck modes remain safe.  
+**Depends on**: Phase 20  
+**Requirements**: VAL-01, VAL-02, VAL-03  
 **Success Criteria** (what must be TRUE):
-  1. User can process a local Kindle HTML or text export without using the external Kindle Formatter website.
-  2. User keeps target-language characters, punctuation, record order, and source provenance in normalized highlight records.
-  3. User receives clear rejected-highlight reasons for unusable, malformed, empty, unsafe, or language-mismatched fragments instead of silent continuation.
-  4. User receives deterministic vocabulary candidates for all supported languages with duplicate filtering and first-seen ordering.
-  5. User can review imported highlight count, extracted candidate count, rejected count, duplicate count, and planned card count before expensive generation.
-**Plans**: 4 plans complete
-
-Plans:
-
-- [x] 10-01-PLAN.md — Define local Kindle highlight contracts and deterministic HTML/text parsing.
-- [x] 10-02-PLAN.md — Extract deterministic filtered vocabulary candidates from normalized highlights.
-- [x] 10-03-PLAN.md — Add a privacy-safe local Kindle import preview and count-only CLI command.
-- [x] 10-04-PLAN.md — Prove the local parser-to-preview flow with integration and regression evidence.
-
-### Phase 11: Highlight Pipeline Integration
-
-**Goal**: Highlight candidates run through the existing Multilang job pipeline as a duplicate-safe `highlights` deck mode.  
-**Depends on**: Phase 10  
-**Requirements**: MODE-01, INGEST-04  
-**Success Criteria** (what must be TRUE):
-  1. User can choose a `highlights` deck mode alongside frequency-deck and custom word-list modes.
-  2. User can rerun the same highlight import without duplicate cards because content hashes, candidate keys, and import manifests are stable.
-  3. User sees a visible import summary showing what was reused, skipped as duplicate, newly planned, or blocked.
-  4. User's highlight candidates preserve enough internal provenance for audit while using the existing grounding, job, and resume behavior.
-**Plans**: 4 plans
-
-Plans:
-
-- [x] 11-01-PLAN.md — Define stable content-derived highlight import and candidate identity.
-- [x] 11-02-PLAN.md — Persist private highlight records separately from safe import manifests.
-- [x] 11-03-PLAN.md — Wire highlights through lexical grounding, job orchestration, resume, and duplicate prevention.
-- [x] 11-04-PLAN.md — Expose public `generate --source highlights` and count-only lifecycle summaries.
-
-### Phase 12: Highlight Generation, Audio, and QA
-
-**Goal**: Highlight-mode cards receive the requested learner-facing content, privacy-aware generation, validation, and playable audio.  
-**Depends on**: Phase 11  
-**Requirements**: GEN-01, GEN-02, GEN-03  
-**Success Criteria** (what must be TRUE):
-  1. User receives highlight cards with word or headword, IPA and spoken-pronunciation behavior, definition, example sentence, word audio, sentence audio, and blank `Image`.
-  2. User receives concise but grammatically richer highlight examples that include the target word and pass language and length validation.
-  3. User's private highlight text is minimized or redacted in prompts, reports, and errors while preserving internal source provenance for audit and sense/context use.
-  4. User can distinguish highlight generation QA outcomes from frequency/custom QA outcomes in review evidence.
-**Plans**: 4 plans
-
-Plans:
-
-- [x] 12-01-PLAN.md — Apply highlight source-profile validation for richer examples without Translation dependency.
-- [x] 12-02-PLAN.md — Add minimized, redacted highlight context to provider/local example generation.
-- [x] 12-03-PLAN.md — Prove highlight card content, word audio, sentence audio, and blank Image assembly.
-- [x] 12-04-PLAN.md — Add source-aware highlight QA reports and regression evidence.
-
-### Phase 13: Highlight Export and Template
-
-**Goal**: Generated highlight cards export to Anki-compatible artifacts with the requested dedicated study template.  
-**Depends on**: Phase 12  
-**Requirements**: EXPORT-01, EXPORT-02, EXPORT-03  
-**Success Criteria** (what must be TRUE):
-  1. User can export highlight decks to APKG, CSV, and TSV with a dedicated highlight note type, exact English field names, and no `Translation` field.
-  2. User sees highlight card fronts with prompt-side content only and card backs with `{{FrontSide}}`, an answer divider, and `Definition`.
-  3. User sees centered, responsive, Multilang-colored highlight cards with safe packaged media references.
-  4. User receives export validation that no highlight template contains dangling field references or mixed-source note model collisions.
-**Plans**: 3 plans
+  1. User can run validators for IPA word repetition, banned Definition patterns, Translation/example mismatch, `word_audio`/`Word` mismatch, and dangling template fields.
+  2. User gets regression fixtures covering the normalized examples from `card_issues_normalized.md`.
+  3. User receives final milestone evidence proving audit behavior, text corrections, normal-card export contract, and word-audio integrity.
+  4. User receives regression evidence that frequency, custom word-list, highlight, and phonetics deck behavior remains unaffected outside the intended normal-card changes.
+**Plans**: TBD
 **UI hint**: yes
-
-Plans:
-
-- [x] 13-01-PLAN.md — Create the dedicated highlight template and source-aware template validation.
-- [x] 13-02-PLAN.md — Wire the validated highlight template into APKG export with media and mixed-source safety.
-- [x] 13-03-PLAN.md — Prove strict highlight CSV/TSV/APKG export evidence and existing-mode regression boundaries.
-
-### Phase 14: WebDAV Highlight Fetch Adapter
-
-**Goal**: Kindle highlight exports can be fetched from a configured WebDAV source without leaking secrets or masking remote failures.  
-**Depends on**: Phase 13  
-**Requirements**: INGEST-01, INGEST-02  
-**Success Criteria** (what must be TRUE):
-  1. User can configure Kindle WebDAV URL, username, and secret without editing source code or exposing credentials in logs or artifacts.
-  2. User can list remote Kindle highlight exports, select a file, and fetch it into the same local normalization path used by file imports.
-  3. User receives distinct auth, path, network, malformed response, and empty-source failure messages.
-  4. User can rerun WebDAV fetches against unchanged content and see an idempotent, redacted sync summary.
-**Plans**: 4 plans
-
-Plans:
-
-- [x] 14-01-PLAN.md — Define env-only WebDAV settings and redaction-safe domain contracts.
-- [x] 14-02-PLAN.md — Implement the injectable WebDAV listing/fetch adapter with private content-hash cache writes.
-- [x] 14-03-PLAN.md — Expose safe list/fetch CLI commands that reuse local highlight preview counts.
-- [x] 14-04-PLAN.md — Wire WebDAV remote fetch into `generate --source highlights` and record idempotency/privacy evidence.
-
-### Phase 15: Phonetics Template Refresh
-
-**Goal**: Phonetics exports use the provided front layout and refreshed back behavior without breaking existing Russian phonetics audio.  
-**Depends on**: Phase 13  
-**Requirements**: PHON-01, PHON-02, PHON-03  
-**Success Criteria** (what must be TRUE):
-  1. User sees phonetics card fronts using the provided layout for spellings, sound, letter audio, example word, word audio, word translation, example sentence, and sentence audio.
-  2. User sees `Sentence Translation` revealed on the phonetics card back using Multilang colors.
-  3. User receives phonetics exports without `Notes`, `is_priming`, or `is_sentence` fields or dangling references.
-  4. User can still play existing Russian phonetics letter, word, and sentence audio after the template refresh.
-**Plans**: 2 plans complete
-**UI hint**: yes
-
-Plans:
-
-- [x] 15-01-PLAN.md — Refresh the phonetics-only field contract, front/back template, CSS, and focused tests.
-- [x] 15-02-PLAN.md — Add export-level evidence and human Anki verification for the refreshed phonetics template.
-
-### Phase 16: End-to-End v1.2 Audit
-
-**Goal**: The complete v1.2 flow is proven from representative inputs through importable Anki artifacts, with regressions and privacy evidence checked.  
-**Depends on**: Phase 14, Phase 15  
-**Requirements**: EVID-01  
-**Success Criteria** (what must be TRUE):
-  1. User receives end-to-end evidence that a local Kindle fixture becomes generated highlight cards and importable Anki exports.
-  2. User receives phonetics template export evidence showing the refreshed field set, layout behavior, and audio references.
-  3. User receives regression evidence that existing frequency and custom generation, audio, and export contracts still pass after all v1.2 changes.
-  4. User receives a final audit summary showing no unmapped v1.2 requirements, no known secret leaks, and clear remaining caveats.
-**Plans**: 3 plans
-
-Plans:
-
-- [x] 16-01-PLAN.md — Prove a representative local Kindle fixture becomes highlight cards and APKG/CSV/TSV artifacts.
-- [x] 16-02-PLAN.md — Prove refreshed phonetics export evidence and existing frequency/custom regression boundaries.
-- [x] 16-03-PLAN.md — Create the final v1.2 audit evidence artifact with requirement coverage, privacy checks, and caveats.
 
 ## Progress
 
@@ -206,15 +89,34 @@ Plans:
 | v1.0 MVP | 1-7 | 34/34 | Complete | 2026-04-29 |
 | v1.1 Card Quality Refresh | 8 | 4/4 | Complete | 2026-05-02 |
 | v1.2 Kindle Highlights and Template Refresh | 9-16 | 29/29 | Complete | 2026-05-08 |
+| v1.3 Card Quality Remediation and Deck Validation | 17-21 | TBD | Not started | - |
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
-| 08. Card Quality Refresh | 4/4 | Complete | 2026-05-02 |
-| 09. Source Profiles, Privacy, and Regression Boundary | 5/5 | Complete | 2026-05-04 |
-| 10. Local Kindle Normalization and Candidate Extraction | 4/4 | Complete    | 2026-05-05 |
-| 11. Highlight Pipeline Integration | 4/4 | Complete   | 2026-05-05 |
-| 12. Highlight Generation, Audio, and QA | 4/4 | Complete    | 2026-05-05 |
-| 13. Highlight Export and Template | 3/3 | Complete    | 2026-05-06 |
-| 14. WebDAV Highlight Fetch Adapter | 4/4 | Complete | 2026-05-07 |
-| 15. Phonetics Template Refresh | 2/2 | Complete | 2026-05-07 |
-| 16. End-to-End v1.2 Audit | 3/3 | Complete | 2026-05-08 |
+| 17. Deck Quality Audit and Issue Reports | 0/TBD | Not started | - |
+| 18. Text Field Remediation | 0/TBD | Not started | - |
+| 19. Normal Card Export and Responsive Template | 0/TBD | Not started | - |
+| 20. Word Audio Integrity Gate | 0/TBD | Not started | - |
+| 21. Validation Fixtures and Milestone Evidence | 0/TBD | Not started | - |
+
+## Coverage
+
+| Requirement | Phase | Status |
+|-------------|-------|--------|
+| AUDIT-01 | Phase 17 | Pending |
+| AUDIT-02 | Phase 17 | Pending |
+| AUDIT-03 | Phase 17 | Pending |
+| IPA-01 | Phase 18 | Pending |
+| DEF-01 | Phase 18 | Pending |
+| DEF-02 | Phase 18 | Pending |
+| TRNS-01 | Phase 18 | Pending |
+| TMPL-01 | Phase 19 | Pending |
+| TMPL-02 | Phase 19 | Pending |
+| TMPL-03 | Phase 19 | Pending |
+| AUD-01 | Phase 20 | Pending |
+| AUD-02 | Phase 20 | Pending |
+| VAL-01 | Phase 21 | Pending |
+| VAL-02 | Phase 21 | Pending |
+| VAL-03 | Phase 21 | Pending |
+
+Coverage: 15/15 v1.3 requirements mapped exactly once.

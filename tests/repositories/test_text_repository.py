@@ -57,9 +57,9 @@ def make_candidate(*, lemma: str, translation_target_language: str = "pt") -> Le
         warning_code=None,
         warning_detail=None,
         provenance=LexicalProvenance(
-            source="kaikki",
-            definition=DefinitionRecord(source="kaikki", value=f"definition for {lemma}"),
-            pronunciation=PronunciationRecord(source="kaikki", value=f"/{lemma}/"),
+            source="manual",
+            definition=DefinitionRecord(source="manual", value=f"definition for {lemma}"),
+            pronunciation=PronunciationRecord(source="manual", value=f"/{lemma}/"),
         ),
     )
 

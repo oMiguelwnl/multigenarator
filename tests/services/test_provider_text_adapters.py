@@ -14,6 +14,7 @@ from multilang.services.provider_text_adapters import (
     can_use_litellm,
 )
 from multilang.services.text_generation import SentenceGenerationRequest, SentenceTranslationRequest
+from multilang.services.text_generation import DefinitionGenerationRequest
 from multilang.settings import Settings
 
 
@@ -59,6 +60,46 @@ def test_litellm_sentence_adapter_uses_openrouter_key_and_json_response() -> Non
     assert calls[0]["model"] == "openrouter/openai/gpt-4o-mini"
     assert calls[0]["api_key"] == "router-key"
     assert "Study form: в" in calls[0]["messages"][1]["content"]
+
+
+def test_litellm_definition_adapter_generates_definition_without_cache_definition() -> None:
+    calls: list[dict[str, object]] = []
+
+    def fake_completion(**kwargs: object) -> dict[str, object]:
+        calls.append(kwargs)
+        return {
+            "choices": [
+                {
+                    "message": {
+                        "content": json.dumps(
+                            {
+                                "definitions_html": "noun: a safe place for boats",
+                            }
+                        )
+                    }
+                }
+            ]
+        }
+
+    settings = Settings(
+        _env_file=None,
+        text_generation_model="openai/gpt-4o-mini",
+        openrouter_api_key="router-key",
+    )
+    result = LiteLLMSentenceAdapter(settings, completion_func=fake_completion).generate_definition(
+        DefinitionGenerationRequest(
+            display_form="harbor",
+            lemma="harbor",
+            target_language="en",
+            part_of_speech="noun",
+        )
+    )
+
+    prompt = calls[0]["messages"][1]["content"]
+    assert result.definitions_html == "noun: a safe place for boats"
+    assert result.provenance["source"] == "provider-definition-generator"
+    assert "Generate the definition from your language knowledge" in prompt
+    assert "a sheltered place" not in prompt
 
 
 def test_litellm_highlight_prompt_uses_redacted_context_and_rules() -> None:

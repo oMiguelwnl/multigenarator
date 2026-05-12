@@ -30,8 +30,8 @@ def make_candidate(
         translation_target_language="pt" if language is SupportedLanguage.EN else "en",
         grounding_status=GroundingStatus.GROUNDED,
         provenance=LexicalProvenance(
-            source="kaikki",
-            definition=DefinitionRecord(source="kaikki", value=definition),
+            source="manual",
+            definition=DefinitionRecord(source="manual", value=definition),
         ),
     )
 

@@ -5,17 +5,17 @@ from __future__ import annotations
 from multilang.domain.jobs import SupportedLanguage
 from multilang.domain.highlights import HighlightCandidate
 from multilang.domain.lexicon import GroundingStatus, LexicalCardCandidate, LexicalProvenance
-from multilang.services.kaikki_lookup import KaikkiRecord
+from multilang.services.lexical_lookup import LexicalRecord
 from multilang.services.lexical_grounding import LexicalGroundingService
-from multilang.services.text_generation import SentenceTranslationResult
+from multilang.services.text_generation import DefinitionGenerationResult
 from multilang.services.word_list_parser import ParsedWordListItem
 
 
 class StubLookup:
-    def __init__(self, mapping: dict[str, KaikkiRecord | None]) -> None:
+    def __init__(self, mapping: dict[str, LexicalRecord | None]) -> None:
         self._mapping = mapping
 
-    def lookup(self, *, language_code: str, term: str) -> KaikkiRecord | None:
+    def lookup(self, *, language_code: str, term: str) -> LexicalRecord | None:
         return self._mapping.get(term.casefold())
 
 
@@ -36,24 +36,25 @@ class StubPronunciationGenerator:
         )()
 
 
-class StubDefinitionTranslator:
+class StubDefinitionGenerator:
     def __init__(self) -> None:
         self.calls: list[object] = []
 
-    def translate_sentence(self, request: object) -> SentenceTranslationResult:
+    def generate_definition(self, request: object) -> DefinitionGenerationResult:
         self.calls.append(request)
-        return SentenceTranslationResult(
-            translation="verbo: lavarse con agua",
-            provenance={"source": "stub-definition-translator"},
+        label = request.part_of_speech or "term"
+        return DefinitionGenerationResult(
+            definitions_html=f"{label}: LLM definition for {request.lemma}",
+            provenance={"source": "stub-llm-definition-generator"},
         )
 
 
 def test_grounding_prefers_study_form_and_manual_language_policy() -> None:
-    translator = StubDefinitionTranslator()
+    generator = StubDefinitionGenerator()
     service = LexicalGroundingService(
         lookup=StubLookup(
             {
-                "lavar": KaikkiRecord(
+                "lavar": LexicalRecord(
                     term="lavar",
                     display_form="lavarse",
                     lemma="lavar",
@@ -64,7 +65,7 @@ def test_grounding_prefers_study_form_and_manual_language_policy() -> None:
                 )
             }
         ),
-        definition_translator=translator,
+        definition_generator=generator,
     )
 
     candidate = service.ground_word_list_item(
@@ -80,21 +81,22 @@ def test_grounding_prefers_study_form_and_manual_language_policy() -> None:
     assert candidate.display_form == "lavarse"
     assert candidate.lemma == "lavar"
     assert candidate.lemma_key == "lavar"
-    assert candidate.definitions_html == "verbo: lavarse con agua"
+    assert candidate.definitions_html == "verb: LLM definition for lavar"
     assert candidate.definition_language == "es"
     assert candidate.translation_target_language == "es"
     assert candidate.grounding_status is GroundingStatus.GROUNDED
-    assert translator.calls
-    assert translator.calls[0].translation_target_language == "es"
-    assert translator.calls[0].template_kind == "definition"
+    assert generator.calls
+    assert generator.calls[0].target_language == "es"
+    assert candidate.provenance.definition is not None
+    assert candidate.provenance.definition.source == "stub-llm-definition-generator"
 
 
 def test_frequency_grounding_keeps_default_english_definition_policy() -> None:
-    translator = StubDefinitionTranslator()
+    generator = StubDefinitionGenerator()
     service = LexicalGroundingService(
         lookup=StubLookup(
             {
-                "casa": KaikkiRecord(
+                "casa": LexicalRecord(
                     term="casa",
                     display_form="casa",
                     lemma="casa",
@@ -104,7 +106,7 @@ def test_frequency_grounding_keeps_default_english_definition_policy() -> None:
                 )
             }
         ),
-        definition_translator=translator,
+        definition_generator=generator,
     )
     seed = LexicalCardCandidate(
         submitted_form="casa",
@@ -120,17 +122,17 @@ def test_frequency_grounding_keeps_default_english_definition_policy() -> None:
 
     candidate = service.ground_frequency_candidate(language=SupportedLanguage.ES, candidate=seed)
 
-    assert candidate.definitions_html == "noun: a building where people live"
+    assert candidate.definitions_html == "noun: LLM definition for casa"
     assert candidate.definition_language == "en"
-    assert translator.calls == []
+    assert generator.calls[0].target_language == "en"
 
 
 def test_highlight_grounding_localizes_definition_to_deck_language() -> None:
-    translator = StubDefinitionTranslator()
+    generator = StubDefinitionGenerator()
     service = LexicalGroundingService(
         lookup=StubLookup(
             {
-                "lavar": KaikkiRecord(
+                "lavar": LexicalRecord(
                     term="lavar",
                     display_form="lavar",
                     lemma="lavar",
@@ -140,7 +142,7 @@ def test_highlight_grounding_localizes_definition_to_deck_language() -> None:
                 )
             }
         ),
-        definition_translator=translator,
+        definition_generator=generator,
     )
 
     candidate = service.ground_highlight_candidate(
@@ -156,30 +158,31 @@ def test_highlight_grounding_localizes_definition_to_deck_language() -> None:
         ),
     )
 
-    assert candidate.definitions_html == "verbo: lavarse con agua"
+    assert candidate.definitions_html == "verb: LLM definition for lavar"
     assert candidate.definition_language == "es"
-    assert translator.calls[0].translation_target_language == "es"
+    assert generator.calls[0].target_language == "es"
 
 
-def test_grounding_formats_simple_grammar_labels_for_common_parts_of_speech() -> None:
+def test_grounding_uses_llm_definition_generator_instead_of_cache_definitions() -> None:
+    generator = StubDefinitionGenerator()
     service = LexicalGroundingService(
         lookup=StubLookup(
             {
-                "casa": KaikkiRecord(
+                "casa": LexicalRecord(
                     term="casa",
                     display_form="casa",
                     lemma="casa",
                     definitions=["a building where people live"],
                     part_of_speech="noun",
                 ),
-                "bonito": KaikkiRecord(
+                "bonito": LexicalRecord(
                     term="bonito",
                     display_form="bonito",
                     lemma="bonito",
                     definitions=["beautiful; pleasant to look at or experience"],
                     part_of_speech="adj",
                 ),
-                "em": KaikkiRecord(
+                "em": LexicalRecord(
                     term="em",
                     display_form="em",
                     lemma="em",
@@ -187,13 +190,14 @@ def test_grounding_formats_simple_grammar_labels_for_common_parts_of_speech() ->
                     part_of_speech="prep",
                 ),
             }
-        )
+        ),
+        definition_generator=generator,
     )
 
     expected = {
-        "casa": "noun: a building where people live",
-        "bonito": "adjective: beautiful; pleasant to look at or experience",
-        "em": "preposition: used to show location, time, or position inside something",
+        "casa": "noun: LLM definition for casa",
+        "bonito": "adj: LLM definition for bonito",
+        "em": "prep: LLM definition for em",
     }
     for item_key, definition in expected.items():
         candidate = service.ground_word_list_item(
@@ -207,13 +211,15 @@ def test_grounding_formats_simple_grammar_labels_for_common_parts_of_speech() ->
         )
 
         assert candidate.definitions_html == definition
+        assert "building where people live" not in candidate.definitions_html
 
 
 def test_grounding_omits_verb_tense_from_definition_template() -> None:
+    generator = StubDefinitionGenerator()
     service = LexicalGroundingService(
         lookup=StubLookup(
             {
-                "lava": KaikkiRecord(
+                "lava": LexicalRecord(
                     term="lava",
                     display_form="lava",
                     lemma="lavar",
@@ -222,7 +228,8 @@ def test_grounding_omits_verb_tense_from_definition_template() -> None:
                     grammar_tags=["present", "third", "singular"],
                 )
             }
-        )
+        ),
+        definition_generator=generator,
     )
 
     candidate = service.ground_word_list_item(
@@ -235,7 +242,7 @@ def test_grounding_omits_verb_tense_from_definition_template() -> None:
         ),
     )
 
-    assert candidate.definitions_html == "verb: washes; cleans something with water"
+    assert candidate.definitions_html == "verb: LLM definition for lavar"
     assert "present" not in candidate.definitions_html
     assert "third" not in candidate.definitions_html
     assert "singular" not in candidate.definitions_html
@@ -265,7 +272,7 @@ def test_grounding_does_not_invent_ipa() -> None:
     service = LexicalGroundingService(
         lookup=StubLookup(
             {
-                "casa": KaikkiRecord(
+                "casa": LexicalRecord(
                     term="casa",
                     display_form="casa",
                     lemma="casa",
@@ -289,7 +296,7 @@ def test_grounding_does_not_invent_ipa() -> None:
     assert candidate.ipa is None
     assert candidate.provenance.pronunciation is not None
     assert candidate.provenance.pronunciation.value is None
-    assert candidate.provenance.pronunciation.source == "kaikki_missing"
+    assert candidate.provenance.pronunciation.source == "manual_missing"
     assert candidate.provenance.pronunciation.authoritative is True
 
 
@@ -339,11 +346,12 @@ def test_frequency_failures_are_flagged_for_backfill() -> None:
     assert candidate.frequency_level == 1
 
 
-def test_frequency_rejects_morphological_only_lexical_records() -> None:
+def test_frequency_uses_lexical_lookup_without_cache_definition_for_card_definition() -> None:
+    generator = StubDefinitionGenerator()
     service = LexicalGroundingService(
         lookup=StubLookup(
             {
-                "casas": KaikkiRecord(
+                "casas": LexicalRecord(
                     term="casas",
                     display_form="casas",
                     lemma="casas",
@@ -351,7 +359,8 @@ def test_frequency_rejects_morphological_only_lexical_records() -> None:
                     ipa="/casas/",
                 )
             }
-        )
+        ),
+        definition_generator=generator,
     )
     seed = LexicalCardCandidate(
         submitted_form="casas",
@@ -370,16 +379,16 @@ def test_frequency_rejects_morphological_only_lexical_records() -> None:
         candidate=seed,
     )
 
-    assert candidate.grounding_status is GroundingStatus.BACKFILL_REQUIRED
-    assert candidate.warning_code == "backfill_required"
-    assert "not a primary card entry" in (candidate.warning_detail or "")
+    assert candidate.grounding_status is GroundingStatus.GROUNDED
+    assert candidate.definitions_html == "term: LLM definition for casas"
+    assert generator.calls[0].lemma == "casas"
 
 
 def test_russian_frequency_rejects_uppercase_duplicate_records() -> None:
     service = LexicalGroundingService(
         lookup=StubLookup(
             {
-                "и": KaikkiRecord(
+                "и": LexicalRecord(
                     term="И",
                     display_form="И",
                     lemma="И",
@@ -414,7 +423,7 @@ def test_grounding_preserves_authoritative_ipa_for_custom_word_list() -> None:
     service = LexicalGroundingService(
         lookup=StubLookup(
             {
-                "casa": KaikkiRecord(
+                "casa": LexicalRecord(
                     term="casa",
                     display_form="casa",
                     lemma="casa",
@@ -434,7 +443,7 @@ def test_grounding_preserves_authoritative_ipa_for_custom_word_list() -> None:
     assert candidate.ipa == "/authoritative/"
     assert candidate.spoken_form == "casa"
     assert candidate.provenance.pronunciation is not None
-    assert candidate.provenance.pronunciation.source == "kaikki"
+    assert candidate.provenance.pronunciation.source == "manual"
     assert generator.calls == []
 
 
@@ -443,7 +452,7 @@ def test_grounding_uses_ai_pronunciation_when_authoritative_ipa_is_missing() -> 
     service = LexicalGroundingService(
         lookup=StubLookup(
             {
-                "casa": KaikkiRecord(
+                "casa": LexicalRecord(
                     term="casa",
                     display_form="casa",
                     lemma="casa",
@@ -472,7 +481,7 @@ def test_grounding_preserves_authoritative_ipa_for_frequency_candidates() -> Non
     service = LexicalGroundingService(
         lookup=StubLookup(
             {
-                "casa": KaikkiRecord(
+                "casa": LexicalRecord(
                     term="casa",
                     display_form="casa",
                     lemma="casa",
@@ -500,5 +509,5 @@ def test_grounding_preserves_authoritative_ipa_for_frequency_candidates() -> Non
     assert candidate.ipa == "/authoritative/"
     assert candidate.spoken_form == "casa"
     assert candidate.provenance.pronunciation is not None
-    assert candidate.provenance.pronunciation.source == "kaikki"
+    assert candidate.provenance.pronunciation.source == "manual"
     assert generator.calls == []

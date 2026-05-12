@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-import gzip
 import json
 from pathlib import Path
 
@@ -23,7 +22,7 @@ def write_word_list(tmp_path: Path, *items: str) -> Path:
 
 
 def write_lookup_index(tmp_path: Path, *terms: str) -> Path:
-    index_path = tmp_path / "lexicon" / "en" / "kaikki-index.json"
+    index_path = tmp_path / "lexicon" / "en" / "lexical-index.json"
     index_path.parent.mkdir(parents=True, exist_ok=True)
     index_path.write_text(
         json.dumps(
@@ -34,7 +33,7 @@ def write_lookup_index(tmp_path: Path, *terms: str) -> Path:
                     "lemma": term,
                     "definitions": [f"definition for {term}"],
                     "ipa": f"/{term}/",
-                    "source": "kaikki",
+                    "source": "manual",
                 }
                 for term in terms
             }
@@ -102,7 +101,7 @@ def test_module_level_app_honors_runtime_database_override(monkeypatch, tmp_path
     assert database_path.exists()
 
 
-def test_prepare_local_smoke_writes_english_archive_words_and_index(tmp_path: Path) -> None:
+def test_prepare_local_smoke_writes_english_words_and_index(tmp_path: Path) -> None:
     output_dir = tmp_path / "live-smoke-azure"
 
     result = runner.invoke(
@@ -114,38 +113,17 @@ def test_prepare_local_smoke_writes_english_archive_words_and_index(tmp_path: Pa
         ],
     )
 
-    archive_path = output_dir / "kaikki-en.jsonl.gz"
     words_path = output_dir / "words.txt"
-    index_path = output_dir / "lexicon" / "en" / "kaikki-index.json"
+    index_path = output_dir / "lexicon" / "en" / "lexical-index.json"
 
     assert result.exit_code == 0
-    assert archive_path.exists()
     assert words_path.read_text(encoding="utf-8") == "harbor\nlantern\nmeadow"
     assert index_path.exists()
-    assert f"archive={archive_path}" in result.output
     assert f"words={words_path}" in result.output
     assert f"index={index_path}" in result.output
 
-    with gzip.open(archive_path, "rt", encoding="utf-8") as handle:
-        rows = [json.loads(line) for line in handle if line.strip()]
+    rows = json.loads(index_path.read_text(encoding="utf-8"))
 
-    assert rows == [
-        {
-            "word": "harbor",
-            "lang_code": "en",
-            "senses": [{"glosses": ["a sheltered place where boats can anchor safely"]}],
-            "sounds": [{"ipa": "/ˈhɑrbər/"}],
-        },
-        {
-            "word": "lantern",
-            "lang_code": "en",
-            "senses": [{"glosses": ["a portable light protected by a transparent case"]}],
-            "sounds": [{"ipa": "/ˈlæntərn/"}],
-        },
-        {
-            "word": "meadow",
-            "lang_code": "en",
-            "senses": [{"glosses": ["a field of grass and wildflowers"]}],
-            "sounds": [{"ipa": "/ˈmɛdoʊ/"}],
-        },
-    ]
+    assert rows["harbor"]["definitions"] == ["a sheltered place where boats can anchor safely"]
+    assert rows["lantern"]["definitions"] == ["a portable light protected by a transparent case"]
+    assert rows["meadow"]["definitions"] == ["a field of grass and wildflowers"]

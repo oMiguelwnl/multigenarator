@@ -5,6 +5,7 @@ from __future__ import annotations
 from uuid import uuid4
 
 from sqlalchemy import select
+from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
 from multilang.db.models import AudioAssetModel, GenerationJob
@@ -59,10 +60,23 @@ class AudioRepository:
             row = AudioAssetModel(id=str(uuid4()), **payload)
             self.session.add(row)
         else:
-            for field, value in payload.items():
-                setattr(row, field, value)
+            self._apply_payload(row, payload)
 
-        self.session.commit()
+        try:
+            self.session.commit()
+        except IntegrityError:
+            self.session.rollback()
+            row = self.session.scalar(
+                select(AudioAssetModel).where(
+                    AudioAssetModel.job_id == record.job_id,
+                    AudioAssetModel.item_key == record.item_key,
+                    AudioAssetModel.asset_kind == record.asset_kind.value,
+                )
+            )
+            if row is None:
+                raise
+            self._apply_payload(row, payload)
+            self.session.commit()
         self.session.refresh(row)
         return self._to_domain(row)
 
@@ -126,6 +140,11 @@ class AudioRepository:
         if job is None:
             raise ValueError(f"unknown job_id: {job_id}")
         return job.run_key
+
+    @staticmethod
+    def _apply_payload(row: AudioAssetModel, payload: dict[str, object]) -> None:
+        for field, value in payload.items():
+            setattr(row, field, value)
 
     def _to_domain(self, row: AudioAssetModel) -> AudioAssetRecord:
         normalized_input = NormalizedTtsInput(

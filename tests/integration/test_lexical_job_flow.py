@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-import gzip
 import json
 from pathlib import Path
 
@@ -36,9 +35,9 @@ def write_word_list(tmp_path: Path, *items: str) -> Path:
 
 
 def write_lookup_index(tmp_path: Path, *, language_code: str, terms: list[str]) -> Path:
-    """Write a small cached Kaikki index for runtime lookups."""
+    """Write a small cached lexical index for runtime lookups."""
 
-    index_path = tmp_path / "lexicon" / language_code / "kaikki-index.json"
+    index_path = tmp_path / "lexicon" / language_code / "lexical-index.json"
     index_path.parent.mkdir(parents=True, exist_ok=True)
     payload = {
         term: {
@@ -47,31 +46,12 @@ def write_lookup_index(tmp_path: Path, *, language_code: str, terms: list[str]) 
             "lemma": term,
             "definitions": [f"definition for {term}"],
             "ipa": f"/{term}/",
-            "source": "kaikki",
+            "source": "manual",
         }
         for term in terms
     }
     index_path.write_text(json.dumps(payload, indent=2, sort_keys=True), encoding="utf-8")
     return index_path.parent.parent
-
-
-def write_kaikki_archive(tmp_path: Path, *, language_code: str, terms: list[str]) -> Path:
-    archive_path = tmp_path / f"kaikki-{language_code}.jsonl.gz"
-    with gzip.open(archive_path, "wt", encoding="utf-8") as handle:
-        for term in terms:
-            handle.write(
-                json.dumps(
-                    {
-                        "word": term,
-                        "lang_code": language_code,
-                        "senses": [{"glosses": [f"definition for {term}"]}],
-                        "sounds": [{"ipa": f"/{term}/"}],
-                    },
-                    ensure_ascii=False,
-                )
-            )
-            handle.write("\n")
-    return archive_path
 
 
 def skip_runtime_text_generation(monkeypatch) -> None:
@@ -139,13 +119,10 @@ def test_generate_frequency_deck_persists_three_grounded_levels(monkeypatch, tmp
         session.close()
 
 
-def test_generate_frequency_deck_bootstraps_lexicon_from_local_archive(
-    monkeypatch, tmp_path: Path
-) -> None:
-    database_path = str(tmp_path / "bootstrap-flow.db")
-    lexicon_dir = tmp_path / "lexicon"
+def test_generate_frequency_deck_uses_manual_lexicon_cache(monkeypatch, tmp_path: Path) -> None:
+    database_path = str(tmp_path / "manual-cache-flow.db")
     all_terms = [f"word-{rank}" for rank in range(1, 3001)]
-    source_archive = write_kaikki_archive(tmp_path, language_code="en", terms=all_terms)
+    lexicon_dir = write_lookup_index(tmp_path, language_code="en", terms=all_terms)
 
     monkeypatch.setenv("MULTILANG_DATABASE_URL", f"sqlite+pysqlite:///{database_path}")
     monkeypatch.setenv("MULTILANG_LEXICON_DATA_DIR", str(lexicon_dir))
@@ -168,14 +145,12 @@ def test_generate_frequency_deck_bootstraps_lexicon_from_local_archive(
             "en",
             "--source",
             "frequency",
-            "--lexicon-source-file",
-            str(source_archive),
         ],
     )
 
     assert result.exit_code == 0
     assert "grounded_candidates=3000" in result.output
-    assert (lexicon_dir / "en" / "kaikki-index.json").exists()
+    assert (lexicon_dir / "en" / "lexical-index.json").exists()
 
 
 def test_generate_frequency_deck_persists_custom_cards_per_level(monkeypatch, tmp_path: Path) -> None:
@@ -243,8 +218,6 @@ def test_generate_frequency_deck_fails_fast_without_lexicon_data(
 
     monkeypatch.setenv("MULTILANG_DATABASE_URL", f"sqlite+pysqlite:///{database_path}")
     monkeypatch.setenv("MULTILANG_LEXICON_DATA_DIR", str(lexicon_dir))
-    monkeypatch.setattr(cli_module, "DEFAULT_KAIKKI_SOURCE_DIR", tmp_path / "missing-kaikki")
-
     app = create_app()
     result = runner.invoke(
         app,

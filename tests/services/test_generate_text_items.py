@@ -46,8 +46,8 @@ def make_candidate(
         translation_target_language=translation_target_language,
         grounding_status=GroundingStatus.GROUNDED,
         provenance=LexicalProvenance(
-            source="kaikki",
-            definition=DefinitionRecord(source="kaikki", value=f"to {lemma}"),
+            source="manual",
+            definition=DefinitionRecord(source="manual", value=f"to {lemma}"),
             notes=[item_key],
         ),
     )
