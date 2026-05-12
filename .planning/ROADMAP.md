@@ -13,7 +13,7 @@ Phase 17: Deck Quality Audit and Issue Reports.
 
 ## Phases
 
-- [ ] **Phase 17: Deck Quality Audit and Issue Reports** - Generated APKGs can be audited non-destructively for normalized card-quality defects with actionable reports.
+- [x] **Phase 17: Deck Quality Audit and Issue Reports** - Generated APKGs can be audited non-destructively for normalized card-quality defects with actionable reports. (completed 2026-05-12)
 - [ ] **Phase 18: Text Field Remediation** - IPA, Definition, and Translation values are corrected to learner-safe meanings, pronunciations, and sentence translations.
 - [ ] **Phase 19: Normal Card Export and Responsive Template** - Normal card exports remove `Front of Card` while preserving responsive sentence-audio layout and isolating other templates.
 - [ ] **Phase 20: Word Audio Integrity Gate** - Word audio mismatches are detected and repaired, regenerated, or blocked before exported cards reach the user.
@@ -35,7 +35,7 @@ Phase 17: Deck Quality Audit and Issue Reports.
 Plans:
 - [x] 17-01-PLAN.md — Build non-mutating APKG reader and Definition issue detector.
 - [x] 17-02-PLAN.md — Write reproducible JSON and Markdown audit reports.
-- [ ] 17-03-PLAN.md — Add `audit-deck` CLI command and deck-specific evidence gate.
+- [x] 17-03-PLAN.md — Add `audit-deck` CLI command and deck-specific evidence gate.
 
 ### Phase 18: Text Field Remediation
 
@@ -97,7 +97,7 @@ Plans:
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
-| 17. Deck Quality Audit and Issue Reports | 2/3 | In Progress|  |
+| 17. Deck Quality Audit and Issue Reports | 3/3 | Complete   | 2026-05-12 |
 | 18. Text Field Remediation | 0/TBD | Not started | - |
 | 19. Normal Card Export and Responsive Template | 0/TBD | Not started | - |
 | 20. Word Audio Integrity Gate | 0/TBD | Not started | - |

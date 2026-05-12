@@ -3,15 +3,15 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: planning
-stopped_at: Paused at 17-03 known APKG checkpoint
-last_updated: "2026-05-12T19:38:58.808Z"
+stopped_at: Completed 17-03-PLAN.md
+last_updated: "2026-05-12T20:00:10.368Z"
 last_activity: 2026-05-12 -- Created v1.3 roadmap from current milestone requirements.
 progress:
   total_phases: 5
-  completed_phases: 0
+  completed_phases: 1
   total_plans: 3
-  completed_plans: 2
-  percent: 67
+  completed_plans: 3
+  percent: 100
 ---
 
 # Project State
@@ -58,6 +58,8 @@ Progress: [░░░░░░░░░░] 0%
 
 - Last completed milestone work: Phase 16 End-to-End v1.2 Audit completed 2026-05-08.
 - Trend: v1.3 begins from completed highlight/template work and focuses on correcting known card-quality defects found in generated decks.
+
+| Phase 17 P03 | 20min | 3 tasks | 2 files |
 
 ## Accumulated Context
 
@@ -108,6 +110,8 @@ Full decision history is in `.planning/PROJECT.md` and `.planning/milestones/v1.
 - [v1.3]: Treat IPA repetition, morphology-only definitions, translation mismatches, and audio/word mismatches as validation failures before export.
 - [v1.3]: Remove redundant `Front of Card` from normal generated-card exports while keeping highlight and phonetics behavior isolated.
 - [v1.3]: Use `card_issues_normalized.md` and the known APKG as the normalized defect catalog for remediation evidence.
+- [Phase 17]: Known APKG audit evidence is generated under ignored .multilang/audits because reports may contain private deck excerpts.
+- [Phase 17]: The audit-deck command composes APKG reader, Definition issue detector, and deterministic report writer without invoking mutation services.
 
 ### Pending Todos
 
@@ -138,6 +142,6 @@ Items acknowledged and carried forward from previous milestone close:
 
 ## Session Continuity
 
-Last session: 2026-05-12T19:38:58.799Z
-Stopped at: Paused at 17-03 known APKG checkpoint
+Last session: 2026-05-12T20:00:10.363Z
+Stopped at: Completed 17-03-PLAN.md
 Resume file: None

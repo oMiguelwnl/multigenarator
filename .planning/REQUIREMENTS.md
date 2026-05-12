@@ -11,9 +11,9 @@ Requirements for the current milestone. Each requirement maps to exactly one roa
 
 ### Deck Quality Audit
 
-- [ ] **AUDIT-01**: User can audit a generated APKG, including `dbda4eb2-f0ec-402b-864f-48cdcf982b09.apkg`, and receive a report of normalized card-quality defects by note/card identifier and field.
-- [ ] **AUDIT-02**: User can identify every card in the audited deck whose `Definition` is grammatical metadata, an inflection description, or an incorrect semantic sense.
-- [ ] **AUDIT-03**: User can run the deck audit without mutating the original deck, with reproducible human-readable and machine-readable output.
+- [x] **AUDIT-01**: User can audit a generated APKG, including `dbda4eb2-f0ec-402b-864f-48cdcf982b09.apkg`, and receive a report of normalized card-quality defects by note/card identifier and field.
+- [x] **AUDIT-02**: User can identify every card in the audited deck whose `Definition` is grammatical metadata, an inflection description, or an incorrect semantic sense.
+- [x] **AUDIT-03**: User can run the deck audit without mutating the original deck, with reproducible human-readable and machine-readable output.
 
 ### Text Field Correctness
 
@@ -68,9 +68,9 @@ Which phases cover which requirements. Updated during roadmap creation.
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| AUDIT-01 | Phase 17 | Pending |
-| AUDIT-02 | Phase 17 | Pending |
-| AUDIT-03 | Phase 17 | Pending |
+| AUDIT-01 | Phase 17 | Complete |
+| AUDIT-02 | Phase 17 | Complete |
+| AUDIT-03 | Phase 17 | Complete |
 | IPA-01 | Phase 18 | Pending |
 | DEF-01 | Phase 18 | Pending |
 | DEF-02 | Phase 18 | Pending |
