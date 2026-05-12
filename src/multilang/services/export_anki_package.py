@@ -89,22 +89,20 @@ def export_anki_package(
     source_type = next(iter(source_types), "frequency")
     model = build_multilang_model(source_type=source_type)
     deck = genanki.Deck(DECK_ID, deck_name)
-    media_files: list[Path] = []
+    media_files = _resolve_media_files(rows=rows, media_index=media_index)
 
     for row in rows:
         deck.add_note(build_multilang_note(row, model=model))
-        media_files.extend(_resolve_media_files(row=row, media_index=media_index))
 
     output_path.parent.mkdir(parents=True, exist_ok=True)
     package = genanki.Package(deck)
-    deduped_media = list(dict.fromkeys(media_files))
-    package.media_files = [str(path) for path in deduped_media]
+    package.media_files = [str(path) for path in media_files]
     package.write_to_file(str(output_path))
 
     return ExportAnkiPackageResult(
         output_path=output_path,
         card_count=len(rows),
-        media_files=deduped_media,
+        media_files=media_files,
     )
 
 
@@ -113,14 +111,19 @@ def _row_fields(row: ExportCardRow, *, field_names: tuple[str, ...]) -> list[str
     return [str(mapping[field_name]) if mapping[field_name] is not None else "" for field_name in field_names]
 
 
-def _resolve_media_files(*, row: ExportCardRow, media_index: dict[str, Path]) -> list[Path]:
-    field_names = export_field_names_for_source_type(row.identity.source_type)
-    media_files: list[Path] = []
-    if "word_audio" in field_names:
-        media_files.append(_require_media_file(row.word_audio, media_index=media_index))
-    if "sentence_audio" in field_names:
-        media_files.append(_require_media_file(row.sentence_audio, media_index=media_index))
-    return media_files
+def _resolve_media_files(*, rows: list[ExportCardRow], media_index: dict[str, Path]) -> list[Path]:
+    sound_tags: list[str] = []
+    for row in rows:
+        field_names = export_field_names_for_source_type(row.identity.source_type)
+        if "word_audio" in field_names:
+            sound_tags.append(row.word_audio)
+        if "sentence_audio" in field_names:
+            sound_tags.append(row.sentence_audio)
+
+    return [
+        _require_media_file(sound_tag, media_index=media_index)
+        for sound_tag in dict.fromkeys(sound_tags)
+    ]
 
 
 def _require_media_file(sound_tag: str, *, media_index: dict[str, Path]) -> Path:

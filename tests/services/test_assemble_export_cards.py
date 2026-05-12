@@ -119,12 +119,36 @@ class FakeAudioRepository:
 
 
 @dataclass
+class PreloadingAudioRepository(FakeAudioRepository):
+    list_calls: int = 0
+    get_calls: int = 0
+
+    def list_assets_for_job(self, job_id: str) -> list[AudioAssetRecord]:
+        self.list_calls += 1
+        return list(self.assets.values())
+
+    def get_asset(self, job_id: str, item_key: str, asset_kind: AudioAssetKind) -> AudioAssetRecord | None:
+        self.get_calls += 1
+        return super().get_asset(job_id, item_key, asset_kind)
+
+
+@dataclass
 class FakeExportRepository:
     saved_rows: list[object] = field(default_factory=list)
 
     def upsert_card_snapshot(self, record: object) -> object:
         self.saved_rows.append(record)
         return record
+
+
+@dataclass
+class BulkExportRepository(FakeExportRepository):
+    bulk_calls: int = 0
+
+    def upsert_card_snapshots(self, records: list[object]) -> list[object]:
+        self.bulk_calls += 1
+        self.saved_rows.extend(records)
+        return list(records)
 
 
 def build_service(
@@ -142,6 +166,31 @@ def build_service(
         export_repository=repository,
     )
     return service, repository
+
+
+def test_assemble_export_cards_preloads_audio_and_persists_snapshots_in_batch() -> None:
+    assets = {
+        ("run", AudioAssetKind.WORD.value): make_asset(item_key="run", asset_kind=AudioAssetKind.WORD, storage_path="run-word.mp3"),
+        ("run", AudioAssetKind.SENTENCE.value): make_asset(item_key="run", asset_kind=AudioAssetKind.SENTENCE, storage_path="run-sentence.mp3"),
+        ("jump", AudioAssetKind.WORD.value): make_asset(item_key="jump", asset_kind=AudioAssetKind.WORD, storage_path="jump-word.mp3"),
+        ("jump", AudioAssetKind.SENTENCE.value): make_asset(item_key="jump", asset_kind=AudioAssetKind.SENTENCE, storage_path="jump-sentence.mp3"),
+    }
+    audio_repository = PreloadingAudioRepository(assets=assets)
+    export_repository = BulkExportRepository()
+    service = AssembleExportCardsService(
+        text_repository=FakeTextRepository(accepted_records=[make_text_record(item_key="run"), make_text_record(item_key="jump")]),
+        lexical_repository=FakeLexicalRepository(candidates={"run": make_candidate(item_key="run"), "jump": make_candidate(item_key="jump")}),
+        audio_repository=audio_repository,
+        export_repository=export_repository,
+    )
+
+    result = service.execute(job_id="job-1", deck_language=SupportedLanguage.EN)
+
+    assert len(result.cards) == 2
+    assert audio_repository.list_calls == 1
+    assert audio_repository.get_calls == 0
+    assert export_repository.bulk_calls == 1
+    assert len(export_repository.saved_rows) == 2
 
 
 def test_assemble_export_cards_persists_exact_field_order_and_sound_tags() -> None:

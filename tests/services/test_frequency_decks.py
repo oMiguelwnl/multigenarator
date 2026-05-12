@@ -144,6 +144,73 @@ def test_build_frequency_level_backfills_rejected_candidates(monkeypatch) -> Non
     assert all(candidate.frequency_level == 3 for candidate in level)
 
 
+def test_build_frequency_level_skips_repeated_tokens_within_level(monkeypatch) -> None:
+    from multilang.services import frequency_decks
+
+    monkeypatch.setattr(
+        frequency_decks,
+        "iter_curated_frequency_candidates",
+        lambda language, scan_limit=6000: iter(
+            [
+                (2001, "word-a"),
+                (2002, "word-a"),
+                (2003, "word-b"),
+                (2004, "word-c"),
+            ]
+        ),
+    )
+
+    level = frequency_decks.build_frequency_level(
+        SupportedLanguage.EN,
+        level=3,
+        required_count_per_level=3,
+    )
+
+    assert [candidate.submitted_form for candidate in level] == ["word-a", "word-b", "word-c"]
+    assert [candidate.frequency_rank for candidate in level] == [2001, 2003, 2004]
+
+
+def test_build_frequency_deck_deduplicates_tokens_across_levels(monkeypatch) -> None:
+    from multilang.services import frequency_decks
+
+    monkeypatch.setattr(
+        frequency_decks,
+        "iter_curated_frequency_candidates",
+        lambda language, scan_limit=6000: iter(
+            [
+                (1, "word-1"),
+                (2, "word-2"),
+                (3, "word-3"),
+                (1001, "word-1"),
+                (1002, "word-1002"),
+                (1003, "word-2"),
+                (1004, "word-1004"),
+                (1005, "word-1005"),
+                (2001, "word-2001"),
+                (2002, "word-2002"),
+                (2003, "word-2003"),
+            ]
+        ),
+    )
+
+    deck = frequency_decks.build_frequency_deck(
+        SupportedLanguage.EN,
+        required_count_per_level=3,
+    )
+
+    assert [candidate.submitted_form for candidate in deck[1]] == ["word-1", "word-2", "word-3"]
+    assert [candidate.submitted_form for candidate in deck[2]] == [
+        "word-1002",
+        "word-1004",
+        "word-1005",
+    ]
+    assert [candidate.submitted_form for candidate in deck[3]] == [
+        "word-2001",
+        "word-2002",
+        "word-2003",
+    ]
+
+
 def test_build_frequency_level_scans_past_rank_3000_for_backfill(monkeypatch) -> None:
     from multilang.services import frequency_decks
 

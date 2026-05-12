@@ -100,14 +100,15 @@ def build_frequency_level(
         raise ValueError(f"unsupported frequency level: {level}")
 
     start_rank, end_rank = LEVEL_WINDOWS[level]
-    rejected_lemmas = {lemma.casefold() for lemma in (rejected_lemmas or set())}
+    seen_lemmas = {lemma.casefold() for lemma in (rejected_lemmas or set())}
     selected: list[LexicalCardCandidate] = []
     backfill: list[tuple[int, str]] = []
 
     for rank, token in iter_curated_frequency_candidates(language, scan_limit=scan_limit):
         if rank < start_rank:
             continue
-        if token.casefold() in rejected_lemmas:
+        lemma_key = token.casefold()
+        if lemma_key in seen_lemmas:
             continue
 
         if rank <= end_rank and len(selected) < required_count_per_level:
@@ -119,10 +120,14 @@ def build_frequency_level(
                     frequency_level=level,
                 )
             )
+            seen_lemmas.add(lemma_key)
+            if len(selected) >= required_count_per_level:
+                break
             continue
 
         if rank > end_rank and len(selected) < required_count_per_level:
             backfill.append((rank, token))
+            seen_lemmas.add(lemma_key)
             if len(selected) + len(backfill) >= required_count_per_level:
                 break
 
@@ -157,16 +162,21 @@ def build_frequency_deck(
     """Build the deterministic three-level frequency deck."""
 
     rejected_lemmas_by_level = rejected_lemmas_by_level or {}
-    return {
-        level: build_frequency_level(
+    deck: dict[int, list[LexicalCardCandidate]] = {}
+    selected_lemmas: set[str] = set()
+    for level in (1, 2, 3):
+        level_rejections = {lemma.casefold() for lemma in rejected_lemmas_by_level.get(level, set())}
+        candidates = build_frequency_level(
             language,
             level=level,
             required_count_per_level=required_count_per_level,
-            rejected_lemmas={lemma.casefold() for lemma in rejected_lemmas_by_level.get(level, set())},
+            rejected_lemmas=selected_lemmas | level_rejections,
             scan_limit=scan_limit,
         )
-        for level in (1, 2, 3)
-    }
+        deck[level] = candidates
+        selected_lemmas.update(candidate.lemma_key.casefold() for candidate in candidates)
+
+    return deck
 
 
 __all__ = [

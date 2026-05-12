@@ -39,6 +39,7 @@ class AssembleExportCardsService:
             raise AssembleExportCardsError(f"no accepted text records for job {job_id}")
 
         cards: list[ExportCardRow] = []
+        audio_index = self._preload_audio_assets(job_id)
         for sort_index, text_record in enumerate(accepted_records, start=1):
             lexical_candidate = self.lexical_repository.get_candidate_for_item(job_id, text_record.item_key)
             if lexical_candidate is None:
@@ -50,11 +51,21 @@ class AssembleExportCardsService:
             source_profile = get_source_profile(source_type)
             field_names = export_field_names_for_source_type(source_type)
             word_audio = (
-                self._require_audio(job_id=job_id, item_key=text_record.item_key, asset_kind=AudioAssetKind.WORD)
+                self._require_audio(
+                    job_id=job_id,
+                    item_key=text_record.item_key,
+                    asset_kind=AudioAssetKind.WORD,
+                    audio_index=audio_index,
+                )
                 if "word_audio" in field_names
                 else None
             )
-            sentence_audio = self._require_audio(job_id=job_id, item_key=text_record.item_key, asset_kind=AudioAssetKind.SENTENCE)
+            sentence_audio = self._require_audio(
+                job_id=job_id,
+                item_key=text_record.item_key,
+                asset_kind=AudioAssetKind.SENTENCE,
+                audio_index=audio_index,
+            )
             row = ExportCardRow(
                 identity=ExportCardIdentity(
                     language=deck_language,
@@ -73,12 +84,31 @@ class AssembleExportCardsService:
                 word_audio=self._to_sound_tag(word_audio) if word_audio is not None else "",
                 sentence_audio=self._to_sound_tag(sentence_audio),
             )
-            cards.append(self.export_repository.upsert_card_snapshot(row))
+            cards.append(row)
 
-        return AssembleExportCardsResult(cards=cards)
+        return AssembleExportCardsResult(cards=self._persist_cards(cards))
 
-    def _require_audio(self, *, job_id: str, item_key: str, asset_kind: AudioAssetKind) -> AudioAssetRecord:
-        asset = self.audio_repository.get_asset(job_id, item_key, asset_kind)
+    def _preload_audio_assets(self, job_id: str) -> dict[tuple[str, str], AudioAssetRecord] | None:
+        if not hasattr(self.audio_repository, "list_assets_for_job"):
+            return None
+        return {
+            (asset.item_key, asset.asset_kind.value): asset
+            for asset in self.audio_repository.list_assets_for_job(job_id)
+        }
+
+    def _require_audio(
+        self,
+        *,
+        job_id: str,
+        item_key: str,
+        asset_kind: AudioAssetKind,
+        audio_index: dict[tuple[str, str], AudioAssetRecord] | None = None,
+    ) -> AudioAssetRecord:
+        asset = (
+            audio_index.get((item_key, asset_kind.value))
+            if audio_index is not None
+            else self.audio_repository.get_asset(job_id, item_key, asset_kind)
+        )
         if asset is None:
             raise AssembleExportCardsError(
                 f"missing required {asset_kind.value} audio for item {item_key} in job {job_id}"
@@ -88,6 +118,12 @@ class AssembleExportCardsService:
                 f"missing required {asset_kind.value} audio for item {item_key} in job {job_id}"
             )
         return asset
+
+    def _persist_cards(self, cards: list[ExportCardRow]) -> list[ExportCardRow]:
+        bulk_upsert = getattr(self.export_repository, "upsert_card_snapshots", None)
+        if callable(bulk_upsert):
+            return list(bulk_upsert(cards))
+        return [self.export_repository.upsert_card_snapshot(row) for row in cards]
 
     def _render_definitions(self, candidate: LexicalCardCandidate) -> str:
         raw = candidate.definitions_html or ""

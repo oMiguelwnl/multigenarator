@@ -92,6 +92,42 @@ def test_upsert_card_snapshot_updates_existing_job_item_row() -> None:
     assert updated.translation == "Eu corro mais rápido."
 
 
+def test_upsert_card_snapshots_persists_batch_with_single_job_scope() -> None:
+    repository, job_repository, session = build_repositories()
+    job = job_repository.create_job(
+        request=make_request(),
+        run_key="run-export-bulk-upsert",
+        source_fingerprint="list-bulk",
+        total_items=2,
+    )
+
+    first = make_card_row(item_key="line-1", sort_index=1)
+    second = make_card_row(item_key="line-2", sort_index=2)
+    stored = repository.upsert_card_snapshots(
+        [
+            first.model_copy(update={"identity": first.identity.model_copy(update={"job_id": job.id})}),
+            second.model_copy(update={"identity": second.identity.model_copy(update={"job_id": job.id})}),
+        ]
+    )
+
+    assert [row.identity.item_key for row in stored] == ["line-1", "line-2"]
+    assert session.execute(
+        text("SELECT COUNT(*) FROM card_exports WHERE job_id = :job_id"),
+        {"job_id": job.id},
+    ).scalar_one() == 2
+
+    updated = make_card_row(item_key="line-2", sort_index=2, translation="Linha dois atualizada.")
+    repository.upsert_card_snapshots(
+        [updated.model_copy(update={"identity": updated.identity.model_copy(update={"job_id": job.id})})]
+    )
+
+    assert session.execute(
+        text("SELECT COUNT(*) FROM card_exports WHERE job_id = :job_id AND item_key = :item_key"),
+        {"job_id": job.id, "item_key": "line-2"},
+    ).scalar_one() == 1
+    assert repository.list_card_snapshots(job.id)[1].translation == "Linha dois atualizada."
+
+
 def test_artifacts_and_card_queries_are_job_scoped_and_sorted() -> None:
     repository, job_repository, _ = build_repositories()
     job = job_repository.create_job(

@@ -215,23 +215,57 @@ class RuntimeGenerateService(IngestLexicalItemsService):
 
     def _build_media_index(self, rows: list[object]) -> dict[str, Path]:
         media_index: dict[str, Path] = {}
+        asset_index = self._preload_audio_assets(rows)
         for row in rows:
             field_names = export_field_names_for_source_type(row.identity.source_type)
             if "word_audio" in field_names:
-                word_asset = self.audio_repository.get_asset(row.identity.job_id, row.identity.item_key, AudioAssetKind.WORD)
+                word_asset = self._get_audio_asset(
+                    asset_index=asset_index,
+                    job_id=row.identity.job_id,
+                    item_key=row.identity.item_key,
+                    asset_kind=AudioAssetKind.WORD,
+                )
                 if word_asset is None:
                     raise ValueError(f"missing required word audio for item {row.identity.item_key}")
                 word_path = Path(word_asset.provenance.storage_path)
                 _validate_media_reference(sound_tag=row.word_audio, media_path=word_path)
-                media_index[row.word_audio] = word_path
+                _add_media_reference(media_index, sound_tag=row.word_audio, media_path=word_path)
             if "sentence_audio" in field_names:
-                sentence_asset = self.audio_repository.get_asset(row.identity.job_id, row.identity.item_key, AudioAssetKind.SENTENCE)
+                sentence_asset = self._get_audio_asset(
+                    asset_index=asset_index,
+                    job_id=row.identity.job_id,
+                    item_key=row.identity.item_key,
+                    asset_kind=AudioAssetKind.SENTENCE,
+                )
                 if sentence_asset is None:
                     raise ValueError(f"missing required sentence audio for item {row.identity.item_key}")
                 sentence_path = Path(sentence_asset.provenance.storage_path)
                 _validate_media_reference(sound_tag=row.sentence_audio, media_path=sentence_path)
-                media_index[row.sentence_audio] = sentence_path
+                _add_media_reference(media_index, sound_tag=row.sentence_audio, media_path=sentence_path)
         return media_index
+
+    def _preload_audio_assets(self, rows: list[object]) -> dict[tuple[str, str], object] | None:
+        job_ids = {row.identity.job_id for row in rows}
+        if len(job_ids) != 1 or not hasattr(self.audio_repository, "list_assets_for_job"):
+            return None
+
+        job_id = next(iter(job_ids))
+        return {
+            (asset.item_key, asset.asset_kind.value): asset
+            for asset in self.audio_repository.list_assets_for_job(job_id)
+        }
+
+    def _get_audio_asset(
+        self,
+        *,
+        asset_index: dict[tuple[str, str], object] | None,
+        job_id: str,
+        item_key: str,
+        asset_kind: AudioAssetKind,
+    ) -> object | None:
+        if asset_index is not None:
+            return asset_index.get((item_key, asset_kind.value))
+        return self.audio_repository.get_asset(job_id, item_key, asset_kind)
 
 
 def _validate_media_reference(*, sound_tag: str, media_path: Path) -> None:
@@ -240,6 +274,13 @@ def _validate_media_reference(*, sound_tag: str, media_path: Path) -> None:
         raise ValueError(f"media basename mismatch for {media_path.name}")
     if not media_path.exists():
         raise ValueError(f"missing media file for {media_path.name}")
+
+
+def _add_media_reference(media_index: dict[str, Path], *, sound_tag: str, media_path: Path) -> None:
+    existing_path = media_index.get(sound_tag)
+    if existing_path is not None and existing_path != media_path:
+        raise ValueError(f"conflicting media file for {sound_tag}")
+    media_index[sound_tag] = media_path
 
 
 def _build_translation_adapter(runtime_settings: Settings) -> object:

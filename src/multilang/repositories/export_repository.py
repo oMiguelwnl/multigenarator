@@ -26,42 +26,42 @@ class ExportRepository:
         self.session = session
 
     def upsert_card_snapshot(self, record: ExportCardRow) -> ExportCardRow:
-        job_id = record.identity.job_id
-        row = self.session.scalar(
-            select(CardExportModel).where(
-                CardExportModel.job_id == job_id,
-                CardExportModel.item_key == record.identity.item_key,
-            )
-        )
+        return self.upsert_card_snapshots([record])[0]
 
-        payload = {
-            "job_id": job_id,
-            "run_key": self._resolve_run_key(job_id),
-            "item_key": record.identity.item_key,
-            "lemma_key": record.identity.lemma_key,
-            "note_guid": build_export_note_guid(record.identity),
-            "sort_index": record.sort_index,
-            "word": record.word,
-            "front_of_card": record.front_of_card,
-            "ipa": record.ipa,
-            "definitions": record.definitions,
-            "example_sentence": record.example_sentence,
-            "translation": record.translation,
-            "word_audio": record.word_audio,
-            "sentence_audio": record.sentence_audio,
-            "image": record.image,
+    def upsert_card_snapshots(self, records: list[ExportCardRow]) -> list[ExportCardRow]:
+        if not records:
+            return []
+
+        job_ids = {record.identity.job_id for record in records}
+        if len(job_ids) != 1:
+            raise ValueError("cannot bulk upsert export snapshots for multiple jobs")
+
+        job_id = next(iter(job_ids))
+        run_key = self._resolve_run_key(job_id)
+        existing = {
+            row.item_key: row
+            for row in self.session.scalars(
+                select(CardExportModel).where(CardExportModel.job_id == job_id)
+            )
         }
 
-        if row is None:
-            row = CardExportModel(id=str(uuid4()), **payload)
-            self.session.add(row)
-        else:
-            for field, value in payload.items():
-                setattr(row, field, value)
+        ordered_rows: list[CardExportModel] = []
+        for record in records:
+            payload = self._card_payload(record, run_key=run_key)
+            row = existing.get(record.identity.item_key)
+            if row is None:
+                row = CardExportModel(id=str(uuid4()), **payload)
+                self.session.add(row)
+                existing[record.identity.item_key] = row
+            else:
+                for field, value in payload.items():
+                    setattr(row, field, value)
+            ordered_rows.append(row)
 
         self.session.commit()
-        self.session.refresh(row)
-        return self._to_card_domain(row)
+        for row in ordered_rows:
+            self.session.refresh(row)
+        return [self._to_card_domain(row) for row in ordered_rows]
 
     def list_card_snapshots(self, job_id: str) -> list[ExportCardRow]:
         rows = self.session.scalars(
@@ -113,6 +113,26 @@ class ExportRepository:
         if job is None:
             raise ValueError(f"unknown job_id: {job_id}")
         return job.run_key
+
+    @staticmethod
+    def _card_payload(record: ExportCardRow, *, run_key: str) -> dict[str, object]:
+        return {
+            "job_id": record.identity.job_id,
+            "run_key": run_key,
+            "item_key": record.identity.item_key,
+            "lemma_key": record.identity.lemma_key,
+            "note_guid": build_export_note_guid(record.identity),
+            "sort_index": record.sort_index,
+            "word": record.word,
+            "front_of_card": record.front_of_card,
+            "ipa": record.ipa,
+            "definitions": record.definitions,
+            "example_sentence": record.example_sentence,
+            "translation": record.translation,
+            "word_audio": record.word_audio,
+            "sentence_audio": record.sentence_audio,
+            "image": record.image,
+        }
 
     def _to_card_domain(self, row: CardExportModel) -> ExportCardRow:
         return ExportCardRow(

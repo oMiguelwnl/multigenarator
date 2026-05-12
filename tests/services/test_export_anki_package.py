@@ -241,6 +241,35 @@ def test_export_anki_package_bundles_referenced_media_and_sound_basenames(tmp_pa
         assert any(name.isdigit() for name in archive.namelist())
 
 
+def test_export_anki_package_deduplicates_shared_media_before_packaging(tmp_path: Path) -> None:
+    word_media = write_media_file(tmp_path / "audio" / "run-word.mp3")
+    sentence_media = write_media_file(tmp_path / "audio" / "run-sentence.mp3")
+    first = make_row(item_key="run", sort_index=1)
+    second = make_row(
+        item_key="walk",
+        sort_index=2,
+        word_audio=first.word_audio,
+        sentence_audio=first.sentence_audio,
+    )
+    output_path = tmp_path / "deck.apkg"
+
+    result = export_anki_package(
+        rows=[first, second],
+        media_index={
+            first.word_audio: word_media,
+            first.sentence_audio: sentence_media,
+        },
+        output_path=output_path,
+        deck_name="English::Level 1",
+    )
+
+    assert result.card_count == 2
+    assert result.media_files == [word_media, sentence_media]
+    with zipfile.ZipFile(output_path) as archive:
+        media_manifest = json.loads(archive.read("media").decode("utf-8"))
+    assert sorted(media_manifest.values()) == ["run-sentence.mp3", "run-word.mp3"]
+
+
 def test_export_highlight_anki_package_uses_highlight_model_and_bundles_media(
     tmp_path: Path,
 ) -> None:
