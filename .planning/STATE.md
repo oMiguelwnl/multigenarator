@@ -1,36 +1,36 @@
 ---
 gsd_state_version: 1.0
-milestone: v1.2
-milestone_name: Audit
-status: executing
+milestone: v1.3
+milestone_name: Card Quality Remediation and Deck Validation
+status: defining_requirements
 stopped_at: None
-last_updated: "2026-05-08T12:47:27Z"
-last_activity: 2026-05-08 -- Phase 16 Plan 03 completed; v1.2 audit complete
+last_updated: "2026-05-12T00:00:00Z"
+last_activity: 2026-05-12 -- Milestone v1.3 started
 progress:
-  total_phases: 9
-  completed_phases: 9
-  total_plans: 30
-  completed_plans: 33
-  percent: 100
+  total_phases: 0
+  completed_phases: 0
+  total_plans: 0
+  completed_plans: 0
+  percent: 0
 ---
 
 # Project State
 
 ## Project Reference
 
-See: .planning/PROJECT.md (updated 2026-05-06)
+See: .planning/PROJECT.md (updated 2026-05-12)
 
 **Core value:** Generate reliable, high-quality Anki cards for real vocabulary the learner needs to study, with accurate definitions, examples, translations where appropriate, and audio.  
-**Current focus:** Phase 16 — End-to-End v1.2 Audit
+**Current focus:** Defining requirements for v1.3 Card Quality Remediation and Deck Validation
 
 ## Current Position
 
-Phase: 16
-Plan: Complete
-Status: v1.2 audit complete
-Last activity: 2026-05-08 -- Phase 16 Plan 03 completed; v1.2 audit complete
+Phase: Not started (defining requirements)
+Plan: —
+Status: Defining requirements
+Last activity: 2026-05-12 -- Milestone v1.3 started
 
-Progress: [██████████] 100%
+Progress: [░░░░░░░░░░] 0%
 
 ## Performance Metrics
 
@@ -61,8 +61,8 @@ Progress: [██████████] 100%
 
 **Recent Trend:**
 
-- Last completed milestone work: Phase 08 Card Quality Refresh completed 2026-05-02.
-- Trend: v1.2 begins from a stable card-quality refresh but must protect existing frequency/custom flows while adding highlights.
+- Last completed milestone work: Phase 16 End-to-End v1.2 Audit completed 2026-05-08.
+- Trend: v1.3 begins from completed highlight/template work and focuses on correcting known card-quality defects found in generated decks.
 
 | Phase 10 P01 | unknown | 2 tasks | 5 files |
 | Phase 10 P02 | unknown | 2 tasks | 3 files |
@@ -136,17 +136,18 @@ Full decision history is in `.planning/PROJECT.md` and `.planning/milestones/v1.
 - [Phase 16-end-to-end-v12-audit]: Local highlight audit evidence uses only synthetic Kindle fixtures, tmp_path media, and deterministic fakes while tying APKG/CSV/TSV assertions to the same assembled highlight row.
 - [Phase 16-end-to-end-v12-audit]: Final audit wrappers re-execute phonetics, frequency, custom, CLI, and highlight privacy evidence while asserting source field tuples and note types remain isolated.
 - [Phase 16-end-to-end-v12-audit]: Final v1.2 audit evidence is scanner-readable and self-tested for 24/24 requirement coverage, command references, privacy marker exclusions, pass signals, and caveats.
+- [v1.3]: Card-quality defects from `card_issues_normalized.md` are now the active milestone focus: IPA repetition, morphology-only or semantically wrong definitions, translation/example mismatches, redundant `Front of Card`, sentence audio layout, and word/audio mismatches.
 
 ### Pending Todos
 
-- Plan Phase 10 local Kindle normalization using Phase 09 source-profile and redaction boundaries, including the T-09-02 omit-unsafe-input error pattern.
-- Keep v1.2 requirement coverage at 24/24 as phases are planned and executed.
-- Preserve Phase 08 completion information until v1.1 is archived.
+- Define v1.3 requirements from `card_issues_normalized.md`.
+- Create a v1.3 roadmap continuing phase numbering from Phase 17.
+- Preserve completed v1.1/v1.2 history until milestone archives are refreshed.
 
 ### Blockers/Concerns
 
-- Broad pytest collection now succeeds (`uv run pytest --collect-only -q` collected 247 tests during Phase 09), but future phases should keep the Phase 09 evidence commands green before relying on wider execution.
-- Exact Kindle export shapes still need real fixture validation; Phase 10 should be fixture-driven and fail closed for malformed or unsafe highlight fragments.
+- The concrete APKG `dbda4eb2-f0ec-402b-864f-48cdcf982b09.apkg` must be located or supplied during execution to complete the deck-specific audit requirement.
+- Existing broad-suite status should be rechecked before treating full regression results as authoritative for v1.3.
 
 ### Quick Tasks Completed
 
@@ -164,6 +165,6 @@ Items acknowledged and carried forward from v1.0 milestone close:
 
 ## Session Continuity
 
-Last session: 2026-05-08T12:47:27Z
-Stopped at: Completed 16-03-PLAN.md; v1.2 audit complete
+Last session: 2026-05-12T00:00:00Z
+Stopped at: Starting v1.3 milestone requirements
 Resume file: None

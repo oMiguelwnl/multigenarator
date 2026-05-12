@@ -27,18 +27,22 @@ v1.2 Phase 12 Highlight Generation, Audio, and QA was completed on 2026-05-05. H
 
 v1.2 Phase 13 Highlight Export and Template was completed on 2026-05-06. Highlight APKG, CSV, and TSV exports now use a dedicated `Multilang::Highlight Card` note type with exact English fields, no `Translation`, a responsive Definition-on-back template, fail-closed media/template validation, and regression evidence preserving existing frequency and word-list export behavior.
 
-## Current Milestone: v1.2 Kindle Highlights and Template Refresh
+v1.2 was completed through Phase 16 on 2026-05-08. Local Kindle highlights, highlight export, phonetics export, and existing frequency/custom regressions were audited with 24/24 requirements mapped and complete.
 
-**Goal:** Add a highlights-based deck mode that automatically imports Kindle highlights from WebDAV, normalizes them locally, generates Anki cards from reading-derived vocabulary, and updates highlight and phonetics card templates for the new study flow.
+## Current Milestone: v1.3 Card Quality Remediation and Deck Validation
+
+**Goal:** Fix known generated-card quality defects and harden validation so exported decks preserve accurate IPA, definitions, translations, audio-field alignment, and responsive Anki layouts.
 
 **Target features:**
 
-- Automatically fetch Kindle highlights from the configured WebDAV export location.
-- Reimplement Kindle Formatter-style normalization inside Multilang instead of depending on the external formatter website.
-- Add a new highlights deck mode alongside the existing frequency-deck and custom word-list flows.
-- Generate highlight-specific cards with concise but grammatically richer example sentences.
-- Support a highlight deck template where `Definition` is on the back, there is no `Translation` field, fields use English names, and the layout is centered and responsive.
-- Refresh the phonetics card template with the provided front layout, `Sentence Translation` on the back, removed unused fields, and Multilang colors.
+- Audit the deck `dbda4eb2-f0ec-402b-864f-48cdcf982b09.apkg` and identify all card content issues that match the normalized issue catalog.
+- Ensure `IPA` contains only a phonetic transcription, without appending the original or accented word form.
+- Ensure `Definition` describes semantic meaning in English, never only grammatical case, inflection metadata, or an incorrect sense.
+- Ensure `Translation` translates the `Example Sentence`, not the isolated word.
+- Remove the redundant `Front of Card` field from generated normal cards and adjust export/template contracts safely.
+- Keep `sentence_audio` visually beside `Example Sentence` across screen sizes.
+- Detect and correct `word_audio` assets that do not match the card `Word`.
+- Add validation and regression evidence so these defects do not recur across generated decks.
 
 ## Next Milestone Goals
 
@@ -69,8 +73,10 @@ After v1.2, candidate directions from the archived v1 requirement seeds remain:
 
 ### Active
 
-- [ ] Add automatic Kindle highlights ingestion from WebDAV as a new deck input source.
-- [ ] Refresh the phonetics deck template while preserving required sentence translation behavior.
+- [ ] Audit generated decks for normalized card-quality defects and produce actionable issue reports.
+- [ ] Correct IPA, Definition, Translation, and audio-field alignment defects before export.
+- [ ] Update the normal card schema/template by removing redundant `Front of Card` and preserving responsive audio layout.
+- [ ] Add validation and regression evidence that prevents recurrence of the normalized issue catalog.
 
 ### Out of Scope
 
@@ -83,7 +89,7 @@ After v1.2, candidate directions from the archived v1 requirement seeds remain:
 
 The v1.0 codebase is a Python 3.12 project managed by uv. The runtime exposes CLI-first generation and export workflows, with typed Pydantic/domain contracts, SQLAlchemy/Alembic persistence, deterministic local/fallback adapters for tests, Azure Speech integration for audio, and genanki packaging for `.apkg` exports.
 
-Each exported card preserves these fields:
+Before v1.3, normal exported cards preserve these fields:
 
 - `SortIndex`
 - `word`
@@ -98,6 +104,8 @@ Each exported card preserves these fields:
 
 The preferred audio direction remains Azure TTS. The current code includes an Azure voice registry and fallback matrix for the supported languages.
 
+v1.3 intentionally revises the normal generated-card export contract by removing redundant `Front of Card` from newly generated cards while keeping existing learner-facing fields, audio references, blank `Image`, and Anki-safe media behavior.
+
 Known follow-up debt: full-suite collection drift remains in tests that import removed private runtime template adapters. Focused milestone evidence suites passed; this should be handled before broad full-suite gating is treated as authoritative again.
 
 ## Constraints
@@ -107,7 +115,7 @@ Known follow-up debt: full-suite collection drift remains in tests that import r
 - **Highlights Mode**: Kindle highlights are a new deck input mode and must not remove the existing frequency-deck mode.
 - **Output Quality**: Example sentences and translations must be high quality; Tatoeba is secondary-only behind validation.
 - **Audio Provider**: Audio should use Azure TTS if required voices are available, with documented fallback behavior.
-- **Card Schema**: The generated deck must preserve the requested field set and formatting.
+- **Card Schema**: Generated decks must preserve the active requested field set and formatting; v1.3 intentionally removes redundant `Front of Card` from normal generated cards.
 - **Engineering Quality**: The codebase must keep tests, fallback paths, deterministic contracts, and auditable persistence.
 
 ## Key Decisions
@@ -127,6 +135,7 @@ Known follow-up debt: full-suite collection drift remains in tests that import r
 | Normalize Kindle highlights locally instead of automating the external formatter website | A local formatter keeps generation reproducible, testable, and independent of a browser-only tool | Validated in v1.2 Phase 10 with local parser, candidate extraction, preview CLI, and regression evidence. |
 | Keep highlight QA source-aware and privacy-safe | Raw reading text, paths, and book metadata may appear in private imports but must not leak to prompts/reports/artifacts | Validated in v1.2 Phase 12 with redacted context generation, source-aware review reports, and regression evidence. |
 | Use a dedicated highlight note type and template | Highlight cards need English fields, no Translation, Definition on the back, responsive styling, and no leakage into frequency or word-list decks | Validated in v1.2 Phase 13 with APKG/CSV/TSV export evidence and regression coverage. |
+| Treat card quality defects as validation failures before export | IPA repetition, morphology-only definitions, translation mismatches, and audio/word mismatches make learner decks unreliable | Pending in v1.3. |
 
 ## Evolution
 
@@ -148,4 +157,4 @@ This document evolves at phase transitions and milestone boundaries.
 4. Update Context with current state.
 
 ---
-*Last updated: 2026-05-06 after completing v1.2 Phase 13*
+*Last updated: 2026-05-12 after starting v1.3 milestone*
