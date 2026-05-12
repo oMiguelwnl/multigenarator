@@ -11,6 +11,7 @@ import typer
 
 from multilang.domain.jobs import GenerationRequest, JobProgressSnapshot, SupportedLanguage
 from multilang.domain.exporting import ExportArtifactFormat
+from multilang.domain.deck_audit import detect_card_issues
 from multilang.domain.webdav import WebDAVError, WebDAVFailureCode, WebDAVFetchResult, WebDAVRemoteCandidate
 from multilang.progress import ProgressRenderer
 from multilang.repositories.text_repository import TextRepository
@@ -19,6 +20,8 @@ from multilang.services.execution_report import JobExecutionReport
 from multilang.services.generate_job import GenerateJobResult, GenerateJobService
 from multilang.services.highlight_import_preview import build_highlight_import_preview
 from multilang.services.ingest_lexical_items import IngestLexicalItemsService
+from multilang.services.deck_audit_reader import read_apkg_cards
+from multilang.services.deck_audit_reports import write_deck_audit_reports
 from multilang.services.lexical_lookup import LexicalLookup, normalize_lexical_key
 from multilang.services.job_summary import JobLifecycleSummary, JobSummaryBuilder
 from multilang.services.russian_phoneme_deck import (
@@ -797,6 +800,36 @@ def create_app(
 
         typer.echo(f"artifact_path={result.output_path}")
         typer.echo(f"card_count={result.card_count}")
+
+    @cli.command("audit-deck")
+    def audit_deck(
+        input_apkg: Annotated[
+            Path,
+            typer.Option("--input-apkg", exists=False, dir_okay=False, help="Path to the APKG deck to audit."),
+        ],
+        output_dir: Annotated[
+            Path,
+            typer.Option(
+                "--output-dir",
+                file_okay=False,
+                dir_okay=True,
+                help="Directory where deck-audit.json and deck-audit.md will be written.",
+            ),
+        ] = Path(".multilang/audits"),
+    ) -> None:
+        try:
+            read_result = read_apkg_cards(input_apkg)
+            issues = [issue for card in read_result.cards for issue in detect_card_issues(card)]
+            report_result = write_deck_audit_reports(read_result, issues, output_dir)
+        except (ValueError, OSError) as exc:
+            typer.echo(str(exc))
+            raise typer.Exit(code=1) from exc
+
+        typer.echo(f"json_report={report_result.json_path}")
+        typer.echo(f"markdown_report={report_result.markdown_path}")
+        typer.echo(f"card_count={read_result.card_count}")
+        typer.echo(f"issue_count={report_result.issue_count}")
+        typer.echo(f"input_sha256={read_result.input_sha256}")
 
     @cli.command("export-russian-phonemes")
     def export_russian_phonemes(
