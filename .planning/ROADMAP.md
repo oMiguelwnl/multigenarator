@@ -66,7 +66,7 @@ Plans:
 **Plans**: 3 plans
 Plans:
 - [x] 19-01-PLAN.md — Remove `Front of Card` from normal APKG, CSV, TSV, and template references.
-- [ ] 19-02-PLAN.md — Make normal `sentence_audio` render beside `Example Sentence` responsively.
+- [x] 19-02-PLAN.md — Make normal `sentence_audio` render beside `Example Sentence` responsively.
 - [ ] 19-03-PLAN.md — Add integrated normal export evidence and highlight/phonetics isolation checks.
 **UI hint**: yes
 
@@ -107,7 +107,7 @@ Plans:
 |-------|----------------|--------|-----------|
 | 17. Deck Quality Audit and Issue Reports | 3/3 | Complete   | 2026-05-12 |
 | 18. Text Field Remediation | 2/3 | In Progress|  |
-| 19. Normal Card Export and Responsive Template | 1/3 | In Progress|  |
+| 19. Normal Card Export and Responsive Template | 2/3 | In Progress|  |
 | 20. Word Audio Integrity Gate | 0/TBD | Not started | - |
 | 21. Validation Fixtures and Milestone Evidence | 0/TBD | Not started | - |
 
