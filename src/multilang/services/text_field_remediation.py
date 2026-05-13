@@ -1,0 +1,132 @@
+"""Deterministic remediation for learner-facing generated text fields."""
+
+from __future__ import annotations
+
+import re
+import unicodedata
+from html import escape
+
+_KNOWN_DEFINITION_CORRECTIONS = {
+    "достичь": "verb: to achieve, to attain, to reach",
+}
+
+_RELATION_ONLY_RE = re.compile(
+    r"\b(?:inflection|genitive|accusative|dative|instrumental|prepositional|nominative|locative|ablative)\s+of\b"
+)
+_GRAMMAR_ONLY_TERMS = {
+    "ablative",
+    "accusative",
+    "animate",
+    "dative",
+    "feminine",
+    "genitive",
+    "instrumental",
+    "locative",
+    "masculine",
+    "neuter",
+    "nominative",
+    "plural",
+    "prepositional",
+    "singular",
+    "vocative",
+}
+_PART_OF_SPEECH_LABELS = {
+    "adj": "adjective",
+    "adjective": "adjective",
+    "adv": "adverb",
+    "adverb": "adverb",
+    "noun": "noun",
+    "verb": "verb",
+}
+
+
+def remediate_definition_html(
+    *,
+    display_form: str,
+    lemma: str,
+    part_of_speech: str | None,
+    generated_html: str | None,
+    source_definitions: list[str],
+) -> str | None:
+    """Return learner-safe definition HTML when deterministic remediation is possible."""
+
+    known = _KNOWN_DEFINITION_CORRECTIONS.get(_normalize_key(lemma)) or _KNOWN_DEFINITION_CORRECTIONS.get(
+        _normalize_key(display_form)
+    )
+    if known is not None:
+        return known
+
+    if generated_html and _is_learner_safe_definition(generated_html):
+        return generated_html
+
+    source_meaning = _select_substantive_source_definition(source_definitions)
+    if source_meaning is None:
+        return generated_html
+
+    label = _part_of_speech_label(part_of_speech)
+    formatted = f"{label}: {source_meaning}" if label else source_meaning
+    return escape(formatted)
+
+
+def validate_definition_html(*, lemma_key: str, definitions_html: str | None) -> None:
+    """Raise if a Definition field still contains learner-hostile morphology metadata."""
+
+    if not definitions_html or not _is_learner_safe_definition(definitions_html):
+        raise ValueError(f"definition for {lemma_key} must be a learner-safe semantic definition")
+
+
+def _is_learner_safe_definition(definitions_html: str) -> bool:
+    parts = _definition_parts(definitions_html)
+    return bool(parts) and all(_is_substantive_definition(part) for part in parts)
+
+
+def _definition_parts(definitions_html: str) -> list[str]:
+    cleaned = re.sub(r"</(?:li|ul)>", "\n", definitions_html)
+    cleaned = re.sub(r"<(?:ul|li)[^>]*>", "", cleaned)
+    cleaned = re.sub(r"<br\s*/?>", "\n", cleaned)
+    cleaned = re.sub(r"<[^>]+>", " ", cleaned)
+    return [part.strip() for part in cleaned.splitlines() if part.strip()]
+
+
+def _is_substantive_definition(definition: str) -> bool:
+    normalized = _without_label(" ".join(definition.casefold().split()))
+    if not normalized:
+        return False
+    if _RELATION_ONLY_RE.search(normalized):
+        return False
+    before_of, separator, _ = normalized.partition(" of ")
+    if separator:
+        relation_words = set(re.findall(r"[a-z]+", before_of))
+        if relation_words and relation_words.issubset(_GRAMMAR_ONLY_TERMS):
+            return False
+    words = set(re.findall(r"[a-z]+", normalized))
+    if words and words.issubset(_GRAMMAR_ONLY_TERMS):
+        return False
+    return True
+
+
+def _select_substantive_source_definition(source_definitions: list[str]) -> str | None:
+    for definition in source_definitions:
+        cleaned = " ".join(definition.split())
+        if cleaned and _is_substantive_definition(cleaned):
+            return cleaned
+    return None
+
+
+def _without_label(value: str) -> str:
+    return re.sub(r"^[a-z][a-z -]{1,40}:\s+", "", value).strip()
+
+
+def _part_of_speech_label(value: str | None) -> str | None:
+    if value is None:
+        return None
+    normalized = " ".join(value.replace("-", " ").replace("_", " ").casefold().split())
+    return _PART_OF_SPEECH_LABELS.get(normalized, normalized or None)
+
+
+def _normalize_key(value: str) -> str:
+    decomposed = unicodedata.normalize("NFD", value.casefold())
+    return "".join(char for char in decomposed if unicodedata.category(char) != "Mn")
+
+
+__all__ = ["remediate_definition_html", "validate_definition_html"]
