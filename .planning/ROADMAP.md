@@ -107,7 +107,7 @@ Plans:
 |-------|----------------|--------|-----------|
 | 17. Deck Quality Audit and Issue Reports | 3/3 | Complete   | 2026-05-12 |
 | 18. Text Field Remediation | 3/3 | Complete    | 2026-05-13 |
-| 19. Normal Card Export and Responsive Template | 3/3 | Complete   | 2026-05-13 |
+| 19. Normal Card Export and Responsive Template | 3/3 | Complete    | 2026-05-13 |
 | 20. Word Audio Integrity Gate | 0/TBD | Not started | - |
 | 21. Validation Fixtures and Milestone Evidence | 0/TBD | Not started | - |
 
