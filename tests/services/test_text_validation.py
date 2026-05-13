@@ -71,6 +71,32 @@ def test_validation_flags_translation_copied_from_definition() -> None:
     assert result.validation_status is ValidationStatus.FAILED
 
 
+def test_validation_rejects_isolated_word_translation_for_multi_token_sentence() -> None:
+    result = build_service().validate(
+        sentence=build_sentence(text="Он хочет достичь цели завтра.", target_language="ru"),
+        translation=build_translation(text="to achieve", target_language="en"),
+        display_form="дости́чь",
+        lemma="достичь",
+        definitions_html="verb: to achieve, to attain, to reach",
+    )
+
+    assert result.validation_status is ValidationStatus.FAILED
+    assert ValidationFlagCode.TRANSLATION_MISMATCH in {flag.code for flag in result.validation_flags}
+
+
+def test_validation_allows_full_sentence_translation_for_multi_token_sentence() -> None:
+    result = build_service().validate(
+        sentence=build_sentence(text="Он хочет достичь цели завтра.", target_language="ru"),
+        translation=build_translation(text="He wants to achieve the goal tomorrow.", target_language="en"),
+        display_form="дости́чь",
+        lemma="достичь",
+        definitions_html="verb: to achieve, to attain, to reach",
+    )
+
+    assert result.validation_status is ValidationStatus.PASSED
+    assert ValidationFlagCode.TRANSLATION_MISMATCH not in {flag.code for flag in result.validation_flags}
+
+
 def test_validation_rejects_hollow_support_verb_templates() -> None:
     result = build_service().validate(
         sentence=build_sentence(text="I use wash every day."),
