@@ -140,13 +140,7 @@ class AssembleExportCardsService:
         cleaned = " ".join(ipa.split())
         if not cleaned:
             raise AssembleExportCardsError("missing IPA for export candidate")
-        if not spoken_form:
-            raise AssembleExportCardsError("missing spoken form for export candidate")
-        cleaned_spoken_form = " ".join(spoken_form.split())
-        if not cleaned_spoken_form:
-            raise AssembleExportCardsError("missing spoken form for export candidate")
-        escaped_ipa = escape(cleaned)
-        return f"{escaped_ipa} ({escape(cleaned_spoken_form)})"
+        return escape(_strip_trailing_ipa_word_hint(cleaned))
 
     def _to_sound_tag(self, asset: AudioAssetRecord) -> str:
         return f"[sound:{Path(asset.provenance.storage_path).name}]"
@@ -212,6 +206,16 @@ def _readable_pronunciation_hint(ipa: str) -> str | None:
     if not hint:
         return None
     return hint
+
+
+_TRAILING_IPA_WORD_HINT_RE = re.compile(r"^(?P<ipa>.+(?:/|\]|⟩))\s+\([^()]+\)$")
+
+
+def _strip_trailing_ipa_word_hint(ipa: str) -> str:
+    match = _TRAILING_IPA_WORD_HINT_RE.match(ipa)
+    if match is None:
+        return ipa
+    return match.group("ipa").strip()
 
 
 def _candidate_source_type(candidate: object) -> str:
