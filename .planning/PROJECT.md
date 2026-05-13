@@ -29,6 +29,8 @@ v1.2 Phase 13 Highlight Export and Template was completed on 2026-05-06. Highlig
 
 v1.2 was completed through Phase 16 on 2026-05-08. Local Kindle highlights, highlight export, phonetics export, and existing frequency/custom regressions were audited with 24/24 requirements mapped and complete.
 
+v1.3 Phase 18 Text Field Remediation was completed on 2026-05-13. Normal generated cards now keep IPA fields to phonetic transcription or a safe word fallback, remediate learner-facing Definitions away from morphology-only metadata including the known `дости́чь` sense, and reject isolated-word Translations before accepted text can be exported.
+
 ## Current Milestone: v1.3 Card Quality Remediation and Deck Validation
 
 **Goal:** Fix known generated-card quality defects and harden validation so exported decks preserve accurate IPA, definitions, translations, audio-field alignment, and responsive Anki layouts.
@@ -74,7 +76,7 @@ After v1.2, candidate directions from the archived v1 requirement seeds remain:
 ### Active
 
 - [ ] Audit generated decks for normalized card-quality defects and produce actionable issue reports.
-- [ ] Correct IPA, Definition, Translation, and audio-field alignment defects before export.
+- [ ] Correct IPA, Definition, Translation, and audio-field alignment defects before export. _(IPA/Definition/Translation validated in Phase 18; audio-field alignment remains active for Phase 20.)_
 - [ ] Update the normal card schema/template by removing redundant `Front of Card` and preserving responsive audio layout.
 - [ ] Add validation and regression evidence that prevents recurrence of the normalized issue catalog.
 
@@ -157,4 +159,4 @@ This document evolves at phase transitions and milestone boundaries.
 4. Update Context with current state.
 
 ---
-*Last updated: 2026-05-12 after starting v1.3 milestone*
+*Last updated: 2026-05-13 after Phase 18 text field remediation*
