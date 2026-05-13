@@ -224,11 +224,11 @@ def test_assemble_export_cards_persists_exact_field_order_and_sound_tags() -> No
     )
     assert row.word_audio == "[sound:run-word.mp3]"
     assert row.sentence_audio == "[sound:run-sentence.mp3]"
-    assert row.ipa == "/run/ (RUN)"
+    assert row.ipa == "/run/"
     assert export_repository.saved_rows[0].note_guid == row.note_guid
 
 
-def test_assemble_export_cards_renders_ai_ipa_with_spoken_form() -> None:
+def test_assemble_export_cards_renders_ipa_without_spoken_form_suffix() -> None:
     service, _ = build_service(
         accepted_records=[make_text_record(item_key="casa")],
         candidates={"casa": make_candidate(item_key="casa", ipa="/ˈkaza/", spoken_form="KA-za")},
@@ -240,7 +240,22 @@ def test_assemble_export_cards_renders_ai_ipa_with_spoken_form() -> None:
 
     row = service.execute(job_id="job-1", deck_language=SupportedLanguage.EN).cards[0]
 
-    assert row.ipa == "/ˈkaza/ (KA-za)"
+    assert row.ipa == "/ˈkaza/"
+
+
+def test_assemble_export_cards_strips_redundant_parenthetical_word_hint_from_ipa() -> None:
+    service, _ = build_service(
+        accepted_records=[make_text_record(item_key="громко")],
+        candidates={"громко": make_candidate(item_key="громко", ipa="[ˈɡromkə] (гро́мко)", spoken_form="гро́мко")},
+        assets={
+            ("громко", AudioAssetKind.WORD.value): make_asset(item_key="громко", asset_kind=AudioAssetKind.WORD, storage_path="gromko-word.mp3"),
+            ("громко", AudioAssetKind.SENTENCE.value): make_asset(item_key="громко", asset_kind=AudioAssetKind.SENTENCE, storage_path="gromko-sentence.mp3"),
+        },
+    )
+
+    row = service.execute(job_id="job-1", deck_language=SupportedLanguage.RU).cards[0]
+
+    assert row.ipa == "[ˈɡromkə]"
 
 
 def test_assemble_export_cards_builds_highlight_row_without_translation_field() -> None:
@@ -267,7 +282,7 @@ def test_assemble_export_cards_builds_highlight_row_without_translation_field() 
     assert tuple(mapping) == ("SortIndex", "Word", "IPA", "Example Sentence", "sentence_audio", "Definition", "Image")
     assert row.identity.source_type == "kindle-highlights"
     assert row.word == "wash"
-    assert row.ipa == "/wɑʃ/ (wash)"
+    assert row.ipa == "/wɑʃ/"
     assert row.translation == ""
     assert "Translation" not in mapping
     assert mapping["Image"] == ""
@@ -384,7 +399,7 @@ def test_assemble_export_cards_rejects_untemplated_definitions() -> None:
     ("candidate", "message"),
     [
         (make_candidate(item_key="missing-ipa").model_copy(update={"ipa": None}), "missing IPA"),
-        (make_candidate(item_key="missing-spoken").model_copy(update={"spoken_form": None}), "missing spoken form"),
+        (make_candidate(item_key="missing-spoken").model_copy(update={"ipa": ""}), "missing IPA"),
     ],
 )
 def test_assemble_export_cards_rejects_missing_pronunciation_data(
