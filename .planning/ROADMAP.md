@@ -63,7 +63,11 @@ Plans:
   2. User sees `sentence_audio` visually beside `Example Sentence` on normal cards at desktop and mobile card widths.
   3. User keeps highlight template behavior unchanged after the normal-card schema and CSS changes.
   4. User keeps phonetics template behavior unchanged after the normal-card schema and CSS changes.
-**Plans**: TBD
+**Plans**: 3 plans
+Plans:
+- [ ] 19-01-PLAN.md — Remove `Front of Card` from normal APKG, CSV, TSV, and template references.
+- [ ] 19-02-PLAN.md — Make normal `sentence_audio` render beside `Example Sentence` responsively.
+- [ ] 19-03-PLAN.md — Add integrated normal export evidence and highlight/phonetics isolation checks.
 **UI hint**: yes
 
 ### Phase 20: Word Audio Integrity Gate
@@ -103,7 +107,7 @@ Plans:
 |-------|----------------|--------|-----------|
 | 17. Deck Quality Audit and Issue Reports | 3/3 | Complete   | 2026-05-12 |
 | 18. Text Field Remediation | 0/TBD | Not started | - |
-| 19. Normal Card Export and Responsive Template | 0/TBD | Not started | - |
+| 19. Normal Card Export and Responsive Template | 0/3 | Not started | - |
 | 20. Word Audio Integrity Gate | 0/TBD | Not started | - |
 | 21. Validation Fixtures and Milestone Evidence | 0/TBD | Not started | - |
 
