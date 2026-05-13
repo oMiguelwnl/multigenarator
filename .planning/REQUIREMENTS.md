@@ -24,9 +24,9 @@ Requirements for the current milestone. Each requirement maps to exactly one roa
 
 ### Template and Export Contract
 
-- [ ] **TMPL-01**: User receives normal generated card exports without the redundant `Front of Card` field in APKG, CSV, TSV, or template references.
+- [x] **TMPL-01**: User receives normal generated card exports without the redundant `Front of Card` field in APKG, CSV, TSV, or template references.
 - [ ] **TMPL-02**: User sees `sentence_audio` beside `Example Sentence` on normal cards across desktop and mobile card widths.
-- [ ] **TMPL-03**: User keeps highlight and phonetics template behavior isolated from normal-card schema and CSS changes.
+- [x] **TMPL-03**: User keeps highlight and phonetics template behavior isolated from normal-card schema and CSS changes.
 
 ### Audio Integrity
 
@@ -75,9 +75,9 @@ Which phases cover which requirements. Updated during roadmap creation.
 | DEF-01 | Phase 18 | Pending |
 | DEF-02 | Phase 18 | Pending |
 | TRNS-01 | Phase 18 | Complete |
-| TMPL-01 | Phase 19 | Pending |
+| TMPL-01 | Phase 19 | Complete |
 | TMPL-02 | Phase 19 | Pending |
-| TMPL-03 | Phase 19 | Pending |
+| TMPL-03 | Phase 19 | Complete |
 | AUD-01 | Phase 20 | Pending |
 | AUD-02 | Phase 20 | Pending |
 | VAL-01 | Phase 21 | Pending |

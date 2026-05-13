@@ -3,15 +3,15 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: executing
-stopped_at: Completed 18-03-PLAN.md
-last_updated: "2026-05-13T17:18:05.403Z"
+stopped_at: Completed 19-01-PLAN.md
+last_updated: "2026-05-13T17:18:52.940Z"
 last_activity: 2026-05-13
 progress:
   total_phases: 5
   completed_phases: 1
   total_plans: 9
-  completed_plans: 5
-  percent: 56
+  completed_plans: 6
+  percent: 67
 ---
 
 # Project State
@@ -26,7 +26,7 @@ See: .planning/PROJECT.md (updated 2026-05-12)
 ## Current Position
 
 Phase: 19 (normal-card-export-and-responsive-template) — EXECUTING
-Plan: 2 of 3
+Plan: 3 of 3
 Status: Ready to execute
 Last activity: 2026-05-13
 
@@ -62,6 +62,7 @@ Progress: [░░░░░░░░░░] 0%
 | Phase 17 P03 | 20min | 3 tasks | 2 files |
 | Phase 18 P01 | unknown | 2 tasks | 4 files |
 | Phase 18 P03 | unknown | 2 tasks | 3 files |
+| Phase 19 P01 | 22min | 2 tasks | 6 files |
 
 ## Accumulated Context
 
@@ -116,6 +117,7 @@ Full decision history is in `.planning/PROJECT.md` and `.planning/milestones/v1.
 - [Phase 17]: The audit-deck command composes APKG reader, Definition issue detector, and deterministic report writer without invoking mutation services.
 - [Phase 18]: Keep spoken_form available for audio/provenance but never append it to exported IPA.
 - [Phase 18]: Use conservative length and definition-gloss heuristics to reject isolated-word translations only when the source sentence has enough context.
+- [Phase 19]: Keep ExportCardRow.front_of_card as backward-compatible construction data while excluding it from normal exports.
 
 ### Pending Todos
 
@@ -146,6 +148,6 @@ Items acknowledged and carried forward from previous milestone close:
 
 ## Session Continuity
 
-Last session: 2026-05-13T17:18:05.394Z
-Stopped at: Completed 18-03-PLAN.md
+Last session: 2026-05-13T17:18:52.930Z
+Stopped at: Completed 19-01-PLAN.md
 Resume file: None
