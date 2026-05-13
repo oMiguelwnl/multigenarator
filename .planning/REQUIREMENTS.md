@@ -30,8 +30,8 @@ Requirements for the current milestone. Each requirement maps to exactly one roa
 
 ### Audio Integrity
 
-- [ ] **AUD-01**: User can detect `word_audio` assets whose synthesis text or stored manifest does not exactly match the card `Word`.
-- [ ] **AUD-02**: User receives exported cards only when `word_audio` matches `Word`, with mismatches repaired, regenerated, or blocked with a clear validation error.
+- [x] **AUD-01**: User can detect `word_audio` assets whose synthesis text or stored manifest does not exactly match the card `Word`.
+- [x] **AUD-02**: User receives exported cards only when `word_audio` matches `Word`, with mismatches repaired, regenerated, or blocked with a clear validation error.
 
 ### Validation and Evidence
 
@@ -78,8 +78,8 @@ Which phases cover which requirements. Updated during roadmap creation.
 | TMPL-01 | Phase 19 | Complete |
 | TMPL-02 | Phase 19 | Complete |
 | TMPL-03 | Phase 19 | Complete |
-| AUD-01 | Phase 20 | Pending |
-| AUD-02 | Phase 20 | Pending |
+| AUD-01 | Phase 20 | Complete |
+| AUD-02 | Phase 20 | Complete |
 | VAL-01 | Phase 21 | Pending |
 | VAL-02 | Phase 21 | Pending |
 | VAL-03 | Phase 21 | Pending |

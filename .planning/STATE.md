@@ -2,16 +2,16 @@
 gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
-status: ready
-stopped_at: Completed 19-03-PLAN.md
-last_updated: "2026-05-13T17:32:24.742Z"
+status: executing
+stopped_at: Completed 20-01-PLAN.md
+last_updated: "2026-05-13T17:45:32.137Z"
 last_activity: 2026-05-13
 progress:
   total_phases: 5
   completed_phases: 3
-  total_plans: 9
-  completed_plans: 9
-  percent: 100
+  total_plans: 15
+  completed_plans: 10
+  percent: 67
 ---
 
 # Project State
@@ -25,8 +25,8 @@ See: .planning/PROJECT.md (updated 2026-05-12)
 
 ## Current Position
 
-Phase: 20
-Plan: Not started
+Phase: 20 (word-audio-integrity-gate) — EXECUTING
+Plan: 2 of 3
 Status: Ready to execute
 Last activity: 2026-05-13
 
@@ -68,6 +68,7 @@ Progress: [░░░░░░░░░░] 0%
 | Phase 19 P02 | 16min | 2 tasks | 3 files |
 | Phase 18 P02 | unknown | 2 tasks | 5 files |
 | Phase 19 P03 | 18min | 2 tasks | 1 files |
+| Phase 20 P01 | 14min | 2 tasks | 2 files |
 
 ## Accumulated Context
 
@@ -126,6 +127,7 @@ Full decision history is in `.planning/PROJECT.md` and `.planning/milestones/v1.
 - [Phase 19]: Use a dedicated .exampleSentenceLine flex row so sentence audio stays beside the example text without overflow.
 - [Phase 18]: Keep definition remediation deterministic and provider-free, correcting known senses or falling back to substantive lexical source definitions.
 - [Phase 19]: Use synthetic tmp_path artifact evidence for normal template/export regression coverage.
+- [Phase 20]: Word audio integrity is exact-match only; stored display text, normalized display text, TTS text, and provenance hashes must match exported Word.
 
 ### Pending Todos
 
@@ -156,6 +158,6 @@ Items acknowledged and carried forward from previous milestone close:
 
 ## Session Continuity
 
-Last session: 2026-05-13T17:30:12.755Z
-Stopped at: Completed 19-03-PLAN.md
+Last session: 2026-05-13T17:45:32.126Z
+Stopped at: Completed 20-01-PLAN.md
 Resume file: None
