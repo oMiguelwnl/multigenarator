@@ -79,7 +79,11 @@ Plans:
   1. User can detect cards where the `word_audio` synthesis text or stored manifest does not exactly match the card `Word`.
   2. User receives repaired or regenerated `word_audio` when a mismatch can be safely corrected.
   3. User receives a clear validation error that blocks export when a word-audio mismatch cannot be repaired.
-**Plans**: TBD
+**Plans**: 3 plans
+Plans:
+- [ ] 20-01-PLAN.md — Define exact word-audio integrity checks for synthesis text and stored manifests.
+- [ ] 20-02-PLAN.md — Regenerate mismatched reusable word audio during audio generation.
+- [ ] 20-03-PLAN.md — Block unrepairable word-audio mismatches during assembly and export.
 
 ### Phase 21: Validation Fixtures and Milestone Evidence
 
