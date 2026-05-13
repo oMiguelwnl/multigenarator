@@ -852,7 +852,8 @@ def create_app(
         ] = None,
     ) -> None:
         cards = RUSSIAN_PHONEME_CARDS[:limit] if limit is not None else RUSSIAN_PHONEME_CARDS
-        result = export_russian_phoneme_deck(output_path=output_path, deck_name=deck_name, cards=cards)
+        settings = Settings()
+        result = export_russian_phoneme_deck(output_path=output_path, deck_name=deck_name, cards=cards, settings=settings)
         typer.echo(f"artifact_path={result.output_path}")
         typer.echo(f"card_count={result.card_count}")
 

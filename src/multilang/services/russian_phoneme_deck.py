@@ -2,13 +2,17 @@
 
 from __future__ import annotations
 
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
 from importlib.resources import files
 from pathlib import Path
 from hashlib import sha256
 import re
+from datetime import datetime
 
 import genanki
+
+from multilang.services.azure_speech_adapter import AzureSpeechAdapter
+from multilang.settings import Settings
 
 PHONEME_MODEL_ID = 1_602_300_601
 PHONEME_DECK_ID = 1_602_300_602
@@ -151,15 +155,131 @@ def export_russian_phoneme_deck(
     output_path: Path,
     deck_name: str = DEFAULT_RUSSIAN_PHONEME_DECK_NAME,
     cards: tuple[RussianPhonemeCard, ...] = RUSSIAN_PHONEME_CARDS,
+    settings: Settings | None = None,
 ) -> RussianPhonemeDeckExportResult:
+    settings = settings or Settings()
     model = build_russian_phoneme_model()
     deck = genanki.Deck(PHONEME_DECK_ID, deck_name)
+    
+    # Synthesize audio for all cards
+    synthesizer = AzureSpeechAdapter(settings)
+    audio_dir = Path(settings.audio_storage_dir) / "phoneme" / datetime.now().strftime("%Y-%m-%d")
+    media_files: list[Path] = []
+    
+    # Synthesize audio for each card
+    cards_with_audio = []
     for card in cards:
-        deck.add_note(build_russian_phoneme_note(card, model=model))
+        card_with_audio = _synthesize_card_audio(
+            card=card,
+            synthesizer=synthesizer,
+            audio_dir=audio_dir,
+            media_files=media_files,
+        )
+        cards_with_audio.append(card_with_audio)
+        deck.add_note(build_russian_phoneme_note(card_with_audio, model=model))
 
     output_path.parent.mkdir(parents=True, exist_ok=True)
-    genanki.Package(deck).write_to_file(str(output_path))
+    package = genanki.Package(deck)
+    package.media_files = [str(path) for path in media_files]
+    package.write_to_file(str(output_path))
     return RussianPhonemeDeckExportResult(output_path=output_path, card_count=len(cards))
+
+
+def _synthesize_card_audio(
+    *,
+    card: RussianPhonemeCard,
+    synthesizer: AzureSpeechAdapter,
+    audio_dir: Path,
+    media_files: list[Path],
+) -> RussianPhonemeCard:
+    """Synthesize audio for letter, word, and sentence of a card."""
+    letter_audio = ""
+    word_audio = ""
+    sentence_audio = ""
+    
+    try:
+        # Synthesize letter audio
+        letter_audio_path = _synthesize_text(
+            text=card.letters,
+            item_id=f"letter-{card.sort_index}",
+            synthesizer=synthesizer,
+            audio_dir=audio_dir,
+        )
+        if letter_audio_path:
+            letter_audio = f"[sound:{letter_audio_path.name}]"
+            media_files.append(letter_audio_path)
+    except Exception:
+        # Silently skip audio if synthesis fails
+        pass
+    
+    try:
+        # Synthesize word audio
+        word_audio_path = _synthesize_text(
+            text=card.example_word,
+            item_id=f"word-{card.sort_index}",
+            synthesizer=synthesizer,
+            audio_dir=audio_dir,
+        )
+        if word_audio_path:
+            word_audio = f"[sound:{word_audio_path.name}]"
+            media_files.append(word_audio_path)
+    except Exception:
+        pass
+    
+    try:
+        # Synthesize sentence audio
+        sentence_audio_path = _synthesize_text(
+            text=card.example_sentence,
+            item_id=f"sentence-{card.sort_index}",
+            synthesizer=synthesizer,
+            audio_dir=audio_dir,
+        )
+        if sentence_audio_path:
+            sentence_audio = f"[sound:{sentence_audio_path.name}]"
+            media_files.append(sentence_audio_path)
+    except Exception:
+        pass
+    
+    # Return card with audio references
+    return replace(
+        card,
+        letter_audio=letter_audio,
+        word_audio=word_audio,
+        sentence_audio=sentence_audio,
+    )
+
+
+def _synthesize_text(
+    *,
+    text: str,
+    item_id: str,
+    synthesizer: AzureSpeechAdapter,
+    audio_dir: Path,
+) -> Path | None:
+    """Synthesize audio for Russian text and return the file path."""
+    # Generate unique filename based on content
+    content_hash = sha256(text.encode("utf-8")).hexdigest()[:16]
+    filename = f"ru-{item_id}-{content_hash}.mp3"
+    output_path = audio_dir / filename
+    
+    # Skip if already synthesized
+    if output_path.exists():
+        return output_path
+    
+    # Synthesize using Azure Speech
+    response = synthesizer.synthesize(
+        ssml_text=text,
+        voice_id="ru-RU-DmitryNeural",
+        locale="ru-RU",
+        output_path=output_path,
+        audio_format="audio-24khz-48kbitrate-mono-mp3",
+    )
+    
+    # Verify synthesis was successful
+    if response.storage_path and response.storage_path.exists():
+        return response.storage_path
+    
+    return None
 
 
 def _phoneme_card_fields(card: RussianPhonemeCard) -> list[str]:

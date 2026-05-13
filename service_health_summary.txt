@@ -1,0 +1,249 @@
+# MULTILANG EXTERNAL SERVICES: CONFIGURATION & HEALTH CHECK GUIDE
+
+## EXTERNAL SERVICES REQUIRED
+
+### 1. AZURE SPEECH SERVICE (TTS)
+Purpose: Generate audio files for vocabulary words and example sentences
+Required: YES
+
+Configuration:
+- MULTILANG_AZURE_SPEECH_KEY: API key for Azure Cognitive Services
+- MULTILANG_AZURE_SPEECH_REGION: Azure region (e.g., eastus)
+- MULTILANG_AZURE_SPEECH_OUTPUT_FORMAT: audio-24khz-48kbitrate-mono-mp3
+
+Code Location:
+- File: src/multilang/services/azure_speech_adapter.py
+- Class: AzureSpeechAdapter
+- Initialization: src/multilang/runtime.py line 347
+
+How to Check:
+- Call: AzureSpeechAdapter(settings).available_voice_ids()
+- Returns empty set if credentials are missing
+- Raises AzureSpeechAdapterError if synthesis fails
+
+---
+
+### 2. LITELLM / OPENROUTER / OPENAI (TEXT GENERATION)
+Purpose: Generate example sentences, definitions, pronunciation
+Required: YES (unless text_generation_provider="local")
+
+Configuration:
+- MULTILANG_TEXT_GENERATION_PROVIDER: "litellm" (default) or "local"
+- MULTILANG_TEXT_GENERATION_MODEL: e.g., "openai/gpt-4o-mini"
+- MULTILANG_OPENAI_API_KEY or OPENAI_API_KEY: OpenAI API key
+- MULTILANG_OPENROUTER_API_KEY or OPENROUTER_API_KEY: OpenRouter API key
+
+Code Location:
+- File: src/multilang/services/provider_text_adapters.py
+- Class: LiteLLMSentenceAdapter (lines 63-128)
+- Initialization: src/multilang/runtime.py lines 304-306
+
+Provider Detection Function:
+- can_use_litellm(settings): Returns True if API key configured
+- Source: src/multilang/services/provider_text_adapters.py lines 209-210
+
+Error Handling:
+- Raises ValueError if no API key found
+- Raises ValueError if response JSON is invalid
+- Redacts sensitive data in exceptions
+
+---
+
+### 3. DEEPL API (TRANSLATION)
+Purpose: Translate example sentences to target language
+Required: CONDITIONALLY (if translation_provider="deepl")
+
+Configuration:
+- MULTILANG_TRANSLATION_PROVIDER: "deepl" (preferred), "google", or "local"
+- MULTILANG_DEEPL_API_KEY or DEEPL_API_KEY: DeepL API key
+
+Language Support (11 languages):
+- Portuguese → PT-BR
+- Spanish → ES
+- English → EN-US
+- French → FR
+- German → DE
+- Italian → IT
+- Polish → PL
+- Turkish → TR
+- Romanian → RO
+- Russian → RU
+- Dutch → NL
+
+Code Location:
+- File: src/multilang/services/provider_text_adapters.py
+- Class: DeepLTranslationAdapter (lines 131-161)
+- Initialization: src/multilang/runtime.py lines 289-292
+
+Provider Detection Function:
+- can_use_deepl(settings): Returns True if API key configured
+- Source: src/multilang/services/provider_text_adapters.py lines 213-214
+
+Fallback Chain:
+1. DeepL (primary)
+2. Google Translate (fallback)
+3. Local (no-op, disabled for production)
+
+---
+
+### 4. GOOGLE TRANSLATE (FALLBACK)
+Purpose: Fallback translation if DeepL fails
+Required: NO (fallback only)
+API Key: Not required (uses deep-translator library)
+
+Code Location:
+- File: src/multilang/services/provider_text_adapters.py
+- Class: GoogleTranslateAdapter (lines 164-183)
+- Class: FallbackTranslationAdapter (lines 186-206)
+
+Provider Detection Function:
+- can_use_google_translate(settings): Returns True (always available)
+- Source: src/multilang/services/provider_text_adapters.py lines 217-218
+
+---
+
+### 5. POSTGRESQL DATABASE
+Purpose: Store all generated content, job state, audio metadata
+Required: YES (always)
+
+Configuration:
+- MULTILANG_DATABASE_URL: PostgreSQL connection string
+- Development: sqlite+pysqlite:///.multilang/dev.db
+- Production: PostgreSQL 17+ recommended
+
+Code Location:
+- File: src/multilang/runtime.py
+- Initialization: build_runtime_service() lines 314-393
+
+---
+
+## HOW TO VERIFY SERVICES ARE WORKING
+
+### Option A: Check Environment Variables
+
+export MULTILANG_AZURE_SPEECH_KEY=your-key
+export MULTILANG_AZURE_SPEECH_REGION=eastus
+export MULTILANG_TEXT_GENERATION_PROVIDER=litellm
+export MULTILANG_OPENROUTER_API_KEY=your-key
+export MULTILANG_TRANSLATION_PROVIDER=deepl
+export MULTILANG_DEEPL_API_KEY=your-key
+
+### Option B: Programmatic Provider Detection
+
+from multilang.settings import Settings
+from multilang.services.provider_text_adapters import (
+    can_use_litellm,
+    can_use_deepl,
+    can_use_google_translate,
+)
+
+settings = Settings()
+print(f"LiteLLM: {can_use_litellm(settings)}")
+print(f"DeepL: {can_use_deepl(settings)}")
+print(f"Google: {can_use_google_translate(settings)}")
+
+Source: src/multilang/services/provider_text_adapters.py lines 209-218
+
+### Option C: Azure Speech Voice Check
+
+from multilang.services.azure_speech_adapter import AzureSpeechAdapter
+from multilang.settings import Settings
+
+settings = Settings()
+adapter = AzureSpeechAdapter(settings)
+voice_ids = adapter.available_voice_ids()
+print(f"Available voices: {voice_ids}")
+
+Returns empty set if credentials missing, raises AzureSpeechAdapterError if synthesis fails.
+
+Source: src/multilang/services/azure_speech_adapter.py lines 45-67
+
+### Option D: Run Provider Tests
+
+pytest tests/services/test_azure_speech_adapter.py -v
+pytest tests/services/test_provider_text_adapters.py -v
+
+Key test files:
+- tests/services/test_azure_speech_adapter.py
+- tests/services/test_provider_text_adapters.py (lines 224-238: provider detection)
+
+---
+
+## ERROR MESSAGES & DIAGNOSTICS
+
+AZURE SPEECH ERRORS:
+- "Azure Speech credentials are required: set MULTILANG_AZURE_SPEECH_KEY and MULTILANG_AZURE_SPEECH_REGION"
+  Location: src/multilang/services/azure_speech_adapter.py lines 123-127
+  
+- "Azure Speech synthesis failed; reason=...; error_code=...; details=..."
+  Location: src/multilang/services/azure_speech_adapter.py lines 129-150
+
+LITELLM ERRORS:
+- "LiteLLM sentence generation requires MULTILANG_LITELLM_API_KEY, MULTILANG_OPENAI_API_KEY, or MULTILANG_OPENROUTER_API_KEY"
+  Location: src/multilang/runtime.py lines 307-309
+  
+- "LiteLLM sentence response did not include a sentence"
+  Location: src/multilang/services/provider_text_adapters.py line 91
+  
+- "LiteLLM response was not JSON"
+  Location: src/multilang/services/provider_text_adapters.py line 336
+
+DEEPL ERRORS:
+- "DeepL translation requires MULTILANG_DEEPL_API_KEY or DEEPL_API_KEY"
+  Location: src/multilang/runtime.py line 297
+  
+- "unsupported DeepL target language: {language}"
+  Location: src/multilang/services/provider_text_adapters.py line 147
+
+---
+
+## RUNTIME INITIALIZATION FLOW
+
+build_runtime_service() [src/multilang/runtime.py lines 314-393]
+  ├── Create Settings instance
+  ├── Create SQLAlchemy engine (database)
+  ├── Initialize repositories
+  ├── _build_translation_adapter()
+  │   ├── If provider == "deepl": Create DeepLTranslationAdapter
+  │   ├── Else if provider == "google": Create GoogleTranslateAdapter
+  │   └── Else: Create LocalTranslationAdapter
+  ├── _build_sentence_adapter()
+  │   ├── If provider == "litellm": Create LiteLLMSentenceAdapter
+  │   └── Else: Create LocalSentenceAdapter
+  ├── Create AudioSynthesisService
+  │   └── With AzureSpeechAdapter(settings)
+  └── Return RuntimeGenerateService with all adapters
+
+Key code sections:
+- Translation adapter building: src/multilang/runtime.py lines 286-298
+- Sentence adapter building: src/multilang/runtime.py lines 301-311
+- Full service assembly: src/multilang/runtime.py lines 314-393
+
+---
+
+## CONFIGURATION FILES
+
+Settings File: src/multilang/settings.py (lines 31-75)
+
+Environment Variable Aliases (Pydantic field aliases):
+- OPENAI_API_KEY → MULTILANG_OPENAI_API_KEY
+- OPENROUTER_API_KEY → MULTILANG_OPENROUTER_API_KEY
+- DEEPL_API_KEY → MULTILANG_DEEPL_API_KEY
+- LITELLM_API_KEY → MULTILANG_LITELLM_API_KEY
+
+Default Configuration (.env file):
+DATABASE_URL=sqlite+pysqlite:///.multilang/dev.db
+AZURE_SPEECH_REGION=eastus
+TEXT_GENERATION_PROVIDER=litellm
+TRANSLATION_PROVIDER=deepl
+AUDIO_STORAGE_DIR=.multilang/audio
+LEXICON_DATA_DIR=.multilang/lexicon
+
+---
+
+## SUMMARY TABLE
+
+Service              | Required | Config Key                                  | Fallback           | Check Function
+Azure Speech TTS     | YES      | AZURE_SPEECH_KEY, AZURE_SPEECH_REGION      | None               | available_voice_ids()
+LiteLLM/OpenRouter   | YES*     | OPENROUTER_API_KEY or OPENAI_API_KEY      | Local generation   | can_use_litellm()
+DeepL Translation    | COND     | DEEPL_API_KEY                    
