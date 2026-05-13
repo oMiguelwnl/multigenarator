@@ -18,7 +18,7 @@ NORMAL_TEMPLATE = """
 ## Front Template
 
 ```html
-{{Front of Card}} {{Translation}} {{#Image}}{{Image}}{{/Image}}
+{{word}} {{Translation}} {{#Image}}{{Image}}{{/Image}}
 ```
 
 ## Back Template
@@ -82,7 +82,6 @@ def test_load_card_template_keeps_normal_template_and_translation_field(
         field_names=(
             "SortIndex",
             "word",
-            "Front of Card",
             "IPA",
             "Definitions",
             "Example Sentence",
@@ -92,6 +91,31 @@ def test_load_card_template_keeps_normal_template_and_translation_field(
             "Image",
         ),
     )
+
+
+def test_normal_template_validation_rejects_removed_front_of_card_field() -> None:
+    template = CardTemplate(
+        front="{{Front of Card}} {{Translation}}",
+        back="{{FrontSide}} {{Definitions}}",
+        css=".card { color: blue; }",
+        source_template_name="normal_card",
+    )
+
+    with pytest.raises(ValueError, match="Front of Card"):
+        validate_template_references(
+            template,
+            field_names=(
+                "SortIndex",
+                "word",
+                "IPA",
+                "Definitions",
+                "Example Sentence",
+                "Translation",
+                "word_audio",
+                "sentence_audio",
+                "Image",
+            ),
+        )
 
 
 @pytest.mark.parametrize(

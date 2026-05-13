@@ -70,7 +70,6 @@ def test_build_multilang_model_uses_exact_fields_and_hides_translation_on_front(
     assert [field["name"] for field in model.fields] == [
         "SortIndex",
         "word",
-        "Front of Card",
         "IPA",
         "Definitions",
         "Example Sentence",
@@ -80,6 +79,8 @@ def test_build_multilang_model_uses_exact_fields_and_hides_translation_on_front(
         "Image",
     ]
     assert 'id="translation"' in model.templates[0]["qfmt"]
+    assert "{{word}}" in model.templates[0]["qfmt"]
+    assert "{{Front of Card}}" not in model.templates[0]["qfmt"] + model.templates[0]["afmt"]
     assert 'style="display:none;"' in model.templates[0]["qfmt"]
     assert "{{Translation}}" in model.templates[0]["qfmt"]
     assert "document.getElementById(\"translation\").style.display = \"block\";" in model.templates[0]["afmt"]

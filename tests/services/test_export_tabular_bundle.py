@@ -57,7 +57,7 @@ def test_write_export_tabular_bundle_writes_tsv_with_anki_headers(tmp_path: Path
     content = output.output_path.read_text(encoding="utf-8")
 
     assert output.output_path.suffix == ".tsv"
-    assert content.startswith("#separator:Tab\n#html:true\n#notetype:Multilang::Card\n#deck:English::Level 1\n#columns:SortIndex\tword\tFront of Card\tIPA\tDefinitions\tExample Sentence\tTranslation\tword_audio\tsentence_audio\tImage\n")
+    assert content.startswith("#separator:Tab\n#html:true\n#notetype:Multilang::Card\n#deck:English::Level 1\n#columns:SortIndex\tword\tIPA\tDefinitions\tExample Sentence\tTranslation\tword_audio\tsentence_audio\tImage\n")
 
 
 def test_write_export_tabular_bundle_writes_utf8_csv_with_fixed_field_order(tmp_path: Path) -> None:
@@ -77,7 +77,6 @@ def test_write_export_tabular_bundle_writes_utf8_csv_with_fixed_field_order(tmp_
     assert parsed == [
         "1",
         "beta",
-        "beta front",
         "/beta/",
         "um<br>dois",
         "Пример, beta<br>в строке два",
@@ -103,8 +102,8 @@ def test_write_export_tabular_bundle_round_trips_non_latin_text_and_br_values(tm
     parsed_rows = list(csv.reader(output.output_path.read_text(encoding="utf-8").splitlines()[5:], delimiter="\t"))
 
     assert parsed_rows[0][1] == "ёж"
-    assert parsed_rows[0][6] == '日本語, português, "quoted"'
-    assert parsed_rows[0][4] == "значение<br>ещё одно"
+    assert parsed_rows[0][5] == '日本語, português, "quoted"'
+    assert parsed_rows[0][3] == "значение<br>ещё одно"
 
 
 def test_write_export_tabular_bundle_uses_highlight_fields_for_manual_word_lists(tmp_path: Path) -> None:
