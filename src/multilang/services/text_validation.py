@@ -135,7 +135,7 @@ class TextValidationService:
             definitions_html=definitions_html,
         )
         if require_translation:
-            self._check_translation(flags, context=context)
+            self._check_translation(flags, context=context, display_form=display_form, lemma=lemma)
 
         validation_status = ValidationStatus.FAILED if flags else ValidationStatus.PASSED
         confidence_score = self._score(flags=flags, uncertainty_count=len(context.uncertainty_notes))
@@ -258,7 +258,14 @@ class TextValidationService:
                 )
             )
 
-    def _check_translation(self, flags: list[ValidationFlag], *, context: _ValidationContext) -> None:
+    def _check_translation(
+        self,
+        flags: list[ValidationFlag],
+        *,
+        context: _ValidationContext,
+        display_form: str,
+        lemma: str,
+    ) -> None:
         translation_text = _normalize_text(context.translation_text)
         if not translation_text:
             flags.append(
@@ -283,6 +290,20 @@ class TextValidationService:
                 ValidationFlag(
                     code=ValidationFlagCode.TRANSLATION_MISMATCH,
                     detail="translation must not simply repeat the displayed sentence",
+                )
+            )
+            return
+
+        if _looks_like_isolated_word_translation(
+            translation_text,
+            context=context,
+            display_form=display_form,
+            lemma=lemma,
+        ):
+            flags.append(
+                ValidationFlag(
+                    code=ValidationFlagCode.TRANSLATION_MISMATCH,
+                    detail="translation appears to translate only the study word instead of the full sentence",
                 )
             )
 
@@ -314,6 +335,58 @@ def _tokenize(value: str) -> list[str]:
 def _normalize_text(value: str) -> str:
     value = re.sub(r"<[^>]+>", " ", value)
     return " ".join(_TOKEN_RE.findall(value.casefold()))
+
+
+def _looks_like_isolated_word_translation(
+    translation_text: str,
+    *,
+    context: _ValidationContext,
+    display_form: str,
+    lemma: str,
+) -> bool:
+    if len(context.sentence_tokens) < 4:
+        return False
+
+    translation_tokens = translation_text.split()
+    if len(translation_tokens) > 3:
+        return False
+
+    target_keys = _match_keys(display_form) | _match_keys(lemma)
+    if translation_text in target_keys:
+        return True
+
+    definition_glosses = _definition_glosses(context.definition_text)
+    return translation_text in definition_glosses
+
+
+def _definition_glosses(definition_text: str) -> set[str]:
+    if not definition_text:
+        return set()
+
+    definition_tokens = definition_text.split()
+    without_label = " ".join(definition_tokens[1:]) if definition_tokens[:1] and definition_tokens[0] in _DEFINITION_LABEL_TOKENS else definition_text
+    candidates = {definition_text, without_label}
+    for separator in (",", ";", " or "):
+        for value in list(candidates):
+            candidates.update(part.strip() for part in value.split(separator))
+    candidates.update(match.group(0).strip() for match in re.finditer(r"\bto\s+\w+\b", without_label))
+    return {candidate for candidate in candidates if candidate}
+
+
+_DEFINITION_LABEL_TOKENS = {
+    "adjective",
+    "adverb",
+    "article",
+    "conjunction",
+    "determiner",
+    "interjection",
+    "noun",
+    "numeral",
+    "particle",
+    "preposition",
+    "pronoun",
+    "verb",
+}
 
 
 def _match_keys(value: str) -> set[str]:
