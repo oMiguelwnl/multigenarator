@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
+from html import unescape
 from pathlib import Path
 
 from sqlalchemy import create_engine
@@ -28,6 +29,7 @@ from multilang.services.audio_synthesis import (
     AudioSynthesisService,
 )
 from multilang.services.assemble_export_cards import AssembleExportCardsService
+from multilang.services.audio_integrity import assert_word_audio_matches_word
 from multilang.services.export_anki_package import MANUAL_NOTE_TYPE_NAME, NOTE_TYPE_NAME, export_anki_package
 from multilang.services.export_tabular_bundle import ExportTabularBundleResult, write_export_tabular_bundle
 from multilang.services.generate_job import GenerateJobService
@@ -227,6 +229,11 @@ class RuntimeGenerateService(IngestLexicalItemsService):
                 )
                 if word_asset is None:
                     raise ValueError(f"missing required word audio for item {row.identity.item_key}")
+                assert_word_audio_matches_word(
+                    word_asset,
+                    unescape(row.word),
+                    item_key=row.identity.item_key,
+                )
                 word_path = Path(word_asset.provenance.storage_path)
                 _validate_media_reference(sound_tag=row.word_audio, media_path=word_path)
                 _add_media_reference(media_index, sound_tag=row.word_audio, media_path=word_path)
@@ -250,6 +257,10 @@ class RuntimeGenerateService(IngestLexicalItemsService):
             return None
 
         job_id = next(iter(job_ids))
+        session = getattr(self.audio_repository, "session", None)
+        expire_all = getattr(session, "expire_all", None)
+        if callable(expire_all):
+            expire_all()
         return {
             (asset.item_key, asset.asset_kind.value): asset
             for asset in self.audio_repository.list_assets_for_job(job_id)
