@@ -13,6 +13,7 @@ from multilang.domain.jobs import SupportedLanguage
 from multilang.domain.lexicon import LexicalCardCandidate
 from multilang.domain.source_profiles import get_source_profile
 from multilang.domain.text_quality import TextQualityRecord
+from multilang.services.text_field_remediation import validate_definition_html
 
 
 class AssembleExportCardsError(ValueError):
@@ -129,7 +130,13 @@ class AssembleExportCardsService:
         raw = candidate.definitions_html or ""
         cleaned = raw.replace("</ul>", "").replace("<ul>", "\n").replace("</li>", "\n").replace("<li>", "")
         raw_parts = [part.strip() for part in re.split(r"(?:<br\s*/?>|\n)+", cleaned) if part.strip()]
-        parts = [escape(_require_definition_template(candidate, part)) for part in raw_parts]
+        parts = []
+        for part in raw_parts:
+            try:
+                validate_definition_html(lemma_key=candidate.lemma_key, definitions_html=part)
+            except ValueError as exc:
+                raise AssembleExportCardsError(str(exc)) from exc
+            parts.append(escape(_require_definition_template(candidate, part)))
         if not parts:
             raise AssembleExportCardsError(f"missing definitions for item {candidate.lemma_key}")
         return "<br>".join(parts)

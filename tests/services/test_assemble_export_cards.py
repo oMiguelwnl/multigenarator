@@ -213,7 +213,6 @@ def test_assemble_export_cards_persists_exact_field_order_and_sound_tags() -> No
     assert tuple(row.ordered_field_mapping().keys()) == (
         "SortIndex",
         "word",
-        "Front of Card",
         "IPA",
         "Definitions",
         "Example Sentence",

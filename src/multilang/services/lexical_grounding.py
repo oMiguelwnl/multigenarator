@@ -19,6 +19,7 @@ from multilang.domain.lexicon import (
 )
 from multilang.services.lexical_lookup import LexicalLookup, LexicalRecord, normalize_lexical_key
 from multilang.services.provider_pronunciation_adapters import PronunciationGenerationRequest
+from multilang.services.text_field_remediation import remediate_definition_html
 from multilang.services.text_generation import DefinitionGenerationRequest, DefinitionGenerationResult
 from multilang.services.word_list_parser import ParsedWordListItem
 
@@ -154,7 +155,14 @@ class LexicalGroundingService:
             target_language=resolved_definition_language,
             part_of_speech=record.part_of_speech,
         )
-        definitions_html = definition_result.definitions_html if definition_result is not None else None
+        generated_definitions_html = definition_result.definitions_html if definition_result is not None else None
+        definitions_html = remediate_definition_html(
+            display_form=learner_display_form,
+            lemma=record.lemma,
+            part_of_speech=record.part_of_speech,
+            generated_html=generated_definitions_html,
+            source_definitions=record.definitions,
+        )
         ipa = record.ipa.strip() if record.ipa else None
         spoken_form: str | None = learner_display_form if ipa else None
         pronunciation_source = record.source if ipa else f"{record.source}_missing"
