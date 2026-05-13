@@ -299,7 +299,7 @@ def test_grounding_uses_word_fallback_when_authoritative_ipa_is_missing() -> Non
     assert candidate.provenance.pronunciation.value == "casa"
     assert candidate.provenance.pronunciation.source == "manual_missing"
     assert candidate.provenance.pronunciation.authoritative is False
-    assert "word fallback" in candidate.provenance.notes
+    assert any("word fallback" in note for note in candidate.provenance.notes)
 
 
 def test_custom_word_list_failures_stay_pending() -> None:

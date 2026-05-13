@@ -155,13 +155,16 @@ class LexicalGroundingService:
             part_of_speech=record.part_of_speech,
         )
         definitions_html = definition_result.definitions_html if definition_result is not None else None
-        ipa = record.ipa
-        spoken_form: str | None = learner_display_form if record.ipa else None
-        pronunciation_source = record.source if record.ipa else f"{record.source}_missing"
+        ipa = record.ipa.strip() if record.ipa else None
+        spoken_form: str | None = learner_display_form if ipa else None
+        pronunciation_source = record.source if ipa else f"{record.source}_missing"
+        pronunciation_authoritative = bool(ipa)
         notes: list[str] = []
-        if record.ipa is None:
+        if ipa:
+            notes.append("authoritative IPA used from lexical source")
+        else:
             notes.append("authoritative IPA missing in lexical source")
-        if self._pronunciation_generator is not None and record.ipa is None:
+        if self._pronunciation_generator is not None and ipa is None:
             pronunciation = self._pronunciation_generator.generate_pronunciation(
                 PronunciationGenerationRequest(
                     target_language=language.value,
@@ -177,6 +180,13 @@ class LexicalGroundingService:
                     "source", "provider-pronunciation-generator"
                 )
             )
+            pronunciation_authoritative = True
+            notes.append("provider IPA used because authoritative IPA was missing")
+        if not ipa:
+            ipa = learner_display_form
+            spoken_form = learner_display_form
+            pronunciation_authoritative = False
+            notes.append("word fallback used because authoritative IPA was missing")
 
         return LexicalCardCandidate(
             submitted_form=submitted_form,
@@ -203,7 +213,7 @@ class LexicalGroundingService:
                 pronunciation=PronunciationRecord(
                     source=pronunciation_source,
                     value=ipa,
-                    authoritative=True,
+                    authoritative=pronunciation_authoritative,
                 ),
                 notes=notes,
             ),
