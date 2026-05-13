@@ -16,7 +16,7 @@ Phase 17: Deck Quality Audit and Issue Reports.
 - [x] **Phase 17: Deck Quality Audit and Issue Reports** - Generated APKGs can be audited non-destructively for normalized card-quality defects with actionable reports. (completed 2026-05-12)
 - [x] **Phase 18: Text Field Remediation** - IPA, Definition, and Translation values are corrected to learner-safe meanings, pronunciations, and sentence translations. (completed 2026-05-13)
 - [x] **Phase 19: Normal Card Export and Responsive Template** - Normal card exports remove `Front of Card` while preserving responsive sentence-audio layout and isolating other templates. (completed 2026-05-13)
-- [ ] **Phase 20: Word Audio Integrity Gate** - Word audio mismatches are detected and repaired, regenerated, or blocked before exported cards reach the user.
+- [x] **Phase 20: Word Audio Integrity Gate** - Word audio mismatches are detected and repaired, regenerated, or blocked before exported cards reach the user. (completed 2026-05-13)
 - [ ] **Phase 21: Validation Fixtures and Milestone Evidence** - Validators, normalized issue fixtures, and final evidence prove defects do not recur across deck modes.
 
 ## Phase Details
@@ -83,7 +83,7 @@ Plans:
 Plans:
 - [x] 20-01-PLAN.md — Define exact word-audio integrity checks for synthesis text and stored manifests.
 - [x] 20-02-PLAN.md — Regenerate mismatched reusable word audio during audio generation.
-- [ ] 20-03-PLAN.md — Block unrepairable word-audio mismatches during assembly and export.
+- [x] 20-03-PLAN.md — Block unrepairable word-audio mismatches during assembly and export.
 
 ### Phase 21: Validation Fixtures and Milestone Evidence
 
@@ -116,7 +116,7 @@ Plans:
 | 17. Deck Quality Audit and Issue Reports | 3/3 | Complete   | 2026-05-12 |
 | 18. Text Field Remediation | 3/3 | Complete    | 2026-05-13 |
 | 19. Normal Card Export and Responsive Template | 3/3 | Complete    | 2026-05-13 |
-| 20. Word Audio Integrity Gate | 2/3 | In Progress|  |
+| 20. Word Audio Integrity Gate | 3/3 | Complete   | 2026-05-13 |
 | 21. Validation Fixtures and Milestone Evidence | 0/TBD | Not started | - |
 
 ## Coverage
