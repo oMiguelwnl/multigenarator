@@ -9,10 +9,24 @@ import sqlite3
 import zipfile
 from pathlib import Path
 
-from multilang.domain.exporting import ExportArtifactFormat, ExportCardIdentity, ExportCardRow
+from multilang.domain.exporting import (
+    ExportArtifactFormat,
+    ExportCardIdentity,
+    ExportCardRow,
+    HIGHLIGHT_EXPORT_CARD_FIELD_NAMES,
+    MANUAL_EXPORT_CARD_FIELD_NAMES,
+)
 from multilang.domain.jobs import SupportedLanguage
-from multilang.services.export_anki_package import MODEL_ID, NOTE_TYPE_NAME, export_anki_package
+from multilang.services.export_anki_package import (
+    HIGHLIGHT_NOTE_TYPE_NAME,
+    MANUAL_NOTE_TYPE_NAME,
+    MODEL_ID,
+    NOTE_TYPE_NAME,
+    build_multilang_model,
+    export_anki_package,
+)
 from multilang.services.export_tabular_bundle import write_export_tabular_bundle
+from multilang.services.russian_phoneme_deck import PHONEME_FIELD_NAMES, build_russian_phoneme_model
 
 
 NORMAL_FIELD_NAMES = (
@@ -157,3 +171,49 @@ def test_normal_template_references_are_within_revised_export_fields(tmp_path: P
 
     assert references <= set(NORMAL_FIELD_NAMES) | {"FrontSide"}
     assert "Front of Card" not in references
+
+
+def test_highlight_and_manual_models_remain_isolated_from_normal_contract_changes() -> None:
+    highlight_model = build_multilang_model(source_type="kindle-highlights")
+    manual_model = build_multilang_model(source_type="word-list")
+    highlight_markup = highlight_model.templates[0]["qfmt"] + highlight_model.templates[0]["afmt"]
+    manual_markup = manual_model.templates[0]["qfmt"] + manual_model.templates[0]["afmt"]
+
+    assert highlight_model.name == HIGHLIGHT_NOTE_TYPE_NAME
+    assert manual_model.name == MANUAL_NOTE_TYPE_NAME
+    assert [field["name"] for field in highlight_model.fields] == list(HIGHLIGHT_EXPORT_CARD_FIELD_NAMES)
+    assert [field["name"] for field in manual_model.fields] == list(MANUAL_EXPORT_CARD_FIELD_NAMES)
+    assert "Translation" not in [field["name"] for field in highlight_model.fields]
+    assert "Translation" not in [field["name"] for field in manual_model.fields]
+    assert "word_audio" not in [field["name"] for field in highlight_model.fields]
+    assert "word_audio" not in [field["name"] for field in manual_model.fields]
+    assert "{{Word}}" in highlight_markup
+    assert "{{Word}}" in manual_markup
+    assert 'class="card"' in highlight_markup
+    assert 'class="card"' in manual_markup
+    assert 'class="meaning"' in highlight_markup
+    assert 'class="meaning"' in manual_markup
+    assert ".audio-controls" in highlight_model.css
+    assert ".audio-controls" in manual_model.css
+    assert "{{word}}" not in highlight_markup + manual_markup
+    assert "{{Front of Card}}" not in highlight_markup + manual_markup
+
+
+def test_russian_phoneme_model_remains_isolated_from_normal_and_highlight_fields() -> None:
+    model = build_russian_phoneme_model()
+    template_markup = model.templates[0]["qfmt"] + model.templates[0]["afmt"]
+    references = {reference.lstrip("#/") for reference in re.findall(r"{{(?:hint:)?([^{}]+)}}", template_markup)}
+    forbidden_normal_fields = {
+        "word",
+        "Word",
+        "Front of Card",
+        "Definitions",
+        "Definition",
+        "Translation",
+        "Image",
+    }
+
+    assert tuple(field["name"] for field in model.fields) == PHONEME_FIELD_NAMES
+    assert references <= set(PHONEME_FIELD_NAMES) | {"FrontSide"}
+    assert references.isdisjoint(forbidden_normal_fields)
+    assert forbidden_normal_fields.isdisjoint({field["name"] for field in model.fields})
