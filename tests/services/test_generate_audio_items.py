@@ -219,6 +219,41 @@ def test_generate_audio_items_service_regenerates_mismatched_reusable_word_audio
     assert synthesis.synthesized[0].asset_kind is AudioAssetKind.WORD
 
 
+def test_generate_audio_items_service_keeps_sentence_reuse_outside_word_gate() -> None:
+    prepared_word = make_asset(item_key="alpha", asset_kind=AudioAssetKind.WORD, status=AudioSynthesisStatus.PENDING)
+    prepared_sentence = make_asset(item_key="alpha", asset_kind=AudioAssetKind.SENTENCE, status=AudioSynthesisStatus.PENDING)
+    existing_sentence = make_asset(item_key="alpha", asset_kind=AudioAssetKind.SENTENCE, status=AudioSynthesisStatus.SYNTHESIZED).model_copy(
+        update={"job_id": "old-job", "item_key": "old-item"}
+    )
+    audio_repository = FakeAudioRepository(
+        reusable_assets={
+            (
+                AudioAssetKind.SENTENCE.value,
+                prepared_sentence.normalized_input.text_hash or "",
+                prepared_sentence.normalized_input.ssml_hash or "",
+                prepared_sentence.provenance.voice_id,
+                prepared_sentence.provenance.format.value,
+            ): existing_sentence
+        }
+    )
+    synthesis = FakeAudioSynthesisService(prepared={"alpha": AudioSynthesisBundle(word_asset=prepared_word, sentence_asset=prepared_sentence)})
+    service = GenerateAudioItemsService(
+        job_repository=FakeJobRepository(),
+        lexical_repository=FakeLexicalRepository(candidates={"alpha": make_candidate(item_key="alpha")}),
+        text_repository=FakeTextRepository(accepted_records=[make_text_record(item_key="alpha", review_status=ReviewStatus.ACCEPTED)]),
+        audio_repository=audio_repository,
+        audio_synthesis_service=synthesis,
+    )
+
+    result = service.execute(job_id="job-1", deck_language=SupportedLanguage.EN)
+
+    assert result.processed_items == 2
+    assert result.reused_items == 1
+    assert audio_repository.saved_assets[1].asset_kind is AudioAssetKind.SENTENCE
+    assert audio_repository.saved_assets[1].provenance.storage_path == existing_sentence.provenance.storage_path
+    assert [asset.asset_kind for asset in synthesis.synthesized] == [AudioAssetKind.WORD]
+
+
 def test_generate_audio_items_service_skips_review_required_text_rows() -> None:
     service = GenerateAudioItemsService(
         job_repository=FakeJobRepository(),
