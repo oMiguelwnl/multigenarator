@@ -23,7 +23,7 @@ from multilang.services.text_generation import (
     SentenceGenerationFallback,
     SentenceGenerationResult,
 )
-from multilang.services.text_validation import TextValidationResult
+from multilang.services.text_validation import TextValidationResult, TextValidationService
 
 
 def make_candidate(
@@ -321,6 +321,72 @@ def test_generate_text_items_flags_review_after_one_failed_repair() -> None:
     assert saved.review_reason == "translation_mismatch"
     assert saved.validation_flags[0].code is ValidationFlagCode.TRANSLATION_MISMATCH
     assert job_repository.successes == [("job-1", "line-1", JobStage.GENERATE_TEXT)]
+
+
+def test_generate_text_items_routes_isolated_word_translation_to_review() -> None:
+    candidate = make_candidate(lemma="достичь", item_key="ru-1", translation_target_language="en").model_copy(
+        update={"definitions_html": "verb: to achieve, to attain, to reach"}
+    )
+    repository = FakeTextRepository(
+        candidates=[PersistedCandidate(id="lex-ru-1", item_key="ru-1", candidate=candidate)]
+    )
+    generation = FakeGenerationService(
+        bundles=[
+            make_bundle(sentence="Он хочет достичь цели завтра.", translation="to achieve"),
+            make_bundle(sentence="Он хочет достичь цели завтра.", translation="to achieve"),
+        ]
+    )
+
+    service = GenerateTextItemsService(
+        job_repository=FakeJobRepository(),
+        lexical_repository=None,
+        text_repository=repository,
+        text_generation_service=generation,
+        text_validation_service=TextValidationService(),
+        tatoeba_sentence_source=FakeTatoebaSentenceSource(fallback=None),
+    )
+
+    result = service.execute(job_id="job-ru", deck_language=SupportedLanguage.RU)
+
+    assert result.accepted_items == 0
+    assert result.review_required_items == 1
+    saved = repository.saved_records[0]
+    assert saved.review_status is ReviewStatus.REVIEW_REQUIRED
+    assert saved.review_reason == "translation_mismatch"
+    assert saved.validation_flags[0].code is ValidationFlagCode.TRANSLATION_MISMATCH
+
+
+def test_generate_text_items_accepts_repaired_full_sentence_translation() -> None:
+    candidate = make_candidate(lemma="достичь", item_key="ru-1", translation_target_language="en").model_copy(
+        update={"definitions_html": "verb: to achieve, to attain, to reach"}
+    )
+    repository = FakeTextRepository(
+        candidates=[PersistedCandidate(id="lex-ru-1", item_key="ru-1", candidate=candidate)]
+    )
+    generation = FakeGenerationService(
+        bundles=[
+            make_bundle(sentence="Он хочет достичь цели завтра.", translation="to achieve"),
+            make_bundle(sentence="Он хочет достичь цели завтра.", translation="He wants to achieve the goal tomorrow."),
+        ]
+    )
+
+    service = GenerateTextItemsService(
+        job_repository=FakeJobRepository(),
+        lexical_repository=None,
+        text_repository=repository,
+        text_generation_service=generation,
+        text_validation_service=TextValidationService(),
+        tatoeba_sentence_source=FakeTatoebaSentenceSource(fallback=None),
+    )
+
+    result = service.execute(job_id="job-ru", deck_language=SupportedLanguage.RU)
+
+    assert result.accepted_items == 1
+    assert result.review_required_items == 0
+    saved = repository.saved_records[0]
+    assert saved.review_status is ReviewStatus.ACCEPTED
+    assert saved.generation_status is TextGenerationStatus.REPAIRED
+    assert saved.translation_text == "He wants to achieve the goal tomorrow."
 
 
 def test_generate_text_items_skips_tatoeba_when_first_pass_validation_succeeds() -> None:
