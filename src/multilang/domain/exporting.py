@@ -13,7 +13,6 @@ from multilang.domain.source_profiles import get_source_profile
 FREQUENCY_EXPORT_CARD_FIELD_NAMES = (
     "SortIndex",
     "word",
-    "Front of Card",
     "IPA",
     "Definitions",
     "Example Sentence",
