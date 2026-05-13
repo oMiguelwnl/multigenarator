@@ -82,7 +82,7 @@ Plans:
 **Plans**: 3 plans
 Plans:
 - [x] 20-01-PLAN.md — Define exact word-audio integrity checks for synthesis text and stored manifests.
-- [ ] 20-02-PLAN.md — Regenerate mismatched reusable word audio during audio generation.
+- [x] 20-02-PLAN.md — Regenerate mismatched reusable word audio during audio generation.
 - [ ] 20-03-PLAN.md — Block unrepairable word-audio mismatches during assembly and export.
 
 ### Phase 21: Validation Fixtures and Milestone Evidence
@@ -116,7 +116,7 @@ Plans:
 | 17. Deck Quality Audit and Issue Reports | 3/3 | Complete   | 2026-05-12 |
 | 18. Text Field Remediation | 3/3 | Complete    | 2026-05-13 |
 | 19. Normal Card Export and Responsive Template | 3/3 | Complete    | 2026-05-13 |
-| 20. Word Audio Integrity Gate | 1/3 | In Progress|  |
+| 20. Word Audio Integrity Gate | 2/3 | In Progress|  |
 | 21. Validation Fixtures and Milestone Evidence | 0/TBD | Not started | - |
 
 ## Coverage
