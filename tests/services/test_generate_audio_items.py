@@ -184,6 +184,41 @@ def test_generate_audio_items_service_reuses_existing_assets() -> None:
     assert synthesis.synthesized[0].asset_kind is AudioAssetKind.SENTENCE
 
 
+def test_generate_audio_items_service_regenerates_mismatched_reusable_word_audio() -> None:
+    prepared_word = make_asset(item_key="run", asset_kind=AudioAssetKind.WORD, status=AudioSynthesisStatus.PENDING)
+    prepared_sentence = make_asset(item_key="run", asset_kind=AudioAssetKind.SENTENCE, status=AudioSynthesisStatus.PENDING)
+    corrupted_word = make_asset(item_key="jump", asset_kind=AudioAssetKind.WORD, status=AudioSynthesisStatus.SYNTHESIZED).model_copy(
+        update={"job_id": "old-job", "item_key": "old-item"}
+    )
+    audio_repository = FakeAudioRepository(
+        reusable_assets={
+            (
+                AudioAssetKind.WORD.value,
+                prepared_word.normalized_input.text_hash or "",
+                prepared_word.normalized_input.ssml_hash or "",
+                prepared_word.provenance.voice_id,
+                prepared_word.provenance.format.value,
+            ): corrupted_word
+        }
+    )
+    synthesis = FakeAudioSynthesisService(prepared={"run": AudioSynthesisBundle(word_asset=prepared_word, sentence_asset=prepared_sentence)})
+    service = GenerateAudioItemsService(
+        job_repository=FakeJobRepository(),
+        lexical_repository=FakeLexicalRepository(candidates={"run": make_candidate(item_key="run")}),
+        text_repository=FakeTextRepository(accepted_records=[make_text_record(item_key="run", review_status=ReviewStatus.ACCEPTED)]),
+        audio_repository=audio_repository,
+        audio_synthesis_service=synthesis,
+    )
+
+    result = service.execute(job_id="job-1", deck_language=SupportedLanguage.EN)
+
+    assert result.processed_items == 2
+    assert result.reused_items == 0
+    assert audio_repository.saved_assets[0].display_text == "run"
+    assert audio_repository.saved_assets[0].provenance.storage_path != corrupted_word.provenance.storage_path
+    assert synthesis.synthesized[0].asset_kind is AudioAssetKind.WORD
+
+
 def test_generate_audio_items_service_skips_review_required_text_rows() -> None:
     service = GenerateAudioItemsService(
         job_repository=FakeJobRepository(),
