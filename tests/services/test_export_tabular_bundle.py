@@ -281,4 +281,4 @@ def test_write_export_tabular_bundle_preserves_translation_for_frequency_decks(t
     parsed_rows = list(csv.reader(lines[5:]))
 
     assert ",Translation," in lines[4]
-    assert parsed_rows[0][6] == "run translation"
+    assert parsed_rows[0][5] == "run translation"

@@ -11,7 +11,7 @@ Import these into your Anki note type under **Card Template → Front / Back / S
 <div class="customCard cardBack">
   <div class="horizontalPadding centerVertically targetWordContainer">
     <div class="wordBlock">
-      <span class="targetWord">{{Front of Card}}</span>
+      <span class="targetWord">{{word}}</span>
       {{#IPA}}<span class="ipa">{{IPA}}</span>{{/IPA}}
     </div>
     <span class="wordAudioButtonBack">{{word_audio}}</span>
