@@ -395,6 +395,24 @@ def test_assemble_export_cards_rejects_untemplated_definitions() -> None:
         service.execute(job_id="job-1", deck_language=SupportedLanguage.EN)
 
 
+def test_assemble_export_cards_rejects_unresolved_morphology_only_definitions() -> None:
+    service, _ = build_service(
+        accepted_records=[make_text_record(item_key="case-form")],
+        candidates={"case-form": make_candidate(item_key="case-form", definitions_html="adjective: masculine animate accusative singular")},
+        assets={
+            ("case-form", AudioAssetKind.WORD.value): make_asset(
+                item_key="case-form", asset_kind=AudioAssetKind.WORD, storage_path="case-form-word.mp3"
+            ),
+            ("case-form", AudioAssetKind.SENTENCE.value): make_asset(
+                item_key="case-form", asset_kind=AudioAssetKind.SENTENCE, storage_path="case-form-sentence.mp3"
+            ),
+        },
+    )
+
+    with pytest.raises(AssembleExportCardsError, match="learner-safe semantic definition"):
+        service.execute(job_id="job-1", deck_language=SupportedLanguage.EN)
+
+
 @pytest.mark.parametrize(
     ("candidate", "message"),
     [

@@ -49,6 +49,17 @@ class StubDefinitionGenerator:
         )
 
 
+class FixedDefinitionGenerator:
+    def __init__(self, definitions_html: str) -> None:
+        self.definitions_html = definitions_html
+
+    def generate_definition(self, request: object) -> DefinitionGenerationResult:
+        return DefinitionGenerationResult(
+            definitions_html=self.definitions_html,
+            provenance={"source": "fixed-definition-generator"},
+        )
+
+
 def test_grounding_prefers_study_form_and_manual_language_policy() -> None:
     generator = StubDefinitionGenerator()
     service = LexicalGroundingService(
@@ -384,6 +395,31 @@ def test_frequency_uses_lexical_lookup_without_cache_definition_for_card_definit
     assert candidate.grounding_status is GroundingStatus.GROUNDED
     assert candidate.definitions_html == "term: LLM definition for casas"
     assert generator.calls[0].lemma == "casas"
+
+
+def test_grounding_remediates_morphology_only_definition_from_source_meaning() -> None:
+    service = LexicalGroundingService(
+        lookup=StubLookup(
+            {
+                "большую": LexicalRecord(
+                    term="большую",
+                    display_form="большую",
+                    lemma="большой",
+                    definitions=["feminine accusative singular of большой", "big; large; important"],
+                    part_of_speech="adjective",
+                    ipa="[bɐlʲˈʂuju]",
+                )
+            }
+        ),
+        definition_generator=FixedDefinitionGenerator("adjective: feminine accusative singular"),
+    )
+
+    candidate = service.ground_word_list_item(
+        language=SupportedLanguage.RU,
+        item=ParsedWordListItem(line_number=1, submitted_form="большую", display_form="большую", item_key="большую"),
+    )
+
+    assert candidate.definitions_html == "adjective: big; large; important"
 
 
 def test_russian_frequency_rejects_uppercase_duplicate_records() -> None:
