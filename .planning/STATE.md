@@ -2,16 +2,16 @@
 gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
-status: planning
-stopped_at: Completed 17-03-PLAN.md
-last_updated: "2026-05-12T20:00:10.368Z"
-last_activity: 2026-05-12 -- Created v1.3 roadmap from current milestone requirements.
+status: executing
+stopped_at: Completed 18-01-PLAN.md
+last_updated: "2026-05-13T17:13:47.371Z"
+last_activity: 2026-05-13
 progress:
   total_phases: 5
   completed_phases: 1
-  total_plans: 3
-  completed_plans: 3
-  percent: 100
+  total_plans: 9
+  completed_plans: 4
+  percent: 44
 ---
 
 # Project State
@@ -21,14 +21,14 @@ progress:
 See: .planning/PROJECT.md (updated 2026-05-12)
 
 **Core value:** Generate reliable, high-quality Anki cards for real vocabulary the learner needs to study, with accurate definitions, examples, translations where appropriate, and audio.  
-**Current focus:** Phase 17 - Deck Quality Audit and Issue Reports
+**Current focus:** Phase 18 — text-field-remediation
 
 ## Current Position
 
-Phase: 17 of 21 (Deck Quality Audit and Issue Reports)  
-Plan: 0 of TBD in current phase  
-Status: Ready to plan  
-Last activity: 2026-05-12 -- Created v1.3 roadmap from current milestone requirements.
+Phase: 18 (text-field-remediation) — EXECUTING
+Plan: 2 of 3
+Status: Ready to execute
+Last activity: 2026-05-13
 
 Progress: [░░░░░░░░░░] 0%
 
@@ -60,6 +60,7 @@ Progress: [░░░░░░░░░░] 0%
 - Trend: v1.3 begins from completed highlight/template work and focuses on correcting known card-quality defects found in generated decks.
 
 | Phase 17 P03 | 20min | 3 tasks | 2 files |
+| Phase 18 P01 | unknown | 2 tasks | 4 files |
 
 ## Accumulated Context
 
@@ -112,6 +113,7 @@ Full decision history is in `.planning/PROJECT.md` and `.planning/milestones/v1.
 - [v1.3]: Use `card_issues_normalized.md` and the known APKG as the normalized defect catalog for remediation evidence.
 - [Phase 17]: Known APKG audit evidence is generated under ignored .multilang/audits because reports may contain private deck excerpts.
 - [Phase 17]: The audit-deck command composes APKG reader, Definition issue detector, and deterministic report writer without invoking mutation services.
+- [Phase 18]: Keep spoken_form available for audio/provenance but never append it to exported IPA.
 
 ### Pending Todos
 
@@ -142,6 +144,6 @@ Items acknowledged and carried forward from previous milestone close:
 
 ## Session Continuity
 
-Last session: 2026-05-12T20:00:10.363Z
-Stopped at: Completed 17-03-PLAN.md
+Last session: 2026-05-13T17:13:47.362Z
+Stopped at: Completed 18-01-PLAN.md
 Resume file: None

@@ -49,7 +49,7 @@ Plans:
   4. User sees `Translation` values that translate the full `Example Sentence`, not the isolated `Word`.
 **Plans**: 3 plans
 Plans:
-- [ ] 18-01-PLAN.md — Correct IPA fallback and IPA-only export rendering.
+- [x] 18-01-PLAN.md — Correct IPA fallback and IPA-only export rendering.
 - [ ] 18-02-PLAN.md — Remediate semantic Definitions and block unresolved morphology-only values.
 - [ ] 18-03-PLAN.md — Reject isolated-word Translations before acceptance/export.
 
@@ -106,7 +106,7 @@ Plans:
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
 | 17. Deck Quality Audit and Issue Reports | 3/3 | Complete   | 2026-05-12 |
-| 18. Text Field Remediation | 0/TBD | Not started | - |
+| 18. Text Field Remediation | 1/3 | In Progress|  |
 | 19. Normal Card Export and Responsive Template | 0/3 | Not started | - |
 | 20. Word Audio Integrity Gate | 0/TBD | Not started | - |
 | 21. Validation Fixtures and Milestone Evidence | 0/TBD | Not started | - |

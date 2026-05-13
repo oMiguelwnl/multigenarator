@@ -17,7 +17,7 @@ Requirements for the current milestone. Each requirement maps to exactly one roa
 
 ### Text Field Correctness
 
-- [ ] **IPA-01**: User receives `IPA` values that contain only the phonetic transcription, or the word itself as a fallback when pronunciation cannot be determined confidently.
+- [x] **IPA-01**: User receives `IPA` values that contain only the phonetic transcription, or the word itself as a fallback when pronunciation cannot be determined confidently.
 - [ ] **DEF-01**: User receives English semantic definitions for generated words, including inflected forms, instead of case descriptions or `inflection of`-style metadata.
 - [ ] **DEF-02**: User receives corrected definitions for known wrong senses, including cases like `дости́чь` meaning "to achieve, to attain, to reach".
 - [ ] **TRNS-01**: User receives `Translation` values that translate the `Example Sentence`, not the isolated `Word`.
@@ -71,7 +71,7 @@ Which phases cover which requirements. Updated during roadmap creation.
 | AUDIT-01 | Phase 17 | Complete |
 | AUDIT-02 | Phase 17 | Complete |
 | AUDIT-03 | Phase 17 | Complete |
-| IPA-01 | Phase 18 | Pending |
+| IPA-01 | Phase 18 | Complete |
 | DEF-01 | Phase 18 | Pending |
 | DEF-02 | Phase 18 | Pending |
 | TRNS-01 | Phase 18 | Pending |
