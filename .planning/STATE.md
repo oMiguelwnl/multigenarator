@@ -2,7 +2,7 @@
 gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
-status: verifying
+status: ready
 stopped_at: Completed 19-03-PLAN.md
 last_updated: "2026-05-13T17:32:24.742Z"
 last_activity: 2026-05-13
@@ -21,13 +21,13 @@ progress:
 See: .planning/PROJECT.md (updated 2026-05-12)
 
 **Core value:** Generate reliable, high-quality Anki cards for real vocabulary the learner needs to study, with accurate definitions, examples, translations where appropriate, and audio.  
-**Current focus:** Phase 19 — normal-card-export-and-responsive-template
+**Current focus:** Phase 20 — word-audio-integrity-gate
 
 ## Current Position
 
 Phase: 20
 Plan: Not started
-Status: Phase complete — ready for verification
+Status: Ready to execute
 Last activity: 2026-05-13
 
 Progress: [░░░░░░░░░░] 0%

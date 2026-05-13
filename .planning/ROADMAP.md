@@ -122,9 +122,9 @@ Plans:
 | DEF-01 | Phase 18 | Pending |
 | DEF-02 | Phase 18 | Pending |
 | TRNS-01 | Phase 18 | Pending |
-| TMPL-01 | Phase 19 | Pending |
-| TMPL-02 | Phase 19 | Pending |
-| TMPL-03 | Phase 19 | Pending |
+| TMPL-01 | Phase 19 | Complete |
+| TMPL-02 | Phase 19 | Complete |
+| TMPL-03 | Phase 19 | Complete |
 | AUD-01 | Phase 20 | Pending |
 | AUD-02 | Phase 20 | Pending |
 | VAL-01 | Phase 21 | Pending |
