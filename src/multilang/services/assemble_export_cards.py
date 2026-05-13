@@ -13,6 +13,7 @@ from multilang.domain.jobs import SupportedLanguage
 from multilang.domain.lexicon import LexicalCardCandidate
 from multilang.domain.source_profiles import get_source_profile
 from multilang.domain.text_quality import TextQualityRecord
+from multilang.services.audio_integrity import AudioIntegrityError, assert_word_audio_matches_word
 from multilang.services.text_field_remediation import validate_definition_html
 
 
@@ -61,6 +62,15 @@ class AssembleExportCardsService:
                 if "word_audio" in field_names
                 else None
             )
+            if word_audio is not None:
+                try:
+                    assert_word_audio_matches_word(
+                        word_audio,
+                        lexical_candidate.lemma,
+                        item_key=text_record.item_key,
+                    )
+                except AudioIntegrityError as exc:
+                    raise AssembleExportCardsError(str(exc)) from exc
             sentence_audio = self._require_audio(
                 job_id=job_id,
                 item_key=text_record.item_key,
