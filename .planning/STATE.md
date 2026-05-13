@@ -3,15 +3,15 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: executing
-stopped_at: Completed 18-01-PLAN.md
-last_updated: "2026-05-13T17:13:47.371Z"
+stopped_at: Completed 18-03-PLAN.md
+last_updated: "2026-05-13T17:18:05.403Z"
 last_activity: 2026-05-13
 progress:
   total_phases: 5
   completed_phases: 1
   total_plans: 9
-  completed_plans: 4
-  percent: 44
+  completed_plans: 5
+  percent: 56
 ---
 
 # Project State
@@ -21,11 +21,11 @@ progress:
 See: .planning/PROJECT.md (updated 2026-05-12)
 
 **Core value:** Generate reliable, high-quality Anki cards for real vocabulary the learner needs to study, with accurate definitions, examples, translations where appropriate, and audio.  
-**Current focus:** Phase 18 — text-field-remediation
+**Current focus:** Phase 19 — normal-card-export-and-responsive-template
 
 ## Current Position
 
-Phase: 18 (text-field-remediation) — EXECUTING
+Phase: 19 (normal-card-export-and-responsive-template) — EXECUTING
 Plan: 2 of 3
 Status: Ready to execute
 Last activity: 2026-05-13
@@ -61,6 +61,7 @@ Progress: [░░░░░░░░░░] 0%
 
 | Phase 17 P03 | 20min | 3 tasks | 2 files |
 | Phase 18 P01 | unknown | 2 tasks | 4 files |
+| Phase 18 P03 | unknown | 2 tasks | 3 files |
 
 ## Accumulated Context
 
@@ -114,6 +115,7 @@ Full decision history is in `.planning/PROJECT.md` and `.planning/milestones/v1.
 - [Phase 17]: Known APKG audit evidence is generated under ignored .multilang/audits because reports may contain private deck excerpts.
 - [Phase 17]: The audit-deck command composes APKG reader, Definition issue detector, and deterministic report writer without invoking mutation services.
 - [Phase 18]: Keep spoken_form available for audio/provenance but never append it to exported IPA.
+- [Phase 18]: Use conservative length and definition-gloss heuristics to reject isolated-word translations only when the source sentence has enough context.
 
 ### Pending Todos
 
@@ -144,6 +146,6 @@ Items acknowledged and carried forward from previous milestone close:
 
 ## Session Continuity
 
-Last session: 2026-05-13T17:13:47.362Z
-Stopped at: Completed 18-01-PLAN.md
+Last session: 2026-05-13T17:18:05.394Z
+Stopped at: Completed 18-03-PLAN.md
 Resume file: None
