@@ -14,7 +14,7 @@ Phase 17: Deck Quality Audit and Issue Reports.
 ## Phases
 
 - [x] **Phase 17: Deck Quality Audit and Issue Reports** - Generated APKGs can be audited non-destructively for normalized card-quality defects with actionable reports. (completed 2026-05-12)
-- [ ] **Phase 18: Text Field Remediation** - IPA, Definition, and Translation values are corrected to learner-safe meanings, pronunciations, and sentence translations.
+- [x] **Phase 18: Text Field Remediation** - IPA, Definition, and Translation values are corrected to learner-safe meanings, pronunciations, and sentence translations. (completed 2026-05-13)
 - [ ] **Phase 19: Normal Card Export and Responsive Template** - Normal card exports remove `Front of Card` while preserving responsive sentence-audio layout and isolating other templates.
 - [ ] **Phase 20: Word Audio Integrity Gate** - Word audio mismatches are detected and repaired, regenerated, or blocked before exported cards reach the user.
 - [ ] **Phase 21: Validation Fixtures and Milestone Evidence** - Validators, normalized issue fixtures, and final evidence prove defects do not recur across deck modes.
@@ -50,7 +50,7 @@ Plans:
 **Plans**: 3 plans
 Plans:
 - [x] 18-01-PLAN.md — Correct IPA fallback and IPA-only export rendering.
-- [ ] 18-02-PLAN.md — Remediate semantic Definitions and block unresolved morphology-only values.
+- [x] 18-02-PLAN.md — Remediate semantic Definitions and block unresolved morphology-only values.
 - [x] 18-03-PLAN.md — Reject isolated-word Translations before acceptance/export.
 
 ### Phase 19: Normal Card Export and Responsive Template
@@ -106,7 +106,7 @@ Plans:
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
 | 17. Deck Quality Audit and Issue Reports | 3/3 | Complete   | 2026-05-12 |
-| 18. Text Field Remediation | 2/3 | In Progress|  |
+| 18. Text Field Remediation | 3/3 | Complete   | 2026-05-13 |
 | 19. Normal Card Export and Responsive Template | 2/3 | In Progress|  |
 | 20. Word Audio Integrity Gate | 0/TBD | Not started | - |
 | 21. Validation Fixtures and Milestone Evidence | 0/TBD | Not started | - |
