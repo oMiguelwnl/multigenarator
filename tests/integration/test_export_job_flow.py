@@ -12,7 +12,7 @@ from sqlalchemy.orm import Session
 from typer.testing import CliRunner
 
 from multilang.cli import create_app
-from multilang.db.models import CardExportModel, DeckExportModel, GenerationJob
+from multilang.db.models import AudioAssetModel, CardExportModel, DeckExportModel, GenerationJob
 import multilang.runtime as runtime_module
 from multilang.runtime import build_runtime_service
 from multilang.services.audio_synthesis import AudioSynthesisAdapter, AudioSynthesisResponse
@@ -191,5 +191,78 @@ def test_export_command_runtime_path_fails_loudly_when_audio_is_missing(
         assert generate_result.exit_code == 0
         assert export_result.exit_code == 1
         assert "missing media file" in export_result.output or "missing required" in export_result.output
+    finally:
+        session.close()
+
+
+@pytest.mark.parametrize("export_format", ["apkg", "csv", "tsv"])
+def test_export_command_runtime_path_blocks_persisted_word_audio_mismatches(
+    export_format: str,
+    tmp_path: Path,
+    monkeypatch,
+) -> None:
+    database_path = tmp_path / f"export-audio-integrity-{export_format}.db"
+    lexicon_dir = write_lookup_index(tmp_path, "the")
+    output_dir = tmp_path / "exports"
+    monkeypatch.setattr(runtime_module, "AzureSpeechAdapter", FakeAzureSpeechAdapter)
+    service = build_runtime_service(
+        Settings(
+            database_url=f"sqlite+pysqlite:///{database_path}",
+            lexicon_data_dir=lexicon_dir,
+            audio_storage_dir=tmp_path / "audio",
+            azure_speech_key="key",
+            azure_speech_region="eastus",
+            tatoeba_enabled=False,
+        ),
+    )
+    app = create_app(service=service)
+
+    generate_result = runner.invoke(
+        app,
+        [
+            "generate",
+            "--language",
+            "en",
+            "--source",
+            "frequency",
+            "--level",
+            "1",
+            "--test-mode",
+            "--cards-per-level",
+            "1",
+        ],
+    )
+
+    session = Session(create_engine(f"sqlite+pysqlite:///{database_path}"))
+    try:
+        job = session.scalar(select(GenerationJob))
+        assert job is not None
+        first_export = runner.invoke(
+            app,
+            ["export", "--job-id", job.id, "--format", export_format, "--output-dir", str(output_dir)],
+        )
+        assert generate_result.exit_code == 0
+        assert first_export.exit_code == 0
+        session.rollback()
+        word_audio = session.scalar(
+            select(AudioAssetModel).where(
+                AudioAssetModel.job_id == job.id,
+                AudioAssetModel.asset_kind == "word",
+            )
+        )
+        assert word_audio is not None
+        word_audio.display_text = "jump"
+        word_audio.tts_text = "jump"
+        word_audio.text_hash = "stale-jump-hash"
+        session.commit()
+
+        second_export = runner.invoke(
+            app,
+            ["export", "--job-id", job.id, "--format", export_format, "--output-dir", str(output_dir)],
+        )
+
+        assert second_export.exit_code == 1
+        assert "word_audio" in second_export.output
+        assert "Word" in second_export.output
     finally:
         session.close()
