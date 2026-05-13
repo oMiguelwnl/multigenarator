@@ -94,6 +94,31 @@ def test_accent_stripped_tts_text_does_not_match_accented_word() -> None:
     assert_integrity_error(asset, "ação", "normalized_input.tts_text")
 
 
+def test_normalized_display_text_must_match_expected_word_exactly() -> None:
+    normalized = NormalizedTtsInput(display_text="acao", tts_text="ação")
+    asset = AudioAssetRecord.model_construct(
+        job_id="job-123",
+        item_key="item-1",
+        asset_kind=AudioAssetKind.WORD,
+        display_text="ação",
+        normalized_input=normalized,
+        provenance=AudioProvenance(
+            provider=AudioProvider.AZURE,
+            voice_id="pt-BR-FranciscaNeural",
+            locale="pt-BR",
+            format=AudioFormat.AUDIO_24KHZ_48KBITRATE_MONO_MP3,
+            text_hash=normalized.text_hash or "",
+            ssml_hash=normalized.ssml_hash or "",
+            storage_path="audio/word/hash.mp3",
+            byte_size=4096,
+            duration_ms=1200,
+            status=AudioSynthesisStatus.SYNTHESIZED,
+        ),
+    )
+
+    assert_integrity_error(asset, "ação", "normalized_input.display_text")
+
+
 def test_sentence_asset_is_never_treated_as_matching_word_audio() -> None:
     asset = make_record(word="Eu uso ação todos os dias.", asset_kind=AudioAssetKind.SENTENCE)
 
