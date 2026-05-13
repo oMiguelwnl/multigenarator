@@ -268,7 +268,7 @@ def test_definition_formatter_covers_supported_basic_part_of_speech_labels() -> 
         )
 
 
-def test_grounding_does_not_invent_ipa() -> None:
+def test_grounding_uses_word_fallback_when_authoritative_ipa_is_missing() -> None:
     service = LexicalGroundingService(
         lookup=StubLookup(
             {
@@ -293,11 +293,13 @@ def test_grounding_does_not_invent_ipa() -> None:
         ),
     )
 
-    assert candidate.ipa is None
+    assert candidate.ipa == "casa"
+    assert candidate.spoken_form == "casa"
     assert candidate.provenance.pronunciation is not None
-    assert candidate.provenance.pronunciation.value is None
+    assert candidate.provenance.pronunciation.value == "casa"
     assert candidate.provenance.pronunciation.source == "manual_missing"
-    assert candidate.provenance.pronunciation.authoritative is True
+    assert candidate.provenance.pronunciation.authoritative is False
+    assert "word fallback" in candidate.provenance.notes
 
 
 def test_custom_word_list_failures_stay_pending() -> None:
@@ -474,6 +476,7 @@ def test_grounding_uses_ai_pronunciation_when_authoritative_ipa_is_missing() -> 
     assert candidate.provenance.pronunciation is not None
     assert candidate.provenance.pronunciation.source == "provider-pronunciation-generator"
     assert generator.calls
+    assert "provider IPA used because authoritative IPA was missing" in candidate.provenance.notes
 
 
 def test_grounding_preserves_authoritative_ipa_for_frequency_candidates() -> None:
