@@ -47,7 +47,11 @@ Plans:
   2. User receives English semantic definitions for generated words and inflected forms instead of grammatical case or `inflection of` metadata.
   3. User receives corrected definitions for known wrong senses, including `дости́чь` as “to achieve, to attain, to reach”.
   4. User sees `Translation` values that translate the full `Example Sentence`, not the isolated `Word`.
-**Plans**: TBD
+**Plans**: 3 plans
+Plans:
+- [ ] 18-01-PLAN.md — Correct IPA fallback and IPA-only export rendering.
+- [ ] 18-02-PLAN.md — Remediate semantic Definitions and block unresolved morphology-only values.
+- [ ] 18-03-PLAN.md — Reject isolated-word Translations before acceptance/export.
 
 ### Phase 19: Normal Card Export and Responsive Template
 
