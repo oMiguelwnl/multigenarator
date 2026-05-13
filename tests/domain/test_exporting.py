@@ -55,7 +55,6 @@ def test_export_contract_uses_exact_field_order() -> None:
     assert EXPORT_CARD_FIELD_NAMES == (
         "SortIndex",
         "word",
-        "Front of Card",
         "IPA",
         "Definitions",
         "Example Sentence",
@@ -64,7 +63,8 @@ def test_export_contract_uses_exact_field_order() -> None:
         "sentence_audio",
         "Image",
     )
-    assert tuple(row.model_dump(by_alias=True, exclude={"identity", "note_guid"}).keys()) == EXPORT_CARD_FIELD_NAMES
+    assert tuple(row.ordered_field_mapping().keys()) == EXPORT_CARD_FIELD_NAMES
+    assert "Front of Card" not in row.ordered_field_mapping()
 
 
 def test_manual_word_list_export_uses_highlight_field_contract() -> None:
@@ -85,6 +85,7 @@ def test_export_field_names_are_source_profile_aware_for_existing_modes() -> Non
     assert export_field_names_for_source_type("word-list") == MANUAL_EXPORT_CARD_FIELD_NAMES
     assert "Translation" in export_field_names_for_source_type("frequency")
     assert "Translation" not in export_field_names_for_source_type("word-list")
+    assert "Front of Card" not in export_field_names_for_source_type("frequency")
 
 
 def test_highlight_export_field_names_omit_translation_and_use_highlight_aliases() -> None:
