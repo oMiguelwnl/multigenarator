@@ -227,6 +227,29 @@ def test_assemble_export_cards_persists_exact_field_order_and_sound_tags() -> No
     assert export_repository.saved_rows[0].note_guid == row.note_guid
 
 
+def test_assemble_export_cards_blocks_mismatched_word_audio_before_persisting() -> None:
+    corrupted_word = make_asset(item_key="jump", asset_kind=AudioAssetKind.WORD, storage_path="jump-word.mp3").model_copy(
+        update={"item_key": "run"}
+    )
+    service, export_repository = build_service(
+        accepted_records=[make_text_record(item_key="run")],
+        candidates={"run": make_candidate(item_key="run")},
+        assets={
+            ("run", AudioAssetKind.WORD.value): corrupted_word,
+            ("run", AudioAssetKind.SENTENCE.value): make_asset(item_key="run", asset_kind=AudioAssetKind.SENTENCE, storage_path="run-sentence.mp3"),
+        },
+    )
+
+    with pytest.raises(AssembleExportCardsError) as exc_info:
+        service.execute(job_id="job-1", deck_language=SupportedLanguage.EN)
+
+    message = str(exc_info.value)
+    assert "word_audio" in message
+    assert "Word" in message
+    assert "run" in message
+    assert export_repository.saved_rows == []
+
+
 def test_assemble_export_cards_renders_ipa_without_spoken_form_suffix() -> None:
     service, _ = build_service(
         accepted_records=[make_text_record(item_key="casa")],
@@ -287,6 +310,27 @@ def test_assemble_export_cards_builds_highlight_row_without_translation_field() 
     assert mapping["Image"] == ""
     assert row.word_audio == ""
     assert mapping["sentence_audio"] == "[sound:wash-sentence.mp3]"
+
+
+def test_assemble_export_cards_rejects_mismatched_word_audio_before_persisting_snapshot() -> None:
+    corrupted_word = make_asset(item_key="jump", asset_kind=AudioAssetKind.WORD, storage_path="jump-word.mp3").model_copy(
+        update={"item_key": "run"}
+    )
+    service, export_repository = build_service(
+        accepted_records=[make_text_record(item_key="run")],
+        candidates={"run": make_candidate(item_key="run")},
+        assets={
+            ("run", AudioAssetKind.WORD.value): corrupted_word,
+            ("run", AudioAssetKind.SENTENCE.value): make_asset(
+                item_key="run", asset_kind=AudioAssetKind.SENTENCE, storage_path="run-sentence.mp3"
+            ),
+        },
+    )
+
+    with pytest.raises(AssembleExportCardsError, match="word_audio.*Word.*run"):
+        service.execute(job_id="job-1", deck_language=SupportedLanguage.EN)
+
+    assert export_repository.saved_rows == []
 
 
 def test_assemble_export_cards_joins_definitions_with_br_and_preserves_image_blank() -> None:
