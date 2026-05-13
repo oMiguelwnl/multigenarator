@@ -121,7 +121,7 @@ def test_normal_template_validation_rejects_removed_front_of_card_field() -> Non
 def test_project_normal_template_groups_example_sentence_and_audio_in_one_row() -> None:
     template = load_card_template(source_type="frequency")
 
-    assert 'class="exampleSentenceLine"' in template.front
+    assert 'exampleSentenceLine' in template.front
     assert '<span class="exampleSentenceText">{{Example Sentence}}</span>' in template.front
     assert '<span class="sentenceAudioButton">{{sentence_audio}}</span>' in template.front
     assert template.front.index('class="exampleSentenceText"') < template.front.index('class="sentenceAudioButton"')

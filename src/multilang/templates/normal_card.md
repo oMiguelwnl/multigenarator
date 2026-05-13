@@ -36,9 +36,9 @@ Import these into your Anki note type under **Card Template → Front / Back / S
 
   <div class="horizontalPadding">
     <div class="header">example:</div>
-    <div class="indent">
-      {{Example Sentence}}
-      <span class="wordAudioButtonBack">{{sentence_audio}}</span>
+    <div class="indent exampleSentenceLine">
+      <span class="exampleSentenceText">{{Example Sentence}}</span>
+      <span class="sentenceAudioButton">{{sentence_audio}}</span>
     </div>
     <div id="translation" class="sentenceTranslation indent" style="display:none;">
       {{Translation}}
