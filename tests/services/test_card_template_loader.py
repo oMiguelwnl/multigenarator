@@ -118,6 +118,20 @@ def test_normal_template_validation_rejects_removed_front_of_card_field() -> Non
         )
 
 
+def test_project_normal_template_groups_example_sentence_and_audio_in_one_row() -> None:
+    template = load_card_template(source_type="frequency")
+
+    assert 'class="exampleSentenceLine"' in template.front
+    assert '<span class="exampleSentenceText">{{Example Sentence}}</span>' in template.front
+    assert '<span class="sentenceAudioButton">{{sentence_audio}}</span>' in template.front
+    assert template.front.index('class="exampleSentenceText"') < template.front.index('class="sentenceAudioButton"')
+    assert 'id="translation"' in template.front
+    assert 'style="display:none;"' in template.front
+    assert '{{Translation}}' in template.front
+    assert 'document.getElementById("translation").style.display = "block";' in template.back
+    assert '{{FrontSide}}' in template.back
+
+
 @pytest.mark.parametrize(
     "private_reference",
     [
