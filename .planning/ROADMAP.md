@@ -95,7 +95,11 @@ Plans:
   2. User gets regression fixtures covering the normalized examples from `card_issues_normalized.md`.
   3. User receives final milestone evidence proving audit behavior, text corrections, normal-card export contract, and word-audio integrity.
   4. User receives regression evidence that frequency, custom word-list, highlight, and phonetics deck behavior remains unaffected outside the intended normal-card changes.
-**Plans**: TBD
+**Plans**: 3 plans
+Plans:
+- [ ] 21-01-PLAN.md — Create shared validators for all normalized v1.3 issue categories.
+- [ ] 21-02-PLAN.md — Convert `card_issues_normalized.md` examples into executable regression fixtures.
+- [ ] 21-03-PLAN.md — Add final milestone evidence and existing-mode regression proof.
 **UI hint**: yes
 
 ## Progress
