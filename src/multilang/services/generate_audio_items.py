@@ -5,9 +5,10 @@ from __future__ import annotations
 from dataclasses import dataclass
 from typing import Any
 
-from multilang.domain.audio import AudioAssetRecord, AudioSynthesisStatus
+from multilang.domain.audio import AudioAssetKind, AudioAssetRecord, AudioSynthesisStatus
 from multilang.domain.exporting import export_field_names_for_source_type
 from multilang.domain.jobs import JobStage, SupportedLanguage
+from multilang.services.audio_integrity import word_audio_matches_word
 
 
 @dataclass(slots=True)
@@ -91,7 +92,7 @@ class GenerateAudioItemsService:
             voice_id=prepared_asset.provenance.voice_id,
             format=prepared_asset.provenance.format,
         )
-        if reusable is not None:
+        if reusable is not None and _can_reuse_asset(prepared_asset, reusable):
             return reusable.model_copy(
                 update={
                     "job_id": prepared_asset.job_id,
@@ -113,6 +114,12 @@ def _candidate_source_type(candidate: object) -> str:
     if getattr(candidate, "frequency_rank", None) is not None or getattr(candidate, "frequency_level", None) is not None:
         return "frequency"
     return "word-list"
+
+
+def _can_reuse_asset(prepared_asset: AudioAssetRecord, reusable: AudioAssetRecord) -> bool:
+    if prepared_asset.asset_kind is not AudioAssetKind.WORD:
+        return True
+    return word_audio_matches_word(reusable, prepared_asset.display_text)
 
 
 __all__ = ["GenerateAudioItemsResult", "GenerateAudioItemsService"]
