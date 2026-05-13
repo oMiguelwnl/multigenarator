@@ -316,6 +316,22 @@ body {
   margin-left: 8px;
 }
 
+.exampleSentenceLine {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.exampleSentenceText {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.sentenceAudioButton {
+  flex: 0 0 auto;
+  margin-left: 8px;
+}
+
 .replay-button svg {
   width: 20px;
   height: 20px;
