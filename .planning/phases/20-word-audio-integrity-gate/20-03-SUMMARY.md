@@ -1,50 +1,51 @@
 ---
 phase: 20-word-audio-integrity-gate
 plan: 03
-subsystem: export-validation
-tags: [audio, export, validation, cli, pytest]
+subsystem: export-audio-integrity
+tags: [audio, export-gate, validation, pytest]
 requires:
   - phase: 20-01
     provides: Strict word-audio integrity helper
   - phase: 20-02
-    provides: Generation-time cache mismatch repair
+    provides: Generation-time cache repair for mismatched word audio
 provides:
-  - Assembly-time block for unrepaired word-audio mismatches
-  - Runtime APKG/CSV/TSV export block for persisted word-audio drift
-affects: [export-assembly, runtime-export, cli-export]
+  - Assembly-time block for unrepaired word-audio mismatches before card snapshots persist
+  - Runtime APKG/CSV/TSV export block for corrupted persisted word-audio metadata
+affects: [export-assembly, runtime-export, apkg-export, tabular-export]
 tech-stack:
   added: []
-  patterns: [assembly service error boundary, runtime persisted metadata revalidation]
+  patterns: [service-boundary validation, runtime persisted-snapshot revalidation]
 key-files:
   created: []
-  modified: [src/multilang/services/assemble_export_cards.py, src/multilang/runtime.py, tests/services/test_assemble_export_cards.py, tests/integration/test_export_job_flow.py]
+  modified:
+    - src/multilang/services/assemble_export_cards.py
+    - src/multilang/runtime.py
+    - tests/services/test_assemble_export_cards.py
+    - tests/integration/test_export_job_flow.py
 key-decisions:
-  - "Assembly validates word audio against lexical_candidate.lemma, matching the exported normal card Word."
-  - "Runtime export refreshes persisted audio rows before validating snapshots so APKG/CSV/TSV gates catch external metadata drift."
-patterns-established:
-  - "Export gates validate text metadata before media basename/file existence checks."
+  - "Unrepaired word-audio mismatches are hard export blockers at both snapshot assembly and persisted runtime export boundaries."
 requirements-completed: [AUD-01, AUD-02]
-duration: 7min
+duration: 8min
 completed: 2026-05-13
 ---
 
-# Phase 20 Plan 03: Export Word Audio Gate Summary
+# Phase 20 Plan 03: Export Word-Audio Integrity Gate Summary
 
-**Assembly and runtime export gates that block APKG, CSV, and TSV artifacts when word_audio metadata no longer matches Word**
+**Assembly and runtime export gates that block APKG/CSV/TSV artifacts when persisted `word_audio` no longer exactly matches `Word`**
 
 ## Performance
 
-- **Duration:** 7 min
+- **Duration:** 8 min
 - **Started:** 2026-05-13T17:48:01Z
-- **Completed:** 2026-05-13T17:55:23Z
+- **Completed:** 2026-05-13T17:56:30Z
 - **Tasks:** 2
 - **Files modified:** 4
 
 ## Accomplishments
 
-- Added assembly-time `assert_word_audio_matches_word` validation before export card snapshots are persisted.
-- Added runtime persisted-snapshot validation before media indexing so existing card snapshots cannot export stale word audio.
-- Added APKG/CSV/TSV CLI integration evidence that corrupts persisted WORD audio after snapshot creation and verifies export fails with `word_audio`/`Word` diagnostics.
+- Added assembly-time validation so normal/frequency card snapshots cannot be persisted when WORD audio metadata mismatches the lexical lemma used for exported `Word`.
+- Added runtime persisted-snapshot validation before media index construction, including HTML-unescaped `row.word` matching for existing APKG/CSV/TSV exports.
+- Added focused service and integration coverage proving clear `word_audio`/`Word` diagnostics and preserving missing-media behavior for otherwise valid assets.
 
 ## Task Commits
 
@@ -53,34 +54,22 @@ completed: 2026-05-13
 
 ## Files Created/Modified
 
-- `src/multilang/services/assemble_export_cards.py` - Wraps word-audio integrity failures as `AssembleExportCardsError` before snapshot persistence.
-- `src/multilang/runtime.py` - Revalidates persisted WORD audio against `row.word` before APKG/CSV/TSV export media indexing.
-- `tests/services/test_assemble_export_cards.py` - Covers assembly block and highlight isolation.
-- `tests/integration/test_export_job_flow.py` - Covers runtime export failure for APKG, CSV, and TSV after persisted audio metadata drift.
+- `src/multilang/services/assemble_export_cards.py` - Wraps `AudioIntegrityError` as `AssembleExportCardsError` before snapshot persistence.
+- `src/multilang/runtime.py` - Revalidates persisted WORD audio against exported `row.word` before APKG/CSV/TSV media handling.
+- `tests/services/test_assemble_export_cards.py` - Covers pre-persist snapshot blocking and diagnostics.
+- `tests/integration/test_export_job_flow.py` - Covers persisted WORD audio corruption across APKG, CSV, and TSV export commands.
 
 ## Decisions Made
 
-- Compare assembly word audio against `lexical_candidate.lemma`, not display form, because normal export `Word` is built from lemma.
-- Refresh the runtime audio repository session before media index construction so validation reads current persisted metadata.
+- Remaining word-audio mismatches after generation-time repair are not recoverable at export time and fail closed before writing learner-facing artifacts.
 
 ## Deviations from Plan
 
-### Auto-fixed Issues
-
-**1. [Rule 2 - Missing Critical] Refreshed runtime audio rows before export validation**
-- **Found during:** Task 2 (runtime persisted snapshot export gate)
-- **Issue:** The runtime service can keep a long-lived SQLAlchemy session, which may otherwise reuse stale audio rows and miss persisted metadata drift.
-- **Fix:** Expire the audio repository session before preloading audio rows for export media indexing.
-- **Files modified:** `src/multilang/runtime.py`
-- **Verification:** `python -m pytest tests/integration/test_export_job_flow.py tests/services/test_assemble_export_cards.py tests/services/test_generate_audio_items.py tests/services/test_audio_integrity.py -q`
-- **Committed in:** `7c251d0`
-
-**Total deviations:** 1 auto-fixed (Rule 2 missing critical)
-**Impact on plan:** Required for the runtime gate to enforce AUD-02 against persisted metadata, with no scope creep.
+None - plan executed as written.
 
 ## Issues Encountered
 
-- TDD red phase confirmed persisted APKG/CSV/TSV exports previously succeeded even after WORD audio metadata was corrupted.
+- TDD red phases failed as expected before assembly/runtime gates were implemented.
 
 ## User Setup Required
 
@@ -90,9 +79,14 @@ None - no external service configuration required.
 
 None.
 
+## Threat Flags
+
+None - export validation touched the trust boundaries already listed in the plan threat model.
+
 ## Next Phase Readiness
 
-- Phase 21 can include validation fixtures and milestone evidence over the completed word-audio integrity gates.
+- Phase 20 now provides both repair-on-generation and fail-closed export gates for AUD-01/AUD-02.
+- Phase 21 can use the focused test evidence as milestone validation input.
 
 ## Self-Check: PASSED
 
