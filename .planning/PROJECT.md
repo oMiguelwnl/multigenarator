@@ -31,6 +31,8 @@ v1.2 was completed through Phase 16 on 2026-05-08. Local Kindle highlights, high
 
 v1.3 Phase 18 Text Field Remediation was completed on 2026-05-13. Normal generated cards now keep IPA fields to phonetic transcription or a safe word fallback, remediate learner-facing Definitions away from morphology-only metadata including the known `дости́чь` sense, and reject isolated-word Translations before accepted text can be exported.
 
+v1.3 Phase 19 Normal Card Export and Responsive Template was completed on 2026-05-13. Normal generated-card APKG/CSV/TSV exports now omit the redundant `Front of Card` field, normal templates render the target word through `word`, sentence audio sits beside the example sentence with responsive flex CSS, and integrated tests prove highlight/manual/phonetics templates remain isolated.
+
 ## Current Milestone: v1.3 Card Quality Remediation and Deck Validation
 
 **Goal:** Fix known generated-card quality defects and harden validation so exported decks preserve accurate IPA, definitions, translations, audio-field alignment, and responsive Anki layouts.
@@ -72,12 +74,12 @@ After v1.2, candidate directions from the archived v1 requirement seeds remain:
 - [x] Normalize Kindle highlight exports locally into usable vocabulary candidates. _(v1.2 Phase 10)_
 - [x] Generate privacy-safe highlight text/audio/card rows without replacing the existing frequency-deck or custom word-list flows. _(v1.2 Phase 12)_
 - [x] Add a responsive highlight deck template with `Definition` on the back and no `Translation` field. _(v1.2 Phase 13)_
+- [x] Update the normal card schema/template by removing redundant `Front of Card` and preserving responsive audio layout. _(v1.3 Phase 19)_
 
 ### Active
 
 - [ ] Audit generated decks for normalized card-quality defects and produce actionable issue reports.
 - [ ] Correct IPA, Definition, Translation, and audio-field alignment defects before export. _(IPA/Definition/Translation validated in Phase 18; audio-field alignment remains active for Phase 20.)_
-- [ ] Update the normal card schema/template by removing redundant `Front of Card` and preserving responsive audio layout.
 - [ ] Add validation and regression evidence that prevents recurrence of the normalized issue catalog.
 
 ### Out of Scope
@@ -159,4 +161,4 @@ This document evolves at phase transitions and milestone boundaries.
 4. Update Context with current state.
 
 ---
-*Last updated: 2026-05-13 after Phase 18 text field remediation*
+*Last updated: 2026-05-13 after Phase 19 normal card export/template remediation*
