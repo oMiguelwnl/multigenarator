@@ -33,6 +33,8 @@ v1.3 Phase 18 Text Field Remediation was completed on 2026-05-13. Normal generat
 
 v1.3 Phase 19 Normal Card Export and Responsive Template was completed on 2026-05-13. Normal generated-card APKG/CSV/TSV exports now omit the redundant `Front of Card` field, normal templates render the target word through `word`, sentence audio sits beside the example sentence with responsive flex CSS, and integrated tests prove highlight/manual/phonetics templates remain isolated.
 
+v1.3 Phase 20 Word Audio Integrity Gate was completed on 2026-05-13. Word-audio metadata now has exact-match validation against exported `Word`, mismatched reusable WORD audio is regenerated during audio generation, and APKG/CSV/TSV exports fail before artifact creation when persisted word audio drifts from card snapshots.
+
 ## Current Milestone: v1.3 Card Quality Remediation and Deck Validation
 
 **Goal:** Fix known generated-card quality defects and harden validation so exported decks preserve accurate IPA, definitions, translations, audio-field alignment, and responsive Anki layouts.
@@ -79,7 +81,7 @@ After v1.2, candidate directions from the archived v1 requirement seeds remain:
 ### Active
 
 - [ ] Audit generated decks for normalized card-quality defects and produce actionable issue reports.
-- [ ] Correct IPA, Definition, Translation, and audio-field alignment defects before export. _(IPA/Definition/Translation validated in Phase 18; audio-field alignment remains active for Phase 20.)_
+- [x] Correct IPA, Definition, Translation, and audio-field alignment defects before export. _(IPA/Definition/Translation validated in Phase 18; audio-field alignment validated in Phase 20.)_
 - [ ] Add validation and regression evidence that prevents recurrence of the normalized issue catalog.
 
 ### Out of Scope
@@ -140,6 +142,7 @@ Known follow-up debt: full-suite collection drift remains in tests that import r
 | Keep highlight QA source-aware and privacy-safe | Raw reading text, paths, and book metadata may appear in private imports but must not leak to prompts/reports/artifacts | Validated in v1.2 Phase 12 with redacted context generation, source-aware review reports, and regression evidence. |
 | Use a dedicated highlight note type and template | Highlight cards need English fields, no Translation, Definition on the back, responsive styling, and no leakage into frequency or word-list decks | Validated in v1.2 Phase 13 with APKG/CSV/TSV export evidence and regression coverage. |
 | Treat card quality defects as validation failures before export | IPA repetition, morphology-only definitions, translation mismatches, and audio/word mismatches make learner decks unreliable | Pending in v1.3. |
+| Validate word audio at generation and export boundaries | Stale or corrupted reusable audio can otherwise produce cards whose audio pronounces a different word than the displayed `Word` | Validated in v1.3 Phase 20 with exact metadata checks, regeneration, and export blocks. |
 
 ## Evolution
 
@@ -161,4 +164,4 @@ This document evolves at phase transitions and milestone boundaries.
 4. Update Context with current state.
 
 ---
-*Last updated: 2026-05-13 after Phase 19 normal card export/template remediation*
+*Last updated: 2026-05-13 after Phase 20 word audio integrity gate*
