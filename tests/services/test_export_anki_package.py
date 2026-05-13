@@ -103,6 +103,10 @@ def test_build_multilang_model_uses_project_card_template_sections() -> None:
     assert "justify-content: space-between;" in model.css
     assert ".wordAudioButtonBack" in model.css
     assert "margin-left: 8px;" in model.css
+    assert ".exampleSentenceLine" in model.css
+    assert ".exampleSentenceText" in model.css
+    assert ".sentenceAudioButton" in model.css
+    assert "min-width: 0;" in model.css
     assert ".customCard" in model.css
 
 

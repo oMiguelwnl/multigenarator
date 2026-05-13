@@ -132,6 +132,21 @@ def test_project_normal_template_groups_example_sentence_and_audio_in_one_row() 
     assert '{{FrontSide}}' in template.back
 
 
+def test_project_normal_template_css_keeps_sentence_audio_beside_text_responsively() -> None:
+    template = load_card_template(source_type="frequency")
+
+    assert ".exampleSentenceLine" in template.css
+    assert "display: flex;" in template.css
+    assert "align-items: center;" in template.css
+    assert "gap:" in template.css
+    assert ".exampleSentenceText" in template.css
+    assert "flex: 1 1 auto;" in template.css
+    assert "min-width: 0;" in template.css
+    assert ".sentenceAudioButton" in template.css
+    assert "flex: 0 0 auto;" in template.css
+    assert "margin-left: 8px;" in template.css
+
+
 @pytest.mark.parametrize(
     "private_reference",
     [
