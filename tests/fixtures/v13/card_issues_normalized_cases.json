@@ -1,0 +1,347 @@
+{
+  "source_document": "card_issues_normalized.md",
+  "coverage": [
+    {
+      "id": "ipa_correction",
+      "source_lines": [7, 23],
+      "summary_action_line": 123,
+      "description": "Remove repeated original/accented word forms from IPA and keep only phonetic transcription."
+    },
+    {
+      "id": "grammar_definition_correction",
+      "source_lines": [26, 50],
+      "summary_action_line": 124,
+      "description": "Replace grammar-only Definition values and inflection-only labels with learner-facing meanings."
+    },
+    {
+      "id": "wrong_sense_definition_correction",
+      "source_lines": [51, 62],
+      "summary_action_line": 125,
+      "description": "Reject the known incorrect дости́чь sense and accept the corrected meaning."
+    },
+    {
+      "id": "definition_analysis_validation",
+      "source_lines": [63, 68],
+      "summary_action_line": 126,
+      "description": "Keep definition validation tied to the normalized defect catalog and future deck audit rules."
+    },
+    {
+      "id": "translation_correction",
+      "source_lines": [71, 79],
+      "summary_action_line": 127,
+      "description": "Ensure Translation represents the full Example Sentence rather than an isolated word gloss."
+    },
+    {
+      "id": "front_of_card_removal",
+      "source_lines": [82, 91],
+      "summary_action_line": 128,
+      "description": "Reject normal-card templates that still reference the removed Front of Card field."
+    },
+    {
+      "id": "sentence_audio_layout",
+      "source_lines": [92, 105],
+      "summary_action_line": 129,
+      "description": "Require the normal template to keep sentence_audio beside the example sentence with expected selectors."
+    },
+    {
+      "id": "word_audio_correction",
+      "source_lines": [108, 115],
+      "summary_action_line": 130,
+      "description": "Reject word_audio assets whose manifest metadata does not exactly match Word."
+    }
+  ],
+  "cases": [
+    {
+      "id": "ipa_word_repetition_bad_gromko",
+      "group": "ipa_correction",
+      "source_lines": [12, 15],
+      "validator": "card",
+      "field": "IPA",
+      "input": {
+        "word": "громко",
+        "ipa": "[ˈɡromkə] (гро́мко)",
+        "definitions": "adverb: loudly, with a loud sound",
+        "example_sentence": "Он говорит громко каждый день.",
+        "translation": "He speaks loudly every day."
+      },
+      "expected_issue_types": ["ipa_word_repetition"],
+      "expected_pass": false
+    },
+    {
+      "id": "ipa_word_repetition_corrected_gromko",
+      "group": "ipa_correction",
+      "source_lines": [16, 18],
+      "validator": "card",
+      "field": "IPA",
+      "input": {
+        "word": "громко",
+        "ipa": "[ˈɡromkə]",
+        "definitions": "adverb: loudly, with a loud sound",
+        "example_sentence": "Он говорит громко каждый день.",
+        "translation": "He speaks loudly every day."
+      },
+      "expected_issue_types": [],
+      "expected_pass": true
+    },
+    {
+      "id": "definition_banned_pattern_bad_dalnego",
+      "group": "grammar_definition_correction",
+      "source_lines": [32, 34],
+      "validator": "card",
+      "field": "Definitions",
+      "input": {
+        "word": "дальнего",
+        "ipa": "[ˈdalʲnʲɪvə]",
+        "definitions": "adjective: masculine animate accusative singular",
+        "example_sentence": "Он приехал из дальнего города.",
+        "translation": "He came from a distant city."
+      },
+      "expected_issue_types": ["definition_banned_pattern"],
+      "expected_pass": false
+    },
+    {
+      "id": "definition_banned_pattern_bad_mestnosti",
+      "group": "grammar_definition_correction",
+      "source_lines": [32, 34],
+      "validator": "card",
+      "field": "Definitions",
+      "input": {
+        "word": "местности",
+        "ipa": "[ˈmʲesnəsʲtʲɪ]",
+        "definitions": "noun: genitive/dative/prepositional singular",
+        "example_sentence": "В этой местности много лесов.",
+        "translation": "There are many forests in this area."
+      },
+      "expected_issue_types": ["definition_banned_pattern"],
+      "expected_pass": false
+    },
+    {
+      "id": "definition_banned_pattern_bad_pogibli",
+      "group": "grammar_definition_correction",
+      "source_lines": [32, 36],
+      "validator": "card",
+      "field": "Definitions",
+      "input": {
+        "word": "поги́бли",
+        "ipa": "[pɐˈɡʲiblʲɪ]",
+        "definitions": "verb: short plural past indicative perfective of поги́бнуть (pogíbnutʹ)",
+        "example_sentence": "Они погибли во время шторма.",
+        "translation": "They died during the storm."
+      },
+      "expected_issue_types": ["definition_banned_pattern"],
+      "expected_pass": false
+    },
+    {
+      "id": "definition_banned_pattern_bad_zabolevaniya",
+      "group": "grammar_definition_correction",
+      "source_lines": [40, 49],
+      "validator": "card",
+      "field": "Definitions",
+      "input": {
+        "word": "заболевания",
+        "ipa": "[zəbɐlʲɪˈvanʲɪjə]",
+        "definitions": "noun: inflection of заболева́ние (zabolevánije)",
+        "example_sentence": "Эти заболевания требуют лечения.",
+        "translation": "These diseases require treatment."
+      },
+      "expected_issue_types": ["definition_banned_pattern"],
+      "expected_pass": false
+    },
+    {
+      "id": "definition_banned_pattern_corrected_meaning",
+      "group": "grammar_definition_correction",
+      "source_lines": [37, 50],
+      "validator": "card",
+      "field": "Definitions",
+      "input": {
+        "word": "заболевания",
+        "ipa": "[zəbɐlʲɪˈvanʲɪjə]",
+        "definitions": "noun: diseases or illnesses",
+        "example_sentence": "Эти заболевания требуют лечения.",
+        "translation": "These diseases require treatment."
+      },
+      "expected_issue_types": [],
+      "expected_pass": true
+    },
+    {
+      "id": "definition_wrong_sense_bad_dostich",
+      "group": "wrong_sense_definition_correction",
+      "source_lines": [55, 58],
+      "validator": "card",
+      "field": "Definitions",
+      "input": {
+        "word": "дости́чь",
+        "ipa": "[dɐˈstʲitɕ]",
+        "definitions": "verb: to amount to, to come to",
+        "example_sentence": "Он хочет достичь цели завтра.",
+        "translation": "He wants to achieve the goal tomorrow."
+      },
+      "expected_issue_types": ["definition_banned_pattern"],
+      "expected_pass": false
+    },
+    {
+      "id": "definition_wrong_sense_corrected_dostich",
+      "group": "wrong_sense_definition_correction",
+      "source_lines": [57, 62],
+      "validator": "card",
+      "field": "Definitions",
+      "input": {
+        "word": "дости́чь",
+        "ipa": "[dɐˈstʲitɕ]",
+        "definitions": "verb: to achieve, to attain, to reach",
+        "example_sentence": "Он хочет достичь цели завтра.",
+        "translation": "He wants to achieve the goal tomorrow."
+      },
+      "expected_issue_types": [],
+      "expected_pass": true
+    },
+    {
+      "id": "definition_analysis_validation_corrected_meaning",
+      "group": "definition_analysis_validation",
+      "source_lines": [63, 68],
+      "validator": "card",
+      "field": "Definitions",
+      "input": {
+        "word": "местности",
+        "ipa": "[ˈmʲesnəsʲtʲɪ]",
+        "definitions": "noun: area, locality, or terrain",
+        "example_sentence": "В этой местности много лесов.",
+        "translation": "There are many forests in this area."
+      },
+      "expected_issue_types": [],
+      "expected_pass": true
+    },
+    {
+      "id": "translation_example_mismatch_bad_isolated_gloss",
+      "group": "translation_correction",
+      "source_lines": [71, 79],
+      "validator": "card",
+      "field": "Translation",
+      "input": {
+        "word": "дости́чь",
+        "ipa": "[dɐˈstʲitɕ]",
+        "definitions": "verb: to achieve, to attain, to reach",
+        "example_sentence": "Он хочет достичь цели завтра.",
+        "translation": "to achieve"
+      },
+      "expected_issue_types": ["translation_example_mismatch"],
+      "expected_pass": false
+    },
+    {
+      "id": "translation_example_mismatch_corrected_sentence",
+      "group": "translation_correction",
+      "source_lines": [76, 79],
+      "validator": "card",
+      "field": "Translation",
+      "input": {
+        "word": "дости́чь",
+        "ipa": "[dɐˈstʲitɕ]",
+        "definitions": "verb: to achieve, to attain, to reach",
+        "example_sentence": "Он хочет достичь цели завтра.",
+        "translation": "He wants to achieve the goal tomorrow."
+      },
+      "expected_issue_types": [],
+      "expected_pass": true
+    },
+    {
+      "id": "normal_front_of_card_dangling_template_bad",
+      "group": "front_of_card_removal",
+      "source_lines": [84, 91],
+      "validator": "template",
+      "field": "template",
+      "input": {
+        "front": "<div class=\"word\">{{Front of Card}}</div>",
+        "back": "{{FrontSide}}<div>{{Definitions}}</div>",
+        "css": ".card { color: #222; }"
+      },
+      "expected_issue_types": ["dangling_template_field"],
+      "expected_pass": false
+    },
+    {
+      "id": "normal_front_of_card_dangling_template_corrected",
+      "group": "front_of_card_removal",
+      "source_lines": [88, 91],
+      "validator": "template",
+      "field": "template",
+      "input": {
+        "front": "<div class=\"word\">{{word}}</div>",
+        "back": "{{FrontSide}}<div>{{Definitions}}</div>",
+        "css": ".card { color: #222; }"
+      },
+      "expected_issue_types": [],
+      "expected_pass": true
+    },
+    {
+      "id": "sentence_audio_layout_bad_missing_selectors",
+      "group": "sentence_audio_layout",
+      "source_lines": [92, 105],
+      "validator": "template",
+      "field": "template",
+      "input": {
+        "front": "<div>{{Example Sentence}}</div><div>{{sentence_audio}}</div>",
+        "back": "{{FrontSide}}<div>{{Definitions}}</div>",
+        "css": ".card { color: #222; }"
+      },
+      "expected_issue_types": ["sentence_audio_layout"],
+      "expected_pass": false
+    },
+    {
+      "id": "sentence_audio_layout_corrected_selectors",
+      "group": "sentence_audio_layout",
+      "source_lines": [100, 105],
+      "validator": "template",
+      "field": "template",
+      "input": {
+        "front": "<div class=\"exampleSentenceLine\"><span class=\"exampleSentenceText\">{{Example Sentence}}</span><span class=\"sentenceAudioButton\">{{sentence_audio}}</span></div>",
+        "back": "{{FrontSide}}<div>{{Definitions}}</div>",
+        "css": ".exampleSentenceLine { display: flex; } .exampleSentenceText { min-width: 0; } .sentenceAudioButton { flex: 0 0 auto; }"
+      },
+      "expected_issue_types": [],
+      "expected_pass": true
+    },
+    {
+      "id": "word_audio_word_mismatch_bad_metadata",
+      "group": "word_audio_correction",
+      "source_lines": [108, 115],
+      "validator": "card",
+      "field": "word_audio",
+      "input": {
+        "word": "громко",
+        "ipa": "[ˈɡromkə]",
+        "definitions": "adverb: loudly, with a loud sound",
+        "example_sentence": "Он говорит громко каждый день.",
+        "translation": "He speaks loudly every day.",
+        "word_audio": "[sound:gromko.mp3]",
+        "word_audio_asset": {
+          "display_text": "тихо",
+          "tts_text": "тихо",
+          "storage_path": "audio/word/tiho.mp3"
+        }
+      },
+      "expected_issue_types": ["word_audio_word_mismatch"],
+      "expected_pass": false
+    },
+    {
+      "id": "word_audio_word_mismatch_corrected_metadata",
+      "group": "word_audio_correction",
+      "source_lines": [113, 115],
+      "validator": "card",
+      "field": "word_audio",
+      "input": {
+        "word": "громко",
+        "ipa": "[ˈɡromkə]",
+        "definitions": "adverb: loudly, with a loud sound",
+        "example_sentence": "Он говорит громко каждый день.",
+        "translation": "He speaks loudly every day.",
+        "word_audio": "[sound:gromko.mp3]",
+        "word_audio_asset": {
+          "display_text": "громко",
+          "tts_text": "громко",
+          "storage_path": "audio/word/gromko.mp3"
+        }
+      },
+      "expected_issue_types": [],
+      "expected_pass": true
+    }
+  ]
+}
