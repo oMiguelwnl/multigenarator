@@ -17,7 +17,7 @@ def make_row(
     word_audio: str = "[sound:gromko.mp3]",
 ) -> ExportCardRow:
     identity = ExportCardIdentity(
-        language=SupportedLanguage.RUSSIAN,
+        language=SupportedLanguage.RU,
         source_type="frequency",
         job_id="job-v13-validation",
         item_key=f"item-{word}",
