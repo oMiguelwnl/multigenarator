@@ -17,7 +17,7 @@ Phase 17: Deck Quality Audit and Issue Reports.
 - [x] **Phase 18: Text Field Remediation** - IPA, Definition, and Translation values are corrected to learner-safe meanings, pronunciations, and sentence translations. (completed 2026-05-13)
 - [x] **Phase 19: Normal Card Export and Responsive Template** - Normal card exports remove `Front of Card` while preserving responsive sentence-audio layout and isolating other templates. (completed 2026-05-13)
 - [x] **Phase 20: Word Audio Integrity Gate** - Word audio mismatches are detected and repaired, regenerated, or blocked before exported cards reach the user. (completed 2026-05-13)
-- [ ] **Phase 21: Validation Fixtures and Milestone Evidence** - Validators, normalized issue fixtures, and final evidence prove defects do not recur across deck modes.
+- [x] **Phase 21: Validation Fixtures and Milestone Evidence** - Validators, normalized issue fixtures, and final evidence prove defects do not recur across deck modes. (completed 2026-05-15)
 
 ## Phase Details
 
@@ -99,7 +99,7 @@ Plans:
 Plans:
 - [x] 21-01-PLAN.md — Create shared validators for all normalized v1.3 issue categories.
 - [x] 21-02-PLAN.md — Convert `card_issues_normalized.md` examples into executable regression fixtures.
-- [ ] 21-03-PLAN.md — Add final milestone evidence and existing-mode regression proof.
+- [x] 21-03-PLAN.md — Add final milestone evidence and existing-mode regression proof.
 **UI hint**: yes
 
 ## Progress
@@ -117,7 +117,7 @@ Plans:
 | 18. Text Field Remediation | 3/3 | Complete    | 2026-05-13 |
 | 19. Normal Card Export and Responsive Template | 3/3 | Complete    | 2026-05-13 |
 | 20. Word Audio Integrity Gate | 3/3 | Complete    | 2026-05-13 |
-| 21. Validation Fixtures and Milestone Evidence | 2/3 | In Progress|  |
+| 21. Validation Fixtures and Milestone Evidence | 3/3 | Complete   | 2026-05-15 |
 
 ## Coverage
 

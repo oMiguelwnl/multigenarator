@@ -2,16 +2,16 @@
 gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
-status: executing
-stopped_at: Completed 21-02-PLAN.md
-last_updated: "2026-05-15T13:26:19.980Z"
+status: verifying
+stopped_at: Completed 21-03-PLAN.md
+last_updated: "2026-05-15T13:36:52.558Z"
 last_activity: 2026-05-15
 progress:
   total_phases: 5
-  completed_phases: 4
+  completed_phases: 5
   total_plans: 15
-  completed_plans: 14
-  percent: 93
+  completed_plans: 15
+  percent: 100
 ---
 
 # Project State
@@ -27,7 +27,7 @@ See: .planning/PROJECT.md (updated 2026-05-12)
 
 Phase: 21 (validation-fixtures-and-milestone-evidence) — EXECUTING
 Plan: 3 of 3
-Status: Ready to execute
+Status: Phase complete — ready for verification
 Last activity: 2026-05-15
 
 Progress: [█████████░] 87%
@@ -76,6 +76,7 @@ Progress: [█████████░] 87%
 | Phase 20 P03 | 8min | 2 tasks | 4 files |
 | Phase 21 P01 | 3min | 2 tasks | 2 files |
 | Phase 21 P02 | 4min | 2 tasks | 4 files |
+| Phase 21 P03 | 7min | 2 tasks | 3 files |
 
 ## Accumulated Context
 
@@ -141,6 +142,8 @@ Full decision history is in `.planning/PROJECT.md` and `.planning/milestones/v1.
 - [Phase 21]: Normalize validator output into bounded issue objects with stable enum values for downstream fixtures and evidence.
 - [Phase 21]: Use the shared v1.3 validation facade for fixture execution while extending existing validator boundaries where fixtures exposed missing correctness checks. — Keeps VAL-02 fixtures tied to one validation surface while closing correctness gaps discovered by executable examples.
 - [Phase 21]: Keep VAL-02 fixture data synthetic and traceable to card_issues_normalized.md source lines instead of private APKG excerpts. — Preserves evidence quality without leaking private deck contents.
+- [Phase 21]: Use focused scanner-readable command references for milestone closeout instead of embedding private audit report contents. — Preserves milestone evidence quality without committing private deck text.
+- [Phase 21]: Assert existing deck-mode safety through exported field tuples and note/template boundaries rather than duplicating validation logic. — Keeps VAL-03 tied to source-of-truth export contracts.
 
 ### Pending Todos
 
@@ -171,6 +174,6 @@ Items acknowledged and carried forward from previous milestone close:
 
 ## Session Continuity
 
-Last session: 2026-05-15T13:26:19.955Z
-Stopped at: Completed 21-02-PLAN.md
+Last session: 2026-05-15T13:36:31.821Z
+Stopped at: Completed 21-03-PLAN.md
 Resume file: None

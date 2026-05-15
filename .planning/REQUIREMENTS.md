@@ -37,7 +37,7 @@ Requirements for the current milestone. Each requirement maps to exactly one roa
 
 - [x] **VAL-01**: User can run validators for IPA word repetition, banned Definition patterns, Translation/example mismatch, `word_audio`/`Word` mismatch, and dangling template fields.
 - [x] **VAL-02**: User gets regression fixtures covering the normalized issue examples from `card_issues_normalized.md`.
-- [ ] **VAL-03**: User gets final milestone evidence proving the audit, corrections, normal-card export contract, and unaffected existing deck modes.
+- [x] **VAL-03**: User gets final milestone evidence proving the audit, corrections, normal-card export contract, and unaffected existing deck modes.
 
 ## Future Requirements
 
@@ -82,7 +82,7 @@ Which phases cover which requirements. Updated during roadmap creation.
 | AUD-02 | Phase 20 | Complete |
 | VAL-01 | Phase 21 | Complete |
 | VAL-02 | Phase 21 | Complete |
-| VAL-03 | Phase 21 | Pending |
+| VAL-03 | Phase 21 | Complete |
 
 **Coverage:**
 
