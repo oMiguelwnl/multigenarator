@@ -127,7 +127,8 @@ def validate_v13_template_contract(
                 message="Card template references fields outside the active export contract.",
             )
         ]
-    if "{{sentence_audio}}" in template.front + template.back:
+    template_markup = template.front + template.back
+    if re.search(r"{{\s*sentence_audio\s*}}", template_markup):
         template_surface = " ".join((template.front, template.back, template.css))
         required_selectors = {"exampleSentenceLine", "exampleSentenceText", "sentenceAudioButton"}
         if not required_selectors <= set(re.findall(r"[A-Za-z][A-Za-z0-9_-]+", template_surface)):
