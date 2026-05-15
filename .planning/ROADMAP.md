@@ -97,7 +97,7 @@ Plans:
   4. User receives regression evidence that frequency, custom word-list, highlight, and phonetics deck behavior remains unaffected outside the intended normal-card changes.
 **Plans**: 3 plans
 Plans:
-- [ ] 21-01-PLAN.md — Create shared validators for all normalized v1.3 issue categories.
+- [x] 21-01-PLAN.md — Create shared validators for all normalized v1.3 issue categories.
 - [ ] 21-02-PLAN.md — Convert `card_issues_normalized.md` examples into executable regression fixtures.
 - [ ] 21-03-PLAN.md — Add final milestone evidence and existing-mode regression proof.
 **UI hint**: yes
@@ -117,7 +117,7 @@ Plans:
 | 18. Text Field Remediation | 3/3 | Complete    | 2026-05-13 |
 | 19. Normal Card Export and Responsive Template | 3/3 | Complete    | 2026-05-13 |
 | 20. Word Audio Integrity Gate | 3/3 | Complete    | 2026-05-13 |
-| 21. Validation Fixtures and Milestone Evidence | 0/TBD | Not started | - |
+| 21. Validation Fixtures and Milestone Evidence | 1/3 | In Progress|  |
 
 ## Coverage
 
@@ -135,7 +135,7 @@ Plans:
 | TMPL-03 | Phase 19 | Complete |
 | AUD-01 | Phase 20 | Pending |
 | AUD-02 | Phase 20 | Pending |
-| VAL-01 | Phase 21 | Pending |
+| VAL-01 | Phase 21 | Complete |
 | VAL-02 | Phase 21 | Pending |
 | VAL-03 | Phase 21 | Pending |
 

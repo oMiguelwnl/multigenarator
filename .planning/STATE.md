@@ -2,16 +2,16 @@
 gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
-status: verifying
-stopped_at: Completed 20-03-PLAN.md
-last_updated: "2026-05-13T17:58:50.490Z"
-last_activity: 2026-05-13
+status: executing
+stopped_at: Completed 21-01-PLAN.md
+last_updated: "2026-05-15T13:18:54.962Z"
+last_activity: 2026-05-15
 progress:
   total_phases: 5
   completed_phases: 4
   total_plans: 15
-  completed_plans: 12
-  percent: 80
+  completed_plans: 13
+  percent: 87
 ---
 
 # Project State
@@ -21,16 +21,16 @@ progress:
 See: .planning/PROJECT.md (updated 2026-05-12)
 
 **Core value:** Generate reliable, high-quality Anki cards for real vocabulary the learner needs to study, with accurate definitions, examples, translations where appropriate, and audio.  
-**Current focus:** Phase 20 — word-audio-integrity-gate
+**Current focus:** Phase 21 — validation-fixtures-and-milestone-evidence
 
 ## Current Position
 
-Phase: 21
-Plan: Not started
-Status: Phase complete — ready for verification
-Last activity: 2026-05-13
+Phase: 21 (validation-fixtures-and-milestone-evidence) — EXECUTING
+Plan: 2 of 3
+Status: Ready to execute
+Last activity: 2026-05-15
 
-Progress: [░░░░░░░░░░] 0%
+Progress: [█████████░] 87%
 
 ## Performance Metrics
 
@@ -74,6 +74,7 @@ Progress: [░░░░░░░░░░] 0%
 | Phase 20 P02 | 4min | 2 tasks | 2 files |
 | Phase 20 P03 | 7min | 2 tasks | 4 files |
 | Phase 20 P03 | 8min | 2 tasks | 4 files |
+| Phase 21 P01 | 3min | 2 tasks | 2 files |
 
 ## Accumulated Context
 
@@ -135,6 +136,8 @@ Full decision history is in `.planning/PROJECT.md` and `.planning/milestones/v1.
 - [Phase 20]: Word audio integrity is exact-match only; stored display text, normalized display text, TTS text, and provenance hashes must match exported Word.
 - [Phase 20]: Reusable WORD audio is accepted only after passing the exact Word integrity helper; mismatches are regenerated and excluded from reuse counts.
 - [Phase 20]: Assembly validates word audio against lexical_candidate.lemma, and runtime export refreshes persisted audio rows before validating snapshots.
+- [Phase 21]: Reuse existing text, template, and audio validators through a thin v1.3 facade instead of duplicating detection logic.
+- [Phase 21]: Normalize validator output into bounded issue objects with stable enum values for downstream fixtures and evidence.
 
 ### Pending Todos
 
@@ -165,6 +168,6 @@ Items acknowledged and carried forward from previous milestone close:
 
 ## Session Continuity
 
-Last session: 2026-05-13T17:57:42.985Z
-Stopped at: Completed 20-03-PLAN.md
+Last session: 2026-05-15T13:18:38.719Z
+Stopped at: Completed 21-01-PLAN.md
 Resume file: None
