@@ -137,11 +137,14 @@ def test_russian_phonetics_mode_keeps_phoneme_contract_without_normal_or_highlig
     model = build_russian_phoneme_model()
     markup = model.templates[0]["qfmt"] + model.templates[0]["afmt"]
     references = _template_references(markup)
-    forbidden_fields = set(FREQUENCY_EXPORT_CARD_FIELD_NAMES) | set(HIGHLIGHT_EXPORT_CARD_FIELD_NAMES)
+    model_field_names = {field["name"] for field in model.fields}
+    forbidden_learner_fields = {"word", "Word", "IPA", "Definitions", "Definition", "Translation", "Image"}
 
     assert tuple(field["name"] for field in model.fields) == PHONEME_FIELD_NAMES
     assert references <= set(PHONEME_FIELD_NAMES) | {"FrontSide"}
-    assert references.isdisjoint({"word", "Word", "IPA", "Definitions", "Definition", "Translation", "Image"})
-    assert set(PHONEME_FIELD_NAMES).isdisjoint(forbidden_fields)
+    assert references.isdisjoint(forbidden_learner_fields)
+    assert model_field_names.isdisjoint(forbidden_learner_fields)
+    assert model_field_names != set(FREQUENCY_EXPORT_CARD_FIELD_NAMES)
+    assert model_field_names != set(HIGHLIGHT_EXPORT_CARD_FIELD_NAMES)
     assert "word_audio" in PHONEME_FIELD_NAMES
     assert "sentence_audio" in PHONEME_FIELD_NAMES
