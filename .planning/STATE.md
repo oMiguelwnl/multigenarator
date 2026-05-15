@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: verifying
-stopped_at: Completed 21-03-PLAN.md
-last_updated: "2026-05-15T13:36:52.558Z"
+stopped_at: Completed 21-04-PLAN.md
+last_updated: "2026-05-15T13:53:54.842Z"
 last_activity: 2026-05-15
 progress:
   total_phases: 5
   completed_phases: 5
-  total_plans: 15
-  completed_plans: 15
+  total_plans: 16
+  completed_plans: 16
   percent: 100
 ---
 
@@ -26,11 +26,11 @@ See: .planning/PROJECT.md (updated 2026-05-12)
 ## Current Position
 
 Phase: 21 (validation-fixtures-and-milestone-evidence) — EXECUTING
-Plan: 3 of 3
-Status: Phase complete — ready for verification
+Plan: 4 of 4
+Status: Phase complete — ready for re-verification
 Last activity: 2026-05-15
 
-Progress: [█████████░] 87%
+Progress: [██████████] 100%
 
 ## Performance Metrics
 
@@ -77,6 +77,7 @@ Progress: [█████████░] 87%
 | Phase 21 P01 | 3min | 2 tasks | 2 files |
 | Phase 21 P02 | 4min | 2 tasks | 4 files |
 | Phase 21 P03 | 7min | 2 tasks | 3 files |
+| Phase 21 P04 | 2min | 2 tasks | 3 files |
 
 ## Accumulated Context
 
@@ -144,6 +145,8 @@ Full decision history is in `.planning/PROJECT.md` and `.planning/milestones/v1.
 - [Phase 21]: Keep VAL-02 fixture data synthetic and traceable to card_issues_normalized.md source lines instead of private APKG excerpts. — Preserves evidence quality without leaking private deck contents.
 - [Phase 21]: Use focused scanner-readable command references for milestone closeout instead of embedding private audit report contents. — Preserves milestone evidence quality without committing private deck text.
 - [Phase 21]: Assert existing deck-mode safety through exported field tuples and note/template boundaries rather than duplicating validation logic. — Keeps VAL-03 tied to source-of-truth export contracts.
+- [Phase 21]: Detect sentence_audio references with a bounded whitespace-tolerant Anki field regex — Closes the valid Anki whitespace formatting bypass without changing public issue taxonomy.
+- [Phase 21]: Preserve dangling-template-field precedence before sentence_audio layout validation — Invalid template references still report dangling_template_field instead of layout issues.
 
 ### Pending Todos
 
@@ -174,6 +177,6 @@ Items acknowledged and carried forward from previous milestone close:
 
 ## Session Continuity
 
-Last session: 2026-05-15T13:36:31.821Z
-Stopped at: Completed 21-03-PLAN.md
+Last session: 2026-05-15T13:53:54.806Z
+Stopped at: Completed 21-04-PLAN.md
 Resume file: None

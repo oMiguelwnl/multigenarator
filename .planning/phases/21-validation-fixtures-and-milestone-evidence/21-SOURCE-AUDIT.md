@@ -27,8 +27,9 @@
 | REQ VAL-03 | 21-03 | Final evidence and existing-mode regression proof |
 | RESEARCH: Python/pytest deterministic validation | 21-01, 21-02, 21-03 | All verification uses focused pytest suites and JSON validation |
 | RESEARCH: avoid live provider-only validation | 21-01, 21-02, 21-03 | Uses synthetic rows/assets/templates and Phase 20 metadata checks |
-| STATE: privacy-safe evidence | 21-02, 21-03 | No raw private APKG excerpts; scanner blocks private markers |
+| STATE: privacy-safe evidence | 21-02, 21-03, 21-04 | No raw private APKG excerpts; scanner blocks private markers; gap fixture remains synthetic template markup |
 | STATE: keep normal/highlight/phonetics isolated | 21-03 | Dedicated existing-mode regression file |
+| VERIFICATION GAP: whitespace-formatted `sentence_audio` reference bypass | 21-04 | Gap-closure plan adds a whitespace-tolerant detector and regression fixture for valid Anki reference formatting |
 
 ## Deferred / Excluded Items
 
@@ -42,4 +43,4 @@
 
 ## Result
 
-All GOAL, REQ, RESEARCH, and CONTEXT carry-forward items are covered by the Phase 21 plan set. No unplanned source items remain.
+All GOAL, REQ, RESEARCH, CONTEXT carry-forward items, and the Phase 21 verification gap are covered by the Phase 21 plan set. No unplanned source items remain.

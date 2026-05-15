@@ -95,11 +95,12 @@ Plans:
   2. User gets regression fixtures covering the normalized examples from `card_issues_normalized.md`.
   3. User receives final milestone evidence proving audit behavior, text corrections, normal-card export contract, and word-audio integrity.
   4. User receives regression evidence that frequency, custom word-list, highlight, and phonetics deck behavior remains unaffected outside the intended normal-card changes.
-**Plans**: 3 plans
+**Plans**: 4 plans
 Plans:
 - [x] 21-01-PLAN.md — Create shared validators for all normalized v1.3 issue categories.
 - [x] 21-02-PLAN.md — Convert `card_issues_normalized.md` examples into executable regression fixtures.
 - [x] 21-03-PLAN.md — Add final milestone evidence and existing-mode regression proof.
+- [x] 21-04-PLAN.md — Close whitespace-formatted `sentence_audio` layout validation gap.
 **UI hint**: yes
 
 ## Progress
@@ -117,7 +118,7 @@ Plans:
 | 18. Text Field Remediation | 3/3 | Complete    | 2026-05-13 |
 | 19. Normal Card Export and Responsive Template | 3/3 | Complete    | 2026-05-13 |
 | 20. Word Audio Integrity Gate | 3/3 | Complete    | 2026-05-13 |
-| 21. Validation Fixtures and Milestone Evidence | 3/3 | Complete   | 2026-05-15 |
+| 21. Validation Fixtures and Milestone Evidence | 4/4 | Complete   | 2026-05-15 |
 
 ## Coverage
 
@@ -136,7 +137,7 @@ Plans:
 | AUD-01 | Phase 20 | Pending |
 | AUD-02 | Phase 20 | Pending |
 | VAL-01 | Phase 21 | Complete |
-| VAL-02 | Phase 21 | Pending |
-| VAL-03 | Phase 21 | Pending |
+| VAL-02 | Phase 21 | Complete |
+| VAL-03 | Phase 21 | Complete |
 
 Coverage: 15/15 v1.3 requirements mapped exactly once.
