@@ -171,5 +171,57 @@ def test_dangling_template_field_is_normalized() -> None:
     ]
 
 
+def test_whitespace_sentence_audio_reference_requires_layout_selectors() -> None:
+    template = CardTemplate(
+        front="<div>{{Example Sentence}}</div><div>{{ sentence_audio }}</div>",
+        back="{{FrontSide}}<div>{{Definitions}}</div>",
+        css=".card { color: #222; }",
+        source_template_name="sentence_audio_whitespace_missing_layout",
+    )
+
+    issues = validate_v13_template_contract(template, FREQUENCY_EXPORT_CARD_FIELD_NAMES)
+
+    assert [(issue.field_name, issue.issue_type) for issue in issues] == [
+        ("template", V13ValidationIssueType.SENTENCE_AUDIO_LAYOUT)
+    ]
+
+
+def test_whitespace_sentence_audio_reference_with_required_selectors_returns_no_layout_issue() -> None:
+    template = CardTemplate(
+        front=(
+            '<div class="exampleSentenceLine">'
+            '<span class="exampleSentenceText">{{Example Sentence}}</span>'
+            '<span class="sentenceAudioButton">{{ sentence_audio }}</span>'
+            "</div>"
+        ),
+        back="{{FrontSide}}<div>{{Definitions}}</div>",
+        css=(
+            ".exampleSentenceLine { display: flex; } "
+            ".exampleSentenceText { min-width: 0; } "
+            ".sentenceAudioButton { flex: 0 0 auto; }"
+        ),
+        source_template_name="sentence_audio_whitespace_correct_layout",
+    )
+
+    issues = validate_v13_template_contract(template, FREQUENCY_EXPORT_CARD_FIELD_NAMES)
+
+    assert V13ValidationIssueType.SENTENCE_AUDIO_LAYOUT not in {issue.issue_type for issue in issues}
+
+
+def test_dangling_template_field_takes_precedence_over_sentence_audio_layout() -> None:
+    template = CardTemplate(
+        front="<div>{{Front of Card}}</div><div>{{ sentence_audio }}</div>",
+        back="{{FrontSide}}<div>{{Definitions}}</div>",
+        css=".card { color: #222; }",
+        source_template_name="sentence_audio_whitespace_with_dangling_field",
+    )
+
+    issues = validate_v13_template_contract(template, FREQUENCY_EXPORT_CARD_FIELD_NAMES)
+
+    assert [(issue.field_name, issue.issue_type) for issue in issues] == [
+        ("template", V13ValidationIssueType.DANGLING_TEMPLATE_FIELD)
+    ]
+
+
 def test_project_normal_template_matches_v13_field_contract() -> None:
     assert validate_v13_template_contract(load_card_template("frequency"), FREQUENCY_EXPORT_CARD_FIELD_NAMES) == []
