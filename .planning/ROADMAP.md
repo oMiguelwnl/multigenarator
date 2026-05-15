@@ -98,7 +98,7 @@ Plans:
 **Plans**: 3 plans
 Plans:
 - [x] 21-01-PLAN.md — Create shared validators for all normalized v1.3 issue categories.
-- [ ] 21-02-PLAN.md — Convert `card_issues_normalized.md` examples into executable regression fixtures.
+- [x] 21-02-PLAN.md — Convert `card_issues_normalized.md` examples into executable regression fixtures.
 - [ ] 21-03-PLAN.md — Add final milestone evidence and existing-mode regression proof.
 **UI hint**: yes
 
@@ -117,7 +117,7 @@ Plans:
 | 18. Text Field Remediation | 3/3 | Complete    | 2026-05-13 |
 | 19. Normal Card Export and Responsive Template | 3/3 | Complete    | 2026-05-13 |
 | 20. Word Audio Integrity Gate | 3/3 | Complete    | 2026-05-13 |
-| 21. Validation Fixtures and Milestone Evidence | 1/3 | In Progress|  |
+| 21. Validation Fixtures and Milestone Evidence | 2/3 | In Progress|  |
 
 ## Coverage
 

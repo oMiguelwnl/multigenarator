@@ -3,15 +3,15 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: executing
-stopped_at: Completed 21-01-PLAN.md
-last_updated: "2026-05-15T13:18:54.962Z"
+stopped_at: Completed 21-02-PLAN.md
+last_updated: "2026-05-15T13:26:19.980Z"
 last_activity: 2026-05-15
 progress:
   total_phases: 5
   completed_phases: 4
   total_plans: 15
-  completed_plans: 13
-  percent: 87
+  completed_plans: 14
+  percent: 93
 ---
 
 # Project State
@@ -26,7 +26,7 @@ See: .planning/PROJECT.md (updated 2026-05-12)
 ## Current Position
 
 Phase: 21 (validation-fixtures-and-milestone-evidence) — EXECUTING
-Plan: 2 of 3
+Plan: 3 of 3
 Status: Ready to execute
 Last activity: 2026-05-15
 
@@ -75,6 +75,7 @@ Progress: [█████████░] 87%
 | Phase 20 P03 | 7min | 2 tasks | 4 files |
 | Phase 20 P03 | 8min | 2 tasks | 4 files |
 | Phase 21 P01 | 3min | 2 tasks | 2 files |
+| Phase 21 P02 | 4min | 2 tasks | 4 files |
 
 ## Accumulated Context
 
@@ -138,6 +139,8 @@ Full decision history is in `.planning/PROJECT.md` and `.planning/milestones/v1.
 - [Phase 20]: Assembly validates word audio against lexical_candidate.lemma, and runtime export refreshes persisted audio rows before validating snapshots.
 - [Phase 21]: Reuse existing text, template, and audio validators through a thin v1.3 facade instead of duplicating detection logic.
 - [Phase 21]: Normalize validator output into bounded issue objects with stable enum values for downstream fixtures and evidence.
+- [Phase 21]: Use the shared v1.3 validation facade for fixture execution while extending existing validator boundaries where fixtures exposed missing correctness checks. — Keeps VAL-02 fixtures tied to one validation surface while closing correctness gaps discovered by executable examples.
+- [Phase 21]: Keep VAL-02 fixture data synthetic and traceable to card_issues_normalized.md source lines instead of private APKG excerpts. — Preserves evidence quality without leaking private deck contents.
 
 ### Pending Todos
 
@@ -168,6 +171,6 @@ Items acknowledged and carried forward from previous milestone close:
 
 ## Session Continuity
 
-Last session: 2026-05-15T13:18:38.719Z
-Stopped at: Completed 21-01-PLAN.md
+Last session: 2026-05-15T13:26:19.955Z
+Stopped at: Completed 21-02-PLAN.md
 Resume file: None
