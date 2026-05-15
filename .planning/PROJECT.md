@@ -35,6 +35,8 @@ v1.3 Phase 19 Normal Card Export and Responsive Template was completed on 2026-0
 
 v1.3 Phase 20 Word Audio Integrity Gate was completed on 2026-05-13. Word-audio metadata now has exact-match validation against exported `Word`, mismatched reusable WORD audio is regenerated during audio generation, and APKG/CSV/TSV exports fail before artifact creation when persisted word audio drifts from card snapshots.
 
+v1.3 Phase 21 Validation Fixtures and Milestone Evidence was completed on 2026-05-15. Shared v1.3 validators, executable normalized issue fixtures, final scanner-readable milestone evidence, and mode-isolation regression tests now prove the known card-quality defects do not recur across normal, custom word-list, highlight, and phonetics deck paths.
+
 ## Current Milestone: v1.3 Card Quality Remediation and Deck Validation
 
 **Goal:** Fix known generated-card quality defects and harden validation so exported decks preserve accurate IPA, definitions, translations, audio-field alignment, and responsive Anki layouts.
@@ -77,12 +79,12 @@ After v1.2, candidate directions from the archived v1 requirement seeds remain:
 - [x] Generate privacy-safe highlight text/audio/card rows without replacing the existing frequency-deck or custom word-list flows. _(v1.2 Phase 12)_
 - [x] Add a responsive highlight deck template with `Definition` on the back and no `Translation` field. _(v1.2 Phase 13)_
 - [x] Update the normal card schema/template by removing redundant `Front of Card` and preserving responsive audio layout. _(v1.3 Phase 19)_
+- [x] Add validation and regression evidence that prevents recurrence of the normalized issue catalog. _(v1.3 Phase 21)_
 
 ### Active
 
 - [ ] Audit generated decks for normalized card-quality defects and produce actionable issue reports.
 - [x] Correct IPA, Definition, Translation, and audio-field alignment defects before export. _(IPA/Definition/Translation validated in Phase 18; audio-field alignment validated in Phase 20.)_
-- [ ] Add validation and regression evidence that prevents recurrence of the normalized issue catalog.
 
 ### Out of Scope
 
@@ -164,4 +166,4 @@ This document evolves at phase transitions and milestone boundaries.
 4. Update Context with current state.
 
 ---
-*Last updated: 2026-05-13 after Phase 20 word audio integrity gate*
+*Last updated: 2026-05-15 after Phase 21 validation fixtures and milestone evidence*
