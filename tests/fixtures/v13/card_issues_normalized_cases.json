@@ -286,6 +286,20 @@
       "expected_pass": false
     },
     {
+      "id": "sentence_audio_layout_bad_whitespace_reference",
+      "group": "sentence_audio_layout",
+      "source_lines": [92, 105],
+      "validator": "template",
+      "field": "template",
+      "input": {
+        "front": "<div>{{Example Sentence}}</div><div>{{ sentence_audio }}</div>",
+        "back": "{{FrontSide}}<div>{{Definitions}}</div>",
+        "css": ".card { color: #222; }"
+      },
+      "expected_issue_types": ["sentence_audio_layout"],
+      "expected_pass": false
+    },
+    {
       "id": "sentence_audio_layout_corrected_selectors",
       "group": "sentence_audio_layout",
       "source_lines": [100, 105],
