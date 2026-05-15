@@ -25,8 +25,12 @@ _GRAMMAR_ONLY_TERMS = {
     "masculine",
     "neuter",
     "nominative",
+    "indicative",
+    "past",
+    "perfective",
     "plural",
     "prepositional",
+    "short",
     "singular",
     "vocative",
 }
@@ -73,6 +77,11 @@ def validate_definition_html(*, lemma_key: str, definitions_html: str | None) ->
 
     if not definitions_html or not _is_learner_safe_definition(definitions_html):
         raise ValueError(f"definition for {lemma_key} must be a learner-safe semantic definition")
+    known = _KNOWN_DEFINITION_CORRECTIONS.get(_normalize_key(lemma_key))
+    if known is not None:
+        definition_text = "\n".join(_definition_parts(definitions_html))
+        if _normalize_definition_text(definition_text) != _normalize_definition_text(known):
+            raise ValueError(f"definition for {lemma_key} must use the known corrected meaning")
 
 
 def _is_learner_safe_definition(definitions_html: str) -> bool:
@@ -127,6 +136,10 @@ def _part_of_speech_label(value: str | None) -> str | None:
 def _normalize_key(value: str) -> str:
     decomposed = unicodedata.normalize("NFD", value.casefold())
     return "".join(char for char in decomposed if unicodedata.category(char) != "Mn")
+
+
+def _normalize_definition_text(value: str) -> str:
+    return " ".join(_normalize_key(value).split())
 
 
 __all__ = ["remediate_definition_html", "validate_definition_html"]

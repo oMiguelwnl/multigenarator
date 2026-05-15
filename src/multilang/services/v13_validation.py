@@ -25,6 +25,7 @@ class V13ValidationIssueType(StrEnum):
     TRANSLATION_EXAMPLE_MISMATCH = "translation_example_mismatch"
     WORD_AUDIO_WORD_MISMATCH = "word_audio_word_mismatch"
     DANGLING_TEMPLATE_FIELD = "dangling_template_field"
+    SENTENCE_AUDIO_LAYOUT = "sentence_audio_layout"
 
 
 @dataclass(frozen=True, slots=True)
@@ -126,6 +127,17 @@ def validate_v13_template_contract(
                 message="Card template references fields outside the active export contract.",
             )
         ]
+    if "{{sentence_audio}}" in template.front + template.back:
+        template_surface = " ".join((template.front, template.back, template.css))
+        required_selectors = {"exampleSentenceLine", "exampleSentenceText", "sentenceAudioButton"}
+        if not required_selectors <= set(re.findall(r"[A-Za-z][A-Za-z0-9_-]+", template_surface)):
+            return [
+                _issue(
+                    field_name="template",
+                    issue_type=V13ValidationIssueType.SENTENCE_AUDIO_LAYOUT,
+                    message="sentence_audio must stay beside Example Sentence using the normal responsive layout selectors.",
+                )
+            ]
     return []
 
 
