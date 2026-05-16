@@ -1,11 +1,11 @@
 ---
 gsd_state_version: 1.0
-milestone: v1.0
-milestone_name: milestone
-status: verifying
-stopped_at: Completed 21-04-PLAN.md
-last_updated: "2026-05-15T14:06:55.399Z"
-last_activity: 2026-05-15
+milestone: v1.3
+milestone_name: Card Quality Remediation and Deck Validation
+status: milestone_complete
+stopped_at: v1.3 milestone completed and archived
+last_updated: "2026-05-16T17:56:48.493Z"
+last_activity: 2026-05-16
 progress:
   total_phases: 5
   completed_phases: 5
@@ -18,17 +18,17 @@ progress:
 
 ## Project Reference
 
-See: .planning/PROJECT.md (updated 2026-05-12)
+See: .planning/PROJECT.md (updated 2026-05-16)
 
 **Core value:** Generate reliable, high-quality Anki cards for real vocabulary the learner needs to study, with accurate definitions, examples, translations where appropriate, and audio.  
-**Current focus:** Phase 21 — validation-fixtures-and-milestone-evidence
+**Current focus:** Define the next milestone with `/gsd-new-milestone`
 
 ## Current Position
 
-Phase: 21
+Phase: Next milestone
 Plan: Not started
-Status: Phase complete — ready for re-verification
-Last activity: 2026-05-15
+Status: v1.3 milestone complete — ready for next milestone definition
+Last activity: 2026-05-16
 
 Progress: [██████████] 100%
 
@@ -41,7 +41,7 @@ Progress: [██████████] 100%
 - v1.1 plans completed: 4
 - v1.2 planned phases: 8
 - v1.2 requirements mapped: 24/24
-- v1.3 plans completed: 0
+- v1.3 plans completed: 16
 - v1.3 requirements mapped: 15/15
 
 **By Phase:**
@@ -151,14 +151,11 @@ Full decision history is in `.planning/PROJECT.md` and `.planning/milestones/v1.
 
 ### Pending Todos
 
-- Plan Phase 17 deck quality audit and issue reports.
-- Locate or supply `dbda4eb2-f0ec-402b-864f-48cdcf982b09.apkg` before Phase 17 execution needs deck-specific evidence.
-- Keep v1.3 requirement coverage at 15/15 as phases are planned and executed.
-- Preserve completed v1.1/v1.2 history until milestone archives are refreshed.
+- Define the next milestone with fresh requirements and roadmap.
+- Repair broad-suite drift before treating full `python -m pytest -q` as authoritative again.
 
 ### Blockers/Concerns
 
-- The concrete APKG `dbda4eb2-f0ec-402b-864f-48cdcf982b09.apkg` must be located or supplied during execution to complete deck-specific audit evidence.
 - Known follow-up debt from PROJECT.md: full-suite collection drift remains in tests that import removed private runtime template adapters; focused milestone evidence should stay authoritative until broad suite drift is repaired.
 - Research was explicitly skipped for v1.3; do not treat existing `.planning/research/SUMMARY.md` as current v1.3 research.
 
@@ -175,9 +172,10 @@ Items acknowledged and carried forward from previous milestone close:
 | Category | Item | Status | Deferred At |
 |----------|------|--------|-------------|
 | Test suite drift | Full-suite collection drift in tests importing removed private runtime template adapters | Known debt | Pre-v1.3 |
+| quick_task | 260430-001-russian-card-quality-regression | missing | v1.3 closeout 2026-05-16 |
 
 ## Session Continuity
 
-Last session: 2026-05-15T13:53:54.806Z
-Stopped at: Completed 21-04-PLAN.md
+Last session: 2026-05-16T17:56:48.493Z
+Stopped at: v1.3 milestone completed and archived
 Resume file: None

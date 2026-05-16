@@ -51,6 +51,51 @@
 
 ---
 
+## Milestone: v1.3 - Card Quality Remediation and Deck Validation
+
+**Shipped:** 2026-05-16  
+**Phases:** 5 | **Plans:** 16 | **Tasks:** 27 best-effort
+
+### What Was Built
+
+- Non-mutating APKG audit reports for normalized generated-card defects.
+- Text remediation for IPA-only output, semantic Definitions, known wrong senses, and sentence-level Translation validation.
+- Revised normal generated-card export/template contract with no redundant `Front of Card` and responsive sentence-audio layout.
+- Exact word-audio integrity checks across reuse, assembly, and APKG/CSV/TSV export boundaries.
+- Shared v1.3 validator facade, executable normalized issue fixtures, and final scanner-readable milestone evidence covering 15/15 requirements.
+
+### What Worked
+
+- Converting the normalized issue catalog into executable fixtures exposed real validator gaps before milestone close.
+- Focused mode-isolation tests protected highlight, word-list/manual, and Russian phonetics behavior while normal-card contracts changed.
+- Treating audio metadata as exact-match provenance prevented stale reusable assets from silently reaching exports.
+
+### What Was Inefficient
+
+- The milestone audit file was not generated before closeout, so closeout relied on Phase 21 final evidence and explicit user acknowledgement.
+- The broad full-suite still has known drift outside the focused v1.3 gate, which creates noise during final verification.
+- GSD metadata still reported an older milestone version during transition, requiring manual safety checks before archive.
+
+### Patterns Established
+
+- Keep a thin milestone-specific validation facade over source-of-truth validators instead of duplicating detection logic.
+- Store fixture catalogs as scanner-readable JSON tied back to source issue lines and synthetic examples.
+- Use final evidence tests to prove both requirement coverage and mode isolation at milestone boundaries.
+
+### Key Lessons
+
+1. A narrative defect catalog should become runnable fixtures before a remediation milestone is considered done.
+2. Template validators must accept valid Anki field-reference formatting variants, not only exact literal strings.
+3. Focused milestone gates are useful, but broad-suite drift should be resolved before it becomes normalized debt.
+
+### Cost Observations
+
+- Model mix: not tracked.
+- Sessions: not tracked.
+- Notable: gap closure was fast once the verifier reduced the issue to one concrete validator bypass.
+
+---
+
 ## Cross-Milestone Trends
 
 ### Process Evolution
@@ -58,14 +103,17 @@
 | Milestone | Sessions | Phases | Key Change |
 |-----------|----------|--------|------------|
 | v1.0 | not tracked | 7 | Established trust-first phase sequencing from job lifecycle through export and audit hygiene. |
+| v1.3 | not tracked | 5 | Shifted card-quality defects from ad hoc deck observations into deterministic validators, fixtures, and final evidence. |
 
 ### Cumulative Quality
 
 | Milestone | Tests | Coverage | Zero-Dep Additions |
 |-----------|-------|----------|-------------------|
 | v1.0 | Focused final evidence suite: 25 passed | Not measured | Not tracked |
+| v1.3 | Focused closeout regression gate: 175 passed | 15/15 requirements | Shared validator facade and JSON fixture catalog |
 
 ### Top Lessons (Verified Across Milestones)
 
 1. Product-quality gates need both deterministic automated tests and selective human verification.
 2. Planning artifacts must be maintained as executable evidence, not just narrative documentation.
+3. Milestone evidence should include regression checks for unchanged modes, not only the mode being modified.

@@ -12,10 +12,10 @@ Generate reliable, high-quality Anki cards for real vocabulary the learner needs
 
 ## Current State
 
-**Shipped version:** v1.0 MVP on 2026-04-29  
-**Milestone archive:** `.planning/milestones/v1.0-ROADMAP.md`  
-**Requirements archive:** `.planning/milestones/v1.0-REQUIREMENTS.md`  
-**Audit result:** passed with 23/23 requirements satisfied, 7/7 phases complete or verified, and 8/8 integration flows satisfied.
+**Shipped version:** v1.3 Card Quality Remediation and Deck Validation on 2026-05-16  
+**Milestone archive:** `.planning/milestones/v1.3-ROADMAP.md`  
+**Requirements archive:** `.planning/milestones/v1.3-REQUIREMENTS.md`  
+**Audit result:** Phase 21 final evidence passed with 15/15 v1.3 requirements covered and 9/9 Phase 21 must-haves verified.
 
 v1.0 provides the shipped CLI path for generation, review support, audio generation, and export. Representative custom word-list and frequency-deck inputs are verified end to end through accepted text, audio assets, and `.apkg`/CSV/TSV artifacts.
 
@@ -35,22 +35,13 @@ v1.3 Phase 19 Normal Card Export and Responsive Template was completed on 2026-0
 
 v1.3 Phase 20 Word Audio Integrity Gate was completed on 2026-05-13. Word-audio metadata now has exact-match validation against exported `Word`, mismatched reusable WORD audio is regenerated during audio generation, and APKG/CSV/TSV exports fail before artifact creation when persisted word audio drifts from card snapshots.
 
-v1.3 Phase 21 Validation Fixtures and Milestone Evidence was completed on 2026-05-15. Shared v1.3 validators, executable normalized issue fixtures, final scanner-readable milestone evidence, and mode-isolation regression tests now prove the known card-quality defects do not recur across normal, custom word-list, highlight, and phonetics deck paths.
+v1.3 was completed on 2026-05-16 after Phases 17-21. Generated-card quality defects can now be audited, IPA/Definition/Translation defects are remediated before export, normal generated-card exports use the revised field/template contract, word-audio mismatches are regenerated or blocked, and shared v1.3 validators plus scanner-readable evidence prove the known defects do not recur across normal, custom word-list, highlight, and phonetics deck paths.
 
-## Current Milestone: v1.3 Card Quality Remediation and Deck Validation
+## Current Milestone: Ready for v1.4 Definition
 
-**Goal:** Fix known generated-card quality defects and harden validation so exported decks preserve accurate IPA, definitions, translations, audio-field alignment, and responsive Anki layouts.
+**Goal:** Define the next milestone from the remaining product directions and known technical debt.
 
-**Target features:**
-
-- Audit the deck `dbda4eb2-f0ec-402b-864f-48cdcf982b09.apkg` and identify all card content issues that match the normalized issue catalog.
-- Ensure `IPA` contains only a phonetic transcription, without appending the original or accented word form.
-- Ensure `Definition` describes semantic meaning in English, never only grammatical case, inflection metadata, or an incorrect sense.
-- Ensure `Translation` translates the `Example Sentence`, not the isolated word.
-- Remove the redundant `Front of Card` field from generated normal cards and adjust export/template contracts safely.
-- Keep `sentence_audio` visually beside `Example Sentence` across screen sizes.
-- Detect and correct `word_audio` assets that do not match the card `Word`.
-- Add validation and regression evidence so these defects do not recur across generated decks.
+**Target features:** To be defined by `/gsd-new-milestone`.
 
 ## Next Milestone Goals
 
@@ -79,12 +70,13 @@ After v1.2, candidate directions from the archived v1 requirement seeds remain:
 - [x] Generate privacy-safe highlight text/audio/card rows without replacing the existing frequency-deck or custom word-list flows. _(v1.2 Phase 12)_
 - [x] Add a responsive highlight deck template with `Definition` on the back and no `Translation` field. _(v1.2 Phase 13)_
 - [x] Update the normal card schema/template by removing redundant `Front of Card` and preserving responsive audio layout. _(v1.3 Phase 19)_
+- [x] Audit generated decks for normalized card-quality defects and produce actionable issue reports. _(v1.3 Phase 17)_
+- [x] Correct IPA, Definition, Translation, and audio-field alignment defects before export. _(v1.3 Phases 18 and 20)_
 - [x] Add validation and regression evidence that prevents recurrence of the normalized issue catalog. _(v1.3 Phase 21)_
 
 ### Active
 
-- [ ] Audit generated decks for normalized card-quality defects and produce actionable issue reports.
-- [x] Correct IPA, Definition, Translation, and audio-field alignment defects before export. _(IPA/Definition/Translation validated in Phase 18; audio-field alignment validated in Phase 20.)_
+- [ ] Define v1.4 requirements and roadmap.
 
 ### Out of Scope
 
@@ -114,7 +106,7 @@ The preferred audio direction remains Azure TTS. The current code includes an Az
 
 v1.3 intentionally revises the normal generated-card export contract by removing redundant `Front of Card` from newly generated cards while keeping existing learner-facing fields, audio references, blank `Image`, and Anki-safe media behavior.
 
-Known follow-up debt: full-suite collection drift remains in tests that import removed private runtime template adapters. Focused milestone evidence suites passed; this should be handled before broad full-suite gating is treated as authoritative again.
+Known follow-up debt: one incomplete quick task remains for `260430-001-russian-card-quality-regression`, and full-suite collection/assertion drift still has failures outside the focused v1.3 evidence gate. Focused milestone evidence suites passed; the broad suite should be repaired before it is treated as authoritative again.
 
 ## Constraints
 
@@ -145,6 +137,7 @@ Known follow-up debt: full-suite collection drift remains in tests that import r
 | Use a dedicated highlight note type and template | Highlight cards need English fields, no Translation, Definition on the back, responsive styling, and no leakage into frequency or word-list decks | Validated in v1.2 Phase 13 with APKG/CSV/TSV export evidence and regression coverage. |
 | Treat card quality defects as validation failures before export | IPA repetition, morphology-only definitions, translation mismatches, and audio/word mismatches make learner decks unreliable | Pending in v1.3. |
 | Validate word audio at generation and export boundaries | Stale or corrupted reusable audio can otherwise produce cards whose audio pronounces a different word than the displayed `Word` | Validated in v1.3 Phase 20 with exact metadata checks, regeneration, and export blocks. |
+| Validate normalized issue coverage through executable fixtures | Narrative issue catalogs can drift unless every known defect maps to a runnable validator case | Validated in v1.3 Phase 21 with shared validators, JSON fixtures, and scanner-readable milestone evidence. |
 
 ## Evolution
 
@@ -166,4 +159,4 @@ This document evolves at phase transitions and milestone boundaries.
 4. Update Context with current state.
 
 ---
-*Last updated: 2026-05-15 after Phase 21 validation fixtures and milestone evidence*
+*Last updated: 2026-05-16 after v1.3 milestone completion*
