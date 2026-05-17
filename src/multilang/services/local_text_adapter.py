@@ -155,9 +155,9 @@ class LocalSentenceAdapter:
             template_kind = "flagged"
             uncertainty_notes = ["local runtime inserted a placeholder review case"]
         else:
-            template_kind = "verb" if sense_key is not None else "term"
+            template_kind = "verb" if _uses_verb_template(request, sense_key=sense_key) else "term"
             templates = _VERB_TEMPLATES if template_kind == "verb" else _TERM_TEMPLATES
-            sentence = templates[request.target_language].format(term=request.display_form)
+            sentence = templates[request.target_language].format(term=_sentence_term(request))
             uncertainty_notes = []
 
         return SentenceGenerationResult(
@@ -215,6 +215,10 @@ def _sense_hint(definitions_html: str | None, display_form: str) -> str:
     if not first_gloss:
         return display_form
 
+    if first_gloss.startswith("learner definition for "):
+        candidate = first_gloss.removeprefix("learner definition for ").strip()
+        return candidate or display_form
+
     if first_gloss.startswith("definition for "):
         candidate = first_gloss.removeprefix("definition for ").strip()
         return candidate or display_form
@@ -229,7 +233,7 @@ def _sense_hint(definitions_html: str | None, display_form: str) -> str:
 def _generate_highlight_sentence(request: SentenceGenerationRequest) -> SentenceGenerationResult:
     if request.target_language not in _HIGHLIGHT_TEMPLATES:
         raise ValueError(f"unsupported runtime template language: {request.target_language}")
-    sentence = _HIGHLIGHT_TEMPLATES[request.target_language].format(term=request.display_form)
+    sentence = _HIGHLIGHT_TEMPLATES[request.target_language].format(term=_sentence_term(request))
     return SentenceGenerationResult(
         sentence=sentence,
         intended_sense=_sense_hint(request.definitions_html, request.display_form),
@@ -249,6 +253,34 @@ def _infer_sense_key(definitions_html: str | None, display_form: str) -> str | N
         if candidate in _SENSE_ALIASES:
             return _SENSE_ALIASES[candidate]
     return None
+
+
+def _uses_verb_template(request: SentenceGenerationRequest, *, sense_key: str | None) -> bool:
+    return sense_key is not None or _definition_has_verb_label(request.definitions_html) or _first_gloss(
+        request.definitions_html
+    ).startswith("to ")
+
+
+def _definition_has_verb_label(definitions_html: str | None) -> bool:
+    if not definitions_html:
+        return False
+    first_segment = definitions_html.split("<br>", 1)[0]
+    stripped = _DEFINITION_RE.sub(" ", first_segment)
+    return bool(re.match(r"\s*verb\s*:", stripped, flags=re.IGNORECASE))
+
+
+def _sentence_term(request: SentenceGenerationRequest) -> str:
+    term = request.display_form.strip()
+    lemma = request.lemma.strip()
+    if lemma and term.casefold() != lemma.casefold():
+        term = lemma
+    return _lowercase_sentence_term(term, target_language=request.target_language)
+
+
+def _lowercase_sentence_term(term: str, *, target_language: str) -> str:
+    if target_language == SupportedLanguage.DE.value or not term[:1].isupper():
+        return term
+    return term[:1].casefold() + term[1:]
 
 
 def _localized_sense(sense_hint: str | None, *, language: str) -> str:
@@ -321,7 +353,8 @@ def _first_gloss(definitions_html: str | None) -> str:
 
     first_segment = definitions_html.split("<br>", 1)[0]
     stripped = _DEFINITION_RE.sub(" ", first_segment)
-    return " ".join(stripped.casefold().split())
+    normalized = " ".join(stripped.casefold().split())
+    return re.sub(r"^[a-z][a-z -]{1,40}:\s+", "", normalized).strip()
 
 
 __all__ = ["LocalSentenceAdapter", "LocalTranslationAdapter"]

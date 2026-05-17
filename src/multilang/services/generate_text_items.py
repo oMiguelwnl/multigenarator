@@ -177,7 +177,7 @@ class GenerateTextItemsService:
             min_sentence_tokens=source_profile.min_sentence_tokens,
             max_sentence_tokens=source_profile.max_sentence_tokens,
         )
-        return _gate_frequency_local_templates(
+        return _gate_local_templates(
             validation=validation,
             bundle=bundle,
             source_type=source_profile.source_type,
@@ -393,7 +393,7 @@ def _bounded_context_snippet(text: str, *, display_form: str, lemma: str, max_to
     return " ".join(tokens[start:end])
 
 
-def _gate_frequency_local_templates(
+def _gate_local_templates(
     *,
     validation: TextValidationResult,
     bundle: GeneratedTextBundle,
@@ -401,7 +401,7 @@ def _gate_frequency_local_templates(
     deck_language: SupportedLanguage,
 ) -> TextValidationResult:
     if (
-        source_type != "frequency"
+        source_type not in {"frequency", "word-list"}
         or deck_language is SupportedLanguage.EN
         or not _uses_generic_local_text(bundle)
     ):
@@ -411,7 +411,7 @@ def _gate_frequency_local_templates(
         *validation.validation_flags,
         ValidationFlag(
             code=ValidationFlagCode.BANNED_PATTERN,
-            detail="frequency decks must not accept generic local text templates as learner-facing content",
+            detail="non-English learner decks must not accept generic local text templates as learner-facing content",
         ),
     ]
     return validation.model_copy(

@@ -142,7 +142,8 @@ def test_litellm_highlight_prompt_uses_redacted_context_and_rules() -> None:
     assert "Highlight context hint" in prompt
     assert "Readers wash every cup before dawn REDACTED" in prompt
     assert "between 6 and 16 words" in prompt
-    assert "study form or a normal inflection" in prompt
+    assert "Base the sentence on the card word/lemma" in prompt
+    assert "Do not copy title-cased list input" in prompt
     assert "dav/private-export" not in prompt
 
 

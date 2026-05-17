@@ -76,6 +76,7 @@ class TextValidationResult(BaseModel):
 @dataclass(slots=True)
 class _ValidationContext:
     sentence_text: str
+    target_language: str
     translation_text: str
     definition_text: str
     sentence_tokens: list[str]
@@ -104,6 +105,7 @@ class TextValidationService:
     ) -> TextValidationResult:
         context = _ValidationContext(
             sentence_text=sentence.text.strip(),
+            target_language=sentence.target_language,
             translation_text=translation.text.strip(),
             definition_text=_normalize_text(definitions_html or ""),
             sentence_tokens=_tokenize(sentence.text),
@@ -232,6 +234,11 @@ class TextValidationService:
         ) or _looks_like_short_command(
             context.sentence_text,
             context.sentence_tokens,
+            display_form=display_form,
+            lemma=lemma,
+        ) or _has_unexpected_target_capitalization(
+            context.sentence_text,
+            target_language=context.target_language,
             display_form=display_form,
             lemma=lemma,
         ):
@@ -490,6 +497,36 @@ def _looks_like_short_command(
         return tokens[0] in _GENERIC_SUPPORT_VERBS or tokens[0] in targets
 
     return False
+
+
+def _has_unexpected_target_capitalization(
+    value: str,
+    *,
+    target_language: str,
+    display_form: str,
+    lemma: str,
+) -> bool:
+    if target_language == "de" or _starts_with_upper(lemma):
+        return False
+
+    target_keys = _match_keys(display_form) | _match_keys(lemma)
+    first_token_seen = False
+    for match in _TOKEN_RE.finditer(value):
+        token = match.group(0)
+        if not first_token_seen:
+            first_token_seen = True
+            continue
+        if not _starts_with_upper(token):
+            continue
+        if _match_keys(token).isdisjoint(target_keys):
+            continue
+        return True
+    return False
+
+
+def _starts_with_upper(value: str) -> bool:
+    stripped = value.strip()
+    return bool(stripped) and stripped[0].isalpha() and stripped[0].isupper()
 
 
 __all__ = ["TextValidationResult", "TextValidationService"]

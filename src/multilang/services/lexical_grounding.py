@@ -291,9 +291,7 @@ class LexicalGroundingService:
         candidate = record.display_form.strip()
         if not candidate:
             return default
-        if candidate.casefold() != record.lemma.casefold():
-            return candidate
-        return default
+        return candidate
 
     @staticmethod
     def _format_definitions(

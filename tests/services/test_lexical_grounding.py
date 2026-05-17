@@ -102,6 +102,38 @@ def test_grounding_prefers_study_form_and_manual_language_policy() -> None:
     assert candidate.provenance.definition.source == "stub-llm-definition-generator"
 
 
+def test_grounding_uses_canonical_display_when_lookup_resolves_source_form() -> None:
+    service = LexicalGroundingService(
+        lookup=StubLookup(
+            {
+                "remercia": LexicalRecord(
+                    term="remercia",
+                    display_form="remercier",
+                    lemma="remercier",
+                    definitions=["to thank someone"],
+                    part_of_speech="verb",
+                    ipa="/ʁə.mɛʁ.sje/",
+                )
+            }
+        )
+    )
+
+    candidate = service.ground_word_list_item(
+        language=SupportedLanguage.FR,
+        item=ParsedWordListItem(
+            line_number=3,
+            submitted_form="Remercia",
+            display_form="Remercia",
+            item_key="remercia",
+        ),
+    )
+
+    assert candidate.submitted_form == "Remercia"
+    assert candidate.display_form == "remercier"
+    assert candidate.lemma == "remercier"
+    assert candidate.definitions_html == "verb: to thank someone"
+
+
 def test_frequency_grounding_keeps_default_english_definition_policy() -> None:
     generator = StubDefinitionGenerator()
     service = LexicalGroundingService(

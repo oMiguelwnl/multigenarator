@@ -470,7 +470,49 @@ def test_generate_text_items_routes_frequency_local_templates_to_review() -> Non
     assert saved.review_status is ReviewStatus.REVIEW_REQUIRED
     assert saved.validation_status is ValidationStatus.FAILED
     assert saved.review_reason == "banned_pattern"
-    assert saved.validation_flags[0].detail.startswith("frequency decks must not accept")
+    assert saved.validation_flags[0].detail.startswith("non-English learner decks must not accept")
+
+
+def test_generate_text_items_routes_non_english_word_list_local_templates_to_review() -> None:
+    repository = FakeTextRepository(
+        candidates=[PersistedCandidate(id="lex-fr-1", item_key="remercia", candidate=make_candidate())]
+    )
+    generation = FakeGenerationService(
+        bundles=[
+            make_local_bundle(
+                sentence="Des voisins discutent Remercia pendant le dîner.",
+                translation="Des voisins discutent Remercia pendant le dîner.",
+            ),
+            make_local_bundle(
+                sentence="Des voisins discutent Remercia pendant le dîner.",
+                translation="Des voisins discutent Remercia pendant le dîner.",
+            ),
+        ]
+    )
+    validation = FakeValidationService(
+        results=[
+            make_validation_result(status=ValidationStatus.PASSED, label=ConfidenceLabel.HIGH, score=0.95),
+            make_validation_result(status=ValidationStatus.PASSED, label=ConfidenceLabel.HIGH, score=0.95),
+        ]
+    )
+
+    service = GenerateTextItemsService(
+        job_repository=FakeJobRepository(),
+        lexical_repository=None,
+        text_repository=repository,
+        text_generation_service=generation,
+        text_validation_service=validation,
+        tatoeba_sentence_source=FakeTatoebaSentenceSource(fallback=None),
+    )
+
+    result = service.execute(job_id="job-fr", deck_language=SupportedLanguage.FR)
+
+    assert result.accepted_items == 0
+    assert result.review_required_items == 1
+    saved = repository.saved_records[0]
+    assert saved.review_status is ReviewStatus.REVIEW_REQUIRED
+    assert saved.validation_status is ValidationStatus.FAILED
+    assert saved.review_reason == "banned_pattern"
 
 
 def test_generate_text_items_retries_ai_then_uses_tatoeba_for_failed_first_pass() -> None:

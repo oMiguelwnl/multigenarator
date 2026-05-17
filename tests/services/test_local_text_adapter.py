@@ -74,6 +74,23 @@ def test_local_highlight_sentence_is_richer_and_source_aware() -> None:
     assert result.provenance["template_kind"] == "highlight"
 
 
+def test_local_sentence_uses_lemma_not_title_cased_source_form_for_french_verbs() -> None:
+    result = LocalSentenceAdapter().generate_sentence(
+        SentenceGenerationRequest(
+            display_form="Remercia",
+            lemma="remercier",
+            definitions_html="verb: to thank someone",
+            target_language="fr",
+            translation_target_language="fr",
+            source_type="word-list",
+        )
+    )
+
+    assert result.sentence == "Mon frère veut remercier demain."
+    assert "Remercia" not in result.sentence
+    assert result.provenance["template_kind"] == "verb"
+
+
 def test_curated_smoke_terms_keep_portuguese_translations() -> None:
     sentence_adapter = LocalSentenceAdapter()
     translation_adapter = LocalTranslationAdapter()

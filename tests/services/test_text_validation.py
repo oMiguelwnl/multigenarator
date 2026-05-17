@@ -123,6 +123,23 @@ def test_validation_rejects_generic_meta_sentences() -> None:
     assert result.validation_status is ValidationStatus.FAILED
 
 
+def test_validation_rejects_title_cased_target_form_in_middle_of_sentence() -> None:
+    result = build_service().validate(
+        sentence=build_sentence(
+            text="Des voisins discutent Remercia pendant le dîner.",
+            target_language="fr",
+        ),
+        translation=build_translation(text="translation omitted", target_language="fr"),
+        display_form="remercier",
+        lemma="remercier",
+        definitions_html="verb: to thank someone",
+        require_translation=False,
+    )
+
+    assert result.validation_status is ValidationStatus.FAILED
+    assert ValidationFlagCode.BANNED_PATTERN in {flag.code for flag in result.validation_flags}
+
+
 def test_validation_downgrades_confidence_for_risky_but_valid_text() -> None:
     result = build_service().validate(
         sentence=build_sentence(text="I wash the cup at home."),

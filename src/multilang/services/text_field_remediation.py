@@ -13,6 +13,7 @@ _KNOWN_DEFINITION_CORRECTIONS = {
 _RELATION_ONLY_RE = re.compile(
     r"\b(?:inflection|genitive|accusative|dative|instrumental|prepositional|nominative|locative|ablative)\s+of\b"
 )
+_PLACEHOLDER_DEFINITION_RE = re.compile(r"\blearner\s+definition\s+for\b")
 _GRAMMAR_ONLY_TERMS = {
     "ablative",
     "accusative",
@@ -100,6 +101,8 @@ def _definition_parts(definitions_html: str) -> list[str]:
 def _is_substantive_definition(definition: str) -> bool:
     normalized = _without_label(" ".join(definition.casefold().split()))
     if not normalized:
+        return False
+    if _PLACEHOLDER_DEFINITION_RE.search(normalized):
         return False
     if _RELATION_ONLY_RE.search(normalized):
         return False

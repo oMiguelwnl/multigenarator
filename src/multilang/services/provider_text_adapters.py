@@ -225,6 +225,7 @@ def _sentence_prompt(request: SentenceGenerationRequest) -> str:
         context = redact_sensitive_text(request.highlight_context or "").strip()
         lines = [
             f"Target language: {target_name} ({request.target_language})",
+            f"Card word/lemma: {request.lemma}",
             f"Study form: {request.display_form}",
             f"Lemma: {request.lemma}",
             f"Definition context: {definition}",
@@ -235,7 +236,9 @@ def _sentence_prompt(request: SentenceGenerationRequest) -> str:
             [
                 "Rules:",
                 "- Write exactly one natural learner sentence in the target language.",
-                "- Include the study form or a normal inflection of the lemma.",
+                "- Base the sentence on the card word/lemma; use the source study form only if it is the same normal word form.",
+                "- Include the card word exactly when natural; otherwise use a normal inflection of the lemma.",
+                "- Do not copy title-cased list input into the middle of the sentence; lowercase ordinary words unless the language normally capitalizes them.",
                 "- Keep the sentence between 6 and 16 words.",
                 "- Use the highlight context only to choose the sense; do not copy private text wholesale.",
                 "- Do not write a dictionary definition, translation, grammar note, or meta sentence.",
@@ -247,12 +250,15 @@ def _sentence_prompt(request: SentenceGenerationRequest) -> str:
     return "\n".join(
         [
             f"Target language: {target_name} ({request.target_language})",
+            f"Card word/lemma: {request.lemma}",
             f"Study form: {request.display_form}",
             f"Lemma: {request.lemma}",
             f"Definition context: {definition}",
             "Rules:",
             "- Write exactly one everyday sentence in the target language.",
-            "- Include the study form exactly when natural; otherwise use a normal inflected form of the lemma.",
+            "- Base the sentence on the card word/lemma; use the source study form only if it is the same normal word form.",
+            "- Include the card word exactly when natural; otherwise use a normal inflected form of the lemma.",
+            "- Do not copy title-cased list input into the middle of the sentence; lowercase ordinary words unless the language normally capitalizes them.",
             "- Keep the sentence between 4 and 12 words.",
             "- Do not write a dictionary definition, translation, grammar note, or meta sentence.",
             "- Do not use generic discussion templates, placeholder text, or phrases like 'the word'.",
@@ -276,6 +282,7 @@ def _definition_prompt(request: DefinitionGenerationRequest) -> str:
             "- Generate the definition from your language knowledge, not from a supplied cache definition.",
             "- Return one concise learner-friendly definition.",
             "- Format definitions_html exactly as '[part of speech]: [meaning]'.",
+            "- Do not return placeholder text such as 'learner definition for ...'.",
             "- Use plain text only; do not include lists, examples, translations, or extra HTML except <br> between multiple senses if necessary.",
         ]
     )

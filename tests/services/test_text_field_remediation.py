@@ -48,5 +48,23 @@ def test_remediate_definition_html_uses_substantive_source_definition_when_gener
     ) == "adjective: big; large; important"
 
 
+def test_remediate_definition_html_replaces_local_placeholder_with_source_definition() -> None:
+    assert remediate_definition_html(
+        display_form="remercier",
+        lemma="remercier",
+        part_of_speech="verb",
+        generated_html="verb: learner definition for remercier",
+        source_definitions=["to thank someone"],
+    ) == "verb: to thank someone"
+
+
+def test_validate_definition_html_rejects_local_placeholder_definition() -> None:
+    with pytest.raises(ValueError, match="learner-safe semantic definition"):
+        validate_definition_html(
+            lemma_key="remercier",
+            definitions_html="verb: learner definition for remercier",
+        )
+
+
 def test_validate_definition_html_accepts_semantic_definition() -> None:
     validate_definition_html(lemma_key="ru:dostich", definitions_html="verb: to achieve, to attain, to reach")
