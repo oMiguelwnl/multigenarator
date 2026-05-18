@@ -1,0 +1,130 @@
+[
+  {
+    "Spellings": "ą",
+    "Sound": "/ɔ̃/",
+    "Example Word": "mąż",
+    "Word Translation": "marido",
+    "Example Sentence": "To jest mój mąż.",
+    "Sentence Translation": "Este é meu marido."
+  },
+  {
+    "Spellings": "ę",
+    "Sound": "/ɛ̃/",
+    "Example Word": "ręka",
+    "Word Translation": "mão",
+    "Example Sentence": "Moja ręka jest zimna.",
+    "Sentence Translation": "Minha mão está fria."
+  },
+  {
+    "Spellings": "ł",
+    "Sound": "/w/",
+    "Example Word": "mały",
+    "Word Translation": "pequeno",
+    "Example Sentence": "To jest mały dom.",
+    "Sentence Translation": "Esta é uma casa pequena."
+  },
+  {
+    "Spellings": "ń",
+    "Sound": "/ɲ/",
+    "Example Word": "koń",
+    "Word Translation": "cavalo",
+    "Example Sentence": "Koń biegnie szybko.",
+    "Sentence Translation": "O cavalo corre rápido."
+  },
+  {
+    "Spellings": "ś",
+    "Sound": "/ɕ/",
+    "Example Word": "środa",
+    "Word Translation": "quarta-feira",
+    "Example Sentence": "Dzisiaj jest środa.",
+    "Sentence Translation": "Hoje é quarta-feira."
+  },
+  {
+    "Spellings": "ź",
+    "Sound": "/ʑ/",
+    "Example Word": "źle",
+    "Word Translation": "mal",
+    "Example Sentence": "Czuję się źle.",
+    "Sentence Translation": "Estou me sentindo mal."
+  },
+  {
+    "Spellings": "ż",
+    "Sound": "/ʐ/",
+    "Example Word": "żona",
+    "Word Translation": "esposa",
+    "Example Sentence": "Moja żona jest lekarzem.",
+    "Sentence Translation": "Minha esposa é médica."
+  },
+  {
+    "Spellings": "ć",
+    "Sound": "/t͡ɕ/",
+    "Example Word": "ćma",
+    "Word Translation": "mariposa",
+    "Example Sentence": "Ćma leci do światła.",
+    "Sentence Translation": "A mariposa voa para a luz."
+  },
+  {
+    "Spellings": "ó",
+    "Sound": "/u/",
+    "Example Word": "mówić",
+    "Word Translation": "falar",
+    "Example Sentence": "Lubię mówić po polsku.",
+    "Sentence Translation": "Eu gosto de falar polonês."
+  },
+  {
+    "Spellings": "cz",
+    "Sound": "/t͡ʂ/",
+    "Example Word": "czekolada",
+    "Word Translation": "chocolate",
+    "Example Sentence": "Lubię czekoladę.",
+    "Sentence Translation": "Eu gosto de chocolate."
+  },
+  {
+    "Spellings": "sz",
+    "Sound": "/ʂ/",
+    "Example Word": "szkoła",
+    "Word Translation": "escola",
+    "Example Sentence": "Idę do szkoły.",
+    "Sentence Translation": "Eu vou para a escola."
+  },
+  {
+    "Spellings": "rz",
+    "Sound": "/ʐ/",
+    "Example Word": "rzeka",
+    "Word Translation": "rio",
+    "Example Sentence": "Rzeka jest długa.",
+    "Sentence Translation": "O rio é longo."
+  },
+  {
+    "Spellings": "ch",
+    "Sound": "/x/",
+    "Example Word": "chleb",
+    "Word Translation": "pão",
+    "Example Sentence": "Jem chleb.",
+    "Sentence Translation": "Eu como pão."
+  },
+  {
+    "Spellings": "dz",
+    "Sound": "/d͡z/",
+    "Example Word": "dzwon",
+    "Word Translation": "sino",
+    "Example Sentence": "Słyszę dzwon.",
+    "Sentence Translation": "Eu ouço um sino."
+  },
+  {
+    "Spellings": "dź",
+    "Sound": "/d͡ʑ/",
+    "Example Word": "dźwięk",
+    "Word Translation": "som",
+    "Example Sentence": "Ten dźwięk jest głośny.",
+    "Sentence Translation": "Este som é alto."
+  },
+  {
+    "Spellings": "dż",
+    "Sound": "/d͡ʐ/",
+    "Example Word": "dżem",
+    "Word Translation": "geleia",
+    "Example Sentence": "Jem chleb z dżemem.",
+    "Sentence Translation": "Eu como pão com geleia."
+  }
+]

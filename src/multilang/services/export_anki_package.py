@@ -9,6 +9,7 @@ import re
 import genanki
 
 from multilang.domain.exporting import ExportCardRow, export_field_names_for_source_type
+from multilang.domain.jobs import SupportedLanguage
 from multilang.domain.source_profiles import get_source_profile
 from multilang.services.card_template_loader import load_card_template
 
@@ -40,10 +41,14 @@ class MultilangNote(genanki.Note):
         return self._multilang_guid  # type: ignore[attr-defined]
 
 
-def build_multilang_model(*, source_type: str = "frequency") -> genanki.Model:
+def build_multilang_model(
+    *,
+    source_type: str = "frequency",
+    language: SupportedLanguage | None = None,
+) -> genanki.Model:
     profile = get_source_profile(source_type)
     try:
-        template = load_card_template(source_type=profile.source_type)
+        template = load_card_template(source_type=profile.source_type, language=language)
     except ValueError as exc:
         raise ExportAnkiPackageError(str(exc)) from exc
     model_id = {
@@ -69,7 +74,10 @@ def build_multilang_model(*, source_type: str = "frequency") -> genanki.Model:
 def build_multilang_note(row: ExportCardRow, *, model: genanki.Model | None = None) -> genanki.Note:
     field_names = export_field_names_for_source_type(row.identity.source_type)
     note = MultilangNote(
-        model=model or build_multilang_model(source_type=row.identity.source_type),
+        model=model or build_multilang_model(
+            source_type=row.identity.source_type,
+            language=row.identity.language,
+        ),
         fields=_row_fields(row, field_names=field_names),
     )
     note._multilang_guid = row.note_guid  # type: ignore[attr-defined]
@@ -87,7 +95,9 @@ def export_anki_package(
     if len(source_types) > 1:
         raise ExportAnkiPackageError("cannot export mixed source types in one note model")
     source_type = next(iter(source_types), "frequency")
-    model = build_multilang_model(source_type=source_type)
+    languages = {row.identity.language for row in rows}
+    language = next(iter(languages), None)
+    model = build_multilang_model(source_type=source_type, language=language)
     deck = genanki.Deck(DECK_ID, deck_name)
     media_files = _resolve_media_files(rows=rows, media_index=media_index)
 

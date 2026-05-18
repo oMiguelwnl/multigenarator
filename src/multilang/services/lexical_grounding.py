@@ -46,10 +46,12 @@ class LexicalGroundingService:
         lookup: object,
         pronunciation_generator: PronunciationGenerator | None = None,
         definition_generator: DefinitionGenerator | None = None,
+        allow_frequency_seed_fallback: bool = False,
     ) -> None:
         self._lookup = lookup
         self._pronunciation_generator = pronunciation_generator
         self._definition_generator = definition_generator
+        self._allow_frequency_seed_fallback = allow_frequency_seed_fallback
 
     def ground_word_list_item(
         self,
@@ -82,6 +84,8 @@ class LexicalGroundingService:
     ) -> LexicalCardCandidate:
         record = self._lookup_record(language=language, term=candidate.lemma_key)
         if record is None:
+            if self._should_use_frequency_seed_fallback(language):
+                return self._ground_frequency_seed_candidate(language=language, candidate=candidate)
             return self._backfill_required_candidate(
                 candidate,
                 warning_detail=f"no authoritative lexical match for '{candidate.lemma}'",
@@ -137,6 +141,40 @@ class LexicalGroundingService:
     def _lookup_record(self, *, language: SupportedLanguage, term: str) -> LexicalRecord | None:
         return self._lookup.lookup(language_code=language.value, term=term)
 
+    def _should_use_frequency_seed_fallback(self, language: SupportedLanguage) -> bool:
+        if not self._allow_frequency_seed_fallback:
+            return False
+        has_index = getattr(self._lookup, "has_index", None)
+        if not callable(has_index):
+            return False
+        return not bool(has_index(language_code=language.value))
+
+    def _ground_frequency_seed_candidate(
+        self,
+        *,
+        language: SupportedLanguage,
+        candidate: LexicalCardCandidate,
+    ) -> LexicalCardCandidate:
+        record = LexicalRecord(
+            term=candidate.display_form,
+            display_form=candidate.display_form,
+            lemma=candidate.lemma,
+            definitions=[],
+            source="wordfreq",
+        )
+        grounded = self._grounded_candidate(
+            language=language,
+            submitted_form=candidate.submitted_form,
+            display_form=candidate.display_form,
+            record=record,
+        )
+        return grounded.model_copy(
+            update={
+                "frequency_rank": candidate.frequency_rank,
+                "frequency_level": candidate.frequency_level,
+            }
+        )
+
     def _grounded_candidate(
         self,
         *,
@@ -152,6 +190,7 @@ class LexicalGroundingService:
         definition_result = self._generate_definition(
             display_form=learner_display_form,
             lemma=record.lemma,
+            source_language=language.value,
             target_language=resolved_definition_language,
             part_of_speech=record.part_of_speech,
         )
@@ -232,6 +271,7 @@ class LexicalGroundingService:
         *,
         display_form: str,
         lemma: str,
+        source_language: str,
         target_language: str,
         part_of_speech: str | None,
     ) -> DefinitionGenerationResult | None:
@@ -241,6 +281,7 @@ class LexicalGroundingService:
             DefinitionGenerationRequest(
                 display_form=display_form,
                 lemma=lemma,
+                source_language=source_language,
                 target_language=target_language,
                 part_of_speech=part_of_speech,
             )

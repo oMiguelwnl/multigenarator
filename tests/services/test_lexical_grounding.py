@@ -19,6 +19,11 @@ class StubLookup:
         return self._mapping.get(term.casefold())
 
 
+class MissingIndexLookup(StubLookup):
+    def has_index(self, *, language_code: str) -> bool:
+        return False
+
+
 class StubPronunciationGenerator:
     def __init__(self) -> None:
         self.calls: list[object] = []
@@ -389,6 +394,47 @@ def test_frequency_failures_are_flagged_for_backfill() -> None:
     assert candidate.warning_code == "backfill_required"
     assert candidate.frequency_rank == 12
     assert candidate.frequency_level == 1
+
+
+def test_frequency_can_fallback_to_wordfreq_seed_when_lookup_index_is_missing() -> None:
+    generator = StubDefinitionGenerator()
+    pronunciation_generator = StubPronunciationGenerator()
+    service = LexicalGroundingService(
+        lookup=MissingIndexLookup({}),
+        pronunciation_generator=pronunciation_generator,
+        definition_generator=generator,
+        allow_frequency_seed_fallback=True,
+    )
+    seed = LexicalCardCandidate(
+        submitted_form="perro",
+        display_form="perro",
+        lemma="perro",
+        lemma_key="perro",
+        frequency_rank=12,
+        frequency_level=1,
+        translation_target_language="en",
+        grounding_status=GroundingStatus.PENDING,
+        provenance=LexicalProvenance(source="wordfreq"),
+    )
+
+    candidate = service.ground_frequency_candidate(
+        language=SupportedLanguage.ES,
+        candidate=seed,
+    )
+
+    assert candidate.grounding_status is GroundingStatus.GROUNDED
+    assert candidate.frequency_rank == 12
+    assert candidate.frequency_level == 1
+    assert candidate.definitions_html == "term: LLM definition for perro"
+    assert candidate.ipa == "/right/"
+    assert candidate.spoken_form == "RYT"
+    assert candidate.provenance.source == "wordfreq"
+    assert candidate.provenance.pronunciation is not None
+    assert candidate.provenance.pronunciation.source == "provider-pronunciation-generator"
+    assert generator.calls[0].lemma == "perro"
+    assert generator.calls[0].source_language == "es"
+    assert generator.calls[0].target_language == "en"
+    assert pronunciation_generator.calls
 
 
 def test_frequency_uses_lexical_lookup_without_cache_definition_for_card_definition() -> None:

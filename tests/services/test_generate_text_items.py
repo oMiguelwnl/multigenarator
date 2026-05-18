@@ -751,7 +751,7 @@ def test_generate_text_items_preserves_frequency_and_word_list_profile_validatio
     assert [call["max_sentence_tokens"] for call in validation.calls] == [12, 12]
 
 
-def test_generate_text_items_skips_same_language_translation_only_for_word_list() -> None:
+def test_generate_text_items_skips_same_language_translation_validation() -> None:
     repository = FakeTextRepository(
         candidates=[
             PersistedCandidate(
@@ -797,7 +797,7 @@ def test_generate_text_items_skips_same_language_translation_only_for_word_list(
 
     service.execute(job_id="job-same-language", deck_language=SupportedLanguage.EN)
 
-    assert [call["require_translation"] for call in validation.calls] == [True, False]
+    assert [call["require_translation"] for call in validation.calls] == [False, False]
 
 
 def test_generate_text_items_infers_source_profile_when_source_type_is_absent() -> None:

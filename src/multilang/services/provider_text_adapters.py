@@ -268,9 +268,11 @@ def _sentence_prompt(request: SentenceGenerationRequest) -> str:
 
 
 def _definition_prompt(request: DefinitionGenerationRequest) -> str:
+    source_name = _LANGUAGE_NAMES.get(request.source_language, request.source_language)
     target_name = _LANGUAGE_NAMES.get(request.target_language, request.target_language)
     lines = [
-        f"Definition language: {target_name} ({request.target_language})",
+        f"Source word language: {source_name} ({request.source_language})",
+        f"Definition output language: {target_name} ({request.target_language})",
         f"Study form: {request.display_form}",
         f"Lemma: {request.lemma}",
     ]
@@ -279,9 +281,11 @@ def _definition_prompt(request: DefinitionGenerationRequest) -> str:
     lines.extend(
         [
             "Rules:",
+            "- Define the Study form as a word or expression in the source word language, not as an English spelling, letter, acronym, or unrelated homograph.",
             "- Generate the definition from your language knowledge, not from a supplied cache definition.",
             "- Return one concise learner-friendly definition.",
             "- Format definitions_html exactly as '[part of speech]: [meaning]'.",
+            "- For short function words such as one-letter prepositions or conjunctions, define their normal source-language meaning.",
             "- Do not return placeholder text such as 'learner definition for ...'.",
             "- Use plain text only; do not include lists, examples, translations, or extra HTML except <br> between multiple senses if necessary.",
         ]

@@ -90,6 +90,7 @@ def test_litellm_definition_adapter_generates_definition_without_cache_definitio
         DefinitionGenerationRequest(
             display_form="harbor",
             lemma="harbor",
+            source_language="en",
             target_language="en",
             part_of_speech="noun",
         )
@@ -98,8 +99,50 @@ def test_litellm_definition_adapter_generates_definition_without_cache_definitio
     prompt = calls[0]["messages"][1]["content"]
     assert result.definitions_html == "noun: a safe place for boats"
     assert result.provenance["source"] == "provider-definition-generator"
+    assert "Source word language: English (en)" in prompt
+    assert "Definition output language: English (en)" in prompt
     assert "Generate the definition from your language knowledge" in prompt
     assert "a sheltered place" not in prompt
+
+
+def test_litellm_definition_prompt_disambiguates_short_foreign_function_words() -> None:
+    calls: list[dict[str, object]] = []
+
+    def fake_completion(**kwargs: object) -> dict[str, object]:
+        calls.append(kwargs)
+        return {
+            "choices": [
+                {
+                    "message": {
+                        "content": json.dumps(
+                            {
+                                "definitions_html": "preposition: in; at; inside",
+                            }
+                        )
+                    }
+                }
+            ]
+        }
+
+    settings = Settings(
+        _env_file=None,
+        text_generation_model="openai/gpt-4o-mini",
+        openrouter_api_key="router-key",
+    )
+    result = LiteLLMSentenceAdapter(settings, completion_func=fake_completion).generate_definition(
+        DefinitionGenerationRequest(
+            display_form="w",
+            lemma="w",
+            source_language="pl",
+            target_language="en",
+        )
+    )
+
+    prompt = calls[0]["messages"][1]["content"]
+    assert result.definitions_html == "preposition: in; at; inside"
+    assert "Source word language: Polish (pl)" in prompt
+    assert "not as an English spelling, letter" in prompt
+    assert "one-letter prepositions" in prompt
 
 
 def test_litellm_highlight_prompt_uses_redacted_context_and_rules() -> None:

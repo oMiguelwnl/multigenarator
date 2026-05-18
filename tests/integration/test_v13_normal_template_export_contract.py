@@ -107,6 +107,8 @@ def test_normal_apkg_omits_front_of_card_and_exports_responsive_sentence_layout(
     assert "sentenceAudioButton" in qfmt
     assert "{{Example Sentence}}" in qfmt
     assert "{{sentence_audio}}" in qfmt
+    assert '<div class="header">Definição:</div>' in qfmt
+    assert '<div class="header">Exemplo:</div>' in qfmt
     assert ".exampleSentenceLine" in css
     assert ".exampleSentenceText" in css
     assert ".sentenceAudioButton" in css

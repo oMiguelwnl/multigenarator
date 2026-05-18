@@ -1,4 +1,4 @@
-"""Deterministic introductory Russian phoneme Anki deck."""
+"""Deterministic introductory phoneme Anki decks."""
 
 from __future__ import annotations
 
@@ -18,6 +18,14 @@ PHONEME_MODEL_ID = 1_602_300_601
 PHONEME_DECK_ID = 1_602_300_602
 PHONEME_NOTE_TYPE_NAME = "Multilang::Russian Phoneme"
 DEFAULT_RUSSIAN_PHONEME_DECK_NAME = "Multilang Russian::Intro Phonemes"
+POLISH_PHONEME_MODEL_ID = 1_602_300_603
+POLISH_PHONEME_DECK_ID = 1_602_300_604
+POLISH_PHONEME_NOTE_TYPE_NAME = "Multilang::Polish Phoneme"
+DEFAULT_POLISH_PHONEME_DECK_NAME = "Multilang Polish::Intro Phonemes"
+POLISH_PHONEME_VOICE_ID = "pl-PL-AgnieszkaNeural"
+POLISH_PHONEME_LOCALE = "pl-PL"
+RUSSIAN_PHONEME_VOICE_ID = "ru-RU-DmitryNeural"
+RUSSIAN_PHONEME_LOCALE = "ru-RU"
 PHONEME_FIELD_NAMES = (
     "Spellings",
     "Sound",
@@ -49,10 +57,11 @@ class RussianPhonemeCard:
     letter_audio: str = ""
     word_audio: str = ""
     sentence_audio: str = ""
+    language_code: str = "ru"
 
     @property
     def guid(self) -> str:
-        payload = f"ru-phoneme|{self.sort_index}|{self.letters}|{self.ipa}"
+        payload = f"{self.language_code}-phoneme|{self.sort_index}|{self.letters}|{self.ipa}"
         return sha256(payload.encode("utf-8")).hexdigest()[:32]
 
 
@@ -108,6 +117,26 @@ RUSSIAN_PHONEME_CARDS: tuple[RussianPhonemeCard, ...] = (
 )
 
 
+POLISH_PHONEME_CARDS: tuple[RussianPhonemeCard, ...] = (
+    RussianPhonemeCard(1, "ą", "/ɔ̃/", "mąż", "marido", "To jest mój mąż.", "Este é meu marido.", language_code="pl"),
+    RussianPhonemeCard(2, "ę", "/ɛ̃/", "ręka", "mão", "Moja ręka jest zimna.", "Minha mão está fria.", language_code="pl"),
+    RussianPhonemeCard(3, "ł", "/w/", "mały", "pequeno", "To jest mały dom.", "Esta é uma casa pequena.", language_code="pl"),
+    RussianPhonemeCard(4, "ń", "/ɲ/", "koń", "cavalo", "Koń biegnie szybko.", "O cavalo corre rápido.", language_code="pl"),
+    RussianPhonemeCard(5, "ś", "/ɕ/", "środa", "quarta-feira", "Dzisiaj jest środa.", "Hoje é quarta-feira.", language_code="pl"),
+    RussianPhonemeCard(6, "ź", "/ʑ/", "źle", "mal", "Czuję się źle.", "Estou me sentindo mal.", language_code="pl"),
+    RussianPhonemeCard(7, "ż", "/ʐ/", "żona", "esposa", "Moja żona jest lekarzem.", "Minha esposa é médica.", language_code="pl"),
+    RussianPhonemeCard(8, "ć", "/t͡ɕ/", "ćma", "mariposa", "Ćma leci do światła.", "A mariposa voa para a luz.", language_code="pl"),
+    RussianPhonemeCard(9, "ó", "/u/", "mówić", "falar", "Lubię mówić po polsku.", "Eu gosto de falar polonês.", language_code="pl"),
+    RussianPhonemeCard(10, "cz", "/t͡ʂ/", "czekolada", "chocolate", "Lubię czekoladę.", "Eu gosto de chocolate.", language_code="pl"),
+    RussianPhonemeCard(11, "sz", "/ʂ/", "szkoła", "escola", "Idę do szkoły.", "Eu vou para a escola.", language_code="pl"),
+    RussianPhonemeCard(12, "rz", "/ʐ/", "rzeka", "rio", "Rzeka jest długa.", "O rio é longo.", language_code="pl"),
+    RussianPhonemeCard(13, "ch", "/x/", "chleb", "pão", "Jem chleb.", "Eu como pão.", language_code="pl"),
+    RussianPhonemeCard(14, "dz", "/d͡z/", "dzwon", "sino", "Słyszę dzwon.", "Eu ouço um sino.", language_code="pl"),
+    RussianPhonemeCard(15, "dź", "/d͡ʑ/", "dźwięk", "som", "Ten dźwięk jest głośny.", "Este som é alto.", language_code="pl"),
+    RussianPhonemeCard(16, "dż", "/d͡ʐ/", "dżem", "geleia", "Jem chleb z dżemem.", "Eu como pão com geleia.", language_code="pl"),
+)
+
+
 class RussianPhonemeNote(genanki.Note):
     @property
     def guid(self) -> str:
@@ -121,10 +150,18 @@ class RussianPhonemeDeckExportResult:
 
 
 def build_russian_phoneme_model() -> genanki.Model:
-    template = _load_russian_phoneme_template()
+    return _build_phoneme_model(model_id=PHONEME_MODEL_ID, note_type_name=PHONEME_NOTE_TYPE_NAME)
+
+
+def build_polish_phoneme_model() -> genanki.Model:
+    return _build_phoneme_model(model_id=POLISH_PHONEME_MODEL_ID, note_type_name=POLISH_PHONEME_NOTE_TYPE_NAME)
+
+
+def _build_phoneme_model(*, model_id: int, note_type_name: str) -> genanki.Model:
+    template = _load_phoneme_template()
     return genanki.Model(
-        PHONEME_MODEL_ID,
-        PHONEME_NOTE_TYPE_NAME,
+        model_id,
+        note_type_name,
         fields=[{"name": field_name} for field_name in PHONEME_FIELD_NAMES],
         templates=[
             {
@@ -142,8 +179,20 @@ def build_russian_phoneme_note(
     *,
     model: genanki.Model | None = None,
 ) -> genanki.Note:
+    return _build_phoneme_note(card, model=model or build_russian_phoneme_model())
+
+
+def build_polish_phoneme_note(
+    card: RussianPhonemeCard,
+    *,
+    model: genanki.Model | None = None,
+) -> genanki.Note:
+    return _build_phoneme_note(card, model=model or build_polish_phoneme_model())
+
+
+def _build_phoneme_note(card: RussianPhonemeCard, *, model: genanki.Model) -> genanki.Note:
     note = RussianPhonemeNote(
-        model=model or build_russian_phoneme_model(),
+        model=model,
         fields=_phoneme_card_fields(card),
     )
     note._multilang_guid = card.guid  # type: ignore[attr-defined]
@@ -157,26 +206,72 @@ def export_russian_phoneme_deck(
     cards: tuple[RussianPhonemeCard, ...] = RUSSIAN_PHONEME_CARDS,
     settings: Settings | None = None,
 ) -> RussianPhonemeDeckExportResult:
+    return _export_phoneme_deck(
+        output_path=output_path,
+        deck_id=PHONEME_DECK_ID,
+        deck_name=deck_name,
+        model=build_russian_phoneme_model(),
+        cards=cards,
+        settings=settings,
+        language_code="ru",
+        voice_id=RUSSIAN_PHONEME_VOICE_ID,
+        locale=RUSSIAN_PHONEME_LOCALE,
+    )
+
+
+def export_polish_phoneme_deck(
+    *,
+    output_path: Path,
+    deck_name: str = DEFAULT_POLISH_PHONEME_DECK_NAME,
+    cards: tuple[RussianPhonemeCard, ...] = POLISH_PHONEME_CARDS,
+    settings: Settings | None = None,
+) -> RussianPhonemeDeckExportResult:
+    return _export_phoneme_deck(
+        output_path=output_path,
+        deck_id=POLISH_PHONEME_DECK_ID,
+        deck_name=deck_name,
+        model=build_polish_phoneme_model(),
+        cards=cards,
+        settings=settings,
+        language_code="pl",
+        voice_id=POLISH_PHONEME_VOICE_ID,
+        locale=POLISH_PHONEME_LOCALE,
+    )
+
+
+def _export_phoneme_deck(
+    *,
+    output_path: Path,
+    deck_id: int,
+    deck_name: str,
+    model: genanki.Model,
+    cards: tuple[RussianPhonemeCard, ...],
+    settings: Settings | None,
+    language_code: str,
+    voice_id: str,
+    locale: str,
+) -> RussianPhonemeDeckExportResult:
     settings = settings or Settings()
-    model = build_russian_phoneme_model()
-    deck = genanki.Deck(PHONEME_DECK_ID, deck_name)
-    
+    deck = genanki.Deck(deck_id, deck_name)
+
     # Synthesize audio for all cards
     synthesizer = AzureSpeechAdapter(settings)
     audio_dir = Path(settings.audio_storage_dir) / "phoneme" / datetime.now().strftime("%Y-%m-%d")
     media_files: list[Path] = []
-    
+
     # Synthesize audio for each card
-    cards_with_audio = []
     for card in cards:
+        card = card if card.language_code == language_code else replace(card, language_code=language_code)
         card_with_audio = _synthesize_card_audio(
             card=card,
             synthesizer=synthesizer,
             audio_dir=audio_dir,
             media_files=media_files,
+            language_code=language_code,
+            voice_id=voice_id,
+            locale=locale,
         )
-        cards_with_audio.append(card_with_audio)
-        deck.add_note(build_russian_phoneme_note(card_with_audio, model=model))
+        deck.add_note(_build_phoneme_note(card_with_audio, model=model))
 
     output_path.parent.mkdir(parents=True, exist_ok=True)
     package = genanki.Package(deck)
@@ -191,6 +286,9 @@ def _synthesize_card_audio(
     synthesizer: AzureSpeechAdapter,
     audio_dir: Path,
     media_files: list[Path],
+    language_code: str,
+    voice_id: str,
+    locale: str,
 ) -> RussianPhonemeCard:
     """Synthesize audio for letter, word, and sentence of a card."""
     letter_audio = ""
@@ -204,6 +302,9 @@ def _synthesize_card_audio(
             item_id=f"letter-{card.sort_index}",
             synthesizer=synthesizer,
             audio_dir=audio_dir,
+            language_code=language_code,
+            voice_id=voice_id,
+            locale=locale,
         )
         if letter_audio_path:
             letter_audio = f"[sound:{letter_audio_path.name}]"
@@ -219,6 +320,9 @@ def _synthesize_card_audio(
             item_id=f"word-{card.sort_index}",
             synthesizer=synthesizer,
             audio_dir=audio_dir,
+            language_code=language_code,
+            voice_id=voice_id,
+            locale=locale,
         )
         if word_audio_path:
             word_audio = f"[sound:{word_audio_path.name}]"
@@ -233,6 +337,9 @@ def _synthesize_card_audio(
             item_id=f"sentence-{card.sort_index}",
             synthesizer=synthesizer,
             audio_dir=audio_dir,
+            language_code=language_code,
+            voice_id=voice_id,
+            locale=locale,
         )
         if sentence_audio_path:
             sentence_audio = f"[sound:{sentence_audio_path.name}]"
@@ -255,11 +362,14 @@ def _synthesize_text(
     item_id: str,
     synthesizer: AzureSpeechAdapter,
     audio_dir: Path,
+    language_code: str,
+    voice_id: str,
+    locale: str,
 ) -> Path | None:
-    """Synthesize audio for Russian text and return the file path."""
+    """Synthesize audio for phoneme deck text and return the file path."""
     # Generate unique filename based on content
     content_hash = sha256(text.encode("utf-8")).hexdigest()[:16]
-    filename = f"ru-{item_id}-{content_hash}.mp3"
+    filename = f"{language_code}-{item_id}-{content_hash}.mp3"
     output_path = audio_dir / filename
     
     # Skip if already synthesized
@@ -269,8 +379,8 @@ def _synthesize_text(
     # Synthesize using Azure Speech
     response = synthesizer.synthesize(
         ssml_text=text,
-        voice_id="ru-RU-DmitryNeural",
-        locale="ru-RU",
+        voice_id=voice_id,
+        locale=locale,
         output_path=output_path,
         audio_format="audio-24khz-48kbitrate-mono-mp3",
     )
@@ -297,25 +407,37 @@ def _phoneme_card_fields(card: RussianPhonemeCard) -> list[str]:
     return [values[field_name] for field_name in PHONEME_FIELD_NAMES]
 
 
-def _load_russian_phoneme_template() -> dict[str, str]:
+def _load_phoneme_template() -> dict[str, str]:
     template_path = files("multilang").joinpath("templates", "russian_phoneme_card.md")
     content = template_path.read_text(encoding="utf-8")
     match = _TEMPLATE_SECTION_RE.search(content)
     if match is None:
-        raise ValueError(f"unable to parse Russian phoneme template from {template_path}")
+        raise ValueError(f"unable to parse phoneme template from {template_path}")
     return {name: match.group(name).strip() for name in ("front", "back", "css")}
 
 
 __all__ = [
+    "DEFAULT_POLISH_PHONEME_DECK_NAME",
     "DEFAULT_RUSSIAN_PHONEME_DECK_NAME",
     "PHONEME_DECK_ID",
     "PHONEME_FIELD_NAMES",
     "PHONEME_MODEL_ID",
     "PHONEME_NOTE_TYPE_NAME",
+    "POLISH_PHONEME_CARDS",
+    "POLISH_PHONEME_DECK_ID",
+    "POLISH_PHONEME_LOCALE",
+    "POLISH_PHONEME_MODEL_ID",
+    "POLISH_PHONEME_NOTE_TYPE_NAME",
+    "POLISH_PHONEME_VOICE_ID",
     "RUSSIAN_PHONEME_CARDS",
+    "RUSSIAN_PHONEME_LOCALE",
+    "RUSSIAN_PHONEME_VOICE_ID",
     "RussianPhonemeCard",
     "RussianPhonemeDeckExportResult",
+    "build_polish_phoneme_model",
+    "build_polish_phoneme_note",
     "build_russian_phoneme_model",
     "build_russian_phoneme_note",
+    "export_polish_phoneme_deck",
     "export_russian_phoneme_deck",
 ]

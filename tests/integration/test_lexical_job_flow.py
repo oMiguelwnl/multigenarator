@@ -209,32 +209,54 @@ def test_generate_frequency_deck_persists_custom_cards_per_level(monkeypatch, tm
         session.close()
 
 
-def test_generate_frequency_deck_fails_fast_without_lexicon_data(
+def test_generate_frequency_deck_can_run_without_lexicon_data(
     monkeypatch, tmp_path: Path
 ) -> None:
-    database_path = str(tmp_path / "missing-lexicon.db")
+    database_path = str(tmp_path / "frequency-without-lexicon.db")
     lexicon_dir = tmp_path / "lexicon"
     lexicon_dir.mkdir()
 
     monkeypatch.setenv("MULTILANG_DATABASE_URL", f"sqlite+pysqlite:///{database_path}")
     monkeypatch.setenv("MULTILANG_LEXICON_DATA_DIR", str(lexicon_dir))
+    skip_runtime_text_generation(monkeypatch)
+
+    from multilang.services import frequency_decks
+
+    monkeypatch.setattr(
+        frequency_decks,
+        "iter_curated_frequency_candidates",
+        lambda language, scan_limit=6000: (
+            (rank, f"word-{rank}")
+            for rank in [1, 2, 3, 1001, 1002, 1003, 2001, 2002, 2003]
+        ),
+    )
+
     app = create_app()
     result = runner.invoke(
         app,
-        ["generate", "--language", "en", "--source", "frequency", "--level", "1"],
+        [
+            "generate",
+            "--language",
+            "en",
+            "--source",
+            "frequency",
+            "--cards-per-level",
+            "3",
+        ],
     )
 
-    assert result.exit_code == 1
-    assert "lexical data is missing for language 'en'" in result.output
-    assert "grounded_candidates=" not in result.output
+    assert result.exit_code == 0
+    assert "grounded_candidates=9" in result.output
+    assert "pending_groundings=0" in result.output
+    assert not (lexicon_dir / "en" / "lexical-index.json").exists()
 
     session = build_session(database_path)
     try:
         job_count = session.scalar(select(func.count(GenerationJob.id)))
         candidate_count = session.scalar(select(func.count(LexicalCandidate.id)))
 
-        assert job_count == 0
-        assert candidate_count == 0
+        assert job_count == 1
+        assert candidate_count == 9
     finally:
         session.close()
 

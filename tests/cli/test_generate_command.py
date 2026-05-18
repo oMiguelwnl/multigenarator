@@ -25,6 +25,7 @@ from multilang.services.input_fingerprint import build_run_key
 from multilang.services.ingest_lexical_items import IngestLexicalItemsService
 from multilang.services.lexical_lookup import LexicalRecord
 from multilang.services.lexical_grounding import LexicalGroundingService
+import multilang.services.russian_phoneme_deck as phoneme_deck_module
 from multilang.services.text_review import ReviewReport, ReviewReportItem
 from multilang.settings import Settings
 
@@ -780,3 +781,19 @@ def test_generate_command_reports_failed_audio_when_no_approved_voice_exists(
     assert result.exit_code == 0
     assert "audio_processed_items=1" in result.output
     assert "failed_audio_items=1" in result.output
+
+
+def test_export_polish_phonemes_command_writes_limited_deck(tmp_path: Path, monkeypatch) -> None:
+    output_path = tmp_path / "polish-phonemes.apkg"
+    app = create_app()
+    monkeypatch.setattr(phoneme_deck_module, "AzureSpeechAdapter", FakeAzureSpeechAdapter)
+
+    result = runner.invoke(
+        app,
+        ["export-polish-phonemes", "--output-path", str(output_path), "--limit", "2"],
+    )
+
+    assert result.exit_code == 0
+    assert output_path.exists()
+    assert f"artifact_path={output_path}" in result.output
+    assert "card_count=2" in result.output

@@ -1,6 +1,6 @@
-# Russian Phoneme Card Template
+# Phoneme Card Template
 
-Template used only by the introductory Russian phoneme deck.
+Template used by introductory phoneme decks.
 
 ## Fields
 

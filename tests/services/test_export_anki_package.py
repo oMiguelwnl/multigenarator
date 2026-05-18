@@ -110,6 +110,19 @@ def test_build_multilang_model_uses_project_card_template_sections() -> None:
     assert ".customCard" in model.css
 
 
+def test_build_english_frequency_model_localizes_visual_labels_only() -> None:
+    model = build_multilang_model(language=SupportedLanguage.EN)
+    qfmt = model.templates[0]["qfmt"]
+    spanish_model = build_multilang_model(language=SupportedLanguage.ES)
+
+    assert '<div class="header">Definição:</div>' in qfmt
+    assert '<div class="header">Exemplo:</div>' in qfmt
+    assert "{{Definitions}}" in qfmt
+    assert "{{Translation}}" in qfmt
+    assert '<div class="header">Definition:</div>' in spanish_model.templates[0]["qfmt"]
+    assert '<div class="header">example:</div>' in spanish_model.templates[0]["qfmt"]
+
+
 def test_normal_deck_css_does_not_update_russian_phoneme_template() -> None:
     phoneme_deck_source = Path("src/multilang/services/russian_phoneme_deck.py").read_text(encoding="utf-8")
 

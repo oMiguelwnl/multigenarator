@@ -48,6 +48,7 @@ from multilang.services.provider_text_adapters import (
     can_use_google_translate,
     can_use_litellm,
 )
+from multilang.services.provider_pronunciation_adapters import LiteLLMPronunciationAdapter
 from multilang.services.regenerate_text_item import RegenerateTextItemService
 from multilang.services.tatoeba_sentence_source import (
     StaticTatoebaCandidateProvider,
@@ -322,6 +323,12 @@ def _build_sentence_adapter(runtime_settings: Settings) -> object:
     raise ValueError(f"unsupported text generation provider: {runtime_settings.text_generation_provider}")
 
 
+def _build_pronunciation_adapter(runtime_settings: Settings) -> object | None:
+    if can_use_litellm(runtime_settings):
+        return LiteLLMPronunciationAdapter(runtime_settings)
+    return None
+
+
 def build_runtime_service(
     settings: Settings | None = None,
     *,
@@ -365,7 +372,9 @@ def build_runtime_service(
         settings=runtime_settings,
         grounding_service=LexicalGroundingService(
             lookup=LexicalLookup(data_dir=runtime_settings.lexicon_data_dir),
+            pronunciation_generator=_build_pronunciation_adapter(runtime_settings),
             definition_generator=sentence_adapter,
+            allow_frequency_seed_fallback=True,
         ),
         text_repository=text_repository,
         audio_repository=audio_repository,

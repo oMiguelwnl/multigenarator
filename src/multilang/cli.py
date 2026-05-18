@@ -25,8 +25,11 @@ from multilang.services.deck_audit_reports import write_deck_audit_reports
 from multilang.services.lexical_lookup import LexicalLookup, normalize_lexical_key
 from multilang.services.job_summary import JobLifecycleSummary, JobSummaryBuilder
 from multilang.services.russian_phoneme_deck import (
+    DEFAULT_POLISH_PHONEME_DECK_NAME,
     DEFAULT_RUSSIAN_PHONEME_DECK_NAME,
+    POLISH_PHONEME_CARDS,
     RUSSIAN_PHONEME_CARDS,
+    export_polish_phoneme_deck,
     export_russian_phoneme_deck,
 )
 from multilang.services.text_review import ReviewReport, TextReviewService
@@ -383,6 +386,9 @@ def _print_highlight_preview_counts(input_file: Path, *, language: SupportedLang
 
 
 def _prepare_lexical_data(request: GenerationRequest, *, settings: Settings) -> None:
+    if request.source_type == "frequency":
+        return
+
     lookup = LexicalLookup(data_dir=settings.lexicon_data_dir)
     if lookup.has_index(language_code=request.language.value):
         return
@@ -854,6 +860,32 @@ def create_app(
         cards = RUSSIAN_PHONEME_CARDS[:limit] if limit is not None else RUSSIAN_PHONEME_CARDS
         settings = Settings()
         result = export_russian_phoneme_deck(output_path=output_path, deck_name=deck_name, cards=cards, settings=settings)
+        typer.echo(f"artifact_path={result.output_path}")
+        typer.echo(f"card_count={result.card_count}")
+
+    @cli.command("export-polish-phonemes")
+    def export_polish_phonemes(
+        output_path: Annotated[
+            Path,
+            typer.Option(
+                "--output-path",
+                dir_okay=False,
+                writable=True,
+                help="Path for the Polish introductory phoneme .apkg deck.",
+            ),
+        ] = Settings().export_output_dir / "polish-phonemes.apkg",
+        deck_name: Annotated[
+            str,
+            typer.Option("--deck-name", help="Deck name for the Polish phoneme package."),
+        ] = DEFAULT_POLISH_PHONEME_DECK_NAME,
+        limit: Annotated[
+            int | None,
+            typer.Option("--limit", min=1, help="Export only the first N Polish phoneme cards."),
+        ] = None,
+    ) -> None:
+        cards = POLISH_PHONEME_CARDS[:limit] if limit is not None else POLISH_PHONEME_CARDS
+        settings = Settings()
+        result = export_polish_phoneme_deck(output_path=output_path, deck_name=deck_name, cards=cards, settings=settings)
         typer.echo(f"artifact_path={result.output_path}")
         typer.echo(f"card_count={result.card_count}")
 

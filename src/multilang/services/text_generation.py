@@ -45,6 +45,7 @@ class SentenceGenerationRequest(BaseModel):
 class DefinitionGenerationRequest(BaseModel):
     display_form: str = Field(min_length=1)
     lemma: str = Field(min_length=1)
+    source_language: str = Field(min_length=2)
     target_language: str = Field(min_length=2)
     part_of_speech: str | None = None
 
@@ -180,7 +181,13 @@ class TextGenerationService:
         deck_language: SupportedLanguage,
         translation_request: SentenceTranslationRequest,
     ) -> GeneratedTextBundle:
-        translation_result = self._translation_adapter.translate_sentence(translation_request)
+        if candidate.translation_target_language == deck_language.value:
+            translation_result = SentenceTranslationResult(
+                translation=sentence_result.sentence,
+                provenance={"source": "same-language-translator"},
+            )
+        else:
+            translation_result = self._translation_adapter.translate_sentence(translation_request)
 
         return GeneratedTextBundle(
             sentence=GeneratedSentence(

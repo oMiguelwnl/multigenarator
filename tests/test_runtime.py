@@ -6,6 +6,7 @@ import pytest
 
 from multilang.runtime import build_runtime_service
 from multilang.services.local_text_adapter import LocalSentenceAdapter, LocalTranslationAdapter
+from multilang.services.provider_pronunciation_adapters import LiteLLMPronunciationAdapter
 from multilang.services.text_generation import SentenceGenerationRequest, SentenceTranslationRequest
 from multilang.settings import Settings
 
@@ -70,3 +71,20 @@ def test_runtime_allows_local_text_services_only_when_explicitly_configured(tmp_
     )
 
     assert service is not None
+
+
+def test_runtime_wires_litellm_pronunciation_adapter_when_configured(tmp_path) -> None:
+    service = build_runtime_service(
+        Settings(
+            _env_file=None,
+            database_url=f"sqlite+pysqlite:///{tmp_path / 'runtime.db'}",
+            text_generation_provider="litellm",
+            translation_provider="local",
+            openai_api_key="test-key",
+        )
+    )
+
+    assert isinstance(
+        service.grounding_service._pronunciation_generator,
+        LiteLLMPronunciationAdapter,
+    )

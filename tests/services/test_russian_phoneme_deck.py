@@ -8,15 +8,27 @@ from pathlib import Path
 
 from multilang.services.russian_phoneme_deck import (
     PHONEME_FIELD_NAMES,
+    POLISH_PHONEME_CARDS,
     RUSSIAN_PHONEME_CARDS,
     RussianPhonemeCard,
+    build_polish_phoneme_model,
+    build_polish_phoneme_note,
     build_russian_phoneme_model,
     build_russian_phoneme_note,
+    export_polish_phoneme_deck,
     export_russian_phoneme_deck,
 )
 
 
 _FIELD_REFERENCE_RE = re.compile(r"{{[#/^]?([^}:]+)}}|{{hint:([^}]+)}}")
+
+
+class NoOpAzureSpeechAdapter:
+    def __init__(self, *_args, **_kwargs) -> None:
+        pass
+
+    def synthesize(self, **_kwargs):
+        raise RuntimeError("audio disabled in phoneme deck tests")
 
 
 def _template_references(template: str) -> set[str]:
@@ -42,6 +54,60 @@ def test_russian_phoneme_example_sentences_contain_exact_example_word() -> None:
             card.example_word,
             card.example_sentence,
         )
+
+
+def test_polish_phoneme_cards_use_supplied_field_data() -> None:
+    assert len(POLISH_PHONEME_CARDS) == 16
+    assert [card.sort_index for card in POLISH_PHONEME_CARDS] == list(
+        range(1, len(POLISH_PHONEME_CARDS) + 1)
+    )
+    assert {card.language_code for card in POLISH_PHONEME_CARDS} == {"pl"}
+    assert [card.letters for card in POLISH_PHONEME_CARDS] == [
+        "ą",
+        "ę",
+        "ł",
+        "ń",
+        "ś",
+        "ź",
+        "ż",
+        "ć",
+        "ó",
+        "cz",
+        "sz",
+        "rz",
+        "ch",
+        "dz",
+        "dź",
+        "dż",
+    ]
+
+    first_card = POLISH_PHONEME_CARDS[0]
+    assert first_card.ipa == "/ɔ̃/"
+    assert first_card.example_word == "mąż"
+    assert first_card.example_word_translation == "marido"
+    assert first_card.example_sentence == "To jest mój mąż."
+    assert first_card.example_sentence_translation == "Este é meu marido."
+
+
+def test_build_polish_phoneme_model_reuses_intro_template() -> None:
+    polish_model = build_polish_phoneme_model()
+    russian_model = build_russian_phoneme_model()
+    note = build_polish_phoneme_note(POLISH_PHONEME_CARDS[0], model=polish_model)
+
+    assert [field["name"] for field in polish_model.fields] == list(PHONEME_FIELD_NAMES)
+    assert polish_model.templates[0] == russian_model.templates[0]
+    assert polish_model.css == russian_model.css
+    assert note.fields == [
+        "ą",
+        "/ɔ̃/",
+        "",
+        "mąż",
+        "",
+        "marido",
+        "To jest mój mąż.",
+        "",
+        "Este é meu marido.",
+    ]
 
 
 def test_build_russian_phoneme_model_uses_intro_template() -> None:
@@ -106,7 +172,7 @@ def test_build_russian_phoneme_model_uses_intro_template() -> None:
     assert 'document.getElementById("sentenceTranslation").style.display = "block"' in back
     assert _template_references(front).isdisjoint(forbidden_references)
     assert _template_references(back).isdisjoint(forbidden_references)
-    assert "--color-audio-button: #8369ed" in model.css
+    assert "--color-audio-button: #8b6cff" in model.css
     assert "pronunciationHighlight" not in front
     assert ".pronunciationHighlight" not in model.css
     assert note.fields == [
@@ -122,7 +188,8 @@ def test_build_russian_phoneme_model_uses_intro_template() -> None:
     ]
 
 
-def test_export_russian_phoneme_deck_writes_apkg(tmp_path: Path) -> None:
+def test_export_russian_phoneme_deck_writes_apkg(tmp_path: Path, monkeypatch) -> None:
+    monkeypatch.setattr("multilang.services.russian_phoneme_deck.AzureSpeechAdapter", NoOpAzureSpeechAdapter)
     output_path = tmp_path / "russian-phonemes.apkg"
 
     result = export_russian_phoneme_deck(output_path=output_path)
@@ -133,7 +200,20 @@ def test_export_russian_phoneme_deck_writes_apkg(tmp_path: Path) -> None:
         assert "collection.anki2" in archive.namelist()
 
 
-def test_export_russian_phoneme_deck_can_write_visual_check_subset(tmp_path: Path) -> None:
+def test_export_polish_phoneme_deck_writes_apkg(tmp_path: Path, monkeypatch) -> None:
+    monkeypatch.setattr("multilang.services.russian_phoneme_deck.AzureSpeechAdapter", NoOpAzureSpeechAdapter)
+    output_path = tmp_path / "polish-phonemes.apkg"
+
+    result = export_polish_phoneme_deck(output_path=output_path)
+
+    assert result.output_path == output_path
+    assert result.card_count == len(POLISH_PHONEME_CARDS)
+    with zipfile.ZipFile(output_path) as archive:
+        assert "collection.anki2" in archive.namelist()
+
+
+def test_export_russian_phoneme_deck_can_write_visual_check_subset(tmp_path: Path, monkeypatch) -> None:
+    monkeypatch.setattr("multilang.services.russian_phoneme_deck.AzureSpeechAdapter", NoOpAzureSpeechAdapter)
     output_path = tmp_path / "russian-phonemes-visual-check.apkg"
     cards = RUSSIAN_PHONEME_CARDS[:4]
 

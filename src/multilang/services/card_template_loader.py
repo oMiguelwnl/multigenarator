@@ -8,6 +8,7 @@ from importlib.resources.abc import Traversable
 import re
 
 from multilang.domain.exporting import export_field_names_for_source_type
+from multilang.domain.jobs import SupportedLanguage
 from multilang.domain.source_profiles import get_source_profile
 
 TEMPLATE_ROOT: Traversable = files("multilang").joinpath("templates")
@@ -34,7 +35,7 @@ class CardTemplate:
     source_template_name: str
 
 
-def load_card_template(source_type: str) -> CardTemplate:
+def load_card_template(source_type: str, *, language: SupportedLanguage | None = None) -> CardTemplate:
     """Load and validate the card template selected by a source profile."""
 
     profile = get_source_profile(source_type)
@@ -45,6 +46,8 @@ def load_card_template(source_type: str) -> CardTemplate:
         template_path=template_path,
         source_template_name=profile.template_name,
     )
+    if profile.source_type == "frequency" and language is SupportedLanguage.EN:
+        template = _localize_english_frequency_labels(template)
     validate_template_references(
         template,
         field_names=export_field_names_for_source_type(profile.source_type),
@@ -82,6 +85,21 @@ def _parse_card_template(
         back=match.group("back").strip(),
         css=match.group("css").strip(),
         source_template_name=source_template_name,
+    )
+
+
+def _localize_english_frequency_labels(template: CardTemplate) -> CardTemplate:
+    return CardTemplate(
+        front=template.front.replace(
+            '<div class="header">Definition:</div>',
+            '<div class="header">Definição:</div>',
+        ).replace(
+            '<div class="header">example:</div>',
+            '<div class="header">Exemplo:</div>',
+        ),
+        back=template.back,
+        css=template.css,
+        source_template_name=template.source_template_name,
     )
 
 

@@ -112,6 +112,16 @@ class FakeSentenceAdapter(SentenceGenerationAdapter):
         )
 
 
+class EnglishSentenceAdapter(SentenceGenerationAdapter):
+    def generate_sentence(self, request: SentenceGenerationRequest) -> SentenceGenerationResult:
+        return SentenceGenerationResult(
+            sentence="I wash my hands before dinner.",
+            intended_sense="daily routine",
+            uncertainty_notes=[],
+            provenance={"provider": "litellm", "model": "openai/gpt-4o-mini"},
+        )
+
+
 class FakeTranslationAdapter(SentenceTranslationAdapter):
     def __init__(self) -> None:
         self.requests: list[SentenceTranslationRequest] = []
@@ -189,6 +199,24 @@ def test_text_generation_service_uses_candidate_translation_policy() -> None:
     assert sentence_adapter.requests[0].target_language == SupportedLanguage.ES.value
     assert translation_adapter.requests[0].translation_target_language == "pt"
     assert translation_adapter.requests[0].sentence == result.sentence.text
+
+
+def test_text_generation_service_uses_generated_sentence_for_same_language_translation() -> None:
+    translation_adapter = FakeTranslationAdapter()
+    service = TextGenerationService(
+        sentence_adapter=EnglishSentenceAdapter(),
+        translation_adapter=translation_adapter,
+    )
+
+    candidate = build_candidate().model_copy(update={"translation_target_language": "en"})
+
+    result = service.generate_bundle(candidate=candidate, deck_language=SupportedLanguage.EN)
+
+    assert result.sentence.text == "I wash my hands before dinner."
+    assert result.translation.text == "I wash my hands before dinner."
+    assert result.translation.target_language == "en"
+    assert result.translation.provenance.source == "same-language-translator"
+    assert translation_adapter.requests == []
 
 
 def test_tatoeba_fallback_translation_uses_selected_sentence_not_linked_translation_text() -> None:
