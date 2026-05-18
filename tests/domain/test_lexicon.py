@@ -42,14 +42,14 @@ def test_candidate_keeps_submitted_and_lemma_values() -> None:
     assert candidate.lemma_key == "es:hablar"
 
 
-def test_policy_for_english_keeps_english_definition_and_translation() -> None:
+def test_policy_for_english_targets_portuguese_definition_and_translation() -> None:
     english_policy = policy_for_language(SupportedLanguage.EN)
     french_policy = policy_for_language(SupportedLanguage.FR)
 
     assert english_policy == DeckLanguagePolicy(
         deck_language=SupportedLanguage.EN,
-        definition_language="en",
-        translation_target_language="en",
+        definition_language="pt",
+        translation_target_language="pt",
     )
     assert french_policy.definition_language == "en"
     assert french_policy.translation_target_language == "en"

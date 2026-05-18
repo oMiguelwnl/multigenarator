@@ -244,7 +244,7 @@ def _candidate_source_type(candidate: object) -> str:
     return "word-list"
 
 
-_DEFINITION_TEMPLATE_RE = re.compile(r"^[A-Za-z][A-Za-z -]{1,40}:\s+\S")
+_DEFINITION_TEMPLATE_RE = re.compile(r"^[^\W\d_](?:[^\W\d_]|[ -]){1,40}:\s+\S")
 
 
 def _require_definition_template(candidate: LexicalCardCandidate, definition: str) -> str:

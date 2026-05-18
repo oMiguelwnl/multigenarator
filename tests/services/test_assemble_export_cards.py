@@ -345,6 +345,21 @@ def test_assemble_export_cards_normalizes_existing_br_separators() -> None:
     assert row.definitions == "noun: first sense<br>noun: second &amp; third"
 
 
+def test_assemble_export_cards_accepts_portuguese_definition_labels() -> None:
+    service, _ = build_service(
+        accepted_records=[make_text_record(item_key="to")],
+        candidates={"to": make_candidate(item_key="to", definitions_html="preposição: indica direção ou propósito")},
+        assets={
+            ("to", AudioAssetKind.WORD.value): make_asset(item_key="to", asset_kind=AudioAssetKind.WORD, storage_path="to-word.mp3"),
+            ("to", AudioAssetKind.SENTENCE.value): make_asset(item_key="to", asset_kind=AudioAssetKind.SENTENCE, storage_path="to-sentence.mp3"),
+        },
+    )
+
+    row = service.execute(job_id="job-1", deck_language=SupportedLanguage.EN).cards[0]
+
+    assert row.definitions == "preposição: indica direção ou propósito"
+
+
 def test_assemble_export_cards_escapes_text_and_keeps_guid_stable_when_text_changes() -> None:
     assets = {
         ("read", AudioAssetKind.WORD.value): make_asset(item_key="read", asset_kind=AudioAssetKind.WORD, storage_path="dir/read-word.mp3"),
