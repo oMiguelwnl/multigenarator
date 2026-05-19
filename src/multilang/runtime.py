@@ -17,6 +17,7 @@ from multilang.repositories.highlight_import_repository import HighlightImportRe
 from multilang.repositories.job_repository import JobRepository
 from multilang.repositories.lexical_repository import LexicalRepository
 from multilang.repositories.text_repository import TextRepository
+from multilang.services.provider_response_cache import ProviderResponseCacheService
 from multilang.domain.audio import AudioAssetKind
 from multilang.domain.exporting import (
     ExportArtifactFormat,
@@ -372,6 +373,7 @@ def build_runtime_service(
     text_generation_service = TextGenerationService(
         sentence_adapter=sentence_adapter,
         translation_adapter=translation_adapter,
+        provider_cache=ProviderResponseCacheService(text_repository),
     )
     text_validation_service = TextValidationService()
     tatoeba_sentence_source = TatoebaSentenceSource(

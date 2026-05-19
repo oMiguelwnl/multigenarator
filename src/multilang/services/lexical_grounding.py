@@ -18,6 +18,7 @@ from multilang.domain.lexicon import (
     policy_for_language,
 )
 from multilang.services.lexical_lookup import LexicalLookup, LexicalRecord, normalize_lexical_key
+from multilang.services.polish_function_words import lookup_polish_function_word
 from multilang.services.provider_pronunciation_adapters import PronunciationGenerationRequest
 from multilang.services.rate_limit import RateLimiter
 from multilang.services.text_field_remediation import remediate_definition_html
@@ -150,6 +151,10 @@ class LexicalGroundingService:
         )
 
     def _lookup_record(self, *, language: SupportedLanguage, term: str) -> LexicalRecord | None:
+        if language is SupportedLanguage.PL:
+            fixed = lookup_polish_function_word(term)
+            if fixed is not None:
+                return fixed
         return self._lookup.lookup(language_code=language.value, term=term)
 
     def _should_use_frequency_seed_fallback(self, language: SupportedLanguage) -> bool:

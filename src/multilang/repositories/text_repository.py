@@ -7,7 +7,7 @@ from uuid import uuid4
 from sqlalchemy import or_, select
 from sqlalchemy.orm import Session
 
-from multilang.db.models import LexicalCandidate, TextQualityRecordModel
+from multilang.db.models import LexicalCandidate, ProviderResponseCacheModel, TextQualityRecordModel
 from multilang.domain.lexicon import GroundingStatus
 from multilang.domain.text_quality import (
     ConfidenceLabel,
@@ -18,6 +18,7 @@ from multilang.domain.text_quality import (
     ValidationFlag,
     ValidationStatus,
 )
+from multilang.services.provider_response_cache import ProviderCacheKey, ProviderCachedResponse
 
 
 class TextRepository:
@@ -154,6 +155,77 @@ class TextRepository:
             .order_by(LexicalCandidate.item_key.asc())
         )
         return list(rows)
+
+    def list_repair_candidates(self, job_id: str, *, max_items: int | None = None) -> list[LexicalCandidate]:
+        statement = (
+            select(LexicalCandidate)
+            .join(TextQualityRecordModel, TextQualityRecordModel.lexical_candidate_id == LexicalCandidate.id)
+            .where(
+                LexicalCandidate.job_id == job_id,
+                LexicalCandidate.grounding_status == GroundingStatus.GROUNDED.value,
+                TextQualityRecordModel.review_status != ReviewStatus.ACCEPTED.value,
+            )
+            .order_by(LexicalCandidate.item_key.asc())
+        )
+        if max_items is not None:
+            statement = statement.limit(max_items)
+        return list(self.session.scalars(statement))
+
+    def claim_generation_candidates(self, job_id: str, *, missing_only: bool = False, limit: int | None = None) -> list[LexicalCandidate]:
+        candidates = self.list_generation_candidates(job_id, missing_only=missing_only)
+        return candidates if limit is None else candidates[:limit]
+
+    def get_provider_response(self, key: ProviderCacheKey) -> ProviderCachedResponse | None:
+        row = self.session.scalar(
+            select(ProviderResponseCacheModel).where(
+                ProviderResponseCacheModel.provider == key.provider,
+                ProviderResponseCacheModel.model == key.model,
+                ProviderResponseCacheModel.task_type == key.task_type,
+                ProviderResponseCacheModel.language == key.language,
+                ProviderResponseCacheModel.item_key == (key.item_key or ""),
+                ProviderResponseCacheModel.prompt_hash == (key.prompt_hash or ""),
+                ProviderResponseCacheModel.prompt_version == key.prompt_version,
+            )
+        )
+        if row is None:
+            return None
+        return ProviderCachedResponse(
+            key=key,
+            response=dict(row.normalized_response),
+            metadata=dict(row.response_metadata),
+        )
+
+    def upsert_provider_response(self, record: ProviderCachedResponse) -> ProviderCachedResponse:
+        key = record.key
+        row = self.session.scalar(
+            select(ProviderResponseCacheModel).where(
+                ProviderResponseCacheModel.provider == key.provider,
+                ProviderResponseCacheModel.model == key.model,
+                ProviderResponseCacheModel.task_type == key.task_type,
+                ProviderResponseCacheModel.language == key.language,
+                ProviderResponseCacheModel.item_key == (key.item_key or ""),
+                ProviderResponseCacheModel.prompt_hash == (key.prompt_hash or ""),
+                ProviderResponseCacheModel.prompt_version == key.prompt_version,
+            )
+        )
+        payload = {
+            "provider": key.provider,
+            "model": key.model,
+            "task_type": key.task_type,
+            "language": key.language,
+            "item_key": key.item_key or "",
+            "prompt_hash": key.prompt_hash or "",
+            "prompt_version": key.prompt_version,
+            "normalized_response": dict(record.response),
+            "response_metadata": dict(record.metadata),
+        }
+        if row is None:
+            self.session.add(ProviderResponseCacheModel(id=str(uuid4()), **payload))
+        else:
+            for field, value in payload.items():
+                setattr(row, field, value)
+        self.session.commit()
+        return record
 
     def _resolve_run_key(self, job_id: str, lexical_candidate_id: str) -> str:
         lexical_candidate = self.session.scalar(

@@ -63,6 +63,41 @@ class GenerationJob(Base):
     )
 
 
+class ProviderResponseCacheModel(Base):
+    """Persisted normalized provider response cache."""
+
+    __tablename__ = "provider_response_cache"
+    __table_args__ = (
+        UniqueConstraint(
+            "provider",
+            "model",
+            "task_type",
+            "language",
+            "item_key",
+            "prompt_hash",
+            "prompt_version",
+            name="uq_provider_response_cache_key",
+        ),
+    )
+
+    id: Mapped[str] = mapped_column(String(36), primary_key=True)
+    provider: Mapped[str] = mapped_column(String(64), nullable=False, index=True)
+    model: Mapped[str] = mapped_column(String(128), nullable=False)
+    task_type: Mapped[str] = mapped_column(String(64), nullable=False, index=True)
+    language: Mapped[str] = mapped_column(String(8), nullable=False, index=True)
+    item_key: Mapped[str] = mapped_column(String(255), nullable=False, default="")
+    prompt_hash: Mapped[str] = mapped_column(String(64), nullable=False, default="")
+    prompt_version: Mapped[str] = mapped_column(String(64), nullable=False, index=True)
+    normalized_response: Mapped[dict[str, Any]] = mapped_column(JSON, nullable=False, default=dict)
+    response_metadata: Mapped[dict[str, Any]] = mapped_column(JSON, nullable=False, default=dict)
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), nullable=False, server_default=func.now()
+    )
+    updated_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), nullable=False, server_default=func.now(), onupdate=func.now()
+    )
+
+
 class HighlightImportRecordModel(Base):
     """Private normalized highlight text for a generation job."""
 

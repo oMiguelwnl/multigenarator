@@ -10,6 +10,8 @@ from multilang.domain.text_quality import TextProvenance
 from multilang.domain.jobs import SupportedLanguage
 from multilang.domain.lexicon import GroundingStatus, LexicalCardCandidate
 from multilang.services.rate_limit import RateLimiter
+from multilang.services.provider_response_cache import ProviderCacheKey, ProviderResponseCacheService
+from multilang.services.provider_retry import retry_provider_call
 
 
 class SentenceGenerationRequest(BaseModel):
@@ -122,9 +124,13 @@ class TextGenerationService:
         *,
         sentence_adapter: SentenceGenerationAdapter,
         translation_adapter: SentenceTranslationAdapter,
+        provider_cache: ProviderResponseCacheService | None = None,
+        prompt_version: str = "text-generation-v1",
     ) -> None:
         self._sentence_adapter = sentence_adapter
         self._translation_adapter = translation_adapter
+        self._provider_cache = provider_cache
+        self._prompt_version = prompt_version
 
     def generate_bundle(
         self,
@@ -143,7 +149,7 @@ class TextGenerationService:
         )
         if rate_limiter is not None:
             rate_limiter.wait()
-        sentence_result = self._sentence_adapter.generate_sentence(sentence_request)
+        sentence_result = self._generate_sentence(sentence_request)
 
         translation_request = SentenceTranslationRequest.from_sentence(
             sentence_result=sentence_result,
@@ -197,7 +203,7 @@ class TextGenerationService:
         else:
             if rate_limiter is not None:
                 rate_limiter.wait()
-            translation_result = self._translation_adapter.translate_sentence(translation_request)
+            translation_result = self._translate_sentence(translation_request)
 
         return GeneratedTextBundle(
             sentence=GeneratedSentence(
@@ -213,6 +219,44 @@ class TextGenerationService:
                 provenance=_normalize_provenance(translation_result.provenance),
             ),
         )
+
+    def _generate_sentence(self, request: SentenceGenerationRequest) -> SentenceGenerationResult:
+        key = _cache_key_for_request("sentence", request, adapter=self._sentence_adapter, prompt_version=self._prompt_version)
+        if self._provider_cache is not None:
+            cached = self._provider_cache.get(key)
+            if cached is not None:
+                return SentenceGenerationResult.model_validate(cached.response)
+        result = retry_provider_call(lambda: self._sentence_adapter.generate_sentence(request))
+        if self._provider_cache is not None:
+            self._provider_cache.put(key, result.model_dump(mode="json"), metadata={"provider": key.provider, "model": key.model})
+        return result
+
+    def _translate_sentence(self, request: SentenceTranslationRequest) -> SentenceTranslationResult:
+        key = _cache_key_for_request("translation", request, adapter=self._translation_adapter, prompt_version=self._prompt_version)
+        if self._provider_cache is not None:
+            cached = self._provider_cache.get(key)
+            if cached is not None:
+                return SentenceTranslationResult.model_validate(cached.response)
+        result = retry_provider_call(lambda: self._translation_adapter.translate_sentence(request))
+        if self._provider_cache is not None:
+            self._provider_cache.put(key, result.model_dump(mode="json"), metadata={"provider": key.provider, "model": key.model})
+        return result
+
+
+def _cache_key_for_request(task_type: str, request: BaseModel, *, adapter: object, prompt_version: str) -> ProviderCacheKey:
+    provider = str(getattr(adapter, "provider", adapter.__class__.__name__))
+    model = str(getattr(adapter, "model", "default"))
+    language = str(getattr(request, "target_language", None) or getattr(request, "translation_target_language", ""))
+    item_key = str(getattr(request, "lemma", "") or "") or None
+    return ProviderCacheKey.from_prompt(
+        provider=provider,
+        model=model,
+        task_type=task_type,
+        language=language,
+        prompt_version=prompt_version,
+        prompt=request.model_dump(mode="json"),
+        item_key=item_key,
+    )
 
 
 class SentenceGenerationAdapter(Protocol):
