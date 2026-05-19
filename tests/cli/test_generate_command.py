@@ -20,6 +20,7 @@ from multilang.repositories.job_repository import JobRepository
 from multilang.repositories.lexical_repository import LexicalRepository
 import multilang.runtime as runtime_module
 from multilang.runtime import build_runtime_service
+from multilang.runtime import RuntimeTextResult
 from multilang.services.generate_job import GenerateJobService
 from multilang.services.input_fingerprint import build_run_key
 from multilang.services.ingest_lexical_items import IngestLexicalItemsService
@@ -30,6 +31,26 @@ from multilang.services.text_review import ReviewReport, ReviewReportItem
 from multilang.settings import Settings
 
 runner = CliRunner()
+
+
+class FakeRuntimeRepository:
+    def get_job(self, job_id: str):
+        return type("Job", (), {"id": job_id, "language": "en"})()
+
+
+class FakeRuntimeCommandService:
+    def __init__(self) -> None:
+        self.repository = FakeRuntimeRepository()
+        self.generate_text_calls: list[dict[str, object]] = []
+        self.synthesize_audio_calls: list[dict[str, object]] = []
+
+    def generate_text(self, **kwargs: object) -> RuntimeTextResult:
+        self.generate_text_calls.append(kwargs)
+        return RuntimeTextResult(processed_items=2, accepted_items=1, review_required_items=1)
+
+    def synthesize_audio(self, **kwargs: object) -> RuntimeTextResult:
+        self.synthesize_audio_calls.append(kwargs)
+        return RuntimeTextResult(processed_items=0, accepted_items=0, review_required_items=0, audio_processed_items=1, audio_reused_items=0)
 
 
 class FileWritingAudioAdapter(AudioSynthesisAdapter):
@@ -236,6 +257,32 @@ def test_generate_frequency_resume_accepts_max_items() -> None:
     assert captured[0].resume_job_id == "job-123"
     assert captured[0].max_items == 25
     assert captured[0].rate_limit_per_minute == 30
+
+
+def test_repair_text_command_uses_repair_only_without_audio() -> None:
+    service = FakeRuntimeCommandService()
+    app = create_app(service=service)
+
+    result = runner.invoke(app, ["repair-text", "--job-id", "job-1", "--max-items", "2"])
+
+    assert result.exit_code == 0
+    assert service.generate_text_calls[0]["repair_only"] is True
+    assert service.generate_text_calls[0]["synthesize_audio"] is False
+    assert service.generate_text_calls[0]["max_items"] == 2
+    assert "text_processed_items=2" in result.output
+
+
+def test_synthesize_audio_command_does_not_call_text_generation() -> None:
+    service = FakeRuntimeCommandService()
+    app = create_app(service=service)
+
+    result = runner.invoke(app, ["synthesize-audio", "--job-id", "job-1", "--missing-only", "--max-items", "3"])
+
+    assert result.exit_code == 0
+    assert service.generate_text_calls == []
+    assert service.synthesize_audio_calls[0]["missing_only"] is True
+    assert service.synthesize_audio_calls[0]["max_items"] == 3
+    assert "audio_processed_items=1" in result.output
 
 
 def test_public_kindle_highlights_source_remains_rejected() -> None:

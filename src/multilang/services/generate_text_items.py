@@ -96,6 +96,7 @@ class GenerateTextItemsService:
         max_items: int | None = None,
         progress_callback: GenerateTextProgressCallback | None = None,
         rate_limiter: RateLimiter | None = None,
+        repair_only: bool = False,
     ) -> GenerateTextItemsResult:
         if max_items is not None and max_items < 1:
             raise ValueError("max_items must be greater than or equal to 1")
@@ -103,17 +104,24 @@ class GenerateTextItemsService:
         started_at = monotonic()
         result = GenerateTextItemsResult()
         seen_sentences = self._normalize_sentences(self.text_repository.list_example_sentences_for_job(job_id))
-        candidates = self.text_repository.list_generation_candidates(job_id, missing_only=missing_only)
-        missing_item_keys = (
-            {str(getattr(candidate, "item_key")) for candidate in candidates}
-            if missing_only
-            else {
-                str(getattr(candidate, "item_key"))
-                for candidate in self.text_repository.list_generation_candidates(job_id, missing_only=True)
-            }
-        )
+        if repair_only:
+            lister = getattr(self.text_repository, "list_repair_candidates")
+            candidates = lister(job_id, max_items=max_items)
+        else:
+            candidates = self.text_repository.list_generation_candidates(job_id, missing_only=missing_only)
+        if repair_only:
+            missing_item_keys = set()
+        else:
+            missing_item_keys = (
+                {str(getattr(candidate, "item_key")) for candidate in candidates}
+                if missing_only
+                else {
+                    str(getattr(candidate, "item_key"))
+                    for candidate in self.text_repository.list_generation_candidates(job_id, missing_only=True)
+                }
+            )
         remaining_missing = len(missing_item_keys)
-        if max_items is not None:
+        if max_items is not None and not repair_only:
             candidates = candidates[:max_items]
 
         for persisted_candidate in candidates:

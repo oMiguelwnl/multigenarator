@@ -134,6 +134,8 @@ class RuntimeGenerateService(IngestLexicalItemsService):
         max_items: int | None = None,
         progress_callback: Callable[[GenerateTextProgress], None] | None = None,
         rate_limiter: RateLimiter | None = None,
+        repair_only: bool = False,
+        synthesize_audio: bool = True,
     ) -> RuntimeTextResult:
         result = self.generate_text_items_service.execute(
             job_id=job_id,
@@ -142,7 +144,14 @@ class RuntimeGenerateService(IngestLexicalItemsService):
             max_items=max_items,
             progress_callback=progress_callback,
             rate_limiter=rate_limiter,
+            repair_only=repair_only,
         )
+        if not synthesize_audio:
+            return RuntimeTextResult(
+                processed_items=result.processed_items,
+                accepted_items=result.accepted_items,
+                review_required_items=result.review_required_items,
+            )
         audio_item_keys = set(result.processed_item_keys) if missing_only or max_items is not None else None
         audio_result = self.generate_audio_items_service.execute(
             job_id=job_id,
@@ -153,6 +162,30 @@ class RuntimeGenerateService(IngestLexicalItemsService):
             processed_items=result.processed_items,
             accepted_items=result.accepted_items,
             review_required_items=result.review_required_items,
+            audio_processed_items=audio_result.processed_items,
+            audio_reused_items=audio_result.reused_items,
+            fallback_audio_items=audio_result.fallback_items,
+            failed_audio_items=audio_result.failed_items,
+        )
+
+    def synthesize_audio(
+        self,
+        *,
+        job_id: str,
+        deck_language: object,
+        missing_only: bool = False,
+        max_items: int | None = None,
+    ) -> RuntimeTextResult:
+        audio_result = self.generate_audio_items_service.execute(
+            job_id=job_id,
+            deck_language=deck_language,
+            missing_only=missing_only,
+            max_items=max_items,
+        )
+        return RuntimeTextResult(
+            processed_items=0,
+            accepted_items=0,
+            review_required_items=0,
             audio_processed_items=audio_result.processed_items,
             audio_reused_items=audio_result.reused_items,
             fallback_audio_items=audio_result.fallback_items,
@@ -190,12 +223,13 @@ class RuntimeGenerateService(IngestLexicalItemsService):
         export_format: ExportArtifactFormat,
         output_dir: Path,
         deck_name: str | None = None,
+        refresh_snapshots: bool = False,
     ) -> RuntimeExportResult:
         job = self.job_service.repository.get_job(job_id)
         if job is None:
             raise ValueError(f"unknown job_id: {job_id}")
 
-        rows = self.export_repository.list_card_snapshots(job_id)
+        rows = [] if refresh_snapshots else self.export_repository.list_card_snapshots(job_id)
         if not rows:
             rows = self.assemble_export_cards_service.execute(
                 job_id=job_id,

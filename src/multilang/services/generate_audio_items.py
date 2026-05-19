@@ -43,8 +43,13 @@ class GenerateAudioItemsService:
         job_id: str,
         deck_language: SupportedLanguage,
         item_keys: set[str] | None = None,
+        missing_only: bool = False,
+        max_items: int | None = None,
     ) -> GenerateAudioItemsResult:
+        if max_items is not None and max_items < 1:
+            raise ValueError("max_items must be greater than or equal to 1")
         result = GenerateAudioItemsResult()
+        processed_records = 0
 
         for text_record in self.text_repository.list_accepted_records(job_id):
             if item_keys is not None and text_record.item_key not in item_keys:
@@ -64,6 +69,13 @@ class GenerateAudioItemsService:
                 assets.append(prepared_bundle.word_asset)
             if "sentence_audio" in field_names:
                 assets.append(prepared_bundle.sentence_asset)
+            if missing_only:
+                assets = [asset for asset in assets if self.audio_repository.get_asset(job_id, text_record.item_key, asset.asset_kind) is None]
+                if not assets:
+                    continue
+            if max_items is not None and processed_records >= max_items:
+                break
+            processed_records += 1
 
             for prepared_asset in assets:
                 final_asset, reused = self._materialize_asset(prepared_asset)

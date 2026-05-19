@@ -836,6 +836,10 @@ def create_app(
             str | None,
             typer.Option("--deck-name", help="Optional deck name override for exported artifacts."),
         ] = None,
+        refresh_snapshots: Annotated[
+            bool,
+            typer.Option("--refresh-snapshots", help="Rebuild card_exports before writing the artifact."),
+        ] = False,
     ) -> None:
         resolved_service = resolve_service()
         if resolved_service is None or not hasattr(resolved_service, "export_job"):
@@ -850,6 +854,7 @@ def create_app(
                 export_format=format,
                 output_dir=target_output_dir,
                 deck_name=deck_name,
+                refresh_snapshots=refresh_snapshots,
             )
         except ValueError as exc:
             typer.echo(str(exc))
@@ -857,6 +862,54 @@ def create_app(
 
         typer.echo(f"artifact_path={result.output_path}")
         typer.echo(f"card_count={result.card_count}")
+
+    @cli.command("repair-text")
+    def repair_text(
+        job_id: Annotated[str, typer.Option("--job-id", help="Persisted job id to repair.")],
+        max_items: Annotated[int | None, typer.Option("--max-items", min=1, help="Maximum review rows to repair.")] = None,
+    ) -> None:
+        resolved_service = resolve_service()
+        if resolved_service is None or not hasattr(resolved_service, "generate_text"):
+            raise typer.Exit(code=1)
+        job = resolved_service.repository.get_job(job_id)
+        if job is None:
+            typer.echo(f"unknown job_id: {job_id}")
+            raise typer.Exit(code=1)
+        result = resolved_service.generate_text(
+            job_id=job_id,
+            deck_language=SupportedLanguage(job.language),
+            max_items=max_items,
+            repair_only=True,
+            synthesize_audio=False,
+            progress_callback=_print_generate_text_progress,
+        )
+        typer.echo(f"text_processed_items={result.processed_items}")
+        typer.echo(f"accepted_text_items={result.accepted_items}")
+        typer.echo(f"review_required_text_items={result.review_required_items}")
+
+    @cli.command("synthesize-audio")
+    def synthesize_audio(
+        job_id: Annotated[str, typer.Option("--job-id", help="Persisted job id to synthesize audio for.")],
+        missing_only: Annotated[bool, typer.Option("--missing-only", help="Generate only missing audio assets.")] = False,
+        max_items: Annotated[int | None, typer.Option("--max-items", min=1, help="Maximum text rows to process.")] = None,
+    ) -> None:
+        resolved_service = resolve_service()
+        if resolved_service is None or not hasattr(resolved_service, "synthesize_audio"):
+            raise typer.Exit(code=1)
+        job = resolved_service.repository.get_job(job_id)
+        if job is None:
+            typer.echo(f"unknown job_id: {job_id}")
+            raise typer.Exit(code=1)
+        result = resolved_service.synthesize_audio(
+            job_id=job_id,
+            deck_language=SupportedLanguage(job.language),
+            missing_only=missing_only,
+            max_items=max_items,
+        )
+        typer.echo(f"audio_processed_items={result.audio_processed_items}")
+        typer.echo(f"audio_reused_items={result.audio_reused_items}")
+        typer.echo(f"fallback_audio_items={result.fallback_audio_items}")
+        typer.echo(f"failed_audio_items={result.failed_audio_items}")
 
     @cli.command("audit-deck")
     def audit_deck(

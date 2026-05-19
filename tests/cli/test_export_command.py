@@ -23,7 +23,7 @@ class FakeExportResult:
 class FakeRuntimeService:
     response: FakeExportResult | None = None
     error: Exception | None = None
-    calls: list[tuple[str, ExportArtifactFormat, Path, str | None]] = field(default_factory=list)
+    calls: list[tuple[str, ExportArtifactFormat, Path, str | None, bool]] = field(default_factory=list)
 
     def export_job(
         self,
@@ -32,8 +32,9 @@ class FakeRuntimeService:
         export_format: ExportArtifactFormat,
         output_dir: Path,
         deck_name: str | None,
+        refresh_snapshots: bool = False,
     ) -> FakeExportResult:
-        self.calls.append((job_id, export_format, output_dir, deck_name))
+        self.calls.append((job_id, export_format, output_dir, deck_name, refresh_snapshots))
         if self.error is not None:
             raise self.error
         assert self.response is not None
@@ -62,7 +63,22 @@ def test_export_command_writes_requested_artifact_and_prints_path(tmp_path: Path
     assert result.exit_code == 0
     assert f"artifact_path={artifact_path}" in result.output
     assert "card_count=3" in result.output
-    assert service.calls == [("job-1", ExportArtifactFormat.CSV, tmp_path / "exports", None)]
+    assert service.calls == [("job-1", ExportArtifactFormat.CSV, tmp_path / "exports", None, False)]
+
+
+def test_export_command_forwards_refresh_snapshots(tmp_path: Path) -> None:
+    artifact_path = tmp_path / "exports" / "job-1.tsv"
+    artifact_path.parent.mkdir(parents=True, exist_ok=True)
+    artifact_path.write_text("tsv", encoding="utf-8")
+    service = FakeRuntimeService(response=FakeExportResult(output_path=artifact_path, card_count=1))
+
+    result = runner.invoke(
+        create_app(service=service),
+        ["export", "--job-id", "job-1", "--format", "tsv", "--output-dir", str(tmp_path / "exports"), "--refresh-snapshots"],
+    )
+
+    assert result.exit_code == 0
+    assert service.calls == [("job-1", ExportArtifactFormat.TSV, tmp_path / "exports", None, True)]
 
 
 def test_export_command_exits_non_zero_with_explicit_diagnostics(tmp_path: Path) -> None:

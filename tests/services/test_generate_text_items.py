@@ -121,6 +121,9 @@ class FakeTextRepository:
         self.missing_only_calls.append(missing_only)
         return list(self.candidates)
 
+    def list_repair_candidates(self, job_id: str, *, max_items: int | None = None) -> list[object]:
+        return list(self.candidates[:max_items]) if max_items is not None else list(self.candidates)
+
     def list_example_sentences_for_job(
         self,
         job_id: str,
@@ -275,6 +278,25 @@ def test_generate_text_items_limits_eligible_candidates_after_missing_only_selec
     assert [snapshot.remaining_missing for snapshot in progress] == [2, 1]
     assert [snapshot.last_item_key for snapshot in progress] == ["line-1", "line-2"]
     assert all(snapshot.elapsed_seconds >= 0 for snapshot in progress)
+
+
+def test_generate_text_items_repair_only_uses_review_selection_without_missing_only() -> None:
+    repository = FakeTextRepository(candidates=[PersistedCandidate(id="lex-1", item_key="line-1", candidate=make_candidate())])
+    generation = FakeGenerationService(bundles=[make_bundle(sentence="I wash the cup at home.", translation="I wash the cup at home.")])
+    validation = FakeValidationService(results=[make_validation_result(status=ValidationStatus.PASSED, label=ConfidenceLabel.HIGH, score=0.93)])
+    service = GenerateTextItemsService(
+        job_repository=FakeJobRepository(),
+        lexical_repository=None,
+        text_repository=repository,
+        text_generation_service=generation,
+        text_validation_service=validation,
+        tatoeba_sentence_source=FakeTatoebaSentenceSource(fallback=None),
+    )
+
+    result = service.execute(job_id="job-1", deck_language=SupportedLanguage.EN, repair_only=True, max_items=1)
+
+    assert result.processed_items == 1
+    assert repository.missing_only_calls == []
 
 
 def test_generate_text_items_repairs_once_then_accepts() -> None:
