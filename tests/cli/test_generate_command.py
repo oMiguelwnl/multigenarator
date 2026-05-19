@@ -210,6 +210,34 @@ def test_generate_highlights_source_maps_to_internal_kindle_highlights(tmp_path:
     assert captured[0].source_type == "kindle-highlights"
 
 
+def test_generate_frequency_resume_accepts_max_items() -> None:
+    captured: list[GenerationRequest] = []
+    app = create_app(generate_executor=lambda request: captured.append(request))
+
+    result = runner.invoke(
+        app,
+        [
+            "generate",
+            "--language",
+            "pl",
+            "--source",
+            "frequency",
+            "--resume",
+            "job-123",
+            "--max-items",
+            "25",
+            "--rate-limit-per-minute",
+            "30",
+        ],
+    )
+
+    assert result.exit_code == 0
+    assert captured[0].source_type == "frequency"
+    assert captured[0].resume_job_id == "job-123"
+    assert captured[0].max_items == 25
+    assert captured[0].rate_limit_per_minute == 30
+
+
 def test_public_kindle_highlights_source_remains_rejected() -> None:
     app = create_app(generate_executor=lambda request: None)
 

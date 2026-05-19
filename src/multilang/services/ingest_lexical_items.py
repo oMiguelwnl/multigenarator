@@ -19,6 +19,7 @@ from multilang.services.lexical_grounding import (
     LexicalGroundingService,
     build_lexical_grounding_service,
 )
+from multilang.services.rate_limit import RateLimiter
 from multilang.services.word_list_parser import parse_word_list
 from multilang.settings import Settings
 
@@ -63,18 +64,28 @@ class IngestLexicalItemsService:
         )
         self.highlight_import_repo = highlight_import_repo
 
-    def execute(self, request: GenerationRequest) -> IngestLexicalItemsResult:
+    def execute(
+        self,
+        request: GenerationRequest,
+        *,
+        rate_limiter: RateLimiter | None = None,
+    ) -> IngestLexicalItemsResult:
         """Execute lexical ingestion for the shipped runtime path."""
 
         if request.source_type == "frequency":
-            return self._ingest_frequency_deck(request)
+            return self._ingest_frequency_deck(request, rate_limiter=rate_limiter)
         if request.source_type == "word-list":
-            return self._ingest_word_list(request)
+            return self._ingest_word_list(request, rate_limiter=rate_limiter)
         if request.source_type == "kindle-highlights":
-            return self._ingest_highlights(request)
+            return self._ingest_highlights(request, rate_limiter=rate_limiter)
         raise ValueError(f"Unsupported source type: {request.source_type}")
 
-    def _ingest_highlights(self, request: GenerationRequest) -> IngestLexicalItemsResult:
+    def _ingest_highlights(
+        self,
+        request: GenerationRequest,
+        *,
+        rate_limiter: RateLimiter | None = None,
+    ) -> IngestLexicalItemsResult:
         if request.input_file is None:
             raise ValueError("kindle-highlights requests require an input file")
         if self.highlight_import_repo is None:
@@ -135,6 +146,7 @@ class IngestLexicalItemsService:
             grounded = self.grounding_service.ground_highlight_candidate(
                 language=request.language,
                 candidate=highlight_candidate,
+                rate_limiter=rate_limiter,
             )
             if grounded.grounding_status is not GroundingStatus.GROUNDED:
                 blocked_candidates += 1
@@ -180,7 +192,12 @@ class IngestLexicalItemsService:
         result.planned_cards = len(grounded_item_keys) + len(orchestration.skipped_item_keys)
         return result
 
-    def _ingest_frequency_deck(self, request: GenerationRequest) -> IngestLexicalItemsResult:
+    def _ingest_frequency_deck(
+        self,
+        request: GenerationRequest,
+        *,
+        rate_limiter: RateLimiter | None = None,
+    ) -> IngestLexicalItemsResult:
         """Ingest lexical items from a frequency deck with lexical backfill."""
 
         language = request.language
@@ -221,6 +238,7 @@ class IngestLexicalItemsService:
                 language=language,
                 level=level,
                 required_count_per_level=cards_per_level,
+                rate_limiter=rate_limiter,
             )
             total_backfilled += backfilled_count
             level_counts[level] = len(grounded_candidates)
@@ -248,7 +266,12 @@ class IngestLexicalItemsService:
         self.repository.advance_job_to_stage(orchestration.job_id, JobStage.GENERATE_TEXT)
         return result
 
-    def _ingest_word_list(self, request: GenerationRequest) -> IngestLexicalItemsResult:
+    def _ingest_word_list(
+        self,
+        request: GenerationRequest,
+        *,
+        rate_limiter: RateLimiter | None = None,
+    ) -> IngestLexicalItemsResult:
         """Ingest lexical items from a custom word list, preserving pending items."""
 
         if request.input_file is None:
@@ -281,6 +304,7 @@ class IngestLexicalItemsService:
             candidate = self.grounding_service.ground_word_list_item(
                 language=request.language,
                 item=item,
+                rate_limiter=rate_limiter,
             )
             self.lexical_repo.upsert_candidate(
                 job_id=orchestration.job_id,
@@ -338,6 +362,7 @@ class IngestLexicalItemsService:
         language: SupportedLanguage,
         level: int,
         required_count_per_level: int = 1000,
+        rate_limiter: RateLimiter | None = None,
     ) -> tuple[list[LexicalCardCandidate], int]:
         rejected_lemmas: set[str] = set()
 
@@ -354,6 +379,7 @@ class IngestLexicalItemsService:
                 grounded_candidate = self.grounding_service.ground_frequency_candidate(
                     language=language,
                     candidate=candidate,
+                    rate_limiter=rate_limiter,
                 )
                 if grounded_candidate.grounding_status is GroundingStatus.GROUNDED:
                     grounded_candidates.append(grounded_candidate)

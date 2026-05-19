@@ -52,6 +52,9 @@ class GenerationRequest(BaseModel):
     resume_job_id: str | None = None
     overwrite: bool = False
     yes_overwrite: bool = False
+    missing_only: bool = False
+    max_items: int | None = Field(default=None, ge=1)
+    rate_limit_per_minute: int | None = Field(default=None, ge=1)
 
     def resolved_cards_per_level(self) -> int:
         if self.cards_per_level is not None:

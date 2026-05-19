@@ -65,6 +65,14 @@ class FixedDefinitionGenerator:
         )
 
 
+class RecordingRateLimiter:
+    def __init__(self) -> None:
+        self.wait_count = 0
+
+    def wait(self) -> None:
+        self.wait_count += 1
+
+
 def test_grounding_prefers_study_form_and_manual_language_policy() -> None:
     generator = StubDefinitionGenerator()
     service = LexicalGroundingService(
@@ -105,6 +113,38 @@ def test_grounding_prefers_study_form_and_manual_language_policy() -> None:
     assert generator.calls[0].target_language == "es"
     assert candidate.provenance.definition is not None
     assert candidate.provenance.definition.source == "stub-llm-definition-generator"
+
+
+def test_grounding_rate_limits_definition_and_pronunciation_provider_calls() -> None:
+    definition_generator = StubDefinitionGenerator()
+    pronunciation_generator = StubPronunciationGenerator()
+    limiter = RecordingRateLimiter()
+    service = LexicalGroundingService(
+        lookup=StubLookup(
+            {
+                "wash": LexicalRecord(
+                    term="wash",
+                    display_form="wash",
+                    lemma="wash",
+                    definitions=[],
+                    part_of_speech="verb",
+                    ipa=None,
+                )
+            }
+        ),
+        definition_generator=definition_generator,
+        pronunciation_generator=pronunciation_generator,
+    )
+
+    service.ground_word_list_item(
+        language=SupportedLanguage.EN,
+        item=ParsedWordListItem(line_number=1, submitted_form="wash", display_form="wash", item_key="wash"),
+        rate_limiter=limiter,
+    )
+
+    assert limiter.wait_count == 2
+    assert len(definition_generator.calls) == 1
+    assert len(pronunciation_generator.calls) == 1
 
 
 def test_grounding_uses_canonical_display_when_lookup_resolves_source_form() -> None:

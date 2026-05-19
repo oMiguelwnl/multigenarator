@@ -233,7 +233,7 @@ def test_list_generation_candidates_and_round_trip_structured_fields() -> None:
         request=make_request(),
         run_key="run-en-text",
         source_fingerprint="list-c",
-        total_items=3,
+        total_items=4,
     )
     pending = seed_lexical_candidate(
         lexical_repository,
@@ -259,6 +259,14 @@ def test_list_generation_candidates_and_round_trip_structured_fields() -> None:
         run_key=job.run_key,
         item_key="line-3",
         lemma="cook",
+    )
+    missing_text = seed_lexical_candidate(
+        lexical_repository,
+        _,
+        job_id=job.id,
+        run_key=job.run_key,
+        item_key="line-4",
+        lemma="draw",
     )
 
     repository.upsert_text_record(
@@ -295,11 +303,14 @@ def test_list_generation_candidates_and_round_trip_structured_fields() -> None:
 
     stored = repository.get_text_record(job.id, "line-2")
     candidates = repository.list_generation_candidates(job.id)
+    missing_only_candidates = repository.list_generation_candidates(job.id, missing_only=True)
 
     assert stored is not None
     assert stored.validation_flags[0].code is ValidationFlagCode.LOW_CONFIDENCE
     assert stored.sentence_provenance.metadata["repair"] is True
     assert stored.translation_provenance.metadata["repair"] is True
     assert pending.grounding_status == GroundingStatus.PENDING.value
-    assert [candidate.item_key for candidate in candidates] == ["line-2"]
+    assert [candidate.item_key for candidate in candidates] == ["line-2", "line-4"]
+    assert [candidate.item_key for candidate in missing_only_candidates] == ["line-4"]
     assert candidates[0].lemma == review.lemma
+    assert missing_only_candidates[0].lemma == missing_text.lemma

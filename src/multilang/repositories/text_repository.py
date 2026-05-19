@@ -131,7 +131,15 @@ class TextRepository:
         )
         return [self._to_domain(row) for row in rows]
 
-    def list_generation_candidates(self, job_id: str) -> list[LexicalCandidate]:
+    def list_generation_candidates(self, job_id: str, *, missing_only: bool = False) -> list[LexicalCandidate]:
+        text_filter = (
+            TextQualityRecordModel.id.is_(None)
+            if missing_only
+            else or_(
+                TextQualityRecordModel.id.is_(None),
+                TextQualityRecordModel.review_status != ReviewStatus.ACCEPTED.value,
+            )
+        )
         rows = self.session.scalars(
             select(LexicalCandidate)
             .outerjoin(
@@ -141,10 +149,7 @@ class TextRepository:
             .where(
                 LexicalCandidate.job_id == job_id,
                 LexicalCandidate.grounding_status == GroundingStatus.GROUNDED.value,
-                or_(
-                    TextQualityRecordModel.id.is_(None),
-                    TextQualityRecordModel.review_status != ReviewStatus.ACCEPTED.value,
-                ),
+                text_filter,
             )
             .order_by(LexicalCandidate.item_key.asc())
         )

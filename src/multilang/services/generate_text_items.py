@@ -2,8 +2,10 @@
 
 from __future__ import annotations
 
+from collections.abc import Callable
 import re
-from dataclasses import dataclass
+from dataclasses import dataclass, field
+from time import monotonic
 from typing import Any, Protocol
 
 from multilang.domain.jobs import JobStage, SupportedLanguage
@@ -25,6 +27,7 @@ from multilang.services.text_generation import (
     SentenceGenerationResult,
     TextGenerationService,
 )
+from multilang.services.rate_limit import RateLimiter
 from multilang.services.text_validation import TextValidationResult, TextValidationService
 
 
@@ -44,6 +47,20 @@ class GenerateTextItemsResult:
     processed_items: int = 0
     accepted_items: int = 0
     review_required_items: int = 0
+    processed_item_keys: list[str] = field(default_factory=list)
+
+
+@dataclass(slots=True)
+class GenerateTextProgress:
+    processed_this_run: int
+    accepted_this_run: int
+    review_this_run: int
+    remaining_missing: int
+    last_item_key: str
+    elapsed_seconds: float
+
+
+GenerateTextProgressCallback = Callable[[GenerateTextProgress], None]
 
 
 class GenerateTextItemsService:
@@ -75,11 +92,31 @@ class GenerateTextItemsService:
         *,
         job_id: str,
         deck_language: SupportedLanguage,
+        missing_only: bool = False,
+        max_items: int | None = None,
+        progress_callback: GenerateTextProgressCallback | None = None,
+        rate_limiter: RateLimiter | None = None,
     ) -> GenerateTextItemsResult:
+        if max_items is not None and max_items < 1:
+            raise ValueError("max_items must be greater than or equal to 1")
+
+        started_at = monotonic()
         result = GenerateTextItemsResult()
         seen_sentences = self._normalize_sentences(self.text_repository.list_example_sentences_for_job(job_id))
+        candidates = self.text_repository.list_generation_candidates(job_id, missing_only=missing_only)
+        missing_item_keys = (
+            {str(getattr(candidate, "item_key")) for candidate in candidates}
+            if missing_only
+            else {
+                str(getattr(candidate, "item_key"))
+                for candidate in self.text_repository.list_generation_candidates(job_id, missing_only=True)
+            }
+        )
+        remaining_missing = len(missing_item_keys)
+        if max_items is not None:
+            candidates = candidates[:max_items]
 
-        for persisted_candidate in self.text_repository.list_generation_candidates(job_id):
+        for persisted_candidate in candidates:
             candidate_id = getattr(persisted_candidate, "id")
             item_key = getattr(persisted_candidate, "item_key")
             lexical_candidate = self._to_candidate(persisted_candidate)
@@ -98,6 +135,7 @@ class GenerateTextItemsService:
                 deck_language=deck_language,
                 source_type=source_type,
                 highlight_context=highlight_context,
+                rate_limiter=rate_limiter,
             )
             validation = self._validate_bundle(
                 bundle=generated_bundle,
@@ -119,6 +157,7 @@ class GenerateTextItemsService:
                     seen_sentences=seen_sentences,
                     source_type=source_type,
                     highlight_context=highlight_context,
+                    rate_limiter=rate_limiter,
                 )
 
             record = self._build_record(
@@ -141,10 +180,24 @@ class GenerateTextItemsService:
             )
 
             result.processed_items += 1
+            result.processed_item_keys.append(item_key)
             if record.review_status is ReviewStatus.ACCEPTED:
                 result.accepted_items += 1
             else:
                 result.review_required_items += 1
+            if item_key in missing_item_keys:
+                remaining_missing -= 1
+            if progress_callback is not None:
+                progress_callback(
+                    GenerateTextProgress(
+                        processed_this_run=result.processed_items,
+                        accepted_this_run=result.accepted_items,
+                        review_this_run=result.review_required_items,
+                        remaining_missing=max(remaining_missing, 0),
+                        last_item_key=item_key,
+                        elapsed_seconds=monotonic() - started_at,
+                    )
+                )
 
         return result
 
@@ -229,12 +282,14 @@ class GenerateTextItemsService:
         seen_sentences: set[str],
         source_type: str | None,
         highlight_context: str | None = None,
+        rate_limiter: RateLimiter | None = None,
     ) -> tuple[GeneratedTextBundle, TextValidationResult, int]:
         retry_bundle = self.text_generation_service.generate_bundle(
             candidate=candidate,
             deck_language=deck_language,
             source_type=source_type,
             highlight_context=highlight_context,
+            rate_limiter=rate_limiter,
         )
         retry_validation = self._validate_bundle(
             bundle=retry_bundle,
@@ -254,6 +309,7 @@ class GenerateTextItemsService:
             seen_sentences=seen_sentences,
             source_type=source_type,
             highlight_context=highlight_context,
+            rate_limiter=rate_limiter,
         )
         fallback_used = fallback_bundle is not retry_bundle
         return fallback_bundle, fallback_validation, 2 if fallback_used else 1
@@ -268,6 +324,7 @@ class GenerateTextItemsService:
         seen_sentences: set[str],
         source_type: str | None,
         highlight_context: str | None = None,
+        rate_limiter: RateLimiter | None = None,
     ) -> tuple[GeneratedTextBundle, TextValidationResult]:
         fallback_sentence = self.tatoeba_sentence_source.select_sentence(
             display_form=candidate.display_form,
@@ -284,6 +341,7 @@ class GenerateTextItemsService:
             fallback=SentenceGenerationFallback(sentence_result=fallback_sentence),
             source_type=source_type,
             highlight_context=highlight_context,
+            rate_limiter=rate_limiter,
         )
         repaired_validation = self._validate_bundle(
             bundle=repaired_bundle,
@@ -440,4 +498,9 @@ def _is_generic_local_provenance(provenance: object) -> bool:
     return not template_kind.startswith("curated:")
 
 
-__all__ = ["GenerateTextItemsResult", "GenerateTextItemsService"]
+__all__ = [
+    "GenerateTextItemsResult",
+    "GenerateTextItemsService",
+    "GenerateTextProgress",
+    "GenerateTextProgressCallback",
+]

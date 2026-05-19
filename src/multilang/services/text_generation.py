@@ -9,6 +9,7 @@ from pydantic import BaseModel, Field
 from multilang.domain.text_quality import TextProvenance
 from multilang.domain.jobs import SupportedLanguage
 from multilang.domain.lexicon import GroundingStatus, LexicalCardCandidate
+from multilang.services.rate_limit import RateLimiter
 
 
 class SentenceGenerationRequest(BaseModel):
@@ -132,6 +133,7 @@ class TextGenerationService:
         deck_language: SupportedLanguage,
         source_type: str | None = None,
         highlight_context: str | None = None,
+        rate_limiter: RateLimiter | None = None,
     ) -> GeneratedTextBundle:
         sentence_request = SentenceGenerationRequest.from_candidate(
             candidate=candidate,
@@ -139,6 +141,8 @@ class TextGenerationService:
             source_type=source_type,
             highlight_context=highlight_context,
         )
+        if rate_limiter is not None:
+            rate_limiter.wait()
         sentence_result = self._sentence_adapter.generate_sentence(sentence_request)
 
         translation_request = SentenceTranslationRequest.from_sentence(
@@ -150,6 +154,7 @@ class TextGenerationService:
             candidate=candidate,
             deck_language=deck_language,
             translation_request=translation_request,
+            rate_limiter=rate_limiter,
         )
 
     def generate_bundle_from_fallback(
@@ -160,6 +165,7 @@ class TextGenerationService:
         fallback: SentenceGenerationFallback,
         source_type: str | None = None,
         highlight_context: str | None = None,
+        rate_limiter: RateLimiter | None = None,
     ) -> GeneratedTextBundle:
         sentence_result = fallback.sentence_result
         translation_request = SentenceTranslationRequest.from_sentence(
@@ -171,6 +177,7 @@ class TextGenerationService:
             candidate=candidate,
             deck_language=deck_language,
             translation_request=translation_request,
+            rate_limiter=rate_limiter,
         )
 
     def _build_bundle(
@@ -180,6 +187,7 @@ class TextGenerationService:
         candidate: LexicalCardCandidate,
         deck_language: SupportedLanguage,
         translation_request: SentenceTranslationRequest,
+        rate_limiter: RateLimiter | None = None,
     ) -> GeneratedTextBundle:
         if candidate.translation_target_language == deck_language.value:
             translation_result = SentenceTranslationResult(
@@ -187,6 +195,8 @@ class TextGenerationService:
                 provenance={"source": "same-language-translator"},
             )
         else:
+            if rate_limiter is not None:
+                rate_limiter.wait()
             translation_result = self._translation_adapter.translate_sentence(translation_request)
 
         return GeneratedTextBundle(

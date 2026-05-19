@@ -18,8 +18,10 @@ from multilang.repositories.text_repository import TextRepository
 from multilang.runtime import build_runtime_service
 from multilang.services.execution_report import JobExecutionReport
 from multilang.services.generate_job import GenerateJobResult, GenerateJobService
+from multilang.services.generate_text_items import GenerateTextProgress
 from multilang.services.highlight_import_preview import build_highlight_import_preview
 from multilang.services.ingest_lexical_items import IngestLexicalItemsService
+from multilang.services.rate_limit import SimpleRateLimiter
 from multilang.services.deck_audit_reader import read_apkg_cards
 from multilang.services.deck_audit_reports import write_deck_audit_reports
 from multilang.services.lexical_lookup import LexicalLookup, normalize_lexical_key
@@ -288,6 +290,8 @@ def _validate_regeneration_flags(
         return
     if request.resume_job_id is None:
         raise typer.BadParameter("--regenerate-item-key requires --resume")
+    if request.missing_only:
+        raise typer.BadParameter("--missing-only cannot be combined with --regenerate-item-key")
 
 
 def _confirm_overwrite(request: GenerationRequest, conflict_checker: ConflictChecker) -> None:
@@ -321,6 +325,18 @@ def _print_summary(summary: JobLifecycleSummary) -> None:
         typer.echo(
             f"failed_item={failed_item.item_key} retry_count={failed_item.retry_count} error={failed_item.error}"
         )
+
+
+def _print_generate_text_progress(progress: GenerateTextProgress) -> None:
+    typer.echo(
+        "stage=generate_text "
+        f"processed_this_run={progress.processed_this_run} "
+        f"accepted_this_run={progress.accepted_this_run} "
+        f"review_this_run={progress.review_this_run} "
+        f"remaining_missing={progress.remaining_missing} "
+        f"last_item_key={progress.last_item_key} "
+        f"elapsed_seconds={progress.elapsed_seconds:.2f}"
+    )
 
 
 def _print_resume_diagnostic(report: JobExecutionReport) -> None:
@@ -631,6 +647,29 @@ def create_app(
                 help="Confirm overwrite in non-interactive mode when conflicts exist.",
             ),
         ] = False,
+        missing_only: Annotated[
+            bool,
+            typer.Option(
+                "--missing-only",
+                help="Generate text only for items without persisted text.",
+            ),
+        ] = False,
+        max_items: Annotated[
+            int | None,
+            typer.Option(
+                "--max-items",
+                min=1,
+                help="Maximum eligible text candidates to process in this run.",
+            ),
+        ] = None,
+        rate_limit_per_minute: Annotated[
+            int | None,
+            typer.Option(
+                "--rate-limit-per-minute",
+                min=1,
+                help="Maximum provider calls per minute during generation.",
+            ),
+        ] = None,
         review_report_file: Annotated[
             Path | None,
             typer.Option(
@@ -678,6 +717,9 @@ def create_app(
             resume_job_id=resume,
             overwrite=overwrite,
             yes_overwrite=yes_overwrite,
+            missing_only=missing_only,
+            max_items=max_items,
+            rate_limit_per_minute=rate_limit_per_minute,
         )
         _validate_request(request, test_mode=test_mode)
         _validate_regeneration_flags(
@@ -686,11 +728,16 @@ def create_app(
         )
         _confirm_overwrite(request, conflict_checker)
         resolved_service = resolve_service()
+        rate_limiter = (
+            SimpleRateLimiter(request.rate_limit_per_minute)
+            if request.rate_limit_per_minute is not None
+            else None
+        )
 
         if isinstance(resolved_service, IngestLexicalItemsService):
             if service is None:
                 _prepare_lexical_data(request, settings=resolved_service.settings)
-            lexical_result = resolved_service.execute(request)
+            lexical_result = resolved_service.execute(request, rate_limiter=rate_limiter)
             if lexical_result.report.orchestration.diagnostic is not None:
                 _print_resume_diagnostic(lexical_result.report)
                 raise typer.Exit(code=1)
@@ -722,6 +769,10 @@ def create_app(
                     text_result = resolved_service.generate_text(
                         job_id=lexical_result.report.job_id,
                         deck_language=language,
+                        missing_only=request.missing_only,
+                        max_items=request.max_items,
+                        progress_callback=_print_generate_text_progress,
+                        rate_limiter=rate_limiter,
                     )
                 typer.echo(f"text_processed_items={text_result.processed_items}")
                 typer.echo(f"accepted_text_items={text_result.accepted_items}")

@@ -146,6 +146,14 @@ class TrackingTranslationAdapter(SentenceTranslationAdapter):
         )
 
 
+class RecordingRateLimiter:
+    def __init__(self) -> None:
+        self.wait_count = 0
+
+    def wait(self) -> None:
+        self.wait_count += 1
+
+
 def test_text_generation_service_returns_sentence_and_translation_provenance() -> None:
     sentence_adapter = FakeSentenceAdapter()
     translation_adapter = FakeTranslationAdapter()
@@ -201,6 +209,22 @@ def test_text_generation_service_uses_candidate_translation_policy() -> None:
     assert translation_adapter.requests[0].sentence == result.sentence.text
 
 
+def test_text_generation_service_rate_limits_sentence_and_translation_calls() -> None:
+    limiter = RecordingRateLimiter()
+    service = TextGenerationService(
+        sentence_adapter=FakeSentenceAdapter(),
+        translation_adapter=FakeTranslationAdapter(),
+    )
+
+    service.generate_bundle(
+        candidate=build_candidate(),
+        deck_language=SupportedLanguage.ES,
+        rate_limiter=limiter,
+    )
+
+    assert limiter.wait_count == 2
+
+
 def test_text_generation_service_uses_generated_sentence_for_same_language_translation() -> None:
     translation_adapter = FakeTranslationAdapter()
     service = TextGenerationService(
@@ -217,6 +241,22 @@ def test_text_generation_service_uses_generated_sentence_for_same_language_trans
     assert result.translation.target_language == "en"
     assert result.translation.provenance.source == "same-language-translator"
     assert translation_adapter.requests == []
+
+
+def test_text_generation_service_rate_limits_only_provider_calls_for_same_language_translation() -> None:
+    limiter = RecordingRateLimiter()
+    service = TextGenerationService(
+        sentence_adapter=EnglishSentenceAdapter(),
+        translation_adapter=FakeTranslationAdapter(),
+    )
+
+    service.generate_bundle(
+        candidate=build_candidate().model_copy(update={"translation_target_language": "en"}),
+        deck_language=SupportedLanguage.EN,
+        rate_limiter=limiter,
+    )
+
+    assert limiter.wait_count == 1
 
 
 def test_tatoeba_fallback_translation_uses_selected_sentence_not_linked_translation_text() -> None:

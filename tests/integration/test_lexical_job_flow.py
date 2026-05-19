@@ -58,7 +58,7 @@ def skip_runtime_text_generation(monkeypatch) -> None:
     monkeypatch.setattr(
         RuntimeGenerateService,
         "generate_text",
-        lambda self, *, job_id, deck_language: RuntimeTextResult(
+        lambda self, *, job_id, deck_language, missing_only=False, max_items=None, progress_callback=None, rate_limiter=None: RuntimeTextResult(
             processed_items=0,
             accepted_items=0,
             review_required_items=0,

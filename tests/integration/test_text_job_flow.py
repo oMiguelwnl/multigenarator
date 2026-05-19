@@ -23,6 +23,12 @@ def write_word_list(tmp_path: Path, *items: str) -> Path:
     return path
 
 
+def write_highlight_export(tmp_path: Path, text: str) -> Path:
+    path = tmp_path / "highlights.txt"
+    path.write_text(f"Synthetic Learner Reader\n- Your Highlight at Location 1\n{text}\n==========", encoding="utf-8")
+    return path
+
+
 def write_lookup_index(tmp_path: Path, *terms: str, language_code: str = "en") -> Path:
     index_path = tmp_path / "lexicon" / language_code / "lexical-index.json"
     index_path.parent.mkdir(parents=True, exist_ok=True)
@@ -140,6 +146,189 @@ def test_generate_command_regenerates_one_flagged_item_without_full_rerun(tmp_pa
     assert "accepted_text_items=1" in first_result.output
     assert "review_required_text_items=1" in first_result.output
     assert review_report.exists()
+
+
+def test_generate_resume_missing_only_skips_existing_review_rows(tmp_path: Path) -> None:
+    database_path = tmp_path / "missing-only-runtime.db"
+    lexicon_dir = write_lookup_index(tmp_path, "alpha", "flag-beta", "gamma")
+    source = write_word_list(tmp_path, "alpha", "flag-beta")
+    service = build_runtime_service(
+        Settings(
+            database_url=f"sqlite+pysqlite:///{database_path}",
+            lexicon_data_dir=lexicon_dir,
+            tatoeba_enabled=False,
+        )
+    )
+    app = create_app(service=service)
+
+    first_result = runner.invoke(
+        app,
+        [
+            "generate",
+            "--language",
+            "en",
+            "--source",
+            "word-list",
+            "--input-file",
+            str(source),
+        ],
+    )
+
+    session = Session(create_engine(f"sqlite+pysqlite:///{database_path}"))
+    try:
+        job = session.scalar(select(GenerationJob))
+        assert job is not None
+        flagged_before = session.scalar(
+            select(TextQualityRecordModel).where(TextQualityRecordModel.item_key == "flag-beta")
+        )
+        assert flagged_before is not None
+        flagged_id = flagged_before.id
+        flagged_sentence = flagged_before.example_sentence
+
+        source.write_text("alpha\nflag-beta\ngamma", encoding="utf-8")
+        second_result = runner.invoke(
+            app,
+            [
+                "generate",
+                "--language",
+                "en",
+                "--source",
+                "word-list",
+                "--input-file",
+                str(source),
+                "--resume",
+                job.id,
+                "--missing-only",
+            ],
+        )
+
+        assert first_result.exit_code == 0
+        assert second_result.exit_code == 0
+        assert "text_processed_items=1" in second_result.output
+        assert "accepted_text_items=1" in second_result.output
+        assert "review_required_text_items=0" in second_result.output
+        session.expire_all()
+        assert session.scalar(select(func.count()).select_from(TextQualityRecordModel)) == 3
+
+        flagged_after = session.scalar(
+            select(TextQualityRecordModel).where(TextQualityRecordModel.item_key == "flag-beta")
+        )
+        gamma = session.scalar(
+            select(TextQualityRecordModel).where(TextQualityRecordModel.item_key == "gamma")
+        )
+        assert flagged_after is not None
+        assert gamma is not None
+        assert flagged_after.id == flagged_id
+        assert flagged_after.example_sentence == flagged_sentence
+        assert flagged_after.review_status == "review_required"
+        assert gamma.review_status == "accepted"
+    finally:
+        session.close()
+
+
+def test_generate_resume_missing_only_respects_max_items(tmp_path: Path) -> None:
+    database_path = tmp_path / "missing-only-max-items-runtime.db"
+    lexicon_dir = write_lookup_index(tmp_path, "alpha", "flag-beta", "gamma", "delta", "epsilon")
+    source = write_word_list(tmp_path, "alpha", "flag-beta")
+    service = build_runtime_service(
+        Settings(
+            database_url=f"sqlite+pysqlite:///{database_path}",
+            lexicon_data_dir=lexicon_dir,
+            tatoeba_enabled=False,
+        )
+    )
+    app = create_app(service=service)
+
+    first_result = runner.invoke(
+        app,
+        [
+            "generate",
+            "--language",
+            "en",
+            "--source",
+            "word-list",
+            "--input-file",
+            str(source),
+        ],
+    )
+
+    session = Session(create_engine(f"sqlite+pysqlite:///{database_path}"))
+    try:
+        job = session.scalar(select(GenerationJob))
+        assert job is not None
+        source.write_text("alpha\nflag-beta\ngamma\ndelta\nepsilon", encoding="utf-8")
+
+        second_result = runner.invoke(
+            app,
+            [
+                "generate",
+                "--language",
+                "en",
+                "--source",
+                "word-list",
+                "--input-file",
+                str(source),
+                "--resume",
+                job.id,
+                "--missing-only",
+                "--max-items",
+                "2",
+            ],
+        )
+
+        assert first_result.exit_code == 0
+        assert second_result.exit_code == 0
+        assert "text_processed_items=2" in second_result.output
+        assert "accepted_text_items=2" in second_result.output
+        assert "review_required_text_items=0" in second_result.output
+        session.expire_all()
+        assert session.scalar(select(func.count()).select_from(TextQualityRecordModel)) == 4
+        generated_keys = session.scalars(
+            select(TextQualityRecordModel.item_key).order_by(TextQualityRecordModel.item_key.asc())
+        ).all()
+        assert generated_keys == ["alpha", "delta", "epsilon", "flag-beta"]
+    finally:
+        session.close()
+
+
+def test_generate_text_progress_reports_counters_without_private_content(tmp_path: Path) -> None:
+    database_path = tmp_path / "highlight-progress-runtime.db"
+    lexicon_dir = write_lookup_index(tmp_path, "meadow")
+    private_highlight = "The meadow keeps a lantern beside a private cottage"
+    source = write_highlight_export(tmp_path, private_highlight)
+    service = build_runtime_service(
+        Settings(
+            database_url=f"sqlite+pysqlite:///{database_path}",
+            lexicon_data_dir=lexicon_dir,
+            tatoeba_enabled=False,
+        )
+    )
+    app = create_app(service=service)
+
+    result = runner.invoke(
+        app,
+        [
+            "generate",
+            "--language",
+            "en",
+            "--source",
+            "highlights",
+            "--input-file",
+            str(source),
+        ],
+    )
+
+    assert result.exit_code == 0
+    assert "stage=generate_text" in result.output
+    assert "processed_this_run=1" in result.output
+    assert "accepted_this_run=1" in result.output
+    assert "review_this_run=0" in result.output
+    assert "remaining_missing=0" in result.output
+    assert "last_item_key=" in result.output
+    assert "elapsed_seconds=" in result.output
+    assert private_highlight not in result.output
+    assert "private cottage" not in result.output
+    assert "Readers notice" not in result.output
 
 
 def test_generate_command_skips_pending_groundings_during_text_generation(tmp_path: Path) -> None:

@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from collections.abc import Callable
 from dataclasses import dataclass
 from html import unescape
 from pathlib import Path
@@ -34,10 +35,11 @@ from multilang.services.export_anki_package import MANUAL_NOTE_TYPE_NAME, NOTE_T
 from multilang.services.export_tabular_bundle import ExportTabularBundleResult, write_export_tabular_bundle
 from multilang.services.generate_job import GenerateJobService
 from multilang.services.generate_audio_items import GenerateAudioItemsService
-from multilang.services.generate_text_items import GenerateTextItemsService
+from multilang.services.generate_text_items import GenerateTextItemsService, GenerateTextProgress
 from multilang.services.ingest_lexical_items import IngestLexicalItemsService
 from multilang.services.lexical_lookup import LexicalLookup
 from multilang.services.lexical_grounding import LexicalGroundingService
+from multilang.services.rate_limit import RateLimiter
 from multilang.services.local_text_adapter import LocalSentenceAdapter, LocalTranslationAdapter
 from multilang.services.provider_text_adapters import (
     DeepLTranslationAdapter,
@@ -122,11 +124,29 @@ class RuntimeGenerateService(IngestLexicalItemsService):
         self.assemble_export_cards_service = assemble_export_cards_service
         self.settings = runtime_settings
 
-    def generate_text(self, *, job_id: str, deck_language: object) -> RuntimeTextResult:
-        result = self.generate_text_items_service.execute(job_id=job_id, deck_language=deck_language)
+    def generate_text(
+        self,
+        *,
+        job_id: str,
+        deck_language: object,
+        missing_only: bool = False,
+        max_items: int | None = None,
+        progress_callback: Callable[[GenerateTextProgress], None] | None = None,
+        rate_limiter: RateLimiter | None = None,
+    ) -> RuntimeTextResult:
+        result = self.generate_text_items_service.execute(
+            job_id=job_id,
+            deck_language=deck_language,
+            missing_only=missing_only,
+            max_items=max_items,
+            progress_callback=progress_callback,
+            rate_limiter=rate_limiter,
+        )
+        audio_item_keys = set(result.processed_item_keys) if missing_only or max_items is not None else None
         audio_result = self.generate_audio_items_service.execute(
             job_id=job_id,
             deck_language=deck_language,
+            item_keys=audio_item_keys,
         )
         return RuntimeTextResult(
             processed_items=result.processed_items,

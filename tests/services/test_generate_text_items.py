@@ -115,8 +115,10 @@ class FakeTextRepository:
     candidates: list[object]
     saved_records: list[object] = field(default_factory=list)
     existing_sentences: list[str] = field(default_factory=list)
+    missing_only_calls: list[bool] = field(default_factory=list)
 
-    def list_generation_candidates(self, job_id: str) -> list[object]:
+    def list_generation_candidates(self, job_id: str, *, missing_only: bool = False) -> list[object]:
+        self.missing_only_calls.append(missing_only)
         return list(self.candidates)
 
     def list_example_sentences_for_job(
@@ -156,6 +158,7 @@ class FakeGenerationService:
         deck_language: SupportedLanguage,
         source_type: str | None = None,
         highlight_context: str | None = None,
+        rate_limiter: object | None = None,
     ) -> GeneratedTextBundle:
         self.calls.append((candidate, deck_language))
         self.request_metadata.append({"source_type": source_type, "highlight_context": highlight_context})
@@ -169,6 +172,7 @@ class FakeGenerationService:
         fallback: SentenceGenerationFallback,
         source_type: str | None = None,
         highlight_context: str | None = None,
+        rate_limiter: object | None = None,
     ) -> GeneratedTextBundle:
         self.fallback_calls.append((candidate, deck_language, fallback))
         self.request_metadata.append({"source_type": source_type, "highlight_context": highlight_context})
@@ -215,6 +219,62 @@ class PersistedCandidate:
     item_key: str
     candidate: LexicalCardCandidate
     source_type: str = "word-list"
+
+
+def test_generate_text_items_limits_eligible_candidates_after_missing_only_selection() -> None:
+    repository = FakeTextRepository(
+        candidates=[
+            PersistedCandidate(id="lex-1", item_key="line-1", candidate=make_candidate(item_key="line-1")),
+            PersistedCandidate(id="lex-2", item_key="line-2", candidate=make_candidate(lemma="cook", item_key="line-2")),
+            PersistedCandidate(id="lex-3", item_key="line-3", candidate=make_candidate(lemma="draw", item_key="line-3")),
+        ]
+    )
+    generation = FakeGenerationService(
+        bundles=[
+            make_bundle(sentence="I wash the cup at home.", translation="I wash the cup at home."),
+            make_bundle(sentence="I cook rice at home.", translation="I cook rice at home."),
+        ]
+    )
+    validation = FakeValidationService(
+        results=[
+            make_validation_result(status=ValidationStatus.PASSED, label=ConfidenceLabel.HIGH, score=0.93),
+            make_validation_result(status=ValidationStatus.PASSED, label=ConfidenceLabel.HIGH, score=0.91),
+        ]
+    )
+    job_repository = FakeJobRepository()
+    service = GenerateTextItemsService(
+        job_repository=job_repository,
+        lexical_repository=None,
+        text_repository=repository,
+        text_generation_service=generation,
+        text_validation_service=validation,
+        tatoeba_sentence_source=FakeTatoebaSentenceSource(fallback=None),
+    )
+
+    progress = []
+
+    result = service.execute(
+        job_id="job-1",
+        deck_language=SupportedLanguage.EN,
+        missing_only=True,
+        max_items=2,
+        progress_callback=progress.append,
+    )
+
+    assert repository.missing_only_calls == [True]
+    assert result.processed_items == 2
+    assert result.processed_item_keys == ["line-1", "line-2"]
+    assert [record.item_key for record in repository.saved_records] == ["line-1", "line-2"]
+    assert job_repository.successes == [
+        ("job-1", "line-1", JobStage.GENERATE_TEXT),
+        ("job-1", "line-2", JobStage.GENERATE_TEXT),
+    ]
+    assert [snapshot.processed_this_run for snapshot in progress] == [1, 2]
+    assert [snapshot.accepted_this_run for snapshot in progress] == [1, 2]
+    assert [snapshot.review_this_run for snapshot in progress] == [0, 0]
+    assert [snapshot.remaining_missing for snapshot in progress] == [2, 1]
+    assert [snapshot.last_item_key for snapshot in progress] == ["line-1", "line-2"]
+    assert all(snapshot.elapsed_seconds >= 0 for snapshot in progress)
 
 
 def test_generate_text_items_repairs_once_then_accepts() -> None:

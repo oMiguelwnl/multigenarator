@@ -19,6 +19,7 @@ from multilang.domain.lexicon import (
 )
 from multilang.services.lexical_lookup import LexicalLookup, LexicalRecord, normalize_lexical_key
 from multilang.services.provider_pronunciation_adapters import PronunciationGenerationRequest
+from multilang.services.rate_limit import RateLimiter
 from multilang.services.text_field_remediation import remediate_definition_html
 from multilang.services.text_generation import DefinitionGenerationRequest, DefinitionGenerationResult
 from multilang.services.word_list_parser import ParsedWordListItem
@@ -58,6 +59,7 @@ class LexicalGroundingService:
         *,
         language: SupportedLanguage,
         item: ParsedWordListItem,
+        rate_limiter: RateLimiter | None = None,
     ) -> LexicalCardCandidate:
         record = self._lookup_record(language=language, term=item.item_key)
         if record is None:
@@ -68,6 +70,7 @@ class LexicalGroundingService:
             display_form=item.display_form,
             record=record,
             definition_language=language.value,
+            rate_limiter=rate_limiter,
         )
         return candidate.model_copy(
             update={
@@ -81,11 +84,16 @@ class LexicalGroundingService:
         *,
         language: SupportedLanguage,
         candidate: LexicalCardCandidate,
+        rate_limiter: RateLimiter | None = None,
     ) -> LexicalCardCandidate:
         record = self._lookup_record(language=language, term=candidate.lemma_key)
         if record is None:
             if self._should_use_frequency_seed_fallback(language):
-                return self._ground_frequency_seed_candidate(language=language, candidate=candidate)
+                return self._ground_frequency_seed_candidate(
+                    language=language,
+                    candidate=candidate,
+                    rate_limiter=rate_limiter,
+                )
             return self._backfill_required_candidate(
                 candidate,
                 warning_detail=f"no authoritative lexical match for '{candidate.lemma}'",
@@ -101,6 +109,7 @@ class LexicalGroundingService:
             submitted_form=candidate.submitted_form,
             display_form=candidate.display_form,
             record=record,
+            rate_limiter=rate_limiter,
         )
         return grounded.model_copy(
             update={
@@ -114,6 +123,7 @@ class LexicalGroundingService:
         *,
         language: SupportedLanguage,
         candidate: HighlightCandidate,
+        rate_limiter: RateLimiter | None = None,
     ) -> LexicalCardCandidate:
         record = self._lookup_record(language=language, term=candidate.lemma_key)
         if record is None:
@@ -136,6 +146,7 @@ class LexicalGroundingService:
             display_form=candidate.display_form,
             record=record,
             definition_language=language.value,
+            rate_limiter=rate_limiter,
         )
 
     def _lookup_record(self, *, language: SupportedLanguage, term: str) -> LexicalRecord | None:
@@ -154,6 +165,7 @@ class LexicalGroundingService:
         *,
         language: SupportedLanguage,
         candidate: LexicalCardCandidate,
+        rate_limiter: RateLimiter | None = None,
     ) -> LexicalCardCandidate:
         record = LexicalRecord(
             term=candidate.display_form,
@@ -167,6 +179,7 @@ class LexicalGroundingService:
             submitted_form=candidate.submitted_form,
             display_form=candidate.display_form,
             record=record,
+            rate_limiter=rate_limiter,
         )
         return grounded.model_copy(
             update={
@@ -183,6 +196,7 @@ class LexicalGroundingService:
         display_form: str,
         record: LexicalRecord,
         definition_language: str | None = None,
+        rate_limiter: RateLimiter | None = None,
     ) -> LexicalCardCandidate:
         policy = policy_for_language(language)
         resolved_definition_language = definition_language or policy.definition_language
@@ -193,6 +207,7 @@ class LexicalGroundingService:
             source_language=language.value,
             target_language=resolved_definition_language,
             part_of_speech=record.part_of_speech,
+            rate_limiter=rate_limiter,
         )
         generated_definitions_html = definition_result.definitions_html if definition_result is not None else None
         definitions_html = remediate_definition_html(
@@ -212,6 +227,8 @@ class LexicalGroundingService:
         else:
             notes.append("authoritative IPA missing in lexical source")
         if self._pronunciation_generator is not None and ipa is None:
+            if rate_limiter is not None:
+                rate_limiter.wait()
             pronunciation = self._pronunciation_generator.generate_pronunciation(
                 PronunciationGenerationRequest(
                     target_language=language.value,
@@ -274,9 +291,12 @@ class LexicalGroundingService:
         source_language: str,
         target_language: str,
         part_of_speech: str | None,
+        rate_limiter: RateLimiter | None = None,
     ) -> DefinitionGenerationResult | None:
         if self._definition_generator is None:
             return None
+        if rate_limiter is not None:
+            rate_limiter.wait()
         return self._definition_generator.generate_definition(
             DefinitionGenerationRequest(
                 display_form=display_form,
