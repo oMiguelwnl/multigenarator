@@ -136,6 +136,7 @@ class RuntimeGenerateService(IngestLexicalItemsService):
         rate_limiter: RateLimiter | None = None,
         repair_only: bool = False,
         synthesize_audio: bool = True,
+        concurrency: int = 1,
     ) -> RuntimeTextResult:
         result = self.generate_text_items_service.execute(
             job_id=job_id,
@@ -145,6 +146,7 @@ class RuntimeGenerateService(IngestLexicalItemsService):
             progress_callback=progress_callback,
             rate_limiter=rate_limiter,
             repair_only=repair_only,
+            concurrency=concurrency,
         )
         if not synthesize_audio:
             return RuntimeTextResult(

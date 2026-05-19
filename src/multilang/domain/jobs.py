@@ -55,6 +55,7 @@ class GenerationRequest(BaseModel):
     missing_only: bool = False
     max_items: int | None = Field(default=None, ge=1)
     rate_limit_per_minute: int | None = Field(default=None, ge=1)
+    concurrency: int = Field(default=1, ge=1)
 
     def resolved_cards_per_level(self) -> int:
         if self.cards_per_level is not None:

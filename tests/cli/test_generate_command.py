@@ -249,6 +249,8 @@ def test_generate_frequency_resume_accepts_max_items() -> None:
             "25",
             "--rate-limit-per-minute",
             "30",
+            "--concurrency",
+            "2",
         ],
     )
 
@@ -257,6 +259,7 @@ def test_generate_frequency_resume_accepts_max_items() -> None:
     assert captured[0].resume_job_id == "job-123"
     assert captured[0].max_items == 25
     assert captured[0].rate_limit_per_minute == 30
+    assert captured[0].concurrency == 2
 
 
 def test_repair_text_command_uses_repair_only_without_audio() -> None:

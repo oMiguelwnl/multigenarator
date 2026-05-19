@@ -97,6 +97,7 @@ class GenerateTextItemsService:
         progress_callback: GenerateTextProgressCallback | None = None,
         rate_limiter: RateLimiter | None = None,
         repair_only: bool = False,
+        concurrency: int = 1,
     ) -> GenerateTextItemsResult:
         if max_items is not None and max_items < 1:
             raise ValueError("max_items must be greater than or equal to 1")
@@ -104,11 +105,18 @@ class GenerateTextItemsService:
         started_at = monotonic()
         result = GenerateTextItemsResult()
         seen_sentences = self._normalize_sentences(self.text_repository.list_example_sentences_for_job(job_id))
+        if concurrency < 1:
+            raise ValueError("concurrency must be greater than or equal to 1")
+
         if repair_only:
             lister = getattr(self.text_repository, "list_repair_candidates")
             candidates = lister(job_id, max_items=max_items)
         else:
-            candidates = self.text_repository.list_generation_candidates(job_id, missing_only=missing_only)
+            claimer = getattr(self.text_repository, "claim_generation_candidates", None)
+            if callable(claimer):
+                candidates = claimer(job_id, missing_only=missing_only, limit=max_items)
+            else:
+                candidates = self.text_repository.list_generation_candidates(job_id, missing_only=missing_only)
         if repair_only:
             missing_item_keys = set()
         else:
@@ -121,7 +129,7 @@ class GenerateTextItemsService:
                 }
             )
         remaining_missing = len(missing_item_keys)
-        if max_items is not None and not repair_only:
+        if max_items is not None and not repair_only and not callable(getattr(self.text_repository, "claim_generation_candidates", None)):
             candidates = candidates[:max_items]
 
         for persisted_candidate in candidates:

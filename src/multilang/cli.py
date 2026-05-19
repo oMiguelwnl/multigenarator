@@ -670,6 +670,14 @@ def create_app(
                 help="Maximum provider calls per minute during generation.",
             ),
         ] = None,
+        concurrency: Annotated[
+            int,
+            typer.Option(
+                "--concurrency",
+                min=1,
+                help="Generation workers to claim text items for; default 1. SQLite is conservative, Postgres is recommended for real concurrency.",
+            ),
+        ] = 1,
         review_report_file: Annotated[
             Path | None,
             typer.Option(
@@ -720,6 +728,7 @@ def create_app(
             missing_only=missing_only,
             max_items=max_items,
             rate_limit_per_minute=rate_limit_per_minute,
+            concurrency=concurrency,
         )
         _validate_request(request, test_mode=test_mode)
         _validate_regeneration_flags(
@@ -773,6 +782,7 @@ def create_app(
                         max_items=request.max_items,
                         progress_callback=_print_generate_text_progress,
                         rate_limiter=rate_limiter,
+                        concurrency=request.concurrency,
                     )
                 typer.echo(f"text_processed_items={text_result.processed_items}")
                 typer.echo(f"accepted_text_items={text_result.accepted_items}")

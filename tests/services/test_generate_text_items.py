@@ -116,6 +116,7 @@ class FakeTextRepository:
     saved_records: list[object] = field(default_factory=list)
     existing_sentences: list[str] = field(default_factory=list)
     missing_only_calls: list[bool] = field(default_factory=list)
+    claim_calls: list[dict[str, object]] = field(default_factory=list)
 
     def list_generation_candidates(self, job_id: str, *, missing_only: bool = False) -> list[object]:
         self.missing_only_calls.append(missing_only)
@@ -123,6 +124,11 @@ class FakeTextRepository:
 
     def list_repair_candidates(self, job_id: str, *, max_items: int | None = None) -> list[object]:
         return list(self.candidates[:max_items]) if max_items is not None else list(self.candidates)
+
+    def claim_generation_candidates(self, job_id: str, *, missing_only: bool = False, limit: int | None = None) -> list[object]:
+        self.claim_calls.append({"job_id": job_id, "missing_only": missing_only, "limit": limit})
+        rows = list(self.candidates)
+        return rows[:limit] if limit is not None else rows
 
     def list_example_sentences_for_job(
         self,
@@ -264,7 +270,7 @@ def test_generate_text_items_limits_eligible_candidates_after_missing_only_selec
         progress_callback=progress.append,
     )
 
-    assert repository.missing_only_calls == [True]
+    assert repository.claim_calls == [{"job_id": "job-1", "missing_only": True, "limit": 2}]
     assert result.processed_items == 2
     assert result.processed_item_keys == ["line-1", "line-2"]
     assert [record.item_key for record in repository.saved_records] == ["line-1", "line-2"]
@@ -275,9 +281,30 @@ def test_generate_text_items_limits_eligible_candidates_after_missing_only_selec
     assert [snapshot.processed_this_run for snapshot in progress] == [1, 2]
     assert [snapshot.accepted_this_run for snapshot in progress] == [1, 2]
     assert [snapshot.review_this_run for snapshot in progress] == [0, 0]
-    assert [snapshot.remaining_missing for snapshot in progress] == [2, 1]
+    assert [snapshot.remaining_missing for snapshot in progress] == [1, 0]
     assert [snapshot.last_item_key for snapshot in progress] == ["line-1", "line-2"]
     assert all(snapshot.elapsed_seconds >= 0 for snapshot in progress)
+
+
+def test_generate_text_items_uses_claim_boundary_for_concurrency_without_duplicates() -> None:
+    repository = FakeTextRepository(
+        candidates=[PersistedCandidate(id="lex-1", item_key="line-1", candidate=make_candidate(item_key="line-1"))]
+    )
+    generation = FakeGenerationService(bundles=[make_bundle(sentence="I wash the cup at home.", translation="I wash the cup at home.")])
+    validation = FakeValidationService(results=[make_validation_result(status=ValidationStatus.PASSED, label=ConfidenceLabel.HIGH, score=0.93)])
+    service = GenerateTextItemsService(
+        job_repository=FakeJobRepository(),
+        lexical_repository=None,
+        text_repository=repository,
+        text_generation_service=generation,
+        text_validation_service=validation,
+        tatoeba_sentence_source=FakeTatoebaSentenceSource(fallback=None),
+    )
+
+    result = service.execute(job_id="job-1", deck_language=SupportedLanguage.EN, concurrency=2, max_items=1)
+
+    assert result.processed_item_keys == ["line-1"]
+    assert repository.claim_calls == [{"job_id": "job-1", "missing_only": False, "limit": 1}]
 
 
 def test_generate_text_items_repair_only_uses_review_selection_without_missing_only() -> None:
