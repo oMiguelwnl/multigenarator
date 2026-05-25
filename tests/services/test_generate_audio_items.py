@@ -355,3 +355,29 @@ def test_generate_audio_items_missing_only_skips_existing_assets() -> None:
 
     assert result.processed_items == 1
     assert {asset.asset_kind for asset in audio_repository.saved_assets} == {AudioAssetKind.SENTENCE}
+
+
+def test_generate_audio_items_missing_only_retries_failed_assets() -> None:
+    prepared_word = make_asset(item_key="alpha", asset_kind=AudioAssetKind.WORD, status=AudioSynthesisStatus.PENDING)
+    prepared_sentence = make_asset(item_key="alpha", asset_kind=AudioAssetKind.SENTENCE, status=AudioSynthesisStatus.PENDING)
+    failed_word = make_asset(item_key="alpha", asset_kind=AudioAssetKind.WORD, status=AudioSynthesisStatus.FAILED)
+    existing_sentence = make_asset(item_key="alpha", asset_kind=AudioAssetKind.SENTENCE, status=AudioSynthesisStatus.SYNTHESIZED)
+    audio_repository = FakeAudioRepository(
+        existing_assets={
+            ("job-1", "alpha", AudioAssetKind.WORD.value): failed_word,
+            ("job-1", "alpha", AudioAssetKind.SENTENCE.value): existing_sentence,
+        }
+    )
+    synthesis = FakeAudioSynthesisService(prepared={"alpha": AudioSynthesisBundle(word_asset=prepared_word, sentence_asset=prepared_sentence)})
+    service = GenerateAudioItemsService(
+        job_repository=FakeJobRepository(),
+        lexical_repository=FakeLexicalRepository(candidates={"alpha": make_candidate(item_key="alpha")}),
+        text_repository=FakeTextRepository(accepted_records=[make_text_record(item_key="alpha", review_status=ReviewStatus.ACCEPTED)]),
+        audio_repository=audio_repository,
+        audio_synthesis_service=synthesis,
+    )
+
+    result = service.execute(job_id="job-1", deck_language=SupportedLanguage.EN, missing_only=True)
+
+    assert result.processed_items == 1
+    assert {asset.asset_kind for asset in audio_repository.saved_assets} == {AudioAssetKind.WORD}

@@ -89,3 +89,49 @@ def test_settings_expose_azure_speech_configuration() -> None:
     assert settings.azure_speech_output_format == "audio-24khz-48kbitrate-mono-mp3"
     assert settings.audio_storage_dir.name == "audio"
     assert settings.audio_voice_registry_version == VOICE_REGISTRY_VERSION
+
+
+def test_settings_expose_elevenlabs_configuration() -> None:
+    settings = Settings(
+        _env_file=None,
+        audio_provider="elevenlabs",
+        elevenlabs_api_key="eleven-key",
+        elevenlabs_voice_id="voice-123",
+    )
+
+    assert settings.audio_provider == "elevenlabs"
+    assert settings.elevenlabs_api_key == "eleven-key"
+    assert settings.elevenlabs_api_key_2 is None
+    assert settings.elevenlabs_api_key_3 is None
+    assert settings.elevenlabs_api_key_4 is None
+    assert settings.elevenlabs_api_keys == []
+    assert settings.elevenlabs_voice_id == "voice-123"
+    assert settings.elevenlabs_model_id == "eleven_multilingual_v2"
+    assert settings.elevenlabs_output_format == "mp3_44100_128"
+
+
+def test_settings_expose_audio_fallback_providers() -> None:
+    settings = Settings(
+        _env_file=None,
+        audio_provider="azure",
+        audio_fallback_providers=["elevenlabs"],
+    )
+
+    assert settings.audio_fallback_providers == ["elevenlabs"]
+
+
+def test_settings_expose_multiple_elevenlabs_keys() -> None:
+    settings = Settings(
+        _env_file=None,
+        elevenlabs_api_key="key-1",
+        elevenlabs_api_key_2="key-2",
+        elevenlabs_api_key_3="key-3",
+        elevenlabs_api_key_4="key-4",
+        elevenlabs_api_keys=["key-5", "key-6"],
+    )
+
+    assert settings.elevenlabs_api_key == "key-1"
+    assert settings.elevenlabs_api_key_2 == "key-2"
+    assert settings.elevenlabs_api_key_3 == "key-3"
+    assert settings.elevenlabs_api_key_4 == "key-4"
+    assert settings.elevenlabs_api_keys == ["key-5", "key-6"]

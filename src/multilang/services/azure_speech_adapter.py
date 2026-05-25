@@ -13,6 +13,7 @@ from xml.etree import ElementTree
 from xml.sax.saxutils import escape
 from urllib.request import Request, urlopen
 
+from multilang.domain.audio import AudioFormat, AudioProvider
 from multilang.services.audio_synthesis import AudioSynthesisResponse
 from multilang.settings import Settings
 
@@ -29,6 +30,9 @@ class AzureSpeechAdapterError(RuntimeError):
 
 class AzureSpeechAdapter:
     """Resolve Azure voice inventory and synthesize SSML to files."""
+
+    provider = AudioProvider.AZURE
+    audio_format = AudioFormat.AUDIO_24KHZ_48KBITRATE_MONO_MP3
 
     def __init__(
         self,

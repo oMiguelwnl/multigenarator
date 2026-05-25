@@ -107,6 +107,8 @@ def test_generate_command_default_runtime_uses_azure_audio_adapter(
             database_url=f"sqlite+pysqlite:///{database_path}",
             lexicon_data_dir=lexicon_dir,
             audio_storage_dir=tmp_path / "audio",
+            audio_provider="azure",
+            audio_fallback_providers=[],
             azure_speech_key="key",
             azure_speech_region="eastus",
             tatoeba_enabled=False,

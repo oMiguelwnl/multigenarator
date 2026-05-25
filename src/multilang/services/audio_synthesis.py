@@ -19,7 +19,7 @@ from multilang.domain.audio import (
 )
 from multilang.domain.jobs import SupportedLanguage
 from multilang.domain.text_quality import ReviewStatus, TextQualityRecord, ValidationStatus
-from multilang.services.audio_voice_registry import VoiceSelectionError, select_voice
+from multilang.services.audio_voice_registry import VoiceSelection, VoiceSelectionError, select_voice
 from multilang.settings import Settings
 
 _WHITESPACE_RE = re.compile(r"\s+")
@@ -30,6 +30,11 @@ class AudioSynthesisResponse:
     storage_path: Path
     byte_size: int
     duration_ms: int | None
+    provider: AudioProvider | None = None
+    voice_id: str | None = None
+    locale: str | None = None
+    audio_format: AudioFormat | None = None
+    fallback_used: bool | None = None
 
 
 class AudioSynthesisAdapter(Protocol):
@@ -128,7 +133,7 @@ class AudioSynthesisService:
                 voice_id=prepared_asset.provenance.voice_id,
                 locale=prepared_asset.provenance.locale,
                 output_path=output_path,
-                audio_format=self.settings.azure_speech_output_format,
+                audio_format=self._audio_format().value,
             )
         except Exception:
             return self._build_record(
@@ -168,13 +173,17 @@ class AudioSynthesisService:
             asset_kind=prepared_asset.asset_kind,
             display_text=prepared_asset.display_text,
             normalized_input=prepared_asset.normalized_input,
-            voice_id=prepared_asset.provenance.voice_id,
-            locale=prepared_asset.provenance.locale,
+            voice_id=response.voice_id or prepared_asset.provenance.voice_id,
+            locale=response.locale or prepared_asset.provenance.locale,
             storage_path=str(response.storage_path),
             byte_size=response.byte_size,
             duration_ms=response.duration_ms,
             status=AudioSynthesisStatus.SYNTHESIZED,
-            fallback_used=prepared_asset.provenance.fallback_used,
+            fallback_used=response.fallback_used
+            if response.fallback_used is not None
+            else prepared_asset.provenance.fallback_used,
+            provider=response.provider,
+            audio_format=response.audio_format,
         )
 
     def _prepare_asset(
@@ -185,13 +194,10 @@ class AudioSynthesisService:
         item_key: str,
         asset_kind: AudioAssetKind,
         display_text: str,
-        ) -> AudioAssetRecord:
+    ) -> AudioAssetRecord:
         normalized_input = self._normalize_input(display_text, asset_kind=asset_kind)
         try:
-            voice = select_voice(
-                language,
-                available_voice_ids=self.adapter.available_voice_ids(),
-            )
+            voice = self._select_voice(language)
         except VoiceSelectionError:
             return self._failed_asset(
                 job_id=job_id,
@@ -271,6 +277,8 @@ class AudioSynthesisService:
         duration_ms: int | None,
         status: AudioSynthesisStatus,
         fallback_used: bool,
+        provider: AudioProvider | None = None,
+        audio_format: AudioFormat | None = None,
     ) -> AudioAssetRecord:
         return AudioAssetRecord(
             job_id=job_id,
@@ -279,10 +287,10 @@ class AudioSynthesisService:
             display_text=display_text,
             normalized_input=normalized_input,
             provenance=AudioProvenance(
-                provider=AudioProvider.AZURE,
+                provider=provider or self._provider(),
                 voice_id=voice_id,
                 locale=locale,
-                format=AudioFormat(self.settings.azure_speech_output_format),
+                format=audio_format or self._audio_format(),
                 text_hash=normalized_input.text_hash or "",
                 ssml_hash=normalized_input.ssml_hash or "",
                 storage_path=storage_path,
@@ -292,6 +300,21 @@ class AudioSynthesisService:
                 fallback_used=fallback_used,
             ),
         )
+
+    def _select_voice(self, language: SupportedLanguage) -> VoiceSelection:
+        adapter_selector = getattr(self.adapter, "select_voice", None)
+        if callable(adapter_selector):
+            return adapter_selector(language)
+        return select_voice(
+            language,
+            available_voice_ids=self.adapter.available_voice_ids(),
+        )
+
+    def _provider(self) -> AudioProvider:
+        return AudioProvider(getattr(self.adapter, "provider", AudioProvider.AZURE))
+
+    def _audio_format(self) -> AudioFormat:
+        return AudioFormat(getattr(self.adapter, "audio_format", self.settings.azure_speech_output_format))
 
     def _normalize_input(self, display_text: str, *, asset_kind: AudioAssetKind) -> NormalizedTtsInput:
         normalized = _WHITESPACE_RE.sub(" ", display_text.replace("’", "'").strip())

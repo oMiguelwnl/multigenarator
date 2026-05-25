@@ -70,7 +70,7 @@ class GenerateAudioItemsService:
             if "sentence_audio" in field_names:
                 assets.append(prepared_bundle.sentence_asset)
             if missing_only:
-                assets = [asset for asset in assets if self.audio_repository.get_asset(job_id, text_record.item_key, asset.asset_kind) is None]
+                assets = [asset for asset in assets if self._needs_audio_retry(job_id, text_record.item_key, asset.asset_kind)]
                 if not assets:
                     continue
             if max_items is not None and processed_records >= max_items:
@@ -95,6 +95,12 @@ class GenerateAudioItemsService:
             )
 
         return result
+
+    def _needs_audio_retry(self, job_id: str, item_key: str, asset_kind: AudioAssetKind) -> bool:
+        existing = self.audio_repository.get_asset(job_id, item_key, asset_kind)
+        if existing is None:
+            return True
+        return existing.provenance.status is not AudioSynthesisStatus.SYNTHESIZED or existing.provenance.byte_size <= 0
 
     def _materialize_asset(self, prepared_asset: AudioAssetRecord) -> tuple[AudioAssetRecord, bool]:
         reusable = self.audio_repository.get_reusable_asset(

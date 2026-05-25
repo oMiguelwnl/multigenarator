@@ -25,10 +25,12 @@ class AudioSynthesisStatus(str, Enum):
 
 class AudioProvider(str, Enum):
     AZURE = "azure"
+    ELEVENLABS = "elevenlabs"
 
 
 class AudioFormat(str, Enum):
     AUDIO_24KHZ_48KBITRATE_MONO_MP3 = "audio-24khz-48kbitrate-mono-mp3"
+    MP3_44100_128 = "mp3_44100_128"
 
 
 class NormalizedTtsInput(BaseModel):

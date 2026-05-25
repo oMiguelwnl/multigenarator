@@ -26,6 +26,8 @@ from multilang.domain.exporting import (
     export_field_names_for_source_type,
 )
 from multilang.services.azure_speech_adapter import AzureSpeechAdapter
+from multilang.services.elevenlabs_speech_adapter import ElevenLabsSpeechAdapter
+from multilang.services.fallback_audio_adapter import FallbackAudioAdapter
 from multilang.services.audio_synthesis import (
     AudioSynthesisAdapter,
     AudioSynthesisService,
@@ -386,6 +388,22 @@ def _build_pronunciation_adapter(runtime_settings: Settings) -> object | None:
     return None
 
 
+def _build_audio_adapter(runtime_settings: Settings) -> AudioSynthesisAdapter:
+    providers = [runtime_settings.audio_provider, *runtime_settings.audio_fallback_providers]
+    adapters = [_build_single_audio_adapter(runtime_settings, provider) for provider in dict.fromkeys(providers)]
+    if len(adapters) == 1:
+        return adapters[0]
+    return FallbackAudioAdapter(adapters)
+
+
+def _build_single_audio_adapter(runtime_settings: Settings, provider: str) -> AudioSynthesisAdapter:
+    if provider == "azure":
+        return AzureSpeechAdapter(runtime_settings)
+    if provider == "elevenlabs":
+        return ElevenLabsSpeechAdapter(runtime_settings)
+    raise ValueError(f"unsupported audio provider: {provider}")
+
+
 def build_runtime_service(
     settings: Settings | None = None,
     *,
@@ -420,7 +438,7 @@ def build_runtime_service(
         )
     )
     audio_synthesis_service = AudioSynthesisService(
-        adapter=audio_adapter or AzureSpeechAdapter(runtime_settings),
+        adapter=audio_adapter or _build_audio_adapter(runtime_settings),
         settings=runtime_settings,
     )
     return RuntimeGenerateService(

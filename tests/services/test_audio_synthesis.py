@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from multilang.domain.audio import AudioAssetKind, AudioSynthesisStatus
+from multilang.domain.audio import AudioAssetKind, AudioFormat, AudioProvider, AudioSynthesisStatus
 from multilang.domain.jobs import SupportedLanguage
 from multilang.domain.text_quality import (
     ConfidenceLabel,
@@ -20,6 +20,7 @@ from multilang.services.audio_synthesis import (
     AudioSynthesisResponse,
     AudioSynthesisService,
 )
+from multilang.services.audio_voice_registry import VoiceSelection
 from multilang.settings import Settings
 
 
@@ -94,6 +95,20 @@ class RaisingAdapter(FakeAudioAdapter):
         audio_format: str,
     ) -> AudioSynthesisResponse:
         raise RuntimeError("azure canceled")
+
+
+class FakeElevenLabsAdapter(FakeAudioAdapter):
+    provider = AudioProvider.ELEVENLABS
+    audio_format = AudioFormat.MP3_44100_128
+
+    def select_voice(self, language: SupportedLanguage) -> VoiceSelection:
+        return VoiceSelection(
+            language=language,
+            voice_id="elevenlabs-voice",
+            locale="pl-PL",
+            registry_version="elevenlabs-test",
+            fallback_used=False,
+        )
 
 
 def build_service(tmp_path: Path, *, available_voice_ids: set[str] | None = None) -> AudioSynthesisService:
@@ -190,6 +205,24 @@ def test_audio_synthesis_service_marks_adapter_errors_as_failed(tmp_path: Path) 
 
     assert bundle.word_asset.provenance.status is AudioSynthesisStatus.FAILED
     assert bundle.sentence_asset.provenance.status is AudioSynthesisStatus.FAILED
+
+
+def test_audio_synthesis_service_records_elevenlabs_provider_and_format(tmp_path: Path) -> None:
+    service = AudioSynthesisService(
+        adapter=FakeElevenLabsAdapter(tmp_path),
+        settings=Settings(audio_storage_dir=tmp_path / "audio"),
+    )
+
+    bundle = service.synthesize_item(
+        language=SupportedLanguage.PL,
+        display_word="dom",
+        text_record=make_text_record(example_sentence="To jest duzy dom."),
+    )
+
+    assert bundle.word_asset.provenance.provider is AudioProvider.ELEVENLABS
+    assert bundle.word_asset.provenance.format is AudioFormat.MP3_44100_128
+    assert bundle.word_asset.provenance.voice_id == "elevenlabs-voice"
+    assert "elevenlabs-test" in bundle.word_asset.provenance.storage_path
 
 
 def test_audio_synthesis_service_returns_separate_word_and_sentence_assets(tmp_path: Path) -> None:

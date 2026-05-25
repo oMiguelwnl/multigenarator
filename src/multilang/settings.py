@@ -11,7 +11,9 @@ from multilang.services.audio_voice_registry import VOICE_REGISTRY_VERSION
 SupportedLanguageCode = Literal["pt", "es", "en", "fr", "de", "it", "pl", "tr", "ro", "ru", "nl"]
 TextGenerationProvider = Literal["litellm", "local"]
 TranslationProvider = Literal["deepl", "google", "local"]
+AudioProviderName = Literal["azure", "elevenlabs"]
 AudioOutputFormat = Literal["audio-24khz-48kbitrate-mono-mp3"]
+ElevenLabsOutputFormat = Literal["mp3_44100_128"]
 
 DEFAULT_SUPPORTED_LANGUAGES: tuple[SupportedLanguageCode, ...] = (
     "pt",
@@ -58,9 +60,22 @@ class Settings(BaseSettings):
         default=None,
         validation_alias=AliasChoices("MULTILANG_DEEPL_API_KEY", "DEEPL_API_KEY"),
     )
+    audio_provider: AudioProviderName = "azure"
     azure_speech_key: str | None = None
     azure_speech_region: str | None = None
     azure_speech_output_format: AudioOutputFormat = "audio-24khz-48kbitrate-mono-mp3"
+    audio_fallback_providers: list[AudioProviderName] = Field(default_factory=list)
+    elevenlabs_api_key: str | None = Field(
+        default=None,
+        validation_alias=AliasChoices("MULTILANG_ELEVENLABS_API_KEY", "ELEVENLABS_API_KEY"),
+    )
+    elevenlabs_api_key_2: str | None = None
+    elevenlabs_api_key_3: str | None = None
+    elevenlabs_api_key_4: str | None = None
+    elevenlabs_api_keys: list[str] = Field(default_factory=list)
+    elevenlabs_voice_id: str | None = None
+    elevenlabs_model_id: str = "eleven_multilingual_v2"
+    elevenlabs_output_format: ElevenLabsOutputFormat = "mp3_44100_128"
     audio_storage_dir: Path = Path(".multilang/audio")
     export_output_dir: Path = Path(".multilang/exports")
     webdav_url: str | None = None
