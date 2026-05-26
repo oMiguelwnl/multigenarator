@@ -11,6 +11,7 @@ from typing import Any
 
 from multilang.domain.exporting import ExportQualityGateResult
 from multilang.domain.text_quality import ReviewStatus, ValidationStatus
+from multilang.repositories.provider_call_log_repository import summarize_provider_call_records
 
 
 @dataclass(frozen=True)
@@ -28,6 +29,8 @@ def write_generation_report(
     audio_assets: list[object],
     gate_result: ExportQualityGateResult,
     output_dir: Path,
+    provider_call_records: list[object] | None = None,
+    provider_call_summary: list[dict[str, object]] | None = None,
 ) -> GenerationReportResult:
     target_dir = Path(output_dir)
     target_dir.mkdir(parents=True, exist_ok=True)
@@ -38,6 +41,8 @@ def write_generation_report(
         text_records=text_records,
         audio_assets=audio_assets,
         gate_result=gate_result,
+        provider_call_records=provider_call_records or [],
+        provider_call_summary=provider_call_summary,
     )
     json_path = target_dir / "generation-report.json"
     markdown_path = target_dir / "generation-report.md"
@@ -54,6 +59,8 @@ def _payload(
     text_records: list[object],
     audio_assets: list[object],
     gate_result: ExportQualityGateResult,
+    provider_call_records: list[object],
+    provider_call_summary: list[dict[str, object]] | None,
 ) -> dict[str, Any]:
     review_counts = Counter(getattr(record, "review_status", "") for record in text_records)
     validation_counts = Counter(getattr(record, "validation_status", "") for record in text_records)
@@ -61,6 +68,7 @@ def _payload(
     translation_providers = Counter(_provider(getattr(record, "translation_provenance", None)) for record in text_records)
     audio_providers = Counter(getattr(getattr(asset, "provenance", None), "provider", "") for asset in audio_assets)
     output_path = Path(str(getattr(export_artifact, "output_path", "")))
+    telemetry = provider_call_summary if provider_call_summary is not None else summarize_provider_call_records(provider_call_records)
     return {
         "job_id": getattr(job, "id", ""),
         "language": getattr(job, "language", ""),
@@ -88,6 +96,7 @@ def _payload(
             "translation": _string_counter(translation_providers),
             "audio": _string_counter(audio_providers),
         },
+        "provider_calls": telemetry,
         "blocking_issues": [issue.message for issue in gate_result.issues],
         "warnings": [warning.message for warning in gate_result.warnings],
     }
@@ -141,7 +150,19 @@ def _markdown(payload: dict[str, Any]) -> str:
         f"blocking_issues={payload['blocking_issues']}",
         f"warnings={payload['warnings']}",
         "",
+        "## Provider Calls",
+        "",
     ]
+    for row in payload.get("provider_calls", []):
+        lines.append(
+            "provider_call="
+            f"provider:{row.get('provider')} operation:{row.get('operation')} status:{row.get('status')} "
+            f"calls:{row.get('calls')} retries:{row.get('retry_attempts')} "
+            f"latency_ms_total:{row.get('latency_ms_total')} p95:{row.get('latency_ms_p95')} "
+            f"tokens:{row.get('total_tokens')} cost:{row.get('estimated_cost')} "
+            f"fallbacks:{row.get('fallback_count')} circuit_blocks:{row.get('circuit_open_blocks')}"
+        )
+    lines.extend([""])
     return "\n".join(lines)
 
 

@@ -98,6 +98,35 @@ class ProviderResponseCacheModel(Base):
     )
 
 
+class ProviderCallLogModel(Base):
+    """Persisted privacy-safe telemetry for provider call attempts."""
+
+    __tablename__ = "provider_call_logs"
+
+    id: Mapped[str] = mapped_column(String(36), primary_key=True)
+    job_id: Mapped[str | None] = mapped_column(String(36), nullable=True, index=True)
+    item_key: Mapped[str | None] = mapped_column(String(255), nullable=True, index=True)
+    operation: Mapped[str] = mapped_column(String(64), nullable=False, index=True)
+    provider: Mapped[str] = mapped_column(String(64), nullable=False, index=True)
+    model: Mapped[str | None] = mapped_column(String(128), nullable=True)
+    voice_id: Mapped[str | None] = mapped_column(String(255), nullable=True)
+    attempt: Mapped[int] = mapped_column(Integer, nullable=False, default=1)
+    latency_ms: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
+    status: Mapped[str] = mapped_column(String(32), nullable=False, index=True)
+    error_code: Mapped[str | None] = mapped_column(String(64), nullable=True)
+    error_summary: Mapped[str | None] = mapped_column(Text, nullable=True)
+    fallback_from: Mapped[str | None] = mapped_column(String(128), nullable=True)
+    prompt_hash: Mapped[str | None] = mapped_column(String(64), nullable=True)
+    response_hash: Mapped[str | None] = mapped_column(String(64), nullable=True)
+    input_tokens: Mapped[int | None] = mapped_column(Integer, nullable=True)
+    output_tokens: Mapped[int | None] = mapped_column(Integer, nullable=True)
+    total_tokens: Mapped[int | None] = mapped_column(Integer, nullable=True)
+    estimated_cost: Mapped[float | None] = mapped_column(Float, nullable=True)
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), nullable=False, server_default=func.now()
+    )
+
+
 class HighlightImportRecordModel(Base):
     """Private normalized highlight text for a generation job."""
 

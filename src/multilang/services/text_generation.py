@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+from hashlib import sha256
+from time import perf_counter
 from typing import Any, Protocol
 
 from pydantic import BaseModel, Field
@@ -12,6 +14,7 @@ from multilang.domain.lexicon import GroundingStatus, LexicalCardCandidate
 from multilang.services.rate_limit import RateLimiter
 from multilang.services.provider_response_cache import ProviderCacheKey, ProviderResponseCacheService
 from multilang.services.provider_retry import retry_provider_call
+from multilang.repositories.provider_call_log_repository import ProviderCallLogCreate
 
 
 class SentenceGenerationRequest(BaseModel):
@@ -125,11 +128,13 @@ class TextGenerationService:
         sentence_adapter: SentenceGenerationAdapter,
         translation_adapter: SentenceTranslationAdapter,
         provider_cache: ProviderResponseCacheService | None = None,
+        provider_call_logger: Any | None = None,
         prompt_version: str = "text-generation-v1",
     ) -> None:
         self._sentence_adapter = sentence_adapter
         self._translation_adapter = translation_adapter
         self._provider_cache = provider_cache
+        self._provider_call_logger = provider_call_logger
         self._prompt_version = prompt_version
 
     def generate_bundle(
@@ -140,6 +145,7 @@ class TextGenerationService:
         source_type: str | None = None,
         highlight_context: str | None = None,
         rate_limiter: RateLimiter | None = None,
+        job_id: str | None = None,
     ) -> GeneratedTextBundle:
         sentence_request = SentenceGenerationRequest.from_candidate(
             candidate=candidate,
@@ -149,7 +155,7 @@ class TextGenerationService:
         )
         if rate_limiter is not None:
             rate_limiter.wait()
-        sentence_result = self._generate_sentence(sentence_request)
+        sentence_result = self._generate_sentence(sentence_request, job_id=job_id, item_key=candidate.lemma_key)
 
         translation_request = SentenceTranslationRequest.from_sentence(
             sentence_result=sentence_result,
@@ -161,6 +167,7 @@ class TextGenerationService:
             deck_language=deck_language,
             translation_request=translation_request,
             rate_limiter=rate_limiter,
+            job_id=job_id,
         )
 
     def generate_bundle_from_fallback(
@@ -172,6 +179,7 @@ class TextGenerationService:
         source_type: str | None = None,
         highlight_context: str | None = None,
         rate_limiter: RateLimiter | None = None,
+        job_id: str | None = None,
     ) -> GeneratedTextBundle:
         sentence_result = fallback.sentence_result
         translation_request = SentenceTranslationRequest.from_sentence(
@@ -184,6 +192,7 @@ class TextGenerationService:
             deck_language=deck_language,
             translation_request=translation_request,
             rate_limiter=rate_limiter,
+            job_id=job_id,
         )
 
     def _build_bundle(
@@ -194,6 +203,7 @@ class TextGenerationService:
         deck_language: SupportedLanguage,
         translation_request: SentenceTranslationRequest,
         rate_limiter: RateLimiter | None = None,
+        job_id: str | None = None,
     ) -> GeneratedTextBundle:
         if candidate.translation_target_language == deck_language.value:
             translation_result = SentenceTranslationResult(
@@ -203,7 +213,7 @@ class TextGenerationService:
         else:
             if rate_limiter is not None:
                 rate_limiter.wait()
-            translation_result = self._translate_sentence(translation_request)
+            translation_result = self._translate_sentence(translation_request, job_id=job_id, item_key=candidate.lemma_key)
 
         return GeneratedTextBundle(
             sentence=GeneratedSentence(
@@ -220,27 +230,103 @@ class TextGenerationService:
             ),
         )
 
-    def _generate_sentence(self, request: SentenceGenerationRequest) -> SentenceGenerationResult:
+    def _generate_sentence(self, request: SentenceGenerationRequest, *, job_id: str | None = None, item_key: str | None = None) -> SentenceGenerationResult:
         key = _cache_key_for_request("sentence", request, adapter=self._sentence_adapter, prompt_version=self._prompt_version)
         if self._provider_cache is not None:
             cached = self._provider_cache.get(key)
             if cached is not None:
                 return SentenceGenerationResult.model_validate(cached.response)
-        result = retry_provider_call(lambda: self._sentence_adapter.generate_sentence(request))
+        result = self._call_with_telemetry(
+            lambda: retry_provider_call(lambda: self._sentence_adapter.generate_sentence(request)),
+            operation="sentence",
+            adapter=self._sentence_adapter,
+            request_payload=request.model_dump(mode="json"),
+            job_id=job_id,
+            item_key=item_key,
+        )
         if self._provider_cache is not None:
             self._provider_cache.put(key, result.model_dump(mode="json"), metadata={"provider": key.provider, "model": key.model})
         return result
 
-    def _translate_sentence(self, request: SentenceTranslationRequest) -> SentenceTranslationResult:
+    def _translate_sentence(self, request: SentenceTranslationRequest, *, job_id: str | None = None, item_key: str | None = None) -> SentenceTranslationResult:
         key = _cache_key_for_request("translation", request, adapter=self._translation_adapter, prompt_version=self._prompt_version)
         if self._provider_cache is not None:
             cached = self._provider_cache.get(key)
             if cached is not None:
                 return SentenceTranslationResult.model_validate(cached.response)
-        result = retry_provider_call(lambda: self._translation_adapter.translate_sentence(request))
+        result = self._call_with_telemetry(
+            lambda: retry_provider_call(lambda: self._translation_adapter.translate_sentence(request)),
+            operation="translation",
+            adapter=self._translation_adapter,
+            request_payload=request.model_dump(mode="json"),
+            job_id=job_id,
+            item_key=item_key,
+        )
         if self._provider_cache is not None:
             self._provider_cache.put(key, result.model_dump(mode="json"), metadata={"provider": key.provider, "model": key.model})
         return result
+
+    def _call_with_telemetry(
+        self,
+        operation_func: Any,
+        *,
+        operation: str,
+        adapter: object,
+        request_payload: object,
+        job_id: str | None,
+        item_key: str | None,
+    ) -> Any:
+        started = perf_counter()
+        prompt_hash = _safe_hash(request_payload)
+        provider = str(getattr(adapter, "provider", adapter.__class__.__name__))
+        model = getattr(adapter, "model", getattr(adapter, "_model", None))
+        try:
+            result = operation_func()
+        except Exception as exc:
+            self._log_provider_call(
+                operation=operation,
+                provider=provider,
+                model=str(model) if model else None,
+                job_id=job_id,
+                item_key=item_key,
+                status="failure",
+                latency_ms=_elapsed_ms(started),
+                error_code=type(exc).__name__,
+                error_summary=str(exc),
+                prompt_hash=prompt_hash,
+            )
+            raise
+        provenance = getattr(result, "provenance", {}) or {}
+        self._log_provider_call(
+            operation=operation,
+            provider=str(provenance.get("provider") or provider),
+            model=str(provenance.get("model") or model) if (provenance.get("model") or model) else None,
+            job_id=job_id,
+            item_key=item_key,
+            status="success",
+            latency_ms=_elapsed_ms(started),
+            fallback_from=provenance.get("fallback_from"),
+            prompt_hash=prompt_hash,
+            response_hash=_safe_hash(getattr(result, "model_dump", lambda **_: str(result))(mode="json") if hasattr(result, "model_dump") else str(result)),
+            input_tokens=provenance.get("input_tokens"),
+            output_tokens=provenance.get("output_tokens"),
+            total_tokens=provenance.get("total_tokens"),
+            estimated_cost=provenance.get("estimated_cost"),
+        )
+        return result
+
+    def _log_provider_call(self, **kwargs: Any) -> None:
+        if self._provider_call_logger is None:
+            return
+        self._provider_call_logger.insert(ProviderCallLogCreate(**kwargs))
+
+
+def _safe_hash(payload: object) -> str:
+    return sha256(repr(payload).encode("utf-8")).hexdigest()
+
+
+def _elapsed_ms(started: float) -> int:
+    return max(0, int((perf_counter() - started) * 1000))
 
 
 def _cache_key_for_request(task_type: str, request: BaseModel, *, adapter: object, prompt_version: str) -> ProviderCacheKey:

@@ -3,9 +3,11 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
+from hashlib import sha256
 from html import escape
 from pathlib import Path
 import re
+from time import perf_counter
 from typing import Protocol
 
 from multilang.domain.audio import (
@@ -21,6 +23,8 @@ from multilang.domain.jobs import SupportedLanguage
 from multilang.domain.text_quality import ReviewStatus, TextQualityRecord, ValidationStatus
 from multilang.services.audio_voice_registry import VoiceSelection, VoiceSelectionError, select_voice
 from multilang.settings import Settings
+from multilang.repositories.provider_call_log_repository import ProviderCallLogCreate
+from multilang.services.provider_retry import safe_provider_error_summary
 
 _WHITESPACE_RE = re.compile(r"\s+")
 
@@ -60,9 +64,10 @@ class AudioSynthesisBundle:
 class AudioSynthesisService:
     """Build and validate separate word and sentence audio assets."""
 
-    def __init__(self, *, adapter: AudioSynthesisAdapter, settings: Settings | None = None) -> None:
+    def __init__(self, *, adapter: AudioSynthesisAdapter, settings: Settings | None = None, provider_call_logger: object | None = None) -> None:
         self.adapter = adapter
         self.settings = settings or Settings()
+        self.provider_call_logger = provider_call_logger
 
     def synthesize_item(
         self,
@@ -127,6 +132,7 @@ class AudioSynthesisService:
             return prepared_asset
 
         output_path = Path(prepared_asset.provenance.storage_path)
+        started = perf_counter()
         try:
             response = self.adapter.synthesize(
                 ssml_text=prepared_asset.normalized_input.ssml_text or prepared_asset.normalized_input.tts_text,
@@ -135,7 +141,14 @@ class AudioSynthesisService:
                 output_path=output_path,
                 audio_format=self._audio_format().value,
             )
-        except Exception:
+        except Exception as exc:
+            self._log_provider_call(
+                prepared_asset=prepared_asset,
+                status="failure",
+                latency_ms=_elapsed_ms(started),
+                error_code=type(exc).__name__,
+                error_summary=safe_provider_error_summary(exc),
+            )
             return self._build_record(
                 job_id=prepared_asset.job_id,
                 item_key=prepared_asset.item_key,
@@ -152,6 +165,13 @@ class AudioSynthesisService:
             )
 
         if not self._is_valid_media(expected_path=output_path, response=response):
+            self._log_provider_call(
+                prepared_asset=prepared_asset,
+                status="failure",
+                latency_ms=_elapsed_ms(started),
+                error_code="invalid_media",
+                error_summary="provider returned missing or empty media",
+            )
             return self._build_record(
                 job_id=prepared_asset.job_id,
                 item_key=prepared_asset.item_key,
@@ -167,6 +187,12 @@ class AudioSynthesisService:
                 fallback_used=prepared_asset.provenance.fallback_used,
             )
 
+        self._log_provider_call(
+            prepared_asset=prepared_asset,
+            status="success",
+            latency_ms=_elapsed_ms(started),
+            response_hash=_safe_hash(response.storage_path.name),
+        )
         return self._build_record(
             job_id=prepared_asset.job_id,
             item_key=prepared_asset.item_key,
@@ -365,6 +391,44 @@ class AudioSynthesisService:
             and text_record.validation_status is ValidationStatus.PASSED
             and bool(text_record.example_sentence)
         )
+
+    def _log_provider_call(
+        self,
+        *,
+        prepared_asset: AudioAssetRecord,
+        status: str,
+        latency_ms: int,
+        error_code: str | None = None,
+        error_summary: str | None = None,
+        response_hash: str | None = None,
+    ) -> None:
+        logger = getattr(self.provider_call_logger, "insert", None)
+        if not callable(logger):
+            return
+        logger(
+            ProviderCallLogCreate(
+                job_id=prepared_asset.job_id,
+                item_key=prepared_asset.item_key,
+                operation=f"audio_{prepared_asset.asset_kind.value}",
+                provider=str(self._provider().value),
+                voice_id=prepared_asset.provenance.voice_id,
+                attempt=1,
+                latency_ms=latency_ms,
+                status=status,
+                error_code=error_code,
+                error_summary=error_summary,
+                prompt_hash=_safe_hash(prepared_asset.normalized_input.tts_text),
+                response_hash=response_hash,
+            )
+        )
+
+
+def _safe_hash(payload: object) -> str:
+    return sha256(repr(payload).encode("utf-8")).hexdigest()
+
+
+def _elapsed_ms(started: float) -> int:
+    return max(0, int((perf_counter() - started) * 1000))
 
 
 __all__ = [

@@ -74,6 +74,14 @@ class LiteLLMSentenceAdapter:
         self._api_key = _litellm_api_key(settings)
         self._completion = completion_func or _litellm_completion
 
+    @property
+    def provider(self) -> str:
+        return "litellm"
+
+    @property
+    def model(self) -> str:
+        return self._model
+
     def generate_sentence(self, request: SentenceGenerationRequest) -> SentenceGenerationResult:
         response = self._completion(
             model=self._model,
@@ -98,6 +106,7 @@ class LiteLLMSentenceAdapter:
                 "source": "provider-text-generator",
                 "provider": "litellm",
                 "model": self._model,
+                **_usage_metadata(response),
                 **({"source_type": request.source_type} if request.source_type else {}),
             },
         )
@@ -124,6 +133,7 @@ class LiteLLMSentenceAdapter:
                 "source": "provider-definition-generator",
                 "provider": "litellm",
                 "model": self._model,
+                **_usage_metadata(response),
             },
         )
 
@@ -140,6 +150,10 @@ class DeepLTranslationAdapter:
         if not settings.deepl_api_key:
             raise ValueError("DeepL translation requires a DeepL API key")
         self._translator = (translator_factory or _deepl_translator)(settings.deepl_api_key)
+
+    @property
+    def provider(self) -> str:
+        return "deepl"
 
     def translate_sentence(self, request: SentenceTranslationRequest) -> SentenceTranslationResult:
         target_lang = _DEEPL_TARGET_LANGUAGES.get(request.translation_target_language)
@@ -166,6 +180,10 @@ class GoogleTranslateAdapter:
 
     def __init__(self, *, translator_factory: GoogleTranslatorFactory | None = None) -> None:
         self._translator_factory = translator_factory or _google_translator
+
+    @property
+    def provider(self) -> str:
+        return "google_translate"
 
     def translate_sentence(self, request: SentenceTranslationRequest) -> SentenceTranslationResult:
         translator = self._translator_factory(source="auto", target=request.translation_target_language)
@@ -380,6 +398,23 @@ def _get(value: Any, key: str) -> Any:
     if isinstance(value, dict):
         return value.get(key)
     return getattr(value, key, None)
+
+
+def _usage_metadata(response: Any) -> dict[str, int]:
+    usage = _get(response, "usage") or {}
+    input_tokens = _get(usage, "prompt_tokens") or _get(usage, "input_tokens")
+    output_tokens = _get(usage, "completion_tokens") or _get(usage, "output_tokens")
+    total_tokens = _get(usage, "total_tokens")
+    result: dict[str, int] = {}
+    if input_tokens is not None:
+        result["input_tokens"] = int(input_tokens)
+    if output_tokens is not None:
+        result["output_tokens"] = int(output_tokens)
+    if total_tokens is not None:
+        result["total_tokens"] = int(total_tokens)
+    elif input_tokens is not None or output_tokens is not None:
+        result["total_tokens"] = int(input_tokens or 0) + int(output_tokens or 0)
+    return result
 
 
 def _optional_string(value: object) -> str | None:

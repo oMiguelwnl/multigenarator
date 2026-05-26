@@ -70,6 +70,15 @@ class FakeAudioAdapter(AudioSynthesisAdapter):
         return AudioSynthesisResponse(storage_path=output_path, byte_size=output_path.stat().st_size, duration_ms=875)
 
 
+class RecordingProviderCallLogger:
+    def __init__(self) -> None:
+        self.records = []
+
+    def insert(self, record):
+        self.records.append(record)
+        return record
+
+
 class MissingFileAdapter(FakeAudioAdapter):
     def synthesize(
         self,
@@ -255,3 +264,18 @@ def test_audio_synthesis_service_applies_prominent_prosody_to_word_only(tmp_path
     sentence_ssml = bundle.sentence_asset.normalized_input.ssml_text or ""
     assert '<prosody rate="-10%" pitch="+8%" volume="+20%">read</prosody>' in word_ssml
     assert "<prosody" not in sentence_ssml
+
+
+def test_audio_synthesis_service_logs_tts_provider_calls(tmp_path: Path) -> None:
+    logger = RecordingProviderCallLogger()
+    service = AudioSynthesisService(
+        adapter=FakeAudioAdapter(tmp_path),
+        settings=Settings(audio_storage_dir=tmp_path / "audio"),
+        provider_call_logger=logger,
+    )
+
+    service.synthesize_item(language=SupportedLanguage.EN, display_word="read", text_record=make_text_record())
+
+    assert [record.operation for record in logger.records] == ["audio_word", "audio_sentence"]
+    assert all(record.provider == "azure" for record in logger.records)
+    assert all(record.prompt_hash for record in logger.records)

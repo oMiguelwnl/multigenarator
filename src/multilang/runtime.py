@@ -16,6 +16,7 @@ from multilang.repositories.export_repository import ExportRepository
 from multilang.repositories.highlight_import_repository import HighlightImportRepository
 from multilang.repositories.job_repository import JobRepository
 from multilang.repositories.lexical_repository import LexicalRepository
+from multilang.repositories.provider_call_log_repository import ProviderCallLogRepository
 from multilang.repositories.text_repository import TextRepository
 from multilang.services.provider_response_cache import ProviderResponseCacheService
 from multilang.domain.audio import AudioAssetKind
@@ -113,6 +114,7 @@ class RuntimeGenerateService(IngestLexicalItemsService):
         text_repository: TextRepository,
         audio_repository: AudioRepository,
         export_repository: ExportRepository,
+        provider_call_log_repository: ProviderCallLogRepository,
         generate_text_items_service: GenerateTextItemsService,
         regenerate_text_item_service: RegenerateTextItemService,
         text_review_service: TextReviewService,
@@ -125,6 +127,7 @@ class RuntimeGenerateService(IngestLexicalItemsService):
         self.text_repository = text_repository
         self.audio_repository = audio_repository
         self.export_repository = export_repository
+        self.provider_call_log_repository = provider_call_log_repository
         self.generate_text_items_service = generate_text_items_service
         self.regenerate_text_item_service = regenerate_text_item_service
         self.text_review_service = text_review_service
@@ -326,6 +329,7 @@ class RuntimeGenerateService(IngestLexicalItemsService):
             audio_assets=audio_assets,
             gate_result=gate_result,
             output_dir=output_path.parent,
+            provider_call_records=self.provider_call_log_repository.list_for_job(job_id),
         )
         return RuntimeExportResult(
             output_path=output_path,
@@ -496,6 +500,7 @@ def build_runtime_service(
     text_repository = TextRepository(session)
     audio_repository = AudioRepository(session)
     export_repository = ExportRepository(session)
+    provider_call_log_repository = ProviderCallLogRepository(session)
     highlight_import_repository = HighlightImportRepository(session)
     generate_job_service = GenerateJobService(job_repository)
     translation_adapter = _build_translation_adapter(runtime_settings)
@@ -504,6 +509,7 @@ def build_runtime_service(
         sentence_adapter=sentence_adapter,
         translation_adapter=translation_adapter,
         provider_cache=ProviderResponseCacheService(text_repository),
+        provider_call_logger=provider_call_log_repository,
     )
     text_validation_service = TextValidationService()
     tatoeba_sentence_source = TatoebaSentenceSource(
@@ -516,6 +522,7 @@ def build_runtime_service(
     audio_synthesis_service = AudioSynthesisService(
         adapter=audio_adapter or _build_audio_adapter(runtime_settings),
         settings=runtime_settings,
+        provider_call_logger=provider_call_log_repository,
     )
     return RuntimeGenerateService(
         job_service=generate_job_service,
@@ -531,6 +538,7 @@ def build_runtime_service(
         text_repository=text_repository,
         audio_repository=audio_repository,
         export_repository=export_repository,
+        provider_call_log_repository=provider_call_log_repository,
         generate_text_items_service=GenerateTextItemsService(
             job_repository=job_repository,
             lexical_repository=lexical_repository,

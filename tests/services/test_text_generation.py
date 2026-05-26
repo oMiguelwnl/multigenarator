@@ -154,6 +154,15 @@ class RecordingRateLimiter:
         self.wait_count += 1
 
 
+class RecordingProviderCallLogger:
+    def __init__(self) -> None:
+        self.records = []
+
+    def insert(self, record):
+        self.records.append(record)
+        return record
+
+
 def test_text_generation_service_returns_sentence_and_translation_provenance() -> None:
     sentence_adapter = FakeSentenceAdapter()
     translation_adapter = FakeTranslationAdapter()
@@ -287,3 +296,20 @@ def test_tatoeba_fallback_translation_uses_selected_sentence_not_linked_translat
     assert translation_adapter.requests[0].sentence == "Yo me lavo antes de dormir."
     assert translation_adapter.requests[0].translation_target_language == "en"
     assert result.translation.text == "I wash myself before going to sleep."
+
+
+def test_text_generation_service_logs_provider_calls_without_raw_text() -> None:
+    logger = RecordingProviderCallLogger()
+    service = TextGenerationService(
+        sentence_adapter=FakeSentenceAdapter(),
+        translation_adapter=FakeTranslationAdapter(),
+        provider_call_logger=logger,
+    )
+
+    service.generate_bundle(candidate=build_candidate(), deck_language=SupportedLanguage.ES, job_id="job-1")
+
+    assert [record.operation for record in logger.records] == ["sentence", "translation"]
+    assert logger.records[0].job_id == "job-1"
+    assert logger.records[0].prompt_hash
+    assert not hasattr(logger.records[0], "prompt")
+    assert logger.records[0].provider == "litellm"
