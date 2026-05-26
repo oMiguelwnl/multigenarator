@@ -14,6 +14,7 @@ from multilang.services.provider_retry import (
 
 def test_retry_provider_call_recovers_from_temporary_error() -> None:
     calls = {"count": 0}
+    success_attempts: list[int] = []
 
     def flaky() -> str:
         calls["count"] += 1
@@ -21,8 +22,9 @@ def test_retry_provider_call_recovers_from_temporary_error() -> None:
             raise TimeoutError("timeout api_key=secret raw prompt text")
         return "ok"
 
-    assert retry_provider_call(flaky, wait_seconds=0) == "ok"
+    assert retry_provider_call(flaky, wait_seconds=0, success_attempt_callback=success_attempts.append) == "ok"
     assert calls["count"] == 2
+    assert success_attempts == [2]
 
 
 def test_retry_provider_call_exhaustion_is_redacted() -> None:

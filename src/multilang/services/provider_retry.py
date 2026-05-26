@@ -142,6 +142,7 @@ def retry_provider_call(
     context: ProviderRetryContext | None = None,
     circuit_breaker: ProviderCircuitBreaker | None = None,
     call_logger: object | None = None,
+    success_attempt_callback: Callable[[int], None] | None = None,
 ) -> T:
     last_error: BaseException | None = None
     base_delay = wait_seconds if base_delay_seconds is None else base_delay_seconds
@@ -157,6 +158,8 @@ def retry_provider_call(
             result = operation()
             if context is not None and circuit_breaker is not None:
                 circuit_breaker.record_success(context)
+            if success_attempt_callback is not None:
+                success_attempt_callback(attempt)
             return result
         except Exception as exc:  # noqa: BLE001 - provider adapters expose heterogeneous errors.
             classification = classify_provider_error(exc)

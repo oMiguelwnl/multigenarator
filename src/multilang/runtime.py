@@ -516,6 +516,10 @@ def build_runtime_service(
         provider_cache=ProviderResponseCacheService(text_repository),
         provider_call_logger=provider_call_log_repository,
         circuit_breaker=circuit_breaker,
+        retry_attempts=runtime_settings.default_retry_attempts,
+        retry_base_delay_seconds=runtime_settings.provider_retry_base_delay_seconds,
+        retry_max_delay_seconds=runtime_settings.provider_retry_max_delay_seconds,
+        retry_jitter_ratio=runtime_settings.provider_retry_jitter_ratio,
     )
     text_validation_service = TextValidationService()
     tatoeba_sentence_source = TatoebaSentenceSource(

@@ -112,6 +112,19 @@ class FakeSentenceAdapter(SentenceGenerationAdapter):
         )
 
 
+class FlakySentenceAdapter(FakeSentenceAdapter):
+    def generate_sentence(self, request: SentenceGenerationRequest) -> SentenceGenerationResult:
+        self.requests.append(request)
+        if len(self.requests) == 1:
+            raise TimeoutError("timeout api_key=secret raw prompt text")
+        return SentenceGenerationResult(
+            sentence="Yo me lavo antes de dormir.",
+            intended_sense="reflexive daily routine",
+            uncertainty_notes=["medium confidence"],
+            provenance={"provider": "litellm", "model": "openai/gpt-4o-mini"},
+        )
+
+
 class EnglishSentenceAdapter(SentenceGenerationAdapter):
     def generate_sentence(self, request: SentenceGenerationRequest) -> SentenceGenerationResult:
         return SentenceGenerationResult(
@@ -313,3 +326,19 @@ def test_text_generation_service_logs_provider_calls_without_raw_text() -> None:
     assert logger.records[0].prompt_hash
     assert not hasattr(logger.records[0], "prompt")
     assert logger.records[0].provider == "litellm"
+
+
+def test_text_generation_service_logs_successful_retry_attempt_count() -> None:
+    logger = RecordingProviderCallLogger()
+    service = TextGenerationService(
+        sentence_adapter=FlakySentenceAdapter(),
+        translation_adapter=FakeTranslationAdapter(),
+        provider_call_logger=logger,
+        retry_attempts=2,
+        retry_base_delay_seconds=0,
+    )
+
+    service.generate_bundle(candidate=build_candidate(), deck_language=SupportedLanguage.ES, job_id="job-1")
+
+    sentence_records = [record for record in logger.records if record.operation == "sentence"]
+    assert [(record.status, record.attempt) for record in sentence_records] == [("failure", 1), ("success", 2)]

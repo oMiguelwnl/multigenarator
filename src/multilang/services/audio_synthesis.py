@@ -135,6 +135,12 @@ class AudioSynthesisService:
         output_path = Path(prepared_asset.provenance.storage_path)
         started = perf_counter()
         try:
+            success_attempt = 1
+
+            def record_success_attempt(attempt: int) -> None:
+                nonlocal success_attempt
+                success_attempt = attempt
+
             retry_context = ProviderRetryContext(
                 provider=str(self._provider().value),
                 operation=f"audio_{prepared_asset.asset_kind.value}",
@@ -150,9 +156,14 @@ class AudioSynthesisService:
                     output_path=output_path,
                     audio_format=self._audio_format().value,
                 ),
+                attempts=self.settings.default_retry_attempts,
+                base_delay_seconds=self.settings.provider_retry_base_delay_seconds,
+                max_delay_seconds=self.settings.provider_retry_max_delay_seconds,
+                jitter_ratio=self.settings.provider_retry_jitter_ratio,
                 context=retry_context,
                 circuit_breaker=self.circuit_breaker,
                 call_logger=self.provider_call_logger,
+                success_attempt_callback=record_success_attempt,
             )
         except Exception as exc:
             self._log_provider_call(
@@ -203,6 +214,7 @@ class AudioSynthesisService:
         self._log_provider_call(
             prepared_asset=prepared_asset,
             status="success",
+            attempt=success_attempt,
             latency_ms=_elapsed_ms(started),
             response_hash=_safe_hash(response.storage_path.name),
         )
@@ -410,6 +422,7 @@ class AudioSynthesisService:
         *,
         prepared_asset: AudioAssetRecord,
         status: str,
+        attempt: int = 1,
         latency_ms: int,
         error_code: str | None = None,
         error_summary: str | None = None,
@@ -425,7 +438,7 @@ class AudioSynthesisService:
                 operation=f"audio_{prepared_asset.asset_kind.value}",
                 provider=str(self._provider().value),
                 voice_id=prepared_asset.provenance.voice_id,
-                attempt=1,
+                attempt=attempt,
                 latency_ms=latency_ms,
                 status=status,
                 error_code=error_code,

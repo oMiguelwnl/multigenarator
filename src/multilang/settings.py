@@ -45,9 +45,9 @@ class Settings(BaseSettings):
     default_retry_attempts: int = 2
     frequency_assets_dir: Path = Path("assets/frequency")
     frequency_list_version: str = "v1"
-    provider_retry_base_delay_seconds: float = 0.0
+    provider_retry_base_delay_seconds: float = 1.0
     provider_retry_max_delay_seconds: float = 30.0
-    provider_retry_jitter_ratio: float = 0.0
+    provider_retry_jitter_ratio: float = 0.1
     provider_circuit_failure_threshold: int = 3
     provider_circuit_cooldown_seconds: float = 60.0
     lexicon_data_dir: Path = Path(".multilang/lexicon")

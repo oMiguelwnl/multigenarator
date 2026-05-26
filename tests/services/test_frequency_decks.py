@@ -270,6 +270,8 @@ def test_all_supported_frequency_assets_validate() -> None:
         entries = frequency_decks.load_curated_frequency_entries(language)
         assert len(entries) == 3000
         assert [sum(1 for entry in entries if entry.level == level) for level in (1, 2, 3)] == [1000, 1000, 1000]
+        assert all("needs_human_review" not in entry.curation_flags for entry in entries)
+        assert all("structurally_curated" in entry.curation_flags for entry in entries)
 
 
 def test_validation_rejects_duplicate_lemma_key(tmp_path) -> None:

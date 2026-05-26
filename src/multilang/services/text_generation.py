@@ -130,6 +130,10 @@ class TextGenerationService:
         provider_cache: ProviderResponseCacheService | None = None,
         provider_call_logger: Any | None = None,
         circuit_breaker: ProviderCircuitBreaker | None = None,
+        retry_attempts: int = 3,
+        retry_base_delay_seconds: float = 1.0,
+        retry_max_delay_seconds: float = 30.0,
+        retry_jitter_ratio: float = 0.0,
         prompt_version: str = "text-generation-v1",
     ) -> None:
         self._sentence_adapter = sentence_adapter
@@ -137,6 +141,10 @@ class TextGenerationService:
         self._provider_cache = provider_cache
         self._provider_call_logger = provider_call_logger
         self._circuit_breaker = circuit_breaker
+        self._retry_attempts = retry_attempts
+        self._retry_base_delay_seconds = retry_base_delay_seconds
+        self._retry_max_delay_seconds = retry_max_delay_seconds
+        self._retry_jitter_ratio = retry_jitter_ratio
         self._prompt_version = prompt_version
 
     def generate_bundle(
@@ -283,6 +291,12 @@ class TextGenerationService:
         provider = str(getattr(adapter, "provider", adapter.__class__.__name__))
         model = getattr(adapter, "model", getattr(adapter, "_model", None))
         try:
+            success_attempt = 1
+
+            def record_success_attempt(attempt: int) -> None:
+                nonlocal success_attempt
+                success_attempt = attempt
+
             retry_context = ProviderRetryContext(
                 provider=provider,
                 operation=operation,
@@ -292,9 +306,14 @@ class TextGenerationService:
             )
             result = retry_provider_call(
                 operation_func,
+                attempts=self._retry_attempts,
+                base_delay_seconds=self._retry_base_delay_seconds,
+                max_delay_seconds=self._retry_max_delay_seconds,
+                jitter_ratio=self._retry_jitter_ratio,
                 context=retry_context,
                 circuit_breaker=self._circuit_breaker,
                 call_logger=self._provider_call_logger,
+                success_attempt_callback=record_success_attempt,
             )
         except Exception as exc:
             self._log_provider_call(
@@ -318,6 +337,7 @@ class TextGenerationService:
             job_id=job_id,
             item_key=item_key,
             status="success",
+            attempt=success_attempt,
             latency_ms=_elapsed_ms(started),
             fallback_from=provenance.get("fallback_from"),
             prompt_hash=prompt_hash,

@@ -70,6 +70,24 @@ class FakeAudioAdapter(AudioSynthesisAdapter):
         return AudioSynthesisResponse(storage_path=output_path, byte_size=output_path.stat().st_size, duration_ms=875)
 
 
+class FlakyAudioAdapter(FakeAudioAdapter):
+    def synthesize(
+        self,
+        *,
+        ssml_text: str,
+        voice_id: str,
+        locale: str,
+        output_path: Path,
+        audio_format: str,
+    ) -> AudioSynthesisResponse:
+        self.calls.append((ssml_text, voice_id, locale, output_path))
+        if len(self.calls) == 1:
+            raise TimeoutError("temporary timeout api_key=secret")
+        output_path.parent.mkdir(parents=True, exist_ok=True)
+        output_path.write_bytes(f"{voice_id}:{audio_format}:{ssml_text}".encode("utf-8"))
+        return AudioSynthesisResponse(storage_path=output_path, byte_size=output_path.stat().st_size, duration_ms=875)
+
+
 class RecordingProviderCallLogger:
     def __init__(self) -> None:
         self.records = []
@@ -279,3 +297,25 @@ def test_audio_synthesis_service_logs_tts_provider_calls(tmp_path: Path) -> None
     assert [record.operation for record in logger.records] == ["audio_word", "audio_sentence"]
     assert all(record.provider == "azure" for record in logger.records)
     assert all(record.prompt_hash for record in logger.records)
+
+
+def test_audio_synthesis_service_logs_successful_retry_attempt_count(tmp_path: Path) -> None:
+    logger = RecordingProviderCallLogger()
+    service = AudioSynthesisService(
+        adapter=FlakyAudioAdapter(tmp_path),
+        settings=Settings(
+            audio_storage_dir=tmp_path / "audio",
+            default_retry_attempts=2,
+            provider_retry_base_delay_seconds=0,
+        ),
+        provider_call_logger=logger,
+    )
+    prepared = service.prepare_item_assets(
+        language=SupportedLanguage.EN,
+        display_word="read",
+        text_record=make_text_record(),
+    ).word_asset
+
+    service.synthesize_prepared_asset(prepared)
+
+    assert [(record.status, record.attempt) for record in logger.records] == [("failure", 1), ("success", 2)]

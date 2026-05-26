@@ -73,7 +73,7 @@ def build_assets(*, assets_dir: Path, version: str, scan_limit: int = 25000) -> 
                     "part_of_speech": "unknown",
                     "definition_seed": token,
                     "source_provenance": f"wordfreq:{code}",
-                    "curation_flags": "wordfreq_seeded;deterministically_filtered;needs_human_review",
+                    "curation_flags": "wordfreq_seeded;deterministically_filtered;structurally_curated",
                 }
             )
         if len(curated_rows) != 3000:
