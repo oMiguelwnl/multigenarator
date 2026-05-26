@@ -57,6 +57,7 @@ from multilang.services.provider_text_adapters import (
 )
 from multilang.services.generation_report import write_generation_report
 from multilang.services.provider_pronunciation_adapters import LiteLLMPronunciationAdapter
+from multilang.services.provider_retry import ProviderCircuitBreaker
 from multilang.services.regenerate_text_item import RegenerateTextItemService
 from multilang.services.tatoeba_sentence_source import (
     StaticTatoebaCandidateProvider,
@@ -501,6 +502,10 @@ def build_runtime_service(
     audio_repository = AudioRepository(session)
     export_repository = ExportRepository(session)
     provider_call_log_repository = ProviderCallLogRepository(session)
+    circuit_breaker = ProviderCircuitBreaker(
+        failure_threshold=runtime_settings.provider_circuit_failure_threshold,
+        cooldown_seconds=runtime_settings.provider_circuit_cooldown_seconds,
+    )
     highlight_import_repository = HighlightImportRepository(session)
     generate_job_service = GenerateJobService(job_repository)
     translation_adapter = _build_translation_adapter(runtime_settings)
@@ -510,6 +515,7 @@ def build_runtime_service(
         translation_adapter=translation_adapter,
         provider_cache=ProviderResponseCacheService(text_repository),
         provider_call_logger=provider_call_log_repository,
+        circuit_breaker=circuit_breaker,
     )
     text_validation_service = TextValidationService()
     tatoeba_sentence_source = TatoebaSentenceSource(
@@ -523,6 +529,7 @@ def build_runtime_service(
         adapter=audio_adapter or _build_audio_adapter(runtime_settings),
         settings=runtime_settings,
         provider_call_logger=provider_call_log_repository,
+        circuit_breaker=circuit_breaker,
     )
     return RuntimeGenerateService(
         job_service=generate_job_service,

@@ -24,7 +24,7 @@ from multilang.domain.text_quality import ReviewStatus, TextQualityRecord, Valid
 from multilang.services.audio_voice_registry import VoiceSelection, VoiceSelectionError, select_voice
 from multilang.settings import Settings
 from multilang.repositories.provider_call_log_repository import ProviderCallLogCreate
-from multilang.services.provider_retry import safe_provider_error_summary
+from multilang.services.provider_retry import ProviderCircuitBreaker, ProviderRetryContext, retry_provider_call, safe_provider_error_summary
 
 _WHITESPACE_RE = re.compile(r"\s+")
 
@@ -64,10 +64,11 @@ class AudioSynthesisBundle:
 class AudioSynthesisService:
     """Build and validate separate word and sentence audio assets."""
 
-    def __init__(self, *, adapter: AudioSynthesisAdapter, settings: Settings | None = None, provider_call_logger: object | None = None) -> None:
+    def __init__(self, *, adapter: AudioSynthesisAdapter, settings: Settings | None = None, provider_call_logger: object | None = None, circuit_breaker: ProviderCircuitBreaker | None = None) -> None:
         self.adapter = adapter
         self.settings = settings or Settings()
         self.provider_call_logger = provider_call_logger
+        self.circuit_breaker = circuit_breaker
 
     def synthesize_item(
         self,
@@ -134,12 +135,24 @@ class AudioSynthesisService:
         output_path = Path(prepared_asset.provenance.storage_path)
         started = perf_counter()
         try:
-            response = self.adapter.synthesize(
-                ssml_text=prepared_asset.normalized_input.ssml_text or prepared_asset.normalized_input.tts_text,
+            retry_context = ProviderRetryContext(
+                provider=str(self._provider().value),
+                operation=f"audio_{prepared_asset.asset_kind.value}",
                 voice_id=prepared_asset.provenance.voice_id,
-                locale=prepared_asset.provenance.locale,
-                output_path=output_path,
-                audio_format=self._audio_format().value,
+                job_id=prepared_asset.job_id,
+                item_key=prepared_asset.item_key,
+            )
+            response = retry_provider_call(
+                lambda: self.adapter.synthesize(
+                    ssml_text=prepared_asset.normalized_input.ssml_text or prepared_asset.normalized_input.tts_text,
+                    voice_id=prepared_asset.provenance.voice_id,
+                    locale=prepared_asset.provenance.locale,
+                    output_path=output_path,
+                    audio_format=self._audio_format().value,
+                ),
+                context=retry_context,
+                circuit_breaker=self.circuit_breaker,
+                call_logger=self.provider_call_logger,
             )
         except Exception as exc:
             self._log_provider_call(

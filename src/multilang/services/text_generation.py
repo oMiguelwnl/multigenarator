@@ -13,7 +13,7 @@ from multilang.domain.jobs import SupportedLanguage
 from multilang.domain.lexicon import GroundingStatus, LexicalCardCandidate
 from multilang.services.rate_limit import RateLimiter
 from multilang.services.provider_response_cache import ProviderCacheKey, ProviderResponseCacheService
-from multilang.services.provider_retry import retry_provider_call
+from multilang.services.provider_retry import ProviderCircuitBreaker, ProviderRetryContext, retry_provider_call
 from multilang.repositories.provider_call_log_repository import ProviderCallLogCreate
 
 
@@ -129,12 +129,14 @@ class TextGenerationService:
         translation_adapter: SentenceTranslationAdapter,
         provider_cache: ProviderResponseCacheService | None = None,
         provider_call_logger: Any | None = None,
+        circuit_breaker: ProviderCircuitBreaker | None = None,
         prompt_version: str = "text-generation-v1",
     ) -> None:
         self._sentence_adapter = sentence_adapter
         self._translation_adapter = translation_adapter
         self._provider_cache = provider_cache
         self._provider_call_logger = provider_call_logger
+        self._circuit_breaker = circuit_breaker
         self._prompt_version = prompt_version
 
     def generate_bundle(
@@ -237,7 +239,7 @@ class TextGenerationService:
             if cached is not None:
                 return SentenceGenerationResult.model_validate(cached.response)
         result = self._call_with_telemetry(
-            lambda: retry_provider_call(lambda: self._sentence_adapter.generate_sentence(request)),
+            lambda: self._sentence_adapter.generate_sentence(request),
             operation="sentence",
             adapter=self._sentence_adapter,
             request_payload=request.model_dump(mode="json"),
@@ -255,7 +257,7 @@ class TextGenerationService:
             if cached is not None:
                 return SentenceTranslationResult.model_validate(cached.response)
         result = self._call_with_telemetry(
-            lambda: retry_provider_call(lambda: self._translation_adapter.translate_sentence(request)),
+            lambda: self._translation_adapter.translate_sentence(request),
             operation="translation",
             adapter=self._translation_adapter,
             request_payload=request.model_dump(mode="json"),
@@ -281,7 +283,19 @@ class TextGenerationService:
         provider = str(getattr(adapter, "provider", adapter.__class__.__name__))
         model = getattr(adapter, "model", getattr(adapter, "_model", None))
         try:
-            result = operation_func()
+            retry_context = ProviderRetryContext(
+                provider=provider,
+                operation=operation,
+                model=str(model) if model else None,
+                job_id=job_id,
+                item_key=item_key,
+            )
+            result = retry_provider_call(
+                operation_func,
+                context=retry_context,
+                circuit_breaker=self._circuit_breaker,
+                call_logger=self._provider_call_logger,
+            )
         except Exception as exc:
             self._log_provider_call(
                 operation=operation,
