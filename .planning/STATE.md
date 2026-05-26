@@ -28,7 +28,7 @@ See: .planning/PROJECT.md (updated 2026-05-16)
 Phase: Next milestone
 Plan: Not started
 Status: v1.3 milestone complete — ready for next milestone definition
-Last activity: 2026-05-19 - Completed quick task 260519-kyd: realize todas as etapas do arquivo @docs\ai-generation-improvement-prompts.md começando da etapa 4
+Last activity: 2026-05-26 - Completed quick task 260526-jgn: Implemente o plano em docs/generation-process-improvement-plan.md para corrigir o processo de geração de decks
 
 Progress: [██████████] 100%
 
@@ -165,6 +165,7 @@ Full decision history is in `.planning/PROJECT.md` and `.planning/milestones/v1.
 |---|-------------|------|--------|--------|-----------|
 | 260421-001 | implement Tatoeba as a filtered secondary sentence source with advanced reranking and validation, never as the raw default primary source | 2026-04-23 | b833e22 | Verified | [260421-001-tatoeba-filtered-secondary-source](./quick/260421-001-tatoeba-filtered-secondary-source/) |
 | 260519-kyd | realize todas as etapas do arquivo @docs\ai-generation-improvement-prompts.md começando da etapa 4 | 2026-05-19 | 7d24c77 | Complete | [260519-kyd-realize-todas-as-etapas-do-arquivo-docs-](./quick/260519-kyd-realize-todas-as-etapas-do-arquivo-docs-/) |
+| 260526-jgn | Implemente o plano em docs/generation-process-improvement-plan.md para corrigir o processo de geração de decks | 2026-05-26 | b53c697 | Complete | [260526-jgn-implemente-o-plano-em-docs-generation-pr](./quick/260526-jgn-implemente-o-plano-em-docs-generation-pr/) |
 
 ## Deferred Items
 
