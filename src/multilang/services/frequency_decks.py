@@ -2,7 +2,11 @@
 
 from __future__ import annotations
 
-from collections.abc import Iterator
+import csv
+from collections import Counter
+from collections.abc import Iterable, Iterator
+from dataclasses import dataclass
+from pathlib import Path
 
 from wordfreq import iter_wordlist
 
@@ -15,6 +19,47 @@ LEVEL_WINDOWS = {
     2: (1001, 2000),
     3: (2001, 3000),
 }
+CURATED_COLUMNS = (
+    "language",
+    "frequency_list_version",
+    "level",
+    "rank",
+    "source_rank",
+    "display_form",
+    "lemma",
+    "lemma_key",
+    "part_of_speech",
+    "definition_seed",
+    "source_provenance",
+    "curation_flags",
+)
+REJECTION_COLUMNS = ("language", "frequency_list_version", "source_rank", "token", "reason_code")
+VALID_REJECTION_REASON_CODES = {
+    "digit",
+    "empty",
+    "web_noise",
+    "contains_dot",
+    "uppercase",
+    "punctuation",
+    "duplicate_lemma_key",
+    "duplicate_display_form",
+}
+
+
+@dataclass(frozen=True, slots=True)
+class CuratedFrequencyEntry:
+    language: SupportedLanguage
+    frequency_list_version: str
+    level: int
+    rank: int
+    source_rank: int
+    display_form: str
+    lemma: str
+    lemma_key: str
+    part_of_speech: str
+    definition_seed: str
+    source_provenance: str
+    curation_flags: str
 
 
 def _is_curated_token(token: str) -> bool:
@@ -64,6 +109,111 @@ def iter_curated_frequency_candidates(
             yield rank, token
 
 
+def _asset_path(*, language: SupportedLanguage, version: str, assets_dir: Path, kind: str) -> Path:
+    return Path(assets_dir) / language.value / f"{kind}-{version}.csv"
+
+
+def load_curated_frequency_entries(
+    language: SupportedLanguage,
+    *,
+    version: str = "v1",
+    assets_dir: Path | str = Path("assets/frequency"),
+) -> list[CuratedFrequencyEntry]:
+    path = _asset_path(language=language, version=version, assets_dir=Path(assets_dir), kind="curated")
+    if not path.is_file():
+        raise FileNotFoundError(f"missing curated frequency asset: {path}")
+    with path.open("r", encoding="utf-8", newline="") as handle:
+        reader = csv.DictReader(handle)
+        if tuple(reader.fieldnames or ()) != CURATED_COLUMNS:
+            raise ValueError(f"malformed curated frequency header for {path}")
+        entries = [_entry_from_row(row, path=path) for row in reader]
+    validate_curated_frequency_entries(entries, language=language, version=version)
+    validate_frequency_rejection_rows(language, version=version, assets_dir=assets_dir)
+    return entries
+
+
+def _entry_from_row(row: dict[str, str], *, path: Path) -> CuratedFrequencyEntry:
+    try:
+        language = SupportedLanguage(row["language"])
+        level = int(row["level"])
+        rank = int(row["rank"])
+        source_rank = int(row["source_rank"])
+    except Exception as exc:  # noqa: BLE001 - include asset path in validation error.
+        raise ValueError(f"malformed curated frequency row in {path}: {row}") from exc
+    return CuratedFrequencyEntry(
+        language=language,
+        frequency_list_version=row["frequency_list_version"],
+        level=level,
+        rank=rank,
+        source_rank=source_rank,
+        display_form=row["display_form"].strip(),
+        lemma=row["lemma"].strip(),
+        lemma_key=row["lemma_key"].strip(),
+        part_of_speech=row["part_of_speech"].strip(),
+        definition_seed=row["definition_seed"].strip(),
+        source_provenance=row["source_provenance"].strip(),
+        curation_flags=row["curation_flags"].strip(),
+    )
+
+
+def validate_curated_frequency_entries(
+    entries: Iterable[CuratedFrequencyEntry],
+    *,
+    language: SupportedLanguage,
+    version: str = "v1",
+    required_count_per_level: int = 1000,
+) -> None:
+    rows = list(entries)
+    expected_total = required_count_per_level * len(LEVEL_WINDOWS)
+    if len(rows) != expected_total:
+        raise ValueError(f"expected {expected_total} curated rows for {language.value}, found {len(rows)}")
+    if any(row.language is not language for row in rows):
+        raise ValueError("curated asset contains rows for the wrong language")
+    if any(row.frequency_list_version != version for row in rows):
+        raise ValueError("curated asset contains rows for the wrong version")
+    lemma_counts = Counter(row.lemma_key.casefold() for row in rows)
+    if duplicates := [key for key, count in lemma_counts.items() if count > 1]:
+        raise ValueError(f"duplicate lemma_key values: {duplicates[:5]}")
+    display_counts = Counter(row.display_form.casefold() for row in rows)
+    if duplicates := [key for key, count in display_counts.items() if count > 1]:
+        raise ValueError(f"duplicate display_form values: {duplicates[:5]}")
+    for level, (start_rank, end_rank) in LEVEL_WINDOWS.items():
+        level_rows = sorted((row for row in rows if row.level == level), key=lambda row: row.rank)
+        if len(level_rows) != required_count_per_level:
+            raise ValueError(f"expected {required_count_per_level} rows for level {level}")
+        expected_ranks = list(range(start_rank, end_rank + 1))[:required_count_per_level]
+        actual_ranks = [row.rank for row in level_rows]
+        if actual_ranks != expected_ranks:
+            raise ValueError(f"non-contiguous ranks for level {level}")
+    for row in rows:
+        if row.source_rank <= 0 or not row.display_form or not row.lemma or not row.lemma_key:
+            raise ValueError("curated asset contains empty or invalid lexical fields")
+        if not row.source_provenance:
+            raise ValueError("curated asset contains missing source_provenance")
+
+
+def validate_frequency_rejection_rows(
+    language: SupportedLanguage,
+    *,
+    version: str = "v1",
+    assets_dir: Path | str = Path("assets/frequency"),
+) -> None:
+    path = _asset_path(language=language, version=version, assets_dir=Path(assets_dir), kind="rejections")
+    if not path.is_file():
+        raise FileNotFoundError(f"missing frequency rejection asset: {path}")
+    with path.open("r", encoding="utf-8", newline="") as handle:
+        reader = csv.DictReader(handle)
+        if tuple(reader.fieldnames or ()) != REJECTION_COLUMNS:
+            raise ValueError(f"malformed rejection header for {path}")
+        for row in reader:
+            if row["language"] != language.value or row["frequency_list_version"] != version:
+                raise ValueError(f"malformed rejection row language/version in {path}")
+            if int(row["source_rank"]) <= 0 or not row["token"].strip():
+                raise ValueError(f"malformed rejection row token/rank in {path}")
+            if row["reason_code"] not in VALID_REJECTION_REASON_CODES:
+                raise ValueError(f"malformed rejection reason_code in {path}: {row['reason_code']}")
+
+
 def _build_seed_candidate(
     language: SupportedLanguage,
     *,
@@ -86,6 +236,30 @@ def _build_seed_candidate(
     )
 
 
+def _build_asset_candidate(language: SupportedLanguage, entry: CuratedFrequencyEntry) -> LexicalCardCandidate:
+    policy = policy_for_language(language)
+    return LexicalCardCandidate(
+        submitted_form=entry.display_form,
+        display_form=entry.display_form,
+        lemma=entry.lemma,
+        lemma_key=entry.lemma_key,
+        frequency_rank=entry.rank,
+        frequency_level=entry.level,
+        definition_language=policy.definition_language,
+        translation_target_language=policy.translation_target_language,
+        grounding_status=GroundingStatus.PENDING,
+        provenance=LexicalProvenance(
+            source="curated-frequency-asset",
+            notes=[
+                f"frequency_list_version={entry.frequency_list_version}",
+                f"source_rank={entry.source_rank}",
+                f"source_provenance={entry.source_provenance}",
+                f"curation_flags={entry.curation_flags}",
+            ],
+        ),
+    )
+
+
 def build_frequency_level(
     language: SupportedLanguage,
     *,
@@ -93,11 +267,26 @@ def build_frequency_level(
     required_count_per_level: int = 1000,
     rejected_lemmas: set[str] | None = None,
     scan_limit: int = 6000,
+    assets_dir: Path | str = Path("assets/frequency"),
+    version: str = "v1",
+    allow_frequency_seed_fallback: bool = False,
 ) -> list[LexicalCardCandidate]:
     """Build one frequency level using explicit windows plus bounded backfill."""
 
     if level not in LEVEL_WINDOWS:
         raise ValueError(f"unsupported frequency level: {level}")
+
+    if not allow_frequency_seed_fallback:
+        entries = load_curated_frequency_entries(language, version=version, assets_dir=assets_dir)
+        seen_lemmas = {lemma.casefold() for lemma in (rejected_lemmas or set())}
+        candidates = [
+            _build_asset_candidate(language, entry)
+            for entry in entries
+            if entry.level == level and entry.lemma_key.casefold() not in seen_lemmas
+        ]
+        if len(candidates) != required_count_per_level:
+            raise ValueError(f"asset level {level} did not provide {required_count_per_level} usable candidates")
+        return candidates
 
     start_rank, end_rank = LEVEL_WINDOWS[level]
     seen_lemmas = {lemma.casefold() for lemma in (rejected_lemmas or set())}
@@ -158,6 +347,9 @@ def build_frequency_deck(
     required_count_per_level: int = 1000,
     rejected_lemmas_by_level: dict[int, set[str]] | None = None,
     scan_limit: int = 6000,
+    assets_dir: Path | str = Path("assets/frequency"),
+    version: str = "v1",
+    allow_frequency_seed_fallback: bool = False,
 ) -> dict[int, list[LexicalCardCandidate]]:
     """Build the deterministic three-level frequency deck."""
 
@@ -172,6 +364,9 @@ def build_frequency_deck(
             required_count_per_level=required_count_per_level,
             rejected_lemmas=selected_lemmas | level_rejections,
             scan_limit=scan_limit,
+            assets_dir=assets_dir,
+            version=version,
+            allow_frequency_seed_fallback=allow_frequency_seed_fallback,
         )
         deck[level] = candidates
         selected_lemmas.update(candidate.lemma_key.casefold() for candidate in candidates)
@@ -182,5 +377,9 @@ def build_frequency_deck(
 __all__ = [
     "build_frequency_deck",
     "build_frequency_level",
+    "CuratedFrequencyEntry",
+    "load_curated_frequency_entries",
+    "validate_curated_frequency_entries",
+    "validate_frequency_rejection_rows",
     "iter_curated_frequency_candidates",
 ]

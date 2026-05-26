@@ -2,6 +2,9 @@
 
 from __future__ import annotations
 
+import csv
+from dataclasses import replace
+
 from multilang.domain.jobs import SupportedLanguage
 
 
@@ -114,6 +117,8 @@ def test_build_frequency_deck_returns_three_full_levels(monkeypatch) -> None:
     assert deck[2][0].frequency_level == 2
     assert deck[3][0].frequency_level == 3
 
+    assert deck[1][0].provenance.source == "curated-frequency-asset"
+
 
 def test_build_frequency_level_backfills_rejected_candidates(monkeypatch) -> None:
     from multilang.services import frequency_decks
@@ -131,6 +136,7 @@ def test_build_frequency_level_backfills_rejected_candidates(monkeypatch) -> Non
         level=3,
         required_count_per_level=5,
         rejected_lemmas={"word-2001", "word-2003", "word-2005", "word-2007", "word-2009"},
+        allow_frequency_seed_fallback=True,
     )
 
     assert [candidate.frequency_rank for candidate in level] == [2002, 2004, 2006, 2008, 2010]
@@ -164,6 +170,7 @@ def test_build_frequency_level_skips_repeated_tokens_within_level(monkeypatch) -
         SupportedLanguage.EN,
         level=3,
         required_count_per_level=3,
+        allow_frequency_seed_fallback=True,
     )
 
     assert [candidate.submitted_form for candidate in level] == ["word-a", "word-b", "word-c"]
@@ -196,6 +203,7 @@ def test_build_frequency_deck_deduplicates_tokens_across_levels(monkeypatch) -> 
     deck = frequency_decks.build_frequency_deck(
         SupportedLanguage.EN,
         required_count_per_level=3,
+        allow_frequency_seed_fallback=True,
     )
 
     assert [candidate.submitted_form for candidate in deck[1]] == ["word-1", "word-2", "word-3"]
@@ -227,6 +235,7 @@ def test_build_frequency_level_scans_past_rank_3000_for_backfill(monkeypatch) ->
         level=3,
         required_count_per_level=5,
         rejected_lemmas={"word-2997", "word-2998", "word-2999", "word-3000"},
+        allow_frequency_seed_fallback=True,
     )
 
     assert [candidate.frequency_rank for candidate in level] == [2996, 3001, 3002, 3003, 3004]
@@ -245,9 +254,54 @@ def test_build_frequency_deck_supports_custom_cards_per_level(monkeypatch) -> No
     deck = frequency_decks.build_frequency_deck(
         SupportedLanguage.EN,
         required_count_per_level=4,
+        allow_frequency_seed_fallback=True,
     )
 
     assert [len(deck[level]) for level in (1, 2, 3)] == [4, 4, 4]
     assert [candidate.frequency_rank for candidate in deck[1]] == [1, 2, 3, 4]
     assert [candidate.frequency_rank for candidate in deck[2]] == [1001, 1002, 1003, 1004]
     assert [candidate.frequency_rank for candidate in deck[3]] == [2001, 2002, 2003, 2004]
+
+
+def test_all_supported_frequency_assets_validate() -> None:
+    from multilang.services import frequency_decks
+
+    for language in SupportedLanguage:
+        entries = frequency_decks.load_curated_frequency_entries(language)
+        assert len(entries) == 3000
+        assert [sum(1 for entry in entries if entry.level == level) for level in (1, 2, 3)] == [1000, 1000, 1000]
+
+
+def test_validation_rejects_duplicate_lemma_key(tmp_path) -> None:
+    from multilang.services import frequency_decks
+
+    entries = frequency_decks.load_curated_frequency_entries(SupportedLanguage.EN)
+    broken = list(entries)
+    broken[1] = replace(broken[1], lemma_key=broken[0].lemma_key)
+
+    try:
+        frequency_decks.validate_curated_frequency_entries(broken, language=SupportedLanguage.EN)
+    except ValueError as exc:
+        assert "duplicate lemma_key" in str(exc)
+    else:  # pragma: no cover - assertion clarity
+        raise AssertionError("expected duplicate lemma_key validation failure")
+
+
+def test_rejection_validation_rejects_bad_reason(tmp_path) -> None:
+    from multilang.services import frequency_decks
+
+    lang_dir = tmp_path / "en"
+    lang_dir.mkdir(parents=True)
+    source_dir = frequency_decks.Path("assets/frequency/en")
+    (lang_dir / "curated-v1.csv").write_text((source_dir / "curated-v1.csv").read_text(encoding="utf-8"), encoding="utf-8")
+    with (lang_dir / "rejections-v1.csv").open("w", encoding="utf-8", newline="") as handle:
+        writer = csv.DictWriter(handle, fieldnames=frequency_decks.REJECTION_COLUMNS)
+        writer.writeheader()
+        writer.writerow({"language": "en", "frequency_list_version": "v1", "source_rank": 1, "token": "x", "reason_code": "bad"})
+
+    try:
+        frequency_decks.load_curated_frequency_entries(SupportedLanguage.EN, assets_dir=tmp_path)
+    except ValueError as exc:
+        assert "reason_code" in str(exc)
+    else:  # pragma: no cover - assertion clarity
+        raise AssertionError("expected rejection reason validation failure")
