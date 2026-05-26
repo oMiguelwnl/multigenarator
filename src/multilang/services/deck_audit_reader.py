@@ -6,6 +6,7 @@ from dataclasses import dataclass
 from hashlib import sha256
 import json
 from pathlib import Path, PurePosixPath
+import re
 import sqlite3
 from tempfile import TemporaryDirectory
 import zipfile
@@ -21,6 +22,8 @@ class DeckAuditReadResult:
     input_sha256: str
     cards: list[AuditCard]
     card_count: int
+    media_files: set[str]
+    sound_references: set[str]
 
 
 def read_apkg_cards(path: Path) -> DeckAuditReadResult:
@@ -33,7 +36,7 @@ def read_apkg_cards(path: Path) -> DeckAuditReadResult:
     before_hash = _sha256_file(apkg_path)
     with TemporaryDirectory(prefix="multilang-apkg-audit-") as temp_dir:
         collection_path = Path(temp_dir) / "collection.anki2"
-        _copy_collection_to_temp(apkg_path, collection_path)
+        media_files = _copy_collection_to_temp(apkg_path, collection_path)
         cards = _read_collection_cards(collection_path)
 
     after_hash = _sha256_file(apkg_path)
@@ -45,10 +48,12 @@ def read_apkg_cards(path: Path) -> DeckAuditReadResult:
         input_sha256=before_hash,
         cards=cards,
         card_count=len(cards),
+        media_files=media_files,
+        sound_references=_sound_references(cards),
     )
 
 
-def _copy_collection_to_temp(apkg_path: Path, collection_path: Path) -> None:
+def _copy_collection_to_temp(apkg_path: Path, collection_path: Path) -> set[str]:
     try:
         with zipfile.ZipFile(apkg_path) as archive:
             for info in archive.infolist():
@@ -56,8 +61,21 @@ def _copy_collection_to_temp(apkg_path: Path, collection_path: Path) -> None:
             if "collection.anki2" not in archive.namelist():
                 raise ValueError("APKG missing collection.anki2")
             collection_path.write_bytes(archive.read("collection.anki2"))
+            return _read_media_manifest(archive)
     except zipfile.BadZipFile as exc:
         raise ValueError("APKG is not a readable zip archive") from exc
+
+
+def _read_media_manifest(archive: zipfile.ZipFile) -> set[str]:
+    if "media" not in archive.namelist():
+        return set()
+    try:
+        payload = json.loads(archive.read("media").decode("utf-8"))
+    except (UnicodeDecodeError, json.JSONDecodeError) as exc:
+        raise ValueError("APKG has invalid media manifest") from exc
+    if not isinstance(payload, dict):
+        raise ValueError("APKG media manifest must be a JSON object")
+    return {str(value) for value in payload.values()}
 
 
 def _reject_unsafe_member(name: str) -> None:
@@ -107,6 +125,17 @@ def _read_collection_cards(collection_path: Path) -> list[AuditCard]:
             )
         )
     return cards
+
+
+def _sound_references(cards: list[AuditCard]) -> set[str]:
+    references: set[str] = set()
+    for card in cards:
+        for value in card.fields.values():
+            references.update(match.group(1) for match in _SOUND_RE.finditer(value or ""))
+    return references
+
+
+_SOUND_RE = re.compile(r"\[sound:([^\]]+)\]")
 
 
 def _read_models(connection: sqlite3.Connection) -> dict[str, object]:

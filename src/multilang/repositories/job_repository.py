@@ -281,6 +281,25 @@ class JobRepository:
         self.session.refresh(job)
         return self._snapshot(job)
 
+    def update_job_status(
+        self,
+        job_id: str,
+        *,
+        status: JobStatus,
+        current_stage: JobStage | None = None,
+        failed_items: int | None = None,
+    ) -> JobProgressSnapshot:
+        job = self._require_job(job_id)
+        job.status = status.value
+        if current_stage is not None:
+            job.current_stage = current_stage.value
+        if failed_items is not None:
+            job.failed_items = failed_items
+        self.session.add(job)
+        self.session.commit()
+        self.session.refresh(job)
+        return self._snapshot(job)
+
     def _require_job(self, job_id: str) -> GenerationJob:
         job = self.get_job(job_id)
         if job is None:

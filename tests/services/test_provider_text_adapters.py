@@ -16,6 +16,7 @@ from multilang.services.provider_text_adapters import (
 from multilang.services.text_generation import SentenceGenerationRequest, SentenceTranslationRequest
 from multilang.services.text_generation import DefinitionGenerationRequest
 from multilang.settings import Settings
+from multilang.runtime import _build_translation_adapter
 
 
 def test_litellm_sentence_adapter_uses_openrouter_key_and_json_response() -> None:
@@ -280,3 +281,16 @@ def test_provider_detection_requires_configured_keys() -> None:
     assert can_use_google_translate(Settings(_env_file=None, translation_provider="google")) is True
     assert can_use_litellm(provider_settings) is True
     assert can_use_deepl(provider_settings) is True
+
+
+def test_deepl_runtime_adapter_does_not_silently_wrap_google_fallback() -> None:
+    adapter = _build_translation_adapter(Settings(_env_file=None, translation_provider="deepl", deepl_api_key="deepl-key"))
+
+    assert isinstance(adapter, DeepLTranslationAdapter)
+    assert not isinstance(adapter, FallbackTranslationAdapter)
+
+
+def test_explicit_google_provider_still_uses_google_adapter() -> None:
+    adapter = _build_translation_adapter(Settings(_env_file=None, translation_provider="google"))
+
+    assert isinstance(adapter, GoogleTranslateAdapter)

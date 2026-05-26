@@ -278,6 +278,40 @@ def test_validation_preserves_default_frequency_sentence_maximum() -> None:
     assert ValidationFlagCode.SENTENCE_TOO_LONG in {flag.code for flag in result.validation_flags}
 
 
+def test_validation_rejects_provider_error_page_translation() -> None:
+    result = build_service().validate(
+        sentence=build_sentence(text="My mamy dobre połączenia kolejowe.", target_language="pl"),
+        translation=build_translation(
+            text="Error 500 (Server Error)!!1500.That's an error.There was an error. Please try again later.That's all we know.",
+            target_language="en",
+        ),
+        display_form="połączenia",
+        lemma="połączenia",
+        definitions_html="noun: connections",
+    )
+
+    assert result.validation_status is ValidationStatus.FAILED
+    assert ValidationFlagCode.TRANSLATION_MISMATCH in {flag.code for flag in result.validation_flags}
+
+
+def test_validation_rejects_html_quota_captcha_and_blocked_translation_text() -> None:
+    for bad_translation in (
+        "<html><body>Server Error</body></html>",
+        "Quota for this billing period has been exceeded",
+        "Please complete the captcha to continue",
+        "Your request was temporarily blocked",
+    ):
+        result = build_service().validate(
+            sentence=build_sentence(text="I wash the cup at home."),
+            translation=build_translation(text=bad_translation),
+            display_form="wash",
+            lemma="wash",
+            definitions_html="to wash",
+        )
+        assert result.validation_status is ValidationStatus.FAILED
+        assert ValidationFlagCode.TRANSLATION_MISMATCH in {flag.code for flag in result.validation_flags}
+
+
 def test_validation_accepts_configurable_highlight_max_sentence_tokens() -> None:
     result = build_service().validate(
         sentence=build_sentence(text="Readers wash the old cup carefully after the quiet morning chapter ends."),

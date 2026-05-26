@@ -63,11 +63,11 @@ def test_audit_deck_command_writes_reports_and_prints_metadata(tmp_path: Path) -
         ["audit-deck", "--input-apkg", str(apkg_path), "--output-dir", str(output_dir)],
     )
 
-    assert result.exit_code == 0
+    assert result.exit_code == 1
     assert "json_report=" in result.output
     assert "markdown_report=" in result.output
     assert "card_count=1" in result.output
-    assert "issue_count=1" in result.output
+    assert "issue_count=5" in result.output
     assert "input_sha256=" in result.output
     assert (output_dir / "deck-audit.json").exists()
     assert (output_dir / "deck-audit.md").exists()
@@ -101,8 +101,8 @@ def test_audit_deck_rerun_reproducibility_and_non_mutation(tmp_path: Path) -> No
         ["audit-deck", "--input-apkg", str(apkg_path), "--output-dir", str(output_dir)],
     )
 
-    assert first.exit_code == 0
-    assert second.exit_code == 0
+    assert first.exit_code == 1
+    assert second.exit_code == 1
     assert (output_dir / "deck-audit.json").read_bytes() == first_json
     assert sha256(apkg_path.read_bytes()).hexdigest() == before_hash
     markdown = (output_dir / "deck-audit.md").read_text(encoding="utf-8")

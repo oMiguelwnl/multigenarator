@@ -87,6 +87,7 @@ def test_frequency_sample_generates_audio_and_exports_all_formats(tmp_path: Path
     monkeypatch.setattr(frequency_decks, "iter_wordlist", fake_frequency_wordlist)
     service = build_runtime_service(
         Settings(
+            _env_file=None,
             database_url=f"sqlite+pysqlite:///{database_path}",
             lexicon_data_dir=lexicon_dir,
             audio_storage_dir=tmp_path / "audio",
@@ -134,9 +135,33 @@ def test_frequency_sample_generates_audio_and_exports_all_formats(tmp_path: Path
                 app,
                 ["export", "--job-id", job.id, "--format", export_format, "--output-dir", str(output_dir)],
             )
+            assert export_result.exit_code == 1
+            assert "export quality gate failed" in export_result.output
+            assert "frequency deck has 3/3000 cards" in export_result.output
+
+            export_result = runner.invoke(
+                app,
+                [
+                    "export",
+                    "--job-id",
+                    job.id,
+                    "--format",
+                    export_format,
+                    "--output-dir",
+                    str(output_dir),
+                    "--allow-partial",
+                ],
+            )
             assert export_result.exit_code == 0
             assert "card_count=3" in export_result.output
+            assert "export_status=partial" in export_result.output
+            assert "generation_report_json=" in export_result.output
             assert (output_dir / f"{job.id}.{export_format}").exists()
+
+        assert (output_dir / "generation-report.json").exists()
+        report = json.loads((output_dir / "generation-report.json").read_text(encoding="utf-8"))
+        assert report["export"]["card_count"] == 3
+        assert report["warnings"]
 
         assert session.scalar(select(func.count()).select_from(DeckExportModel)) == 3
         assert session.scalar(select(func.count()).select_from(CardExportModel)) == 3

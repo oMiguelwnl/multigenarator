@@ -23,8 +23,10 @@ from multilang.domain.exporting import (
     ExportArtifactFormat,
     ExportArtifactStatus,
     ExportDeckArtifact,
+    evaluate_export_quality_gate,
     export_field_names_for_source_type,
 )
+from multilang.domain.jobs import JobStage, JobStatus
 from multilang.services.azure_speech_adapter import AzureSpeechAdapter
 from multilang.services.elevenlabs_speech_adapter import ElevenLabsSpeechAdapter
 from multilang.services.fallback_audio_adapter import FallbackAudioAdapter
@@ -46,13 +48,13 @@ from multilang.services.rate_limit import RateLimiter
 from multilang.services.local_text_adapter import LocalSentenceAdapter, LocalTranslationAdapter
 from multilang.services.provider_text_adapters import (
     DeepLTranslationAdapter,
-    FallbackTranslationAdapter,
     GoogleTranslateAdapter,
     LiteLLMSentenceAdapter,
     can_use_deepl,
     can_use_google_translate,
     can_use_litellm,
 )
+from multilang.services.generation_report import write_generation_report
 from multilang.services.provider_pronunciation_adapters import LiteLLMPronunciationAdapter
 from multilang.services.regenerate_text_item import RegenerateTextItemService
 from multilang.services.tatoeba_sentence_source import (
@@ -62,7 +64,7 @@ from multilang.services.tatoeba_sentence_source import (
 )
 from multilang.services.text_generation import TextGenerationService
 from multilang.services.text_review import ReviewReport, TextReviewService
-from multilang.services.text_validation import TextValidationService
+from multilang.services.text_validation import TextValidationService, looks_like_invalid_translation
 from multilang.settings import Settings
 from multilang.domain.jobs import SupportedLanguage
 from multilang.domain.source_profiles import get_source_profile
@@ -97,6 +99,9 @@ class RuntimeTextResult:
 class RuntimeExportResult:
     output_path: Path
     card_count: int
+    report_json_path: Path | None = None
+    report_markdown_path: Path | None = None
+    partial: bool = False
 
 
 class RuntimeGenerateService(IngestLexicalItemsService):
@@ -228,6 +233,7 @@ class RuntimeGenerateService(IngestLexicalItemsService):
         output_dir: Path,
         deck_name: str | None = None,
         refresh_snapshots: bool = False,
+        allow_partial: bool = False,
     ) -> RuntimeExportResult:
         job = self.job_service.repository.get_job(job_id)
         if job is None:
@@ -239,6 +245,38 @@ class RuntimeGenerateService(IngestLexicalItemsService):
                 job_id=job_id,
                 deck_language=SupportedLanguage(job.language),
             ).cards
+
+        text_records = self.text_repository.list_records_for_job(job_id)
+        review_required_count = sum(1 for record in text_records if record.review_status.value == "review_required")
+        invalid_translation_count = sum(
+            1
+            for record in text_records
+            if record.review_status.value == "accepted"
+            and looks_like_invalid_translation(record.translation_text or "")
+        )
+        audio_assets = (
+            self.audio_repository.list_assets_for_job(job_id)
+            if hasattr(self.audio_repository, "list_assets_for_job")
+            else []
+        )
+        missing_audio_count, non_synthesized_audio_count = _audio_gate_counts(rows, audio_assets)
+        gate_result = evaluate_export_quality_gate(
+            source_type=job.source_type,
+            rows=rows,
+            review_required_count=review_required_count,
+            invalid_translation_count=invalid_translation_count,
+            missing_audio_count=missing_audio_count,
+            non_synthesized_audio_count=non_synthesized_audio_count,
+            allow_partial=allow_partial,
+        )
+        if not gate_result.passed:
+            self.job_service.repository.update_job_status(
+                job_id,
+                status=JobStatus.BLOCKED,
+                current_stage=JobStage.EXPORT,
+                failed_items=review_required_count + invalid_translation_count + missing_audio_count + non_synthesized_audio_count,
+            )
+            raise ValueError(f"export quality gate failed: {gate_result.message()}")
 
         resolved_deck_name = _sanitize_deck_name(deck_name or _default_deck_name(SupportedLanguage(job.language)))
         output_path = output_dir / f"{job_id}.{export_format.value}"
@@ -263,17 +301,39 @@ class RuntimeGenerateService(IngestLexicalItemsService):
                 tabular_result.output_path.replace(output_path)
             card_count = tabular_result.card_count
 
-        self.export_repository.upsert_deck_export(
+        export_status = ExportArtifactStatus.PARTIAL if gate_result.partial else ExportArtifactStatus.COMPLETED
+        artifact = self.export_repository.upsert_deck_export(
             ExportDeckArtifact(
                 job_id=job_id,
                 export_format=export_format,
                 deck_name=resolved_deck_name,
                 output_path=str(output_path),
                 card_count=card_count,
-                status=ExportArtifactStatus.COMPLETED,
+                status=export_status,
             )
         )
-        return RuntimeExportResult(output_path=output_path, card_count=card_count)
+        self.job_service.repository.update_job_status(
+            job_id,
+            status=JobStatus.PARTIAL if gate_result.partial else JobStatus.COMPLETED,
+            current_stage=JobStage.EXPORT,
+            failed_items=review_required_count if gate_result.partial else 0,
+        )
+        report = write_generation_report(
+            job=self.job_service.repository.get_job(job_id),
+            export_artifact=artifact,
+            rows=rows,
+            text_records=text_records,
+            audio_assets=audio_assets,
+            gate_result=gate_result,
+            output_dir=output_path.parent,
+        )
+        return RuntimeExportResult(
+            output_path=output_path,
+            card_count=card_count,
+            report_json_path=report.json_path,
+            report_markdown_path=report.markdown_path,
+            partial=gate_result.partial,
+        )
 
     def _build_media_index(self, rows: list[object]) -> dict[str, Path]:
         media_index: dict[str, Path] = {}
@@ -347,6 +407,25 @@ def _validate_media_reference(*, sound_tag: str, media_path: Path) -> None:
         raise ValueError(f"missing media file for {media_path.name}")
 
 
+def _audio_gate_counts(rows: list[object], audio_assets: list[object]) -> tuple[int, int]:
+    from multilang.domain.audio import AudioAssetKind, AudioSynthesisStatus
+
+    asset_index = {(asset.item_key, asset.asset_kind.value): asset for asset in audio_assets}
+    missing = 0
+    non_synthesized = 0
+    for row in rows:
+        required = [AudioAssetKind.SENTENCE]
+        if "word_audio" in export_field_names_for_source_type(row.identity.source_type):
+            required.append(AudioAssetKind.WORD)
+        for kind in required:
+            asset = asset_index.get((row.identity.item_key, kind.value))
+            if asset is None:
+                missing += 1
+            elif asset.provenance.status is not AudioSynthesisStatus.SYNTHESIZED or asset.provenance.byte_size <= 0:
+                non_synthesized += 1
+    return missing, non_synthesized
+
+
 def _add_media_reference(media_index: dict[str, Path], *, sound_tag: str, media_path: Path) -> None:
     existing_path = media_index.get(sound_tag)
     if existing_path is not None and existing_path != media_path:
@@ -358,10 +437,7 @@ def _build_translation_adapter(runtime_settings: Settings) -> object:
     if runtime_settings.translation_provider == "local":
         return LocalTranslationAdapter()
     if can_use_deepl(runtime_settings):
-        return FallbackTranslationAdapter(
-            primary=DeepLTranslationAdapter(runtime_settings),
-            fallback=GoogleTranslateAdapter(),
-        )
+        return DeepLTranslationAdapter(runtime_settings)
     if can_use_google_translate(runtime_settings):
         return GoogleTranslateAdapter()
     if runtime_settings.translation_provider == "deepl":

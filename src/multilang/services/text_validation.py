@@ -35,6 +35,17 @@ _META_SENTENCE_PREFIXES = (
     "the word",
     "слово",
 )
+_RAW_HTML_RE = re.compile(r"<\s*/?\s*(?:!doctype|html|head|body|title|script|style|div|span|p|br|h[1-6])\b|&lt;\s*html\b", re.IGNORECASE)
+_INVALID_TRANSLATION_PATTERNS = (
+    re.compile(r"\berror\s*500\b", re.IGNORECASE),
+    re.compile(r"\bserver\s+error\b", re.IGNORECASE),
+    re.compile(r"that's\s+an\s+error", re.IGNORECASE),
+    re.compile(r"there\s+was\s+an\s+error", re.IGNORECASE),
+    re.compile(r"quota\s+(?:exceeded|for this billing period)", re.IGNORECASE),
+    re.compile(r"captcha|recaptcha", re.IGNORECASE),
+    re.compile(r"request\s+(?:blocked|forbidden|denied)", re.IGNORECASE),
+    re.compile(r"temporarily\s+blocked", re.IGNORECASE),
+)
 _MATCHABLE_SUFFIXES = (
     "arse",
     "erse",
@@ -283,6 +294,15 @@ class TextValidationService:
             )
             return
 
+        if looks_like_invalid_translation(context.translation_text):
+            flags.append(
+                ValidationFlag(
+                    code=ValidationFlagCode.TRANSLATION_MISMATCH,
+                    detail="translation appears to be a provider, quota, captcha, server-error, or HTML error page",
+                )
+            )
+            return
+
         if translation_text == context.definition_text:
             flags.append(
                 ValidationFlag(
@@ -337,6 +357,15 @@ class TextValidationService:
 
 def _tokenize(value: str) -> list[str]:
     return _TOKEN_RE.findall(value.casefold())
+
+
+def looks_like_invalid_translation(value: str) -> bool:
+    text = " ".join(str(value or "").strip().split())
+    if not text:
+        return False
+    if _RAW_HTML_RE.search(text):
+        return True
+    return any(pattern.search(text) for pattern in _INVALID_TRANSLATION_PATTERNS)
 
 
 def _normalize_text(value: str) -> str:
@@ -529,4 +558,4 @@ def _starts_with_upper(value: str) -> bool:
     return bool(stripped) and stripped[0].isalpha() and stripped[0].isupper()
 
 
-__all__ = ["TextValidationResult", "TextValidationService"]
+__all__ = ["TextValidationResult", "TextValidationService", "looks_like_invalid_translation"]

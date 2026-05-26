@@ -11,7 +11,7 @@ import typer
 
 from multilang.domain.jobs import GenerationRequest, JobProgressSnapshot, SupportedLanguage
 from multilang.domain.exporting import ExportArtifactFormat
-from multilang.domain.deck_audit import detect_card_issues
+from multilang.domain.deck_audit import audit_deck_package
 from multilang.domain.webdav import WebDAVError, WebDAVFailureCode, WebDAVFetchResult, WebDAVRemoteCandidate
 from multilang.progress import ProgressRenderer
 from multilang.repositories.text_repository import TextRepository
@@ -850,6 +850,10 @@ def create_app(
             bool,
             typer.Option("--refresh-snapshots", help="Rebuild card_exports before writing the artifact."),
         ] = False,
+        allow_partial: Annotated[
+            bool,
+            typer.Option("--allow-partial", help="Allow incomplete frequency exports with an explicit warning status."),
+        ] = False,
     ) -> None:
         resolved_service = resolve_service()
         if resolved_service is None or not hasattr(resolved_service, "export_job"):
@@ -865,6 +869,7 @@ def create_app(
                 output_dir=target_output_dir,
                 deck_name=deck_name,
                 refresh_snapshots=refresh_snapshots,
+                allow_partial=allow_partial,
             )
         except ValueError as exc:
             typer.echo(str(exc))
@@ -872,6 +877,11 @@ def create_app(
 
         typer.echo(f"artifact_path={result.output_path}")
         typer.echo(f"card_count={result.card_count}")
+        if getattr(result, "partial", False):
+            typer.echo("export_status=partial")
+        if getattr(result, "report_json_path", None):
+            typer.echo(f"generation_report_json={result.report_json_path}")
+            typer.echo(f"generation_report_md={result.report_markdown_path}")
 
     @cli.command("repair-text")
     def repair_text(
@@ -939,7 +949,7 @@ def create_app(
     ) -> None:
         try:
             read_result = read_apkg_cards(input_apkg)
-            issues = [issue for card in read_result.cards for issue in detect_card_issues(card)]
+            issues = audit_deck_package(read_result)
             report_result = write_deck_audit_reports(read_result, issues, output_dir)
         except (ValueError, OSError) as exc:
             typer.echo(str(exc))
@@ -950,6 +960,8 @@ def create_app(
         typer.echo(f"card_count={read_result.card_count}")
         typer.echo(f"issue_count={report_result.issue_count}")
         typer.echo(f"input_sha256={read_result.input_sha256}")
+        if any(issue.severity == "error" for issue in issues):
+            raise typer.Exit(code=1)
 
     @cli.command("export-russian-phonemes")
     def export_russian_phonemes(

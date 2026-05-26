@@ -23,7 +23,7 @@ class FakeExportResult:
 class FakeRuntimeService:
     response: FakeExportResult | None = None
     error: Exception | None = None
-    calls: list[tuple[str, ExportArtifactFormat, Path, str | None, bool]] = field(default_factory=list)
+    calls: list[tuple[str, ExportArtifactFormat, Path, str | None, bool, bool]] = field(default_factory=list)
 
     def export_job(
         self,
@@ -33,8 +33,9 @@ class FakeRuntimeService:
         output_dir: Path,
         deck_name: str | None,
         refresh_snapshots: bool = False,
+        allow_partial: bool = False,
     ) -> FakeExportResult:
-        self.calls.append((job_id, export_format, output_dir, deck_name, refresh_snapshots))
+        self.calls.append((job_id, export_format, output_dir, deck_name, refresh_snapshots, allow_partial))
         if self.error is not None:
             raise self.error
         assert self.response is not None
@@ -63,7 +64,7 @@ def test_export_command_writes_requested_artifact_and_prints_path(tmp_path: Path
     assert result.exit_code == 0
     assert f"artifact_path={artifact_path}" in result.output
     assert "card_count=3" in result.output
-    assert service.calls == [("job-1", ExportArtifactFormat.CSV, tmp_path / "exports", None, False)]
+    assert service.calls == [("job-1", ExportArtifactFormat.CSV, tmp_path / "exports", None, False, False)]
 
 
 def test_export_command_forwards_refresh_snapshots(tmp_path: Path) -> None:
@@ -78,7 +79,22 @@ def test_export_command_forwards_refresh_snapshots(tmp_path: Path) -> None:
     )
 
     assert result.exit_code == 0
-    assert service.calls == [("job-1", ExportArtifactFormat.TSV, tmp_path / "exports", None, True)]
+    assert service.calls == [("job-1", ExportArtifactFormat.TSV, tmp_path / "exports", None, True, False)]
+
+
+def test_export_command_forwards_allow_partial(tmp_path: Path) -> None:
+    artifact_path = tmp_path / "exports" / "job-1.apkg"
+    artifact_path.parent.mkdir(parents=True, exist_ok=True)
+    artifact_path.write_text("apkg", encoding="utf-8")
+    service = FakeRuntimeService(response=FakeExportResult(output_path=artifact_path, card_count=2740))
+
+    result = runner.invoke(
+        create_app(service=service),
+        ["export", "--job-id", "job-1", "--format", "apkg", "--output-dir", str(tmp_path / "exports"), "--allow-partial"],
+    )
+
+    assert result.exit_code == 0
+    assert service.calls == [("job-1", ExportArtifactFormat.APKG, tmp_path / "exports", None, False, True)]
 
 
 def test_export_command_exits_non_zero_with_explicit_diagnostics(tmp_path: Path) -> None:
