@@ -401,13 +401,15 @@ def test_generate_command_uses_requested_language_for_manual_word_list_text(tmp_
     )
 
     assert result.exit_code == 0
-    assert "accepted_text_items=1" in result.output
+    assert "accepted_text_items=0" in result.output
+    assert "review_required_text_items=1" in result.output
 
     session = Session(create_engine(f"sqlite+pysqlite:///{database_path}"))
     try:
         generated = session.scalar(select(TextQualityRecordModel))
         assert generated is not None
-        assert generated.review_status == "accepted"
+        assert generated.review_status == "review_required"
+        assert generated.review_reason == "banned_pattern"
         assert "usar" in generated.example_sentence.casefold()
         assert not generated.example_sentence.casefold().startswith(("la palabra", "the word"))
         assert generated.translation_text

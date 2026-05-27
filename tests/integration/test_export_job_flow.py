@@ -239,7 +239,7 @@ def test_export_command_runtime_path_blocks_persisted_word_audio_mismatches(
         assert job is not None
         first_export = runner.invoke(
             app,
-            ["export", "--job-id", job.id, "--format", export_format, "--output-dir", str(output_dir)],
+            ["export", "--job-id", job.id, "--format", export_format, "--output-dir", str(output_dir), "--allow-partial"],
         )
         assert generate_result.exit_code == 0
         assert first_export.exit_code == 0
@@ -258,7 +258,7 @@ def test_export_command_runtime_path_blocks_persisted_word_audio_mismatches(
 
         second_export = runner.invoke(
             app,
-            ["export", "--job-id", job.id, "--format", export_format, "--output-dir", str(output_dir)],
+            ["export", "--job-id", job.id, "--format", export_format, "--output-dir", str(output_dir), "--allow-partial"],
         )
 
         assert second_export.exit_code == 1

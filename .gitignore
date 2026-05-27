@@ -36,6 +36,9 @@ webdav-secrets*.json
 
 # Local runtime data, downloaded sources, generated audio, reviews, and exports
 .multilang/
+.multilang/highlights/raw/
+.multilang/highlights/cache/
+.multilang/highlights/sync/
 *.apkg
 *.mp3
 *.wav

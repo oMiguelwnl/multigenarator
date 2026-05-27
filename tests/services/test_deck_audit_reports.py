@@ -36,6 +36,8 @@ def make_read_result(cards: list[AuditCard]) -> DeckAuditReadResult:
         input_sha256="a" * 64,
         cards=cards,
         card_count=len(cards),
+        media_files=set(),
+        sound_references=set(),
     )
 
 

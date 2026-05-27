@@ -53,18 +53,24 @@ def make_candidate(
     )
 
 
-def make_bundle(*, sentence: str, translation: str) -> GeneratedTextBundle:
+def make_bundle(
+    *,
+    sentence: str,
+    translation: str,
+    sentence_language: str = "en",
+    translation_language: str = "pt",
+) -> GeneratedTextBundle:
     return GeneratedTextBundle(
         sentence=GeneratedSentence(
             text=sentence,
-            target_language="en",
+            target_language=sentence_language,
             intended_sense="habit",
             uncertainty_notes=[],
             provenance=TextProvenance(source="generator", provider="fake-gen"),
         ),
         translation=GeneratedTranslation(
             text=translation,
-            target_language="pt",
+            target_language=translation_language,
             provenance=TextProvenance(source="translator", provider="fake-translate"),
         ),
     )
@@ -474,8 +480,13 @@ def test_generate_text_items_accepts_repaired_full_sentence_translation() -> Non
     )
     generation = FakeGenerationService(
         bundles=[
-            make_bundle(sentence="Он хочет достичь цели завтра.", translation="to achieve"),
-            make_bundle(sentence="Он хочет достичь цели завтра.", translation="He wants to achieve the goal tomorrow."),
+            make_bundle(sentence="Он хочет достичь цели завтра.", translation="to achieve", sentence_language="ru", translation_language="en"),
+            make_bundle(
+                sentence="Он хочет достичь цели завтра.",
+                translation="He wants to achieve the goal tomorrow.",
+                sentence_language="ru",
+                translation_language="en",
+            ),
         ]
     )
 

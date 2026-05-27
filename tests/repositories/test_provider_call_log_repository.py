@@ -55,6 +55,7 @@ def test_provider_call_log_repository_summarizes_calls() -> None:
             "retry_attempts": 1,
             "latency_ms_total": 40,
             "latency_ms_p95": 10,
+            "latency_ms_avg": 20.0,
             "input_tokens": 0,
             "output_tokens": 0,
             "total_tokens": 10,
