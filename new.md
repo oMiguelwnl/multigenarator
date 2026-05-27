@@ -1,17 +1,23 @@
-1.  --max-items
-    Para rodar em lotes controlados:
-    --missing-only --max-items 100
-    Isso evita deixar um processo enorme rodando por horas e reduz risco de bloqueio.
-2.  Progresso granular
-    Mostrar contadores durante a execução:
-    processed=42 accepted=38 review=4 missing=786 last_item=level-2-rank-0131
-3.  Rate limit simples
-    Limitar chamadas por minuto para evitar novo 403:
-    --rate-limit-per-minute 30
-4.  Backoff em erro temporário
-    Se provider retornar 403, 429 ou timeout, esperar e tentar novamente em vez de derrubar o job.
-5.  --refresh-snapshots no export
-    Para garantir que o .apkg usa os dados mais recentes de IPA/definição/frases:
-    python -m multilang.cli export --job-id <JOB_ID> --format apkg --refresh-snapshots
-    Mensagem boa para pedir a próxima implementação:
-    Implemente a próxima etapa do plano em docs/generation-performance-improvements.md: adicionar --max-items ao comando generate. Ele deve limitar quantos candidatos elegíveis são processados nesta execução, funcionar junto com --missing-only e manter compatibilidade com o comportamento atual. Adicione testes focados.
+para o latim eu quero o latim classico, o grego nao sei. procure ferramentas de tradução, audio, morfologia, de frases . Eu usava o https://www.perseus.tufts.edu/hopper/morph?l=Aelii&la=la e https://dicionariolatino.com/ como dicinario, a pronuncia utilizada era a a tradicional, também chamada "eclesiástica . O metodo que usava era o de ensino do Rafael falcón https://rafaelfalcon.com.br/curso-de-latim-online/.
+Usava textos como VIRGILII AENEIS.
+
+Usava esse word para mostrar as declinações: https://docs.google.com/spreadsheets/d/1K5soQkktHNL_JkyfZ1Qfni4b7rCxuOIH6mH26kkx4yE/edit#gid=0
+
+Ele mandava um texto classico e eu tinha que traduzir para o portugues, escrevia a traduçaõ e a sua declinação fica assim:
+
+TExto:
+ergo omnis longo soluit se Teucria luctu;
+panduntur portae, iuuat ire et Dorica castra
+desertosque uidere locos litusque relictum:
+hic Dolopum manus, hic saeuus tendebat Achilles;
+classibus hic locus, hic acie certare solebant.
+Tradução:
+ergo: portanto
+omnis: todo (a)
+solvo, -ere: libertar
+Teucria: Troia
+luctus, -us: luto
+pandor, -eri: abrir-se, esticar-se
+iuvo, -are: convir, ser apropriado
+Doricus, -a, -um: dos dórios (gregos)
+castrum, -i: acampamento militar
