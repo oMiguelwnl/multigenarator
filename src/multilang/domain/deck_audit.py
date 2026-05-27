@@ -18,6 +18,7 @@ class AuditIssueType(str, Enum):
     INVALID_TRANSLATION = "invalid_translation"
     DUPLICATE_FIELD = "duplicate_field"
     MISSING_MEDIA = "missing_media"
+    MISSING_TRACEABILITY_TAGS = "missing_traceability_tags"
 
 
 @dataclass(frozen=True)
@@ -31,6 +32,7 @@ class AuditCard:
     sort_index: str
     card_identifier: str
     fields: dict[str, str]
+    tags: tuple[str, ...] = ()
 
 
 @dataclass(frozen=True)
@@ -117,6 +119,7 @@ def audit_deck_package(read_result: object) -> list[AuditIssue]:
     issues.extend(_detect_incomplete_frequency_deck(cards))
     issues.extend(_detect_invalid_translations(cards))
     issues.extend(_detect_duplicate_fields(cards))
+    issues.extend(_detect_missing_traceability_tags(cards))
     issues.extend(_detect_missing_media(read_result))
     return issues
 
@@ -223,6 +226,42 @@ def _detect_missing_media(read_result: object) -> list[AuditIssue]:
     return issues
 
 
+def _detect_missing_traceability_tags(cards: list[AuditCard]) -> list[AuditIssue]:
+    if not _looks_like_frequency_deck(cards):
+        return []
+    issues: list[AuditIssue] = []
+    for card in cards:
+        tags = set(card.tags)
+        level = _level_for_card(card)
+        rank = _rank_for_card(card)
+        required = {"multilang", "frequency"}
+        if level is not None:
+            required.add(f"level_{level}")
+        if rank is not None:
+            required.add(f"rank_{rank:04d}")
+        if not any(tag.startswith("job_") for tag in tags):
+            required.add("job_*")
+        if not any(len(tag) in {2, 3} and tag.isalpha() for tag in tags):
+            required.add("language")
+        missing = sorted(tag for tag in required if tag not in tags and tag not in {"job_*", "language"})
+        if "job_*" in required:
+            missing.append("job_*")
+        if "language" in required:
+            missing.append("language")
+        if missing:
+            issues.append(
+                _issue(
+                    card,
+                    field_name="__tags__",
+                    issue_type=AuditIssueType.MISSING_TRACEABILITY_TAGS,
+                    message="Frequency note is missing required traceability tags.",
+                    evidence=",".join(missing),
+                    recommended_action="Regenerate the APKG with job/language/source/level/rank tags on every note.",
+                )
+            )
+    return issues
+
+
 def _definition_field(card: AuditCard) -> tuple[str | None, str]:
     for field_name in ("Definitions", "Definition"):
         value = card.fields.get(field_name)
@@ -303,6 +342,16 @@ def _level_for_card(card: AuditCard) -> int | None:
         return None
     if 1 <= sort_index <= 3000:
         return ((sort_index - 1) // 1000) + 1
+    return None
+
+
+def _rank_for_card(card: AuditCard) -> int | None:
+    try:
+        rank = int(str(card.sort_index or "0"))
+    except ValueError:
+        return None
+    if 1 <= rank <= 3000:
+        return rank
     return None
 
 

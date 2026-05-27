@@ -101,3 +101,35 @@ def test_package_audit_detects_incomplete_invalid_duplicate_and_missing_media() 
     assert AuditIssueType.INVALID_TRANSLATION in issue_types
     assert AuditIssueType.DUPLICATE_FIELD in issue_types
     assert AuditIssueType.MISSING_MEDIA in issue_types
+    assert AuditIssueType.MISSING_TRACEABILITY_TAGS in issue_types
+
+
+def test_package_audit_accepts_traceability_tags() -> None:
+    card = AuditCard(
+        note_id=1,
+        note_guid="guid-1",
+        model_id=2,
+        model_name="Multilang::Card",
+        sort_index="1",
+        card_identifier="guid-1:1",
+        fields={
+            "SortIndex": "1",
+            "word": "run",
+            "Definitions": "verb: to run",
+            "Example Sentence": "I run today.",
+            "Translation": "Eu corro hoje.",
+            "word_audio": "[sound:word.mp3]",
+            "sentence_audio": "[sound:sentence.mp3]",
+        },
+        tags=("multilang", "en", "frequency", "level_1", "rank_0001", "job_job_1"),
+    )
+    read_result = DeckAuditReadResult(
+        source_path_name="deck.apkg",
+        input_sha256="abc",
+        cards=[card],
+        card_count=1,
+        media_files={"word.mp3", "sentence.mp3"},
+        sound_references={"word.mp3", "sentence.mp3"},
+    )
+
+    assert AuditIssueType.MISSING_TRACEABILITY_TAGS not in {issue.issue_type for issue in audit_deck_package(read_result)}

@@ -87,8 +87,10 @@ def classify_provider_error(exc: BaseException) -> str:
     status_code = str(getattr(getattr(exc, "response", None), "status_code", "") or getattr(exc, "status_code", ""))
     if "429" in text or status_code == "429" or "rate limit" in text:
         return "rate_limited"
-    if "temporary 403" in text or " 403" in text or status_code == "403":
+    if "temporary 403" in text or " 403" in text or status_code == "403" or "forbidden" in text:
         return "temporary_forbidden"
+    if "quota" in text or "insufficient credits" in text:
+        return "quota_exceeded"
     if "timeout" in text or "timed out" in text:
         return "timeout"
     if "network" in text or "connection" in text:
@@ -104,7 +106,6 @@ def is_temporary_provider_error(exc: BaseException) -> bool:
 
 def safe_provider_error_summary(exc: BaseException) -> str:
     text = redact_sensitive_text(str(exc) or type(exc).__name__)
-    lowered = text.casefold()
     kind = classify_provider_error(exc)
     if kind == "permanent":
         kind = "permanent_provider_error"
@@ -154,6 +155,7 @@ def retry_provider_call(
             _log_retry_event(call_logger, context, attempt=1, status="circuit_open", latency_ms=0, error_code="circuit_open")
             raise
     for attempt in range(1, attempts + 1):
+        attempt_started = monotonic_clock()
         try:
             result = operation()
             if context is not None and circuit_breaker is not None:
@@ -171,12 +173,14 @@ def retry_provider_call(
                 context,
                 attempt=attempt,
                 status="failure",
-                latency_ms=0,
+                latency_ms=_elapsed_ms(attempt_started, monotonic_clock()),
                 error_code=classification,
                 error_summary=safe_provider_error_summary(exc),
             )
             if context is not None and circuit_breaker is not None:
                 circuit_breaker.record_failure(context, now=monotonic_clock())
+                if circuit_breaker.state_for(context) == "open":
+                    raise ProviderCircuitOpenError(f"provider circuit open: {context.circuit_key}") from exc
             if attempt < attempts:
                 delay = _retry_delay(exc, attempt=attempt, base_delay_seconds=base_delay, max_delay_seconds=max_delay_seconds, jitter_ratio=jitter_ratio, jitter=jitter_source)
                 if delay > 0:
@@ -202,6 +206,10 @@ def _retry_delay(
         spread = delay * jitter_ratio
         delay = delay - spread + (2 * spread * jitter())
     return max(0.0, delay)
+
+
+def _elapsed_ms(started: float, finished: float) -> int:
+    return max(0, int((finished - started) * 1000))
 
 
 def _log_retry_event(

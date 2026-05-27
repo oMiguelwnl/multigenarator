@@ -67,6 +67,8 @@ def _payload(
     sentence_providers = Counter(_provider(getattr(record, "sentence_provenance", None)) for record in text_records)
     translation_providers = Counter(_provider(getattr(record, "translation_provenance", None)) for record in text_records)
     audio_providers = Counter(getattr(getattr(asset, "provenance", None), "provider", "") for asset in audio_assets)
+    fallback_audio_count = sum(1 for asset in audio_assets if getattr(getattr(asset, "provenance", None), "fallback_used", False))
+    invalid_translation_count = sum(1 for record in text_records if _looks_like_invalid_translation(getattr(record, "translation_text", "") or ""))
     output_path = Path(str(getattr(export_artifact, "output_path", "")))
     telemetry = provider_call_summary if provider_call_summary is not None else summarize_provider_call_records(provider_call_records)
     return {
@@ -84,6 +86,12 @@ def _payload(
             "failed": validation_counts.get(ValidationStatus.FAILED, validation_counts.get(ValidationStatus.FAILED.value, 0)),
         },
         "level_counts": {str(level): count for level, count in sorted(gate_result.level_counts.items())},
+        "quality_counts": {
+            "duplicate_lemma_keys": _duplicate_count(rows, "lemma_key"),
+            "duplicate_words": _duplicate_count(rows, "word"),
+            "invalid_translations": invalid_translation_count,
+            "audio_fallback_count": fallback_audio_count,
+        },
         "export": {
             "format": getattr(getattr(export_artifact, "export_format", ""), "value", getattr(export_artifact, "export_format", "")),
             "status": getattr(getattr(export_artifact, "status", ""), "value", getattr(export_artifact, "status", "")),
@@ -97,6 +105,12 @@ def _payload(
             "audio": _string_counter(audio_providers),
         },
         "provider_calls": telemetry,
+        "gates": {
+            "passed": gate_result.passed,
+            "partial": gate_result.partial,
+            "failed": [issue.code for issue in gate_result.issues],
+            "warnings": [warning.code for warning in gate_result.warnings],
+        },
         "blocking_issues": [issue.message for issue in gate_result.issues],
         "warnings": [warning.message for warning in gate_result.warnings],
     }
@@ -124,6 +138,18 @@ def _sha256_file(path: Path) -> str:
     return digest.hexdigest()
 
 
+def _duplicate_count(rows: list[object], field_name: str) -> int:
+    values = [str(getattr(getattr(row, "identity", row), field_name, getattr(row, field_name, ""))).casefold() for row in rows]
+    counts = Counter(value for value in values if value)
+    return sum(count - 1 for count in counts.values() if count > 1)
+
+
+def _looks_like_invalid_translation(value: str) -> bool:
+    from multilang.services.text_validation import looks_like_invalid_translation
+
+    return looks_like_invalid_translation(value)
+
+
 def _markdown(payload: dict[str, Any]) -> str:
     lines = [
         "# Generation Report",
@@ -144,9 +170,17 @@ def _markdown(payload: dict[str, Any]) -> str:
         f"review_required={payload['text_counts']['review_required']}",
         f"failed={payload['text_counts']['failed']}",
         f"level_counts={payload['level_counts']}",
+        f"duplicate_lemma_keys={payload['quality_counts']['duplicate_lemma_keys']}",
+        f"duplicate_words={payload['quality_counts']['duplicate_words']}",
+        f"invalid_translations={payload['quality_counts']['invalid_translations']}",
+        f"audio_fallback_count={payload['quality_counts']['audio_fallback_count']}",
         "",
         "## Gate",
         "",
+        f"gate_passed={payload['gates']['passed']}",
+        f"gate_partial={payload['gates']['partial']}",
+        f"failed_gates={payload['gates']['failed']}",
+        f"warning_gates={payload['gates']['warnings']}",
         f"blocking_issues={payload['blocking_issues']}",
         f"warnings={payload['warnings']}",
         "",
@@ -158,7 +192,7 @@ def _markdown(payload: dict[str, Any]) -> str:
             "provider_call="
             f"provider:{row.get('provider')} operation:{row.get('operation')} status:{row.get('status')} "
             f"calls:{row.get('calls')} retries:{row.get('retry_attempts')} "
-            f"latency_ms_total:{row.get('latency_ms_total')} p95:{row.get('latency_ms_p95')} "
+            f"latency_ms_total:{row.get('latency_ms_total')} avg:{row.get('latency_ms_avg')} p95:{row.get('latency_ms_p95')} "
             f"tokens:{row.get('total_tokens')} cost:{row.get('estimated_cost')} "
             f"fallbacks:{row.get('fallback_count')} circuit_blocks:{row.get('circuit_open_blocks')}"
         )

@@ -12,6 +12,7 @@ from multilang.domain.exporting import (
     FREQUENCY_EXPORT_CARD_FIELD_NAMES,
     HIGHLIGHT_EXPORT_CARD_FIELD_NAMES,
     MANUAL_EXPORT_CARD_FIELD_NAMES,
+    evaluate_export_quality_gate,
     export_field_names_for_rows,
     export_field_names_for_source_type,
 )
@@ -155,3 +156,24 @@ def test_export_artifact_formats_cover_apkg_csv_and_tsv() -> None:
 def test_visible_sort_index_must_match_stable_identity() -> None:
     with pytest.raises(ValueError, match="SortIndex"):
         make_row(SortIndex=2)
+
+
+def test_export_gate_blocks_fallback_audio_by_default_and_warns_when_partial_allowed() -> None:
+    rows = [
+        make_row(
+            identity=make_identity(item_key=f"level-{((index - 1) // 1000) + 1}-rank-{index:04d}").model_copy(
+                update={"sort_index": index, "lemma_key": f"en:run:{index}"}
+            ),
+            SortIndex=index,
+        )
+        for index in range(1, 3001)
+    ]
+
+    blocked = evaluate_export_quality_gate(source_type="frequency", rows=rows, fallback_audio_count=1)
+    partial = evaluate_export_quality_gate(source_type="frequency", rows=rows, fallback_audio_count=1, allow_partial=True)
+
+    assert blocked.passed is False
+    assert [issue.code for issue in blocked.issues] == ["fallback_audio"]
+    assert partial.passed is True
+    assert partial.partial is True
+    assert [warning.code for warning in partial.warnings] == ["fallback_audio"]

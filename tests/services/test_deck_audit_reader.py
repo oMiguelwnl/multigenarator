@@ -69,6 +69,7 @@ def test_reads_synthetic_apkg_notes_into_audit_cards(tmp_path: Path) -> None:
     assert card.sort_index == "1"
     assert card.fields["word"] == "run"
     assert card.fields["Definitions"] == "noun: genitive/dative/prepositional singular"
+    assert {"multilang", "en", "frequency", "level_1", "rank_0001", "job_job_audit"}.issubset(set(card.tags))
     assert card.card_identifier
 
 

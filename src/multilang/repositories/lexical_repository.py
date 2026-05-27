@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from collections.abc import Iterable
+from collections import Counter
 from uuid import uuid4
 
 from sqlalchemy import func, or_, select
@@ -36,6 +37,13 @@ class LexicalRepository:
             normalized_source=normalized_source,
             candidate=candidate,
         )
+        if source_type == "frequency":
+            self._reject_frequency_duplicate(
+                job_id=job_id,
+                item_key=item_key,
+                lemma_key=str(payload["lemma_key"]),
+                display_form=str(payload["display_form"]),
+            )
         row = self.session.scalar(
             select(LexicalCandidate).where(
                 LexicalCandidate.job_id == job_id,
@@ -65,6 +73,9 @@ class LexicalRepository:
         candidate_rows = list(candidates)
         if not candidate_rows:
             return
+
+        if source_type == "frequency":
+            self._reject_frequency_batch_duplicates(job_id=job_id, candidate_rows=candidate_rows)
 
         item_keys = [item_key for item_key, _, _ in candidate_rows]
         existing = {
@@ -120,6 +131,56 @@ class LexicalRepository:
             ),
         )
         return int(self.session.scalar(statement) or 0)
+
+    def _reject_frequency_batch_duplicates(
+        self,
+        *,
+        job_id: str,
+        candidate_rows: list[tuple[str, str, LexicalCardCandidate]],
+    ) -> None:
+        lemma_counts = Counter(candidate.lemma_key.casefold() for _, _, candidate in candidate_rows)
+        display_counts = Counter(candidate.display_form.casefold() for _, _, candidate in candidate_rows)
+        if duplicates := [key for key, count in lemma_counts.items() if count > 1]:
+            raise ValueError(f"duplicate frequency lemma_key values before persistence: {duplicates[:5]}")
+        if duplicates := [key for key, count in display_counts.items() if count > 1]:
+            raise ValueError(f"duplicate frequency display_form values before persistence: {duplicates[:5]}")
+
+        item_keys = {item_key for item_key, _, _ in candidate_rows}
+        for item_key, _, candidate in candidate_rows:
+            self._reject_frequency_duplicate(
+                job_id=job_id,
+                item_key=item_key,
+                lemma_key=candidate.lemma_key,
+                display_form=candidate.display_form,
+                excluded_item_keys=item_keys,
+            )
+
+    def _reject_frequency_duplicate(
+        self,
+        *,
+        job_id: str,
+        item_key: str,
+        lemma_key: str,
+        display_form: str,
+        excluded_item_keys: set[str] | None = None,
+    ) -> None:
+        excluded = excluded_item_keys or {item_key}
+        existing = self.session.scalars(
+            select(LexicalCandidate).where(
+                LexicalCandidate.job_id == job_id,
+                LexicalCandidate.source_type == "frequency",
+                LexicalCandidate.item_key.not_in(excluded),
+                or_(
+                    func.lower(LexicalCandidate.lemma_key) == lemma_key.casefold(),
+                    func.lower(LexicalCandidate.display_form) == display_form.casefold(),
+                ),
+            )
+        ).first()
+        if existing is not None:
+            raise ValueError(
+                "duplicate frequency lexical candidate across levels: "
+                f"{item_key} conflicts with {existing.item_key}"
+            )
 
     @staticmethod
     def _candidate_payload(

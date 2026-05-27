@@ -26,6 +26,12 @@ def test_iterator_rejects_noise_tokens(monkeypatch) -> None:
                 "l'amour",
                 "word2",
                 "&word",
+                "https://example.com",
+                "user@example.com",
+                "#tag",
+                "@handle",
+                ":)",
+                "Google",
             ]
         )
 
@@ -42,6 +48,22 @@ def test_iterator_rejects_noise_tokens(monkeypatch) -> None:
         (1, "the"),
         (8, "co-op"),
         (9, "l'amour"),
+    ]
+
+
+def test_iterator_normalizes_unicode_variants(monkeypatch) -> None:
+    from multilang.services import frequency_decks
+
+    monkeypatch.setattr(
+        frequency_decks,
+        "iter_wordlist",
+        lambda language: iter([" l’amour ", "co‑op", "cafe\u0301"]),
+    )
+
+    assert list(frequency_decks.iter_curated_frequency_candidates(SupportedLanguage.FR, scan_limit=3)) == [
+        (1, "l'amour"),
+        (2, "co-op"),
+        (3, "café"),
     ]
 
 

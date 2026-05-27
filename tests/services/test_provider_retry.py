@@ -92,7 +92,7 @@ def test_circuit_breaker_opens_half_opens_and_closes() -> None:
     breaker = ProviderCircuitBreaker(failure_threshold=1, cooldown_seconds=5)
     context = ProviderRetryContext(provider="litellm", model="m", operation="sentence")
 
-    with pytest.raises(ProviderRetryError):
+    with pytest.raises(ProviderCircuitOpenError):
         retry_provider_call(
             lambda: (_ for _ in ()).throw(RuntimeError("429")),
             attempts=1,
@@ -108,3 +108,29 @@ def test_circuit_breaker_opens_half_opens_and_closes() -> None:
     clock["now"] = 6.0
     assert retry_provider_call(lambda: "ok", context=context, circuit_breaker=breaker, monotonic_clock=lambda: clock["now"]) == "ok"
     assert breaker.state_for(context) == "closed"
+
+
+def test_retry_provider_call_stops_when_circuit_opens_before_attempts_exhaust() -> None:
+    calls = {"count": 0}
+    sleeps: list[float] = []
+    breaker = ProviderCircuitBreaker(failure_threshold=1, cooldown_seconds=60)
+    context = ProviderRetryContext(provider="openrouter", model="blocked", operation="sentence")
+
+    def blocked() -> None:
+        calls["count"] += 1
+        raise RuntimeError("403 forbidden")
+
+    with pytest.raises(ProviderCircuitOpenError):
+        retry_provider_call(
+            blocked,
+            attempts=3,
+            base_delay_seconds=1,
+            sleeper=sleeps.append,
+            context=context,
+            circuit_breaker=breaker,
+            monotonic_clock=lambda: 0.0,
+        )
+
+    assert calls["count"] == 1
+    assert sleeps == []
+    assert breaker.state_for(context) == "open"

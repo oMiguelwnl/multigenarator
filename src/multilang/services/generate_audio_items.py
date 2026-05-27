@@ -44,6 +44,7 @@ class GenerateAudioItemsService:
         deck_language: SupportedLanguage,
         item_keys: set[str] | None = None,
         missing_only: bool = False,
+        fallback_only: bool = False,
         max_items: int | None = None,
     ) -> GenerateAudioItemsResult:
         if max_items is not None and max_items < 1:
@@ -69,8 +70,17 @@ class GenerateAudioItemsService:
                 assets.append(prepared_bundle.word_asset)
             if "sentence_audio" in field_names:
                 assets.append(prepared_bundle.sentence_asset)
-            if missing_only:
-                assets = [asset for asset in assets if self._needs_audio_retry(job_id, text_record.item_key, asset.asset_kind)]
+            if missing_only or fallback_only:
+                assets = [
+                    asset
+                    for asset in assets
+                    if self._needs_audio_retry(
+                        job_id,
+                        text_record.item_key,
+                        asset.asset_kind,
+                        fallback_only=fallback_only,
+                    )
+                ]
                 if not assets:
                     continue
             if max_items is not None and processed_records >= max_items:
@@ -96,10 +106,12 @@ class GenerateAudioItemsService:
 
         return result
 
-    def _needs_audio_retry(self, job_id: str, item_key: str, asset_kind: AudioAssetKind) -> bool:
+    def _needs_audio_retry(self, job_id: str, item_key: str, asset_kind: AudioAssetKind, *, fallback_only: bool = False) -> bool:
         existing = self.audio_repository.get_asset(job_id, item_key, asset_kind)
         if existing is None:
-            return True
+            return not fallback_only
+        if fallback_only:
+            return bool(existing.provenance.fallback_used)
         return existing.provenance.status is not AudioSynthesisStatus.SYNTHESIZED or existing.provenance.byte_size <= 0
 
     def _materialize_asset(self, prepared_asset: AudioAssetRecord) -> tuple[AudioAssetRecord, bool]:

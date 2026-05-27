@@ -23,9 +23,11 @@ def test_generation_report_includes_provider_call_summary(tmp_path) -> None:
         audio_assets=[],
         gate_result=ExportQualityGateResult(passed=True, partial=False, card_count=1, level_counts={1: 1}, issues=[], warnings=[]),
         output_dir=tmp_path,
-        provider_call_summary=[{"provider": "litellm", "operation": "sentence", "status": "success", "calls": 1, "retry_attempts": 0, "latency_ms_total": 12, "latency_ms_p95": 12, "total_tokens": 9, "estimated_cost": 0.0, "fallback_count": 0, "circuit_open_blocks": 0}],
+        provider_call_summary=[{"provider": "litellm", "operation": "sentence", "status": "success", "calls": 1, "retry_attempts": 0, "latency_ms_total": 12, "latency_ms_avg": 12, "latency_ms_p95": 12, "total_tokens": 9, "estimated_cost": 0.0, "fallback_count": 0, "circuit_open_blocks": 0}],
     )
 
     markdown = result.markdown_path.read_text(encoding="utf-8")
     assert "## Provider Calls" in markdown
     assert "provider:litellm operation:sentence status:success" in markdown
+    assert "gate_passed=True" in markdown
+    assert "audio_fallback_count=0" in markdown

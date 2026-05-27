@@ -88,8 +88,10 @@ def _read_collection_cards(collection_path: Path) -> list[AuditCard]:
     connection: sqlite3.Connection | None = None
     try:
         connection = sqlite3.connect(collection_path)
+        note_columns = {row[1] for row in connection.execute("pragma table_info(notes)").fetchall()}
+        tag_projection = "tags" if "tags" in note_columns else "'' as tags"
         rows = connection.execute(
-            "select id, guid, mid, flds from notes order by id"
+            f"select id, guid, mid, flds, {tag_projection} from notes order by id"
         ).fetchall()
         if not rows:
             raise ValueError("collection.anki2 contains no note rows")
@@ -101,7 +103,7 @@ def _read_collection_cards(collection_path: Path) -> list[AuditCard]:
             connection.close()
 
     cards: list[AuditCard] = []
-    for note_id, guid, model_id, raw_fields in rows:
+    for note_id, guid, model_id, raw_fields, raw_tags in rows:
         model = models.get(str(model_id))
         if model is None:
             raise ValueError(f"note {note_id} references missing model {model_id}")
@@ -122,6 +124,7 @@ def _read_collection_cards(collection_path: Path) -> list[AuditCard]:
                 sort_index=sort_index,
                 card_identifier=f"{guid}:{sort_index or note_id}",
                 fields=fields,
+                tags=tuple(tag for tag in str(raw_tags or "").split() if tag),
             )
         )
     return cards

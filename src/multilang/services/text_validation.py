@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import re
 from dataclasses import dataclass
+import unicodedata
 
 from pydantic import BaseModel, Field
 
@@ -47,6 +48,16 @@ _INVALID_TRANSLATION_PATTERNS = (
     re.compile(r"temporarily\s+blocked", re.IGNORECASE),
 )
 _MATCHABLE_SUFFIXES = (
+    "ami",
+    "ach",
+    "ego",
+    "emu",
+    "owi",
+    "ami",
+    "ого",
+    "ему",
+    "ами",
+    "ях",
     "arse",
     "erse",
     "irse",
@@ -74,7 +85,41 @@ _MATCHABLE_SUFFIXES = (
     "e",
     "o",
     "a",
+    "u",
+    "y",
+    "ą",
+    "ę",
+    "и",
+    "ы",
+    "а",
+    "я",
+    "е",
+    "у",
+    "ю",
+    "ом",
+    "ой",
+    "ам",
+    "ах",
 )
+
+_LANGUAGE_SCRIPTS = {
+    "ru": "CYRILLIC",
+}
+_LANGUAGE_MARKERS = {
+    "en": {"the", "and", "is", "are", "to", "of", "in", "for", "with", "he", "she", "they"},
+    "pt": {"o", "a", "os", "as", "de", "do", "da", "na", "no", "que", "e", "em", "esta", "para", "com", "eu", "ele", "ela"},
+    "es": {"el", "la", "los", "las", "de", "que", "y", "en", "para", "con", "yo", "él", "ella"},
+    "fr": {"le", "la", "les", "de", "des", "du", "et", "est", "dans", "pour", "avec", "je", "il", "elle"},
+    "de": {"der", "die", "das", "und", "ist", "im", "in", "für", "mit", "ich", "er", "sie"},
+    "it": {"il", "la", "lo", "gli", "di", "che", "e", "in", "per", "con", "io", "lui", "lei"},
+    "pl": {"i", "w", "na", "do", "że", "to", "jest", "się", "nie", "z", "po", "dla"},
+    "tr": {"ve", "bir", "bu", "için", "ile", "de", "da", "ben", "o", "çok"},
+    "ro": {"și", "de", "la", "în", "este", "pentru", "cu", "eu", "el", "ea"},
+    "nl": {"de", "het", "een", "en", "is", "in", "voor", "met", "ik", "hij", "zij"},
+}
+_FOREIGN_TOKEN_BLOCKLIST = {
+    "pl": {"the", "le", "el", "la", "los", "las"},
+}
 
 
 class TextValidationResult(BaseModel):
@@ -147,6 +192,7 @@ class TextValidationService:
             lemma=lemma,
             definitions_html=definitions_html,
         )
+        self._check_language(flags, context=context, translation=translation)
         if require_translation:
             self._check_translation(flags, context=context, display_form=display_form, lemma=lemma)
 
@@ -334,6 +380,29 @@ class TextValidationService:
                 )
             )
 
+    def _check_language(
+        self,
+        flags: list[ValidationFlag],
+        *,
+        context: _ValidationContext,
+        translation: GeneratedTranslation,
+    ) -> None:
+        sentence_mismatch = detect_language_mismatch(
+            context.sentence_text,
+            expected_language=context.target_language,
+            strict_foreign_tokens=True,
+        )
+        if sentence_mismatch:
+            flags.append(ValidationFlag(code=ValidationFlagCode.LANGUAGE_MISMATCH, detail=sentence_mismatch))
+        if context.translation_text:
+            translation_mismatch = detect_language_mismatch(
+                context.translation_text,
+                expected_language=translation.target_language,
+                strict_foreign_tokens=False,
+            )
+            if translation_mismatch:
+                flags.append(ValidationFlag(code=ValidationFlagCode.LANGUAGE_MISMATCH, detail=translation_mismatch))
+
     def _score(self, *, flags: list[ValidationFlag], uncertainty_count: int) -> float:
         score = 0.95
         score -= 0.25 * len(flags)
@@ -366,6 +435,49 @@ def looks_like_invalid_translation(value: str) -> bool:
     if _RAW_HTML_RE.search(text):
         return True
     return any(pattern.search(text) for pattern in _INVALID_TRANSLATION_PATTERNS)
+
+
+def detect_language_mismatch(value: str, *, expected_language: str, strict_foreign_tokens: bool = False) -> str | None:
+    tokens = _tokenize(value)
+    if not tokens:
+        return None
+    expected = expected_language.casefold()
+    script = _LANGUAGE_SCRIPTS.get(expected)
+    if script is not None:
+        letter_tokens = [token for token in tokens if any(character.isalpha() for character in token)]
+        if letter_tokens and _script_token_ratio(letter_tokens, script) < 0.55:
+            return f"text does not look like language {expected_language}"
+    if strict_foreign_tokens:
+        blocked = _FOREIGN_TOKEN_BLOCKLIST.get(expected, set())
+        foreign_tokens = sorted({token for token in tokens if token in blocked})
+        if foreign_tokens:
+            return f"unexpected foreign tokens for {expected_language}: {', '.join(foreign_tokens)}"
+    detected = _detect_language_by_markers(tokens)
+    if detected is not None and detected != expected:
+        expected_hits = len(set(tokens) & _LANGUAGE_MARKERS.get(expected, set()))
+        detected_hits = len(set(tokens) & _LANGUAGE_MARKERS.get(detected, set()))
+        if detected_hits >= max(2, expected_hits + 2):
+            return f"text looks like {detected}, expected {expected_language}"
+    return None
+
+
+def _detect_language_by_markers(tokens: list[str]) -> str | None:
+    counts = {language: len(set(tokens) & markers) for language, markers in _LANGUAGE_MARKERS.items()}
+    language, count = max(counts.items(), key=lambda item: item[1])
+    return language if count >= 2 else None
+
+
+def _script_token_ratio(tokens: list[str], script_name: str) -> float:
+    matching = 0
+    checked = 0
+    for token in tokens:
+        letters = [character for character in token if character.isalpha()]
+        if not letters:
+            continue
+        checked += 1
+        if sum(1 for character in letters if script_name in unicodedata.name(character, "")) / len(letters) >= 0.5:
+            matching += 1
+    return matching / checked if checked else 1.0
 
 
 def _normalize_text(value: str) -> str:
@@ -558,4 +670,4 @@ def _starts_with_upper(value: str) -> bool:
     return bool(stripped) and stripped[0].isalpha() and stripped[0].isupper()
 
 
-__all__ = ["TextValidationResult", "TextValidationService", "looks_like_invalid_translation"]
+__all__ = ["TextValidationResult", "TextValidationService", "detect_language_mismatch", "looks_like_invalid_translation"]

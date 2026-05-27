@@ -174,3 +174,63 @@ def test_count_pending_candidates_only_counts_pending_and_insufficient_rows() ->
     )
 
     assert repository.count_pending_candidates(job.id) == 2
+
+
+def test_frequency_upsert_candidates_rejects_duplicates_before_persistence() -> None:
+    repository, job_repository, _ = build_repositories()
+    job = job_repository.create_job(
+        request=make_request(source_type="frequency"),
+        run_key="run-en-frequency",
+        source_fingerprint="freq-a",
+        total_items=2,
+    )
+    first = make_candidate(status=GroundingStatus.GROUNDED, ipa="/rʌn/", warning_code=None)
+    duplicate = first.model_copy(update={"submitted_form": "ran", "display_form": "ran"})
+
+    try:
+        repository.upsert_candidates(
+            job_id=job.id,
+            run_key=job.run_key,
+            source_type="frequency",
+            candidates=[
+                ("level-1-rank-0001", "run", first),
+                ("level-2-rank-1001", "ran", duplicate),
+            ],
+        )
+    except ValueError as exc:
+        assert "duplicate frequency lemma_key" in str(exc)
+    else:  # pragma: no cover - assertion clarity
+        raise AssertionError("expected duplicate frequency candidate validation failure")
+
+
+def test_frequency_upsert_candidate_rejects_existing_duplicate_across_levels() -> None:
+    repository, job_repository, _ = build_repositories()
+    job = job_repository.create_job(
+        request=make_request(source_type="frequency"),
+        run_key="run-en-frequency-existing",
+        source_fingerprint="freq-b",
+        total_items=2,
+    )
+    first = make_candidate(status=GroundingStatus.GROUNDED, ipa="/rʌn/", warning_code=None)
+    repository.upsert_candidate(
+        job_id=job.id,
+        run_key=job.run_key,
+        item_key="level-1-rank-0001",
+        source_type="frequency",
+        normalized_source="run",
+        candidate=first,
+    )
+
+    try:
+        repository.upsert_candidate(
+            job_id=job.id,
+            run_key=job.run_key,
+            item_key="level-2-rank-1001",
+            source_type="frequency",
+            normalized_source="run",
+            candidate=first,
+        )
+    except ValueError as exc:
+        assert "duplicate frequency lexical candidate" in str(exc)
+    else:  # pragma: no cover - assertion clarity
+        raise AssertionError("expected duplicate frequency candidate validation failure")

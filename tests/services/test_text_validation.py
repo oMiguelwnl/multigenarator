@@ -294,6 +294,32 @@ def test_validation_rejects_provider_error_page_translation() -> None:
     assert ValidationFlagCode.TRANSLATION_MISMATCH in {flag.code for flag in result.validation_flags}
 
 
+def test_validation_rejects_sentence_in_wrong_language() -> None:
+    result = build_service().validate(
+        sentence=build_sentence(text="The committee is ready for the meeting.", target_language="pl"),
+        translation=build_translation(text="The committee is ready for the meeting.", target_language="en"),
+        display_form="komisja",
+        lemma="komisja",
+        definitions_html="noun: committee",
+    )
+
+    assert result.validation_status is ValidationStatus.FAILED
+    assert ValidationFlagCode.LANGUAGE_MISMATCH in {flag.code for flag in result.validation_flags}
+
+
+def test_validation_rejects_translation_in_wrong_language() -> None:
+    result = build_service().validate(
+        sentence=build_sentence(text="To jest dobra komisja.", target_language="pl"),
+        translation=build_translation(text="O gato esta na casa.", target_language="en"),
+        display_form="komisja",
+        lemma="komisja",
+        definitions_html="noun: committee",
+    )
+
+    assert result.validation_status is ValidationStatus.FAILED
+    assert ValidationFlagCode.LANGUAGE_MISMATCH in {flag.code for flag in result.validation_flags}
+
+
 def test_validation_rejects_html_quota_captcha_and_blocked_translation_text() -> None:
     for bad_translation in (
         "<html><body>Server Error</body></html>",

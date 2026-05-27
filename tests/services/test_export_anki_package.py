@@ -234,6 +234,12 @@ def test_build_multilang_note_reuses_deterministic_guid_across_mutable_content_c
     assert original.fields[6] != changed.fields[6]
 
 
+def test_build_multilang_note_adds_traceability_tags() -> None:
+    note = build_multilang_note(make_row(item_key="level-1-rank-0001", sort_index=1))
+
+    assert {"multilang", "en", "frequency", "level_1", "rank_0001", "job_job_1"}.issubset(set(note.tags))
+
+
 def test_export_anki_package_bundles_referenced_media_and_sound_basenames(tmp_path: Path) -> None:
     word_media = write_media_file(tmp_path / "audio" / "run-word.mp3")
     sentence_media = write_media_file(tmp_path / "audio" / "run-sentence.mp3")
@@ -257,6 +263,12 @@ def test_export_anki_package_bundles_referenced_media_and_sound_basenames(tmp_pa
     with zipfile.ZipFile(output_path) as archive:
         assert "collection.anki2" in archive.namelist()
         assert any(name.isdigit() for name in archive.namelist())
+        collection_path = tmp_path / "collection.anki2"
+        collection_path.write_bytes(archive.read("collection.anki2"))
+    with sqlite3.connect(collection_path) as connection:
+        raw_tags = connection.execute("select tags from notes").fetchone()[0]
+    assert " multilang " in raw_tags
+    assert " rank_0001 " in raw_tags
 
 
 def test_export_anki_package_deduplicates_shared_media_before_packaging(tmp_path: Path) -> None:

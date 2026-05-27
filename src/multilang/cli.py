@@ -775,15 +775,27 @@ def create_app(
                         deck_language=language,
                     )
                 else:
-                    text_result = resolved_service.generate_text(
-                        job_id=lexical_result.report.job_id,
-                        deck_language=language,
-                        missing_only=request.missing_only,
-                        max_items=request.max_items,
-                        progress_callback=_print_generate_text_progress,
-                        rate_limiter=rate_limiter,
-                        concurrency=request.concurrency,
-                    )
+                    try:
+                        text_result = resolved_service.generate_text(
+                            job_id=lexical_result.report.job_id,
+                            deck_language=language,
+                            missing_only=request.missing_only,
+                            max_items=request.max_items,
+                            progress_callback=_print_generate_text_progress,
+                            rate_limiter=rate_limiter,
+                            concurrency=request.concurrency,
+                        )
+                    except TypeError as exc:
+                        if "concurrency" not in str(exc):
+                            raise
+                        text_result = resolved_service.generate_text(
+                            job_id=lexical_result.report.job_id,
+                            deck_language=language,
+                            missing_only=request.missing_only,
+                            max_items=request.max_items,
+                            progress_callback=_print_generate_text_progress,
+                            rate_limiter=rate_limiter,
+                        )
                 typer.echo(f"text_processed_items={text_result.processed_items}")
                 typer.echo(f"accepted_text_items={text_result.accepted_items}")
                 typer.echo(f"review_required_text_items={text_result.review_required_items}")
@@ -911,6 +923,7 @@ def create_app(
     def synthesize_audio(
         job_id: Annotated[str, typer.Option("--job-id", help="Persisted job id to synthesize audio for.")],
         missing_only: Annotated[bool, typer.Option("--missing-only", help="Generate only missing audio assets.")] = False,
+        fallback_only: Annotated[bool, typer.Option("--fallback-only", help="Regenerate only audio assets previously produced via fallback.")] = False,
         max_items: Annotated[int | None, typer.Option("--max-items", min=1, help="Maximum text rows to process.")] = None,
     ) -> None:
         resolved_service = resolve_service()
@@ -924,6 +937,7 @@ def create_app(
             job_id=job_id,
             deck_language=SupportedLanguage(job.language),
             missing_only=missing_only,
+            fallback_only=fallback_only,
             max_items=max_items,
         )
         typer.echo(f"audio_processed_items={result.audio_processed_items}")

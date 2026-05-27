@@ -7,6 +7,8 @@ from collections import Counter
 from collections.abc import Iterable, Iterator
 from dataclasses import dataclass
 from pathlib import Path
+import re
+import unicodedata
 
 from wordfreq import iter_wordlist
 
@@ -14,6 +16,19 @@ from multilang.domain.lexicon import GroundingStatus, LexicalCardCandidate, Lexi
 from multilang.domain.jobs import SupportedLanguage
 
 WEB_NOISE_TOKENS = {"http", "https", "www", "nbsp"}
+_URL_OR_EMAIL_RE = re.compile(r"(?:https?://|www\.|\S+@\S+\.\S+)", re.IGNORECASE)
+_HANDLE_OR_HASHTAG_RE = re.compile(r"^[#@]\w+")
+_EMOTICON_RE = re.compile(r"^(?:[:;=8][\-o\*']?[)D(P/\\]|[)D(P/\\][\-o\*']?[:;=8])$")
+_SENSITIVE_PROPER_NAME_WORDS = {
+    "trump",
+    "biden",
+    "putin",
+    "facebook",
+    "google",
+    "microsoft",
+    "apple",
+    "amazon",
+}
 LEVEL_WINDOWS = {
     1: (1, 1000),
     2: (1001, 2000),
@@ -43,6 +58,10 @@ VALID_REJECTION_REASON_CODES = {
     "punctuation",
     "duplicate_lemma_key",
     "duplicate_display_form",
+    "url_or_email",
+    "hashtag_or_handle",
+    "emoji_or_symbol",
+    "sensitive_name_or_brand",
 }
 
 
@@ -63,13 +82,23 @@ class CuratedFrequencyEntry:
 
 
 def _is_curated_token(token: str) -> bool:
+    token = _normalize_frequency_token(token)
     if not token:
+        return False
+    if _URL_OR_EMAIL_RE.search(token):
+        return False
+    if _HANDLE_OR_HASHTAG_RE.match(token):
+        return False
+    if _EMOTICON_RE.match(token):
         return False
     if any(character.isdigit() for character in token):
         return False
 
     lower_token = token.lower()
     if lower_token in WEB_NOISE_TOKENS:
+        return False
+
+    if lower_token in _SENSITIVE_PROPER_NAME_WORDS:
         return False
 
     if "." in token:
@@ -96,6 +125,13 @@ def _is_curated_token(token: str) -> bool:
     return saw_letter
 
 
+def _normalize_frequency_token(token: str) -> str:
+    normalized = unicodedata.normalize("NFC", str(token or ""))
+    normalized = " ".join(normalized.strip().split())
+    normalized = normalized.replace("’", "'").replace("‐", "-").replace("‑", "-").replace("–", "-").replace("—", "-")
+    return normalized
+
+
 def iter_curated_frequency_candidates(
     language: SupportedLanguage,
     scan_limit: int = 6000,
@@ -105,8 +141,9 @@ def iter_curated_frequency_candidates(
     for rank, token in enumerate(iter_wordlist(language.value), start=1):
         if rank > scan_limit:
             break
-        if _is_curated_token(token):
-            yield rank, token
+        normalized = _normalize_frequency_token(token)
+        if _is_curated_token(normalized):
+            yield rank, normalized
 
 
 def _asset_path(*, language: SupportedLanguage, version: str, assets_dir: Path, kind: str) -> Path:

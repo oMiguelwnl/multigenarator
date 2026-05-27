@@ -79,6 +79,7 @@ def build_multilang_note(row: ExportCardRow, *, model: genanki.Model | None = No
             language=row.identity.language,
         ),
         fields=_row_fields(row, field_names=field_names),
+        tags=_traceability_tags(row),
     )
     note._multilang_guid = row.note_guid  # type: ignore[attr-defined]
     return note
@@ -119,6 +120,36 @@ def export_anki_package(
 def _row_fields(row: ExportCardRow, *, field_names: tuple[str, ...]) -> list[str]:
     mapping = row.ordered_field_mapping(field_names=field_names)
     return [str(mapping[field_name]) if mapping[field_name] is not None else "" for field_name in field_names]
+
+
+def _traceability_tags(row: ExportCardRow) -> list[str]:
+    tags = [
+        "multilang",
+        row.identity.language.value,
+        row.identity.source_type.replace("-", "_"),
+        f"job_{_tag_slug(row.identity.job_id)}",
+        f"item_{_tag_slug(row.identity.item_key)}",
+    ]
+    level = _frequency_level(row)
+    if level is not None:
+        tags.append(f"level_{level}")
+    if row.identity.source_type == "frequency" and row.sort_index is not None:
+        tags.append(f"rank_{row.sort_index:04d}")
+    return list(dict.fromkeys(tags))
+
+
+def _frequency_level(row: ExportCardRow) -> int | None:
+    if row.identity.source_type != "frequency":
+        return None
+    rank = row.sort_index or row.identity.sort_index
+    if 1 <= rank <= 3000:
+        return ((rank - 1) // 1000) + 1
+    return None
+
+
+def _tag_slug(value: str) -> str:
+    slug = re.sub(r"[^A-Za-z0-9_]+", "_", value.strip())
+    return slug.strip("_") or "unknown"
 
 
 def _resolve_media_files(*, rows: list[ExportCardRow], media_index: dict[str, Path]) -> list[Path]:

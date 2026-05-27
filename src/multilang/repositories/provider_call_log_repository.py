@@ -121,6 +121,7 @@ def summarize_provider_call_records(records: list[object]) -> list[dict[str, obj
         if latencies:
             index = min(len(latencies) - 1, int(0.95 * (len(latencies) - 1)))
             bucket["latency_ms_p95"] = latencies[index]
+            bucket["latency_ms_avg"] = round(int(bucket["latency_ms_total"]) / len(latencies), 2)
         summaries.append(bucket)
     return sorted(summaries, key=lambda item: (str(item["provider"]), str(item["operation"]), str(item["status"])))
 

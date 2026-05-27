@@ -35,6 +35,7 @@ class ValidationFlagCode(str, Enum):
     BANNED_PATTERN = "banned_pattern"
     DUPLICATE_SENTENCE = "duplicate_sentence"
     TRANSLATION_MISMATCH = "translation_mismatch"
+    LANGUAGE_MISMATCH = "language_mismatch"
     LOW_CONFIDENCE = "low_confidence"
 
 

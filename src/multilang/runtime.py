@@ -187,12 +187,14 @@ class RuntimeGenerateService(IngestLexicalItemsService):
         job_id: str,
         deck_language: object,
         missing_only: bool = False,
+        fallback_only: bool = False,
         max_items: int | None = None,
     ) -> RuntimeTextResult:
         audio_result = self.generate_audio_items_service.execute(
             job_id=job_id,
             deck_language=deck_language,
             missing_only=missing_only,
+            fallback_only=fallback_only,
             max_items=max_items,
         )
         return RuntimeTextResult(
@@ -263,7 +265,7 @@ class RuntimeGenerateService(IngestLexicalItemsService):
             if hasattr(self.audio_repository, "list_assets_for_job")
             else []
         )
-        missing_audio_count, non_synthesized_audio_count = _audio_gate_counts(rows, audio_assets)
+        missing_audio_count, non_synthesized_audio_count, fallback_audio_count = _audio_gate_counts(rows, audio_assets)
         gate_result = evaluate_export_quality_gate(
             source_type=job.source_type,
             rows=rows,
@@ -271,6 +273,7 @@ class RuntimeGenerateService(IngestLexicalItemsService):
             invalid_translation_count=invalid_translation_count,
             missing_audio_count=missing_audio_count,
             non_synthesized_audio_count=non_synthesized_audio_count,
+            fallback_audio_count=fallback_audio_count,
             allow_partial=allow_partial,
         )
         if not gate_result.passed:
@@ -278,7 +281,7 @@ class RuntimeGenerateService(IngestLexicalItemsService):
                 job_id,
                 status=JobStatus.BLOCKED,
                 current_stage=JobStage.EXPORT,
-                failed_items=review_required_count + invalid_translation_count + missing_audio_count + non_synthesized_audio_count,
+                failed_items=review_required_count + invalid_translation_count + missing_audio_count + non_synthesized_audio_count + fallback_audio_count,
             )
             raise ValueError(f"export quality gate failed: {gate_result.message()}")
 
@@ -412,12 +415,13 @@ def _validate_media_reference(*, sound_tag: str, media_path: Path) -> None:
         raise ValueError(f"missing media file for {media_path.name}")
 
 
-def _audio_gate_counts(rows: list[object], audio_assets: list[object]) -> tuple[int, int]:
+def _audio_gate_counts(rows: list[object], audio_assets: list[object]) -> tuple[int, int, int]:
     from multilang.domain.audio import AudioAssetKind, AudioSynthesisStatus
 
     asset_index = {(asset.item_key, asset.asset_kind.value): asset for asset in audio_assets}
     missing = 0
     non_synthesized = 0
+    fallback = 0
     for row in rows:
         required = [AudioAssetKind.SENTENCE]
         if "word_audio" in export_field_names_for_source_type(row.identity.source_type):
@@ -428,7 +432,9 @@ def _audio_gate_counts(rows: list[object], audio_assets: list[object]) -> tuple[
                 missing += 1
             elif asset.provenance.status is not AudioSynthesisStatus.SYNTHESIZED or asset.provenance.byte_size <= 0:
                 non_synthesized += 1
-    return missing, non_synthesized
+            elif asset.provenance.fallback_used:
+                fallback += 1
+    return missing, non_synthesized, fallback
 
 
 def _add_media_reference(media_index: dict[str, Path], *, sound_tag: str, media_path: Path) -> None:

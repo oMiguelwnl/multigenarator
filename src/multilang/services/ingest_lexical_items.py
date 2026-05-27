@@ -233,15 +233,18 @@ class IngestLexicalItemsService:
 
         level_counts = {1: 0, 2: 0, 3: 0}
         total_backfilled = 0
+        selected_frequency_lemmas: set[str] = set()
         for level in levels:
             grounded_candidates, backfilled_count = self._build_grounded_frequency_level(
                 language=language,
                 level=level,
                 required_count_per_level=cards_per_level,
+                initially_rejected_lemmas=selected_frequency_lemmas,
                 rate_limiter=rate_limiter,
             )
             total_backfilled += backfilled_count
             level_counts[level] = len(grounded_candidates)
+            selected_frequency_lemmas.update(candidate.lemma_key.casefold() for candidate in grounded_candidates)
             candidate_rows: list[tuple[str, str, LexicalCardCandidate]] = []
             item_keys: list[str] = []
             for position, candidate in enumerate(grounded_candidates, start=1):
@@ -362,9 +365,11 @@ class IngestLexicalItemsService:
         language: SupportedLanguage,
         level: int,
         required_count_per_level: int = 1000,
+        initially_rejected_lemmas: set[str] | None = None,
         rate_limiter: RateLimiter | None = None,
     ) -> tuple[list[LexicalCardCandidate], int]:
-        rejected_lemmas: set[str] = set()
+        rejected_lemmas: set[str] = {lemma.casefold() for lemma in (initially_rejected_lemmas or set())}
+        seed_backfill_rejections: set[str] = set()
 
         for _ in range(20):
             candidates = build_frequency_level(
@@ -372,6 +377,7 @@ class IngestLexicalItemsService:
                 level=level,
                 required_count_per_level=required_count_per_level,
                 rejected_lemmas=rejected_lemmas,
+                allow_frequency_seed_fallback=required_count_per_level != 1000 or bool(rejected_lemmas),
             )
             grounded_candidates: list[LexicalCardCandidate] = []
             backfill_required: set[str] = set()
@@ -385,15 +391,11 @@ class IngestLexicalItemsService:
                     grounded_candidates.append(grounded_candidate)
                     continue
                 backfill_required.add(candidate.lemma_key)
+                if candidate.provenance.source == "wordfreq":
+                    seed_backfill_rejections.add(candidate.lemma_key.casefold())
 
             if len(grounded_candidates) == required_count_per_level:
-                _, window_end = LEVEL_WINDOWS[level]
-                backfilled_count = sum(
-                    1
-                    for candidate in grounded_candidates
-                    if candidate.frequency_rank is not None and candidate.frequency_rank > window_end
-                )
-                return grounded_candidates, backfilled_count
+                return grounded_candidates, len(seed_backfill_rejections)
 
             if not backfill_required or backfill_required.issubset(rejected_lemmas):
                 break

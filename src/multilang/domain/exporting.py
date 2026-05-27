@@ -178,6 +178,7 @@ def evaluate_export_quality_gate(
     invalid_translation_count: int = 0,
     missing_audio_count: int = 0,
     non_synthesized_audio_count: int = 0,
+    fallback_audio_count: int = 0,
     allow_partial: bool = False,
 ) -> ExportQualityGateResult:
     """Fail-closed export gate for final frequency decks."""
@@ -228,6 +229,12 @@ def evaluate_export_quality_gate(
                 message=f"non-synthesized audio assets: {non_synthesized_audio_count}",
             )
         )
+    if fallback_audio_count and source_type == "frequency" and len(rows) == FREQUENCY_TOTAL_CARDS:
+        issue = ExportQualityIssue(
+            code="fallback_audio",
+            message=f"audio assets generated with fallback voices/providers: {fallback_audio_count}",
+        )
+        (warnings if allow_partial else issues).append(issue)
 
     return ExportQualityGateResult(
         passed=not issues,
