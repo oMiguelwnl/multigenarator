@@ -447,8 +447,8 @@ def test_generate_text_items_routes_isolated_word_translation_to_review() -> Non
     )
     generation = FakeGenerationService(
         bundles=[
-            make_bundle(sentence="Он хочет достичь цели завтра.", translation="to achieve"),
-            make_bundle(sentence="Он хочет достичь цели завтра.", translation="to achieve"),
+            make_bundle(sentence="Он хочет достичь цели завтра.", translation="to achieve", sentence_language="ru", translation_language="en"),
+            make_bundle(sentence="Он хочет достичь цели завтра.", translation="to achieve", sentence_language="ru", translation_language="en"),
         ]
     )
 

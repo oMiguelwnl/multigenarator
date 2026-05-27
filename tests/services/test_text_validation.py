@@ -3,12 +3,44 @@
 from __future__ import annotations
 
 from multilang.domain.text_quality import ConfidenceLabel, ValidationFlagCode, ValidationStatus
+from multilang.services.language_identifier import LanguageDetectionResult
+from multilang.services.morphology import MorphologyValidationResult
 from multilang.services.text_generation import GeneratedSentence, GeneratedTranslation
 from multilang.services.text_validation import TextValidationService
 
 
 def build_service() -> TextValidationService:
     return TextValidationService()
+
+
+class FakeLanguageIdentifier:
+    def __init__(self, detected_language: str | None, *, reliable: bool = True) -> None:
+        self.detected_language = detected_language
+        self.reliable = reliable
+
+    def detect(self, value: str, *, expected_language: str | None = None) -> LanguageDetectionResult:
+        return LanguageDetectionResult(
+            detected_language=self.detected_language,
+            confidence=0.97,
+            reliable=self.reliable,
+            provider="fake-language-id",
+            detail="test detector",
+        )
+
+
+class FakeMorphologicalAnalyzer:
+    def __init__(self, result: MorphologyValidationResult) -> None:
+        self.result = result
+
+    def contains_target_lemma(
+        self,
+        *,
+        sentence_text: str,
+        target_language: str,
+        display_form: str,
+        lemma: str,
+    ) -> MorphologyValidationResult:
+        return self.result
 
 
 def build_sentence(*, text: str, target_language: str = "en") -> GeneratedSentence:
@@ -318,6 +350,55 @@ def test_validation_rejects_translation_in_wrong_language() -> None:
 
     assert result.validation_status is ValidationStatus.FAILED
     assert ValidationFlagCode.LANGUAGE_MISMATCH in {flag.code for flag in result.validation_flags}
+
+
+def test_validation_uses_injected_language_identifier_for_wrong_language() -> None:
+    result = TextValidationService(
+        language_identifier=FakeLanguageIdentifier("es"),
+    ).validate(
+        sentence=build_sentence(text="I wash the cup at home.", target_language="en"),
+        translation=build_translation(text="Eu lavo a xícara em casa.", target_language="pt"),
+        display_form="wash",
+        lemma="wash",
+        definitions_html="to wash",
+    )
+
+    assert result.validation_status is ValidationStatus.FAILED
+    assert ValidationFlagCode.LANGUAGE_MISMATCH in {flag.code for flag in result.validation_flags}
+
+
+def test_validation_accepts_target_lemma_from_morphological_analyzer() -> None:
+    result = TextValidationService(
+        morphological_analyzer=FakeMorphologicalAnalyzer(
+            MorphologyValidationResult(matched=True, reliable=True, provider="fake-morph", detail="lemma match")
+        ),
+    ).validate(
+        sentence=build_sentence(text="He went home after lunch today."),
+        translation=build_translation(text="Ele foi para casa depois do almoço."),
+        display_form="go",
+        lemma="go",
+        definitions_html="verb: to go",
+    )
+
+    assert result.validation_status is ValidationStatus.PASSED
+    assert ValidationFlagCode.MISSING_TARGET_LEMMA not in {flag.code for flag in result.validation_flags}
+
+
+def test_validation_rejects_false_positive_when_morphology_disagrees() -> None:
+    result = TextValidationService(
+        morphological_analyzer=FakeMorphologicalAnalyzer(
+            MorphologyValidationResult(matched=False, reliable=True, provider="fake-morph", detail="lemma absent")
+        ),
+    ).validate(
+        sentence=build_sentence(text="The washer is in the room."),
+        translation=build_translation(text="A lavadora está na sala."),
+        display_form="wash",
+        lemma="wash",
+        definitions_html="verb: to wash",
+    )
+
+    assert result.validation_status is ValidationStatus.FAILED
+    assert ValidationFlagCode.MORPHOLOGY_MISMATCH in {flag.code for flag in result.validation_flags}
 
 
 def test_validation_rejects_html_quota_captcha_and_blocked_translation_text() -> None:

@@ -36,6 +36,7 @@ class ValidationFlagCode(str, Enum):
     DUPLICATE_SENTENCE = "duplicate_sentence"
     TRANSLATION_MISMATCH = "translation_mismatch"
     LANGUAGE_MISMATCH = "language_mismatch"
+    MORPHOLOGY_MISMATCH = "morphology_mismatch"
     LOW_CONFIDENCE = "low_confidence"
 
 

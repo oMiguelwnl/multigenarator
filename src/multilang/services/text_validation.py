@@ -14,6 +14,8 @@ from multilang.domain.text_quality import (
     ValidationFlagCode,
     ValidationStatus,
 )
+from multilang.services.language_identifier import CorpusLanguageIdentifier, LanguageIdentifier
+from multilang.services.morphology import MorphologicalAnalyzer, OptionalStanzaMorphologicalAnalyzer
 from multilang.services.text_generation import GeneratedSentence, GeneratedTranslation
 
 _TOKEN_RE = re.compile(r"\b[\w'-]+\b", re.UNICODE)
@@ -145,6 +147,15 @@ class TextValidationService:
     min_sentence_tokens = 4
     max_sentence_tokens = 12
 
+    def __init__(
+        self,
+        *,
+        language_identifier: LanguageIdentifier | None = None,
+        morphological_analyzer: MorphologicalAnalyzer | None = None,
+    ) -> None:
+        self.language_identifier = language_identifier or CorpusLanguageIdentifier()
+        self.morphological_analyzer = morphological_analyzer or OptionalStanzaMorphologicalAnalyzer()
+
     def validate(
         self,
         *,
@@ -192,7 +203,7 @@ class TextValidationService:
             lemma=lemma,
             definitions_html=definitions_html,
         )
-        self._check_language(flags, context=context, translation=translation)
+        self._check_language(flags, context=context, translation=translation, require_translation=require_translation)
         if require_translation:
             self._check_translation(flags, context=context, display_form=display_form, lemma=lemma)
 
@@ -235,13 +246,31 @@ class TextValidationService:
             for token in context.sentence_tokens
             for key in _match_keys(token)
         }
-        if candidates.isdisjoint(sentence_terms):
+        heuristic_match = not candidates.isdisjoint(sentence_terms)
+        morphology_result = self.morphological_analyzer.contains_target_lemma(
+            sentence_text=context.sentence_text,
+            target_language=context.target_language,
+            display_form=display_form,
+            lemma=lemma,
+        )
+        if morphology_result.reliable:
+            if morphology_result.matched:
+                return
             flags.append(
                 ValidationFlag(
-                    code=ValidationFlagCode.MISSING_TARGET_LEMMA,
-                    detail="sentence must include the target lemma or required study form",
+                    code=ValidationFlagCode.MORPHOLOGY_MISMATCH,
+                    detail=f"sentence morphology does not contain the target lemma or study form ({morphology_result.detail})",
                 )
             )
+            return
+        if heuristic_match:
+            return
+        flags.append(
+            ValidationFlag(
+                code=ValidationFlagCode.MISSING_TARGET_LEMMA,
+                detail="sentence must include the target lemma or required study form",
+            )
+        )
 
     def _check_sentence_length(
         self,
@@ -386,19 +415,22 @@ class TextValidationService:
         *,
         context: _ValidationContext,
         translation: GeneratedTranslation,
+        require_translation: bool,
     ) -> None:
         sentence_mismatch = detect_language_mismatch(
             context.sentence_text,
             expected_language=context.target_language,
             strict_foreign_tokens=True,
+            language_identifier=self.language_identifier,
         )
         if sentence_mismatch:
             flags.append(ValidationFlag(code=ValidationFlagCode.LANGUAGE_MISMATCH, detail=sentence_mismatch))
-        if context.translation_text:
+        if require_translation and context.translation_text:
             translation_mismatch = detect_language_mismatch(
                 context.translation_text,
                 expected_language=translation.target_language,
                 strict_foreign_tokens=False,
+                language_identifier=self.language_identifier,
             )
             if translation_mismatch:
                 flags.append(ValidationFlag(code=ValidationFlagCode.LANGUAGE_MISMATCH, detail=translation_mismatch))
@@ -437,11 +469,26 @@ def looks_like_invalid_translation(value: str) -> bool:
     return any(pattern.search(text) for pattern in _INVALID_TRANSLATION_PATTERNS)
 
 
-def detect_language_mismatch(value: str, *, expected_language: str, strict_foreign_tokens: bool = False) -> str | None:
+_DEFAULT_LANGUAGE_IDENTIFIER = CorpusLanguageIdentifier()
+
+
+def detect_language_mismatch(
+    value: str,
+    *,
+    expected_language: str,
+    strict_foreign_tokens: bool = False,
+    language_identifier: LanguageIdentifier | None = None,
+) -> str | None:
     tokens = _tokenize(value)
     if not tokens:
         return None
     expected = expected_language.casefold()
+    detection = (language_identifier or _DEFAULT_LANGUAGE_IDENTIFIER).detect(value, expected_language=expected)
+    if detection.reliable and detection.detected_language is not None and detection.detected_language != expected:
+        return (
+            f"text looks like {detection.detected_language}, expected {expected_language} "
+            f"({detection.provider} confidence={detection.confidence:.2f}; {detection.detail})"
+        )
     script = _LANGUAGE_SCRIPTS.get(expected)
     if script is not None:
         letter_tokens = [token for token in tokens if any(character.isalpha() for character in token)]
