@@ -5,7 +5,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 from typing import Literal
 
-SourceType = Literal["frequency", "word-list", "kindle-highlights"]
+SourceType = Literal["frequency", "word-list", "kindle-highlights", "latin-mvp"]
 
 
 @dataclass(frozen=True, slots=True)
@@ -46,6 +46,15 @@ SOURCE_PROFILES: dict[SourceType, SourceProfile] = {
         max_sentence_tokens=16,
         note_type_name="Multilang::Highlight Card",
         template_name="highlight_card",
+    ),
+    "latin-mvp": SourceProfile(
+        source_type="latin-mvp",
+        requires_translation_validation=False,
+        exports_translation_field=False,
+        min_sentence_tokens=3,
+        max_sentence_tokens=20,
+        note_type_name="Multilang::Latin MVP Card",
+        template_name="latin_mvp_card",
     ),
 }
 
