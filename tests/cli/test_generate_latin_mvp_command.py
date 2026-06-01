@@ -1,0 +1,50 @@
+"""CLI tests for the isolated Classical Latin MVP command."""
+
+from __future__ import annotations
+
+from typer.testing import CliRunner
+
+from multilang.cli import create_app
+from multilang.domain.latin import LatinGenerationRequest
+from multilang.services.latin_mvp import LatinMvpGenerationService
+
+runner = CliRunner()
+
+
+def test_generate_latin_mvp_prints_required_metadata() -> None:
+    result = runner.invoke(create_app(), ["generate-latin-mvp"])
+
+    assert result.exit_code == 0
+    assert "language_code=la" in result.output
+    assert "variant=classical" in result.output
+    assert "source_type=latin-mvp" in result.output
+    assert "source_pack_version=latin-mvp-50-v1" in result.output
+    assert "card_count=50" in result.output
+    assert "item_count=50" in result.output
+
+
+def test_generate_latin_mvp_accepts_source_pack_version_override() -> None:
+    result = runner.invoke(
+        create_app(),
+        ["generate-latin-mvp", "--source-pack-version", "custom-pack"],
+    )
+
+    assert result.exit_code == 0
+    assert "source_pack_version=custom-pack" in result.output
+    assert "card_count=50" in result.output
+    assert "item_count=50" in result.output
+
+
+def test_generate_latin_mvp_calls_latin_service_with_latin_request() -> None:
+    captured: list[LatinGenerationRequest] = []
+
+    class FakeLatinService(LatinMvpGenerationService):
+        def start(self, request: LatinGenerationRequest):  # type: ignore[override]
+            captured.append(request)
+            return super().start(request)
+
+    result = runner.invoke(create_app(latin_mvp_service=FakeLatinService()), ["generate-latin-mvp"])
+
+    assert result.exit_code == 0
+    assert isinstance(captured[0], LatinGenerationRequest)
+    assert captured[0].source_type == "latin-mvp"
