@@ -10,6 +10,7 @@ from typing import Annotated, Any
 import typer
 
 from multilang.domain.jobs import GenerationRequest, JobProgressSnapshot, SupportedLanguage
+from multilang.domain.latin import LatinGenerationRequest
 from multilang.domain.exporting import ExportArtifactFormat
 from multilang.domain.deck_audit import audit_deck_package
 from multilang.domain.webdav import WebDAVError, WebDAVFailureCode, WebDAVFetchResult, WebDAVRemoteCandidate
@@ -26,6 +27,7 @@ from multilang.services.deck_audit_reader import read_apkg_cards
 from multilang.services.deck_audit_reports import write_deck_audit_reports
 from multilang.services.lexical_lookup import LexicalLookup, normalize_lexical_key
 from multilang.services.job_summary import JobLifecycleSummary, JobSummaryBuilder
+from multilang.services.latin_mvp import LatinMvpGenerationService
 from multilang.services.russian_phoneme_deck import (
     DEFAULT_POLISH_PHONEME_DECK_NAME,
     DEFAULT_RUSSIAN_PHONEME_DECK_NAME,
@@ -460,6 +462,7 @@ def create_app(
     service: GenerateJobService | IngestLexicalItemsService | None = None,
     review_report_builder: ReviewReportBuilder | None = None,
     webdav_service_factory: WebDAVServiceFactory | None = None,
+    latin_mvp_service: LatinMvpGenerationService | None = None,
 ) -> typer.Typer:
     """Build the CLI application with injectable collaborators for tests."""
 
@@ -483,6 +486,9 @@ def create_app(
         if webdav_service_factory is not None:
             return webdav_service_factory()
         return WebDAVHighlightFetchService.from_settings(Settings())
+
+    def resolve_latin_mvp_service() -> LatinMvpGenerationService:
+        return latin_mvp_service or LatinMvpGenerationService()
 
     @cli.callback()
     def main() -> None:
@@ -836,6 +842,26 @@ def create_app(
                 review_report_builder=review_report_builder,
             )
         )
+
+    @cli.command("generate-latin-mvp")
+    def generate_latin_mvp(
+        source_pack_version: Annotated[
+            str,
+            typer.Option(
+                "--source-pack-version",
+                help="Classical Latin MVP source pack version.",
+            ),
+        ] = "latin-mvp-50-v1",
+    ) -> None:
+        request = LatinGenerationRequest(source_pack_version=source_pack_version)
+        result = resolve_latin_mvp_service().start(request)
+
+        typer.echo(f"language_code={result.metadata.language_code}")
+        typer.echo(f"variant={result.metadata.variant.value}")
+        typer.echo(f"source_type={result.source_type}")
+        typer.echo(f"source_pack_version={result.metadata.source_pack_version}")
+        typer.echo(f"card_count={result.metadata.card_count}")
+        typer.echo(f"item_count={len(result.item_keys)}")
 
     @cli.command("export")
     def export(
