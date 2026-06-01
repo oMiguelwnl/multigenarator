@@ -102,43 +102,44 @@ Which phases cover which requirements. Updated during roadmap creation.
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| MODE-01 | TBD | Pending |
-| MODE-02 | TBD | Pending |
-| MODE-03 | TBD | Pending |
-| FREQ-01 | TBD | Pending |
-| FREQ-02 | TBD | Pending |
-| FREQ-03 | TBD | Pending |
-| SRC-01 | TBD | Pending |
-| SRC-02 | TBD | Pending |
-| SENT-01 | TBD | Pending |
-| SENT-02 | TBD | Pending |
-| GRAM-01 | TBD | Pending |
-| GRAM-02 | TBD | Pending |
-| GRAM-03 | TBD | Pending |
-| GRAM-04 | TBD | Pending |
-| PT-01 | TBD | Pending |
-| PT-02 | TBD | Pending |
-| PT-03 | TBD | Pending |
-| REV-01 | TBD | Pending |
-| REV-02 | TBD | Pending |
-| REV-03 | TBD | Pending |
-| AUD-01 | TBD | Pending |
-| AUD-02 | TBD | Pending |
-| AUD-03 | TBD | Pending |
-| AUD-04 | TBD | Pending |
-| EXP-01 | TBD | Pending |
-| EXP-02 | TBD | Pending |
-| EXP-03 | TBD | Pending |
-| EVID-01 | TBD | Pending |
-| EVID-02 | TBD | Pending |
-| EVID-03 | TBD | Pending |
+| MODE-01 | Phase 22 | Pending |
+| MODE-02 | Phase 22 | Pending |
+| MODE-03 | Phase 22 | Pending |
+| FREQ-01 | Phase 23 | Pending |
+| FREQ-02 | Phase 23 | Pending |
+| FREQ-03 | Phase 23 | Pending |
+| SRC-01 | Phase 23 | Pending |
+| SRC-02 | Phase 23 | Pending |
+| SENT-01 | Phase 23 | Pending |
+| SENT-02 | Phase 23 | Pending |
+| GRAM-01 | Phase 24 | Pending |
+| GRAM-02 | Phase 24 | Pending |
+| GRAM-03 | Phase 24 | Pending |
+| GRAM-04 | Phase 24 | Pending |
+| PT-01 | Phase 26 | Pending |
+| PT-02 | Phase 26 | Pending |
+| PT-03 | Phase 26 | Pending |
+| REV-01 | Phase 25 | Pending |
+| REV-02 | Phase 25 | Pending |
+| REV-03 | Phase 25 | Pending |
+| AUD-01 | Phase 27 | Pending |
+| AUD-02 | Phase 27 | Pending |
+| AUD-03 | Phase 27 | Pending |
+| AUD-04 | Phase 27 | Pending |
+| EXP-01 | Phase 28 | Pending |
+| EXP-02 | Phase 28 | Pending |
+| EXP-03 | Phase 28 | Pending |
+| EVID-01 | Phase 28 | Pending |
+| EVID-02 | Phase 28 | Pending |
+| EVID-03 | Phase 28 | Pending |
 
 **Coverage:**
 
 - v2.0 requirements: 30 total
-- Mapped to phases: 0
-- Unmapped: 30 pending roadmap
+- Mapped to phases: 30
+- Unmapped: 0
+- Coverage: 30/30 mapped exactly once across Phases 22-28
 
 ---
 *Requirements defined: 2026-06-01*  
-*Last updated: 2026-06-01 after initial v2.0 requirements definition*
+*Last updated: 2026-06-01 after v2.0 roadmap creation*
