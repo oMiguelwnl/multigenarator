@@ -48,3 +48,23 @@ def test_generate_latin_mvp_calls_latin_service_with_latin_request() -> None:
     assert result.exit_code == 0
     assert isinstance(captured[0], LatinGenerationRequest)
     assert captured[0].source_type == "latin-mvp"
+
+
+def test_existing_generate_command_rejects_latin_language_frequency_path() -> None:
+    result = runner.invoke(
+        create_app(),
+        ["generate", "--language", "la", "--source", "frequency"],
+    )
+
+    assert result.exit_code != 0
+    assert "Invalid value for '--language'" in result.output
+
+
+def test_existing_generate_command_rejects_latin_mvp_source_option() -> None:
+    result = runner.invoke(
+        create_app(),
+        ["generate", "--language", "en", "--source", "latin-mvp"],
+    )
+
+    assert result.exit_code != 0
+    assert "--source must be one of: frequency, word-list, highlights" in result.output
