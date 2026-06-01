@@ -2,9 +2,9 @@
 
 ## What This Is
 
-Multilang is a Python CLI/batch pipeline for generating high-quality multilingual Anki vocabulary cards from supported-language frequency decks, user-provided word lists, and reading-derived vocabulary sources. v1.0 ships the first usable product slice for Portuguese, Spanish, English, French, German, Italian, Polish, Turkish, Romanian, Russian, and Dutch.
+Multilang is a Python CLI/batch pipeline for generating high-quality multilingual Anki vocabulary cards from supported-language frequency decks, user-provided word lists, and reading-derived vocabulary sources. v1.x ships the first usable product slice for Portuguese, Spanish, English, French, German, Italian, Polish, Turkish, Romanian, Russian, and Dutch; v2.0 expands the product toward classical Latin.
 
-The product generates structured Anki-ready cards with word data, IPA, definitions, example sentences, translations where the deck type requires them, word audio, sentence audio, and an empty `Image` field that the user can fill manually later. v1.0 uses grounded lexical inputs, deterministic validation, Azure-first audio synthesis, and fixed-schema Anki export rather than relying on unverified generated text alone.
+The product generates structured Anki-ready cards with word data, IPA or language-appropriate phonetics, definitions, example sentences, translations where the deck type requires them, word audio, sentence audio, and an empty `Image` field that the user can fill manually later. v1.x uses grounded lexical inputs, deterministic validation, Azure-first audio synthesis, and fixed-schema Anki export rather than relying on unverified generated text alone; the Latin milestone adds lemma-based classical reading cards with Portuguese explanations and grammar notes.
 
 ## Core Value
 
@@ -37,11 +37,17 @@ v1.3 Phase 20 Word Audio Integrity Gate was completed on 2026-05-13. Word-audio 
 
 v1.3 was completed on 2026-05-16 after Phases 17-21. Generated-card quality defects can now be audited, IPA/Definition/Translation defects are remediated before export, normal generated-card exports use the revised field/template contract, word-audio mismatches are regenerated or blocked, and shared v1.3 validators plus scanner-readable evidence prove the known defects do not recur across normal, custom word-list, highlight, and phonetics deck paths.
 
-## Current Milestone: Ready for v1.4 Definition
+## Current Milestone: v2.0 Classical Latin MVP
 
-**Goal:** Define the next milestone from the remaining product directions and known technical debt.
+**Goal:** Add a first usable classical Latin Anki deck generation path that produces a 50-card MVP with frequency-by-lemma ordering, Portuguese learner-facing translations/explanations, short grammar notes, traceable sentence sources, audio for word and sentence, and `.apkg` export evidence.
 
-**Target features:** To be defined by `/gsd-new-milestone`.
+**Target features:**
+
+- Research and select Latin frequency, lemmatization, morphology, sentence-source, and TTS resources before implementation.
+- Add Latin-specific card data and export behavior with target form, lemma, Portuguese translation fields, `Gramatica`, source, review status, and word/sentence audio.
+- Build a small curated 50-card classical Latin MVP organized by lemma frequency and Rafael Falcon-style progression from simpler reading contexts toward complexity.
+- Generate or attach word and sentence audio through the best available Latin TTS option found during research, with provider/quality metadata and fallback behavior.
+- Export a test `.apkg` and evidence artifacts proving the Latin MVP pipeline works before scaling to 300, 1000, or 3000 cards.
 
 ## Next Milestone Goals
 
@@ -76,13 +82,13 @@ After v1.2, candidate directions from the archived v1 requirement seeds remain:
 
 ### Active
 
-- [ ] Define v1.4 requirements and roadmap.
+- [ ] Define and implement v2.0 Classical Latin MVP requirements and roadmap.
 
 ### Out of Scope
 
 - Automatic image generation or image sourcing - the image field should stay blank because the user wants to add images manually.
 - Using Tatoeba as the default sentence source without quality validation - v1.0 locked Tatoeba to a secondary-only filtered fallback path.
-- Languages outside Portuguese, Spanish, English, French, German, Italian, Polish, Turkish, Romanian, Russian, and Dutch until a future milestone explicitly expands scope.
+- Greek and other new languages outside the v1 language set plus classical Latin - this milestone is Latin-only and should not broaden into Greek.
 - Full spaced-repetition app or AI tutor - Anki remains the destination study tool.
 
 ## Context
@@ -108,15 +114,20 @@ v1.3 intentionally revises the normal generated-card export contract by removing
 
 Known follow-up debt: one incomplete quick task remains for `260430-001-russian-card-quality-regression`, and full-suite collection/assertion drift still has failures outside the focused v1.3 evidence gate. Focused milestone evidence suites passed; the broad suite should be repaired before it is treated as authoritative again.
 
+v2.0 begins from `LATIN-STRUCTURE.md`, which defines the Latin product direction: classical Latin only, Portuguese translations and explanations, Rafael Falcon as the required didactic reference, frequency-by-lemma organization, traceable real or reliable Latin sentences, audio for both target word and sentence, no separate learner-facing `Classe` field, and a short mandatory `Gramatica` field. `Genitivus` is the preferred final spelling for the genitive case label.
+
 ## Constraints
 
-- **Languages**: v1 supports Portuguese, Spanish, English, French, German, Italian, Polish, Turkish, Romanian, Russian, and Dutch.
+- **Languages**: v1 supports Portuguese, Spanish, English, French, German, Italian, Polish, Turkish, Romanian, Russian, and Dutch; v2.0 adds classical Latin as a separately scoped MVP.
 - **Deck Structure**: Cards are separated into 3 levels with 1000 cards per level.
 - **Highlights Mode**: Kindle highlights are a new deck input mode and must not remove the existing frequency-deck mode.
 - **Output Quality**: Example sentences and translations must be high quality; Tatoeba is secondary-only behind validation.
 - **Audio Provider**: Audio should use Azure TTS if required voices are available, with documented fallback behavior.
 - **Card Schema**: Generated decks must preserve the active requested field set and formatting; v1.3 intentionally removes redundant `Front of Card` from normal generated cards.
 - **Engineering Quality**: The codebase must keep tests, fallback paths, deterministic contracts, and auditable persistence.
+- **Latin MVP Scope**: v2.0 starts with 50 reviewed classical Latin cards, not a full 3000-card Latin deck.
+- **Latin Didactics**: Latin cards must keep the target word in sentence context and include a short Portuguese-facing grammar note aligned with Rafael Falcon-style reading progression.
+- **Latin Research**: Frequency, morphology, sentence-source licensing/quality, and TTS provider choices must be researched before final implementation requirements are locked.
 
 ## Key Decisions
 
@@ -138,6 +149,9 @@ Known follow-up debt: one incomplete quick task remains for `260430-001-russian-
 | Treat card quality defects as validation failures before export | IPA repetition, morphology-only definitions, translation mismatches, and audio/word mismatches make learner decks unreliable | Pending in v1.3. |
 | Validate word audio at generation and export boundaries | Stale or corrupted reusable audio can otherwise produce cards whose audio pronounces a different word than the displayed `Word` | Validated in v1.3 Phase 20 with exact metadata checks, regeneration, and export blocks. |
 | Validate normalized issue coverage through executable fixtures | Narrative issue catalogs can drift unless every known defect maps to a runnable validator case | Validated in v1.3 Phase 21 with shared validators, JSON fixtures, and scanner-readable milestone evidence. |
+| Treat classical Latin as a major v2.0 expansion | Latin requires different frequency resources, morphology, sentence sourcing, grammar notes, and likely TTS strategy from the v1 modern-language pipeline | Pending in v2.0. |
+| Start Latin with a 50-card MVP before scaling | A small reviewed deck validates card format, grammar analysis, sources, audio, and export behavior before committing to 300/1000/3000 cards | Pending in v2.0. |
+| Use `Genitivus` as the final genitive case label | Keeps Latin grammar nomenclature consistent even if user notes contain `Genetivus` | Pending in v2.0. |
 
 ## Evolution
 
@@ -159,4 +173,4 @@ This document evolves at phase transitions and milestone boundaries.
 4. Update Context with current state.
 
 ---
-*Last updated: 2026-05-16 after v1.3 milestone completion*
+*Last updated: 2026-06-01 after v2.0 milestone start*

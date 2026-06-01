@@ -1,36 +1,36 @@
 ---
 gsd_state_version: 1.0
-milestone: v1.3
-milestone_name: Card Quality Remediation and Deck Validation
-status: milestone_complete
-stopped_at: v1.3 milestone completed and archived
-last_updated: "2026-05-19T18:08:18Z"
-last_activity: 2026-05-19
+milestone: v2.0
+milestone_name: Classical Latin MVP
+status: defining_requirements
+stopped_at: v2.0 milestone started; defining requirements
+last_updated: "2026-06-01T00:00:00Z"
+last_activity: 2026-06-01
 progress:
-  total_phases: 5
-  completed_phases: 5
+  total_phases: 0
+  completed_phases: 0
   total_plans: 16
   completed_plans: 16
-  percent: 100
+  percent: 0
 ---
 
 # Project State
 
 ## Project Reference
 
-See: .planning/PROJECT.md (updated 2026-05-16)
+See: .planning/PROJECT.md (updated 2026-06-01)
 
 **Core value:** Generate reliable, high-quality Anki cards for real vocabulary the learner needs to study, with accurate definitions, examples, translations where appropriate, and audio.  
-**Current focus:** Define the next milestone with `/gsd-new-milestone`
+**Current focus:** Define v2.0 Classical Latin MVP requirements and roadmap.
 
 ## Current Position
 
-Phase: Next milestone
-Plan: Not started
-Status: v1.3 milestone complete — ready for next milestone definition
-Last activity: 2026-05-26 - Completed quick task 260526-ke2: Implementar curadoria completa das listas de frequência para todas as línguas suportadas, telemetria estruturada e retry/backoff/circuit breaker
+Phase: Not started (defining requirements)
+Plan: -
+Status: Defining requirements
+Last activity: 2026-06-01 - Milestone v2.0 Classical Latin MVP started
 
-Progress: [██████████] 100%
+Progress: [----------] 0%
 
 ## Performance Metrics
 
@@ -151,7 +151,8 @@ Full decision history is in `.planning/PROJECT.md` and `.planning/milestones/v1.
 
 ### Pending Todos
 
-- Define the next milestone with fresh requirements and roadmap.
+- Define v2.0 Classical Latin MVP requirements and roadmap.
+- Research Latin frequency resources, morphology/lemmatization tools, sentence sources, and TTS providers before implementation planning.
 - Repair broad-suite drift before treating full `python -m pytest -q` as authoritative again.
 
 ### Blockers/Concerns
@@ -179,6 +180,6 @@ Items acknowledged and carried forward from previous milestone close:
 
 ## Session Continuity
 
-Last session: 2026-05-16T17:56:48.493Z
-Stopped at: v1.3 milestone completed and archived
+Last session: 2026-06-01T00:00:00.000Z
+Stopped at: v2.0 milestone started; defining requirements
 Resume file: None
