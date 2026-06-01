@@ -3,6 +3,7 @@
 from pydantic import ValidationError
 import pytest
 
+from multilang.domain.latin import LatinGenerationRequest, LatinVariant
 from multilang.domain.jobs import (
     GenerationRequest,
     JobProgressSnapshot,
@@ -26,10 +27,31 @@ def test_supported_languages() -> None:
         "ru",
         "nl",
     }
+    assert "la" not in {language.value for language in SupportedLanguage}
 
     request = GenerationRequest(language="pt", source_type="frequency", level=1)
 
     assert request.language is SupportedLanguage.PT
+
+
+def test_generation_request_accepts_latin_mvp_source_for_shared_infrastructure() -> None:
+    request = GenerationRequest(language="en", source_type="latin-mvp")
+
+    assert request.language is SupportedLanguage.EN
+    assert request.source_type == "latin-mvp"
+
+
+def test_generation_request_keeps_la_out_of_modern_language_contract() -> None:
+    with pytest.raises(ValidationError):
+        GenerationRequest(language="la", source_type="frequency")
+
+
+def test_latin_contracts_remain_importable_separate_from_modern_generation_request() -> None:
+    request = LatinGenerationRequest()
+
+    assert request.language_code == "la"
+    assert request.variant is LatinVariant.CLASSICAL
+    assert request.source_type == "latin-mvp"
 
 
 def test_generation_request_rejects_unsupported_language() -> None:
