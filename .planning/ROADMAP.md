@@ -55,7 +55,12 @@ Plans:
   3. Every displayed Latin sentence includes provenance metadata with source type, citation or work reference when available, URL or local source identifier, and license note.
   4. User can tell whether each sentence is original Classical Latin, adapted didactic Latin, or a reference example, with adapted text never presented as an original citation.
   5. The first-50 sequence favors clearer early reading contexts and defers overly complex poetic or ambiguous constructions while confirming the displayed target word appears in the sentence.
-**Plans**: TBD
+**Plans:** 4 plans
+Plans:
+- [ ] 23-01-PLAN.md — Define Latin source-pack contracts and loader validation.
+- [ ] 23-02-PLAN.md — Commit the frozen 50-entry source/frequency/sentence manifest.
+- [ ] 23-03-PLAN.md — Wire the Latin MVP service and CLI to the frozen manifest.
+- [ ] 23-04-PLAN.md — Add scanner-readable Phase 23 evidence and isolation checks.
 
 ### Phase 24: Morphology Evidence and Gramatica Gate
 **Goal**: Users receive Latin cards whose target word has resolved morphology evidence and a short standardized Portuguese-facing `Gramatica` note using approved abbreviations and Latin case labels.
@@ -120,7 +125,7 @@ Plans:
 | Phase | Milestone | Plans Complete | Status | Completed |
 |-------|-----------|----------------|--------|-----------|
 | 22. Latin Mode Contracts and Isolation | v2.0 | 3/3 | Complete   | 2026-06-01 |
-| 23. Frozen 50-Card Source Pack and Sentence Sequence | v2.0 | 0/TBD | Not started | - |
+| 23. Frozen 50-Card Source Pack and Sentence Sequence | v2.0 | 0/4 | Planned | - |
 | 24. Morphology Evidence and Gramatica Gate | v2.0 | 0/TBD | Not started | - |
 | 25. Latin Review Gates and Curated Records | v2.0 | 0/TBD | Not started | - |
 | 26. Portuguese Translation Quality | v2.0 | 0/TBD | Not started | - |
