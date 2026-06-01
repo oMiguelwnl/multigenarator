@@ -15,16 +15,16 @@ Requirements for the Classical Latin MVP. Each maps to roadmap phases.
 
 ### Latin Scope And Frequency
 
-- [ ] **FREQ-01**: User receives a reproducible 50-card Latin MVP manifest rather than an unbounded or full 3000-card Latin deck.
-- [ ] **FREQ-02**: Every Latin MVP card is ordered by lemma-level frequency with stored `lemma`, `frequency_rank`, `frequency_source`, and MVP asset version metadata.
-- [ ] **FREQ-03**: User can audit why each first-50 lemma was included, deferred, replaced, or reordered for Rafael Falcon-style didactic suitability.
+- [x] **FREQ-01**: User receives a reproducible 50-card Latin MVP manifest rather than an unbounded or full 3000-card Latin deck.
+- [x] **FREQ-02**: Every Latin MVP card is ordered by lemma-level frequency with stored `lemma`, `frequency_rank`, `frequency_source`, and MVP asset version metadata.
+- [x] **FREQ-03**: User can audit why each first-50 lemma was included, deferred, replaced, or reordered for Rafael Falcon-style didactic suitability.
 
 ### Latin Sources And Sentences
 
-- [ ] **SRC-01**: Every Latin MVP sentence has license-gated provenance metadata, including source type, citation/work reference when available, URL or local source identifier, and source/license note.
-- [ ] **SRC-02**: User can distinguish original Classical Latin text, adapted didactic Latin, and reference examples without adapted sentences being presented as original classical citations.
-- [ ] **SENT-01**: Every Latin MVP card includes the target form in the displayed Latin sentence, with validation for exact target-form presence or accepted orthographic/enclitic normalization.
-- [ ] **SENT-02**: User receives a first-50 sentence sequence that applies Rafael Falcon-style progression rules, favoring clearer early reading contexts and deferring overly complex poetic or ambiguous constructions.
+- [x] **SRC-01**: Every Latin MVP sentence has license-gated provenance metadata, including source type, citation/work reference when available, URL or local source identifier, and source/license note.
+- [x] **SRC-02**: User can distinguish original Classical Latin text, adapted didactic Latin, and reference examples without adapted sentences being presented as original classical citations.
+- [x] **SENT-01**: Every Latin MVP card includes the target form in the displayed Latin sentence, with validation for exact target-form presence or accepted orthographic/enclitic normalization.
+- [x] **SENT-02**: User receives a first-50 sentence sequence that applies Rafael Falcon-style progression rules, favoring clearer early reading contexts and deferring overly complex poetic or ambiguous constructions.
 
 ### Latin Grammar
 
@@ -105,13 +105,13 @@ Which phases cover which requirements. Updated during roadmap creation.
 | MODE-01 | Phase 22 | Complete |
 | MODE-02 | Phase 22 | Complete |
 | MODE-03 | Phase 22 | Complete |
-| FREQ-01 | Phase 23 | Pending |
-| FREQ-02 | Phase 23 | Pending |
-| FREQ-03 | Phase 23 | Pending |
-| SRC-01 | Phase 23 | Pending |
-| SRC-02 | Phase 23 | Pending |
-| SENT-01 | Phase 23 | Pending |
-| SENT-02 | Phase 23 | Pending |
+| FREQ-01 | Phase 23 | Complete |
+| FREQ-02 | Phase 23 | Complete |
+| FREQ-03 | Phase 23 | Complete |
+| SRC-01 | Phase 23 | Complete |
+| SRC-02 | Phase 23 | Complete |
+| SENT-01 | Phase 23 | Complete |
+| SENT-02 | Phase 23 | Complete |
 | GRAM-01 | Phase 24 | Pending |
 | GRAM-02 | Phase 24 | Pending |
 | GRAM-03 | Phase 24 | Pending |
