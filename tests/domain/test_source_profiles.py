@@ -47,6 +47,23 @@ def test_kindle_highlights_source_profile_omits_translation_with_highlight_templ
     assert profile.template_name == "highlight_card"
 
 
+def test_latin_mvp_source_profile_isolated_from_existing_profiles() -> None:
+    profile = get_source_profile("latin-mvp")
+
+    assert profile.source_type == "latin-mvp"
+    assert profile.requires_translation_validation is False
+    assert profile.exports_translation_field is False
+    assert profile.min_sentence_tokens == 3
+    assert profile.max_sentence_tokens == 20
+    assert profile.note_type_name == "Multilang::Latin MVP Card"
+    assert profile.template_name == "latin_mvp_card"
+    assert profile not in {
+        get_source_profile("frequency"),
+        get_source_profile("word-list"),
+        get_source_profile("kindle-highlights"),
+    }
+
+
 def test_unknown_source_profile_error_omits_private_input() -> None:
     unknown = "missing-source /home/user/.multilang/highlights/raw/private.html secret text"
 
@@ -58,6 +75,7 @@ def test_unknown_source_profile_error_omits_private_input() -> None:
     assert "frequency" in message
     assert "word-list" in message
     assert "kindle-highlights" in message
+    assert "latin-mvp" in message
     assert "missing-source" not in message
     assert "/home/user" not in message
     assert ".multilang" not in message
