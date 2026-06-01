@@ -1,438 +1,449 @@
-# Architecture Research: v1.2 Kindle Highlights and Template Refresh
+# Architecture Research: v2.0 Classical Latin MVP Integration
 
 **Project:** Multilang Anki Card Generator  
-**Milestone:** v1.2 Kindle Highlights and Template Refresh  
-**Researched:** 2026-05-03  
-**Scope:** Integration of new v1.2 features into the existing Python CLI/batch architecture only.  
-**Overall confidence:** HIGH for integration shape, MEDIUM for exact Kindle export file format until real WebDAV fixture is captured.
+**Milestone:** v2.0 Classical Latin MVP  
+**Researched:** 2026-06-01  
+**Scope:** Integrate a 50-card Classical Latin MVP into the existing Python CLI/batch architecture without rewriting shipped frequency, custom word-list, or Kindle-highlight flows.  
+**Overall confidence:** HIGH for integration shape and existing-code boundaries; MEDIUM for exact Latin NLP/TTS quality until phase evidence runs against curated fixtures and human audio review.
 
 ## Executive Recommendation
 
-Add Kindle highlights as a **third source type** that feeds the existing pipeline after a new deterministic ingestion/normalization pre-stage:
+Add Latin as a **separate source/profile family** that reuses the existing job, repository, audio, validation, and genanki infrastructure, but does **not** pretend Latin is just another modern `frequency` language. The new path should be `source_type="latin-mvp"`, `language="la"`, and should assemble cards from curated Latin-specific assets rather than from `wordfreq` or normal LLM sentence generation.
+
+Recommended MVP flow:
 
 ```text
-frequency deck      -> existing lexical ingestion -> existing text/audio/export
-custom word list    -> existing lexical ingestion -> existing text/audio/export
-Kindle highlights   -> NEW fetch/normalize/extract -> existing lexical ingestion -> modified text/export profile
+latin curated source pack
+  -> NEW LatinFrequencyAssetLoader       # lemma ranks + DCC/Core support metadata
+  -> NEW LatinSentenceSourceCatalog      # sentence, source citation, license/provenance
+  -> NEW LatinMorphologyAnalyzer         # CLTK first, Morpheus/curated fallback validation
+  -> NEW LatinCardAssembler              # Portuguese translation + short Gramatica + review status
+  -> existing job/repository boundary    # persisted as Latin records/snapshots
+  -> modified audio provider registry    # eSpeak NG first for la, Azure multilingual as evaluated fallback only
+  -> NEW Latin export row/model/template # Latin-specific APKG fields
 ```
 
-Do **not** build a separate highlights pipeline. The existing job orchestration, lexical grounding, text generation, audio synthesis, export snapshotting, and genanki packaging are the right boundaries. v1.2 should add source-specific adapters and policies, not duplicate services.
+Do **not** route Latin through the normal frequency-deck text generator as the primary source of truth. For v2.0, the most reliable architecture is a **curated evidence pipeline**: every accepted Latin card stores the lemma rank, sentence source, morphological analysis, Portuguese-facing fields, audio metadata, and review status. AI may assist translation or grammar drafting later, but the export gate should trust only reviewed structured records.
 
-The most important architectural change is to introduce explicit **source profiles** for behavior that currently branches implicitly on `source_type == "frequency"` or `source_type == "word-list"`. Highlights need different input ingestion, no learner-facing `Translation` field, a different Anki note type/template, and slightly different sentence-generation constraints. Frequency and custom word-list behavior must remain the default and must not inherit highlight rules.
+## Boundaries to Preserve
 
-## Target v1.2 Data Flow
+| Existing boundary | Preserve how | Why |
+|---|---|---|
+| Frequency/custom/highlight source profiles | Add `latin-mvp`; do not change existing profile values or field names. | Prevents Latin field/template rules from leaking into shipped deck modes. |
+| `GenerationJob` lifecycle | Reuse jobs/resume/progress, but add Latin stages. | Keeps operational behavior consistent. |
+| Provider adapters | Add a Latin audio adapter/selector behind the existing audio abstraction. | Avoids provider-specific calls inside card assembly/export. |
+| Export snapshotting | Latin gets its own export row contract; normal `ExportCardRow` remains untouched except source dispatch. | Latin fields differ enough that aliasing normal fields would create brittle mappings. |
+| Validation gates | Add Latin-specific validators before export; keep v1.3 normal-card validators unchanged. | Latin grammar/source/review checks are different from IPA/translation remediation. |
+| Tests with deterministic local/fallback adapters | Use fake CLTK/Morpheus/eSpeak adapters and golden fixtures. | v2.0 evidence must be reproducible without network or installed native tools. |
+
+## Target Latin Data Flow
 
 ```text
-CLI generate --source-type kindle-highlights
+CLI: multilang latin build-mvp --limit 50 --asset-version latin-mvp-2026-06
   |
-  |-- optional WebDAV fetch
-  |     WebDavHighlightSource
-  |       -> raw Kindle export artifact(s) under .multilang/highlights/raw/
+  |-- LatinSourcePackLoader
+  |     reads versioned local assets:
+  |       latin_lemma_frequencies.csv/json
+  |       latin_sentence_catalog.csv/json
+  |       latin_translation_review.csv/json
+  |       optional morph_overrides.csv/json
   |
-  |-- local formatter-style normalization
-  |     KindleHighlightNormalizer
-  |       -> normalized highlight fragments / comma-separated text
+  |-- LatinCandidatePlanner
+  |     joins lemma rank + Rafael-Falcon progression policy
+  |     emits 50 ordered LatinCardCandidate records
   |
-  |-- vocabulary candidate extraction
-  |     HighlightVocabularyExtractor
-  |       -> ordered HighlightVocabularyItem list
+  |-- LatinMorphologyAnalyzer
+  |     CLTK Latin pipeline for tokenization/lemmatization/morph features
+  |     Morpheus/curated override as fallback/cross-check
+  |     emits LatinMorphologyEvidence + confidence
   |
-  |-- existing GenerateJobService.orchestrate
-  |     source_type = "kindle-highlights"
-  |     fingerprint = hash(normalized candidate keys + source document hash)
+  |-- LatinGrammarNoteBuilder
+  |     deterministic formatter for `Gramatica`
+  |     never free-form at export boundary
   |
-  |-- existing LexicalGroundingService
-  |     persisted in lexical_candidates with source_type = "kindle-highlights"
+  |-- LatinCardReviewService
+  |     requires review_status = approved for export
+  |     stores rejection/uncertainty reasons
   |
-  |-- existing GenerateTextItemsService with highlight source profile
-  |     concise but grammatically richer example sentence rules
-  |     translation can be generated internally only if policy keeps it, but export omits it
+  |-- GenerateAudioItemsService / AudioSynthesisService
+  |     audio_kind = word/sentence
+  |     provider plan = espeak-ng la first, Azure multilingual only if explicitly approved by review
   |
-  |-- existing GenerateAudioItemsService
-  |     word_audio + sentence_audio unchanged
+  |-- LatinExportAssembler
+  |     builds LatinExportCardRow with fixed field order
   |
-  |-- modified AssembleExportCardsService / export domain
-  |     same internal snapshot columns; source-specific field mapping
-  |
-  `-- modified export_anki_package
-        source_type-specific genanki model/template
-        Highlight template: Definition on back, no Translation field
+  `-- export_anki_package
+        source_type = latin-mvp
+        note type = Multilang::Latin Card
+        template = latin_card
+        APKG + CSV/TSV evidence
 ```
 
 ## Component Map: New vs Modified vs Unchanged
 
-| Component | Status | Recommendation | Why |
-|-----------|--------|----------------|-----|
-| `multilang.domain.jobs.GenerationRequest` | Modified | Extend `source_type` literal to include `"kindle-highlights"`; keep `input_file` for local highlight export fixtures; add no provider-specific WebDAV fields here unless needed by CLI. | Keeps orchestration source-aware without coupling domain contracts to WebDAV credentials. |
-| `multilang.settings.Settings` | Modified | Add `kindle_webdav_url`, `kindle_webdav_username`, `kindle_webdav_password`, optional `kindle_webdav_remote_path`, timeout, and local highlight artifact dir. | WebDAV config belongs in settings/env, never in domain models or committed files. |
-| `WebDavHighlightSource` | New | Thin adapter using HTTP/WebDAV operations to list and download configured Kindle export files. Return raw bytes + metadata; do not normalize. | Isolates remote I/O and makes it mockable. |
-| `KindleHighlightNormalizer` | New | Pure local service that reimplements Kindle Formatter-style cleanup and highlight splitting. Input bytes/text, output normalized fragments. | Highest test value; can be built and verified before WebDAV. |
-| `HighlightVocabularyExtractor` | New | Convert normalized fragments into ordered vocabulary candidates compatible with existing lexical ingestion. Dedupe deterministically. | Bridges highlights to existing `LexicalCardCandidate` flow without a parallel pipeline. |
-| `IngestLexicalItemsService` | Modified | Add `_ingest_kindle_highlights()` branch that calls the new normalizer/extractor, then grounds each extracted candidate like word-list items. | Reuses job lifecycle, duplicate protection, grounding, and persistence. |
-| `input_fingerprint.py` | Modified | Include source document hash + normalized item keys for highlights. Ignore WebDAV timestamps unless content changes. | Reruns must be idempotent and not duplicate cards. |
-| `LexicalRepository` / `lexical_candidates` table | Mostly unchanged | Store highlight metadata in existing `provenance` JSON: document path, source hash, highlight index, original fragment/excerpt, normalized fragment. | Avoids a migration-heavy highlight schema for v1.2 while preserving auditability. |
-| `GenerateTextItemsService` | Modified | Replace hard-coded translation rule with source-profile policy: `requires_export_translation`, sentence min/max tokens, fallback policy. | Highlights need richer-but-concise examples and no exported translation; frequency behavior stays unchanged. |
-| `TextGenerationService` / adapters | Modified lightly | Pass a generation style/profile in request provenance or an added field: `template_kind="highlight"`, `source_type="kindle-highlights"`, target length roughly 6-16 tokens. | Keeps prompt behavior source-specific without creating a separate generator. |
-| `TextValidationService` | Modified | Support source-specific sentence length profile. Frequency can keep current 4-12 token gate; highlights should allow slightly richer 6-16 token sentences. | Prevents highlight examples from being rejected by frequency-deck constraints. |
-| `AssembleExportCardsService` | Modified | Continue building `ExportCardRow`; for highlight source, set `translation=""` and preserve definition/audio/image fields. | Existing DB snapshot columns are sufficient. |
-| `domain.exporting` | Modified | Add `HIGHLIGHT_EXPORT_CARD_FIELD_NAMES` and make `export_field_names_for_source_type()` return highlight fields for highlights. | Enables template-specific field order and omits `Translation` from exported note model. |
-| `export_anki_package.py` | Modified | Add `HIGHLIGHT_MODEL_ID`, `HIGHLIGHT_NOTE_TYPE_NAME`, template resolution by source type, and robust mixed-source guard. | genanki note types must be source-specific; mixed rows in one deck should fail fast. |
-| `templates/highlight_card.md` | New | Dedicated highlight template based on the supplied option B, renamed to English fields, centered/responsive, Definition on back, no Translation field. | Safer than overloading `CARD_TEMPLATE.md`. |
-| `templates/russian_phoneme_card.md` | Modified | Apply provided phonetics front, back with `Sentence Translation`, remove unused conditional fields, use Multilang colors. | Template-only refresh; should not affect normal/highlight decks. |
-| `russian_phoneme_deck.py` | Modified | Rename field constants to match template: likely `Sound`, `Example Sentence`, `Sentence Translation`, `Image`; keep card data. | Existing fields include no `Notes`, `is_priming`, or `is_sentence`; refresh is mostly field/template alignment. |
-| Audio services | Unchanged | Reuse word and sentence audio synthesis. | Highlight mode still needs playable word and sentence audio. |
-| Frequency deck services | Unchanged except source-profile safety | Existing `frequency_decks.py` and frequency ingestion should remain untouched. | Protects shipped v1.0/v1.1 behavior. |
+| Component | Status | Conceptual module | Recommendation |
+|---|---|---|---|
+| Supported language enum | Modified | `multilang.domain.jobs.SupportedLanguage` | Add `LA = "la"` only where source profile is Latin-aware. If normal frequency generation assumes 3x1000, guard it so `la` cannot accidentally run as normal `frequency`. |
+| Source profiles | Modified | `multilang.domain.source_profiles` | Extend `SourceType` with `"latin-mvp"`. Add profile fields if needed: `requires_review_status`, `template_name="latin_card"`, `note_type_name="Multilang::Latin Card"`, `exports_translation_field=False`, `max_sentence_tokens` Latin-specific. |
+| Latin domain contracts | New | `multilang.domain.latin` | Add Pydantic models for frequency entry, source sentence, morphology evidence, grammar note, review status, and Latin export row. Keep Latin grammar terms as enums. |
+| Latin source pack loader | New | `multilang.services.latin_assets` | Load frozen local CSV/JSON assets. Validate source licenses/provenance at load time. Do not scrape live sites during generation. |
+| Latin frequency planning | New | `multilang.services.latin_frequency` | Use DCC Core Vocabulary ranks/support metadata plus project-curated lemma ranks. Store final MVP rank as project-owned asset; do not rely on `wordfreq`. |
+| Latin sentence catalog | New | `multilang.services.latin_sentence_sources` | Store short real or didactic Latin sentences with source citation, text type, difficulty tags, license/provenance, and target form span. |
+| Latin morphology adapter | New | `multilang.services.latin_morphology` | Wrap CLTK as primary Python-friendly analyzer; support Morpheus/curated override as cross-check. Output normalized project enums, not raw tool output. |
+| Grammar note builder | New | `multilang.services.latin_grammar_notes` | Deterministically format `Gramatica` from normalized morphology/syntax fields. No free-form grammar strings at export. |
+| Review service | New | `multilang.services.latin_review` | Enforce `needs_review`, `approved`, `rejected`, `approved_with_audio_warning` policies. Export only approved cards unless a phase explicitly allows warning exports. |
+| Audio registry/selection | Modified | `audio_voice_registry`, `audio_synthesis`, new `espeak_ng_speech_adapter` | Add provider-selection by `language=la`. Use eSpeak NG for MVP because it has explicit Latin support and local deterministic operation. Keep Azure as experimental fallback only after voice-gallery/human review; Azure docs do not list a Latin locale, though multilingual voices exist. |
+| Audio metadata/integrity | Modified | `domain.audio`, `audio_integrity` | Track `provider`, `voice_id`, `locale_or_voice="la"`, `pronunciation_policy`, `quality_status`, input hash, and whether audio is experimental. Existing word-audio exact-match checks should apply to `target_form`. |
+| Persistence | Modified or new tables | `db.models` + Alembic | Prefer one or two Latin-specific tables rather than overloading `lexical_candidates`/`text_quality_records`: `latin_cards` and optional `latin_source_sentences`. Keep export snapshots in existing `card_exports` only if field JSON can preserve Latin-specific fields; otherwise add Latin export snapshot JSON. |
+| Export contracts | New + modified dispatch | `domain.exporting`, `export_anki_package`, `export_tabular_bundle` | Add `LatinExportCardRow`, `LATIN_EXPORT_CARD_FIELD_NAMES`, and exact source-type model selection. Do not force Latin through normal `ExportCardRow` aliases. |
+| Template | New | `templates/latin_card.md` | Front: target form, Latin sentence, word/sentence audio. Back: lemma, Portuguese word translation, sentence translation, `Gramatica`, source, blank `Image`. |
+| CLI/runtime | Modified | `cli.py`, `runtime.py` | Add a focused Latin command or source option. Prefer `latin build-mvp`, `latin validate`, `latin export` commands over hidden flags on normal generation. |
+| Existing frequency/custom/highlight services | Unchanged except guard tests | `frequency_decks`, `ingest_lexical_items`, highlight services | Do not add Latin branches inside every existing service. Latin should enter shared infra at job/audio/export boundaries only. |
 
-## Source Type Policy
+## Recommended Domain Contracts
 
-Introduce a small source profile module rather than scattering conditionals:
+Add `multilang.domain.latin` with explicit enums and Pydantic models:
 
 ```python
-@dataclass(frozen=True)
-class SourceProfile:
-    source_type: str
-    requires_translation_validation: bool
-    exports_translation_field: bool
-    min_sentence_tokens: int
-    max_sentence_tokens: int
-    note_type_name: str
-    template_name: str
+class LatinReviewStatus(str, Enum):
+    NEEDS_REVIEW = "needs_review"
+    APPROVED = "approved"
+    APPROVED_WITH_AUDIO_WARNING = "approved_with_audio_warning"
+    REJECTED = "rejected"
 
-SOURCE_PROFILES = {
-    "frequency": SourceProfile("frequency", True, True, 4, 12, "Multilang::Card", "normal"),
-    "word-list": SourceProfile("word-list", False, True, 4, 12, "Multilang::Manual Card", "normal"),
-    "kindle-highlights": SourceProfile("kindle-highlights", False, False, 6, 16, "Multilang::Highlight Card", "highlight"),
-}
+class LatinCase(str, Enum):
+    NOMINATIVUS = "Nominativus"
+    VOCATIVUS = "Vocativus"
+    ACCUSATIVUS = "Accusativus"
+    GENITIVUS = "Genitivus"
+    DATIVUS = "Dativus"
+    ABLATIVUS = "Ablativus"
+
+class LatinCardCandidate(BaseModel):
+    language_code: Literal["la"] = "la"
+    frequency_rank: int
+    frequency_source: str
+    lemma: str
+    target_form: str
+    latin_sentence: str
+    source_citation: str
+    source_url: str | None = None
+    sentence_kind: Literal["classical", "didactic"]
+    difficulty_tags: tuple[str, ...] = ()
+
+class LatinMorphologyEvidence(BaseModel):
+    target_form: str
+    lemma: str
+    part_of_speech: str
+    case: LatinCase | None = None
+    number: str | None = None
+    gender: str | None = None
+    declension_or_conjugation: str | None = None
+    syntactic_function: str
+    analyzer: str
+    confidence: Literal["high", "medium", "low"]
+    ambiguity_notes: str | None = None
+
+class LatinCardRecord(BaseModel):
+    candidate: LatinCardCandidate
+    short_translation_pt: str
+    sentence_translation_pt: str
+    grammar: str
+    morphology: LatinMorphologyEvidence
+    review_status: LatinReviewStatus
+    reviewer_notes: str = ""
+    word_audio: str = ""
+    sentence_audio: str = ""
+    image: Literal[""] = ""
 ```
 
-Use this profile in:
+Key rule: `Genitivus` is the only exported spelling. Accept `Genetivus` only as import/user-note input and normalize it before persistence/export.
 
-- `load_requested_item_keys()` for deterministic item keys.
-- `build_input_fingerprint()` for source-specific fingerprints.
-- `GenerateTextItemsService._validate_bundle()` for translation and sentence-length rules.
-- `export_field_names_for_source_type()` and `build_multilang_model()` for field/template selection.
+## Persistence and Migration Guidance
 
-This is the cleanest way to preserve existing flows while adding highlight-specific behavior.
+### Prescriptive recommendation
 
-## Schema and Domain Contract Implications
+Add Latin-specific persistence for the MVP:
 
-### Minimal DB migration strategy
+| Table | Purpose | Required columns |
+|---|---|---|
+| `latin_card_records` | Source of truth for reviewed Latin MVP cards | `id`, `job_id`, `item_key`, `frequency_rank`, `frequency_source`, `lemma`, `target_form`, `latin_sentence`, `short_translation_pt`, `sentence_translation_pt`, `grammar`, `source_citation`, `source_url`, `sentence_kind`, `morphology_json`, `review_status`, `reviewer_notes`, `provenance_json`, timestamps |
+| `latin_source_sentences` (optional but recommended) | Reusable catalog of Latin sentences | `id`, `source_key`, `latin_sentence`, `source_citation`, `source_url`, `license_note`, `difficulty_tags`, `provenance_json` |
 
-Prefer **no new DB tables for v1.2** unless implementation discovers that raw highlight history must be queryable. Existing tables already support the new mode:
+Why not only JSON in `lexical_candidates.provenance`? Latin has first-class fields (`Gramatica`, source citation, review status, target form, Portuguese translation) that need export gates and audit evidence. A dedicated table is clearer and safer than hiding core card state in `provenance`.
 
-- `generation_jobs.source_type` can store `kindle-highlights`.
-- `generation_jobs.source_fingerprint` can store a normalized highlight input fingerprint.
-- `lexical_candidates.source_type` can store `kindle-highlights`.
-- `lexical_candidates.provenance` can store highlight source metadata.
-- `text_quality_records` can store generated examples and optional/empty translation text.
-- `audio_assets` are unchanged.
-- `card_exports` columns are sufficient even when exported highlight note fields omit `translation`.
-- `deck_exports` are unchanged.
+Existing tables remain useful:
 
-The main migration may only be needed if application-level constraints or enum assumptions exist outside Pydantic. PostgreSQL columns are plain strings, so the DB model itself does not require a source-type enum migration.
+- `generation_jobs`: `language="la"`, `source_type="latin-mvp"`, source fingerprint from asset-version + 50 selected item keys.
+- `generation_items`: one item per Latin card candidate.
+- `audio_assets`: store Latin word/sentence audio metadata; extend metadata shape, not necessarily table columns.
+- `deck_exports`: normal artifact metadata.
+- `provider_call_logs`: reusable for Azure or other provider attempts; eSpeak local synthesis can also log provider=`espeak-ng` for evidence.
 
-### Domain additions
+## Latin Source Asset Strategy
 
-Add `multilang.domain.highlights` with pure Pydantic contracts:
+### Frequency resources
 
-```python
-class HighlightSourceDocument(BaseModel):
-    source_uri: str
-    content_hash: str
-    fetched_at: datetime | None = None
-    raw_storage_path: str | None = None
+Use a **project-frozen Latin MVP frequency asset**, seeded from DCC Core Vocabulary and/or a CLTK/Perseus-derived lemma count, then manually curated for 50 cards. `wordfreq` does not cover Latin per the milestone seed, and normal modern-language frequency windows do not apply.
 
-class NormalizedHighlight(BaseModel):
-    highlight_index: int
-    original_text: str
-    normalized_text: str
-    source_document_hash: str
+Recommended asset fields:
 
-class HighlightVocabularyItem(BaseModel):
-    item_key: str
-    submitted_form: str
-    normalized_source: str
-    highlight_index: int
-    source_excerpt: str
+```text
+rank, lemma, display_headword, pos, dcc_rank, corpus_rank, pedagogic_priority,
+falcon_stage, include_in_mvp, notes, source_refs
 ```
 
-Keep these contracts separate from `LexicalCardCandidate`. They represent input provenance, not grounded lexical data.
+DCC is useful because it exposes Latin headwords, parts of speech, semantic groups, and frequency rank, with Portuguese pages available. Treat it as support data, not the only authority for sentence choice.
 
-### Export contracts
+### Sentence resources
 
-Add source-specific field names:
+Store source sentences in a local catalog. Each row must include:
+
+- Latin sentence text.
+- `target_form` and target span/token index.
+- Source citation (`Vergil, Aeneid 1.1`, `Disticha Catonis`, etc.).
+- Source URL/repository if applicable.
+- License/provenance note.
+- Sentence kind: `classical` or `didactic`.
+- Difficulty tags: `simple_svo`, `nominativus`, `accusativus`, `ablativus`, `poetry_complexity`, etc.
+
+Perseus canonical Latin literature is a credible source for classical texts but has CC-BY-SA obligations and warns that metadata may vary. Perseus Treebank Data is useful for syntactic/morphological evaluation fixtures and is CC-BY-SA 3.0 US. Do license/provenance checks before packaging substantial text excerpts.
+
+## Morphology and Grammar Boundaries
+
+### Analyzer strategy
+
+Use CLTK as the primary integration seam because it is a Python library for pre-modern-language NLP and has current releases/docs. Do **not** let raw CLTK output leak into cards. Normalize into project enums and require a reviewed override when ambiguous.
+
+Morpheus is useful as a secondary validator because it is a Perseus morphological parser with Latin stem libraries, but it is older/native-tool oriented. Use it behind a `LatinMorphologyAnalyzer` protocol so tests can fake it and Windows setup does not block the whole MVP.
 
 ```python
-HIGHLIGHT_EXPORT_CARD_FIELD_NAMES = (
+class LatinMorphologyAnalyzer(Protocol):
+    def analyze(self, sentence: str, target_form: str, lemma_hint: str) -> LatinMorphologyEvidence: ...
+```
+
+### Grammar-note generation
+
+`Gramatica` should be a deterministic formatter, not an LLM field:
+
+```text
+{target_form}: {pos_abbrev} {gender?}, {declension/conjugation?}, {case?} {number?}, {syntactic_function}.
+```
+
+Examples:
+
+```text
+virum: subst masc, 2a declinacao, Accusativus singularis, OD.
+cano: v, 3a conjugacao, 1a pessoa singular, praesens indicativus activus, verbo principal.
+```
+
+If analysis is ambiguous, do not export silently. Either set `review_status="needs_review"` or include a controlled uncertainty marker in reviewer notes, not in the final grammar field unless explicitly approved.
+
+## Audio Provider Selection
+
+### Recommendation
+
+For the 50-card MVP, implement a local `EspeakNgSpeechAdapter` and make it the default Latin provider. eSpeak NG officially supports more than 100 languages and is a command-line synthesizer that can output WAV; the seed confirms `-v la` is available. Its formant synthesis is clear but less natural, so audio quality must be reviewable.
+
+Azure Speech should remain **experimental for Latin** in v2.0. Microsoft’s current language-support page lists many TTS locales and multilingual voices, but it does not list a dedicated Latin locale. Multilingual voices may pronounce Latin text, but the project should not mark that as accepted without human playback evidence. Add Azure Latin candidates only behind a config flag such as `latin_audio_provider=azure-multilingual-experimental` and persist `quality_status="needs_audio_review"`.
+
+### Adapter boundary
+
+```python
+class SpeechSynthesisAdapter(Protocol):
+    def synthesize(self, request: AudioSynthesisRequest) -> AudioSynthesisResult: ...
+
+class EspeakNgSpeechAdapter:
+    # shells out to espeak-ng with fixed args, timeout, and output path
+    # test with fake subprocess runner
+```
+
+Audio validation additions:
+
+- Word audio input text must equal `target_form`, not lemma.
+- Sentence audio input text must equal `latin_sentence` after normalized whitespace.
+- Store provider/voice/version/command hash.
+- MVP export gate should either require both audio files or explicitly allow `approved_with_audio_warning`; choose one in requirements before implementation.
+
+## Latin APKG Export Contract
+
+Add a dedicated Latin note type rather than overloading normal or highlight cards.
+
+### Field order
+
+```python
+LATIN_EXPORT_CARD_FIELD_NAMES = (
     "SortIndex",
-    "Word",
-    "IPA",
+    "Target Form",
+    "Latin Sentence",
     "word_audio",
-    "Example Sentence",
     "sentence_audio",
-    "Definition",
+    "Lemma",
+    "Translation PT",
+    "Sentence Translation PT",
+    "Gramatica",
+    "Source",
+    "Review Status",
     "Image",
 )
 ```
 
-`ExportCardRow.ordered_field_mapping()` should synthesize aliases for highlight export:
+`Review Status` may be included for MVP evidence. If the final study card should hide it, keep it on the note but not visibly rendered, or export it in CSV/TSV evidence only. The roadmap should decide this explicitly.
 
-- `Word` from internal `word`.
-- `Definition` from internal `definitions`.
-- omit `Translation` entirely.
+### Template behavior
 
-Do not rename DB columns for this milestone. Rename only the exported Anki field names.
+Front:
 
-## WebDAV Integration Pattern
+- `Target Form`
+- `Latin Sentence`
+- word audio and sentence audio
 
-Recommended adapter boundary:
+Back:
 
-```python
-class HighlightSource(Protocol):
-    def fetch_latest(self) -> list[HighlightSourceDocument]: ...
+- `Lemma`
+- `Translation PT`
+- `Sentence Translation PT`
+- `Gramatica`
+- `Source`
+- blank `Image`
 
-class WebDavHighlightSource:
-    def fetch_latest(self) -> list[HighlightSourceDocument]:
-        # list configured remote path, choose matching files, download bytes,
-        # write raw artifact, return content hash + source URI metadata
-```
+Export gate:
 
-Implementation rules:
+- Mixed source types fail fast.
+- `source_type="latin-mvp"` selects `Multilang::Latin Card`, `templates/latin_card.md`, and Latin fields.
+- `Image` must be blank.
+- `Review Status` must be `approved` unless the phase requirement explicitly permits `approved_with_audio_warning`.
 
-1. Credentials come only from `Settings` / environment.
-2. Raw downloads are stored under `.multilang/highlights/raw/` with content-hash filenames.
-3. The normalizer consumes local raw artifacts, not live WebDAV streams.
-4. WebDAV failures should fail ingestion before job creation when possible, or mark the job failed at `INGEST`; do not continue with stale remote data silently.
-5. Provide a local-file path first: `--input-file highlights.txt --source-type kindle-highlights`. This gives deterministic tests and lets WebDAV be added as an adapter, not as the foundation.
+## Validation Boundaries
 
-## Local Normalization Pattern
+| Boundary | Validator | Blocks export when |
+|---|---|---|
+| Frequency asset | `LatinFrequencyAssetValidator` | duplicate ranks, missing lemma, no source, non-MVP rank gap, rank not stable for selected 50 |
+| Sentence source | `LatinSentenceCatalogValidator` | missing citation/source, target form absent, sentence too long, prohibited complex tag for early MVP, license note missing |
+| Morphology | `LatinMorphologyValidator` | lemma mismatch, case outside approved enum, `Genetivus` not normalized, ambiguity unreviewed |
+| Grammar note | `LatinGrammarNoteValidator` | does not start with target form, missing POS/function, unsupported case label, too long/free-form explanation |
+| Portuguese fields | `LatinPortugueseTextValidator` | empty word/sentence translation, translation is just the Latin word, obvious placeholder/review text |
+| Review | `LatinReviewValidator` | `needs_review` or `rejected` card selected for APKG |
+| Audio | `LatinAudioIntegrityValidator` | missing required audio, word-audio text mismatch, stale synthesized hash, experimental provider without approved status |
+| Export | `LatinExportQualityGate` | wrong field order, nonblank image, mixed source types, fewer/more than requested 50 cards |
 
-`KindleHighlightNormalizer` should be pure and fixture-driven:
+## Suggested Build Order Starting at Phase 22
 
-```text
-raw Kindle export text
-  -> normalize line endings / Unicode / whitespace
-  -> remove location/book metadata if present
-  -> split highlight entries
-  -> discard empty or boilerplate entries
-  -> emit NormalizedHighlight list
-```
+### Phase 22: Latin contracts, source profile, and export isolation
 
-`HighlightVocabularyExtractor` should then produce stable candidate keys:
+Build first:
 
-```text
-highlight-0001-word-0001
-highlight-0001-word-0002
-highlight-0002-word-0001
-```
+- `SupportedLanguage.LA` and `source_type="latin-mvp"` guards.
+- `multilang.domain.latin` enums/models.
+- `LATIN_EXPORT_CARD_FIELD_NAMES`, `LatinExportCardRow`, source-specific genanki model dispatch.
+- Tests proving frequency, word-list, and Kindle-highlight field orders/templates are unchanged.
 
-Use deterministic dedupe by normalized token/lemma candidate while preserving first-seen order. Do not use AI for the first extractor version unless local extraction proves insufficient. AI can later be added behind an adapter to rank or select vocabulary from normalized highlight fragments, but v1.2 should keep ingestion reproducible.
+Rationale: Latin schema/export isolation must exist before source/morph/audio work, otherwise implementation will overload normal card fields.
 
-## Highlight Deck Generation and Template Export
+### Phase 23: Versioned Latin source packs and frequency planning
 
-### Export behavior
+Build:
 
-Highlights need a distinct Anki model:
+- Local asset directory and loader for lemma ranks, sentence catalog, translation/review seed rows.
+- `LatinCandidatePlanner` with deterministic 50-card selection.
+- Validation for DCC/project rank metadata and Rafael-Falcon progression tags.
 
-| Aspect | Frequency / word-list | Kindle highlights |
-|--------|------------------------|-------------------|
-| Note type | `Multilang::Card` / `Multilang::Manual Card` | `Multilang::Highlight Card` |
-| Template source | current normal template | new `templates/highlight_card.md` |
-| Definition placement | front currently includes definition | back only |
-| Translation field | present in field list | omitted |
-| Audio | word + sentence audio | word + sentence audio |
-| Image | blank image field | blank image field |
+Rationale: MVP content must be reproducible and reviewable before automated morphology/audio is introduced.
 
-`export_anki_package()` should fail if rows include mixed source types. Current source detection treats non-word-list as frequency; v1.2 must replace this with exact source-type resolution:
+### Phase 24: Morphology normalization and grammar notes
 
-```python
-source_types = {row.identity.source_type for row in rows}
-if len(source_types) != 1:
-    raise ExportAnkiPackageError("cannot export mixed source types in one note model")
-source_type = source_types.pop()
-```
+Build:
 
-### Template storage
+- `LatinMorphologyAnalyzer` protocol with deterministic fake adapter.
+- CLTK adapter behind optional dependency/config.
+- Curated override mechanism for ambiguous forms.
+- `LatinGrammarNoteBuilder` and validators for case/function labels.
 
-Do not keep adding template variants to `CARD_TEMPLATE.md`. Move toward source-specific template files:
+Rationale: `Gramatica` is the highest-risk learner-facing new field; solve it before APKG/audio polish.
 
-```text
-templates/
-  normal_card.md              # existing normal deck template, or current CARD_TEMPLATE.md kept temporarily
-  highlight_card.md           # new highlight template
-  russian_phoneme_card.md     # existing phoneme template, refreshed
-```
+### Phase 25: Review status and persistence
 
-If moving the normal template is too much churn for v1.2, keep `CARD_TEMPLATE.md` for existing decks and add only `templates/highlight_card.md`. The loader can branch without changing old template paths.
+Build:
 
-## Phonetics Template Refresh Integration
+- Alembic migration for `latin_card_records` and optional `latin_source_sentences`.
+- Repository/service for review transitions.
+- Export gate requiring approved cards.
 
-The phonetics deck is currently isolated in `services/russian_phoneme_deck.py` and `templates/russian_phoneme_card.md`. Keep it isolated.
+Rationale: Review state is the safety mechanism for morphology, translation, source quality, and audio uncertainty.
 
-Required integration changes:
+### Phase 26: Latin audio provider adapter and integrity checks
 
-1. Update `PHONEME_FIELD_NAMES` to match the supplied front template and requested back behavior:
-   - `Spellings`
-   - `Sound` instead of current `IPA` if the template uses `{{Sound}}`
-   - `letter_audio`
-   - `Example Word`
-   - `word_audio`
-   - `Word Translation`
-   - `Example Sentence` instead of current typo `Exemple Sentence`
-   - `sentence_audio`
-   - `Sentence Translation` instead of current `Translation`
-   - `Image`
-2. Update `_phoneme_card_fields()` mapping only; keep `RussianPhonemeCard` data unchanged.
-3. Remove any `{{#Notes}}`, `{{is_priming}}`, or `{{is_sentence}}` references from the template. The current Python model does not include those fields, so they should not be introduced.
-4. Use Multilang colors in CSS and preserve responsiveness.
-5. Add tests that inspect model fields and rendered template strings; no normal/highlight export code should depend on phoneme internals.
+Build:
 
-No database migration is needed for phonetics because this deck is generated deterministically in-memory and not through job tables.
+- `EspeakNgSpeechAdapter` with fake subprocess tests and local timeout/error handling.
+- Audio selection policy for `la`.
+- Word/sentence audio metadata and exact-input validation against `target_form` and `latin_sentence`.
+- Human-review evidence artifact for representative audio samples.
 
-## Safe Build Order for Roadmap
+Rationale: Audio has uncertain quality and native-tool dependency; keep it after card content is stable.
 
-### Phase 1: Source profiles and export isolation
+### Phase 27: Latin APKG/CSV/TSV export evidence
 
-**Build first:**
+Build:
 
-- Add `kindle-highlights` to `GenerationRequest.source_type`.
-- Add source profile helper.
-- Update `export_field_names_for_source_type()` and genanki source-type resolution.
-- Add tests proving frequency and word-list field names/model IDs are unchanged.
+- `templates/latin_card.md`.
+- Latin APKG export, CSV/TSV export, and 50-card quality gate.
+- End-to-end smoke: source pack -> reviewed records -> mocked or local audio -> APKG.
+- Regression tests proving existing frequency/custom/highlight exports still pass.
 
-**Rationale:** prevents highlight-specific export/template work from breaking shipped decks.
+Rationale: Packaging should be the final integration phase after source, grammar, review, and audio contracts are stable.
 
-### Phase 2: Local highlight normalization and candidate extraction
+## Test Evidence Strategy
 
-**Build:**
-
-- `domain.highlights` contracts.
-- `KindleHighlightNormalizer` with raw Kindle fixtures.
-- `HighlightVocabularyExtractor` with deterministic item keys/dedupe.
-- Local CLI path from `--input-file`.
-
-**Rationale:** local normalization is the core product behavior and can be validated without remote I/O.
-
-### Phase 3: Ingest highlights into existing lexical pipeline
-
-**Build:**
-
-- `_ingest_kindle_highlights()` in `IngestLexicalItemsService`.
-- `load_requested_item_keys()` support.
-- `input_fingerprint.py` support.
-- Provenance JSON for source document hash/highlight index/excerpt.
-
-**Rationale:** this proves highlights can reuse grounding, jobs, resume, and duplicate prevention.
-
-### Phase 4: Highlight text-generation profile
-
-**Build:**
-
-- Source-specific sentence length and prompt style.
-- Validation profile for 6-16 token concise-but-richer sentences.
-- Ensure highlight export omits translation even if translation exists internally.
-
-**Rationale:** sentence behavior is quality-sensitive but should ride on existing generator/validator seams.
-
-### Phase 5: Highlight template and export
-
-**Build:**
-
-- `templates/highlight_card.md`.
-- `HIGHLIGHT_MODEL_ID`, `HIGHLIGHT_NOTE_TYPE_NAME`.
-- `.apkg`, CSV, TSV tests for no `Translation` field and Definition on back.
-
-**Rationale:** export should happen after source/profile behavior is stable.
-
-### Phase 6: WebDAV fetch adapter
-
-**Build:**
-
-- Settings and CLI flags for WebDAV fetch.
-- `WebDavHighlightSource` with fake adapter tests.
-- Raw artifact storage by content hash.
-- Integration test using a local/fake WebDAV response, not the real service.
-
-**Rationale:** remote ingestion is valuable but should not block local highlight generation.
-
-### Phase 7: Phonetics template refresh
-
-**Build:**
-
-- Update `russian_phoneme_deck.py` field names/mapping.
-- Refresh `templates/russian_phoneme_card.md`.
-- Add focused phoneme model/template tests.
-
-**Rationale:** independent from highlights; can be scheduled before or after Phase 6 if desired, but should remain separate to reduce regression blast radius.
-
-## Test Seams
-
-| Seam | Tests to Add | Regression Guard |
-|------|--------------|------------------|
-| Source profiles | Unit tests for frequency, word-list, kindle-highlights settings | Frequency requires translation and exports existing fields; highlights omits translation. |
-| WebDAV adapter | Mock/fake HTTP/WebDAV list/download responses; credential missing tests | No real network in unit tests; no secret leakage in errors. |
-| Normalizer | Golden fixtures from real Kindle exports and Kindle Formatter-style expected output | Handles line endings, metadata, empty highlights, duplicated fragments. |
-| Vocabulary extractor | Deterministic item keys, dedupe, order preservation | Same input hash produces same job run key. |
-| Highlight ingestion | Repository-backed test for lexical candidates with `source_type="kindle-highlights"` and provenance | Does not alter frequency/word-list ingestion counts. |
-| Input fingerprint | Hash changes when normalized content changes; does not change for timestamp-only WebDAV metadata | Prevents silent duplicates and unnecessary reruns. |
-| Text generation profile | Adapter receives highlight style/profile; validation accepts richer concise sentence | Frequency max-length behavior remains unchanged. |
-| Export field mapping | `ExportCardRow.ordered_field_mapping(source_type=kindle-highlights)` omits `Translation`, maps `Definition` | Existing `FREQUENCY_EXPORT_CARD_FIELD_NAMES` unchanged. |
-| genanki model selection | Model ID/name/fields for each source type | Mixed-source export raises error. |
-| Highlight template | HTML contains Definition on back, no Translation placeholder, centered responsive CSS | Field names exactly match genanki model fields. |
-| Phoneme template | Field names include `Sentence Translation`; no `Notes`, `is_priming`, `is_sentence`; typo fixed | Normal and highlight templates unaffected. |
-| E2E smoke | Local highlight fixture -> 3-5 cards -> audio mocked/local -> `.apkg` package | Existing frequency and word-list smoke tests still pass. |
+| Test layer | Evidence to add | Must prove |
+|---|---|---|
+| Domain unit | Latin enums/model validation | `Genitivus` canonicalization, review statuses, nonblank required fields |
+| Asset fixtures | 5-card and 50-card source packs | Stable rank ordering, source citations, target form spans |
+| Morphology unit | Fake analyzer + override fixtures for nouns, verbs, prepositions, enclitics | Normalized cases/functions and ambiguity handling |
+| Grammar golden files | Input morphology -> exact `Gramatica` strings | Short deterministic format, no unsupported labels |
+| Persistence | Repository round-trip for Latin records | JSON morphology/provenance preserved, review transitions audited |
+| Audio | Fake eSpeak adapter and optional installed-tool smoke | Word/sentence exact input, stale audio blocked, provider metadata saved |
+| Export contract | Latin field order/template/model tests | No normal/highlight field leakage; blank image; source shown on back |
+| E2E | 3-card fast fixture and 50-card MVP evidence run | Pipeline produces APKG/CSV/TSV with approved cards only |
+| Regression | Existing frequency/custom/highlight focused suites | Latin changes do not rewrite shipped flows |
 
 ## Integration Risks and Mitigations
 
-### Risk 1: Highlight mode accidentally changes shipped deck behavior
+### Risk 1: Latin treated as normal `frequency`
 
-**Why it happens:** existing code branches on `source_type != "word-list"`, which would treat highlights as frequency.  
-**Mitigation:** add explicit source profiles and tests around translation validation, field names, and model selection before building highlight ingestion.
+**Consequence:** 3x1000 deck gates, normal fields, `wordfreq`, IPA, and modern-language translations leak into Latin.  
+**Mitigation:** explicit `latin-mvp` source profile, dispatch tests, and CLI guard that rejects `language=la source_type=frequency` until a future scaled Latin phase defines it.
 
-### Risk 2: WebDAV variability hides normalization bugs
+### Risk 2: Morphological ambiguity creates false grammar notes
 
-**Why it happens:** remote file names, export formats, or network failures can vary.  
-**Mitigation:** build local file ingestion first; store raw downloads by content hash; run normalizer against fixtures.
+**Consequence:** learner studies incorrect case/function.  
+**Mitigation:** store analyzer confidence and ambiguity notes; require curated override or approval before export.
 
-### Risk 3: Overengineering raw highlight persistence
+### Risk 3: Source licensing/provenance forgotten
 
-**Why it happens:** it is tempting to model books/highlights/documents in normalized DB tables.  
-**Mitigation:** for v1.2, use raw filesystem artifacts plus `lexical_candidates.provenance` JSON. Add tables later only if querying highlight history becomes a real requirement.
+**Consequence:** APKG uses text without traceable source or incompatible obligations.  
+**Mitigation:** source catalog requires citation/license note; export gate blocks missing source.
 
-### Risk 4: Translation assumptions leak into highlight export
+### Risk 4: eSpeak audio is technically present but pedagogically poor
 
-**Why it happens:** existing `ExportCardRow` and templates include `Translation` by default.  
-**Mitigation:** source-specific export field mapping; highlight template must not reference `Translation`; tests inspect genanki model fields.
+**Consequence:** MVP meets automation but not study quality.  
+**Mitigation:** audio quality status and human playback checklist; allow roadmap decision whether `approved_with_audio_warning` is exportable.
 
-### Risk 5: Sentence-length validator rejects the desired richer examples
+### Risk 5: Review status becomes decorative
 
-**Why it happens:** current validation max is 12 tokens globally.  
-**Mitigation:** source-specific validation profile: highlights allow approximately 6-16 tokens while frequency remains 4-12.
-
-### Risk 6: Phoneme field renames break template rendering
-
-**Why it happens:** current field names include `IPA`, `Exemple Sentence`, and `Translation`; provided front uses `Sound` and requested back uses `Sentence Translation`.  
-**Mitigation:** update field constants and mapping atomically with template tests.
-
-### Risk 7: Mixed-source export creates invalid note models
-
-**Why it happens:** current export chooses frequency unless all rows are word-list.  
-**Mitigation:** fail fast on mixed source types and select exact source model.
-
-## Architecture Decision Summary
-
-- Add `kindle-highlights` as a **new source type**, not a replacement for frequency decks.
-- Build highlights ingestion as **fetch → normalize → extract candidates → existing lexical pipeline**.
-- Keep WebDAV behind a small adapter; build and test local file normalization first.
-- Use source profiles to control translation, sentence-length, and export/template behavior.
-- Reuse existing DB tables; put highlight-specific audit data in provenance JSON for v1.2.
-- Add a dedicated highlight Anki note type/template; omit `Translation` at the exported field level.
-- Keep the phonetics refresh isolated in `russian_phoneme_deck.py` and its template file.
+**Consequence:** `needs_review` cards ship.  
+**Mitigation:** DB/repository review transitions plus export gate; tests with rejected/needs-review rows.
 
 ## Sources and Evidence
 
-- `.planning/PROJECT.md` — active v1.2 requirements and constraints. [HIGH]
-- `alter_organizado.md` — user-provided WebDAV, template, sentence, and phonetics requirements. [HIGH]
-- `.planning/ROADMAP.md` — current v1.1 completion context. [HIGH]
-- `.planning/REQUIREMENTS.md` — v1.1 template/audio/pronunciation constraints to preserve. [HIGH]
-- Code inspection: `domain.jobs`, `ingest_lexical_items`, `generate_text_items`, `text_generation`, `text_validation`, `domain.exporting`, `assemble_export_cards`, `export_anki_package`, `russian_phoneme_deck`, `settings`, repositories, and DB models. [HIGH]
+- `.planning/PROJECT.md` — current v2.0 Latin goals, constraints, existing architecture, and validated v1.3 state. [HIGH]
+- `.planning/ROADMAP.md` — current phase numbering; v1.3 ended at Phase 21, so v2.0 should start at Phase 22 unless reset. [HIGH]
+- `LATIN-STRUCTURE.md` — user-approved Latin MVP direction, fields, grammar examples, frequency/morphology/source/audio questions. [HIGH]
+- Code inspection: `domain.exporting`, `domain.source_profiles`, `db.models`, `audio_voice_registry`, existing services/repositories. [HIGH]
+- CLTK GitHub/docs — Python NLP toolkit for pre-modern languages; current repo shows installation and Latin language code examples, latest release v1.5.0 May 2025. https://github.com/cltk/cltk [MEDIUM-HIGH]
+- Dickinson College Commentaries Latin Core Vocabulary — Latin headwords, definitions, parts of speech, semantic groups, frequency ranks, and Portuguese view. https://dcc.dickinson.edu/latin-core-list1 [HIGH]
+- Perseus Canonical Latin Literature — canonical XML Latin literature repository, CC-BY-SA-4.0, active releases through 2026. https://github.com/PerseusDL/canonical-latinLit [MEDIUM-HIGH]
+- Perseus Treebank Data — published treebank data, current data v2.0 with v2.1 release, CC-BY-SA-3.0 US. https://github.com/PerseusDL/treebank_data [MEDIUM-HIGH]
+- Perseus Morpheus — Latin/Greek morphological parser with Latin stem library, native build/run model. https://github.com/PerseusDL/morpheus [MEDIUM]
+- eSpeak NG — command-line/local TTS, more than 100 languages, WAV output, formant synthesis quality caveat. https://github.com/espeak-ng/espeak-ng [HIGH]
+- Azure Speech language/voice support — current Microsoft docs list TTS locales and multilingual voices but no dedicated Latin locale found in fetched table. https://learn.microsoft.com/en-us/azure/ai-services/speech-service/language-support?tabs=tts [HIGH for Azure support table, MEDIUM for negative Latin conclusion]
