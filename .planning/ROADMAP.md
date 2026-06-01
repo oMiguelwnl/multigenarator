@@ -39,7 +39,11 @@ v2.0 adds a separate Classical Latin generation path that produces a reviewed, r
   2. User receives Latin deck metadata showing `language_code=la`, Classical Latin variant, MVP source pack version, and explicit 50-card scope.
   3. Existing frequency, custom word-list, highlight, phonetics, review, audio, and export flows still run through their prior profiles after Latin mode is introduced.
   4. Latin-specific contracts and enums exist without mutating shipped normal, highlight, or phonetics note contracts.
-**Plans**: TBD
+**Plans:** 3 plans
+Plans:
+- [ ] 22-01-PLAN.md — Define isolated Classical Latin contracts and source profile.
+- [ ] 22-02-PLAN.md — Add separate Latin MVP start service and CLI command.
+- [ ] 22-03-PLAN.md — Add focused mode-isolation regression evidence.
 
 ### Phase 23: Frozen 50-Card Source Pack and Sentence Sequence
 **Goal**: Users receive a reproducible 50-card Classical Latin MVP source pack ordered by lemma frequency and Rafael Falcon-style didactic suitability, with every sentence traceable and license-gated.
