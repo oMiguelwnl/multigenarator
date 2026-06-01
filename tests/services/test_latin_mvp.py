@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+import pytest
+
 from multilang.domain.latin import LatinGenerationRequest, LatinVariant
 from multilang.services.latin_mvp import LatinMvpGenerationService
 
@@ -25,11 +27,24 @@ def test_latin_mvp_start_returns_exactly_50_deterministic_item_keys() -> None:
     assert result.item_keys == [f"latin-mvp-{index:04d}" for index in range(1, 51)]
 
 
-def test_latin_mvp_source_pack_override_preserves_item_key_contract() -> None:
-    result = LatinMvpGenerationService().start(
-        LatinGenerationRequest(source_pack_version="custom-pack")
-    )
+def test_latin_mvp_start_exposes_manifest_backed_summary_fields() -> None:
+    result = LatinMvpGenerationService().start(LatinGenerationRequest())
 
-    assert result.metadata.source_pack_version == "custom-pack"
-    assert result.metadata.card_count == 50
+    assert result.manifest_path == "data/latin_mvp/latin-mvp-50-v1.json"
+    assert result.first_item_key == "latin-mvp-0001"
+    assert result.last_item_key == "latin-mvp-0050"
+    assert result.license_gate_status == "approved"
+    assert result.source_type_counts["adapted_didactic"] > 0
+    assert result.frequency_source_count == 1
+    assert "50 entries" in result.didactic_sequence_summary
+
+
+def test_latin_mvp_source_pack_version_mismatch_raises_value_error() -> None:
+    with pytest.raises(ValueError, match="source_pack_version"):
+        LatinMvpGenerationService().start(LatinGenerationRequest(source_pack_version="custom-pack"))
+
+
+def test_latin_mvp_item_keys_come_from_manifest_order() -> None:
+    result = LatinMvpGenerationService().start(LatinGenerationRequest())
+
     assert result.item_keys == [f"latin-mvp-{index:04d}" for index in range(1, 51)]

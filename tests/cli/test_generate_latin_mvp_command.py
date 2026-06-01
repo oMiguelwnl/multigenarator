@@ -21,18 +21,31 @@ def test_generate_latin_mvp_prints_required_metadata() -> None:
     assert "source_pack_version=latin-mvp-50-v1" in result.output
     assert "card_count=50" in result.output
     assert "item_count=50" in result.output
+    assert "first_item_key=latin-mvp-0001" in result.output
+    assert "last_item_key=latin-mvp-0050" in result.output
+    assert "license_gate_status=approved" in result.output
+    assert "source_type_counts=" in result.output
 
 
-def test_generate_latin_mvp_accepts_source_pack_version_override() -> None:
+def test_generate_latin_mvp_rejects_source_pack_version_override_mismatch() -> None:
     result = runner.invoke(
         create_app(),
         ["generate-latin-mvp", "--source-pack-version", "custom-pack"],
     )
 
+    assert result.exit_code == 1
+    assert "source_pack_version" in result.output
+
+
+def test_generate_latin_mvp_manifest_json_prints_public_summary() -> None:
+    result = runner.invoke(create_app(), ["generate-latin-mvp", "--manifest-json"])
+
     assert result.exit_code == 0
-    assert "source_pack_version=custom-pack" in result.output
-    assert "card_count=50" in result.output
-    assert "item_count=50" in result.output
+    assert '"source_pack_version": "latin-mvp-50-v1"' in result.output
+    assert '"first_item_key": "latin-mvp-0001"' in result.output
+    assert '"last_item_key": "latin-mvp-0050"' in result.output
+    assert "C:\\" not in result.output
+    assert "/Users/" not in result.output
 
 
 def test_generate_latin_mvp_calls_latin_service_with_latin_request() -> None:
