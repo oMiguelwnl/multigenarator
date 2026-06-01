@@ -5,7 +5,7 @@ milestone_name: Classical Latin MVP
 status: ready_to_plan
 stopped_at: Completed 23-04-PLAN.md
 last_updated: "2026-06-01T18:44:09.599Z"
-last_activity: 2026-06-01 - Completed Phase 22 Latin mode contracts, isolated CLI, and focused regression evidence.
+last_activity: 2026-06-01 - Completed Phase 23 frozen 50-card Latin source pack, manifest-backed CLI, and scanner-readable evidence.
 progress:
   total_phases: 7
   completed_phases: 2
