@@ -20,7 +20,7 @@ v2.0 adds a separate Classical Latin generation path that produces a reviewed, r
 
 **Phase Numbering:** Continuous from v1.3; v2.0 starts at Phase 22.
 
-- [ ] **Phase 22: Latin Mode Contracts and Isolation** - Users can start Classical Latin MVP generation through isolated contracts without breaking existing deck modes.
+- [x] **Phase 22: Latin Mode Contracts and Isolation** - Users can start Classical Latin MVP generation through isolated contracts without breaking existing deck modes. (completed 2026-06-01)
 - [ ] **Phase 23: Frozen 50-Card Source Pack and Sentence Sequence** - Users receive a reproducible first-50 Latin manifest with licensed sources, lemma frequency, and didactic ordering.
 - [ ] **Phase 24: Morphology Evidence and Gramatica Gate** - Users receive reviewed Latin morphology and short standardized `Gramatica` notes that block unresolved ambiguity.
 - [ ] **Phase 25: Latin Review Gates and Curated Records** - Users can approve, reject, and inspect curated Latin records before learner-ready export.
@@ -39,11 +39,11 @@ v2.0 adds a separate Classical Latin generation path that produces a reviewed, r
   2. User receives Latin deck metadata showing `language_code=la`, Classical Latin variant, MVP source pack version, and explicit 50-card scope.
   3. Existing frequency, custom word-list, highlight, phonetics, review, audio, and export flows still run through their prior profiles after Latin mode is introduced.
   4. Latin-specific contracts and enums exist without mutating shipped normal, highlight, or phonetics note contracts.
-**Plans:** 3 plans
+**Plans:** 3/3 plans complete
 Plans:
-- [ ] 22-01-PLAN.md — Define isolated Classical Latin contracts and source profile.
-- [ ] 22-02-PLAN.md — Add separate Latin MVP start service and CLI command.
-- [ ] 22-03-PLAN.md — Add focused mode-isolation regression evidence.
+- [x] 22-01-PLAN.md — Define isolated Classical Latin contracts and source profile.
+- [x] 22-02-PLAN.md — Add separate Latin MVP start service and CLI command.
+- [x] 22-03-PLAN.md — Add focused mode-isolation regression evidence.
 
 ### Phase 23: Frozen 50-Card Source Pack and Sentence Sequence
 **Goal**: Users receive a reproducible 50-card Classical Latin MVP source pack ordered by lemma frequency and Rafael Falcon-style didactic suitability, with every sentence traceable and license-gated.
@@ -119,7 +119,7 @@ Plans:
 
 | Phase | Milestone | Plans Complete | Status | Completed |
 |-------|-----------|----------------|--------|-----------|
-| 22. Latin Mode Contracts and Isolation | v2.0 | 0/TBD | Not started | - |
+| 22. Latin Mode Contracts and Isolation | v2.0 | 3/3 | Complete   | 2026-06-01 |
 | 23. Frozen 50-Card Source Pack and Sentence Sequence | v2.0 | 0/TBD | Not started | - |
 | 24. Morphology Evidence and Gramatica Gate | v2.0 | 0/TBD | Not started | - |
 | 25. Latin Review Gates and Curated Records | v2.0 | 0/TBD | Not started | - |

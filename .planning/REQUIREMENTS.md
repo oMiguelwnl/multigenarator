@@ -9,9 +9,9 @@ Requirements for the Classical Latin MVP. Each maps to roadmap phases.
 
 ### Latin Mode
 
-- [ ] **MODE-01**: User can generate a Classical Latin MVP through a separate Latin generation path that does not route through the existing modern-language frequency deck path.
-- [ ] **MODE-02**: User receives Latin deck metadata that identifies `language_code=la`, the Classical Latin variant, the MVP source pack version, and the 50-card MVP scope.
-- [ ] **MODE-03**: Existing modern-language frequency, custom word-list, highlight, phonetics, review, audio, and export flows remain operational after Latin mode is added.
+- [x] **MODE-01**: User can generate a Classical Latin MVP through a separate Latin generation path that does not route through the existing modern-language frequency deck path.
+- [x] **MODE-02**: User receives Latin deck metadata that identifies `language_code=la`, the Classical Latin variant, the MVP source pack version, and the 50-card MVP scope.
+- [x] **MODE-03**: Existing modern-language frequency, custom word-list, highlight, phonetics, review, audio, and export flows remain operational after Latin mode is added.
 
 ### Latin Scope And Frequency
 
@@ -102,9 +102,9 @@ Which phases cover which requirements. Updated during roadmap creation.
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| MODE-01 | Phase 22 | Pending |
-| MODE-02 | Phase 22 | Pending |
-| MODE-03 | Phase 22 | Pending |
+| MODE-01 | Phase 22 | Complete |
+| MODE-02 | Phase 22 | Complete |
+| MODE-03 | Phase 22 | Complete |
 | FREQ-01 | Phase 23 | Pending |
 | FREQ-02 | Phase 23 | Pending |
 | FREQ-03 | Phase 23 | Pending |
