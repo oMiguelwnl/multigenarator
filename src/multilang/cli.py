@@ -852,9 +852,24 @@ def create_app(
                 help="Classical Latin MVP source pack version.",
             ),
         ] = "latin-mvp-50-v1",
+        manifest_json: Annotated[
+            bool,
+            typer.Option(
+                "--manifest-json",
+                help="Print a validated public JSON summary of the Latin MVP source pack.",
+            ),
+        ] = False,
     ) -> None:
         request = LatinGenerationRequest(source_pack_version=source_pack_version)
-        result = resolve_latin_mvp_service().start(request)
+        try:
+            result = resolve_latin_mvp_service().start(request)
+        except ValueError as exc:
+            typer.echo(str(exc))
+            raise typer.Exit(code=1) from exc
+
+        if manifest_json:
+            typer.echo(json.dumps(result.manifest_summary(), ensure_ascii=False, indent=2, sort_keys=True))
+            return
 
         typer.echo(f"language_code={result.metadata.language_code}")
         typer.echo(f"variant={result.metadata.variant.value}")
@@ -862,6 +877,12 @@ def create_app(
         typer.echo(f"source_pack_version={result.metadata.source_pack_version}")
         typer.echo(f"card_count={result.metadata.card_count}")
         typer.echo(f"item_count={len(result.item_keys)}")
+        typer.echo(f"first_item_key={result.first_item_key}")
+        typer.echo(f"last_item_key={result.last_item_key}")
+        typer.echo(f"license_gate_status={result.license_gate_status}")
+        typer.echo(f"source_type_counts={json.dumps(result.source_type_counts, sort_keys=True)}")
+        typer.echo(f"frequency_source_count={result.frequency_source_count}")
+        typer.echo(f"didactic_sequence_summary={result.didactic_sequence_summary}")
 
     @cli.command("export")
     def export(
