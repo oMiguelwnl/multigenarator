@@ -9,8 +9,10 @@ import pytest
 from pydantic import ValidationError
 
 from multilang.services.latin_source_pack import (
+    APPROVED_LATIN_CASE_LABELS,
     LatinMvpSourcePack,
     load_latin_mvp_source_pack,
+    validate_latin_gramatica,
     validate_latin_target_presence,
 )
 
@@ -37,6 +39,17 @@ def _entry(sequence: int = 1, **overrides: object) -> dict[str, object]:
         "license_gate": "approved",
         "target_match_mode": "exact",
         "original_citation_claim": False,
+        "morphology_evidence": {
+            "lemma": f"lemma{sequence}",
+            "part_of_speech": "subst",
+            "case_label": "Nominativus",
+            "number": "sg",
+            "verbal_analysis": None,
+            "syntactic_function": "Suj",
+            "evidence_note": f"lemma{sequence} is nominative singular subject in the sentence.",
+            "grammar_review_status": "approved",
+        },
+        "gramatica": "subst sg Nominativus Suj",
     }
     data.update(overrides)
     return data
@@ -64,6 +77,13 @@ def test_source_pack_accepts_exact_50_card_contract() -> None:
     assert pack.source_pack_version == "latin-mvp-50-v1"
     assert pack.card_count == 50
     assert [entry.item_key for entry in pack.entries][:2] == ["latin-mvp-0001", "latin-mvp-0002"]
+    assert pack.entries[0].morphology_evidence.grammar_review_status == "approved"
+    assert pack.entries[0].gramatica == "subst sg Nominativus Suj"
+
+
+def test_gramatica_validator_accepts_short_contract() -> None:
+    assert validate_latin_gramatica("subst sg Genitivus Suj") == "subst sg Genitivus Suj"
+    assert validate_latin_gramatica("v pres ind act 3sg V") == "v pres ind act 3sg V"
 
 
 @pytest.mark.parametrize(
@@ -82,6 +102,104 @@ def test_source_pack_accepts_exact_50_card_contract() -> None:
 def test_entry_rejects_blank_required_fields(field: str, value: object) -> None:
     with pytest.raises(ValidationError):
         LatinMvpSourcePack.model_validate(_pack(**{field: value}))
+
+
+@pytest.mark.parametrize(
+    "morphology_evidence",
+    [
+        {
+            "lemma": "lemma1",
+            "part_of_speech": "subst",
+            "case_label": "Nominativus",
+            "number": "sg",
+            "verbal_analysis": None,
+            "syntactic_function": "Suj",
+            "evidence_note": " ",
+            "grammar_review_status": "approved",
+        },
+        {
+            "lemma": "lemma1",
+            "part_of_speech": "subst",
+            "case_label": "Nominativus",
+            "number": "sg",
+            "verbal_analysis": None,
+            "syntactic_function": "",
+            "evidence_note": "subject in context",
+            "grammar_review_status": "approved",
+        },
+        {
+            "lemma": "lemma1",
+            "part_of_speech": "subst",
+            "case_label": "Nominativus",
+            "number": "sg",
+            "verbal_analysis": None,
+            "syntactic_function": "Suj",
+            "evidence_note": "subject in context",
+            "grammar_review_status": "unresolved",
+        },
+    ],
+)
+def test_entry_rejects_unresolved_or_blank_morphology_evidence(morphology_evidence: dict[str, object]) -> None:
+    with pytest.raises(ValidationError):
+        LatinMvpSourcePack.model_validate(_pack(morphology_evidence=morphology_evidence))
+
+
+@pytest.mark.parametrize("case_label", ["Nominativus", "Vocativus", "Accusativus", "Genitivus", "Dativus", "Ablativus"])
+def test_entry_accepts_required_latin_case_labels(case_label: str) -> None:
+    pack = LatinMvpSourcePack.model_validate(
+        _pack(
+            morphology_evidence={
+                "lemma": "lemma1",
+                "part_of_speech": "subst",
+                "case_label": case_label,
+                "number": "sg",
+                "verbal_analysis": None,
+                "syntactic_function": "Suj",
+                "evidence_note": "nominal form resolved in context",
+                "grammar_review_status": "approved",
+            },
+            gramatica=f"subst sg {case_label} Suj",
+        )
+    )
+
+    assert pack.entries[0].morphology_evidence.case_label == case_label
+
+
+@pytest.mark.parametrize("case_label", ["Genetivus", "Locativus", "genitive"])
+def test_entry_rejects_invalid_case_labels(case_label: str) -> None:
+    with pytest.raises(ValidationError):
+        LatinMvpSourcePack.model_validate(
+            _pack(
+                morphology_evidence={
+                    "lemma": "lemma1",
+                    "part_of_speech": "subst",
+                    "case_label": case_label,
+                    "number": "sg",
+                    "verbal_analysis": None,
+                    "syntactic_function": "Suj",
+                    "evidence_note": "nominal form resolved in context",
+                    "grammar_review_status": "approved",
+                },
+                gramatica=f"subst sg {case_label} Suj",
+            )
+        )
+
+
+@pytest.mark.parametrize("gramatica", ["substantivo sg Nominativus Suj", "noun singular subject", "subst sg Genetivus Suj"])
+def test_gramatica_rejects_long_english_or_unapproved_labels(gramatica: str) -> None:
+    with pytest.raises(ValueError):
+        validate_latin_gramatica(gramatica)
+
+
+def test_required_case_label_constant_is_exact() -> None:
+    assert APPROVED_LATIN_CASE_LABELS == (
+        "Nominativus",
+        "Vocativus",
+        "Accusativus",
+        "Genitivus",
+        "Dativus",
+        "Ablativus",
+    )
 
 
 def test_entry_rejects_blocked_license_gate() -> None:
