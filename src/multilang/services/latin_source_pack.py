@@ -18,8 +18,62 @@ LatinSourceType = Literal["original_classical", "adapted_didactic", "reference_e
 LatinLicenseGate = Literal["approved", "blocked"]
 LatinInclusionStatus = Literal["included", "deferred", "replacement"]
 LatinTargetMatchMode = Literal["exact", "orthographic_normalization", "enclitic_normalization"]
+LatinCaseLabel = Literal["Nominativus", "Vocativus", "Accusativus", "Genitivus", "Dativus", "Ablativus"]
+LatinPartOfSpeech = Literal["subst", "adj", "v", "pron", "prep", "conj", "adv"]
+LatinGrammarNumber = Literal["sg", "pl"]
+LatinSyntacticFunction = Literal["Suj", "OD", "OI", "Pred", "Circ", "Conj", "Mod", "V"]
+LatinGrammarReviewStatus = Literal["approved", "unresolved", "ambiguous"]
 
 DEFAULT_LATIN_MVP_SOURCE_PACK_PATH = Path("data") / "latin_mvp" / "latin-mvp-50-v1.json"
+APPROVED_LATIN_CASE_LABELS: tuple[str, ...] = (
+    "Nominativus",
+    "Vocativus",
+    "Accusativus",
+    "Genitivus",
+    "Dativus",
+    "Ablativus",
+)
+APPROVED_LATIN_GRAMATICA_TOKENS: frozenset[str] = frozenset(
+    {
+        *APPROVED_LATIN_CASE_LABELS,
+        "subst",
+        "adj",
+        "v",
+        "pron",
+        "prep",
+        "conj",
+        "adv",
+        "sg",
+        "pl",
+        "Suj",
+        "OD",
+        "OI",
+        "Pred",
+        "Circ",
+        "Conj",
+        "Mod",
+        "V",
+        "pres",
+        "imperf",
+        "fut",
+        "perf",
+        "plup",
+        "ind",
+        "subj",
+        "imp",
+        "inf",
+        "act",
+        "pass",
+        "1sg",
+        "2sg",
+        "3sg",
+        "1pl",
+        "2pl",
+        "3pl",
+    }
+)
+_GRAMATICA_TOKEN_RE = re.compile(r"[A-Za-z0-9]+")
+_GRAMATICA_ALLOWED_RE = re.compile(r"^[A-Za-z0-9 ,;:/()+.-]+$")
 _TOKEN_RE = re.compile(r"[^\W_]+", re.UNICODE)
 _MACRON_MAP = str.maketrans(
     {
@@ -80,6 +134,56 @@ def validate_latin_target_presence(target_form: str, latin_sentence: str, match_
     )
 
 
+def validate_latin_gramatica(value: str) -> str:
+    """Validate and normalize the learner-facing concise Latin grammar note."""
+
+    gramatica = _not_blank(value)
+    if not _GRAMATICA_ALLOWED_RE.fullmatch(gramatica):
+        raise ValueError("gramatica contains unapproved punctuation or characters")
+    tokens = _GRAMATICA_TOKEN_RE.findall(gramatica)
+    if not tokens:
+        raise ValueError("gramatica must include approved grammar tokens")
+    unknown = [token for token in tokens if token not in APPROVED_LATIN_GRAMATICA_TOKENS]
+    if unknown:
+        raise ValueError(f"gramatica contains unapproved grammar token: {unknown[0]}")
+    return gramatica
+
+
+class LatinMorphologyEvidence(BaseModel):
+    """Reviewed morphology evidence for the target form in one Latin MVP sentence."""
+
+    lemma: str = Field(min_length=1)
+    part_of_speech: LatinPartOfSpeech
+    case_label: LatinCaseLabel | None = None
+    number: LatinGrammarNumber | None = None
+    verbal_analysis: str | None = None
+    syntactic_function: LatinSyntacticFunction
+    evidence_note: str = Field(min_length=1)
+    grammar_review_status: LatinGrammarReviewStatus = "approved"
+
+    _strip_text = field_validator("lemma", "syntactic_function", "evidence_note")(_not_blank)
+
+    @field_validator("verbal_analysis")
+    @classmethod
+    def strip_optional_text(cls, value: str | None) -> str | None:
+        if value is None:
+            return None
+        return _not_blank(value)
+
+    @model_validator(mode="after")
+    def enforce_resolved_morphology(self) -> "LatinMorphologyEvidence":
+        if self.grammar_review_status != "approved":
+            raise ValueError("grammar_review_status must be approved")
+        if self.part_of_speech in {"subst", "adj", "pron"}:
+            if self.case_label is None:
+                raise ValueError("nominal morphology requires case_label")
+            if self.number is None:
+                raise ValueError("nominal morphology requires number")
+        if self.part_of_speech == "v" and self.verbal_analysis is None:
+            raise ValueError("verbal morphology requires verbal_analysis")
+        return self
+
+
 class LatinSourceProvenance(BaseModel):
     """Auditable origin and license metadata for a source-pack entry."""
 
@@ -125,6 +229,8 @@ class LatinMvpSourcePackEntry(LatinSourceProvenance, LatinDidacticRationale):
     frequency_source_url: HttpUrl
     source_pack_version: Literal["latin-mvp-50-v1"] = DEFAULT_LATIN_SOURCE_PACK_VERSION
     target_match_mode: LatinTargetMatchMode = "exact"
+    morphology_evidence: LatinMorphologyEvidence
+    gramatica: str = Field(min_length=1)
 
     _strip_text = field_validator(
         "item_key",
@@ -138,7 +244,13 @@ class LatinMvpSourcePackEntry(LatinSourceProvenance, LatinDidacticRationale):
         "work_reference",
         "source_url_or_id",
         "license_note",
+        "gramatica",
     )(_not_blank)
+
+    @field_validator("gramatica")
+    @classmethod
+    def validate_gramatica_field(cls, value: str) -> str:
+        return validate_latin_gramatica(value)
 
     @model_validator(mode="after")
     def validate_entry_contract(self) -> "LatinMvpSourcePackEntry":
@@ -147,6 +259,8 @@ class LatinMvpSourcePackEntry(LatinSourceProvenance, LatinDidacticRationale):
             raise ValueError(f"item_key must be {expected_key} for sequence {self.sequence}")
         if not validate_latin_target_presence(self.target_form, self.latin_sentence, self.target_match_mode):
             raise ValueError("target_form must appear in latin_sentence using target_match_mode")
+        if self.morphology_evidence.lemma != self.lemma:
+            raise ValueError("morphology_evidence lemma must match entry lemma")
         return self
 
 
@@ -201,11 +315,16 @@ def load_latin_mvp_source_pack(path: Path | None = None) -> LatinMvpSourcePack:
 
 
 __all__ = [
+    "APPROVED_LATIN_CASE_LABELS",
+    "APPROVED_LATIN_GRAMATICA_TOKENS",
     "DEFAULT_LATIN_MVP_SOURCE_PACK_PATH",
     "LatinDidacticRationale",
+    "LatinGrammarReviewStatus",
+    "LatinMorphologyEvidence",
     "LatinMvpSourcePack",
     "LatinMvpSourcePackEntry",
     "LatinSourceProvenance",
     "load_latin_mvp_source_pack",
+    "validate_latin_gramatica",
     "validate_latin_target_presence",
 ]
