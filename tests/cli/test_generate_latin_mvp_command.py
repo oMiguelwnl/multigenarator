@@ -28,6 +28,9 @@ def test_generate_latin_mvp_prints_required_metadata() -> None:
     assert "grammar_gate_status=approved" in result.output
     assert "grammar_evidence_count=50" in result.output
     assert "gramatica_count=50" in result.output
+    assert "grammar_gate_status=approved" in result.output
+    assert "grammar_evidence_count=50" in result.output
+    assert "gramatica_count=50" in result.output
 
 
 def test_generate_latin_mvp_rejects_source_pack_version_override_mismatch() -> None:

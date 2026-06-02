@@ -883,6 +883,9 @@ def create_app(
         typer.echo(f"source_type_counts={json.dumps(result.source_type_counts, sort_keys=True)}")
         typer.echo(f"frequency_source_count={result.frequency_source_count}")
         typer.echo(f"didactic_sequence_summary={result.didactic_sequence_summary}")
+        typer.echo(f"grammar_gate_status={result.grammar_gate_status}")
+        typer.echo(f"grammar_evidence_count={result.grammar_evidence_count}")
+        typer.echo(f"gramatica_count={result.gramatica_count}")
 
     @cli.command("export")
     def export(
