@@ -22,7 +22,7 @@ v2.0 adds a separate Classical Latin generation path that produces a reviewed, r
 
 - [x] **Phase 22: Latin Mode Contracts and Isolation** - Users can start Classical Latin MVP generation through isolated contracts without breaking existing deck modes. (completed 2026-06-01)
 - [x] **Phase 23: Frozen 50-Card Source Pack and Sentence Sequence** - Users receive a reproducible first-50 Latin manifest with licensed sources, lemma frequency, and didactic ordering. (completed 2026-06-01)
-- [ ] **Phase 24: Morphology Evidence and Gramatica Gate** - Users receive reviewed Latin morphology and short standardized `Gramatica` notes that block unresolved ambiguity.
+- [x] **Phase 24: Morphology Evidence and Gramatica Gate** - Users receive reviewed Latin morphology and short standardized `Gramatica` notes that block unresolved ambiguity. (completed 2026-06-02)
 - [ ] **Phase 25: Latin Review Gates and Curated Records** - Users can approve, reject, and inspect curated Latin records before learner-ready export.
 - [ ] **Phase 26: Portuguese Translation Quality** - Users receive Portuguese lemma and sentence translations that match the chosen Latin context.
 - [ ] **Phase 27: Latin Audio Policy and Integrity** - Users receive approved playable Latin word and sentence audio with provider metadata and exact-text checks.
@@ -71,12 +71,12 @@ Plans:
   2. Every MVP card has a concise `Gramatica` field using approved short abbreviations such as `subst`, `adj`, `v`, `sg`, `pl`, `Suj`, `OD`, and `OI`.
   3. Final grammar labels use `Genitivus` plus the required case vocabulary: `Nominativus`, `Vocativus`, `Accusativus`, `Genitivus`, `Dativus`, and `Ablativus`.
   4. Cards with ambiguous or uncertain morphology cannot become learner-ready until the final grammar analysis is reviewed and resolved.
-**Plans:** 4 plans
+**Plans:** 4/4 plans complete
 Plans:
-- [ ] 24-01-PLAN.md — Define fail-closed morphology evidence and `Gramatica` validation contracts.
-- [ ] 24-02-PLAN.md — Add approved morphology evidence and standardized `Gramatica` to all 50 frozen Latin MVP entries.
-- [ ] 24-03-PLAN.md — Expose grammar readiness through the Latin MVP service and CLI summary.
-- [ ] 24-04-PLAN.md — Add scanner-readable Phase 24 grammar evidence and no-scope-creep checks.
+- [x] 24-01-PLAN.md — Define fail-closed morphology evidence and `Gramatica` validation contracts.
+- [x] 24-02-PLAN.md — Add approved morphology evidence and standardized `Gramatica` to all 50 frozen Latin MVP entries.
+- [x] 24-03-PLAN.md — Expose grammar readiness through the Latin MVP service and CLI summary.
+- [x] 24-04-PLAN.md — Add scanner-readable Phase 24 grammar evidence and no-scope-creep checks.
 
 ### Phase 25: Latin Review Gates and Curated Records
 **Goal**: Users can manage Classical Latin MVP cards through review states that protect source, translation, grammar, and audio readiness before final export.
@@ -140,7 +140,7 @@ Plans:
 |-------|-----------|----------------|--------|-----------|
 | 22. Latin Mode Contracts and Isolation | v2.0 | 3/3 | Complete   | 2026-06-01 |
 | 23. Frozen 50-Card Source Pack and Sentence Sequence | v2.0 | 4/4 | Complete   | 2026-06-01 |
-| 24. Morphology Evidence and Gramatica Gate | v2.0 | 0/TBD | Not started | - |
+| 24. Morphology Evidence and Gramatica Gate | v2.0 | 4/4 | Complete   | 2026-06-02 |
 | 25. Latin Review Gates and Curated Records | v2.0 | 0/TBD | Not started | - |
 | 26. Portuguese Translation Quality | v2.0 | 0/TBD | Not started | - |
 | 27. Latin Audio Policy and Integrity | v2.0 | 0/TBD | Not started | - |

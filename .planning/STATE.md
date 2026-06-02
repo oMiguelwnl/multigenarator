@@ -2,16 +2,16 @@
 gsd_state_version: 1.0
 milestone: v2.0
 milestone_name: Classical Latin MVP
-status: ready_to_plan
-stopped_at: Completed 23-04-PLAN.md
-last_updated: "2026-06-01T18:44:09.599Z"
-last_activity: 2026-06-01 - Completed Phase 23 frozen 50-card Latin source pack, manifest-backed CLI, and scanner-readable evidence.
+status: ready_to_execute
+stopped_at: Completed 24-04-PLAN.md
+last_updated: "2026-06-02T17:07:03.182Z"
+last_activity: 2026-06-02 - Completed Phase 24 morphology evidence, standardized Gramatica gate, service/CLI grammar readiness, and scanner-readable evidence.
 progress:
   total_phases: 7
-  completed_phases: 2
-  total_plans: 7
-  completed_plans: 7
-  percent: 29
+  completed_phases: 3
+  total_plans: 18
+  completed_plans: 11
+  percent: 61
 ---
 
 # Project State
@@ -21,25 +21,25 @@ progress:
 See: .planning/PROJECT.md (updated 2026-06-01)
 
 **Core value:** Generate reliable, high-quality Anki cards for real vocabulary the learner needs to study, with accurate definitions, examples, translations where appropriate, and audio.  
-**Current focus:** Phase 24: Morphology Evidence and Gramatica Gate.
+**Current focus:** Phase 25: Latin Review Gates and Curated Records.
 
 ## Current Position
 
-Phase: 24 of 28 (Morphology Evidence and Gramatica Gate)
-Plan: TBD in current phase
-Status: Ready to plan
-Last activity: 2026-06-01 - Completed Phase 23 frozen 50-card Latin source pack, manifest-backed CLI, and scanner-readable evidence.
+Phase: 25 of 28 (Latin Review Gates and Curated Records)
+Plan: 1 of 4
+Status: Ready to execute
+Last activity: 2026-06-02 - Completed Phase 24 morphology evidence, standardized Gramatica gate, service/CLI grammar readiness, and scanner-readable evidence.
 
-Progress: [███-------] 29%
+Progress: [██████░░░░] 61%
 
 ## Performance Metrics
 
 **Velocity:**
 
 - Total plans completed: 68 from shipped/previous milestones
-- v2.0 plans completed: 7
+- v2.0 plans completed: 11
 - Average duration: 7min for v2.0
-- Total v2.0 execution time: 0.82 hours
+- Total v2.0 execution time: 1.29 hours
 
 **By Phase:**
 
@@ -47,7 +47,7 @@ Progress: [███-------] 29%
 |-------|-------|-------|----------|
 | 22. Latin Mode Contracts and Isolation | 3 | 21min | 7min |
 | 23. Frozen 50-Card Source Pack and Sentence Sequence | 4 | 28min | 7min |
-| 24. Morphology Evidence and Gramatica Gate | 0 | TBD | N/A |
+| 24. Morphology Evidence and Gramatica Gate | 4 | 28min | 7min |
 | 25. Latin Review Gates and Curated Records | 0 | TBD | N/A |
 | 26. Portuguese Translation Quality | 0 | TBD | N/A |
 | 27. Latin Audio Policy and Integrity | 0 | TBD | N/A |
@@ -65,6 +65,10 @@ Progress: [███-------] 29%
 | Phase 23-frozen-50-card-source-pack-and-sentence-sequence P2 | 7min | 2 tasks | 2 files |
 | Phase 23-frozen-50-card-source-pack-and-sentence-sequence P3 | 7min | 2 tasks | 4 files |
 | Phase 23-frozen-50-card-source-pack-and-sentence-sequence P4 | 7min | 2 tasks | 1 files |
+| Phase 24-morphology-evidence-and-gramatica-gate P1 | 7min | 2 tasks | 2 files |
+| Phase 24-morphology-evidence-and-gramatica-gate P2 | 7min | 2 tasks | 2 files |
+| Phase 24-morphology-evidence-and-gramatica-gate P3 | 7min | 3 tasks | 4 files |
+| Phase 24-morphology-evidence-and-gramatica-gate P4 | 7min | 2 tasks | 1 files |
 
 ## Accumulated Context
 
@@ -86,10 +90,17 @@ Full decision history is in `.planning/PROJECT.md`. Current v2.0 decisions affec
 - [Phase 23-frozen-50-card-source-pack-and-sentence-sequence]: The first-50 Latin MVP pack uses DCC Latin Core Vocabulary rank/source attribution plus truthfully typed project-authored/reference/original sentence provenance.
 - [Phase 23-frozen-50-card-source-pack-and-sentence-sequence]: generate-latin-mvp remains isolated and now reports manifest-backed metadata rather than synthetic range-only output.
 - [Phase 23-frozen-50-card-source-pack-and-sentence-sequence]: Phase 23 evidence excludes grammar, Portuguese translation, audio, and export fields to preserve later-phase boundaries.
+- [Phase 24-morphology-evidence-and-gramatica-gate]: Latin grammar evidence fails closed by accepting only approved grammar_review_status in the source-pack contract.
+- [Phase 24-morphology-evidence-and-gramatica-gate]: The frozen Latin MVP asset stores target-form-specific morphology evidence directly beside each source-pack entry.
+- [Phase 24-morphology-evidence-and-gramatica-gate]: Latin MVP grammar readiness is derived from validated manifest entries, not caller-provided flags.
+- [Phase 24-morphology-evidence-and-gramatica-gate]: Phase 24 evidence maps exactly GRAM-01 through GRAM-04 and keeps later translation/audio/export scope absent.
+- [Phase 24-morphology-evidence-and-gramatica-gate]: Morphology evidence must be approved at loader time; unresolved and ambiguous statuses fail closed.
+- [Phase 24-morphology-evidence-and-gramatica-gate]: Gramatica accepts concise tokens only, including Genitivus and short Portuguese-facing abbreviations.
+- [Phase 24-morphology-evidence-and-gramatica-gate]: CLI and manifest JSON expose aggregate grammar counts and labels, not per-entry evidence notes.
 
 ### Pending Todos
 
-- Plan Phase 24 with `/gsd-plan-phase 24`.
+- Execute Phase 25 with `/gsd-execute-phase 25`.
 - Repair broad-suite drift before treating full `python -m pytest -q` as authoritative again.
 
 ### Blockers/Concerns
@@ -112,6 +123,6 @@ Items acknowledged and carried forward:
 
 ## Session Continuity
 
-Last session: 2026-06-01T18:44:09.590Z
-Stopped at: Completed 23-04-PLAN.md
+Last session: 2026-06-02T17:07:03.172Z
+Stopped at: Completed 24-04-PLAN.md
 Resume file: None

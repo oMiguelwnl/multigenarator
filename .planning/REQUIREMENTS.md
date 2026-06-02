@@ -28,10 +28,10 @@ Requirements for the Classical Latin MVP. Each maps to roadmap phases.
 
 ### Latin Grammar
 
-- [ ] **GRAM-01**: Every Latin MVP card has morphology evidence for the target form, including lemma, part of speech, case or verbal analysis where applicable, number, and syntactic function.
-- [ ] **GRAM-02**: Every Latin MVP card has a short standardized `Gramatica` field using approved abbreviations such as `subst`, `adj`, `v`, `sg`, `pl`, `Suj`, `OD`, and `OI`.
-- [ ] **GRAM-03**: Final Latin grammar labels use `Genitivus` and the required case vocabulary: `Nominativus`, `Vocativus`, `Accusativus`, `Genitivus`, `Dativus`, and `Ablativus`.
-- [ ] **GRAM-04**: Ambiguous or uncertain Latin morphology cannot be exported as learner-ready unless the card is reviewed and approved with the final grammar analysis resolved.
+- [x] **GRAM-01**: Every Latin MVP card has morphology evidence for the target form, including lemma, part of speech, case or verbal analysis where applicable, number, and syntactic function.
+- [x] **GRAM-02**: Every Latin MVP card has a short standardized `Gramatica` field using approved abbreviations such as `subst`, `adj`, `v`, `sg`, `pl`, `Suj`, `OD`, and `OI`.
+- [x] **GRAM-03**: Final Latin grammar labels use `Genitivus` and the required case vocabulary: `Nominativus`, `Vocativus`, `Accusativus`, `Genitivus`, `Dativus`, and `Ablativus`.
+- [x] **GRAM-04**: Ambiguous or uncertain Latin morphology cannot be exported as learner-ready unless the card is reviewed and approved with the final grammar analysis resolved.
 
 ### Portuguese Text
 
@@ -112,10 +112,10 @@ Which phases cover which requirements. Updated during roadmap creation.
 | SRC-02 | Phase 23 | Complete |
 | SENT-01 | Phase 23 | Complete |
 | SENT-02 | Phase 23 | Complete |
-| GRAM-01 | Phase 24 | Pending |
-| GRAM-02 | Phase 24 | Pending |
-| GRAM-03 | Phase 24 | Pending |
-| GRAM-04 | Phase 24 | Pending |
+| GRAM-01 | Phase 24 | Complete |
+| GRAM-02 | Phase 24 | Complete |
+| GRAM-03 | Phase 24 | Complete |
+| GRAM-04 | Phase 24 | Complete |
 | PT-01 | Phase 26 | Pending |
 | PT-02 | Phase 26 | Pending |
 | PT-03 | Phase 26 | Pending |
