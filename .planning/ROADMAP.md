@@ -87,7 +87,12 @@ Plans:
   2. User can export learner-ready Latin MVP cards only when all required review gates are `approved`.
   3. User can inspect rejection, replacement, and uncertainty reasons while preserving original source and frequency provenance.
   4. Approved curated fields are protected from accidental provider or regeneration overwrites.
-**Plans**: TBD
+**Plans:** 4 plans
+Plans:
+- [ ] 25-01-PLAN.md — Define Latin review gate contracts and export-readiness validation.
+- [ ] 25-02-PLAN.md — Commit loader-validated 50-record Latin MVP curation asset.
+- [ ] 25-03-PLAN.md — Add CLI inspection/update commands with approved-field overwrite protection.
+- [ ] 25-04-PLAN.md — Add scanner-readable review-gate evidence and phase-boundary checks.
 
 ### Phase 26: Portuguese Translation Quality
 **Goal**: Users receive Portuguese learner-facing text that matches the selected Latin sense and sentence context without English leakage or dictionary-only mismatches.
