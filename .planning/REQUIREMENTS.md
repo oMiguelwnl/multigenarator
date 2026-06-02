@@ -41,9 +41,9 @@ Requirements for the Classical Latin MVP. Each maps to roadmap phases.
 
 ### Latin Review
 
-- [ ] **REV-01**: Latin MVP cards support `needs_review`, `approved`, and `rejected` review states for source, translation, grammar, and audio readiness.
-- [ ] **REV-02**: User can export the final learner-ready Latin MVP only from cards whose required review gates are `approved`.
-- [ ] **REV-03**: User can inspect rejection, replacement, and uncertainty reasons for Latin MVP cards without losing the original source and frequency provenance.
+- [x] **REV-01**: Latin MVP cards support `needs_review`, `approved`, and `rejected` review states for source, translation, grammar, and audio readiness.
+- [x] **REV-02**: User can export the final learner-ready Latin MVP only from cards whose required review gates are `approved`.
+- [x] **REV-03**: User can inspect rejection, replacement, and uncertainty reasons for Latin MVP cards without losing the original source and frequency provenance.
 
 ### Latin Audio
 
@@ -119,9 +119,9 @@ Which phases cover which requirements. Updated during roadmap creation.
 | PT-01 | Phase 26 | Pending |
 | PT-02 | Phase 26 | Pending |
 | PT-03 | Phase 26 | Pending |
-| REV-01 | Phase 25 | Pending |
-| REV-02 | Phase 25 | Pending |
-| REV-03 | Phase 25 | Pending |
+| REV-01 | Phase 25 | Complete |
+| REV-02 | Phase 25 | Complete |
+| REV-03 | Phase 25 | Complete |
 | AUD-01 | Phase 27 | Pending |
 | AUD-02 | Phase 27 | Pending |
 | AUD-03 | Phase 27 | Pending |

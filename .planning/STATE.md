@@ -1,17 +1,17 @@
 ---
 gsd_state_version: 1.0
-milestone: v2.0
-milestone_name: Classical Latin MVP
-status: ready_to_execute
-stopped_at: Completed 24-04-PLAN.md
-last_updated: "2026-06-02T17:07:03.182Z"
-last_activity: 2026-06-02 - Completed Phase 24 morphology evidence, standardized Gramatica gate, service/CLI grammar readiness, and scanner-readable evidence.
+milestone: v1.0
+milestone_name: milestone
+status: executing
+stopped_at: Completed 25-01-PLAN.md
+last_updated: "2026-06-02T17:11:03.033Z"
+last_activity: 2026-06-02
 progress:
   total_phases: 7
   completed_phases: 3
   total_plans: 18
-  completed_plans: 11
-  percent: 61
+  completed_plans: 12
+  percent: 67
 ---
 
 # Project State
@@ -26,9 +26,9 @@ See: .planning/PROJECT.md (updated 2026-06-01)
 ## Current Position
 
 Phase: 25 of 28 (Latin Review Gates and Curated Records)
-Plan: 1 of 4
+Plan: 2 of 4
 Status: Ready to execute
-Last activity: 2026-06-02 - Completed Phase 24 morphology evidence, standardized Gramatica gate, service/CLI grammar readiness, and scanner-readable evidence.
+Last activity: 2026-06-02
 
 Progress: [██████░░░░] 61%
 
@@ -69,6 +69,7 @@ Progress: [██████░░░░] 61%
 | Phase 24-morphology-evidence-and-gramatica-gate P2 | 7min | 2 tasks | 2 files |
 | Phase 24-morphology-evidence-and-gramatica-gate P3 | 7min | 3 tasks | 4 files |
 | Phase 24-morphology-evidence-and-gramatica-gate P4 | 7min | 2 tasks | 1 files |
+| Phase 25-latin-review-gates-and-curated-records P01 | 7min | 2 tasks | 2 files |
 
 ## Accumulated Context
 
@@ -97,6 +98,8 @@ Full decision history is in `.planning/PROJECT.md`. Current v2.0 decisions affec
 - [Phase 24-morphology-evidence-and-gramatica-gate]: Morphology evidence must be approved at loader time; unresolved and ambiguous statuses fail closed.
 - [Phase 24-morphology-evidence-and-gramatica-gate]: Gramatica accepts concise tokens only, including Genitivus and short Portuguese-facing abbreviations.
 - [Phase 24-morphology-evidence-and-gramatica-gate]: CLI and manifest JSON expose aggregate grammar counts and labels, not per-entry evidence notes.
+- [Phase 25-latin-review-gates-and-curated-records]: Latin export readiness is centralized in latin_review.py and requires all four gates to be approved.
+- [Phase 25-latin-review-gates-and-curated-records]: Blocking review states require explicit reasons so rejection and uncertainty context is preserved.
 
 ### Pending Todos
 
@@ -123,6 +126,6 @@ Items acknowledged and carried forward:
 
 ## Session Continuity
 
-Last session: 2026-06-02T17:07:03.172Z
-Stopped at: Completed 24-04-PLAN.md
+Last session: 2026-06-02T17:11:03.016Z
+Stopped at: Completed 25-01-PLAN.md
 Resume file: None
