@@ -39,6 +39,39 @@ def test_latin_mvp_start_exposes_manifest_backed_summary_fields() -> None:
     assert "50 entries" in result.didactic_sequence_summary
 
 
+def test_latin_mvp_start_exposes_approved_grammar_readiness_fields() -> None:
+    result = LatinMvpGenerationService().start(LatinGenerationRequest())
+
+    assert result.grammar_gate_status == "approved"
+    assert result.grammar_evidence_count == 50
+    assert result.gramatica_count == 50
+    assert result.required_case_labels == [
+        "Nominativus",
+        "Vocativus",
+        "Accusativus",
+        "Genitivus",
+        "Dativus",
+        "Ablativus",
+    ]
+
+
+def test_latin_mvp_manifest_summary_includes_grammar_readiness_fields() -> None:
+    summary = LatinMvpGenerationService().start(LatinGenerationRequest()).manifest_summary()
+
+    assert summary["grammar_gate_status"] == "approved"
+    assert summary["grammar_evidence_count"] == 50
+    assert summary["gramatica_count"] == 50
+    assert "Genitivus" in summary["required_case_labels"]
+
+
+def test_latin_mvp_start_cannot_approve_unresolved_grammar_loader_data() -> None:
+    def unresolved_loader(_path):
+        raise ValueError("Latin MVP source pack grammar evidence unresolved")
+
+    with pytest.raises(ValueError, match="grammar"):
+        LatinMvpGenerationService(source_pack_loader=unresolved_loader).start(LatinGenerationRequest())
+
+
 def test_latin_mvp_source_pack_version_mismatch_raises_value_error() -> None:
     with pytest.raises(ValueError, match="source_pack_version"):
         LatinMvpGenerationService().start(LatinGenerationRequest(source_pack_version="custom-pack"))
