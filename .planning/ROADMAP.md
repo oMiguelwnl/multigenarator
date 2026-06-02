@@ -71,7 +71,12 @@ Plans:
   2. Every MVP card has a concise `Gramatica` field using approved short abbreviations such as `subst`, `adj`, `v`, `sg`, `pl`, `Suj`, `OD`, and `OI`.
   3. Final grammar labels use `Genitivus` plus the required case vocabulary: `Nominativus`, `Vocativus`, `Accusativus`, `Genitivus`, `Dativus`, and `Ablativus`.
   4. Cards with ambiguous or uncertain morphology cannot become learner-ready until the final grammar analysis is reviewed and resolved.
-**Plans**: TBD
+**Plans:** 4 plans
+Plans:
+- [ ] 24-01-PLAN.md — Define fail-closed morphology evidence and `Gramatica` validation contracts.
+- [ ] 24-02-PLAN.md — Add approved morphology evidence and standardized `Gramatica` to all 50 frozen Latin MVP entries.
+- [ ] 24-03-PLAN.md — Expose grammar readiness through the Latin MVP service and CLI summary.
+- [ ] 24-04-PLAN.md — Add scanner-readable Phase 24 grammar evidence and no-scope-creep checks.
 
 ### Phase 25: Latin Review Gates and Curated Records
 **Goal**: Users can manage Classical Latin MVP cards through review states that protect source, translation, grammar, and audio readiness before final export.
