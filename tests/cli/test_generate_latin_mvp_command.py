@@ -25,6 +25,9 @@ def test_generate_latin_mvp_prints_required_metadata() -> None:
     assert "last_item_key=latin-mvp-0050" in result.output
     assert "license_gate_status=approved" in result.output
     assert "source_type_counts=" in result.output
+    assert "grammar_gate_status=approved" in result.output
+    assert "grammar_evidence_count=50" in result.output
+    assert "gramatica_count=50" in result.output
 
 
 def test_generate_latin_mvp_rejects_source_pack_version_override_mismatch() -> None:
@@ -44,6 +47,9 @@ def test_generate_latin_mvp_manifest_json_prints_public_summary() -> None:
     assert '"source_pack_version": "latin-mvp-50-v1"' in result.output
     assert '"first_item_key": "latin-mvp-0001"' in result.output
     assert '"last_item_key": "latin-mvp-0050"' in result.output
+    assert '"grammar_gate_status": "approved"' in result.output
+    assert '"grammar_evidence_count": 50' in result.output
+    assert '"gramatica_count": 50' in result.output
     assert "C:\\" not in result.output
     assert "/Users/" not in result.output
 
