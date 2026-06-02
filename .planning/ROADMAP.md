@@ -103,7 +103,11 @@ Plans:
   2. Every MVP card has a Portuguese sentence translation corresponding to the chosen Latin sentence and target-word context.
   3. Portuguese learner-facing text is reviewed or validated to prevent English leakage, context-missing dictionary glosses, and translations that contradict the Latin sentence.
   4. User can see translation QA evidence before cards are approved for learner-ready export.
-**Plans**: TBD
+**Plans:** 3 plans
+Plans:
+- [ ] 26-01-PLAN.md — Define Portuguese translation QA contracts and deterministic validator.
+- [ ] 26-02-PLAN.md — Commit and validate the 50-entry Portuguese translation asset.
+- [ ] 26-03-PLAN.md — Wire Portuguese QA inspection and scanner-readable Phase 26 evidence.
 
 ### Phase 27: Latin Audio Policy and Integrity
 **Goal**: Users receive approved playable word and sentence audio for every final Latin MVP card, with provider metadata, fallback reasons, and export-blocking integrity checks.
