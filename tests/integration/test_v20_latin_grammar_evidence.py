@@ -103,3 +103,47 @@ def test_gram_04_service_reports_approved_gate_only_after_loader_validation() ->
 
     with pytest.raises(ValueError, match="grammar"):
         LatinMvpGenerationService(source_pack_loader=failing_loader).start(LatinGenerationRequest())
+
+
+def test_phase_24_asset_did_not_add_later_phase_or_scale_fields() -> None:
+    """No-scope-creep: grammar evidence did not add translation/audio/export/review payloads."""
+
+    payload = _asset_payload()
+    forbidden_entry_fields = {
+        "short_translation_pt",
+        "sentence_translation_pt",
+        "translation",
+        "word_audio",
+        "sentence_audio",
+        "audio_asset",
+        "apkg",
+        "csv",
+        "tsv",
+        "Image",
+        "image",
+        "Classe",
+    }
+
+    assert payload["card_count"] == 50
+    assert len(payload["entries"]) == 50
+    assert all(forbidden_entry_fields.isdisjoint(entry) for entry in payload["entries"])
+    serialized = json.dumps(payload, ensure_ascii=False).casefold()
+    assert "300-card" not in serialized
+    assert "1000-card" not in serialized
+    assert "3000-card" not in serialized
+
+
+def test_phase_23_source_and_license_keys_remain_present_after_grammar_additions() -> None:
+    """Compatibility: source provenance and license evidence survive grammar enrichment."""
+
+    pack = load_latin_mvp_source_pack()
+
+    assert {entry.license_gate for entry in pack.entries} == {"approved"}
+    assert all(entry.frequency_source == "DCC Latin Core Vocabulary" for entry in pack.entries)
+    assert all(entry.citation and entry.work_reference and entry.source_url_or_id for entry in pack.entries)
+    assert all(entry.inclusion_rationale and entry.didactic_order_rationale for entry in pack.entries)
+    assert {entry.source_type for entry in pack.entries} <= {
+        "original_classical",
+        "adapted_didactic",
+        "reference_example",
+    }
