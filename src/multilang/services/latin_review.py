@@ -5,6 +5,7 @@ from __future__ import annotations
 from collections import Counter
 import json
 from pathlib import Path
+from typing import cast
 from typing import Literal
 
 from pydantic import BaseModel, Field, field_validator, model_validator
@@ -201,6 +202,65 @@ def load_latin_curated_records(
     return records
 
 
+def write_latin_curated_records(records: list[LatinCuratedRecord], path: Path) -> None:
+    """Write curated Latin review records as stable auditable JSON."""
+
+    path.parent.mkdir(parents=True, exist_ok=True)
+    payload = [record.model_dump(mode="json") for record in records]
+    path.write_text(json.dumps(payload, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+
+
+def _gate_field_name(gate: str) -> str:
+    valid_gate_names = {gate_name for _, gate_name in _GATE_FIELDS}
+    if gate not in valid_gate_names:
+        raise ValueError(f"invalid Latin review gate: {gate}")
+    return f"{gate}_gate"
+
+
+def update_latin_review_gate(
+    records: list[LatinCuratedRecord],
+    *,
+    item_key: str,
+    gate: str,
+    status: str,
+    reason: str | None = None,
+    reviewed_by: str | None = None,
+    reviewed_at: str | None = None,
+    force: bool = False,
+) -> list[LatinCuratedRecord]:
+    """Return records with one gate updated while protecting approved states by default."""
+
+    gate_field = _gate_field_name(gate)
+    if status not in LatinReviewStatus.__args__:
+        raise ValueError(f"invalid Latin review status: {status}")
+    updated_gate = LatinReviewGate(
+        status=cast(LatinReviewStatus, status),
+        reason=reason,
+        reviewed_by=reviewed_by,
+        reviewed_at=reviewed_at,
+    )
+
+    updated_records: list[LatinCuratedRecord] = []
+    matched = False
+    for record in records:
+        if record.item_key != item_key:
+            updated_records.append(record)
+            continue
+
+        matched = True
+        current_gate = getattr(record, gate_field)
+        if current_gate.status == "approved" and not force:
+            if current_gate.status != updated_gate.status or current_gate.reason != updated_gate.reason:
+                raise ValueError(
+                    f"approved gate overwrite requires force item_key={item_key} gate={gate}"
+                )
+        updated_records.append(record.model_copy(update={gate_field: updated_gate}))
+
+    if not matched:
+        raise ValueError(f"unknown Latin curated item_key: {item_key}")
+    return updated_records
+
+
 __all__ = [
     "LatinReviewStatus",
     "LatinReviewGateName",
@@ -209,6 +269,8 @@ __all__ = [
     "LatinCuratedRecord",
     "LatinReviewSummary",
     "load_latin_curated_records",
+    "update_latin_review_gate",
+    "write_latin_curated_records",
     "summarize_latin_review_records",
     "assert_latin_records_export_ready",
 ]

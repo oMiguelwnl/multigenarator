@@ -28,6 +28,13 @@ from multilang.services.deck_audit_reports import write_deck_audit_reports
 from multilang.services.lexical_lookup import LexicalLookup, normalize_lexical_key
 from multilang.services.job_summary import JobLifecycleSummary, JobSummaryBuilder
 from multilang.services.latin_mvp import LatinMvpGenerationService
+from multilang.services.latin_review import (
+    DEFAULT_LATIN_MVP_CURATION_PATH,
+    load_latin_curated_records,
+    summarize_latin_review_records,
+    update_latin_review_gate,
+    write_latin_curated_records,
+)
 from multilang.services.russian_phoneme_deck import (
     DEFAULT_POLISH_PHONEME_DECK_NAME,
     DEFAULT_RUSSIAN_PHONEME_DECK_NAME,
@@ -889,6 +896,76 @@ def create_app(
         typer.echo(f"grammar_gate_status={result.grammar_gate_status}")
         typer.echo(f"grammar_evidence_count={result.grammar_evidence_count}")
         typer.echo(f"gramatica_count={result.gramatica_count}")
+
+    @cli.command("review-latin-mvp")
+    def review_latin_mvp(
+        curation_file: Annotated[
+            Path,
+            typer.Option("--curation-file", exists=False, dir_okay=False, help="Path to the Latin curation JSON."),
+        ] = DEFAULT_LATIN_MVP_CURATION_PATH,
+        summary: Annotated[
+            bool,
+            typer.Option("--summary", help="Print Latin review gate counts."),
+        ] = False,
+        item_key: Annotated[
+            str | None,
+            typer.Option("--item-key", help="Curated record item key to update."),
+        ] = None,
+        gate: Annotated[
+            str | None,
+            typer.Option("--gate", help="Gate to update: source, translation, grammar, or audio."),
+        ] = None,
+        status: Annotated[
+            str | None,
+            typer.Option("--status", help="New status: needs_review, approved, or rejected."),
+        ] = None,
+        reason: Annotated[
+            str | None,
+            typer.Option("--reason", help="Review reason; required for blocking states."),
+        ] = None,
+        reviewed_by: Annotated[
+            str | None,
+            typer.Option("--reviewed-by", help="Optional reviewer identifier."),
+        ] = None,
+        reviewed_at: Annotated[
+            str | None,
+            typer.Option("--reviewed-at", help="Optional review timestamp."),
+        ] = None,
+        force: Annotated[
+            bool,
+            typer.Option("--force", help="Allow overwriting an approved gate."),
+        ] = False,
+    ) -> None:
+        try:
+            records = load_latin_curated_records(curation_file)
+            if summary:
+                review_summary = summarize_latin_review_records(records)
+                typer.echo(f"total_records={review_summary.total_records}")
+                typer.echo(f"learner_ready_records={review_summary.learner_ready_records}")
+                typer.echo(f"blocked_records={review_summary.blocked_records}")
+                typer.echo(f"gate_counts={json.dumps(review_summary.gate_counts, sort_keys=True)}")
+                return
+
+            missing = [name for name, value in (("item_key", item_key), ("gate", gate), ("status", status)) if value is None]
+            if missing:
+                raise ValueError("review-latin-mvp update requires --item-key, --gate, and --status")
+            records = update_latin_review_gate(
+                records,
+                item_key=item_key or "",
+                gate=gate or "",
+                status=status or "",
+                reason=reason,
+                reviewed_by=reviewed_by,
+                reviewed_at=reviewed_at,
+                force=force,
+            )
+            write_latin_curated_records(records, curation_file)
+            typer.echo(f"updated_item_key={item_key}")
+            typer.echo(f"updated_gate={gate}")
+            typer.echo(f"updated_status={status}")
+        except ValueError as exc:
+            typer.echo(str(exc))
+            raise typer.Exit(code=1) from exc
 
     @cli.command("export")
     def export(
