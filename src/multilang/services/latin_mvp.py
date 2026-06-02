@@ -9,6 +9,7 @@ from pydantic import BaseModel, Field
 
 from multilang.domain.latin import LatinDeckMetadata, LatinGenerationRequest
 from multilang.services.latin_source_pack import (
+    APPROVED_LATIN_CASE_LABELS,
     DEFAULT_LATIN_MVP_SOURCE_PACK_PATH,
     LatinMvpSourcePack,
     load_latin_mvp_source_pack,
@@ -30,6 +31,10 @@ class LatinMvpStartResult(BaseModel):
     source_type_counts: dict[str, int] = Field(default_factory=dict)
     frequency_source_count: int
     didactic_sequence_summary: str
+    grammar_gate_status: str
+    grammar_evidence_count: int
+    gramatica_count: int
+    required_case_labels: list[str] = Field(default_factory=list)
 
     def manifest_summary(self) -> dict[str, object]:
         """Return a scanner-friendly public summary of the loaded source pack."""
@@ -48,6 +53,10 @@ class LatinMvpStartResult(BaseModel):
             "source_type_counts": self.source_type_counts,
             "frequency_source_count": self.frequency_source_count,
             "didactic_sequence_summary": self.didactic_sequence_summary,
+            "grammar_gate_status": self.grammar_gate_status,
+            "grammar_evidence_count": self.grammar_evidence_count,
+            "gramatica_count": self.gramatica_count,
+            "required_case_labels": self.required_case_labels,
         }
 
 
@@ -76,6 +85,15 @@ class LatinMvpGenerationService:
         for entry in pack.entries:
             source_type_counts[entry.source_type] = source_type_counts.get(entry.source_type, 0) + 1
         license_gate_status = "approved" if all(entry.license_gate == "approved" for entry in pack.entries) else "blocked"
+        grammar_evidence_count = sum(
+            1 for entry in pack.entries if entry.morphology_evidence.grammar_review_status == "approved"
+        )
+        gramatica_count = sum(1 for entry in pack.entries if bool(entry.gramatica.strip()))
+        grammar_gate_status = (
+            "approved"
+            if grammar_evidence_count == len(pack.entries) == gramatica_count == metadata.card_count
+            else "blocked"
+        )
         return LatinMvpStartResult(
             metadata=metadata,
             source_type=request.source_type,
@@ -90,6 +108,10 @@ class LatinMvpGenerationService:
                 f"50 entries loaded from {pack.source_pack_version}; didactic sequence preserves frequency ranks "
                 "while ordering clear beginner contexts first."
             ),
+            grammar_gate_status=grammar_gate_status,
+            grammar_evidence_count=grammar_evidence_count,
+            gramatica_count=gramatica_count,
+            required_case_labels=list(APPROVED_LATIN_CASE_LABELS),
         )
 
 
