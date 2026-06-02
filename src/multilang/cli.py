@@ -886,6 +886,9 @@ def create_app(
         typer.echo(f"grammar_gate_status={result.grammar_gate_status}")
         typer.echo(f"grammar_evidence_count={result.grammar_evidence_count}")
         typer.echo(f"gramatica_count={result.gramatica_count}")
+        typer.echo(f"grammar_gate_status={result.grammar_gate_status}")
+        typer.echo(f"grammar_evidence_count={result.grammar_evidence_count}")
+        typer.echo(f"gramatica_count={result.gramatica_count}")
 
     @cli.command("export")
     def export(
