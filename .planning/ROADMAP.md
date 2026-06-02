@@ -23,7 +23,7 @@ v2.0 adds a separate Classical Latin generation path that produces a reviewed, r
 - [x] **Phase 22: Latin Mode Contracts and Isolation** - Users can start Classical Latin MVP generation through isolated contracts without breaking existing deck modes. (completed 2026-06-01)
 - [x] **Phase 23: Frozen 50-Card Source Pack and Sentence Sequence** - Users receive a reproducible first-50 Latin manifest with licensed sources, lemma frequency, and didactic ordering. (completed 2026-06-01)
 - [x] **Phase 24: Morphology Evidence and Gramatica Gate** - Users receive reviewed Latin morphology and short standardized `Gramatica` notes that block unresolved ambiguity. (completed 2026-06-02)
-- [ ] **Phase 25: Latin Review Gates and Curated Records** - Users can approve, reject, and inspect curated Latin records before learner-ready export.
+- [x] **Phase 25: Latin Review Gates and Curated Records** - Users can approve, reject, and inspect curated Latin records before learner-ready export. (completed 2026-06-02)
 - [ ] **Phase 26: Portuguese Translation Quality** - Users receive Portuguese lemma and sentence translations that match the chosen Latin context.
 - [ ] **Phase 27: Latin Audio Policy and Integrity** - Users receive approved playable Latin word and sentence audio with provider metadata and exact-text checks.
 - [ ] **Phase 28: Latin Export and Milestone Evidence** - Users can export approved Latin MVP cards and inspect evidence proving Latin coverage and existing-mode safety.
@@ -87,12 +87,12 @@ Plans:
   2. User can export learner-ready Latin MVP cards only when all required review gates are `approved`.
   3. User can inspect rejection, replacement, and uncertainty reasons while preserving original source and frequency provenance.
   4. Approved curated fields are protected from accidental provider or regeneration overwrites.
-**Plans:** 3/4 plans executed
+**Plans:** 4/4 plans complete
 Plans:
 - [x] 25-01-PLAN.md — Define Latin review gate contracts and export-readiness validation.
 - [x] 25-02-PLAN.md — Commit loader-validated 50-record Latin MVP curation asset.
 - [x] 25-03-PLAN.md — Add CLI inspection/update commands with approved-field overwrite protection.
-- [ ] 25-04-PLAN.md — Add scanner-readable review-gate evidence and phase-boundary checks.
+- [x] 25-04-PLAN.md — Add scanner-readable review-gate evidence and phase-boundary checks.
 
 ### Phase 26: Portuguese Translation Quality
 **Goal**: Users receive Portuguese learner-facing text that matches the selected Latin sense and sentence context without English leakage or dictionary-only mismatches.
@@ -141,7 +141,7 @@ Plans:
 | 22. Latin Mode Contracts and Isolation | v2.0 | 3/3 | Complete   | 2026-06-01 |
 | 23. Frozen 50-Card Source Pack and Sentence Sequence | v2.0 | 4/4 | Complete   | 2026-06-01 |
 | 24. Morphology Evidence and Gramatica Gate | v2.0 | 4/4 | Complete   | 2026-06-02 |
-| 25. Latin Review Gates and Curated Records | v2.0 | 3/4 | In Progress|  |
+| 25. Latin Review Gates and Curated Records | v2.0 | 4/4 | Complete   | 2026-06-02 |
 | 26. Portuguese Translation Quality | v2.0 | 0/TBD | Not started | - |
 | 27. Latin Audio Policy and Integrity | v2.0 | 0/TBD | Not started | - |
 | 28. Latin Export and Milestone Evidence | v2.0 | 0/TBD | Not started | - |
