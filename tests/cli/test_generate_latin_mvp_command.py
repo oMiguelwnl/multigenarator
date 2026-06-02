@@ -2,10 +2,15 @@
 
 from __future__ import annotations
 
+import json
+from pathlib import Path
+
+import pytest
 from typer.testing import CliRunner
 
 from multilang.cli import create_app
 from multilang.domain.latin import LatinGenerationRequest
+from multilang.services.latin_review import load_latin_curated_records, update_latin_review_gate, write_latin_curated_records
 from multilang.services.latin_mvp import LatinMvpGenerationService
 
 runner = CliRunner()
@@ -90,3 +95,133 @@ def test_existing_generate_command_rejects_latin_mvp_source_option() -> None:
 
     assert result.exit_code != 0
     assert "--source must be one of: frequency, word-list, highlights" in result.output
+
+
+def test_update_latin_review_gate_changes_only_selected_gate() -> None:
+    records = load_latin_curated_records()
+    updated = update_latin_review_gate(
+        records,
+        item_key="latin-mvp-0001",
+        gate="grammar",
+        status="approved",
+        reason="resolved_by_phase_24",
+        force=True,
+    )
+
+    original = records[0]
+    changed = updated[0]
+    assert changed.grammar_gate.status == "approved"
+    assert changed.grammar_gate.reason == "resolved_by_phase_24"
+    assert changed.source_gate == original.source_gate
+    assert changed.translation_gate == original.translation_gate
+    assert changed.audio_gate == original.audio_gate
+    assert records[0].grammar_gate.reason is None
+
+
+def test_update_latin_review_gate_protects_approved_gate_without_force() -> None:
+    records = load_latin_curated_records()
+
+    with pytest.raises(ValueError, match="approved gate overwrite requires force"):
+        update_latin_review_gate(
+            records,
+            item_key="latin-mvp-0001",
+            gate="source",
+            status="rejected",
+            reason="changed mind",
+        )
+
+    assert records[0].source_gate.status == "approved"
+
+
+def test_update_latin_review_gate_requires_reason_for_blocking_statuses() -> None:
+    records = load_latin_curated_records()
+
+    with pytest.raises(ValueError, match="reason"):
+        update_latin_review_gate(records, item_key="latin-mvp-0001", gate="translation", status="rejected")
+
+    updated = update_latin_review_gate(
+        records,
+        item_key="latin-mvp-0001",
+        gate="translation",
+        status="approved",
+        reviewed_by="reviewer@example.test",
+        reviewed_at="2026-06-02T17:30:00Z",
+    )
+    assert updated[0].translation_gate.status == "approved"
+    assert updated[0].translation_gate.reviewed_by == "reviewer@example.test"
+
+
+def test_write_latin_curated_records_round_trips_json(tmp_path: Path) -> None:
+    output_path = tmp_path / "curation.json"
+    records = load_latin_curated_records()
+
+    write_latin_curated_records(records, output_path)
+
+    payload = json.loads(output_path.read_text(encoding="utf-8"))
+    assert payload[0]["item_key"] == "latin-mvp-0001"
+    assert payload[-1]["item_key"] == "latin-mvp-0050"
+
+
+def test_review_latin_mvp_summary_prints_gate_counts() -> None:
+    result = runner.invoke(create_app(), ["review-latin-mvp", "--summary"])
+
+    assert result.exit_code == 0
+    assert "total_records=50" in result.output
+    assert "learner_ready_records=0" in result.output
+    assert '"translation": {"approved": 0, "needs_review": 50, "rejected": 0}' in result.output
+    assert '"audio": {"approved": 0, "needs_review": 50, "rejected": 0}' in result.output
+
+
+def test_review_latin_mvp_update_writes_file(tmp_path: Path) -> None:
+    curation_file = tmp_path / "curation.json"
+    write_latin_curated_records(load_latin_curated_records(), curation_file)
+
+    result = runner.invoke(
+        create_app(),
+        [
+            "review-latin-mvp",
+            "--curation-file",
+            str(curation_file),
+            "--item-key",
+            "latin-mvp-0001",
+            "--gate",
+            "grammar",
+            "--status",
+            "approved",
+            "--reason",
+            "resolved_by_phase_24",
+            "--force",
+        ],
+    )
+
+    assert result.exit_code == 0
+    assert "updated_item_key=latin-mvp-0001" in result.output
+    assert "updated_gate=grammar" in result.output
+    assert "updated_status=approved" in result.output
+    updated = load_latin_curated_records(curation_file)
+    assert updated[0].grammar_gate.reason == "resolved_by_phase_24"
+
+
+def test_review_latin_mvp_update_protects_approved_gate_without_force(tmp_path: Path) -> None:
+    curation_file = tmp_path / "curation.json"
+    write_latin_curated_records(load_latin_curated_records(), curation_file)
+
+    result = runner.invoke(
+        create_app(),
+        [
+            "review-latin-mvp",
+            "--curation-file",
+            str(curation_file),
+            "--item-key",
+            "latin-mvp-0001",
+            "--gate",
+            "source",
+            "--status",
+            "rejected",
+            "--reason",
+            "not acceptable",
+        ],
+    )
+
+    assert result.exit_code != 0
+    assert "approved gate overwrite requires force" in result.output
