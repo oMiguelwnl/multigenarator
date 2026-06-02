@@ -46,7 +46,8 @@ completed: 2026-06-02
 
 ## Task Commits
 
-1. **Tasks 1-2: Review gate evidence and boundary assertions** - `36b2dd7` (test)
+1. **Task 1: Review gate requirement evidence** - `0cf0087` (test)
+2. **Task 2: No-scope-creep and boundary assertions** - `36b2dd7` (test)
 
 ## Files Created/Modified
 
@@ -76,7 +77,7 @@ None.
 ## Self-Check: PASSED
 
 - Created file exists: `tests/integration/test_v20_latin_review_gate_evidence.py`.
-- Commit exists: `36b2dd7`.
+- Commits exist: `0cf0087`, `36b2dd7`.
 
 ## Next Phase Readiness
 
