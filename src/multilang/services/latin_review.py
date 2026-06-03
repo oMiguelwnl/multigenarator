@@ -250,7 +250,7 @@ def update_latin_review_gate(
         matched = True
         current_gate = getattr(record, gate_field)
         if current_gate.status == "approved" and not force:
-            if current_gate.status != updated_gate.status or current_gate.reason != updated_gate.reason:
+            if current_gate.model_dump(mode="json") != updated_gate.model_dump(mode="json"):
                 raise ValueError(
                     f"approved gate overwrite requires force item_key={item_key} gate={gate}"
                 )

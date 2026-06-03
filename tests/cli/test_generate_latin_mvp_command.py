@@ -133,6 +133,34 @@ def test_update_latin_review_gate_protects_approved_gate_without_force() -> None
     assert records[0].source_gate.status == "approved"
 
 
+def test_update_latin_review_gate_protects_approved_metadata_without_force() -> None:
+    records = load_latin_curated_records()
+    current_reason = records[0].source_gate.reason
+    approved_with_metadata = update_latin_review_gate(
+        records,
+        item_key="latin-mvp-0001",
+        gate="source",
+        status="approved",
+        reason=current_reason,
+        reviewed_by="first-reviewer@example.test",
+        reviewed_at="2026-06-03T17:55:00Z",
+        force=True,
+    )
+
+    with pytest.raises(ValueError, match="approved gate overwrite requires force"):
+        update_latin_review_gate(
+            approved_with_metadata,
+            item_key="latin-mvp-0001",
+            gate="source",
+            status="approved",
+            reason=current_reason,
+            reviewed_by="second-reviewer@example.test",
+            reviewed_at="2026-06-03T17:55:00Z",
+        )
+
+    assert approved_with_metadata[0].source_gate.reviewed_by == "first-reviewer@example.test"
+
+
 def test_update_latin_review_gate_requires_reason_for_blocking_statuses() -> None:
     records = load_latin_curated_records()
 
