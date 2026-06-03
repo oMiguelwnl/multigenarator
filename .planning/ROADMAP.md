@@ -24,7 +24,7 @@ v2.0 adds a separate Classical Latin generation path that produces a reviewed, r
 - [x] **Phase 23: Frozen 50-Card Source Pack and Sentence Sequence** - Users receive a reproducible first-50 Latin manifest with licensed sources, lemma frequency, and didactic ordering. (completed 2026-06-01)
 - [x] **Phase 24: Morphology Evidence and Gramatica Gate** - Users receive reviewed Latin morphology and short standardized `Gramatica` notes that block unresolved ambiguity. (completed 2026-06-02)
 - [x] **Phase 25: Latin Review Gates and Curated Records** - Users can approve, reject, and inspect curated Latin records before learner-ready export. (completed 2026-06-02)
-- [ ] **Phase 26: Portuguese Translation Quality** - Users receive Portuguese lemma and sentence translations that match the chosen Latin context.
+- [x] **Phase 26: Portuguese Translation Quality** - Users receive Portuguese lemma and sentence translations that match the chosen Latin context. (completed 2026-06-03)
 - [ ] **Phase 27: Latin Audio Policy and Integrity** - Users receive approved playable Latin word and sentence audio with provider metadata and exact-text checks.
 - [ ] **Phase 28: Latin Export and Milestone Evidence** - Users can export approved Latin MVP cards and inspect evidence proving Latin coverage and existing-mode safety.
 
@@ -103,11 +103,11 @@ Plans:
   2. Every MVP card has a Portuguese sentence translation corresponding to the chosen Latin sentence and target-word context.
   3. Portuguese learner-facing text is reviewed or validated to prevent English leakage, context-missing dictionary glosses, and translations that contradict the Latin sentence.
   4. User can see translation QA evidence before cards are approved for learner-ready export.
-**Plans:** 2/3 plans executed
+**Plans:** 3/3 plans complete
 Plans:
 - [x] 26-01-PLAN.md — Define Portuguese translation QA contracts and deterministic validator.
 - [x] 26-02-PLAN.md — Commit and validate the 50-entry Portuguese translation asset.
-- [ ] 26-03-PLAN.md — Wire Portuguese QA inspection and scanner-readable Phase 26 evidence.
+- [x] 26-03-PLAN.md — Wire Portuguese QA inspection and scanner-readable Phase 26 evidence.
 
 ### Phase 27: Latin Audio Policy and Integrity
 **Goal**: Users receive approved playable word and sentence audio for every final Latin MVP card, with provider metadata, fallback reasons, and export-blocking integrity checks.
@@ -142,7 +142,7 @@ Plans:
 | 23. Frozen 50-Card Source Pack and Sentence Sequence | v2.0 | 4/4 | Complete   | 2026-06-01 |
 | 24. Morphology Evidence and Gramatica Gate | v2.0 | 4/4 | Complete   | 2026-06-02 |
 | 25. Latin Review Gates and Curated Records | v2.0 | 4/4 | Complete   | 2026-06-02 |
-| 26. Portuguese Translation Quality | v2.0 | 2/3 | In Progress|  |
+| 26. Portuguese Translation Quality | v2.0 | 3/3 | Complete   | 2026-06-03 |
 | 27. Latin Audio Policy and Integrity | v2.0 | 0/TBD | Not started | - |
 | 28. Latin Export and Milestone Evidence | v2.0 | 0/TBD | Not started | - |
 
