@@ -21,6 +21,8 @@ def _default_runner(command: list[str], *, input_text: str | None = None) -> sub
         input=input_text,
         capture_output=True,
         check=False,
+        encoding="utf-8",
+        errors="replace",
         text=True,
     )
 

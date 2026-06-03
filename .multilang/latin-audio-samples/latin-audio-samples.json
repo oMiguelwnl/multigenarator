@@ -1,0 +1,128 @@
+{
+  "manifest_version": "latin-audio-samples-v1",
+  "provider_candidates": {
+    "espeak-ng": {
+      "status": "needs_playback_review",
+      "voice": "la",
+      "pronunciation_policy": "classical_approx",
+      "reason": "eSpeak NG advertises a Latin voice and generated local WAV samples for review."
+    },
+    "azure-multilingual-experimental": {
+      "status": "blocked",
+      "voice": "multilingual-experimental",
+      "pronunciation_policy": "experimental_unverified",
+      "fallback_reason": "no verified native Classical Latin/`la` Azure TTS locale"
+    }
+  },
+  "espeak_samples": [
+    {
+      "audio_kind": "word",
+      "provider": "espeak-ng",
+      "provider_version": "1.52.0",
+      "voice": "la",
+      "pronunciation_policy": "classical_approx",
+      "generated_text": "virum",
+      "text_hash": "3d285adf656e01f148d8b5f023b1de56fa8bcb4a7956ddcfbf8dd092089aa31e",
+      "playback_review_status": "needs_playback_review",
+      "storage_path": ".multilang/latin-audio-samples/word-virum.wav",
+      "fallback_reason": null
+    },
+    {
+      "audio_kind": "word",
+      "provider": "espeak-ng",
+      "provider_version": "1.52.0",
+      "voice": "la",
+      "pronunciation_policy": "classical_approx",
+      "generated_text": "puella",
+      "text_hash": "90c2989fa1b3065d2dbcd46edd2903d3862e5a93b0ef7d18cdf881514a74af5b",
+      "playback_review_status": "needs_playback_review",
+      "storage_path": ".multilang/latin-audio-samples/word-puella.wav",
+      "fallback_reason": null
+    },
+    {
+      "audio_kind": "word",
+      "provider": "espeak-ng",
+      "provider_version": "1.52.0",
+      "voice": "la",
+      "pronunciation_policy": "classical_approx",
+      "generated_text": "caesar",
+      "text_hash": "203b8ade4aaee21728c5ecc2b53aadbe0cd25c7337c205da91f0686542ad3478",
+      "playback_review_status": "needs_playback_review",
+      "storage_path": ".multilang/latin-audio-samples/word-caesar.wav",
+      "fallback_reason": null
+    },
+    {
+      "audio_kind": "word",
+      "provider": "espeak-ng",
+      "provider_version": "1.52.0",
+      "voice": "la",
+      "pronunciation_policy": "classical_approx",
+      "generated_text": "cicero",
+      "text_hash": "13a3714f3ff179531edc457c5c56f8c4f66601917d77d4770ce7efe6d1d7e023",
+      "playback_review_status": "needs_playback_review",
+      "storage_path": ".multilang/latin-audio-samples/word-cicero.wav",
+      "fallback_reason": null
+    },
+    {
+      "audio_kind": "word",
+      "provider": "espeak-ng",
+      "provider_version": "1.52.0",
+      "voice": "la",
+      "pronunciation_policy": "classical_approx",
+      "generated_text": "veni",
+      "text_hash": "6ec4dca2bcc10d9f68fbd938aefd9e8daff46c1674e09501e2520dd2c82b1e6f",
+      "playback_review_status": "needs_playback_review",
+      "storage_path": ".multilang/latin-audio-samples/word-veni.wav",
+      "fallback_reason": null
+    },
+    {
+      "audio_kind": "word",
+      "provider": "espeak-ng",
+      "provider_version": "1.52.0",
+      "voice": "la",
+      "pronunciation_policy": "classical_approx",
+      "generated_text": "quae",
+      "text_hash": "3f087b00c02376c72ab8a17ed920707d2b0de23a13d0bb11a4d03e49a69839fa",
+      "playback_review_status": "needs_playback_review",
+      "storage_path": ".multilang/latin-audio-samples/word-quae.wav",
+      "fallback_reason": null
+    },
+    {
+      "audio_kind": "word",
+      "provider": "espeak-ng",
+      "provider_version": "1.52.0",
+      "voice": "la",
+      "pronunciation_policy": "classical_approx",
+      "generated_text": "cum",
+      "text_hash": "594810adcbee20bd1d6f8e4cee51efdf1a235691e9d08fe96ce944d7fde34fd6",
+      "playback_review_status": "needs_playback_review",
+      "storage_path": ".multilang/latin-audio-samples/word-cum.wav",
+      "fallback_reason": null
+    },
+    {
+      "audio_kind": "word",
+      "provider": "espeak-ng",
+      "provider_version": "1.52.0",
+      "voice": "la",
+      "pronunciation_policy": "classical_approx",
+      "generated_text": "Romae",
+      "text_hash": "4ab4a7c31e380fbaaee51739ecf13a7c3e4a9ca3318f3269977bb8ce242a46cb",
+      "playback_review_status": "needs_playback_review",
+      "storage_path": ".multilang/latin-audio-samples/word-Romae.wav",
+      "fallback_reason": null
+    },
+    {
+      "audio_kind": "sentence",
+      "provider": "espeak-ng",
+      "provider_version": "1.52.0",
+      "voice": "la",
+      "pronunciation_policy": "classical_approx",
+      "generated_text": "Arma virumque cano.",
+      "text_hash": "966f9068487527be32dafd443189860b75c6fe7063f59147c6bcc54c01c26e95",
+      "playback_review_status": "needs_playback_review",
+      "storage_path": ".multilang/latin-audio-samples/sentence-1.wav",
+      "fallback_reason": null
+    }
+  ],
+  "azure_samples": []
+}

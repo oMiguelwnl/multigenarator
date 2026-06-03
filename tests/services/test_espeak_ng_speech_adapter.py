@@ -4,10 +4,11 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 from pathlib import Path
+import subprocess
 
 import pytest
 
-from multilang.services.espeak_ng_speech_adapter import EspeakNgSpeechAdapter
+from multilang.services.espeak_ng_speech_adapter import EspeakNgSpeechAdapter, _default_runner
 
 
 @dataclass(frozen=True)
@@ -37,6 +38,22 @@ class FakeRunner:
             output_path.write_bytes(b"RIFFfake-wave")
             return FakeCompletedProcess(stdout="")
         return FakeCompletedProcess(returncode=99, stderr="unexpected command")
+
+
+def test_default_runner_decodes_native_output_with_replacement(monkeypatch: pytest.MonkeyPatch) -> None:
+    captured: dict[str, object] = {}
+
+    def fake_run(command: list[str], **kwargs: object) -> subprocess.CompletedProcess[str]:
+        captured.update(kwargs)
+        return subprocess.CompletedProcess(command, 0, stdout="", stderr="")
+
+    monkeypatch.setattr(subprocess, "run", fake_run)
+
+    _default_runner(["espeak-ng", "--voices"])
+
+    assert captured["encoding"] == "utf-8"
+    assert captured["errors"] == "replace"
+    assert captured["text"] is True
 
 
 def test_detects_version_and_latin_voice_without_native_process() -> None:
