@@ -3,15 +3,15 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: executing
-stopped_at: Completed 27-01-PLAN.md
-last_updated: "2026-06-03T18:15:13.419Z"
+stopped_at: Completed 27-02-PLAN.md; blocked before 27-03 playback review pending eSpeak NG setup
+last_updated: "2026-06-03T18:18:18.251Z"
 last_activity: 2026-06-03
 progress:
   total_phases: 7
   completed_phases: 5
   total_plans: 23
-  completed_plans: 19
-  percent: 83
+  completed_plans: 20
+  percent: 87
 ---
 
 # Project State
@@ -26,11 +26,11 @@ See: .planning/PROJECT.md (updated 2026-06-01)
 ## Current Position
 
 Phase: 27 (latin-audio-policy-and-integrity) — EXECUTING
-Plan: 2 of 5
+Plan: 3 of 5
 Status: Ready to execute
 Last activity: 2026-06-03
 
-Progress: [████████░░] 83%
+Progress: [█████████░] 87%
 
 ## Performance Metrics
 
@@ -77,6 +77,7 @@ Progress: [████████░░] 83%
 | Phase 26-portuguese-translation-quality P02 | 7min | 2 tasks | 2 files |
 | Phase 26-portuguese-translation-quality P03 | 7min | 2 tasks | 5 files |
 | Phase 27-latin-audio-policy-and-integrity P01 | 4min | 2 tasks | 2 files |
+| Phase 27-latin-audio-policy-and-integrity P02 | 7min | 2 tasks | 4 files |
 
 ## Accumulated Context
 
@@ -123,6 +124,8 @@ Full decision history is in `.planning/PROJECT.md`. Current v2.0 decisions affec
 - [Phase 27-latin-audio-policy-and-integrity]: Export readiness requires both word and sentence artifacts to be approved and exact-text aligned with the frozen source pack.
 - [Phase 27-latin-audio-policy-and-integrity]: Latin audio readiness is source-pack aligned: item order and source_pack_version must match latin-mvp-50-v1 before export can pass.
 - [Phase 27-latin-audio-policy-and-integrity]: Latin audio diagnostics expose item_key, audio_kind, and field names only, avoiding local paths and provider-sensitive details.
+- [Phase 27-latin-audio-policy-and-integrity]: eSpeak NG la is the only locally synthesizeable Latin candidate for playback review; Azure multilingual remains blocked without a verified native Classical Latin/la locale.
+- [Phase 27-latin-audio-policy-and-integrity]: Sample generation is local-only and does not contact Azure or any network provider.
 
 ### Pending Todos
 
@@ -131,6 +134,7 @@ Full decision history is in `.planning/PROJECT.md`. Current v2.0 decisions affec
 
 ### Blockers/Concerns
 
+- Plan 27-03 playback review cannot approve audio until eSpeak NG 1.52+ is installed and `espeak-ng` is available on PATH for real sample WAV generation.
 - Latin TTS quality remains a caveat until Phase 27 sample comparison and playback review lock the approved-only audio policy.
 - Source licensing for Phase 23 is license-gated in the frozen source pack; later phases must preserve those provenance fields.
 - Broad-suite drift remains known debt; focused regression evidence should stay authoritative until repaired.
@@ -149,6 +153,6 @@ Items acknowledged and carried forward:
 
 ## Session Continuity
 
-Last session: 2026-06-03T18:15:13.410Z
-Stopped at: Completed 27-01-PLAN.md
+Last session: 2026-06-03T18:18:18.244Z
+Stopped at: Completed 27-02-PLAN.md; blocked before 27-03 playback review pending eSpeak NG setup
 Resume file: None

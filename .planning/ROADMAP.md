@@ -118,10 +118,10 @@ Plans:
   2. Every final exported Latin MVP card has approved playable word audio and sentence audio; missing, failed, or unapproved audio blocks learner-ready export.
   3. Every Latin audio artifact records provider, provider version, voice, pronunciation policy, generated text, text hash, audio kind, playback review status, and fallback reason when applicable.
   4. Export is blocked when persisted audio text does not match the exported target word or Latin sentence.
-**Plans:** 1/5 plans executed
+**Plans:** 2/5 plans executed
 Plans:
 - [x] 27-01-PLAN.md — Define Latin audio metadata contracts and exact-text readiness validators.
-- [ ] 27-02-PLAN.md — Implement eSpeak NG sample generation and provider comparison metadata.
+- [x] 27-02-PLAN.md — Implement eSpeak NG sample generation and provider comparison metadata.
 - [ ] 27-03-PLAN.md — Record human playback review and lock the Latin MVP audio policy.
 - [ ] 27-04-PLAN.md — Generate the full 50-card audio manifest and update audio gates.
 - [ ] 27-05-PLAN.md — Expose audio readiness summaries and scanner-readable Phase 27 evidence.
@@ -149,7 +149,7 @@ Plans:
 | 24. Morphology Evidence and Gramatica Gate | v2.0 | 4/4 | Complete   | 2026-06-02 |
 | 25. Latin Review Gates and Curated Records | v2.0 | 4/4 | Complete    | 2026-06-03 |
 | 26. Portuguese Translation Quality | v2.0 | 3/3 | Complete   | 2026-06-03 |
-| 27. Latin Audio Policy and Integrity | v2.0 | 1/5 | In Progress|  |
+| 27. Latin Audio Policy and Integrity | v2.0 | 2/5 | In Progress|  |
 | 28. Latin Export and Milestone Evidence | v2.0 | 0/TBD | Not started | - |
 
 ## Coverage

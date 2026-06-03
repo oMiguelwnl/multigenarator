@@ -47,7 +47,7 @@ Requirements for the Classical Latin MVP. Each maps to roadmap phases.
 
 ### Latin Audio
 
-- [ ] **AUD-01**: User can compare or evaluate candidate Latin TTS providers for representative word and sentence samples before the final MVP audio policy is locked.
+- [x] **AUD-01**: User can compare or evaluate candidate Latin TTS providers for representative word and sentence samples before the final MVP audio policy is locked.
 - [x] **AUD-02**: Every final exported Latin MVP card has approved playable word audio and sentence audio; missing, failed, or unapproved audio blocks learner-ready export.
 - [x] **AUD-03**: Every Latin audio artifact stores provider, provider version, voice, pronunciation policy, generated text, text hash, audio kind, playback review status, and fallback reason when applicable.
 - [x] **AUD-04**: Latin audio integrity validation blocks export when persisted audio text does not match the exported target form or Latin sentence.
@@ -122,7 +122,7 @@ Which phases cover which requirements. Updated during roadmap creation.
 | REV-01 | Phase 25 | Complete |
 | REV-02 | Phase 25 | Complete |
 | REV-03 | Phase 25 | Complete |
-| AUD-01 | Phase 27 | Pending |
+| AUD-01 | Phase 27 | Complete |
 | AUD-02 | Phase 27 | Complete |
 | AUD-03 | Phase 27 | Complete |
 | AUD-04 | Phase 27 | Complete |
