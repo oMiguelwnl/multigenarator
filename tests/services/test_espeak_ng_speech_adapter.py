@@ -126,3 +126,25 @@ def test_missing_or_empty_output_fails_closed(tmp_path: Path) -> None:
             output_path=tmp_path / "virum.wav",
             audio_format="wav",
         )
+
+
+def test_missing_binary_error_is_deterministic_and_sanitized(tmp_path: Path) -> None:
+    def missing_binary_runner(command: list[str], *, input_text: str | None = None) -> FakeCompletedProcess:
+        raise FileNotFoundError("PATH=C:\\secret\\bin; HOME=/Users/example")
+
+    adapter = EspeakNgSpeechAdapter(runner=missing_binary_runner)
+
+    with pytest.raises(ValueError, match="eSpeak NG binary is not available") as exc_info:
+        adapter.synthesize(
+            ssml_text="virum",
+            voice_id="la",
+            locale="la",
+            output_path=tmp_path / "virum.wav",
+            audio_format="wav",
+        )
+
+    message = str(exc_info.value)
+    assert "PATH=" not in message
+    assert "HOME=" not in message
+    assert "C:\\" not in message
+    assert "/Users/" not in message
