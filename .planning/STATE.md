@@ -4,7 +4,7 @@ milestone: v1.0
 milestone_name: milestone
 status: executing
 stopped_at: Completed 27-01-PLAN.md
-last_updated: "2026-06-03T18:14:49.469Z"
+last_updated: "2026-06-03T18:15:13.419Z"
 last_activity: 2026-06-03
 progress:
   total_phases: 7
@@ -50,7 +50,7 @@ Progress: [████████░░] 83%
 | 24. Morphology Evidence and Gramatica Gate | 4 | 28min | 7min |
 | 25. Latin Review Gates and Curated Records | 4 | 28min | 7min |
 | 26. Portuguese Translation Quality | 3 | 21min | 7min |
-| 27. Latin Audio Policy and Integrity | 0 | TBD | N/A |
+| 27. Latin Audio Policy and Integrity | 1 | 4min | 4min |
 | 28. Latin Export and Milestone Evidence | 0 | TBD | N/A |
 
 **Recent Trend:**
@@ -76,7 +76,7 @@ Progress: [████████░░] 83%
 | Phase 25-latin-review-gates-and-curated-records P04 | 7min | 2 tasks | 1 files |
 | Phase 26-portuguese-translation-quality P02 | 7min | 2 tasks | 2 files |
 | Phase 26-portuguese-translation-quality P03 | 7min | 2 tasks | 5 files |
-| Phase 27-latin-audio-policy-and-integrity P01 | 7min | 2 tasks | 2 files |
+| Phase 27-latin-audio-policy-and-integrity P01 | 4min | 2 tasks | 2 files |
 
 ## Accumulated Context
 
@@ -121,10 +121,12 @@ Full decision history is in `.planning/PROJECT.md`. Current v2.0 decisions affec
 - [Phase 26-portuguese-translation-quality]: The CLI prints only public QA counts/statuses for --portuguese-json, not translation text, secrets, or local paths.
 - [Phase 27-latin-audio-policy-and-integrity]: Latin audio uses a separate metadata/readiness service rather than adding Latin to SupportedLanguage or the global Azure voice registry.
 - [Phase 27-latin-audio-policy-and-integrity]: Export readiness requires both word and sentence artifacts to be approved and exact-text aligned with the frozen source pack.
+- [Phase 27-latin-audio-policy-and-integrity]: Latin audio readiness is source-pack aligned: item order and source_pack_version must match latin-mvp-50-v1 before export can pass.
+- [Phase 27-latin-audio-policy-and-integrity]: Latin audio diagnostics expose item_key, audio_kind, and field names only, avoiding local paths and provider-sensitive details.
 
 ### Pending Todos
 
-- Verify Phase 26 before advancing to Phase 27.
+- Execute Phase 27 Plan 27-02 for eSpeak NG sample generation and provider comparison metadata.
 - Repair broad-suite drift before treating full `python -m pytest -q` as authoritative again.
 
 ### Blockers/Concerns
@@ -147,6 +149,6 @@ Items acknowledged and carried forward:
 
 ## Session Continuity
 
-Last session: 2026-06-03T18:14:49.460Z
+Last session: 2026-06-03T18:15:13.410Z
 Stopped at: Completed 27-01-PLAN.md
 Resume file: None
