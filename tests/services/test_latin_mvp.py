@@ -64,6 +64,27 @@ def test_latin_mvp_manifest_summary_includes_grammar_readiness_fields() -> None:
     assert "Genitivus" in summary["required_case_labels"]
 
 
+def test_latin_mvp_manifest_summary_can_include_portuguese_translation_summary() -> None:
+    summary = LatinMvpGenerationService().start(
+        LatinGenerationRequest(),
+        include_portuguese_translation_summary=True,
+    ).manifest_summary()
+
+    portuguese_summary = summary["portuguese_translation_summary"]
+    assert portuguese_summary["source_pack_version"] == "latin-mvp-50-v1"
+    assert portuguese_summary["translation_pack_version"] == "latin-mvp-50-pt-v1"
+    assert portuguese_summary["entry_count"] == 50
+    assert portuguese_summary["passed_count"] == 50
+    assert portuguese_summary["failed_count"] == 0
+    assert portuguese_summary["review_status_counts"] == {"needs_review": 50, "approved": 0, "rejected": 0}
+
+
+def test_latin_mvp_manifest_summary_omits_portuguese_translation_summary_by_default() -> None:
+    summary = LatinMvpGenerationService().start(LatinGenerationRequest()).manifest_summary()
+
+    assert "portuguese_translation_summary" not in summary
+
+
 def test_latin_mvp_start_cannot_approve_unresolved_grammar_loader_data() -> None:
     def unresolved_loader(_path):
         raise ValueError("Latin MVP source pack grammar evidence unresolved")

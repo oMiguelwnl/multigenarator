@@ -62,6 +62,21 @@ def test_generate_latin_mvp_manifest_json_prints_public_summary() -> None:
     assert "/Users/" not in result.output
 
 
+def test_generate_latin_mvp_portuguese_json_prints_translation_summary() -> None:
+    result = runner.invoke(create_app(), ["generate-latin-mvp", "--portuguese-json"])
+
+    assert result.exit_code == 0
+    payload = json.loads(result.output)
+    assert payload["source_pack_version"] == "latin-mvp-50-v1"
+    assert payload["portuguese_translation_summary"]["translation_pack_version"] == "latin-mvp-50-pt-v1"
+    assert payload["portuguese_translation_summary"]["entry_count"] == 50
+    assert payload["portuguese_translation_summary"]["passed_count"] == 50
+    assert payload["portuguese_translation_summary"]["failed_count"] == 0
+    assert payload["portuguese_translation_summary"]["issue_counts"] == {}
+    assert "C:\\" not in result.output
+    assert "/Users/" not in result.output
+
+
 def test_generate_latin_mvp_calls_latin_service_with_latin_request() -> None:
     captured: list[LatinGenerationRequest] = []
 
