@@ -14,8 +14,15 @@ from multilang.services.latin_source_pack import (
     LatinMvpSourcePack,
     load_latin_mvp_source_pack,
 )
+from multilang.services.latin_translation_quality import (
+    DEFAULT_LATIN_PORTUGUESE_TRANSLATION_PACK_PATH,
+    LatinPortugueseTranslationPack,
+    LatinPortugueseTranslationQaService,
+    load_latin_portuguese_translation_pack,
+)
 
 LatinSourcePackLoader = Callable[[Path | None], LatinMvpSourcePack]
+LatinPortugueseTranslationPackLoader = Callable[[Path | None], LatinPortugueseTranslationPack]
 
 
 class LatinMvpStartResult(BaseModel):
@@ -35,11 +42,12 @@ class LatinMvpStartResult(BaseModel):
     grammar_evidence_count: int
     gramatica_count: int
     required_case_labels: list[str] = Field(default_factory=list)
+    portuguese_translation_summary: dict[str, object] | None = None
 
     def manifest_summary(self) -> dict[str, object]:
         """Return a scanner-friendly public summary of the loaded source pack."""
 
-        return {
+        summary: dict[str, object] = {
             "language_code": self.metadata.language_code,
             "variant": self.metadata.variant.value,
             "source_type": self.source_type,
@@ -58,6 +66,9 @@ class LatinMvpStartResult(BaseModel):
             "gramatica_count": self.gramatica_count,
             "required_case_labels": self.required_case_labels,
         }
+        if self.portuguese_translation_summary is not None:
+            summary["portuguese_translation_summary"] = self.portuguese_translation_summary
+        return summary
 
 
 class LatinMvpGenerationService:
@@ -68,11 +79,22 @@ class LatinMvpGenerationService:
         *,
         source_pack_path: Path | None = None,
         source_pack_loader: LatinSourcePackLoader = load_latin_mvp_source_pack,
+        portuguese_translation_pack_path: Path | None = None,
+        portuguese_translation_pack_loader: LatinPortugueseTranslationPackLoader = load_latin_portuguese_translation_pack,
+        portuguese_translation_qa_service: LatinPortugueseTranslationQaService | None = None,
     ) -> None:
         self.source_pack_path = source_pack_path
         self.source_pack_loader = source_pack_loader
+        self.portuguese_translation_pack_path = portuguese_translation_pack_path
+        self.portuguese_translation_pack_loader = portuguese_translation_pack_loader
+        self.portuguese_translation_qa_service = portuguese_translation_qa_service or LatinPortugueseTranslationQaService()
 
-    def start(self, request: LatinGenerationRequest) -> LatinMvpStartResult:
+    def start(
+        self,
+        request: LatinGenerationRequest,
+        *,
+        include_portuguese_translation_summary: bool = False,
+    ) -> LatinMvpStartResult:
         pack = self.source_pack_loader(self.source_pack_path)
         if request.source_pack_version != pack.source_pack_version:
             raise ValueError(
@@ -94,6 +116,15 @@ class LatinMvpGenerationService:
             if grammar_evidence_count == len(pack.entries) == gramatica_count == metadata.card_count
             else "blocked"
         )
+        portuguese_translation_summary: dict[str, object] | None = None
+        if include_portuguese_translation_summary:
+            translation_pack = self.portuguese_translation_pack_loader(
+                self.portuguese_translation_pack_path or DEFAULT_LATIN_PORTUGUESE_TRANSLATION_PACK_PATH
+            )
+            portuguese_translation_summary = self.portuguese_translation_qa_service.validate_pack(
+                translation_pack,
+                pack,
+            ).qa_summary()
         return LatinMvpStartResult(
             metadata=metadata,
             source_type=request.source_type,
@@ -112,6 +143,7 @@ class LatinMvpGenerationService:
             grammar_evidence_count=grammar_evidence_count,
             gramatica_count=gramatica_count,
             required_case_labels=list(APPROVED_LATIN_CASE_LABELS),
+            portuguese_translation_summary=portuguese_translation_summary,
         )
 
 

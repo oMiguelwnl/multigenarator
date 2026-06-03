@@ -866,15 +866,29 @@ def create_app(
                 help="Print a validated public JSON summary of the Latin MVP source pack.",
             ),
         ] = False,
+        portuguese_json: Annotated[
+            bool,
+            typer.Option(
+                "--portuguese-json",
+                help="Print a validated public JSON summary with Portuguese translation QA counts.",
+            ),
+        ] = False,
     ) -> None:
         request = LatinGenerationRequest(source_pack_version=source_pack_version)
         try:
-            result = resolve_latin_mvp_service().start(request)
+            latin_service = resolve_latin_mvp_service()
+            if portuguese_json:
+                result = latin_service.start(
+                    request,
+                    include_portuguese_translation_summary=True,
+                )
+            else:
+                result = latin_service.start(request)
         except ValueError as exc:
             typer.echo(str(exc))
             raise typer.Exit(code=1) from exc
 
-        if manifest_json:
+        if manifest_json or portuguese_json:
             typer.echo(json.dumps(result.manifest_summary(), ensure_ascii=False, indent=2, sort_keys=True))
             return
 
