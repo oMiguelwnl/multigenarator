@@ -4,15 +4,19 @@ from __future__ import annotations
 
 from collections import Counter
 from hashlib import sha256
+import json
 from pathlib import Path
 from typing import Literal
 
 from pydantic import BaseModel, Field, field_validator, model_validator
 
+from multilang.services.latin_source_pack import load_latin_mvp_source_pack
+
 
 LatinAudioKind = Literal["word", "sentence"]
 LatinAudioProvider = Literal["espeak-ng", "azure-multilingual-experimental"]
 LatinAudioReviewStatus = Literal["needs_playback_review", "approved", "rejected", "blocked"]
+DEFAULT_LATIN_AUDIO_MANIFEST_PATH = Path("data") / "latin_mvp" / "latin-mvp-50-v1-audio.json"
 
 
 def normalize_latin_audio_text(value: str) -> str:
@@ -114,8 +118,107 @@ class LatinAudioSummary(BaseModel):
     blocking_audio_by_item_key: dict[str, list[str]]
 
 
+def load_latin_audio_manifest(path: Path | None = None) -> LatinAudioManifest:
+    """Load and validate the committed Latin MVP audio manifest JSON."""
+
+    manifest_path = path or DEFAULT_LATIN_AUDIO_MANIFEST_PATH
+    try:
+        payload = json.loads(manifest_path.read_text(encoding="utf-8"))
+        return LatinAudioManifest.model_validate(payload)
+    except FileNotFoundError as exc:
+        raise ValueError("Latin MVP audio manifest is missing for latin-mvp-50-v1") from exc
+    except json.JSONDecodeError as exc:
+        raise ValueError("Latin MVP audio manifest JSON is malformed for latin-mvp-50-v1") from exc
+    except Exception as exc:
+        if exc.__class__.__module__.startswith("pydantic"):
+            raise ValueError(f"Latin MVP audio manifest failed validation for latin-mvp-50-v1: {exc}") from exc
+        raise
+
+
+def _status_counts_for_kind(manifest: LatinAudioManifest, audio_kind: LatinAudioKind) -> dict[str, int]:
+    counter: Counter[str] = Counter()
+    for pair in manifest.artifacts:
+        artifact = getattr(pair, audio_kind)
+        if artifact is None:
+            counter["missing"] += 1
+        else:
+            counter[artifact.playback_review_status] += 1
+    return {
+        "missing": counter.get("missing", 0),
+        **{status: counter.get(status, 0) for status in LatinAudioReviewStatus.__args__},
+    }
+
+
+def _readiness_issues(manifest: LatinAudioManifest) -> dict[str, list[str]]:
+    source_pack = load_latin_mvp_source_pack()
+    issues: dict[str, list[str]] = {}
+    expected_item_keys = [entry.item_key for entry in source_pack.entries]
+    actual_item_keys = [pair.item_key for pair in manifest.artifacts]
+
+    if manifest.source_pack_version != source_pack.source_pack_version:
+        issues.setdefault("manifest", []).append("source_pack_version")
+        return issues
+    if actual_item_keys != expected_item_keys:
+        issues.setdefault("manifest", []).append("item_key_order")
+        return issues
+
+    for entry, pair in zip(source_pack.entries, manifest.artifacts, strict=True):
+        expected_text_by_kind = {
+            "word": entry.target_form,
+            "sentence": entry.latin_sentence,
+        }
+        for audio_kind, expected_text in expected_text_by_kind.items():
+            artifact: LatinAudioArtifact | None = getattr(pair, audio_kind)
+            if artifact is None:
+                issues.setdefault(entry.item_key, []).append(f"audio_kind={audio_kind} field=missing")
+                continue
+            if artifact.playback_review_status != "approved":
+                issues.setdefault(entry.item_key, []).append(
+                    f"audio_kind={audio_kind} field=playback_review_status"
+                )
+            if normalize_latin_audio_text(artifact.generated_text) != normalize_latin_audio_text(expected_text):
+                issues.setdefault(entry.item_key, []).append(f"audio_kind={audio_kind} field=generated_text")
+            if artifact.text_hash != latin_audio_text_hash(artifact.generated_text):
+                issues.setdefault(entry.item_key, []).append(f"audio_kind={audio_kind} field=text_hash")
+    return issues
+
+
+def summarize_latin_audio_manifest(manifest: LatinAudioManifest) -> LatinAudioSummary:
+    """Summarize Latin audio approval and blocking state by item key and audio kind."""
+
+    issues = _readiness_issues(manifest)
+    item_blockers = {item_key: blockers for item_key, blockers in issues.items() if item_key != "manifest"}
+    approved_items = len(manifest.artifacts) - len(item_blockers) if "manifest" not in issues else 0
+    return LatinAudioSummary(
+        total_items=len(manifest.artifacts),
+        approved_items=approved_items,
+        blocked_items=len(issues),
+        status_counts={
+            "word": _status_counts_for_kind(manifest, "word"),
+            "sentence": _status_counts_for_kind(manifest, "sentence"),
+        },
+        blocking_audio_by_item_key=issues,
+    )
+
+
+def assert_latin_audio_manifest_export_ready(manifest: LatinAudioManifest) -> None:
+    """Fail closed unless all 50 source-pack entries have approved exact-text word and sentence audio."""
+
+    summary = summarize_latin_audio_manifest(manifest)
+    if not summary.blocking_audio_by_item_key:
+        return
+
+    blockers = [
+        f"latin_audio_export_blocked item_key={item_key} {' '.join(fields)}"
+        for item_key, fields in summary.blocking_audio_by_item_key.items()
+    ]
+    raise ValueError("; ".join(blockers))
+
+
 __all__ = [
     "LatinAudioArtifact",
+    "DEFAULT_LATIN_AUDIO_MANIFEST_PATH",
+    "assert_latin_audio_manifest_export_ready",
     "LatinAudioKind",
     "LatinAudioManifest",
     "LatinAudioPair",
@@ -123,5 +226,7 @@ __all__ = [
     "LatinAudioReviewStatus",
     "LatinAudioSummary",
     "latin_audio_text_hash",
+    "load_latin_audio_manifest",
     "normalize_latin_audio_text",
+    "summarize_latin_audio_manifest",
 ]

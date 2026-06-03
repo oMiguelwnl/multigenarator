@@ -51,6 +51,10 @@ def make_manifest(overrides: dict[AudioOverrideKey, dict[str, object]] | None = 
         sentence_overrides = dict(overrides.get((entry.item_key, "sentence"), {}))
         word_text = str(word_overrides.get("generated_text", entry.target_form))
         sentence_text = str(sentence_overrides.get("generated_text", entry.latin_sentence))
+        word_overrides.pop("generated_text", None)
+        word_overrides.pop("text_hash", None)
+        sentence_overrides.pop("generated_text", None)
+        sentence_overrides.pop("text_hash", None)
         pairs.append(
             LatinAudioPair(
                 item_key=entry.item_key,
