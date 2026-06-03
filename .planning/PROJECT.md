@@ -116,6 +116,8 @@ Known follow-up debt: one incomplete quick task remains for `260430-001-russian-
 
 v2.0 begins from `LATIN-STRUCTURE.md`, which defines the Latin product direction: classical Latin only, Portuguese translations and explanations, Rafael Falcon as the required didactic reference, frequency-by-lemma organization, traceable real or reliable Latin sentences, audio for both target word and sentence, no separate learner-facing `Classe` field, and a short mandatory `Gramatica` field. `Genitivus` is the preferred final spelling for the genitive case label.
 
+v2.0 Phase 25 was verified on 2026-06-03. Latin MVP curation now has explicit source, translation, grammar, and audio review gates; export readiness fails closed until all gates are approved; and approved gate payload changes require `force`.
+
 ## Constraints
 
 - **Languages**: v1 supports Portuguese, Spanish, English, French, German, Italian, Polish, Turkish, Romanian, Russian, and Dutch; v2.0 adds classical Latin as a separately scoped MVP.
@@ -173,4 +175,4 @@ This document evolves at phase transitions and milestone boundaries.
 4. Update Context with current state.
 
 ---
-*Last updated: 2026-06-01 after v2.0 milestone start*
+*Last updated: 2026-06-03 after Phase 25 verification*
