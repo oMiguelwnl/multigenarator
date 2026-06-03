@@ -7,7 +7,14 @@ from hashlib import sha256
 import pytest
 from pydantic import ValidationError
 
-from multilang.services.latin_audio import LatinAudioArtifact
+from multilang.services.latin_audio import (
+    LatinAudioArtifact,
+    LatinAudioManifest,
+    LatinAudioPair,
+    assert_latin_audio_manifest_export_ready,
+    summarize_latin_audio_manifest,
+)
+from multilang.services.latin_source_pack import load_latin_mvp_source_pack
 
 
 def expected_hash(text: str) -> str:
@@ -30,6 +37,40 @@ def make_artifact(**overrides: object) -> LatinAudioArtifact:
     }
     payload.update(overrides)
     return LatinAudioArtifact.model_validate(payload)
+
+
+AudioOverrideKey = tuple[str, str]
+
+
+def make_manifest(overrides: dict[AudioOverrideKey, dict[str, object]] | None = None) -> LatinAudioManifest:
+    overrides = overrides or {}
+    source_pack = load_latin_mvp_source_pack()
+    pairs: list[LatinAudioPair] = []
+    for entry in source_pack.entries:
+        word_overrides = dict(overrides.get((entry.item_key, "word"), {}))
+        sentence_overrides = dict(overrides.get((entry.item_key, "sentence"), {}))
+        word_text = str(word_overrides.get("generated_text", entry.target_form))
+        sentence_text = str(sentence_overrides.get("generated_text", entry.latin_sentence))
+        pairs.append(
+            LatinAudioPair(
+                item_key=entry.item_key,
+                word=make_artifact(
+                    audio_kind="word",
+                    generated_text=word_text,
+                    text_hash=expected_hash(word_text),
+                    storage_path=f"audio/latin/word/{entry.item_key}.mp3",
+                    **word_overrides,
+                ),
+                sentence=make_artifact(
+                    audio_kind="sentence",
+                    generated_text=sentence_text,
+                    text_hash=expected_hash(sentence_text),
+                    storage_path=f"audio/latin/sentence/{entry.item_key}.mp3",
+                    **sentence_overrides,
+                ),
+            )
+        )
+    return LatinAudioManifest(source_pack_version=source_pack.source_pack_version, artifacts=pairs)
 
 
 def test_word_artifact_requires_auditable_metadata_and_matching_hash() -> None:
@@ -94,3 +135,92 @@ def test_fallback_reason_required_for_fallback_or_blocked_provider_records() -> 
         make_artifact(provider="azure-multilingual-experimental", fallback_reason=None)
     with pytest.raises(ValidationError, match="fallback_reason"):
         make_artifact(playback_review_status="blocked", fallback_reason="   ")
+
+
+def test_manifest_with_approved_word_and_sentence_audio_for_every_source_entry_is_export_ready() -> None:
+    manifest = make_manifest()
+
+    assert_latin_audio_manifest_export_ready(manifest)
+
+    summary = summarize_latin_audio_manifest(manifest)
+    assert summary.total_items == 50
+    assert summary.approved_items == 50
+    assert summary.blocked_items == 0
+    assert summary.status_counts["word"]["approved"] == 50
+    assert summary.status_counts["sentence"]["approved"] == 50
+
+
+@pytest.mark.parametrize(
+    ("manifest", "expected_kind", "expected_field"),
+    [
+        (
+            LatinAudioManifest(
+                artifacts=[pair.model_copy(update={"word": None}) for pair in make_manifest().artifacts]
+            ),
+            "word",
+            "missing",
+        ),
+        (
+            make_manifest({("latin-mvp-0001", "word"): {"playback_review_status": "needs_playback_review"}}),
+            "word",
+            "playback_review_status",
+        ),
+        (
+            make_manifest({("latin-mvp-0001", "sentence"): {"playback_review_status": "rejected"}}),
+            "sentence",
+            "playback_review_status",
+        ),
+        (
+            make_manifest(
+                {
+                    ("latin-mvp-0001", "sentence"): {
+                        "playback_review_status": "blocked",
+                        "fallback_reason": "eSpeak NG sample unavailable.",
+                    }
+                }
+            ),
+            "sentence",
+            "playback_review_status",
+        ),
+    ],
+)
+def test_missing_or_unapproved_audio_fails_with_public_item_and_kind_diagnostics(
+    manifest: LatinAudioManifest,
+    expected_kind: str,
+    expected_field: str,
+) -> None:
+    with pytest.raises(ValueError) as exc_info:
+        assert_latin_audio_manifest_export_ready(manifest)
+
+    message = str(exc_info.value)
+    assert "latin-mvp-0001" in message
+    assert f"audio_kind={expected_kind}" in message
+    assert expected_field in message
+    assert "C:\\" not in message
+    assert "/Users/" not in message
+
+
+def test_word_and_sentence_generated_text_must_match_source_pack_export_text() -> None:
+    source_pack = load_latin_mvp_source_pack()
+    first = source_pack.entries[0]
+    word_mismatch = make_manifest({(first.item_key, "word"): {"generated_text": f"{first.target_form} stale"}})
+    sentence_mismatch = make_manifest(
+        {(first.item_key, "sentence"): {"generated_text": f"{first.latin_sentence} stale"}}
+    )
+    whitespace_equivalent = make_manifest(
+        {(first.item_key, "sentence"): {"generated_text": "  ".join(first.latin_sentence.split())}}
+    )
+
+    with pytest.raises(ValueError) as word_exc:
+        assert_latin_audio_manifest_export_ready(word_mismatch)
+    assert "latin-mvp-0001" in str(word_exc.value)
+    assert "audio_kind=word" in str(word_exc.value)
+    assert "generated_text" in str(word_exc.value)
+
+    with pytest.raises(ValueError) as sentence_exc:
+        assert_latin_audio_manifest_export_ready(sentence_mismatch)
+    assert "latin-mvp-0001" in str(sentence_exc.value)
+    assert "audio_kind=sentence" in str(sentence_exc.value)
+    assert "generated_text" in str(sentence_exc.value)
+
+    assert_latin_audio_manifest_export_ready(whitespace_equivalent)
