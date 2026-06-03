@@ -3,15 +3,15 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: executing
-stopped_at: Completed 26-03-PLAN.md
-last_updated: "2026-06-03T18:09:19.907Z"
-last_activity: 2026-06-03 -- Phase 27 execution started
+stopped_at: Completed 27-01-PLAN.md
+last_updated: "2026-06-03T18:14:49.469Z"
+last_activity: 2026-06-03
 progress:
   total_phases: 7
   completed_phases: 5
   total_plans: 23
-  completed_plans: 18
-  percent: 78
+  completed_plans: 19
+  percent: 83
 ---
 
 # Project State
@@ -26,11 +26,11 @@ See: .planning/PROJECT.md (updated 2026-06-01)
 ## Current Position
 
 Phase: 27 (latin-audio-policy-and-integrity) — EXECUTING
-Plan: 1 of 5
-Status: Executing Phase 27
-Last activity: 2026-06-03 -- Phase 27 execution started
+Plan: 2 of 5
+Status: Ready to execute
+Last activity: 2026-06-03
 
-Progress: [██████░░░░] 61%
+Progress: [████████░░] 83%
 
 ## Performance Metrics
 
@@ -76,6 +76,7 @@ Progress: [██████░░░░] 61%
 | Phase 25-latin-review-gates-and-curated-records P04 | 7min | 2 tasks | 1 files |
 | Phase 26-portuguese-translation-quality P02 | 7min | 2 tasks | 2 files |
 | Phase 26-portuguese-translation-quality P03 | 7min | 2 tasks | 5 files |
+| Phase 27-latin-audio-policy-and-integrity P01 | 7min | 2 tasks | 2 files |
 
 ## Accumulated Context
 
@@ -118,6 +119,8 @@ Full decision history is in `.planning/PROJECT.md`. Current v2.0 decisions affec
 - [Phase 26-portuguese-translation-quality]: All 50 entries remain needs_review until a future human review artifact explicitly approves them.
 - [Phase 26-portuguese-translation-quality]: Portuguese QA summary loading is opt-in so default Latin MVP startup remains provider-free and backward-compatible.
 - [Phase 26-portuguese-translation-quality]: The CLI prints only public QA counts/statuses for --portuguese-json, not translation text, secrets, or local paths.
+- [Phase 27-latin-audio-policy-and-integrity]: Latin audio uses a separate metadata/readiness service rather than adding Latin to SupportedLanguage or the global Azure voice registry.
+- [Phase 27-latin-audio-policy-and-integrity]: Export readiness requires both word and sentence artifacts to be approved and exact-text aligned with the frozen source pack.
 
 ### Pending Todos
 
@@ -144,6 +147,6 @@ Items acknowledged and carried forward:
 
 ## Session Continuity
 
-Last session: 2026-06-03T17:53:32.889Z
-Stopped at: Completed 26-03-PLAN.md
+Last session: 2026-06-03T18:14:49.460Z
+Stopped at: Completed 27-01-PLAN.md
 Resume file: None
