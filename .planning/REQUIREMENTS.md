@@ -35,9 +35,9 @@ Requirements for the Classical Latin MVP. Each maps to roadmap phases.
 
 ### Portuguese Text
 
-- [ ] **PT-01**: Every Latin MVP card has a Portuguese short translation for the target lemma or target form that matches the selected sentence sense.
-- [ ] **PT-02**: Every Latin MVP card has a Portuguese translation of the displayed Latin sentence that corresponds to the selected source sentence and target form context.
-- [ ] **PT-03**: Portuguese learner-facing text is reviewed or validated to prevent English leakage, dictionary-only glosses that miss the sentence sense, and translations that contradict the Latin sentence.
+- [x] **PT-01**: Every Latin MVP card has a Portuguese short translation for the target lemma or target form that matches the selected sentence sense.
+- [x] **PT-02**: Every Latin MVP card has a Portuguese translation of the displayed Latin sentence that corresponds to the selected source sentence and target form context.
+- [x] **PT-03**: Portuguese learner-facing text is reviewed or validated to prevent English leakage, dictionary-only glosses that miss the sentence sense, and translations that contradict the Latin sentence.
 
 ### Latin Review
 
@@ -116,9 +116,9 @@ Which phases cover which requirements. Updated during roadmap creation.
 | GRAM-02 | Phase 24 | Complete |
 | GRAM-03 | Phase 24 | Complete |
 | GRAM-04 | Phase 24 | Complete |
-| PT-01 | Phase 26 | Pending |
-| PT-02 | Phase 26 | Pending |
-| PT-03 | Phase 26 | Pending |
+| PT-01 | Phase 26 | Complete |
+| PT-02 | Phase 26 | Complete |
+| PT-03 | Phase 26 | Complete |
 | REV-01 | Phase 25 | Complete |
 | REV-02 | Phase 25 | Complete |
 | REV-03 | Phase 25 | Complete |
