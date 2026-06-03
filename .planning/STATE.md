@@ -129,7 +129,7 @@ Full decision history is in `.planning/PROJECT.md`. Current v2.0 decisions affec
 
 ### Pending Todos
 
-- Execute Phase 27 Plan 27-02 for eSpeak NG sample generation and provider comparison metadata.
+- Execute Phase 27 Plan 27-03 after eSpeak NG setup is available for playback review.
 - Repair broad-suite drift before treating full `python -m pytest -q` as authoritative again.
 
 ### Blockers/Concerns

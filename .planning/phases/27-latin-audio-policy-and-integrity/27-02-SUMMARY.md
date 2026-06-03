@@ -20,7 +20,8 @@ key-files:
     - src/multilang/services/latin_audio_samples.py
     - tests/services/test_espeak_ng_speech_adapter.py
     - tests/services/test_latin_audio_samples.py
-  modified: []
+  modified:
+    - tests/services/test_espeak_ng_speech_adapter.py
 key-decisions:
   - "eSpeak NG `la` is the only locally synthesizeable Latin candidate for playback review; Azure multilingual remains blocked without a verified native Classical Latin/`la` locale."
   - "Sample generation is local-only and does not contact Azure or any network provider."
@@ -40,7 +41,7 @@ completed: 2026-06-03
 
 - **Duration:** 7 min
 - **Started:** 2026-06-03T18:14:50Z
-- **Completed:** 2026-06-03T18:22:00Z
+- **Completed:** 2026-06-03T18:27:00Z
 - **Tasks:** 2
 - **Files modified:** 4
 
@@ -52,12 +53,13 @@ completed: 2026-06-03
 
 ## Task Commits
 
-Each task was committed atomically using a combined TDD sequence for the adapter and sample manifest behavior:
+Each task was committed with the existing TDD sequence plus an additional adapter coverage commit:
 
 1. **Tasks 1-2 RED: eSpeak adapter and representative sample behavior** - `1232967` (test)
 2. **Tasks 1-2 GREEN: eSpeak adapter and sample manifest implementation** - `c7c4788` (feat)
+3. **Task 1 coverage: missing binary fail-closed behavior** - `5fc8dd9` (test)
 
-**Plan metadata:** pending final metadata commit
+**Plan metadata:** `6c8503a` (docs), followed by this summary correction commit.
 
 ## Files Created/Modified
 
@@ -74,7 +76,14 @@ Each task was committed atomically using a combined TDD sequence for the adapter
 
 ## Deviations from Plan
 
-None - plan executed exactly as written.
+### Auto-fixed Issues
+
+**1. [Rule 2 - Missing critical test coverage] Added explicit missing-binary coverage**
+- **Found during:** Task 1 verification review.
+- **Issue:** The adapter implementation failed closed for `FileNotFoundError`, but focused tests did not explicitly cover the missing native binary path required by the plan.
+- **Fix:** Added a subprocess-free fake runner that raises `FileNotFoundError` and asserts the public `ValueError` does not leak environment/path details.
+- **Files modified:** `tests/services/test_espeak_ng_speech_adapter.py`
+- **Commit:** `5fc8dd9`
 
 ## Issues Encountered
 
@@ -107,8 +116,8 @@ None.
 - Verified `src/multilang/services/latin_audio_samples.py` exists.
 - Verified `tests/services/test_espeak_ng_speech_adapter.py` exists.
 - Verified `tests/services/test_latin_audio_samples.py` exists.
-- Verified commits `1232967` and `c7c4788` exist in git history.
-- Verified `python -m pytest tests/services/test_latin_audio_samples.py tests/services/test_espeak_ng_speech_adapter.py -q` passes: 8 passed.
+- Verified commits `1232967`, `c7c4788`, `5fc8dd9`, and `6c8503a` exist in git history.
+- Verified `python -m pytest tests/services/test_latin_audio_samples.py tests/services/test_espeak_ng_speech_adapter.py -q` passes: 9 passed.
 - Checked optional real sample generation: `espeak-ng` is not on `PATH` in this environment.
 
 ---
