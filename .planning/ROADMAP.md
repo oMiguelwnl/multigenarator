@@ -150,7 +150,7 @@ Plans:
 | 24. Morphology Evidence and Gramatica Gate | v2.0 | 4/4 | Complete   | 2026-06-02 |
 | 25. Latin Review Gates and Curated Records | v2.0 | 4/4 | Complete    | 2026-06-03 |
 | 26. Portuguese Translation Quality | v2.0 | 3/3 | Complete   | 2026-06-03 |
-| 27. Latin Audio Policy and Integrity | v2.0 | 6/6 | Complete   | 2026-06-08 |
+| 27. Latin Audio Policy and Integrity | v2.0 | 6/6 | Complete    | 2026-06-08 |
 | 28. Latin Export and Milestone Evidence | v2.0 | 0/TBD | Not started | - |
 
 ## Coverage
