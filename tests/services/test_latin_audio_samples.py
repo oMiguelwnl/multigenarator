@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from dataclasses import dataclass
 from pathlib import Path
 
 from multilang.services.latin_audio import latin_audio_text_hash
@@ -12,6 +13,13 @@ from multilang.services.latin_audio_samples import (
 )
 from tests.services.test_espeak_ng_speech_adapter import FakeRunner
 from multilang.services.espeak_ng_speech_adapter import EspeakNgSpeechAdapter
+
+
+@dataclass(frozen=True)
+class FakeCompletedProcess:
+    returncode: int = 0
+    stdout: str = ""
+    stderr: str = ""
 
 
 def test_sample_set_includes_representative_words_and_sentence(tmp_path: Path) -> None:
