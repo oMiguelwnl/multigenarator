@@ -8,7 +8,10 @@ from pathlib import Path
 import pytest
 from typer.testing import CliRunner
 
+import multilang.cli as cli_module
 from multilang.cli import create_app
+from multilang.domain.exporting import ExportArtifactFormat
+from multilang.services.latin_export import LATIN_NOTE_TYPE_NAME
 from multilang.domain.latin import LatinGenerationRequest
 from multilang.services.latin_review import load_latin_curated_records, update_latin_review_gate, write_latin_curated_records
 from multilang.services.latin_mvp import LatinMvpGenerationService
@@ -221,6 +224,7 @@ def test_update_latin_review_gate_requires_reason_for_blocking_statuses() -> Non
         status="approved",
         reviewed_by="reviewer@example.test",
         reviewed_at="2026-06-02T17:30:00Z",
+        force=True,
     )
     assert updated[0].translation_gate.status == "approved"
     assert updated[0].translation_gate.reviewed_by == "reviewer@example.test"
@@ -242,9 +246,54 @@ def test_review_latin_mvp_summary_prints_gate_counts() -> None:
 
     assert result.exit_code == 0
     assert "total_records=50" in result.output
-    assert "learner_ready_records=0" in result.output
-    assert '"translation": {"approved": 0, "needs_review": 50, "rejected": 0}' in result.output
+    assert "learner_ready_records=50" in result.output
+    assert '"translation": {"approved": 50, "needs_review": 0, "rejected": 0}' in result.output
     assert '"audio": {"approved": 50, "needs_review": 0, "rejected": 0}' in result.output
+
+
+def test_export_latin_mvp_cli_writes_apkg_and_prints_public_summary(tmp_path: Path) -> None:
+    result = runner.invoke(create_app(), ["export-latin-mvp", "--format", "apkg", "--output-dir", str(tmp_path)])
+
+    assert result.exit_code == 0
+    assert "artifact_path=" in result.output
+    assert "latin-mvp-50.apkg" in result.output
+    assert "card_count=50" in result.output
+    assert "media_count=100" in result.output
+    assert f"note_type={LATIN_NOTE_TYPE_NAME}" in result.output
+    assert "export_status=completed" in result.output
+    assert (tmp_path / "latin-mvp-50.apkg").exists()
+    assert "storage_path" not in result.output
+    assert "provider" not in result.output.lower()
+    assert "secret" not in result.output.lower()
+
+
+@pytest.mark.parametrize(("format_value", "file_name"), [("csv", "latin-mvp-50.csv"), ("tsv", "latin-mvp-50.tsv")])
+def test_export_latin_mvp_cli_writes_tabular_formats_without_audio_paths(tmp_path: Path, format_value: str, file_name: str) -> None:
+    result = runner.invoke(create_app(), ["export-latin-mvp", "--format", format_value, "--output-dir", str(tmp_path)])
+
+    assert result.exit_code == 0
+    assert f"artifact_path={tmp_path / file_name}" in result.output
+    assert "card_count=50" in result.output
+    assert "media_count=0" in result.output
+    assert f"note_type={LATIN_NOTE_TYPE_NAME}" in result.output
+    assert "export_status=completed" in result.output
+    assert (tmp_path / file_name).exists()
+    assert "data/latin_mvp/audio" not in result.output
+    assert "AZURE_" not in result.output
+    assert "OPENAI_" not in result.output
+
+
+def test_export_latin_mvp_cli_rejects_blocked_readiness(monkeypatch: pytest.MonkeyPatch, tmp_path: Path) -> None:
+    def blocked_export(**kwargs: object) -> object:
+        assert kwargs["export_format"] is ExportArtifactFormat.APKG
+        raise ValueError("latin_export_blocked item_key=latin-mvp-0001 gates=translation")
+
+    monkeypatch.setattr(cli_module, "export_latin_mvp_bundle", blocked_export)
+
+    result = runner.invoke(create_app(), ["export-latin-mvp", "--format", "apkg", "--output-dir", str(tmp_path)])
+
+    assert result.exit_code != 0
+    assert "latin_export_blocked item_key=latin-mvp-0001 gates=translation" in result.output
 
 
 def test_review_latin_mvp_update_writes_file(tmp_path: Path) -> None:

@@ -28,6 +28,7 @@ from multilang.services.deck_audit_reports import write_deck_audit_reports
 from multilang.services.lexical_lookup import LexicalLookup, normalize_lexical_key
 from multilang.services.job_summary import JobLifecycleSummary, JobSummaryBuilder
 from multilang.services.latin_mvp import LatinMvpGenerationService
+from multilang.services.latin_export import LATIN_DECK_NAME, export_latin_mvp_bundle
 from multilang.services.latin_review import (
     DEFAULT_LATIN_MVP_CURATION_PATH,
     load_latin_curated_records,
@@ -985,6 +986,44 @@ def create_app(
         except ValueError as exc:
             typer.echo(str(exc))
             raise typer.Exit(code=1) from exc
+
+    @cli.command("export-latin-mvp")
+    def export_latin_mvp(
+        format: Annotated[
+            ExportArtifactFormat,
+            typer.Option("--format", help="Latin export format: apkg, csv, or tsv."),
+        ],
+        output_dir: Annotated[
+            Path,
+            typer.Option(
+                "--output-dir",
+                file_okay=False,
+                dir_okay=True,
+                writable=True,
+                help="Directory where the Latin MVP export artifact will be written.",
+            ),
+        ],
+        deck_name: Annotated[
+            str,
+            typer.Option("--deck-name", help="Optional Latin deck name override."),
+        ] = LATIN_DECK_NAME,
+    ) -> None:
+        try:
+            result = export_latin_mvp_bundle(
+                export_format=format,
+                output_dir=output_dir,
+                deck_name=deck_name,
+                repo_root=Path.cwd(),
+            )
+        except ValueError as exc:
+            typer.echo(str(exc))
+            raise typer.Exit(code=1) from exc
+
+        typer.echo(f"artifact_path={result.output_path}")
+        typer.echo(f"card_count={result.card_count}")
+        typer.echo(f"media_count={result.media_count}")
+        typer.echo(f"note_type={result.note_type_name}")
+        typer.echo(f"export_status={result.export_status}")
 
     @cli.command("export")
     def export(
