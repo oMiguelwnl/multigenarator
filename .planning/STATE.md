@@ -3,15 +3,15 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: executing
-stopped_at: Completed 27-03-PLAN.md
-last_updated: "2026-06-08T16:53:42.545Z"
+stopped_at: Completed 27-04-PLAN.md
+last_updated: "2026-06-08T17:00:26.643Z"
 last_activity: 2026-06-08
 progress:
   total_phases: 7
   completed_phases: 5
   total_plans: 23
-  completed_plans: 21
-  percent: 91
+  completed_plans: 22
+  percent: 96
 ---
 
 # Project State
@@ -26,11 +26,11 @@ See: .planning/PROJECT.md (updated 2026-06-01)
 ## Current Position
 
 Phase: 27 (latin-audio-policy-and-integrity) — EXECUTING
-Plan: 4 of 5
+Plan: 5 of 5
 Status: Ready to execute
 Last activity: 2026-06-08
 
-Progress: [█████████░] 91%
+Progress: [██████████] 96%
 
 ## Performance Metrics
 
@@ -79,6 +79,7 @@ Progress: [█████████░] 91%
 | Phase 27-latin-audio-policy-and-integrity P01 | 4min | 2 tasks | 2 files |
 | Phase 27-latin-audio-policy-and-integrity P02 | 7min | 2 tasks | 4 files |
 | Phase 27-latin-audio-policy-and-integrity P03 | 2min | 1 tasks | 2 files |
+| Phase 27-latin-audio-policy-and-integrity P04 | 4min | 2 tasks | 103 files |
 
 ## Accumulated Context
 
@@ -129,10 +130,12 @@ Full decision history is in `.planning/PROJECT.md`. Current v2.0 decisions affec
 - [Phase 27-latin-audio-policy-and-integrity]: Sample generation is local-only and does not contact Azure or any network provider.
 - [Phase 27-latin-audio-policy-and-integrity]: Approved eSpeak NG voice la for the 50-card Classical Latin MVP only under pronunciation policy classical_approx.
 - [Phase 27-latin-audio-policy-and-integrity]: Azure remains blocked for Classical Latin until a future review verifies a native Classical Latin/la Azure voice.
+- [Phase 27-latin-audio-policy-and-integrity]: The full Latin MVP manifest uses the Plan 27-03 approved eSpeak NG provider espeak-ng, voice la, and pronunciation policy classical_approx.
+- [Phase 27-latin-audio-policy-and-integrity]: Curation audio_gate approval is copied from the playback review artifact while source, translation, grammar, provenance, and sequence fields remain unchanged.
 
 ### Pending Todos
 
-- Execute Phase 27 Plan 27-04 to generate the full 50-card Latin audio manifest from the approved eSpeak NG policy.
+- Execute Phase 27 Plan 27-05 to expose audio readiness summaries and scanner-readable Phase 27 evidence.
 - Repair broad-suite drift before treating full `python -m pytest -q` as authoritative again.
 
 ### Blockers/Concerns
@@ -155,6 +158,6 @@ Items acknowledged and carried forward:
 
 ## Session Continuity
 
-Last session: 2026-06-08T16:53:42.536Z
-Stopped at: Completed 27-03-PLAN.md
+Last session: 2026-06-08T17:00:26.636Z
+Stopped at: Completed 27-04-PLAN.md
 Resume file: None
