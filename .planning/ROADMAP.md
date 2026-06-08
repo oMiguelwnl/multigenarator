@@ -137,7 +137,11 @@ Plans:
   3. User can export approved Latin MVP cards to `.apkg`, CSV, and TSV with packaged media references plus Anki import/playback evidence.
   4. User receives scanner-readable evidence proving all 30 v2.0 requirements are covered by implementation, validation, or explicit review artifacts.
   5. Evidence proves source/license metadata and committed artifacts do not leak private paths, raw provider secrets, unapproved source material, or existing deck-mode regressions.
-**Plans**: TBD
+**Plans:** 3 plans
+Plans:
+- [ ] 28-01-PLAN.md — Define approved Latin export rows and stable learner-facing fields.
+- [ ] 28-02-PLAN.md — Export Latin APKG/CSV/TSV artifacts and CLI command.
+- [ ] 28-03-PLAN.md — Add Phase 28, milestone, privacy, and existing-mode evidence.
 
 ## Progress
 
@@ -151,7 +155,7 @@ Plans:
 | 25. Latin Review Gates and Curated Records | v2.0 | 4/4 | Complete    | 2026-06-03 |
 | 26. Portuguese Translation Quality | v2.0 | 3/3 | Complete   | 2026-06-03 |
 | 27. Latin Audio Policy and Integrity | v2.0 | 6/6 | Complete    | 2026-06-08 |
-| 28. Latin Export and Milestone Evidence | v2.0 | 0/TBD | Not started | - |
+| 28. Latin Export and Milestone Evidence | v2.0 | 0/3 | Planned | - |
 
 ## Coverage
 
