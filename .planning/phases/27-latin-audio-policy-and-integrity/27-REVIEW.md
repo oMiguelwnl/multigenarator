@@ -1,92 +1,49 @@
 ---
 phase: 27-latin-audio-policy-and-integrity
-reviewed: 2026-06-08T17:09:32Z
+reviewed: 2026-06-08T17:44:45Z
 depth: standard
-files_reviewed: 14
+files_reviewed: 5
 files_reviewed_list:
   - src/multilang/services/latin_audio.py
-  - src/multilang/services/espeak_ng_speech_adapter.py
-  - src/multilang/services/latin_audio_samples.py
-  - src/multilang/services/latin_mvp.py
-  - src/multilang/cli.py
-  - data/latin_mvp/latin-mvp-50-v1-audio.json
-  - data/latin_mvp/latin-mvp-50-v1-curation.json
   - tests/services/test_latin_audio.py
-  - tests/services/test_espeak_ng_speech_adapter.py
   - tests/services/test_latin_audio_samples.py
-  - tests/services/test_latin_mvp.py
-  - tests/cli/test_generate_latin_mvp_command.py
-  - tests/integration/test_v20_latin_audio_asset.py
-  - tests/integration/test_v20_latin_audio_evidence.py
+  - .planning/phases/27-latin-audio-policy-and-integrity/27-06-SUMMARY.md
+  - .planning/phases/27-latin-audio-policy-and-integrity/27-VERIFICATION.md
 findings:
   critical: 0
-  warning: 2
+  warning: 0
   info: 0
-  total: 2
-status: issues_found
+  total: 0
+status: clean
 ---
 
 # Phase 27: Code Review Report
 
-**Reviewed:** 2026-06-08T17:09:32Z
+**Reviewed:** 2026-06-08T17:44:45Z
 **Depth:** standard
-**Files Reviewed:** 14
-**Status:** issues_found
+**Files Reviewed:** 5
+**Status:** clean
 
 ## Summary
 
-Reviewed the Phase 27 Latin audio policy/integrity implementation, committed audio/curation assets, CLI exposure, and focused/integration tests. The core exact-text/status checks are well-covered, but the phase currently has one test-suite reliability regression and one export-readiness integrity gap around media paths/files.
+Re-reviewed the final Phase 27 gap-closure changes after plan 27-06, focusing on the two prior warnings: focused pytest collection failure from a `tests.services` import, and unsafe/missing/empty Latin audio media paths passing export readiness.
 
-Verification attempted:
+Both prior findings are resolved:
 
-`uv run pytest tests/services/test_latin_audio.py tests/services/test_espeak_ng_speech_adapter.py tests/services/test_latin_audio_samples.py tests/services/test_latin_mvp.py tests/cli/test_generate_latin_mvp_command.py tests/integration/test_v20_latin_audio_asset.py tests/integration/test_v20_latin_audio_evidence.py`
+- `tests/services/test_latin_audio_samples.py` is now self-contained with local `FakeCompletedProcess` and `FakeRunner` definitions, and no `tests.services` package import remains.
+- `src/multilang/services/latin_audio.py` now validates `storage_path` during readiness: rejects absolute/drive/backslash/tilde/traversal paths, ensures the resolved path stays under `repo_root`, requires an existing regular nonempty file, and requires a `RIFF` media marker before export readiness passes.
+- `tests/services/test_latin_audio.py` includes regression coverage for absolute, traversal, missing, empty, non-media, and valid RIFF storage paths with public-only diagnostics.
 
-Result: collection failed because `tests/services/test_latin_audio_samples.py` imports `tests.services...` but `tests` is not importable as a package in this environment.
+Verification run:
 
-## Warnings
+`PATH="/c/Program Files/eSpeak NG:$PATH" uv run pytest tests/services/test_latin_audio.py tests/services/test_espeak_ng_speech_adapter.py tests/services/test_latin_audio_samples.py tests/services/test_latin_mvp.py tests/cli/test_generate_latin_mvp_command.py tests/integration/test_v20_latin_audio_asset.py tests/integration/test_v20_latin_audio_evidence.py -q`
 
-### WR-01: Phase 27 test suite fails collection due to importing another test module as a package
+Result: `64 passed in 2.97s`.
 
-**File:** `tests/services/test_latin_audio_samples.py:13`
-**Issue:** The test imports `FakeRunner` from `tests.services.test_espeak_ng_speech_adapter`. In this repo layout, `tests` is not importable as a package during the reviewed pytest invocation, so collection fails before any Phase 27 tests run. This makes the Phase 27 verification commands unreliable.
-**Fix:** Keep tests independent by moving the fake runner to a source/test helper module that is importable, or duplicate the tiny fake in this file. For example:
-
-```python
-@dataclass(frozen=True)
-class FakeCompletedProcess:
-    returncode: int = 0
-    stdout: str = ""
-    stderr: str = ""
-
-class FakeRunner:
-    ...
-```
-
-Alternatively, add a proper `tests` package setup and verify the same command works from a clean checkout.
-
-### WR-02: Export-readiness gate can approve manifests with missing or unsafe media paths
-
-**File:** `src/multilang/services/latin_audio.py:175-183`
-**Issue:** `assert_latin_audio_manifest_export_ready()` verifies source alignment, exact generated text, hash, and approval status, but it does not validate that `storage_path` is repository-relative, path-safe, or points to an existing nonempty audio file. A malformed manifest with `playback_review_status="approved"`, exact text/hash, and `storage_path="C:/private/missing.wav"` (or a nonexistent relative file) can pass the export-readiness gate, leading to broken exports or path disclosure risks later.
-**Fix:** Add storage-path checks to readiness validation and cover absolute/path-traversal/missing/empty file cases in unit tests. For example:
-
-```python
-def _validate_audio_storage_path(path_text: str) -> bool:
-    path = Path(path_text)
-    return (
-        not path.is_absolute()
-        and "\\" not in path_text
-        and ":" not in path_text
-        and not path_text.startswith(("/", "~"))
-        and path.exists()
-        and path.stat().st_size > 0
-    )
-```
-
-Then append `field=storage_path` blockers from `_readiness_issues()` when this check fails.
+All reviewed files meet quality standards. No issues found.
 
 ---
 
-_Reviewed: 2026-06-08T17:09:32Z_
+_Reviewed: 2026-06-08T17:44:45Z_
 _Reviewer: the agent (gsd-code-reviewer)_
 _Depth: standard_
