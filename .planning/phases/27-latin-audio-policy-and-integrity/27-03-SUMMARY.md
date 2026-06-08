@@ -52,7 +52,7 @@ completed: 2026-06-08
 
 1. **Task 1: Review representative Latin audio samples and lock policy** - `d93f12f` (docs)
 
-**Plan metadata:** pending final docs commit.
+**Plan metadata:** `c8b118d` (docs), followed by summary metadata correction commit.
 
 ## Files Created/Modified
 
