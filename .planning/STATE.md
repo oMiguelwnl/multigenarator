@@ -3,15 +3,15 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: executing
-stopped_at: Completed 27-02-PLAN.md; blocked before 27-03 playback review pending eSpeak NG setup
-last_updated: "2026-06-03T18:18:18.251Z"
-last_activity: 2026-06-03
+stopped_at: Completed 27-03-PLAN.md
+last_updated: "2026-06-08T16:53:42.545Z"
+last_activity: 2026-06-08
 progress:
   total_phases: 7
   completed_phases: 5
   total_plans: 23
-  completed_plans: 20
-  percent: 87
+  completed_plans: 21
+  percent: 91
 ---
 
 # Project State
@@ -26,11 +26,11 @@ See: .planning/PROJECT.md (updated 2026-06-01)
 ## Current Position
 
 Phase: 27 (latin-audio-policy-and-integrity) — EXECUTING
-Plan: 3 of 5
+Plan: 4 of 5
 Status: Ready to execute
-Last activity: 2026-06-03
+Last activity: 2026-06-08
 
-Progress: [█████████░] 87%
+Progress: [█████████░] 91%
 
 ## Performance Metrics
 
@@ -50,7 +50,7 @@ Progress: [█████████░] 87%
 | 24. Morphology Evidence and Gramatica Gate | 4 | 28min | 7min |
 | 25. Latin Review Gates and Curated Records | 4 | 28min | 7min |
 | 26. Portuguese Translation Quality | 3 | 21min | 7min |
-| 27. Latin Audio Policy and Integrity | 1 | 4min | 4min |
+| 27. Latin Audio Policy and Integrity | 3 | 13min | 4min |
 | 28. Latin Export and Milestone Evidence | 0 | TBD | N/A |
 
 **Recent Trend:**
@@ -78,6 +78,7 @@ Progress: [█████████░] 87%
 | Phase 26-portuguese-translation-quality P03 | 7min | 2 tasks | 5 files |
 | Phase 27-latin-audio-policy-and-integrity P01 | 4min | 2 tasks | 2 files |
 | Phase 27-latin-audio-policy-and-integrity P02 | 7min | 2 tasks | 4 files |
+| Phase 27-latin-audio-policy-and-integrity P03 | 2min | 1 tasks | 2 files |
 
 ## Accumulated Context
 
@@ -126,16 +127,17 @@ Full decision history is in `.planning/PROJECT.md`. Current v2.0 decisions affec
 - [Phase 27-latin-audio-policy-and-integrity]: Latin audio diagnostics expose item_key, audio_kind, and field names only, avoiding local paths and provider-sensitive details.
 - [Phase 27-latin-audio-policy-and-integrity]: eSpeak NG la is the only locally synthesizeable Latin candidate for playback review; Azure multilingual remains blocked without a verified native Classical Latin/la locale.
 - [Phase 27-latin-audio-policy-and-integrity]: Sample generation is local-only and does not contact Azure or any network provider.
+- [Phase 27-latin-audio-policy-and-integrity]: Approved eSpeak NG voice la for the 50-card Classical Latin MVP only under pronunciation policy classical_approx.
+- [Phase 27-latin-audio-policy-and-integrity]: Azure remains blocked for Classical Latin until a future review verifies a native Classical Latin/la Azure voice.
 
 ### Pending Todos
 
-- Execute Phase 27 Plan 27-03 after eSpeak NG setup is available for playback review.
+- Execute Phase 27 Plan 27-04 to generate the full 50-card Latin audio manifest from the approved eSpeak NG policy.
 - Repair broad-suite drift before treating full `python -m pytest -q` as authoritative again.
 
 ### Blockers/Concerns
 
-- Plan 27-03 playback review cannot approve audio until eSpeak NG 1.52+ is installed and `espeak-ng` is available on PATH for real sample WAV generation.
-- Latin TTS quality remains a caveat until Phase 27 sample comparison and playback review lock the approved-only audio policy.
+- Latin TTS quality remains an explicit `classical_approx` caveat even after user approval; future higher-quality Latin audio should use a new review artifact.
 - Source licensing for Phase 23 is license-gated in the frozen source pack; later phases must preserve those provenance fields.
 - Broad-suite drift remains known debt; focused regression evidence should stay authoritative until repaired.
 - Plan 22-02 listed verification exposes existing CLI/audio drift: `tests/cli/test_generate_command.py::test_generate_command_default_runtime_reports_audio_counters` expects `fallback_audio_items=1`, but current runtime output omits it.
@@ -153,6 +155,6 @@ Items acknowledged and carried forward:
 
 ## Session Continuity
 
-Last session: 2026-06-03T18:18:18.244Z
-Stopped at: Completed 27-02-PLAN.md; blocked before 27-03 playback review pending eSpeak NG setup
+Last session: 2026-06-08T16:53:42.536Z
+Stopped at: Completed 27-03-PLAN.md
 Resume file: None
