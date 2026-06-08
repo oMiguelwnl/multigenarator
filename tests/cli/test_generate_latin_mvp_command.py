@@ -77,13 +77,45 @@ def test_generate_latin_mvp_portuguese_json_prints_translation_summary() -> None
     assert "/Users/" not in result.output
 
 
+def test_generate_latin_mvp_audio_json_prints_public_audio_summary() -> None:
+    result = runner.invoke(create_app(), ["generate-latin-mvp", "--audio-json"])
+
+    assert result.exit_code == 0
+    payload = json.loads(result.output)
+    assert payload["source_pack_version"] == "latin-mvp-50-v1"
+    audio_summary = payload["audio_summary"]
+    assert audio_summary["manifest_version"] == "latin-mvp-50-v1"
+    assert audio_summary["entry_count"] == 50
+    assert audio_summary["word_count"] == 50
+    assert audio_summary["sentence_count"] == 50
+    assert audio_summary["approved_count"] == 50
+    assert audio_summary["blocked_count"] == 0
+    assert audio_summary["provider_counts"] == {"espeak-ng": 100}
+    assert audio_summary["playback_status_counts"] == {"approved": 100}
+    assert audio_summary["readiness_status"] == "approved"
+    assert "storage_path" not in result.output
+    assert "provider_response" not in result.output
+    assert "secret" not in result.output.lower()
+    assert "C:\\" not in result.output
+    assert "/Users/" not in result.output
+
+
+def test_generate_latin_mvp_audio_json_and_portuguese_json_can_coexist() -> None:
+    result = runner.invoke(create_app(), ["generate-latin-mvp", "--audio-json", "--portuguese-json"])
+
+    assert result.exit_code == 0
+    payload = json.loads(result.output)
+    assert payload["audio_summary"]["readiness_status"] == "approved"
+    assert payload["portuguese_translation_summary"]["translation_pack_version"] == "latin-mvp-50-pt-v1"
+
+
 def test_generate_latin_mvp_calls_latin_service_with_latin_request() -> None:
     captured: list[LatinGenerationRequest] = []
 
     class FakeLatinService(LatinMvpGenerationService):
-        def start(self, request: LatinGenerationRequest):  # type: ignore[override]
+        def start(self, request: LatinGenerationRequest, **kwargs):  # type: ignore[override]
             captured.append(request)
-            return super().start(request)
+            return super().start(request, **kwargs)
 
     result = runner.invoke(create_app(latin_mvp_service=FakeLatinService()), ["generate-latin-mvp"])
 

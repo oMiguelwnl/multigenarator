@@ -85,6 +85,37 @@ def test_latin_mvp_manifest_summary_omits_portuguese_translation_summary_by_defa
     assert "portuguese_translation_summary" not in summary
 
 
+def test_latin_mvp_manifest_summary_omits_audio_summary_by_default_and_does_not_load_manifest() -> None:
+    def forbidden_audio_loader(_path):
+        raise AssertionError("audio manifest should be opt-in")
+
+    summary = LatinMvpGenerationService(audio_manifest_loader=forbidden_audio_loader).start(
+        LatinGenerationRequest()
+    ).manifest_summary()
+
+    assert "audio_summary" not in summary
+
+
+def test_latin_mvp_manifest_summary_can_include_public_audio_summary() -> None:
+    summary = LatinMvpGenerationService().start(
+        LatinGenerationRequest(),
+        include_audio_summary=True,
+    ).manifest_summary()
+
+    audio_summary = summary["audio_summary"]
+    assert audio_summary["source_pack_version"] == "latin-mvp-50-v1"
+    assert audio_summary["manifest_version"] == "latin-mvp-50-v1"
+    assert audio_summary["entry_count"] == 50
+    assert audio_summary["word_count"] == 50
+    assert audio_summary["sentence_count"] == 50
+    assert audio_summary["approved_count"] == 50
+    assert audio_summary["blocked_count"] == 0
+    assert audio_summary["provider_counts"] == {"espeak-ng": 100}
+    assert audio_summary["playback_status_counts"] == {"approved": 100}
+    assert audio_summary["readiness_status"] == "approved"
+    assert "blocking_audio_by_item_key" not in audio_summary
+
+
 def test_latin_mvp_start_cannot_approve_unresolved_grammar_loader_data() -> None:
     def unresolved_loader(_path):
         raise ValueError("Latin MVP source pack grammar evidence unresolved")
