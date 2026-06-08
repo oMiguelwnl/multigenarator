@@ -17,6 +17,7 @@ LatinAudioKind = Literal["word", "sentence"]
 LatinAudioProvider = Literal["espeak-ng", "azure-multilingual-experimental"]
 LatinAudioReviewStatus = Literal["needs_playback_review", "approved", "rejected", "blocked"]
 DEFAULT_LATIN_AUDIO_MANIFEST_PATH = Path("data") / "latin_mvp" / "latin-mvp-50-v1-audio.json"
+LATIN_AUDIO_MEDIA_MARKER = b"RIFF"
 
 
 def normalize_latin_audio_text(value: str) -> str:
@@ -149,7 +150,31 @@ def _status_counts_for_kind(manifest: LatinAudioManifest, audio_kind: LatinAudio
     }
 
 
-def _readiness_issues(manifest: LatinAudioManifest) -> dict[str, list[str]]:
+def _storage_path_is_export_ready(storage_path: str, *, repo_root: Path) -> bool:
+    path_text = storage_path.strip()
+    if "\\" in path_text or ":" in path_text or path_text.startswith(("/", "~")):
+        return False
+
+    relative_path = Path(path_text)
+    if relative_path.is_absolute() or ".." in relative_path.parts:
+        return False
+
+    root = repo_root.resolve()
+    candidate = (root / relative_path).resolve(strict=False)
+    try:
+        candidate.relative_to(root)
+    except ValueError:
+        return False
+
+    if not candidate.is_file():
+        return False
+    if candidate.stat().st_size <= 0:
+        return False
+    return candidate.read_bytes()[: len(LATIN_AUDIO_MEDIA_MARKER)] == LATIN_AUDIO_MEDIA_MARKER
+
+
+def _readiness_issues(manifest: LatinAudioManifest, *, repo_root: Path | None = None) -> dict[str, list[str]]:
+    readiness_repo_root = repo_root or Path.cwd()
     source_pack = load_latin_mvp_source_pack()
     issues: dict[str, list[str]] = {}
     expected_item_keys = [entry.item_key for entry in source_pack.entries]
@@ -180,13 +205,15 @@ def _readiness_issues(manifest: LatinAudioManifest) -> dict[str, list[str]]:
                 issues.setdefault(entry.item_key, []).append(f"audio_kind={audio_kind} field=generated_text")
             if artifact.text_hash != latin_audio_text_hash(artifact.generated_text):
                 issues.setdefault(entry.item_key, []).append(f"audio_kind={audio_kind} field=text_hash")
+            if not _storage_path_is_export_ready(artifact.storage_path, repo_root=readiness_repo_root):
+                issues.setdefault(entry.item_key, []).append(f"audio_kind={audio_kind} field=storage_path")
     return issues
 
 
-def summarize_latin_audio_manifest(manifest: LatinAudioManifest) -> LatinAudioSummary:
+def summarize_latin_audio_manifest(manifest: LatinAudioManifest, *, repo_root: Path | None = None) -> LatinAudioSummary:
     """Summarize Latin audio approval and blocking state by item key and audio kind."""
 
-    issues = _readiness_issues(manifest)
+    issues = _readiness_issues(manifest, repo_root=repo_root)
     item_blockers = {item_key: blockers for item_key, blockers in issues.items() if item_key != "manifest"}
     approved_items = len(manifest.artifacts) - len(item_blockers) if "manifest" not in issues else 0
     return LatinAudioSummary(
@@ -201,10 +228,10 @@ def summarize_latin_audio_manifest(manifest: LatinAudioManifest) -> LatinAudioSu
     )
 
 
-def assert_latin_audio_manifest_export_ready(manifest: LatinAudioManifest) -> None:
+def assert_latin_audio_manifest_export_ready(manifest: LatinAudioManifest, *, repo_root: Path | None = None) -> None:
     """Fail closed unless all 50 source-pack entries have approved exact-text word and sentence audio."""
 
-    summary = summarize_latin_audio_manifest(manifest)
+    summary = summarize_latin_audio_manifest(manifest, repo_root=repo_root)
     if not summary.blocking_audio_by_item_key:
         return
 
