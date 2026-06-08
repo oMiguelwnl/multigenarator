@@ -11,7 +11,6 @@ from multilang.services.latin_audio_samples import (
     REPRESENTATIVE_LATIN_SAMPLE_WORDS,
     generate_latin_audio_sample_manifest,
 )
-from tests.services.test_espeak_ng_speech_adapter import FakeRunner
 from multilang.services.espeak_ng_speech_adapter import EspeakNgSpeechAdapter
 
 
@@ -20,6 +19,28 @@ class FakeCompletedProcess:
     returncode: int = 0
     stdout: str = ""
     stderr: str = ""
+
+
+class FakeRunner:
+    def __init__(self, *, voices: str = " 5  la             --/M      Latin", fail_synthesis: bool = False) -> None:
+        self.voices = voices
+        self.fail_synthesis = fail_synthesis
+        self.commands: list[list[str]] = []
+
+    def __call__(self, command: list[str], *, input_text: str | None = None) -> FakeCompletedProcess:
+        self.commands.append(command)
+        if command == ["espeak-ng", "--version"]:
+            return FakeCompletedProcess(stdout="eSpeak NG text-to-speech: 1.52.0\n")
+        if command == ["espeak-ng", "--voices"]:
+            return FakeCompletedProcess(stdout=self.voices)
+        if self.fail_synthesis:
+            return FakeCompletedProcess(returncode=1, stderr="native synthesis failed with PATH=/secret/bin")
+        if "-w" in command:
+            output_path = Path(command[command.index("-w") + 1])
+            output_path.parent.mkdir(parents=True, exist_ok=True)
+            output_path.write_bytes(b"RIFFfake-wave")
+            return FakeCompletedProcess(stdout="")
+        return FakeCompletedProcess(returncode=99, stderr="unexpected command")
 
 
 def test_sample_set_includes_representative_words_and_sentence(tmp_path: Path) -> None:
