@@ -3,15 +3,15 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: executing
-stopped_at: Completed 28-02-PLAN.md
-last_updated: "2026-06-08T22:38:10.660Z"
+stopped_at: Completed 28-03-PLAN.md
+last_updated: "2026-06-08T22:42:09.222Z"
 last_activity: 2026-06-08
 progress:
   total_phases: 7
-  completed_phases: 6
+  completed_phases: 7
   total_plans: 27
-  completed_plans: 26
-  percent: 96
+  completed_plans: 27
+  percent: 100
 ---
 
 # Project State
@@ -26,11 +26,11 @@ See: .planning/PROJECT.md (updated 2026-06-01)
 ## Current Position
 
 Phase: 28
-Plan: 03
-Status: In Progress
+Plan: Complete
+Status: Phase complete — ready for verification
 Last activity: 2026-06-08
 
-Progress: [██████████] 96%
+Progress: [██████████] 100%
 
 ## Performance Metrics
 
@@ -85,6 +85,7 @@ Progress: [██████████] 96%
 | Phase 27-latin-audio-policy-and-integrity P06 | 4min | 2 tasks | 3 files |
 | Phase 28-latin-export-and-milestone-evidence P01 | 3min | 2 tasks | 4 files |
 | Phase 28-latin-export-and-milestone-evidence P02 | 5min | 2 tasks | 4 files |
+| Phase 28-latin-export-and-milestone-evidence P03 | 4min | 3 tasks | 4 files |
 
 ## Accumulated Context
 
@@ -148,6 +149,9 @@ Full decision history is in `.planning/PROJECT.md`. Current v2.0 decisions affec
 - [Phase 28-latin-export-and-milestone-evidence]: Latin APKG export uses a dedicated note model and model/deck IDs rather than mutating existing export models.
 - [Phase 28-latin-export-and-milestone-evidence]: Latin CSV/TSV exports use Anki import headers and the exact Plan 28-01 field order.
 - [Phase 28-latin-export-and-milestone-evidence]: The export-latin-mvp CLI prints only artifact path, card/media counts, note type, and status.
+- [Phase 28-latin-export-and-milestone-evidence]: Final milestone evidence treats all 30 v2.0 requirement IDs as an exact set from MODE-01 through EVID-03.
+- [Phase 28-latin-export-and-milestone-evidence]: Existing-mode evidence directly asserts frequency, manual, highlight, and phonetics contracts rather than relying on the known broad-suite drift.
+- [Phase 28-latin-export-and-milestone-evidence]: Latin model and deck IDs are distinct from phoneme and shipped export IDs.
 
 ### Pending Todos
 
@@ -174,6 +178,6 @@ Items acknowledged and carried forward:
 
 ## Session Continuity
 
-Last session: 2026-06-08T22:38:10.650Z
-Stopped at: Completed 28-02-PLAN.md
+Last session: 2026-06-08T22:42:09.212Z
+Stopped at: Completed 28-03-PLAN.md
 Resume file: None

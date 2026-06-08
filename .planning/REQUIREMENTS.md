@@ -60,9 +60,9 @@ Requirements for the Classical Latin MVP. Each maps to roadmap phases.
 
 ### Evidence And Regression
 
-- [ ] **EVID-01**: User receives scanner-readable v2.0 evidence proving all Latin MVP requirements are covered by implementation, validation, or explicit review artifacts.
-- [ ] **EVID-02**: User receives evidence that Latin source/license metadata and committed artifacts do not leak private paths, raw provider secrets, or unapproved source material.
-- [ ] **EVID-03**: Existing frequency, custom word-list, highlight, and phonetics deck export contracts remain covered by focused regression evidence after Latin changes.
+- [x] **EVID-01**: User receives scanner-readable v2.0 evidence proving all Latin MVP requirements are covered by implementation, validation, or explicit review artifacts.
+- [x] **EVID-02**: User receives evidence that Latin source/license metadata and committed artifacts do not leak private paths, raw provider secrets, or unapproved source material.
+- [x] **EVID-03**: Existing frequency, custom word-list, highlight, and phonetics deck export contracts remain covered by focused regression evidence after Latin changes.
 
 ## Future Requirements
 
@@ -129,9 +129,9 @@ Which phases cover which requirements. Updated during roadmap creation.
 | EXP-01 | Phase 28 | Complete |
 | EXP-02 | Phase 28 | Complete |
 | EXP-03 | Phase 28 | Complete |
-| EVID-01 | Phase 28 | Pending |
-| EVID-02 | Phase 28 | Pending |
-| EVID-03 | Phase 28 | Pending |
+| EVID-01 | Phase 28 | Complete |
+| EVID-02 | Phase 28 | Complete |
+| EVID-03 | Phase 28 | Complete |
 
 **Coverage:**
 
