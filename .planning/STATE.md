@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: verifying
-stopped_at: Completed 27-05-PLAN.md
-last_updated: "2026-06-08T17:07:05.102Z"
+stopped_at: Completed 27-06-PLAN.md
+last_updated: "2026-06-08T17:37:32.445Z"
 last_activity: 2026-06-08
 progress:
   total_phases: 7
   completed_phases: 6
-  total_plans: 23
-  completed_plans: 23
+  total_plans: 24
+  completed_plans: 24
   percent: 100
 ---
 
@@ -26,7 +26,7 @@ See: .planning/PROJECT.md (updated 2026-06-01)
 ## Current Position
 
 Phase: 27 (latin-audio-policy-and-integrity) — EXECUTING
-Plan: 5 of 5
+Plan: 6 of 6
 Status: Phase complete — ready for verification
 Last activity: 2026-06-08
 
@@ -37,7 +37,7 @@ Progress: [██████████] 100%
 **Velocity:**
 
 - Total plans completed: 72 from shipped/previous milestones
-- v2.0 plans completed: 11
+- v2.0 plans completed: 12
 - Average duration: 7min for v2.0
 - Total v2.0 execution time: 1.29 hours
 
@@ -50,7 +50,7 @@ Progress: [██████████] 100%
 | 24. Morphology Evidence and Gramatica Gate | 4 | 28min | 7min |
 | 25. Latin Review Gates and Curated Records | 4 | 28min | 7min |
 | 26. Portuguese Translation Quality | 3 | 21min | 7min |
-| 27. Latin Audio Policy and Integrity | 3 | 13min | 4min |
+| 27. Latin Audio Policy and Integrity | 6 | 27min | 5min |
 | 28. Latin Export and Milestone Evidence | 0 | TBD | N/A |
 
 **Recent Trend:**
@@ -81,6 +81,7 @@ Progress: [██████████] 100%
 | Phase 27-latin-audio-policy-and-integrity P03 | 2min | 1 tasks | 2 files |
 | Phase 27-latin-audio-policy-and-integrity P04 | 4min | 2 tasks | 103 files |
 | Phase 27-latin-audio-policy-and-integrity P05 | 6min | 2 tasks | 5 files |
+| Phase 27-latin-audio-policy-and-integrity P06 | 4min | 2 tasks | 3 files |
 
 ## Accumulated Context
 
@@ -135,6 +136,9 @@ Full decision history is in `.planning/PROJECT.md`. Current v2.0 decisions affec
 - [Phase 27-latin-audio-policy-and-integrity]: Curation audio_gate approval is copied from the playback review artifact while source, translation, grammar, provenance, and sequence fields remain unchanged.
 - [Phase 27-latin-audio-policy-and-integrity]: Latin audio readiness output is opt-in through --audio-json and contains aggregate counts only, not media paths or provider raw details.
 - [Phase 27-latin-audio-policy-and-integrity]: Phase 27 evidence uses committed source, curation, playback review, and audio manifest assets rather than mocks.
+- [Phase 27-latin-audio-policy-and-integrity]: Latin audio export readiness now treats storage_path validation as part of the approval gate, not as a later export concern.
+- [Phase 27-latin-audio-policy-and-integrity]: Storage-path diagnostics remain privacy-safe by reporting only item_key, audio_kind, and field=storage_path.
+- [Phase 27-latin-audio-policy-and-integrity]: Focused Phase 27 sample tests keep their fake eSpeak NG runner local rather than importing another test module through tests.services.
 
 ### Pending Todos
 
@@ -161,6 +165,6 @@ Items acknowledged and carried forward:
 
 ## Session Continuity
 
-Last session: 2026-06-08T17:07:05.091Z
-Stopped at: Completed 27-05-PLAN.md
+Last session: 2026-06-08T17:37:32.436Z
+Stopped at: Completed 27-06-PLAN.md
 Resume file: None
