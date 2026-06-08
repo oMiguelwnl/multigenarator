@@ -3,15 +3,15 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: verifying
-stopped_at: Completed 27-06-PLAN.md
-last_updated: "2026-06-08T17:43:41.302Z"
+stopped_at: Completed 28-01-PLAN.md
+last_updated: "2026-06-08T22:33:31.840Z"
 last_activity: 2026-06-08
 progress:
   total_phases: 7
   completed_phases: 6
-  total_plans: 24
-  completed_plans: 24
-  percent: 100
+  total_plans: 27
+  completed_plans: 25
+  percent: 93
 ---
 
 # Project State
@@ -21,16 +21,16 @@ progress:
 See: .planning/PROJECT.md (updated 2026-06-01)
 
 **Core value:** Generate reliable, high-quality Anki cards for real vocabulary the learner needs to study, with accurate definitions, examples, translations where appropriate, and audio.  
-**Current focus:** Phase 27 — latin-audio-policy-and-integrity
+**Current focus:** Phase 28 — latin-export-and-milestone-evidence
 
 ## Current Position
 
 Phase: 28
-Plan: Not started
-Status: Phase complete — ready for verification
+Plan: 02
+Status: In Progress
 Last activity: 2026-06-08
 
-Progress: [██████████] 100%
+Progress: [█████████░] 93%
 
 ## Performance Metrics
 
@@ -83,6 +83,7 @@ Progress: [██████████] 100%
 | Phase 27-latin-audio-policy-and-integrity P04 | 4min | 2 tasks | 103 files |
 | Phase 27-latin-audio-policy-and-integrity P05 | 6min | 2 tasks | 5 files |
 | Phase 27-latin-audio-policy-and-integrity P06 | 4min | 2 tasks | 3 files |
+| Phase 28-latin-export-and-milestone-evidence P01 | 3min | 2 tasks | 4 files |
 
 ## Accumulated Context
 
@@ -140,6 +141,9 @@ Full decision history is in `.planning/PROJECT.md`. Current v2.0 decisions affec
 - [Phase 27-latin-audio-policy-and-integrity]: Latin audio export readiness now treats storage_path validation as part of the approval gate, not as a later export concern.
 - [Phase 27-latin-audio-policy-and-integrity]: Storage-path diagnostics remain privacy-safe by reporting only item_key, audio_kind, and field=storage_path.
 - [Phase 27-latin-audio-policy-and-integrity]: Focused Phase 27 sample tests keep their fake eSpeak NG runner local rather than importing another test module through tests.services.
+- [Phase 28-latin-export-and-milestone-evidence]: Latin export rows are built only after source, translation, grammar, and audio gates are approved.
+- [Phase 28-latin-export-and-milestone-evidence]: The user's Approve translations response is recorded as the human review event for all 50 Portuguese translation gates.
+- [Phase 28-latin-export-and-milestone-evidence]: Latin audio fields expose Anki sound basenames while media_index retains repository-relative WAV paths.
 
 ### Pending Todos
 
@@ -166,6 +170,6 @@ Items acknowledged and carried forward:
 
 ## Session Continuity
 
-Last session: 2026-06-08T17:37:32.436Z
-Stopped at: Completed 27-06-PLAN.md
+Last session: 2026-06-08T22:33:31.832Z
+Stopped at: Completed 28-01-PLAN.md
 Resume file: None
