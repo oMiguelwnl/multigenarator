@@ -2,16 +2,16 @@
 gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
-status: executing
-stopped_at: Completed 27-04-PLAN.md
-last_updated: "2026-06-08T17:00:26.643Z"
+status: verifying
+stopped_at: Completed 27-05-PLAN.md
+last_updated: "2026-06-08T17:07:05.102Z"
 last_activity: 2026-06-08
 progress:
   total_phases: 7
-  completed_phases: 5
+  completed_phases: 6
   total_plans: 23
-  completed_plans: 22
-  percent: 96
+  completed_plans: 23
+  percent: 100
 ---
 
 # Project State
@@ -27,10 +27,10 @@ See: .planning/PROJECT.md (updated 2026-06-01)
 
 Phase: 27 (latin-audio-policy-and-integrity) — EXECUTING
 Plan: 5 of 5
-Status: Ready to execute
+Status: Phase complete — ready for verification
 Last activity: 2026-06-08
 
-Progress: [██████████] 96%
+Progress: [██████████] 100%
 
 ## Performance Metrics
 
@@ -80,6 +80,7 @@ Progress: [██████████] 96%
 | Phase 27-latin-audio-policy-and-integrity P02 | 7min | 2 tasks | 4 files |
 | Phase 27-latin-audio-policy-and-integrity P03 | 2min | 1 tasks | 2 files |
 | Phase 27-latin-audio-policy-and-integrity P04 | 4min | 2 tasks | 103 files |
+| Phase 27-latin-audio-policy-and-integrity P05 | 6min | 2 tasks | 5 files |
 
 ## Accumulated Context
 
@@ -132,10 +133,12 @@ Full decision history is in `.planning/PROJECT.md`. Current v2.0 decisions affec
 - [Phase 27-latin-audio-policy-and-integrity]: Azure remains blocked for Classical Latin until a future review verifies a native Classical Latin/la Azure voice.
 - [Phase 27-latin-audio-policy-and-integrity]: The full Latin MVP manifest uses the Plan 27-03 approved eSpeak NG provider espeak-ng, voice la, and pronunciation policy classical_approx.
 - [Phase 27-latin-audio-policy-and-integrity]: Curation audio_gate approval is copied from the playback review artifact while source, translation, grammar, provenance, and sequence fields remain unchanged.
+- [Phase 27-latin-audio-policy-and-integrity]: Latin audio readiness output is opt-in through --audio-json and contains aggregate counts only, not media paths or provider raw details.
+- [Phase 27-latin-audio-policy-and-integrity]: Phase 27 evidence uses committed source, curation, playback review, and audio manifest assets rather than mocks.
 
 ### Pending Todos
 
-- Execute Phase 27 Plan 27-05 to expose audio readiness summaries and scanner-readable Phase 27 evidence.
+- Execute Phase 28 to add Latin export and v2.0 milestone evidence.
 - Repair broad-suite drift before treating full `python -m pytest -q` as authoritative again.
 
 ### Blockers/Concerns
@@ -158,6 +161,6 @@ Items acknowledged and carried forward:
 
 ## Session Continuity
 
-Last session: 2026-06-08T17:00:26.636Z
-Stopped at: Completed 27-04-PLAN.md
+Last session: 2026-06-08T17:07:05.091Z
+Stopped at: Completed 27-05-PLAN.md
 Resume file: None
