@@ -244,7 +244,7 @@ def test_review_latin_mvp_summary_prints_gate_counts() -> None:
     assert "total_records=50" in result.output
     assert "learner_ready_records=0" in result.output
     assert '"translation": {"approved": 0, "needs_review": 50, "rejected": 0}' in result.output
-    assert '"audio": {"approved": 0, "needs_review": 50, "rejected": 0}' in result.output
+    assert '"audio": {"approved": 50, "needs_review": 0, "rejected": 0}' in result.output
 
 
 def test_review_latin_mvp_update_writes_file(tmp_path: Path) -> None:
