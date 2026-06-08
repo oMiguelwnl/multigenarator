@@ -3,6 +3,8 @@
 from __future__ import annotations
 
 from hashlib import sha256
+from pathlib import Path
+from typing import Callable
 
 import pytest
 from pydantic import ValidationError
@@ -42,7 +44,11 @@ def make_artifact(**overrides: object) -> LatinAudioArtifact:
 AudioOverrideKey = tuple[str, str]
 
 
-def make_manifest(overrides: dict[AudioOverrideKey, dict[str, object]] | None = None) -> LatinAudioManifest:
+def make_manifest(
+    overrides: dict[AudioOverrideKey, dict[str, object]] | None = None,
+    *,
+    storage_path_factory: Callable[[str, str], str] | None = None,
+) -> LatinAudioManifest:
     overrides = overrides or {}
     source_pack = load_latin_mvp_source_pack()
     pairs: list[LatinAudioPair] = []
@@ -55,6 +61,22 @@ def make_manifest(overrides: dict[AudioOverrideKey, dict[str, object]] | None = 
         word_overrides.pop("text_hash", None)
         sentence_overrides.pop("generated_text", None)
         sentence_overrides.pop("text_hash", None)
+        word_storage_path = str(
+            word_overrides.pop(
+                "storage_path",
+                storage_path_factory(entry.item_key, "word")
+                if storage_path_factory is not None
+                else f"data/latin_mvp/audio/latin-mvp-50-v1/{entry.item_key}-word.wav",
+            )
+        )
+        sentence_storage_path = str(
+            sentence_overrides.pop(
+                "storage_path",
+                storage_path_factory(entry.item_key, "sentence")
+                if storage_path_factory is not None
+                else f"data/latin_mvp/audio/latin-mvp-50-v1/{entry.item_key}-sentence.wav",
+            )
+        )
         pairs.append(
             LatinAudioPair(
                 item_key=entry.item_key,
@@ -62,14 +84,14 @@ def make_manifest(overrides: dict[AudioOverrideKey, dict[str, object]] | None = 
                     audio_kind="word",
                     generated_text=word_text,
                     text_hash=expected_hash(word_text),
-                    storage_path=f"audio/latin/word/{entry.item_key}.mp3",
+                    storage_path=word_storage_path,
                     **word_overrides,
                 ),
                 sentence=make_artifact(
                     audio_kind="sentence",
                     generated_text=sentence_text,
                     text_hash=expected_hash(sentence_text),
-                    storage_path=f"audio/latin/sentence/{entry.item_key}.mp3",
+                    storage_path=sentence_storage_path,
                     **sentence_overrides,
                 ),
             )
@@ -152,6 +174,56 @@ def test_manifest_with_approved_word_and_sentence_audio_for_every_source_entry_i
     assert summary.blocked_items == 0
     assert summary.status_counts["word"]["approved"] == 50
     assert summary.status_counts["sentence"]["approved"] == 50
+
+
+def write_manifest_media_files(repo_root: Path) -> Callable[[str, str], str]:
+    def storage_path_for(item_key: str, audio_kind: str) -> str:
+        relative_path = Path("audio") / "latin" / audio_kind / f"{item_key}.wav"
+        media_path = repo_root / relative_path
+        media_path.parent.mkdir(parents=True, exist_ok=True)
+        media_path.write_bytes(b"RIFFfake-wave")
+        return relative_path.as_posix()
+
+    return storage_path_for
+
+
+def test_approved_audio_with_unsafe_or_missing_storage_path_blocks_export_readiness(tmp_path: Path) -> None:
+    storage_path_for = write_manifest_media_files(tmp_path)
+    (tmp_path / "audio" / "empty.wav").parent.mkdir(parents=True, exist_ok=True)
+    (tmp_path / "audio" / "empty.wav").write_bytes(b"")
+    (tmp_path / "audio" / "not-media.wav").write_text("not really audio", encoding="utf-8")
+
+    bad_paths = [
+        "C:/private/latin-mvp-0001-word.wav",
+        "../outside.wav",
+        "audio/missing.wav",
+        "audio/empty.wav",
+        "audio/not-media.wav",
+    ]
+
+    for bad_path in bad_paths:
+        manifest = make_manifest(
+            {("latin-mvp-0001", "word"): {"storage_path": bad_path}},
+            storage_path_factory=storage_path_for,
+        )
+
+        with pytest.raises(ValueError) as exc_info:
+            assert_latin_audio_manifest_export_ready(manifest, repo_root=tmp_path)
+
+        message = str(exc_info.value)
+        assert "latin-mvp-0001" in message
+        assert "audio_kind=word" in message
+        assert "field=storage_path" in message
+        assert bad_path not in message
+        assert str(tmp_path) not in message
+        assert "C:\\" not in message
+        assert "/Users/" not in message
+
+
+def test_approved_audio_with_existing_riff_storage_path_passes_export_readiness(tmp_path: Path) -> None:
+    manifest = make_manifest(storage_path_factory=write_manifest_media_files(tmp_path))
+
+    assert_latin_audio_manifest_export_ready(manifest, repo_root=tmp_path)
 
 
 @pytest.mark.parametrize(
