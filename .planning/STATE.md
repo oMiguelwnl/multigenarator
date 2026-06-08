@@ -2,9 +2,9 @@
 gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
-status: executing
-stopped_at: Completed 28-03-PLAN.md
-last_updated: "2026-06-08T22:42:09.222Z"
+status: complete
+stopped_at: Verified Phase 28
+last_updated: "2026-06-08T22:48:11Z"
 last_activity: 2026-06-08
 progress:
   total_phases: 7
@@ -21,13 +21,13 @@ progress:
 See: .planning/PROJECT.md (updated 2026-06-01)
 
 **Core value:** Generate reliable, high-quality Anki cards for real vocabulary the learner needs to study, with accurate definitions, examples, translations where appropriate, and audio.  
-**Current focus:** Phase 28 — latin-export-and-milestone-evidence
+**Current focus:** v2.0 Classical Latin MVP complete
 
 ## Current Position
 
 Phase: 28
 Plan: Complete
-Status: Phase complete — ready for verification
+Status: Phase verified — v2.0 milestone complete
 Last activity: 2026-06-08
 
 Progress: [██████████] 100%
@@ -155,7 +155,6 @@ Full decision history is in `.planning/PROJECT.md`. Current v2.0 decisions affec
 
 ### Pending Todos
 
-- Execute Phase 28 to add Latin export and v2.0 milestone evidence.
 - Repair broad-suite drift before treating full `python -m pytest -q` as authoritative again.
 
 ### Blockers/Concerns
@@ -178,6 +177,6 @@ Items acknowledged and carried forward:
 
 ## Session Continuity
 
-Last session: 2026-06-08T22:42:09.212Z
-Stopped at: Completed 28-03-PLAN.md
+Last session: 2026-06-08T22:48:11Z
+Stopped at: Verified Phase 28
 Resume file: None
