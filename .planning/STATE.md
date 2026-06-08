@@ -2,16 +2,16 @@
 gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
-status: verifying
-stopped_at: Completed 28-01-PLAN.md
-last_updated: "2026-06-08T22:33:31.840Z"
+status: executing
+stopped_at: Completed 28-02-PLAN.md
+last_updated: "2026-06-08T22:38:10.660Z"
 last_activity: 2026-06-08
 progress:
   total_phases: 7
   completed_phases: 6
   total_plans: 27
-  completed_plans: 25
-  percent: 93
+  completed_plans: 26
+  percent: 96
 ---
 
 # Project State
@@ -26,11 +26,11 @@ See: .planning/PROJECT.md (updated 2026-06-01)
 ## Current Position
 
 Phase: 28
-Plan: 02
+Plan: 03
 Status: In Progress
 Last activity: 2026-06-08
 
-Progress: [█████████░] 93%
+Progress: [██████████] 96%
 
 ## Performance Metrics
 
@@ -84,6 +84,7 @@ Progress: [█████████░] 93%
 | Phase 27-latin-audio-policy-and-integrity P05 | 6min | 2 tasks | 5 files |
 | Phase 27-latin-audio-policy-and-integrity P06 | 4min | 2 tasks | 3 files |
 | Phase 28-latin-export-and-milestone-evidence P01 | 3min | 2 tasks | 4 files |
+| Phase 28-latin-export-and-milestone-evidence P02 | 5min | 2 tasks | 4 files |
 
 ## Accumulated Context
 
@@ -144,6 +145,9 @@ Full decision history is in `.planning/PROJECT.md`. Current v2.0 decisions affec
 - [Phase 28-latin-export-and-milestone-evidence]: Latin export rows are built only after source, translation, grammar, and audio gates are approved.
 - [Phase 28-latin-export-and-milestone-evidence]: The user's Approve translations response is recorded as the human review event for all 50 Portuguese translation gates.
 - [Phase 28-latin-export-and-milestone-evidence]: Latin audio fields expose Anki sound basenames while media_index retains repository-relative WAV paths.
+- [Phase 28-latin-export-and-milestone-evidence]: Latin APKG export uses a dedicated note model and model/deck IDs rather than mutating existing export models.
+- [Phase 28-latin-export-and-milestone-evidence]: Latin CSV/TSV exports use Anki import headers and the exact Plan 28-01 field order.
+- [Phase 28-latin-export-and-milestone-evidence]: The export-latin-mvp CLI prints only artifact path, card/media counts, note type, and status.
 
 ### Pending Todos
 
@@ -170,6 +174,6 @@ Items acknowledged and carried forward:
 
 ## Session Continuity
 
-Last session: 2026-06-08T22:33:31.832Z
-Stopped at: Completed 28-01-PLAN.md
+Last session: 2026-06-08T22:38:10.650Z
+Stopped at: Completed 28-02-PLAN.md
 Resume file: None

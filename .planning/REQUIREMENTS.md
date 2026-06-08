@@ -56,7 +56,7 @@ Requirements for the Classical Latin MVP. Each maps to roadmap phases.
 
 - [x] **EXP-01**: User receives a dedicated Latin Anki note type/template with stable field order for target form, Latin sentence, lemma, Portuguese translations, `Gramatica`, source, word audio, sentence audio, and blank `Image`.
 - [x] **EXP-02**: Latin exports do not include a separate learner-facing `Classe` field while still allowing part-of-speech metadata internally or inside `Gramatica`.
-- [ ] **EXP-03**: User can export approved Latin MVP cards to `.apkg`, CSV, and TSV with packaged media references and Anki import/playback evidence.
+- [x] **EXP-03**: User can export approved Latin MVP cards to `.apkg`, CSV, and TSV with packaged media references and Anki import/playback evidence.
 
 ### Evidence And Regression
 
@@ -128,7 +128,7 @@ Which phases cover which requirements. Updated during roadmap creation.
 | AUD-04 | Phase 27 | Complete |
 | EXP-01 | Phase 28 | Complete |
 | EXP-02 | Phase 28 | Complete |
-| EXP-03 | Phase 28 | Pending |
+| EXP-03 | Phase 28 | Complete |
 | EVID-01 | Phase 28 | Pending |
 | EVID-02 | Phase 28 | Pending |
 | EVID-03 | Phase 28 | Pending |
