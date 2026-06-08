@@ -46,8 +46,8 @@ LATIN_EXPORT_FIELD_NAMES: tuple[str, ...] = (
 )
 LATIN_NOTE_TYPE_NAME = "Multilang::Classical Latin MVP"
 LATIN_DECK_NAME = "Multilang::Classical Latin::MVP 50"
-LATIN_MODEL_ID = 1_602_300_601
-LATIN_DECK_ID = 1_602_300_602
+LATIN_MODEL_ID = 1_602_300_701
+LATIN_DECK_ID = 1_602_300_702
 _SOUND_TAG_RE = re.compile(r"^\[sound:(?P<name>[^\]]+)\]$")
 
 
