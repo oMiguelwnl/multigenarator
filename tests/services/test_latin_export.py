@@ -1,10 +1,26 @@
 from __future__ import annotations
 
+import csv
+import json
+import sqlite3
+import zipfile
 import pytest
 from pathlib import Path
 
+from multilang.domain.exporting import ExportArtifactFormat
 from multilang.services.latin_audio import load_latin_audio_manifest
-from multilang.services.latin_export import LATIN_EXPORT_FIELD_NAMES, LatinExportRow, build_latin_export_rows
+from multilang.services.latin_export import (
+    LATIN_DECK_NAME,
+    LATIN_EXPORT_FIELD_NAMES,
+    LATIN_MODEL_ID,
+    LATIN_NOTE_TYPE_NAME,
+    LatinExportRow,
+    build_latin_anki_model,
+    build_latin_export_rows,
+    export_latin_mvp_apkg,
+    export_latin_mvp_bundle,
+    write_latin_tabular_export,
+)
 from multilang.services.latin_review import load_latin_curated_records
 
 
@@ -151,3 +167,89 @@ def test_build_latin_export_rows_detects_item_key_order_mismatch() -> None:
             audio_manifest_loader=lambda: reversed_manifest,
             audio_ready_validator=lambda manifest, *, repo_root=None: None,
         )
+
+
+def test_latin_apkg_export_writes_dedicated_model_notes_and_media(tmp_path: Path) -> None:
+    bundle = build_latin_export_rows(repo_root=Path.cwd())
+    result = export_latin_mvp_apkg(bundle=bundle, output_path=tmp_path / "latin.apkg", repo_root=Path.cwd())
+
+    assert result.output_path.exists()
+    assert result.card_count == 50
+    assert result.media_count == 100
+    assert result.note_type_name == LATIN_NOTE_TYPE_NAME
+
+    with zipfile.ZipFile(result.output_path) as archive:
+        names = archive.namelist()
+        assert "collection.anki2" in names
+        assert "media" in names
+        media_manifest = json.loads(archive.read("media").decode("utf-8"))
+        assert len(media_manifest) == 100
+        assert "latin-mvp-0001-word.wav" in set(media_manifest.values())
+        collection_path = tmp_path / "collection.anki2"
+        collection_path.write_bytes(archive.read("collection.anki2"))
+
+    with sqlite3.connect(collection_path) as connection:
+        note_count = connection.execute("select count(*) from notes").fetchone()[0]
+        models = json.loads(connection.execute("select models from col").fetchone()[0])
+        fields = connection.execute("select flds from notes order by id limit 1").fetchone()[0].split("\x1f")
+
+    assert note_count == 50
+    latin_model = models[str(LATIN_MODEL_ID)]
+    assert latin_model["name"] == LATIN_NOTE_TYPE_NAME
+    assert [field["name"] for field in latin_model["flds"]] == list(LATIN_EXPORT_FIELD_NAMES)
+    assert fields[1] == "et"
+    assert fields[4] == "e"
+    assert fields[8] == "[sound:latin-mvp-0001-word.wav]"
+    assert fields[10] == ""
+    assert "Classe" not in latin_model["tmpls"][0]["qfmt"] + latin_model["tmpls"][0]["afmt"]
+
+
+def test_latin_tabular_exports_use_anki_headers_and_stable_fields(tmp_path: Path) -> None:
+    bundle = build_latin_export_rows(repo_root=Path.cwd())
+    csv_result = write_latin_tabular_export(bundle=bundle, export_format=ExportArtifactFormat.CSV, output_dir=tmp_path)
+    tsv_result = write_latin_tabular_export(bundle=bundle, export_format=ExportArtifactFormat.TSV, output_dir=tmp_path)
+
+    csv_lines = csv_result.output_path.read_text(encoding="utf-8").splitlines()
+    tsv_lines = tsv_result.output_path.read_text(encoding="utf-8").splitlines()
+
+    assert csv_lines[:5] == [
+        "#separator:Comma",
+        "#html:true",
+        f"#notetype:{LATIN_NOTE_TYPE_NAME}",
+        f"#deck:{LATIN_DECK_NAME}",
+        "#columns:" + ",".join(LATIN_EXPORT_FIELD_NAMES),
+    ]
+    assert tsv_lines[:5] == [
+        "#separator:Tab",
+        "#html:true",
+        f"#notetype:{LATIN_NOTE_TYPE_NAME}",
+        f"#deck:{LATIN_DECK_NAME}",
+        "#columns:" + "\t".join(LATIN_EXPORT_FIELD_NAMES),
+    ]
+    parsed_csv = list(csv.reader(csv_lines[5:]))[0]
+    parsed_tsv = list(csv.reader(tsv_lines[5:], delimiter="\t"))[0]
+    assert parsed_csv[1:6] == ["et", "Et puer legit.", "et", "e", "E o menino lê."]
+    assert parsed_tsv[8:11] == ["[sound:latin-mvp-0001-word.wav]", "[sound:latin-mvp-0001-sentence.wav]", ""]
+    assert csv_result.card_count == 50
+    assert tsv_result.card_count == 50
+
+
+def test_export_latin_mvp_bundle_routes_all_formats(tmp_path: Path) -> None:
+    apkg = export_latin_mvp_bundle(export_format=ExportArtifactFormat.APKG, output_dir=tmp_path, repo_root=Path.cwd())
+    csv_export = export_latin_mvp_bundle(export_format=ExportArtifactFormat.CSV, output_dir=tmp_path, repo_root=Path.cwd())
+    tsv_export = export_latin_mvp_bundle(export_format=ExportArtifactFormat.TSV, output_dir=tmp_path, repo_root=Path.cwd())
+
+    assert apkg.output_path.name == "latin-mvp-50.apkg"
+    assert csv_export.output_path.name == "latin-mvp-50.csv"
+    assert tsv_export.output_path.name == "latin-mvp-50.tsv"
+    assert apkg.media_count == 100
+    assert csv_export.media_count == 0
+
+
+def test_build_latin_anki_model_is_dedicated_to_latin_fields() -> None:
+    model = build_latin_anki_model()
+
+    assert model.name == LATIN_NOTE_TYPE_NAME
+    assert [field["name"] for field in model.fields] == list(LATIN_EXPORT_FIELD_NAMES)
+    assert "Latin Word" in model.templates[0]["qfmt"]
+    assert "Classe" not in model.templates[0]["qfmt"] + model.templates[0]["afmt"]

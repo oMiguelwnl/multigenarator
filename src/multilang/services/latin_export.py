@@ -3,9 +3,17 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
+from enum import Enum
 from pathlib import Path
+import csv
+from hashlib import sha256
+from io import StringIO
+import re
 from typing import Callable
 
+import genanki
+
+from multilang.domain.exporting import ExportArtifactFormat
 from multilang.services.latin_audio import (
     LatinAudioManifest,
     assert_latin_audio_manifest_export_ready,
@@ -38,6 +46,9 @@ LATIN_EXPORT_FIELD_NAMES: tuple[str, ...] = (
 )
 LATIN_NOTE_TYPE_NAME = "Multilang::Classical Latin MVP"
 LATIN_DECK_NAME = "Multilang::Classical Latin::MVP 50"
+LATIN_MODEL_ID = 1_602_300_601
+LATIN_DECK_ID = 1_602_300_602
+_SOUND_TAG_RE = re.compile(r"^\[sound:(?P<name>[^\]]+)\]$")
 
 
 @dataclass(frozen=True)
@@ -102,6 +113,18 @@ class LatinExportBundle:
 
     rows: list[LatinExportRow]
     media_index: dict[str, Path]
+
+
+@dataclass(frozen=True)
+class LatinExportArtifactResult:
+    """Result for one written Latin MVP export artifact."""
+
+    output_path: Path
+    card_count: int
+    media_count: int
+    note_type_name: str = LATIN_NOTE_TYPE_NAME
+    deck_name: str = LATIN_DECK_NAME
+    export_status: str = "completed"
 
 
 def _sound_tag(storage_path: str) -> str:
@@ -205,11 +228,174 @@ def build_latin_export_rows(
     return LatinExportBundle(rows=rows, media_index=media_index)
 
 
+class LatinNote(genanki.Note):
+    @property
+    def guid(self) -> str:
+        return self._latin_guid  # type: ignore[attr-defined]
+
+
+def build_latin_anki_model() -> genanki.Model:
+    """Build the dedicated Classical Latin MVP Anki note model."""
+
+    return genanki.Model(
+        LATIN_MODEL_ID,
+        LATIN_NOTE_TYPE_NAME,
+        fields=[{"name": field_name} for field_name in LATIN_EXPORT_FIELD_NAMES],
+        templates=[
+            {
+                "name": "Latin MVP Card",
+                "qfmt": (
+                    '<div class="latin-card">'
+                    '<div class="latin-word">{{Latin Word}} {{word_audio}}</div>'
+                    '<div class="latin-sentence">{{Latin Sentence}} {{sentence_audio}}</div>'
+                    '<div class="latin-translation" style="display:none;">{{Sentence Translation}}</div>'
+                    "</div>"
+                ),
+                "afmt": (
+                    "{{FrontSide}}"
+                    '<hr id="answer">'
+                    '<div class="translation">{{Translation}}</div>'
+                    '<div class="sentence-translation">{{Sentence Translation}}</div>'
+                    '<div class="lemma">Lemma: {{Lemma}}</div>'
+                    '<div class="gramatica">Gramatica: {{Gramatica}}</div>'
+                    '<div class="source">Source: {{Source}}</div>'
+                    "{{Image}}"
+                ),
+            }
+        ],
+        css=".latin-card{font-family:serif}.latin-word{font-size:2rem}.source{font-size:.8rem;color:#666}",
+    )
+
+
+def _latin_note_guid(row: LatinExportRow) -> str:
+    return sha256(f"la|latin-mvp|{row.item_key}|{row.sort_index}".encode("utf-8")).hexdigest()[:32]
+
+
+def build_latin_anki_note(row: LatinExportRow, *, model: genanki.Model | None = None) -> genanki.Note:
+    note = LatinNote(
+        model=model or build_latin_anki_model(),
+        fields=[str(row.ordered_field_mapping()[field_name]) for field_name in LATIN_EXPORT_FIELD_NAMES],
+        tags=["multilang", "la", "latin_mvp", f"item_{row.item_key.replace('-', '_')}", f"rank_{row.sort_index:04d}"],
+    )
+    note._latin_guid = _latin_note_guid(row)  # type: ignore[attr-defined]
+    return note
+
+
+def _require_latin_media_file(sound_tag: str, *, media_index: dict[str, Path], repo_root: Path) -> Path:
+    match = _SOUND_TAG_RE.match(sound_tag)
+    if match is None:
+        raise ValueError(f"invalid Latin sound reference: {sound_tag}")
+    media_path = media_index.get(sound_tag)
+    if media_path is None:
+        raise ValueError(f"missing Latin media file for {match.group('name')}")
+    resolved = media_path if media_path.is_absolute() else repo_root / media_path
+    if not resolved.exists():
+        raise ValueError(f"missing Latin media file for {match.group('name')}")
+    if resolved.name != match.group("name"):
+        raise ValueError(f"Latin media basename mismatch for {match.group('name')}")
+    return resolved
+
+
+def _latin_media_files(bundle: LatinExportBundle, *, repo_root: Path) -> list[Path]:
+    sound_tags: list[str] = []
+    for row in bundle.rows:
+        sound_tags.extend([row.word_audio, row.sentence_audio])
+    return [
+        _require_latin_media_file(sound_tag, media_index=bundle.media_index, repo_root=repo_root)
+        for sound_tag in dict.fromkeys(sound_tags)
+    ]
+
+
+def export_latin_mvp_apkg(
+    *,
+    bundle: LatinExportBundle,
+    output_path: Path,
+    deck_name: str = LATIN_DECK_NAME,
+    repo_root: Path | None = None,
+) -> LatinExportArtifactResult:
+    """Write the approved Classical Latin MVP as an APKG with WAV media."""
+
+    root = repo_root or Path.cwd()
+    model = build_latin_anki_model()
+    deck = genanki.Deck(LATIN_DECK_ID, deck_name)
+    media_files = _latin_media_files(bundle, repo_root=root)
+    for row in sorted(bundle.rows, key=lambda row: (row.sort_index, row.item_key)):
+        deck.add_note(build_latin_anki_note(row, model=model))
+    output_path.parent.mkdir(parents=True, exist_ok=True)
+    package = genanki.Package(deck)
+    package.media_files = [str(path) for path in media_files]
+    package.write_to_file(str(output_path))
+    return LatinExportArtifactResult(output_path=output_path, card_count=len(bundle.rows), media_count=len(media_files), deck_name=deck_name)
+
+
+def _serialize_latin_field(value: object) -> str:
+    return str(value).replace("\r\n", "<br>").replace("\n", "<br>").replace("\r", "<br>")
+
+
+def write_latin_tabular_export(
+    *,
+    bundle: LatinExportBundle,
+    export_format: ExportArtifactFormat,
+    output_dir: Path,
+    deck_name: str = LATIN_DECK_NAME,
+) -> LatinExportArtifactResult:
+    """Write CSV or TSV Anki import files using the Latin field order."""
+
+    if export_format not in {ExportArtifactFormat.CSV, ExportArtifactFormat.TSV}:
+        raise ValueError(f"unsupported Latin tabular export format: {export_format.value}")
+    delimiter = "\t" if export_format is ExportArtifactFormat.TSV else ","
+    separator_name = "Tab" if export_format is ExportArtifactFormat.TSV else "Comma"
+    suffix = ".tsv" if export_format is ExportArtifactFormat.TSV else ".csv"
+    output_dir.mkdir(parents=True, exist_ok=True)
+    output_path = output_dir / f"latin-mvp-50{suffix}"
+    buffer = StringIO()
+    writer = csv.writer(buffer, delimiter=delimiter, lineterminator="\n", quoting=csv.QUOTE_MINIMAL)
+    buffer.write(f"#separator:{separator_name}\n")
+    buffer.write("#html:true\n")
+    buffer.write(f"#notetype:{LATIN_NOTE_TYPE_NAME}\n")
+    buffer.write(f"#deck:{deck_name}\n")
+    buffer.write(f"#columns:{delimiter.join(LATIN_EXPORT_FIELD_NAMES)}\n")
+    for row in sorted(bundle.rows, key=lambda row: (row.sort_index, row.item_key)):
+        mapping = row.ordered_field_mapping()
+        writer.writerow([_serialize_latin_field(mapping[field_name]) for field_name in LATIN_EXPORT_FIELD_NAMES])
+    output_path.write_text(buffer.getvalue(), encoding="utf-8")
+    return LatinExportArtifactResult(output_path=output_path, card_count=len(bundle.rows), media_count=0, deck_name=deck_name)
+
+
+def export_latin_mvp_bundle(
+    *,
+    export_format: ExportArtifactFormat,
+    output_dir: Path,
+    deck_name: str = LATIN_DECK_NAME,
+    repo_root: Path | None = None,
+) -> LatinExportArtifactResult:
+    """Build approved rows and write one Latin MVP export artifact."""
+
+    root = repo_root or Path.cwd()
+    bundle = build_latin_export_rows(repo_root=root)
+    if export_format is ExportArtifactFormat.APKG:
+        return export_latin_mvp_apkg(
+            bundle=bundle,
+            output_path=output_dir / "latin-mvp-50.apkg",
+            deck_name=deck_name,
+            repo_root=root,
+        )
+    return write_latin_tabular_export(bundle=bundle, export_format=export_format, output_dir=output_dir, deck_name=deck_name)
+
+
 __all__ = [
     "LATIN_DECK_NAME",
+    "LATIN_DECK_ID",
     "LATIN_EXPORT_FIELD_NAMES",
+    "LATIN_MODEL_ID",
     "LATIN_NOTE_TYPE_NAME",
+    "LatinExportArtifactResult",
     "LatinExportBundle",
     "LatinExportRow",
+    "build_latin_anki_model",
+    "build_latin_anki_note",
     "build_latin_export_rows",
+    "export_latin_mvp_apkg",
+    "export_latin_mvp_bundle",
+    "write_latin_tabular_export",
 ]
