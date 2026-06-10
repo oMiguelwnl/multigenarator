@@ -31,6 +31,10 @@ class FakeAzureSpeechAdapter(FakeElevenLabsSpeechAdapter):
     instances = []
 
 
+class FakeGoogleTranslateSpeechAdapter(FakeElevenLabsSpeechAdapter):
+    instances = []
+
+
 def test_local_runtime_uses_curated_smoke_sentence_and_translation_for_lantern() -> None:
     sentence_adapter = LocalSentenceAdapter()
     translation_adapter = LocalTranslationAdapter()
@@ -131,6 +135,27 @@ def test_runtime_wires_elevenlabs_audio_provider(tmp_path, monkeypatch) -> None:
     assert service is not None
     assert len(FakeElevenLabsSpeechAdapter.instances) == 1
     assert FakeElevenLabsSpeechAdapter.instances[0].settings.audio_provider == "elevenlabs"
+
+
+def test_runtime_wires_google_translate_audio_provider(tmp_path, monkeypatch) -> None:
+    import multilang.runtime as runtime_module
+
+    FakeGoogleTranslateSpeechAdapter.instances.clear()
+    monkeypatch.setattr(runtime_module, "GoogleTranslateSpeechAdapter", FakeGoogleTranslateSpeechAdapter)
+
+    service = build_runtime_service(
+        Settings(
+            _env_file=None,
+            database_url=f"sqlite+pysqlite:///{tmp_path / 'runtime.db'}",
+            text_generation_provider="local",
+            translation_provider="local",
+            audio_provider="google_translate",
+        )
+    )
+
+    assert service is not None
+    assert len(FakeGoogleTranslateSpeechAdapter.instances) == 1
+    assert FakeGoogleTranslateSpeechAdapter.instances[0].settings.audio_provider == "google_translate"
 
 
 def test_runtime_wires_configured_audio_fallback_chain(tmp_path, monkeypatch) -> None:

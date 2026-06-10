@@ -4,7 +4,7 @@ from pathlib import Path
 
 import pytest
 
-from multilang.domain.exporting import HIGHLIGHT_EXPORT_CARD_FIELD_NAMES
+from multilang.domain.exporting import HIGHLIGHT_EXPORT_CARD_FIELD_NAMES, LATIN_EXPORT_CARD_FIELD_NAMES
 from multilang.services.card_template_loader import (
     CardTemplate,
     load_card_template,
@@ -145,6 +145,32 @@ def test_project_normal_template_css_keeps_sentence_audio_beside_text_responsive
     assert ".sentenceAudioButton" in template.css
     assert "flex: 0 0 auto;" in template.css
     assert "margin-left: 8px;" in template.css
+
+
+def test_project_latin_mvp_template_uses_wordfreq_layout_with_latin_fields() -> None:
+    template = load_card_template(source_type="latin-mvp")
+    rendered = template.front + template.back
+
+    assert template.source_template_name == "latin_mvp_card"
+    assert 'class="customCard cardBack"' in template.front
+    assert 'class="targetWord"' in template.front
+    assert "exampleSentenceLine" in template.front
+    assert ".customCard" in template.css
+    assert ".exampleSentenceLine" in template.css
+    assert "{{SortIndex}}" in rendered
+    assert "{{Latin Word}}" in rendered
+    assert "{{Latin Sentence}}" in rendered
+    assert "{{Sentence Translation}}" in rendered
+    assert "{{Gramatica}}" in rendered
+    assert "{{word_audio}}" in rendered
+    assert "{{sentence_audio}}" in rendered
+    assert "{{#Image}}" in rendered
+    assert "{{word}}" not in rendered
+    assert "{{IPA}}" not in rendered
+    assert "{{Definitions}}" not in rendered
+    assert "{{Example Sentence}}" not in rendered
+    assert "{{Translation}}" not in rendered
+    validate_template_references(template, field_names=LATIN_EXPORT_CARD_FIELD_NAMES)
 
 
 @pytest.mark.parametrize(

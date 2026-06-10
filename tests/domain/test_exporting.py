@@ -11,6 +11,7 @@ from multilang.domain.exporting import (
     ExportCardRow,
     FREQUENCY_EXPORT_CARD_FIELD_NAMES,
     HIGHLIGHT_EXPORT_CARD_FIELD_NAMES,
+    LATIN_EXPORT_CARD_FIELD_NAMES,
     MANUAL_EXPORT_CARD_FIELD_NAMES,
     evaluate_export_quality_gate,
     export_field_names_for_rows,
@@ -84,6 +85,7 @@ def test_manual_word_list_export_uses_highlight_field_contract() -> None:
 def test_export_field_names_are_source_profile_aware_for_existing_modes() -> None:
     assert export_field_names_for_source_type("frequency") == FREQUENCY_EXPORT_CARD_FIELD_NAMES
     assert export_field_names_for_source_type("word-list") == MANUAL_EXPORT_CARD_FIELD_NAMES
+    assert export_field_names_for_source_type("latin-mvp") == LATIN_EXPORT_CARD_FIELD_NAMES
     assert "Translation" in export_field_names_for_source_type("frequency")
     assert "Translation" not in export_field_names_for_source_type("word-list")
     assert "Front of Card" not in export_field_names_for_source_type("frequency")

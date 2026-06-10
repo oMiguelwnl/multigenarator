@@ -24,6 +24,16 @@ FREQUENCY_EXPORT_CARD_FIELD_NAMES = (
     "sentence_audio",
     "Image",
 )
+LATIN_EXPORT_CARD_FIELD_NAMES = (
+    "SortIndex",
+    "Latin Word",
+    "Latin Sentence",
+    "Sentence Translation",
+    "Gramatica",
+    "word_audio",
+    "sentence_audio",
+    "Image",
+)
 HIGHLIGHT_EXPORT_CARD_FIELD_NAMES = (
     "SortIndex",
     "Word",
@@ -119,6 +129,8 @@ class ExportCardRow(BaseModel):
 
 def export_field_names_for_source_type(source_type: str) -> tuple[str, ...]:
     profile = get_source_profile(source_type)
+    if profile.source_type == "latin-mvp":
+        return LATIN_EXPORT_CARD_FIELD_NAMES
     if not profile.exports_translation_field:
         return HIGHLIGHT_EXPORT_CARD_FIELD_NAMES
     if profile.source_type == "word-list":
@@ -269,6 +281,7 @@ __all__ = [
     "EXPORT_CARD_FIELD_NAMES",
     "FREQUENCY_EXPORT_CARD_FIELD_NAMES",
     "HIGHLIGHT_EXPORT_CARD_FIELD_NAMES",
+    "LATIN_EXPORT_CARD_FIELD_NAMES",
     "MANUAL_EXPORT_CARD_FIELD_NAMES",
     "ExportArtifactFormat",
     "ExportArtifactStatus",

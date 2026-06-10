@@ -242,6 +242,26 @@ def test_google_translate_adapter_uses_target_language() -> None:
     assert result.provenance["provider"] == "google_translate"
 
 
+def test_google_translate_adapter_allows_latin_target_language() -> None:
+    class FakeTranslator:
+        def __init__(self, *, source: str, target: str) -> None:
+            self.source = source
+            self.target = target
+
+        def translate(self, sentence: str) -> str:
+            assert self.source == "auto"
+            assert self.target == "la"
+            assert sentence == "The girl reads."
+            return "Puella legit."
+
+    result = GoogleTranslateAdapter(translator_factory=FakeTranslator).translate_sentence(
+        SentenceTranslationRequest(sentence="The girl reads.", translation_target_language="la")
+    )
+
+    assert result.translation == "Puella legit."
+    assert result.provenance["target_lang"] == "la"
+
+
 def test_fallback_translation_adapter_uses_google_when_deepl_fails() -> None:
     class BrokenPrimary:
         def translate_sentence(self, request: SentenceTranslationRequest):

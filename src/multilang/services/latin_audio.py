@@ -14,10 +14,15 @@ from multilang.services.latin_source_pack import load_latin_mvp_source_pack
 
 
 LatinAudioKind = Literal["word", "sentence"]
-LatinAudioProvider = Literal["espeak-ng", "azure-multilingual-experimental"]
+LatinAudioProvider = Literal[
+    "espeak-ng",
+    "elevenlabs-italian",
+    "finevoice",
+    "azure-multilingual-experimental",
+]
 LatinAudioReviewStatus = Literal["needs_playback_review", "approved", "rejected", "blocked"]
 DEFAULT_LATIN_AUDIO_MANIFEST_PATH = Path("data") / "latin_mvp" / "latin-mvp-50-v1-audio.json"
-LATIN_AUDIO_MEDIA_MARKER = b"RIFF"
+LATIN_AUDIO_MEDIA_MARKERS = (b"RIFF", b"ID3")
 
 
 def normalize_latin_audio_text(value: str) -> str:
@@ -170,7 +175,8 @@ def _storage_path_is_export_ready(storage_path: str, *, repo_root: Path) -> bool
         return False
     if candidate.stat().st_size <= 0:
         return False
-    return candidate.read_bytes()[: len(LATIN_AUDIO_MEDIA_MARKER)] == LATIN_AUDIO_MEDIA_MARKER
+    header = candidate.read_bytes()[: max(len(marker) for marker in LATIN_AUDIO_MEDIA_MARKERS)]
+    return any(header.startswith(marker) for marker in LATIN_AUDIO_MEDIA_MARKERS)
 
 
 def _readiness_issues(manifest: LatinAudioManifest, *, repo_root: Path | None = None) -> dict[str, list[str]]:

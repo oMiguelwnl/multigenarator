@@ -31,6 +31,7 @@ from multilang.domain.jobs import JobStage, JobStatus
 from multilang.services.azure_speech_adapter import AzureSpeechAdapter
 from multilang.services.elevenlabs_speech_adapter import ElevenLabsSpeechAdapter
 from multilang.services.fallback_audio_adapter import FallbackAudioAdapter
+from multilang.services.google_translate_speech_adapter import GoogleTranslateSpeechAdapter
 from multilang.services.audio_synthesis import (
     AudioSynthesisAdapter,
     AudioSynthesisService,
@@ -488,6 +489,8 @@ def _build_single_audio_adapter(runtime_settings: Settings, provider: str) -> Au
         return AzureSpeechAdapter(runtime_settings)
     if provider == "elevenlabs":
         return ElevenLabsSpeechAdapter(runtime_settings)
+    if provider == "google_translate":
+        return GoogleTranslateSpeechAdapter(runtime_settings)
     raise ValueError(f"unsupported audio provider: {provider}")
 
 

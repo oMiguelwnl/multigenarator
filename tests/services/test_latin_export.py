@@ -24,21 +24,18 @@ from multilang.services.latin_export import (
 from multilang.services.latin_review import load_latin_curated_records
 
 
-def test_latin_export_field_order_excludes_classe() -> None:
+def test_latin_export_field_order_excludes_removed_fields_and_classe() -> None:
     assert LATIN_EXPORT_FIELD_NAMES == (
         "SortIndex",
         "Latin Word",
         "Latin Sentence",
-        "Lemma",
-        "Translation",
         "Sentence Translation",
         "Gramatica",
-        "Source",
         "word_audio",
         "sentence_audio",
         "Image",
     )
-    forbidden = {"Classe", "class", "part_of_speech"}
+    forbidden = {"Classe", "class", "part_of_speech", "Translation", "Lemma", "Source"}
     assert forbidden.isdisjoint(LATIN_EXPORT_FIELD_NAMES)
 
 
@@ -48,11 +45,8 @@ def test_latin_export_row_mapping_preserves_blank_image_and_no_classe() -> None:
         item_key="latin-mvp-0001",
         latin_word="puella",
         latin_sentence="Puella legit.",
-        lemma="puella",
-        translation="menina",
         sentence_translation="A menina lê.",
         gramatica="subst Nominativus sg Suj",
-        source="adapted_didactic | Multilang | latin-mvp-0001 | project-authored",
         word_audio="[sound:latin-mvp-0001-word.wav]",
         sentence_audio="[sound:latin-mvp-0001-sentence.wav]",
     )
@@ -61,7 +55,7 @@ def test_latin_export_row_mapping_preserves_blank_image_and_no_classe() -> None:
 
     assert tuple(mapping) == LATIN_EXPORT_FIELD_NAMES
     assert mapping["Image"] == ""
-    assert {"Classe", "class", "part_of_speech"}.isdisjoint(mapping)
+    assert {"Classe", "class", "part_of_speech", "Translation", "Lemma", "Source"}.isdisjoint(mapping)
 
 
 def test_latin_export_row_rejects_nonblank_image() -> None:
@@ -71,11 +65,8 @@ def test_latin_export_row_rejects_nonblank_image() -> None:
             item_key="latin-mvp-0001",
             latin_word="puella",
             latin_sentence="Puella legit.",
-            lemma="puella",
-            translation="menina",
             sentence_translation="A menina lê.",
             gramatica="subst Nominativus sg Suj",
-            source="adapted_didactic | Multilang | latin-mvp-0001 | project-authored",
             word_audio="[sound:latin-mvp-0001-word.wav]",
             sentence_audio="[sound:latin-mvp-0001-sentence.wav]",
             image="not-blank",
@@ -93,19 +84,18 @@ def test_build_latin_export_rows_from_committed_assets() -> None:
     assert first.sort_index == 1
     assert first.item_key == "latin-mvp-0001"
     assert first.latin_word == "et"
-    assert first.translation == "e"
     assert first.sentence_translation == "E o menino lê."
     assert first.word_audio == "[sound:latin-mvp-0001-word.wav]"
     assert first.sentence_audio == "[sound:latin-mvp-0001-sentence.wav]"
     assert bundle.media_index[first.word_audio] == Path("data/latin_mvp/audio/latin-mvp-50-v1/latin-mvp-0001-word.wav")
     assert bundle.media_index[first.sentence_audio] == Path("data/latin_mvp/audio/latin-mvp-50-v1/latin-mvp-0001-sentence.wav")
-    assert "reference_example" in first.source
-    assert "Multilang Latin MVP reference example set" in first.source
-    assert "C:\\" not in first.source
-    assert "/home/" not in first.source
-    assert "AZURE_" not in first.source
-    assert "OPENAI_" not in first.source
     assert "Classe" not in first.ordered_field_mapping()
+    assert "Translation" not in first.ordered_field_mapping()
+    assert "Lemma" not in first.ordered_field_mapping()
+    assert "Source" not in first.ordered_field_mapping()
+    assert not hasattr(first, "translation")
+    assert not hasattr(first, "lemma")
+    assert not hasattr(first, "source")
 
 
 def test_build_latin_export_rows_calls_fail_closed_validators() -> None:
@@ -198,10 +188,14 @@ def test_latin_apkg_export_writes_dedicated_model_notes_and_media(tmp_path: Path
     assert latin_model["name"] == LATIN_NOTE_TYPE_NAME
     assert [field["name"] for field in latin_model["flds"]] == list(LATIN_EXPORT_FIELD_NAMES)
     assert fields[1] == "et"
-    assert fields[4] == "e"
-    assert fields[8] == "[sound:latin-mvp-0001-word.wav]"
-    assert fields[10] == ""
-    assert "Classe" not in latin_model["tmpls"][0]["qfmt"] + latin_model["tmpls"][0]["afmt"]
+    assert fields[3] == "E o menino lê."
+    assert fields[5] == "[sound:latin-mvp-0001-word.wav]"
+    assert fields[7] == ""
+    rendered_template = latin_model["tmpls"][0]["qfmt"] + latin_model["tmpls"][0]["afmt"]
+    assert "Classe" not in rendered_template
+    assert "{{Translation}}" not in rendered_template
+    assert "{{Lemma}}" not in rendered_template
+    assert "{{Source}}" not in rendered_template
 
 
 def test_latin_tabular_exports_use_anki_headers_and_stable_fields(tmp_path: Path) -> None:
@@ -228,8 +222,8 @@ def test_latin_tabular_exports_use_anki_headers_and_stable_fields(tmp_path: Path
     ]
     parsed_csv = list(csv.reader(csv_lines[5:]))[0]
     parsed_tsv = list(csv.reader(tsv_lines[5:], delimiter="\t"))[0]
-    assert parsed_csv[1:6] == ["et", "Et puer legit.", "et", "e", "E o menino lê."]
-    assert parsed_tsv[8:11] == ["[sound:latin-mvp-0001-word.wav]", "[sound:latin-mvp-0001-sentence.wav]", ""]
+    assert parsed_csv[1:5] == ["et", "Et puer legit.", "E o menino lê.", "conj Conj"]
+    assert parsed_tsv[5:8] == ["[sound:latin-mvp-0001-word.wav]", "[sound:latin-mvp-0001-sentence.wav]", ""]
     assert csv_result.card_count == 50
     assert tsv_result.card_count == 50
 
@@ -251,5 +245,16 @@ def test_build_latin_anki_model_is_dedicated_to_latin_fields() -> None:
 
     assert model.name == LATIN_NOTE_TYPE_NAME
     assert [field["name"] for field in model.fields] == list(LATIN_EXPORT_FIELD_NAMES)
-    assert "Latin Word" in model.templates[0]["qfmt"]
-    assert "Classe" not in model.templates[0]["qfmt"] + model.templates[0]["afmt"]
+    assert 'class="customCard cardBack"' in model.templates[0]["qfmt"]
+    assert 'class="targetWord"' in model.templates[0]["qfmt"]
+    assert "{{Latin Word}}" in model.templates[0]["qfmt"]
+    assert "{{Latin Sentence}}" in model.templates[0]["qfmt"]
+    assert "{{Sentence Translation}}" in model.templates[0]["qfmt"]
+    assert "document.getElementById" in model.templates[0]["afmt"]
+    assert ".customCard" in model.css
+    assert ".exampleSentenceLine" in model.css
+    rendered_template = model.templates[0]["qfmt"] + model.templates[0]["afmt"]
+    assert "Classe" not in rendered_template
+    assert "{{Translation}}" not in rendered_template
+    assert "{{Lemma}}" not in rendered_template
+    assert "{{Source}}" not in rendered_template

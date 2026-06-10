@@ -13,7 +13,8 @@ from typing import Callable
 
 import genanki
 
-from multilang.domain.exporting import ExportArtifactFormat
+from multilang.domain.exporting import ExportArtifactFormat, LATIN_EXPORT_CARD_FIELD_NAMES
+from multilang.services.card_template_loader import load_card_template
 from multilang.services.latin_audio import (
     LatinAudioManifest,
     assert_latin_audio_manifest_export_ready,
@@ -31,19 +32,7 @@ from multilang.services.latin_translation_quality import (
 )
 
 
-LATIN_EXPORT_FIELD_NAMES: tuple[str, ...] = (
-    "SortIndex",
-    "Latin Word",
-    "Latin Sentence",
-    "Lemma",
-    "Translation",
-    "Sentence Translation",
-    "Gramatica",
-    "Source",
-    "word_audio",
-    "sentence_audio",
-    "Image",
-)
+LATIN_EXPORT_FIELD_NAMES = LATIN_EXPORT_CARD_FIELD_NAMES
 LATIN_NOTE_TYPE_NAME = "Multilang::Classical Latin MVP"
 LATIN_DECK_NAME = "Multilang::Classical Latin::MVP 50"
 LATIN_MODEL_ID = 1_602_300_701
@@ -59,11 +48,8 @@ class LatinExportRow:
     item_key: str
     latin_word: str
     latin_sentence: str
-    lemma: str
-    translation: str
     sentence_translation: str
     gramatica: str
-    source: str
     word_audio: str
     sentence_audio: str
     image: str = ""
@@ -77,11 +63,8 @@ class LatinExportRow:
             "item_key",
             "latin_word",
             "latin_sentence",
-            "lemma",
-            "translation",
             "sentence_translation",
             "gramatica",
-            "source",
             "word_audio",
             "sentence_audio",
         ):
@@ -96,11 +79,8 @@ class LatinExportRow:
             "SortIndex": self.sort_index,
             "Latin Word": self.latin_word,
             "Latin Sentence": self.latin_sentence,
-            "Lemma": self.lemma,
-            "Translation": self.translation,
             "Sentence Translation": self.sentence_translation,
             "Gramatica": self.gramatica,
-            "Source": self.source,
             "word_audio": self.word_audio,
             "sentence_audio": self.sentence_audio,
             "Image": self.image,
@@ -132,21 +112,6 @@ def _sound_tag(storage_path: str) -> str:
     if not basename or basename in {".", ".."}:
         raise ValueError("Latin audio storage_path must include a public basename")
     return f"[sound:{basename}]"
-
-
-def _public_source_text(record: LatinCuratedRecord) -> str:
-    parts = (
-        record.source_type,
-        record.citation,
-        record.work_reference,
-        record.source_url_or_id,
-        record.license_note,
-    )
-    source_text = " | ".join(parts)
-    forbidden_fragments = ("..", "C:\\", "c:\\", "/Users/", "/home/", "AZURE_", "OPENAI_", "api_key")
-    if any(fragment in source_text for fragment in forbidden_fragments):
-        raise ValueError(f"Latin source text contains non-public provenance item_key={record.item_key}")
-    return source_text
 
 
 def _require_exact_item_key_order(
@@ -192,14 +157,12 @@ def build_latin_export_rows(
             "latin_export_blocked unapproved_translation_entries=" + ",".join(unapproved_translation_keys)
         )
 
-    records_by_key = {record.item_key: record for record in records}
     translations_by_key = {entry.item_key: entry for entry in translations.entries}
     audio_by_key = {pair.item_key: pair for pair in audio_manifest.artifacts}
     rows: list[LatinExportRow] = []
     media_index: dict[str, Path] = {}
 
     for source_entry in source_pack.entries:
-        record = records_by_key[source_entry.item_key]
         translation = translations_by_key[source_entry.item_key]
         audio_pair = audio_by_key[source_entry.item_key]
         if audio_pair.word is None or audio_pair.sentence is None:
@@ -215,11 +178,8 @@ def build_latin_export_rows(
                 item_key=source_entry.item_key,
                 latin_word=source_entry.target_form,
                 latin_sentence=source_entry.latin_sentence,
-                lemma=source_entry.lemma,
-                translation=translation.short_translation_pt,
                 sentence_translation=translation.sentence_translation_pt,
                 gramatica=source_entry.gramatica,
-                source=_public_source_text(record),
                 word_audio=word_audio,
                 sentence_audio=sentence_audio,
             )
@@ -237,6 +197,7 @@ class LatinNote(genanki.Note):
 def build_latin_anki_model() -> genanki.Model:
     """Build the dedicated Classical Latin MVP Anki note model."""
 
+    template = load_card_template(source_type="latin-mvp")
     return genanki.Model(
         LATIN_MODEL_ID,
         LATIN_NOTE_TYPE_NAME,
@@ -244,26 +205,11 @@ def build_latin_anki_model() -> genanki.Model:
         templates=[
             {
                 "name": "Latin MVP Card",
-                "qfmt": (
-                    '<div class="latin-card">'
-                    '<div class="latin-word">{{Latin Word}} {{word_audio}}</div>'
-                    '<div class="latin-sentence">{{Latin Sentence}} {{sentence_audio}}</div>'
-                    '<div class="latin-translation" style="display:none;">{{Sentence Translation}}</div>'
-                    "</div>"
-                ),
-                "afmt": (
-                    "{{FrontSide}}"
-                    '<hr id="answer">'
-                    '<div class="translation">{{Translation}}</div>'
-                    '<div class="sentence-translation">{{Sentence Translation}}</div>'
-                    '<div class="lemma">Lemma: {{Lemma}}</div>'
-                    '<div class="gramatica">Gramatica: {{Gramatica}}</div>'
-                    '<div class="source">Source: {{Source}}</div>'
-                    "{{Image}}"
-                ),
+                "qfmt": template.front,
+                "afmt": template.back,
             }
         ],
-        css=".latin-card{font-family:serif}.latin-word{font-size:2rem}.source{font-size:.8rem;color:#666}",
+        css=template.css,
     )
 
 

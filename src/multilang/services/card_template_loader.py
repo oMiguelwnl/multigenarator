@@ -24,6 +24,7 @@ _ALLOWED_NON_FIELD_HELPERS = frozenset({"FrontSide"})
 _TEMPLATE_FILES = {
     "normal_card": "normal_card.md",
     "highlight_card": "highlight_card.md",
+    "latin_mvp_card": "latin_mvp_card.md",
 }
 
 

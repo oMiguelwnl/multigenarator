@@ -27,15 +27,15 @@ def make_artifact(**overrides: object) -> LatinAudioArtifact:
     text = str(overrides.get("generated_text", "arma"))
     payload: dict[str, object] = {
         "audio_kind": "word",
-        "provider": "espeak-ng",
-        "provider_version": "1.52.0",
-        "voice": "la",
-        "pronunciation_policy": "classical-restored-v1",
+        "provider": "elevenlabs-italian",
+        "provider_version": "eleven_multilingual_v2",
+        "voice": "it-IT",
+        "pronunciation_policy": "italian_multilingual_approx",
         "generated_text": text,
         "text_hash": expected_hash(text),
         "playback_review_status": "approved",
         "storage_path": "audio/latin/word/latin-mvp-0001.mp3",
-        "fallback_reason": None,
+        "fallback_reason": "ElevenLabs Italian reserve requires playback review for Latin.",
     }
     payload.update(overrides)
     return LatinAudioArtifact.model_validate(payload)
@@ -105,10 +105,10 @@ def test_word_artifact_requires_auditable_metadata_and_matching_hash() -> None:
     assert artifact.audio_kind == "word"
     assert artifact.generated_text == "arma"
     assert artifact.text_hash == expected_hash("arma")
-    assert artifact.provider == "espeak-ng"
-    assert artifact.provider_version == "1.52.0"
-    assert artifact.voice == "la"
-    assert artifact.pronunciation_policy == "classical-restored-v1"
+    assert artifact.provider == "elevenlabs-italian"
+    assert artifact.provider_version == "eleven_multilingual_v2"
+    assert artifact.voice == "it-IT"
+    assert artifact.pronunciation_policy == "italian_multilingual_approx"
     assert artifact.playback_review_status == "approved"
     assert artifact.storage_path == "audio/latin/word/latin-mvp-0001.mp3"
 
@@ -143,22 +143,22 @@ def test_sentence_artifact_requires_same_metadata_contract() -> None:
         make_artifact(audio_kind="sentence", playback_review_status="queued")
 
 
-def test_fallback_reason_required_for_fallback_or_blocked_provider_records() -> None:
+def test_fallback_reason_required_for_reserve_or_blocked_provider_records() -> None:
     no_fallback = make_artifact(provider="espeak-ng", playback_review_status="approved", fallback_reason=None)
     assert no_fallback.fallback_reason is None
 
     fallback = make_artifact(
-        provider="azure-multilingual-experimental",
+        provider="finevoice",
         playback_review_status="needs_playback_review",
-        fallback_reason="Azure multilingual Latin sample requires manual approval.",
+        fallback_reason="FineVoice Latin sample requires manual approval.",
     )
-    assert fallback.fallback_reason == "Azure multilingual Latin sample requires manual approval."
+    assert fallback.fallback_reason == "FineVoice Latin sample requires manual approval."
 
-    blocked = make_artifact(playback_review_status="blocked", fallback_reason="eSpeak NG unavailable on runner.")
-    assert blocked.fallback_reason == "eSpeak NG unavailable on runner."
+    blocked = make_artifact(playback_review_status="blocked", fallback_reason="reserve provider unavailable on runner.")
+    assert blocked.fallback_reason == "reserve provider unavailable on runner."
 
     with pytest.raises(ValidationError, match="fallback_reason"):
-        make_artifact(provider="azure-multilingual-experimental", fallback_reason=None)
+        make_artifact(provider="elevenlabs-italian", fallback_reason=None)
     with pytest.raises(ValidationError, match="fallback_reason"):
         make_artifact(playback_review_status="blocked", fallback_reason="   ")
 
@@ -226,6 +226,19 @@ def test_approved_audio_with_existing_riff_storage_path_passes_export_readiness(
     assert_latin_audio_manifest_export_ready(manifest, repo_root=tmp_path)
 
 
+def test_approved_audio_with_existing_id3_storage_path_passes_export_readiness(tmp_path: Path) -> None:
+    def storage_path_for(item_key: str, audio_kind: str) -> str:
+        relative_path = Path("audio") / "latin" / audio_kind / f"{item_key}.mp3"
+        media_path = tmp_path / relative_path
+        media_path.parent.mkdir(parents=True, exist_ok=True)
+        media_path.write_bytes(b"ID3fake-mp3")
+        return relative_path.as_posix()
+
+    manifest = make_manifest(storage_path_factory=storage_path_for)
+
+    assert_latin_audio_manifest_export_ready(manifest, repo_root=tmp_path)
+
+
 @pytest.mark.parametrize(
     ("manifest", "expected_kind", "expected_field"),
     [
@@ -251,7 +264,7 @@ def test_approved_audio_with_existing_riff_storage_path_passes_export_readiness(
                 {
                     ("latin-mvp-0001", "sentence"): {
                         "playback_review_status": "blocked",
-                        "fallback_reason": "eSpeak NG sample unavailable.",
+                        "fallback_reason": "reserve sample unavailable.",
                     }
                 }
             ),

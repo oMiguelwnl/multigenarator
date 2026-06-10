@@ -37,6 +37,7 @@ _LANGUAGE_NAMES = {
     "ro": "Romanian",
     "ru": "Russian",
     "nl": "Dutch",
+    "la": "Latin",
 }
 
 _DEEPL_TARGET_LANGUAGES = {

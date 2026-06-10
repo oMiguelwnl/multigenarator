@@ -11,7 +11,7 @@ from multilang.services.audio_voice_registry import VOICE_REGISTRY_VERSION
 SupportedLanguageCode = Literal["pt", "es", "en", "fr", "de", "it", "pl", "tr", "ro", "ru", "nl"]
 TextGenerationProvider = Literal["litellm", "local"]
 TranslationProvider = Literal["deepl", "google", "local"]
-AudioProviderName = Literal["azure", "elevenlabs"]
+AudioProviderName = Literal["azure", "elevenlabs", "google_translate"]
 AudioOutputFormat = Literal["audio-24khz-48kbitrate-mono-mp3"]
 ElevenLabsOutputFormat = Literal["mp3_44100_128"]
 

@@ -1,0 +1,29 @@
+{
+  "frameworkVersion": "v1.4",
+  "generatedAt": "2026-06-09T16:52:33.024Z",
+  "templates": {
+    "delegates": {},
+    "research": {},
+    "codebase": {},
+    "brownfieldChange": {},
+    "root": {}
+  },
+  "roles": {},
+  "runtimeHelpers": {
+    "bin/gsdd": "41e0384c217548b26de4f507367f5424cb5868810f4634a5886ac5dd3de6abae",
+    "bin/gsdd.cmd": "0af836d186b4bf71be08f69786dc9606d45341419e1d5c93ad84d4d2f5d6b5a6",
+    "bin/gsdd.mjs": "41949b8ad1bff53b0e42377e2935cbea21f5791f4d44593b253afd0a13ea1e06",
+    "bin/gsdd.ps1": "91f03d5ce7b60828adfe1dfd14d787e35d6172b79d3c7ba7ce85730f2ba0f271",
+    "bin/lib/cli-utils.mjs": "dfe32340660a6dde7fb6a14e8edbeb16770c5b40691e4fa54ce910c48efe575d",
+    "bin/lib/closeout-report.mjs": "ccb8ff3623aafcf5cbe68909b51b4ecb47cd5c61017fbe145a0b95c23c413b8d",
+    "bin/lib/control-map.mjs": "d105c58101e5fb3bef70e8d0af943208ca551f97827fcc2e0e14f83a02ce92d7",
+    "bin/lib/evidence-contract.mjs": "cfda2874f2f41b6e57d007501521d295561ede6f11abca61326b5624f3f322f5",
+    "bin/lib/file-ops.mjs": "23028282737a880e7406381bff80595bd113c929e0408bf597e35f6eaa49ddaa",
+    "bin/lib/lifecycle-preflight.mjs": "ab297675c0e0c55fc592449abad1eb00d27b9e8b734ccfa4df72a5356a8c253e",
+    "bin/lib/lifecycle-state.mjs": "8c0b53b50aba351fac220714163fdff83c41b08999a99d2c793932831ccb96a4",
+    "bin/lib/phase.mjs": "954c88cb998fc6ee2c0aefab357e12c591555559d56d0ff46cdec89cbcbd3bb9",
+    "bin/lib/session-fingerprint.mjs": "53d49a39f14b2ad13ce94b605be927ccc12e4212e605ace6061c447bd6b73c29",
+    "bin/lib/ui-proof.mjs": "3af283f12c2cdcb9a7a8e4e06a5c1536af77d810edf57f752b19ffb406191ec3",
+    "bin/lib/workspace-root.mjs": "d28af2af5dbd46f993eb5d0fd4d57f468a11e98180c1752f7d88e5c877b692de"
+  }
+}

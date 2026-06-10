@@ -66,6 +66,7 @@ def test_latin_note_type_and_model_are_distinct_from_existing_modes() -> None:
     assert [field["name"] for field in latin_model.fields] == list(LATIN_EXPORT_FIELD_NAMES)
     assert LATIN_NOTE_TYPE_NAME not in {NOTE_TYPE_NAME, MANUAL_NOTE_TYPE_NAME, HIGHLIGHT_NOTE_TYPE_NAME, PHONEME_NOTE_TYPE_NAME}
     assert LATIN_MODEL_ID not in {MODEL_ID, MANUAL_MODEL_ID, HIGHLIGHT_MODEL_ID, PHONEME_MODEL_ID}
+    assert {"Translation", "Lemma", "Source"}.isdisjoint(LATIN_EXPORT_FIELD_NAMES)
     assert set(LATIN_EXPORT_FIELD_NAMES) != set(FREQUENCY_EXPORT_CARD_FIELD_NAMES)
     assert set(LATIN_EXPORT_FIELD_NAMES) != set(HIGHLIGHT_EXPORT_CARD_FIELD_NAMES)
     assert set(LATIN_EXPORT_FIELD_NAMES) != set(PHONEME_FIELD_NAMES)

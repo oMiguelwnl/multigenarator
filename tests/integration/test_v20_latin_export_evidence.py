@@ -46,10 +46,12 @@ def test_committed_latin_export_bundle_has_50_safe_rows_and_100_media_refs() -> 
         mapping = row.ordered_field_mapping()
         assert tuple(mapping) == LATIN_EXPORT_FIELD_NAMES
         assert mapping["Image"] == ""
-        assert {"Classe", "class", "part_of_speech"}.isdisjoint(mapping)
+        assert {"Classe", "class", "part_of_speech", "Translation", "Lemma", "Source"}.isdisjoint(mapping)
         assert row.word_audio.startswith("[sound:latin-mvp-")
         assert row.sentence_audio.startswith("[sound:latin-mvp-")
-        _assert_public_text(row.source)
+        assert not hasattr(row, "translation")
+        assert not hasattr(row, "lemma")
+        assert not hasattr(row, "source")
     for sound_tag, media_path in bundle.media_index.items():
         assert sound_tag.startswith("[sound:")
         assert not media_path.is_absolute()
@@ -90,5 +92,9 @@ def test_latin_exports_write_importable_apkg_csv_and_tsv(tmp_path: Path) -> None
         "#columns:" + ",".join(LATIN_EXPORT_FIELD_NAMES),
     ]
     assert tsv_lines[4] == "#columns:" + "\t".join(LATIN_EXPORT_FIELD_NAMES)
+    csv_fields = csv_lines[4].removeprefix("#columns:").split(",")
+    tsv_fields = tsv_lines[4].removeprefix("#columns:").split("\t")
+    assert {"Translation", "Lemma", "Source"}.isdisjoint(csv_fields)
+    assert {"Translation", "Lemma", "Source"}.isdisjoint(tsv_fields)
     assert len(list(csv.reader(csv_lines[5:]))) == 50
     assert len(list(csv.reader(tsv_lines[5:], delimiter="\t"))) == 50

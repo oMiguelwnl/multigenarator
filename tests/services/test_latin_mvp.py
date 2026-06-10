@@ -76,7 +76,7 @@ def test_latin_mvp_manifest_summary_can_include_portuguese_translation_summary()
     assert portuguese_summary["entry_count"] == 50
     assert portuguese_summary["passed_count"] == 50
     assert portuguese_summary["failed_count"] == 0
-    assert portuguese_summary["review_status_counts"] == {"needs_review": 50, "approved": 0, "rejected": 0}
+    assert portuguese_summary["review_status_counts"] == {"needs_review": 0, "approved": 50, "rejected": 0}
 
 
 def test_latin_mvp_manifest_summary_omits_portuguese_translation_summary_by_default() -> None:
