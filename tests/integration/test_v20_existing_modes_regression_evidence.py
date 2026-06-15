@@ -31,7 +31,7 @@ def test_frequency_export_contract_remains_unchanged() -> None:
     assert model.model_id == MODEL_ID
     assert export_field_names_for_source_type("frequency") == FREQUENCY_EXPORT_CARD_FIELD_NAMES
     assert [field["name"] for field in model.fields] == list(FREQUENCY_EXPORT_CARD_FIELD_NAMES)
-    assert "Latin Word" not in FREQUENCY_EXPORT_CARD_FIELD_NAMES
+    assert "Grammar" not in FREQUENCY_EXPORT_CARD_FIELD_NAMES
     assert "Gramatica" not in FREQUENCY_EXPORT_CARD_FIELD_NAMES
 
 
@@ -44,8 +44,8 @@ def test_manual_and_highlight_export_contracts_do_not_gain_latin_fields() -> Non
     assert highlight_model.name == HIGHLIGHT_NOTE_TYPE_NAME
     assert highlight_model.model_id == HIGHLIGHT_MODEL_ID
     assert MANUAL_EXPORT_CARD_FIELD_NAMES == HIGHLIGHT_EXPORT_CARD_FIELD_NAMES
-    assert set(MANUAL_EXPORT_CARD_FIELD_NAMES).isdisjoint({"Latin Word", "Latin Sentence", "Gramatica"})
-    assert set(HIGHLIGHT_EXPORT_CARD_FIELD_NAMES).isdisjoint({"Latin Word", "Latin Sentence", "Gramatica"})
+    assert set(MANUAL_EXPORT_CARD_FIELD_NAMES).isdisjoint({"Sentence", "Grammar", "Gramatica"})
+    assert set(HIGHLIGHT_EXPORT_CARD_FIELD_NAMES).isdisjoint({"Sentence", "Grammar", "Gramatica"})
 
 
 def test_russian_phonetics_model_remains_isolated_from_latin_and_normal_fields() -> None:
@@ -54,7 +54,7 @@ def test_russian_phonetics_model_remains_isolated_from_latin_and_normal_fields()
     assert model.name == PHONEME_NOTE_TYPE_NAME
     assert model.model_id == PHONEME_MODEL_ID
     assert [field["name"] for field in model.fields] == list(PHONEME_FIELD_NAMES)
-    assert set(PHONEME_FIELD_NAMES).isdisjoint({"Latin Word", "Latin Sentence", "Gramatica", "Definitions", "Translation"})
+    assert set(PHONEME_FIELD_NAMES).isdisjoint({"Sentence", "Grammar", "Gramatica", "Definitions", "Translation"})
 
 
 def test_latin_note_type_and_model_are_distinct_from_existing_modes() -> None:
@@ -66,7 +66,7 @@ def test_latin_note_type_and_model_are_distinct_from_existing_modes() -> None:
     assert [field["name"] for field in latin_model.fields] == list(LATIN_EXPORT_FIELD_NAMES)
     assert LATIN_NOTE_TYPE_NAME not in {NOTE_TYPE_NAME, MANUAL_NOTE_TYPE_NAME, HIGHLIGHT_NOTE_TYPE_NAME, PHONEME_NOTE_TYPE_NAME}
     assert LATIN_MODEL_ID not in {MODEL_ID, MANUAL_MODEL_ID, HIGHLIGHT_MODEL_ID, PHONEME_MODEL_ID}
-    assert {"Translation", "Lemma", "Source"}.isdisjoint(LATIN_EXPORT_FIELD_NAMES)
+    assert {"Translation", "Lemma", "Source", "Latin Word", "Latin Sentence", "Gramatica"}.isdisjoint(LATIN_EXPORT_FIELD_NAMES)
     assert set(LATIN_EXPORT_FIELD_NAMES) != set(FREQUENCY_EXPORT_CARD_FIELD_NAMES)
     assert set(LATIN_EXPORT_FIELD_NAMES) != set(HIGHLIGHT_EXPORT_CARD_FIELD_NAMES)
     assert set(LATIN_EXPORT_FIELD_NAMES) != set(PHONEME_FIELD_NAMES)

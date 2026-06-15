@@ -13,7 +13,7 @@ It intentionally mirrors the wordfreq `normal_card.md` structure and styling whi
 
   <div class="horizontalPadding centerVertically targetWordContainer">
     <div class="wordBlock">
-      <span class="targetWord">{{Latin Word}}</span>
+      <span class="targetWord">{{Word}}</span>
     </div>
     <span class="wordAudioButtonBack">{{word_audio}}</span>
   </div>
@@ -21,10 +21,10 @@ It intentionally mirrors the wordfreq `normal_card.md` structure and styling whi
   <div class="dividerLine"></div>
 
   <div class="horizontalPadding">
-    <div class="header">Gramatica:</div>
+    <div class="header">Grammar:</div>
     <div class="indent">
       <ul class="definitionsList">
-        <li>{{Gramatica}}</li>
+        <li>{{Grammar}}</li>
       </ul>
     </div>
   </div>
@@ -36,9 +36,9 @@ It intentionally mirrors the wordfreq `normal_card.md` structure and styling whi
   <div class="dividerLine"></div>
 
   <div class="horizontalPadding">
-    <div class="header">Latin sentence:</div>
+    <div class="header">example:</div>
     <div class="indent exampleSentenceLine">
-      <span class="exampleSentenceText">{{Latin Sentence}}</span>
+      <span class="exampleSentenceText">{{Sentence}}</span>
       <span class="sentenceAudioButton">{{sentence_audio}}</span>
     </div>
     <div id="translation" class="sentenceTranslation indent" style="display:none;">

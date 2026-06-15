@@ -158,13 +158,16 @@ def test_project_latin_mvp_template_uses_wordfreq_layout_with_latin_fields() -> 
     assert ".customCard" in template.css
     assert ".exampleSentenceLine" in template.css
     assert "{{SortIndex}}" in rendered
-    assert "{{Latin Word}}" in rendered
-    assert "{{Latin Sentence}}" in rendered
+    assert "{{Word}}" in rendered
+    assert "{{Sentence}}" in rendered
     assert "{{Sentence Translation}}" in rendered
-    assert "{{Gramatica}}" in rendered
+    assert "{{Grammar}}" in rendered
     assert "{{word_audio}}" in rendered
     assert "{{sentence_audio}}" in rendered
     assert "{{#Image}}" in rendered
+    assert "{{Latin Word}}" not in rendered
+    assert "{{Latin Sentence}}" not in rendered
+    assert "{{Gramatica}}" not in rendered
     assert "{{word}}" not in rendered
     assert "{{IPA}}" not in rendered
     assert "{{Definitions}}" not in rendered

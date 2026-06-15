@@ -77,10 +77,10 @@ class LatinExportRow:
 
         return {
             "SortIndex": self.sort_index,
-            "Latin Word": self.latin_word,
-            "Latin Sentence": self.latin_sentence,
+            "Word": self.latin_word,
+            "Sentence": self.latin_sentence,
             "Sentence Translation": self.sentence_translation,
-            "Gramatica": self.gramatica,
+            "Grammar": self.gramatica,
             "word_audio": self.word_audio,
             "sentence_audio": self.sentence_audio,
             "Image": self.image,

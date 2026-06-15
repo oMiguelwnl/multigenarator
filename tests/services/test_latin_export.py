@@ -27,15 +27,25 @@ from multilang.services.latin_review import load_latin_curated_records
 def test_latin_export_field_order_excludes_removed_fields_and_classe() -> None:
     assert LATIN_EXPORT_FIELD_NAMES == (
         "SortIndex",
-        "Latin Word",
-        "Latin Sentence",
+        "Word",
+        "Sentence",
         "Sentence Translation",
-        "Gramatica",
+        "Grammar",
         "word_audio",
         "sentence_audio",
         "Image",
     )
-    forbidden = {"Classe", "class", "part_of_speech", "Translation", "Lemma", "Source"}
+    forbidden = {
+        "Classe",
+        "class",
+        "part_of_speech",
+        "Translation",
+        "Lemma",
+        "Source",
+        "Latin Word",
+        "Latin Sentence",
+        "Gramatica",
+    }
     assert forbidden.isdisjoint(LATIN_EXPORT_FIELD_NAMES)
 
 
@@ -55,7 +65,17 @@ def test_latin_export_row_mapping_preserves_blank_image_and_no_classe() -> None:
 
     assert tuple(mapping) == LATIN_EXPORT_FIELD_NAMES
     assert mapping["Image"] == ""
-    assert {"Classe", "class", "part_of_speech", "Translation", "Lemma", "Source"}.isdisjoint(mapping)
+    assert {
+        "Classe",
+        "class",
+        "part_of_speech",
+        "Translation",
+        "Lemma",
+        "Source",
+        "Latin Word",
+        "Latin Sentence",
+        "Gramatica",
+    }.isdisjoint(mapping)
 
 
 def test_latin_export_row_rejects_nonblank_image() -> None:
@@ -93,6 +113,9 @@ def test_build_latin_export_rows_from_committed_assets() -> None:
     assert "Translation" not in first.ordered_field_mapping()
     assert "Lemma" not in first.ordered_field_mapping()
     assert "Source" not in first.ordered_field_mapping()
+    assert "Latin Word" not in first.ordered_field_mapping()
+    assert "Latin Sentence" not in first.ordered_field_mapping()
+    assert "Gramatica" not in first.ordered_field_mapping()
     assert not hasattr(first, "translation")
     assert not hasattr(first, "lemma")
     assert not hasattr(first, "source")
@@ -196,6 +219,9 @@ def test_latin_apkg_export_writes_dedicated_model_notes_and_media(tmp_path: Path
     assert "{{Translation}}" not in rendered_template
     assert "{{Lemma}}" not in rendered_template
     assert "{{Source}}" not in rendered_template
+    assert "{{Latin Word}}" not in rendered_template
+    assert "{{Latin Sentence}}" not in rendered_template
+    assert "{{Gramatica}}" not in rendered_template
 
 
 def test_latin_tabular_exports_use_anki_headers_and_stable_fields(tmp_path: Path) -> None:
@@ -247,8 +273,9 @@ def test_build_latin_anki_model_is_dedicated_to_latin_fields() -> None:
     assert [field["name"] for field in model.fields] == list(LATIN_EXPORT_FIELD_NAMES)
     assert 'class="customCard cardBack"' in model.templates[0]["qfmt"]
     assert 'class="targetWord"' in model.templates[0]["qfmt"]
-    assert "{{Latin Word}}" in model.templates[0]["qfmt"]
-    assert "{{Latin Sentence}}" in model.templates[0]["qfmt"]
+    assert "{{Word}}" in model.templates[0]["qfmt"]
+    assert "{{Sentence}}" in model.templates[0]["qfmt"]
+    assert "{{Grammar}}" in model.templates[0]["qfmt"]
     assert "{{Sentence Translation}}" in model.templates[0]["qfmt"]
     assert "document.getElementById" in model.templates[0]["afmt"]
     assert ".customCard" in model.css
@@ -258,3 +285,6 @@ def test_build_latin_anki_model_is_dedicated_to_latin_fields() -> None:
     assert "{{Translation}}" not in rendered_template
     assert "{{Lemma}}" not in rendered_template
     assert "{{Source}}" not in rendered_template
+    assert "{{Latin Word}}" not in rendered_template
+    assert "{{Latin Sentence}}" not in rendered_template
+    assert "{{Gramatica}}" not in rendered_template

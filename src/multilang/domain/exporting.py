@@ -26,10 +26,10 @@ FREQUENCY_EXPORT_CARD_FIELD_NAMES = (
 )
 LATIN_EXPORT_CARD_FIELD_NAMES = (
     "SortIndex",
-    "Latin Word",
-    "Latin Sentence",
+    "Word",
+    "Sentence",
     "Sentence Translation",
-    "Gramatica",
+    "Grammar",
     "word_audio",
     "sentence_audio",
     "Image",
