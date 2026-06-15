@@ -48,23 +48,23 @@ def test_policy_records_deepl_primary_and_google_translation_candidate(tmp_path:
     assert google["reason"] == GOOGLE_TRANSLATE_CANDIDATE_REASON
 
 
-def test_policy_records_google_tts_and_audio_reserves(tmp_path: Path) -> None:
+def test_policy_records_elevenlabs_primary_google_reserve_and_finevoice_research_only(tmp_path: Path) -> None:
     manifest = generate_latin_audio_sample_manifest(output_dir=tmp_path)
 
     google_tts = manifest.provider_candidates["google-translate-tts"]
-    assert google_tts["status"] == "primary_audio_candidate"
+    assert google_tts["status"] == "reserve_audio_candidate"
     assert google_tts["voice"] == "la"
     assert google_tts["pronunciation_policy"] == "google_translate_latin_tts"
     assert google_tts["reason"] == GOOGLE_TRANSLATE_TTS_REASON
 
     elevenlabs = manifest.provider_candidates["elevenlabs-italian"]
-    assert elevenlabs["status"] == "reserve_audio_candidate"
+    assert elevenlabs["status"] == "primary_audio_candidate"
     assert elevenlabs["voice"] == "it-IT"
     assert elevenlabs["pronunciation_policy"] == "italian_multilingual_approx"
     assert elevenlabs["reason"] == ELEVENLABS_ITALIAN_RESERVE_REASON
 
     finevoice = manifest.provider_candidates["finevoice"]
-    assert finevoice["status"] == "reserve_audio_candidate"
+    assert finevoice["status"] == "research_candidate"
     assert finevoice["voice"] == "manual-selection-required"
     assert finevoice["reason"] == FINEVOICE_RESERVE_REASON
 

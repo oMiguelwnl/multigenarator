@@ -10,6 +10,9 @@ import pytest
 from pydantic import ValidationError
 
 from multilang.services.latin_audio import (
+    CURRENT_LATIN_AUDIO_PROVIDER,
+    LATIN_LEGACY_AUDIO_PROVIDERS,
+    LATIN_RESEARCH_ONLY_AUDIO_PROVIDERS,
     LatinAudioArtifact,
     LatinAudioManifest,
     LatinAudioPair,
@@ -17,6 +20,30 @@ from multilang.services.latin_audio import (
     summarize_latin_audio_manifest,
 )
 from multilang.services.latin_source_pack import load_latin_mvp_source_pack
+
+
+class FakeSourceEntry:
+    def __init__(self, item_key: str, target_form: str, latin_sentence: str) -> None:
+        self.item_key = item_key
+        self.target_form = target_form
+        self.latin_sentence = latin_sentence
+
+
+class FakeSourcePack:
+    source_pack_version = "latin-mvp-50-v1"
+    entries = [
+        FakeSourceEntry(f"latin-mvp-{index:04d}", "et" if index == 1 else f"verbum{index}", f"Sententia {index}.")
+        for index in range(1, 51)
+    ]
+
+
+def fake_source_pack() -> FakeSourcePack:
+    return FakeSourcePack()
+
+
+@pytest.fixture(autouse=True)
+def use_fake_source_pack(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setattr("multilang.services.latin_audio.load_latin_mvp_source_pack", fake_source_pack)
 
 
 def expected_hash(text: str) -> str:
@@ -50,7 +77,7 @@ def make_manifest(
     storage_path_factory: Callable[[str, str], str] | None = None,
 ) -> LatinAudioManifest:
     overrides = overrides or {}
-    source_pack = load_latin_mvp_source_pack()
+    source_pack = fake_source_pack()
     pairs: list[LatinAudioPair] = []
     for entry in source_pack.entries:
         word_overrides = dict(overrides.get((entry.item_key, "word"), {}))
@@ -146,6 +173,8 @@ def test_sentence_artifact_requires_same_metadata_contract() -> None:
 def test_fallback_reason_required_for_reserve_or_blocked_provider_records() -> None:
     no_fallback = make_artifact(provider="espeak-ng", playback_review_status="approved", fallback_reason=None)
     assert no_fallback.fallback_reason is None
+    active = make_artifact(provider=CURRENT_LATIN_AUDIO_PROVIDER, fallback_reason=None)
+    assert active.fallback_reason is None
 
     fallback = make_artifact(
         provider="finevoice",
@@ -158,17 +187,21 @@ def test_fallback_reason_required_for_reserve_or_blocked_provider_records() -> N
     assert blocked.fallback_reason == "reserve provider unavailable on runner."
 
     with pytest.raises(ValidationError, match="fallback_reason"):
-        make_artifact(provider="elevenlabs-italian", fallback_reason=None)
-    with pytest.raises(ValidationError, match="fallback_reason"):
         make_artifact(playback_review_status="blocked", fallback_reason="   ")
 
 
-def test_manifest_with_approved_word_and_sentence_audio_for_every_source_entry_is_export_ready() -> None:
-    manifest = make_manifest()
+def test_current_latin_audio_policy_keeps_espeak_legacy_and_finevoice_research_only() -> None:
+    assert CURRENT_LATIN_AUDIO_PROVIDER == "elevenlabs-italian"
+    assert LATIN_LEGACY_AUDIO_PROVIDERS == ("espeak-ng",)
+    assert LATIN_RESEARCH_ONLY_AUDIO_PROVIDERS == ("finevoice",)
 
-    assert_latin_audio_manifest_export_ready(manifest)
 
-    summary = summarize_latin_audio_manifest(manifest)
+def test_manifest_with_approved_word_and_sentence_audio_for_every_source_entry_is_export_ready(tmp_path: Path) -> None:
+    manifest = make_manifest(storage_path_factory=write_manifest_media_files(tmp_path))
+
+    assert_latin_audio_manifest_export_ready(manifest, repo_root=tmp_path)
+
+    summary = summarize_latin_audio_manifest(manifest, repo_root=tmp_path)
     assert summary.total_items == 50
     assert summary.approved_items == 50
     assert summary.blocked_items == 0
@@ -289,27 +322,33 @@ def test_missing_or_unapproved_audio_fails_with_public_item_and_kind_diagnostics
     assert "/Users/" not in message
 
 
-def test_word_and_sentence_generated_text_must_match_source_pack_export_text() -> None:
-    source_pack = load_latin_mvp_source_pack()
+def test_word_and_sentence_generated_text_must_match_source_pack_export_text(tmp_path: Path) -> None:
+    storage_path_for = write_manifest_media_files(tmp_path)
+    source_pack = fake_source_pack()
     first = source_pack.entries[0]
-    word_mismatch = make_manifest({(first.item_key, "word"): {"generated_text": f"{first.target_form} stale"}})
+    word_mismatch = make_manifest(
+        {(first.item_key, "word"): {"generated_text": f"{first.target_form} stale"}},
+        storage_path_factory=storage_path_for,
+    )
     sentence_mismatch = make_manifest(
-        {(first.item_key, "sentence"): {"generated_text": f"{first.latin_sentence} stale"}}
+        {(first.item_key, "sentence"): {"generated_text": f"{first.latin_sentence} stale"}},
+        storage_path_factory=storage_path_for,
     )
     whitespace_equivalent = make_manifest(
-        {(first.item_key, "sentence"): {"generated_text": "  ".join(first.latin_sentence.split())}}
+        {(first.item_key, "sentence"): {"generated_text": "  ".join(first.latin_sentence.split())}},
+        storage_path_factory=storage_path_for,
     )
 
     with pytest.raises(ValueError) as word_exc:
-        assert_latin_audio_manifest_export_ready(word_mismatch)
+        assert_latin_audio_manifest_export_ready(word_mismatch, repo_root=tmp_path)
     assert "latin-mvp-0001" in str(word_exc.value)
     assert "audio_kind=word" in str(word_exc.value)
     assert "generated_text" in str(word_exc.value)
 
     with pytest.raises(ValueError) as sentence_exc:
-        assert_latin_audio_manifest_export_ready(sentence_mismatch)
+        assert_latin_audio_manifest_export_ready(sentence_mismatch, repo_root=tmp_path)
     assert "latin-mvp-0001" in str(sentence_exc.value)
     assert "audio_kind=sentence" in str(sentence_exc.value)
     assert "generated_text" in str(sentence_exc.value)
 
-    assert_latin_audio_manifest_export_ready(whitespace_equivalent)
+    assert_latin_audio_manifest_export_ready(whitespace_equivalent, repo_root=tmp_path)

@@ -25,14 +25,14 @@ AZURE_LATIN_FALLBACK_REASON = "no verified native Classical Latin/`la` Azure TTS
 DEEPL_PRIMARY_TRANSLATION_REASON = "DeepL is the primary configured translation provider for generated text."
 GOOGLE_TRANSLATE_CANDIDATE_REASON = "Google Translate is retained as a candidate translation provider."
 GOOGLE_TRANSLATE_TTS_REASON = (
-    "Google Translate TTS is the primary Latin audio candidate and requires playback review before export approval."
+    "Google Translate TTS is retained as a reserve Latin audio candidate and requires playback review before export approval."
 )
 ELEVENLABS_ITALIAN_RESERVE_REASON = (
-    "ElevenLabs multilingual TTS can synthesize Latin text with an Italian locale/voice as a reserve; "
+    "ElevenLabs multilingual TTS is the preferred Latin replacement candidate using an Italian locale/voice; "
     "playback review is required before export approval."
 )
 FINEVOICE_RESERVE_REASON = (
-    "FineVoice is reserved for manual provider evaluation; no live FineVoice adapter is implemented yet."
+    "FineVoice is research-only for future evaluation; no live FineVoice adapter is implemented yet."
 )
 
 
@@ -74,19 +74,19 @@ def generate_latin_audio_sample_manifest(
                 "reason": GOOGLE_TRANSLATE_CANDIDATE_REASON,
             },
             "google-translate-tts": {
-                "status": "primary_audio_candidate",
+                "status": "reserve_audio_candidate",
                 "voice": "la",
                 "pronunciation_policy": "google_translate_latin_tts",
                 "reason": GOOGLE_TRANSLATE_TTS_REASON,
             },
             "elevenlabs-italian": {
-                "status": "reserve_audio_candidate",
+                "status": "primary_audio_candidate",
                 "voice": "it-IT",
                 "pronunciation_policy": "italian_multilingual_approx",
                 "reason": ELEVENLABS_ITALIAN_RESERVE_REASON,
             },
             "finevoice": {
-                "status": "reserve_audio_candidate",
+                "status": "research_candidate",
                 "voice": "manual-selection-required",
                 "pronunciation_policy": "manual_evaluation_required",
                 "reason": FINEVOICE_RESERVE_REASON,
