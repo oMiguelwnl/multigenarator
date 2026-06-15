@@ -3,6 +3,18 @@
 **Defined:** 2026-06-01  
 **Core Value:** Generate reliable, high-quality Anki cards for real vocabulary the learner needs to study, with accurate definitions, examples, translations where appropriate, and audio.
 
+## v2.1 Requirements
+
+Requirements for replacing the Classical Latin MVP's current eSpeak NG-based audio with a better approved provider while preserving the 50-card export contract.
+
+### Latin Audio Provider Refresh
+
+- [ ] **AUDR-01**: User can review representative Latin word and sentence samples for the replacement provider, preferably ElevenLabs, before the refreshed Latin MVP audio policy is locked.
+- [ ] **AUDR-02**: User receives a committed refreshed 50-card Latin MVP audio manifest and 100 playable media files whose approved provider metadata no longer depends on eSpeak NG.
+- [ ] **AUDR-03**: FineVoice is captured only as a research candidate for future evaluation and is not wired as an active Latin audio provider in this phase.
+- [ ] **AUDR-04**: Latin audio readiness and export tests prove the refreshed manifest blocks stale eSpeak NG dependence, unapproved replacement audio, text mismatches, unsafe paths, missing media, and source-pack drift.
+- [ ] **AUDR-05**: Project-level eSpeak NG references, adapters, tests, and docs are removed only after the refreshed manifest, approved media, tests, and Latin export evidence pass; eSpeak NG is not uninstalled from the user/system environment.
+
 ## v2.0 Requirements
 
 Requirements for the Classical Latin MVP. Each maps to roadmap phases.
@@ -95,6 +107,8 @@ Explicitly excluded. Documented to prevent scope creep.
 | Automatic image generation or sourcing | Existing product decision keeps `Image` blank for manual user images. |
 | Google Cloud TTS provider integration | Research found no verified Classical Latin/`la` voice; adding it would add complexity without clear MVP value. |
 | Python 3.13 migration for CLTK 2.x | The project baseline is Python 3.12; CLTK 2.x migration is a platform upgrade, not an MVP requirement. |
+| FineVoice active provider integration | FineVoice remains research-only until API, voice selection, quality, privacy, and testing contracts are validated. |
+| System-level eSpeak NG uninstall | Project dependency removal is in scope only after replacement audio/export succeeds; uninstalling the user's system package is not a project action. |
 
 ## Traceability
 
@@ -132,6 +146,11 @@ Which phases cover which requirements. Updated during roadmap creation.
 | EVID-01 | Phase 28 | Complete |
 | EVID-02 | Phase 28 | Complete |
 | EVID-03 | Phase 28 | Complete |
+| AUDR-01 | Phase 29 | Planned |
+| AUDR-02 | Phase 29 | Planned |
+| AUDR-03 | Phase 29 | Planned |
+| AUDR-04 | Phase 29 | Planned |
+| AUDR-05 | Phase 29 | Planned |
 
 **Coverage:**
 
@@ -139,6 +158,10 @@ Which phases cover which requirements. Updated during roadmap creation.
 - Mapped to phases: 30
 - Unmapped: 0
 - Coverage: 30/30 mapped exactly once across Phases 22-28
+- v2.1 audio-refresh requirements: 5 total
+- Mapped to phases: 5
+- Unmapped: 0
+- Coverage: 5/5 mapped exactly once in Phase 29
 
 ---
 *Requirements defined: 2026-06-01*  
