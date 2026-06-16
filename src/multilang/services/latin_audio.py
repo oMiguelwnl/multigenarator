@@ -20,6 +20,7 @@ LATIN_LEGACY_AUDIO_PROVIDERS = ("espeak-ng",)
 LatinAudioProvider = Literal[
     "espeak-ng",
     "elevenlabs-italian",
+    "google-translate-tts",
     "finevoice",
     "azure-multilingual-experimental",
 ]
