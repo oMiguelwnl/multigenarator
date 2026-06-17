@@ -1,0 +1,2052 @@
+[
+  {
+    "item_key": "latin-mvp-0001",
+    "sequence": 1,
+    "lemma": "amor",
+    "target_form": "amor",
+    "latin_sentence": "Amor magnus est.",
+    "source_pack_version": "latin-mvp-50-v1",
+    "frequency_rank": 101,
+    "frequency_source": "DCC Latin Core Vocabulary",
+    "source_type": "adapted_didactic",
+    "citation": "Project-authored didactic text using DCC Latin Core Vocabulary lemma metadata.",
+    "work_reference": "Multilang Latin MVP real-data seed",
+    "source_url_or_id": "https://dcc.dickinson.edu/latin-core-list1",
+    "license_note": "Project-authored didactic text; DCC Latin Core Vocabulary lemma metadata attributed under CC BY-SA.",
+    "replacement_reason": null,
+    "uncertainty_reason": null,
+    "source_gate": {
+      "status": "approved",
+      "reason": null,
+      "reviewed_by": "multilang-real-data-seed",
+      "reviewed_at": "2026-06-17"
+    },
+    "translation_gate": {
+      "status": "approved",
+      "reason": null,
+      "reviewed_by": "multilang-real-data-seed",
+      "reviewed_at": "2026-06-17"
+    },
+    "grammar_gate": {
+      "status": "approved",
+      "reason": null,
+      "reviewed_by": "multilang-real-data-seed",
+      "reviewed_at": "2026-06-17"
+    },
+    "audio_gate": {
+      "status": "approved",
+      "reason": "playback_review_approved: google-translate-tts/la/google_translate_latin",
+      "reviewed_by": "user",
+      "reviewed_at": "2026-06-17T00:00:00Z"
+    }
+  },
+  {
+    "item_key": "latin-mvp-0002",
+    "sequence": 2,
+    "lemma": "aqua",
+    "target_form": "aqua",
+    "latin_sentence": "Aqua clara est.",
+    "source_pack_version": "latin-mvp-50-v1",
+    "frequency_rank": 102,
+    "frequency_source": "DCC Latin Core Vocabulary",
+    "source_type": "adapted_didactic",
+    "citation": "Project-authored didactic text using DCC Latin Core Vocabulary lemma metadata.",
+    "work_reference": "Multilang Latin MVP real-data seed",
+    "source_url_or_id": "https://dcc.dickinson.edu/latin-core-list1",
+    "license_note": "Project-authored didactic text; DCC Latin Core Vocabulary lemma metadata attributed under CC BY-SA.",
+    "replacement_reason": null,
+    "uncertainty_reason": null,
+    "source_gate": {
+      "status": "approved",
+      "reason": null,
+      "reviewed_by": "multilang-real-data-seed",
+      "reviewed_at": "2026-06-17"
+    },
+    "translation_gate": {
+      "status": "approved",
+      "reason": null,
+      "reviewed_by": "multilang-real-data-seed",
+      "reviewed_at": "2026-06-17"
+    },
+    "grammar_gate": {
+      "status": "approved",
+      "reason": null,
+      "reviewed_by": "multilang-real-data-seed",
+      "reviewed_at": "2026-06-17"
+    },
+    "audio_gate": {
+      "status": "approved",
+      "reason": "playback_review_approved: google-translate-tts/la/google_translate_latin",
+      "reviewed_by": "user",
+      "reviewed_at": "2026-06-17T00:00:00Z"
+    }
+  },
+  {
+    "item_key": "latin-mvp-0003",
+    "sequence": 3,
+    "lemma": "terra",
+    "target_form": "terra",
+    "latin_sentence": "Terra lata est.",
+    "source_pack_version": "latin-mvp-50-v1",
+    "frequency_rank": 103,
+    "frequency_source": "DCC Latin Core Vocabulary",
+    "source_type": "adapted_didactic",
+    "citation": "Project-authored didactic text using DCC Latin Core Vocabulary lemma metadata.",
+    "work_reference": "Multilang Latin MVP real-data seed",
+    "source_url_or_id": "https://dcc.dickinson.edu/latin-core-list1",
+    "license_note": "Project-authored didactic text; DCC Latin Core Vocabulary lemma metadata attributed under CC BY-SA.",
+    "replacement_reason": null,
+    "uncertainty_reason": null,
+    "source_gate": {
+      "status": "approved",
+      "reason": null,
+      "reviewed_by": "multilang-real-data-seed",
+      "reviewed_at": "2026-06-17"
+    },
+    "translation_gate": {
+      "status": "approved",
+      "reason": null,
+      "reviewed_by": "multilang-real-data-seed",
+      "reviewed_at": "2026-06-17"
+    },
+    "grammar_gate": {
+      "status": "approved",
+      "reason": null,
+      "reviewed_by": "multilang-real-data-seed",
+      "reviewed_at": "2026-06-17"
+    },
+    "audio_gate": {
+      "status": "approved",
+      "reason": "playback_review_approved: google-translate-tts/la/google_translate_latin",
+      "reviewed_by": "user",
+      "reviewed_at": "2026-06-17T00:00:00Z"
+    }
+  },
+  {
+    "item_key": "latin-mvp-0004",
+    "sequence": 4,
+    "lemma": "caelum",
+    "target_form": "caelum",
+    "latin_sentence": "Caelum altum est.",
+    "source_pack_version": "latin-mvp-50-v1",
+    "frequency_rank": 104,
+    "frequency_source": "DCC Latin Core Vocabulary",
+    "source_type": "adapted_didactic",
+    "citation": "Project-authored didactic text using DCC Latin Core Vocabulary lemma metadata.",
+    "work_reference": "Multilang Latin MVP real-data seed",
+    "source_url_or_id": "https://dcc.dickinson.edu/latin-core-list1",
+    "license_note": "Project-authored didactic text; DCC Latin Core Vocabulary lemma metadata attributed under CC BY-SA.",
+    "replacement_reason": null,
+    "uncertainty_reason": null,
+    "source_gate": {
+      "status": "approved",
+      "reason": null,
+      "reviewed_by": "multilang-real-data-seed",
+      "reviewed_at": "2026-06-17"
+    },
+    "translation_gate": {
+      "status": "approved",
+      "reason": null,
+      "reviewed_by": "multilang-real-data-seed",
+      "reviewed_at": "2026-06-17"
+    },
+    "grammar_gate": {
+      "status": "approved",
+      "reason": null,
+      "reviewed_by": "multilang-real-data-seed",
+      "reviewed_at": "2026-06-17"
+    },
+    "audio_gate": {
+      "status": "approved",
+      "reason": "playback_review_approved: google-translate-tts/la/google_translate_latin",
+      "reviewed_by": "user",
+      "reviewed_at": "2026-06-17T00:00:00Z"
+    }
+  },
+  {
+    "item_key": "latin-mvp-0005",
+    "sequence": 5,
+    "lemma": "bellum",
+    "target_form": "bellum",
+    "latin_sentence": "Bellum longum est.",
+    "source_pack_version": "latin-mvp-50-v1",
+    "frequency_rank": 105,
+    "frequency_source": "DCC Latin Core Vocabulary",
+    "source_type": "adapted_didactic",
+    "citation": "Project-authored didactic text using DCC Latin Core Vocabulary lemma metadata.",
+    "work_reference": "Multilang Latin MVP real-data seed",
+    "source_url_or_id": "https://dcc.dickinson.edu/latin-core-list1",
+    "license_note": "Project-authored didactic text; DCC Latin Core Vocabulary lemma metadata attributed under CC BY-SA.",
+    "replacement_reason": null,
+    "uncertainty_reason": null,
+    "source_gate": {
+      "status": "approved",
+      "reason": null,
+      "reviewed_by": "multilang-real-data-seed",
+      "reviewed_at": "2026-06-17"
+    },
+    "translation_gate": {
+      "status": "approved",
+      "reason": null,
+      "reviewed_by": "multilang-real-data-seed",
+      "reviewed_at": "2026-06-17"
+    },
+    "grammar_gate": {
+      "status": "approved",
+      "reason": null,
+      "reviewed_by": "multilang-real-data-seed",
+      "reviewed_at": "2026-06-17"
+    },
+    "audio_gate": {
+      "status": "approved",
+      "reason": "playback_review_approved: google-translate-tts/la/google_translate_latin",
+      "reviewed_by": "user",
+      "reviewed_at": "2026-06-17T00:00:00Z"
+    }
+  },
+  {
+    "item_key": "latin-mvp-0006",
+    "sequence": 6,
+    "lemma": "pax",
+    "target_form": "pax",
+    "latin_sentence": "Pax cara est.",
+    "source_pack_version": "latin-mvp-50-v1",
+    "frequency_rank": 106,
+    "frequency_source": "DCC Latin Core Vocabulary",
+    "source_type": "adapted_didactic",
+    "citation": "Project-authored didactic text using DCC Latin Core Vocabulary lemma metadata.",
+    "work_reference": "Multilang Latin MVP real-data seed",
+    "source_url_or_id": "https://dcc.dickinson.edu/latin-core-list1",
+    "license_note": "Project-authored didactic text; DCC Latin Core Vocabulary lemma metadata attributed under CC BY-SA.",
+    "replacement_reason": null,
+    "uncertainty_reason": null,
+    "source_gate": {
+      "status": "approved",
+      "reason": null,
+      "reviewed_by": "multilang-real-data-seed",
+      "reviewed_at": "2026-06-17"
+    },
+    "translation_gate": {
+      "status": "approved",
+      "reason": null,
+      "reviewed_by": "multilang-real-data-seed",
+      "reviewed_at": "2026-06-17"
+    },
+    "grammar_gate": {
+      "status": "approved",
+      "reason": null,
+      "reviewed_by": "multilang-real-data-seed",
+      "reviewed_at": "2026-06-17"
+    },
+    "audio_gate": {
+      "status": "approved",
+      "reason": "playback_review_approved: google-translate-tts/la/google_translate_latin",
+      "reviewed_by": "user",
+      "reviewed_at": "2026-06-17T00:00:00Z"
+    }
+  },
+  {
+    "item_key": "latin-mvp-0007",
+    "sequence": 7,
+    "lemma": "rex",
+    "target_form": "rex",
+    "latin_sentence": "Rex iustus est.",
+    "source_pack_version": "latin-mvp-50-v1",
+    "frequency_rank": 107,
+    "frequency_source": "DCC Latin Core Vocabulary",
+    "source_type": "adapted_didactic",
+    "citation": "Project-authored didactic text using DCC Latin Core Vocabulary lemma metadata.",
+    "work_reference": "Multilang Latin MVP real-data seed",
+    "source_url_or_id": "https://dcc.dickinson.edu/latin-core-list1",
+    "license_note": "Project-authored didactic text; DCC Latin Core Vocabulary lemma metadata attributed under CC BY-SA.",
+    "replacement_reason": null,
+    "uncertainty_reason": null,
+    "source_gate": {
+      "status": "approved",
+      "reason": null,
+      "reviewed_by": "multilang-real-data-seed",
+      "reviewed_at": "2026-06-17"
+    },
+    "translation_gate": {
+      "status": "approved",
+      "reason": null,
+      "reviewed_by": "multilang-real-data-seed",
+      "reviewed_at": "2026-06-17"
+    },
+    "grammar_gate": {
+      "status": "approved",
+      "reason": null,
+      "reviewed_by": "multilang-real-data-seed",
+      "reviewed_at": "2026-06-17"
+    },
+    "audio_gate": {
+      "status": "approved",
+      "reason": "playback_review_approved: google-translate-tts/la/google_translate_latin",
+      "reviewed_by": "user",
+      "reviewed_at": "2026-06-17T00:00:00Z"
+    }
+  },
+  {
+    "item_key": "latin-mvp-0008",
+    "sequence": 8,
+    "lemma": "regina",
+    "target_form": "regina",
+    "latin_sentence": "Regina prudens est.",
+    "source_pack_version": "latin-mvp-50-v1",
+    "frequency_rank": 108,
+    "frequency_source": "DCC Latin Core Vocabulary",
+    "source_type": "adapted_didactic",
+    "citation": "Project-authored didactic text using DCC Latin Core Vocabulary lemma metadata.",
+    "work_reference": "Multilang Latin MVP real-data seed",
+    "source_url_or_id": "https://dcc.dickinson.edu/latin-core-list1",
+    "license_note": "Project-authored didactic text; DCC Latin Core Vocabulary lemma metadata attributed under CC BY-SA.",
+    "replacement_reason": null,
+    "uncertainty_reason": null,
+    "source_gate": {
+      "status": "approved",
+      "reason": null,
+      "reviewed_by": "multilang-real-data-seed",
+      "reviewed_at": "2026-06-17"
+    },
+    "translation_gate": {
+      "status": "approved",
+      "reason": null,
+      "reviewed_by": "multilang-real-data-seed",
+      "reviewed_at": "2026-06-17"
+    },
+    "grammar_gate": {
+      "status": "approved",
+      "reason": null,
+      "reviewed_by": "multilang-real-data-seed",
+      "reviewed_at": "2026-06-17"
+    },
+    "audio_gate": {
+      "status": "approved",
+      "reason": "playback_review_approved: google-translate-tts/la/google_translate_latin",
+      "reviewed_by": "user",
+      "reviewed_at": "2026-06-17T00:00:00Z"
+    }
+  },
+  {
+    "item_key": "latin-mvp-0009",
+    "sequence": 9,
+    "lemma": "populus",
+    "target_form": "populus",
+    "latin_sentence": "Populus magnus est.",
+    "source_pack_version": "latin-mvp-50-v1",
+    "frequency_rank": 109,
+    "frequency_source": "DCC Latin Core Vocabulary",
+    "source_type": "adapted_didactic",
+    "citation": "Project-authored didactic text using DCC Latin Core Vocabulary lemma metadata.",
+    "work_reference": "Multilang Latin MVP real-data seed",
+    "source_url_or_id": "https://dcc.dickinson.edu/latin-core-list1",
+    "license_note": "Project-authored didactic text; DCC Latin Core Vocabulary lemma metadata attributed under CC BY-SA.",
+    "replacement_reason": null,
+    "uncertainty_reason": null,
+    "source_gate": {
+      "status": "approved",
+      "reason": null,
+      "reviewed_by": "multilang-real-data-seed",
+      "reviewed_at": "2026-06-17"
+    },
+    "translation_gate": {
+      "status": "approved",
+      "reason": null,
+      "reviewed_by": "multilang-real-data-seed",
+      "reviewed_at": "2026-06-17"
+    },
+    "grammar_gate": {
+      "status": "approved",
+      "reason": null,
+      "reviewed_by": "multilang-real-data-seed",
+      "reviewed_at": "2026-06-17"
+    },
+    "audio_gate": {
+      "status": "approved",
+      "reason": "playback_review_approved: google-translate-tts/la/google_translate_latin",
+      "reviewed_by": "user",
+      "reviewed_at": "2026-06-17T00:00:00Z"
+    }
+  },
+  {
+    "item_key": "latin-mvp-0010",
+    "sequence": 10,
+    "lemma": "puer",
+    "target_form": "puer",
+    "latin_sentence": "Puer laetus est.",
+    "source_pack_version": "latin-mvp-50-v1",
+    "frequency_rank": 110,
+    "frequency_source": "DCC Latin Core Vocabulary",
+    "source_type": "adapted_didactic",
+    "citation": "Project-authored didactic text using DCC Latin Core Vocabulary lemma metadata.",
+    "work_reference": "Multilang Latin MVP real-data seed",
+    "source_url_or_id": "https://dcc.dickinson.edu/latin-core-list1",
+    "license_note": "Project-authored didactic text; DCC Latin Core Vocabulary lemma metadata attributed under CC BY-SA.",
+    "replacement_reason": null,
+    "uncertainty_reason": null,
+    "source_gate": {
+      "status": "approved",
+      "reason": null,
+      "reviewed_by": "multilang-real-data-seed",
+      "reviewed_at": "2026-06-17"
+    },
+    "translation_gate": {
+      "status": "approved",
+      "reason": null,
+      "reviewed_by": "multilang-real-data-seed",
+      "reviewed_at": "2026-06-17"
+    },
+    "grammar_gate": {
+      "status": "approved",
+      "reason": null,
+      "reviewed_by": "multilang-real-data-seed",
+      "reviewed_at": "2026-06-17"
+    },
+    "audio_gate": {
+      "status": "approved",
+      "reason": "playback_review_approved: google-translate-tts/la/google_translate_latin",
+      "reviewed_by": "user",
+      "reviewed_at": "2026-06-17T00:00:00Z"
+    }
+  },
+  {
+    "item_key": "latin-mvp-0011",
+    "sequence": 11,
+    "lemma": "puella",
+    "target_form": "puella",
+    "latin_sentence": "Puella laeta est.",
+    "source_pack_version": "latin-mvp-50-v1",
+    "frequency_rank": 111,
+    "frequency_source": "DCC Latin Core Vocabulary",
+    "source_type": "adapted_didactic",
+    "citation": "Project-authored didactic text using DCC Latin Core Vocabulary lemma metadata.",
+    "work_reference": "Multilang Latin MVP real-data seed",
+    "source_url_or_id": "https://dcc.dickinson.edu/latin-core-list1",
+    "license_note": "Project-authored didactic text; DCC Latin Core Vocabulary lemma metadata attributed under CC BY-SA.",
+    "replacement_reason": null,
+    "uncertainty_reason": null,
+    "source_gate": {
+      "status": "approved",
+      "reason": null,
+      "reviewed_by": "multilang-real-data-seed",
+      "reviewed_at": "2026-06-17"
+    },
+    "translation_gate": {
+      "status": "approved",
+      "reason": null,
+      "reviewed_by": "multilang-real-data-seed",
+      "reviewed_at": "2026-06-17"
+    },
+    "grammar_gate": {
+      "status": "approved",
+      "reason": null,
+      "reviewed_by": "multilang-real-data-seed",
+      "reviewed_at": "2026-06-17"
+    },
+    "audio_gate": {
+      "status": "approved",
+      "reason": "playback_review_approved: google-translate-tts/la/google_translate_latin",
+      "reviewed_by": "user",
+      "reviewed_at": "2026-06-17T00:00:00Z"
+    }
+  },
+  {
+    "item_key": "latin-mvp-0012",
+    "sequence": 12,
+    "lemma": "vir",
+    "target_form": "vir",
+    "latin_sentence": "Vir fortis est.",
+    "source_pack_version": "latin-mvp-50-v1",
+    "frequency_rank": 112,
+    "frequency_source": "DCC Latin Core Vocabulary",
+    "source_type": "adapted_didactic",
+    "citation": "Project-authored didactic text using DCC Latin Core Vocabulary lemma metadata.",
+    "work_reference": "Multilang Latin MVP real-data seed",
+    "source_url_or_id": "https://dcc.dickinson.edu/latin-core-list1",
+    "license_note": "Project-authored didactic text; DCC Latin Core Vocabulary lemma metadata attributed under CC BY-SA.",
+    "replacement_reason": null,
+    "uncertainty_reason": null,
+    "source_gate": {
+      "status": "approved",
+      "reason": null,
+      "reviewed_by": "multilang-real-data-seed",
+      "reviewed_at": "2026-06-17"
+    },
+    "translation_gate": {
+      "status": "approved",
+      "reason": null,
+      "reviewed_by": "multilang-real-data-seed",
+      "reviewed_at": "2026-06-17"
+    },
+    "grammar_gate": {
+      "status": "approved",
+      "reason": null,
+      "reviewed_by": "multilang-real-data-seed",
+      "reviewed_at": "2026-06-17"
+    },
+    "audio_gate": {
+      "status": "approved",
+      "reason": "playback_review_approved: google-translate-tts/la/google_translate_latin",
+      "reviewed_by": "user",
+      "reviewed_at": "2026-06-17T00:00:00Z"
+    }
+  },
+  {
+    "item_key": "latin-mvp-0013",
+    "sequence": 13,
+    "lemma": "femina",
+    "target_form": "femina",
+    "latin_sentence": "Femina sapiens est.",
+    "source_pack_version": "latin-mvp-50-v1",
+    "frequency_rank": 113,
+    "frequency_source": "DCC Latin Core Vocabulary",
+    "source_type": "adapted_didactic",
+    "citation": "Project-authored didactic text using DCC Latin Core Vocabulary lemma metadata.",
+    "work_reference": "Multilang Latin MVP real-data seed",
+    "source_url_or_id": "https://dcc.dickinson.edu/latin-core-list1",
+    "license_note": "Project-authored didactic text; DCC Latin Core Vocabulary lemma metadata attributed under CC BY-SA.",
+    "replacement_reason": null,
+    "uncertainty_reason": null,
+    "source_gate": {
+      "status": "approved",
+      "reason": null,
+      "reviewed_by": "multilang-real-data-seed",
+      "reviewed_at": "2026-06-17"
+    },
+    "translation_gate": {
+      "status": "approved",
+      "reason": null,
+      "reviewed_by": "multilang-real-data-seed",
+      "reviewed_at": "2026-06-17"
+    },
+    "grammar_gate": {
+      "status": "approved",
+      "reason": null,
+      "reviewed_by": "multilang-real-data-seed",
+      "reviewed_at": "2026-06-17"
+    },
+    "audio_gate": {
+      "status": "approved",
+      "reason": "playback_review_approved: google-translate-tts/la/google_translate_latin",
+      "reviewed_by": "user",
+      "reviewed_at": "2026-06-17T00:00:00Z"
+    }
+  },
+  {
+    "item_key": "latin-mvp-0014",
+    "sequence": 14,
+    "lemma": "pater",
+    "target_form": "pater",
+    "latin_sentence": "Pater benignus est.",
+    "source_pack_version": "latin-mvp-50-v1",
+    "frequency_rank": 114,
+    "frequency_source": "DCC Latin Core Vocabulary",
+    "source_type": "adapted_didactic",
+    "citation": "Project-authored didactic text using DCC Latin Core Vocabulary lemma metadata.",
+    "work_reference": "Multilang Latin MVP real-data seed",
+    "source_url_or_id": "https://dcc.dickinson.edu/latin-core-list1",
+    "license_note": "Project-authored didactic text; DCC Latin Core Vocabulary lemma metadata attributed under CC BY-SA.",
+    "replacement_reason": null,
+    "uncertainty_reason": null,
+    "source_gate": {
+      "status": "approved",
+      "reason": null,
+      "reviewed_by": "multilang-real-data-seed",
+      "reviewed_at": "2026-06-17"
+    },
+    "translation_gate": {
+      "status": "approved",
+      "reason": null,
+      "reviewed_by": "multilang-real-data-seed",
+      "reviewed_at": "2026-06-17"
+    },
+    "grammar_gate": {
+      "status": "approved",
+      "reason": null,
+      "reviewed_by": "multilang-real-data-seed",
+      "reviewed_at": "2026-06-17"
+    },
+    "audio_gate": {
+      "status": "approved",
+      "reason": "playback_review_approved: google-translate-tts/la/google_translate_latin",
+      "reviewed_by": "user",
+      "reviewed_at": "2026-06-17T00:00:00Z"
+    }
+  },
+  {
+    "item_key": "latin-mvp-0015",
+    "sequence": 15,
+    "lemma": "mater",
+    "target_form": "mater",
+    "latin_sentence": "Mater benigna est.",
+    "source_pack_version": "latin-mvp-50-v1",
+    "frequency_rank": 115,
+    "frequency_source": "DCC Latin Core Vocabulary",
+    "source_type": "adapted_didactic",
+    "citation": "Project-authored didactic text using DCC Latin Core Vocabulary lemma metadata.",
+    "work_reference": "Multilang Latin MVP real-data seed",
+    "source_url_or_id": "https://dcc.dickinson.edu/latin-core-list1",
+    "license_note": "Project-authored didactic text; DCC Latin Core Vocabulary lemma metadata attributed under CC BY-SA.",
+    "replacement_reason": null,
+    "uncertainty_reason": null,
+    "source_gate": {
+      "status": "approved",
+      "reason": null,
+      "reviewed_by": "multilang-real-data-seed",
+      "reviewed_at": "2026-06-17"
+    },
+    "translation_gate": {
+      "status": "approved",
+      "reason": null,
+      "reviewed_by": "multilang-real-data-seed",
+      "reviewed_at": "2026-06-17"
+    },
+    "grammar_gate": {
+      "status": "approved",
+      "reason": null,
+      "reviewed_by": "multilang-real-data-seed",
+      "reviewed_at": "2026-06-17"
+    },
+    "audio_gate": {
+      "status": "approved",
+      "reason": "playback_review_approved: google-translate-tts/la/google_translate_latin",
+      "reviewed_by": "user",
+      "reviewed_at": "2026-06-17T00:00:00Z"
+    }
+  },
+  {
+    "item_key": "latin-mvp-0016",
+    "sequence": 16,
+    "lemma": "filius",
+    "target_form": "filius",
+    "latin_sentence": "Filius parvus est.",
+    "source_pack_version": "latin-mvp-50-v1",
+    "frequency_rank": 116,
+    "frequency_source": "DCC Latin Core Vocabulary",
+    "source_type": "adapted_didactic",
+    "citation": "Project-authored didactic text using DCC Latin Core Vocabulary lemma metadata.",
+    "work_reference": "Multilang Latin MVP real-data seed",
+    "source_url_or_id": "https://dcc.dickinson.edu/latin-core-list1",
+    "license_note": "Project-authored didactic text; DCC Latin Core Vocabulary lemma metadata attributed under CC BY-SA.",
+    "replacement_reason": null,
+    "uncertainty_reason": null,
+    "source_gate": {
+      "status": "approved",
+      "reason": null,
+      "reviewed_by": "multilang-real-data-seed",
+      "reviewed_at": "2026-06-17"
+    },
+    "translation_gate": {
+      "status": "approved",
+      "reason": null,
+      "reviewed_by": "multilang-real-data-seed",
+      "reviewed_at": "2026-06-17"
+    },
+    "grammar_gate": {
+      "status": "approved",
+      "reason": null,
+      "reviewed_by": "multilang-real-data-seed",
+      "reviewed_at": "2026-06-17"
+    },
+    "audio_gate": {
+      "status": "approved",
+      "reason": "playback_review_approved: google-translate-tts/la/google_translate_latin",
+      "reviewed_by": "user",
+      "reviewed_at": "2026-06-17T00:00:00Z"
+    }
+  },
+  {
+    "item_key": "latin-mvp-0017",
+    "sequence": 17,
+    "lemma": "filia",
+    "target_form": "filia",
+    "latin_sentence": "Filia parva est.",
+    "source_pack_version": "latin-mvp-50-v1",
+    "frequency_rank": 117,
+    "frequency_source": "DCC Latin Core Vocabulary",
+    "source_type": "adapted_didactic",
+    "citation": "Project-authored didactic text using DCC Latin Core Vocabulary lemma metadata.",
+    "work_reference": "Multilang Latin MVP real-data seed",
+    "source_url_or_id": "https://dcc.dickinson.edu/latin-core-list1",
+    "license_note": "Project-authored didactic text; DCC Latin Core Vocabulary lemma metadata attributed under CC BY-SA.",
+    "replacement_reason": null,
+    "uncertainty_reason": null,
+    "source_gate": {
+      "status": "approved",
+      "reason": null,
+      "reviewed_by": "multilang-real-data-seed",
+      "reviewed_at": "2026-06-17"
+    },
+    "translation_gate": {
+      "status": "approved",
+      "reason": null,
+      "reviewed_by": "multilang-real-data-seed",
+      "reviewed_at": "2026-06-17"
+    },
+    "grammar_gate": {
+      "status": "approved",
+      "reason": null,
+      "reviewed_by": "multilang-real-data-seed",
+      "reviewed_at": "2026-06-17"
+    },
+    "audio_gate": {
+      "status": "approved",
+      "reason": "playback_review_approved: google-translate-tts/la/google_translate_latin",
+      "reviewed_by": "user",
+      "reviewed_at": "2026-06-17T00:00:00Z"
+    }
+  },
+  {
+    "item_key": "latin-mvp-0018",
+    "sequence": 18,
+    "lemma": "domus",
+    "target_form": "domus",
+    "latin_sentence": "Domus alta est.",
+    "source_pack_version": "latin-mvp-50-v1",
+    "frequency_rank": 118,
+    "frequency_source": "DCC Latin Core Vocabulary",
+    "source_type": "adapted_didactic",
+    "citation": "Project-authored didactic text using DCC Latin Core Vocabulary lemma metadata.",
+    "work_reference": "Multilang Latin MVP real-data seed",
+    "source_url_or_id": "https://dcc.dickinson.edu/latin-core-list1",
+    "license_note": "Project-authored didactic text; DCC Latin Core Vocabulary lemma metadata attributed under CC BY-SA.",
+    "replacement_reason": null,
+    "uncertainty_reason": null,
+    "source_gate": {
+      "status": "approved",
+      "reason": null,
+      "reviewed_by": "multilang-real-data-seed",
+      "reviewed_at": "2026-06-17"
+    },
+    "translation_gate": {
+      "status": "approved",
+      "reason": null,
+      "reviewed_by": "multilang-real-data-seed",
+      "reviewed_at": "2026-06-17"
+    },
+    "grammar_gate": {
+      "status": "approved",
+      "reason": null,
+      "reviewed_by": "multilang-real-data-seed",
+      "reviewed_at": "2026-06-17"
+    },
+    "audio_gate": {
+      "status": "approved",
+      "reason": "playback_review_approved: google-translate-tts/la/google_translate_latin",
+      "reviewed_by": "user",
+      "reviewed_at": "2026-06-17T00:00:00Z"
+    }
+  },
+  {
+    "item_key": "latin-mvp-0019",
+    "sequence": 19,
+    "lemma": "urbs",
+    "target_form": "urbs",
+    "latin_sentence": "Urbs magna est.",
+    "source_pack_version": "latin-mvp-50-v1",
+    "frequency_rank": 119,
+    "frequency_source": "DCC Latin Core Vocabulary",
+    "source_type": "adapted_didactic",
+    "citation": "Project-authored didactic text using DCC Latin Core Vocabulary lemma metadata.",
+    "work_reference": "Multilang Latin MVP real-data seed",
+    "source_url_or_id": "https://dcc.dickinson.edu/latin-core-list1",
+    "license_note": "Project-authored didactic text; DCC Latin Core Vocabulary lemma metadata attributed under CC BY-SA.",
+    "replacement_reason": null,
+    "uncertainty_reason": null,
+    "source_gate": {
+      "status": "approved",
+      "reason": null,
+      "reviewed_by": "multilang-real-data-seed",
+      "reviewed_at": "2026-06-17"
+    },
+    "translation_gate": {
+      "status": "approved",
+      "reason": null,
+      "reviewed_by": "multilang-real-data-seed",
+      "reviewed_at": "2026-06-17"
+    },
+    "grammar_gate": {
+      "status": "approved",
+      "reason": null,
+      "reviewed_by": "multilang-real-data-seed",
+      "reviewed_at": "2026-06-17"
+    },
+    "audio_gate": {
+      "status": "approved",
+      "reason": "playback_review_approved: google-translate-tts/la/google_translate_latin",
+      "reviewed_by": "user",
+      "reviewed_at": "2026-06-17T00:00:00Z"
+    }
+  },
+  {
+    "item_key": "latin-mvp-0020",
+    "sequence": 20,
+    "lemma": "via",
+    "target_form": "via",
+    "latin_sentence": "Via longa est.",
+    "source_pack_version": "latin-mvp-50-v1",
+    "frequency_rank": 120,
+    "frequency_source": "DCC Latin Core Vocabulary",
+    "source_type": "adapted_didactic",
+    "citation": "Project-authored didactic text using DCC Latin Core Vocabulary lemma metadata.",
+    "work_reference": "Multilang Latin MVP real-data seed",
+    "source_url_or_id": "https://dcc.dickinson.edu/latin-core-list1",
+    "license_note": "Project-authored didactic text; DCC Latin Core Vocabulary lemma metadata attributed under CC BY-SA.",
+    "replacement_reason": null,
+    "uncertainty_reason": null,
+    "source_gate": {
+      "status": "approved",
+      "reason": null,
+      "reviewed_by": "multilang-real-data-seed",
+      "reviewed_at": "2026-06-17"
+    },
+    "translation_gate": {
+      "status": "approved",
+      "reason": null,
+      "reviewed_by": "multilang-real-data-seed",
+      "reviewed_at": "2026-06-17"
+    },
+    "grammar_gate": {
+      "status": "approved",
+      "reason": null,
+      "reviewed_by": "multilang-real-data-seed",
+      "reviewed_at": "2026-06-17"
+    },
+    "audio_gate": {
+      "status": "approved",
+      "reason": "playback_review_approved: google-translate-tts/la/google_translate_latin",
+      "reviewed_by": "user",
+      "reviewed_at": "2026-06-17T00:00:00Z"
+    }
+  },
+  {
+    "item_key": "latin-mvp-0021",
+    "sequence": 21,
+    "lemma": "navis",
+    "target_form": "navis",
+    "latin_sentence": "Navis nova est.",
+    "source_pack_version": "latin-mvp-50-v1",
+    "frequency_rank": 121,
+    "frequency_source": "DCC Latin Core Vocabulary",
+    "source_type": "adapted_didactic",
+    "citation": "Project-authored didactic text using DCC Latin Core Vocabulary lemma metadata.",
+    "work_reference": "Multilang Latin MVP real-data seed",
+    "source_url_or_id": "https://dcc.dickinson.edu/latin-core-list1",
+    "license_note": "Project-authored didactic text; DCC Latin Core Vocabulary lemma metadata attributed under CC BY-SA.",
+    "replacement_reason": null,
+    "uncertainty_reason": null,
+    "source_gate": {
+      "status": "approved",
+      "reason": null,
+      "reviewed_by": "multilang-real-data-seed",
+      "reviewed_at": "2026-06-17"
+    },
+    "translation_gate": {
+      "status": "approved",
+      "reason": null,
+      "reviewed_by": "multilang-real-data-seed",
+      "reviewed_at": "2026-06-17"
+    },
+    "grammar_gate": {
+      "status": "approved",
+      "reason": null,
+      "reviewed_by": "multilang-real-data-seed",
+      "reviewed_at": "2026-06-17"
+    },
+    "audio_gate": {
+      "status": "approved",
+      "reason": "playback_review_approved: google-translate-tts/la/google_translate_latin",
+      "reviewed_by": "user",
+      "reviewed_at": "2026-06-17T00:00:00Z"
+    }
+  },
+  {
+    "item_key": "latin-mvp-0022",
+    "sequence": 22,
+    "lemma": "miles",
+    "target_form": "miles",
+    "latin_sentence": "Miles fortis est.",
+    "source_pack_version": "latin-mvp-50-v1",
+    "frequency_rank": 122,
+    "frequency_source": "DCC Latin Core Vocabulary",
+    "source_type": "adapted_didactic",
+    "citation": "Project-authored didactic text using DCC Latin Core Vocabulary lemma metadata.",
+    "work_reference": "Multilang Latin MVP real-data seed",
+    "source_url_or_id": "https://dcc.dickinson.edu/latin-core-list1",
+    "license_note": "Project-authored didactic text; DCC Latin Core Vocabulary lemma metadata attributed under CC BY-SA.",
+    "replacement_reason": null,
+    "uncertainty_reason": null,
+    "source_gate": {
+      "status": "approved",
+      "reason": null,
+      "reviewed_by": "multilang-real-data-seed",
+      "reviewed_at": "2026-06-17"
+    },
+    "translation_gate": {
+      "status": "approved",
+      "reason": null,
+      "reviewed_by": "multilang-real-data-seed",
+      "reviewed_at": "2026-06-17"
+    },
+    "grammar_gate": {
+      "status": "approved",
+      "reason": null,
+      "reviewed_by": "multilang-real-data-seed",
+      "reviewed_at": "2026-06-17"
+    },
+    "audio_gate": {
+      "status": "approved",
+      "reason": "playback_review_approved: google-translate-tts/la/google_translate_latin",
+      "reviewed_by": "user",
+      "reviewed_at": "2026-06-17T00:00:00Z"
+    }
+  },
+  {
+    "item_key": "latin-mvp-0023",
+    "sequence": 23,
+    "lemma": "servus",
+    "target_form": "servus",
+    "latin_sentence": "Servus fidelis est.",
+    "source_pack_version": "latin-mvp-50-v1",
+    "frequency_rank": 123,
+    "frequency_source": "DCC Latin Core Vocabulary",
+    "source_type": "adapted_didactic",
+    "citation": "Project-authored didactic text using DCC Latin Core Vocabulary lemma metadata.",
+    "work_reference": "Multilang Latin MVP real-data seed",
+    "source_url_or_id": "https://dcc.dickinson.edu/latin-core-list1",
+    "license_note": "Project-authored didactic text; DCC Latin Core Vocabulary lemma metadata attributed under CC BY-SA.",
+    "replacement_reason": null,
+    "uncertainty_reason": null,
+    "source_gate": {
+      "status": "approved",
+      "reason": null,
+      "reviewed_by": "multilang-real-data-seed",
+      "reviewed_at": "2026-06-17"
+    },
+    "translation_gate": {
+      "status": "approved",
+      "reason": null,
+      "reviewed_by": "multilang-real-data-seed",
+      "reviewed_at": "2026-06-17"
+    },
+    "grammar_gate": {
+      "status": "approved",
+      "reason": null,
+      "reviewed_by": "multilang-real-data-seed",
+      "reviewed_at": "2026-06-17"
+    },
+    "audio_gate": {
+      "status": "approved",
+      "reason": "playback_review_approved: google-translate-tts/la/google_translate_latin",
+      "reviewed_by": "user",
+      "reviewed_at": "2026-06-17T00:00:00Z"
+    }
+  },
+  {
+    "item_key": "latin-mvp-0024",
+    "sequence": 24,
+    "lemma": "amicus",
+    "target_form": "amicus",
+    "latin_sentence": "Amicus bonus est.",
+    "source_pack_version": "latin-mvp-50-v1",
+    "frequency_rank": 124,
+    "frequency_source": "DCC Latin Core Vocabulary",
+    "source_type": "adapted_didactic",
+    "citation": "Project-authored didactic text using DCC Latin Core Vocabulary lemma metadata.",
+    "work_reference": "Multilang Latin MVP real-data seed",
+    "source_url_or_id": "https://dcc.dickinson.edu/latin-core-list1",
+    "license_note": "Project-authored didactic text; DCC Latin Core Vocabulary lemma metadata attributed under CC BY-SA.",
+    "replacement_reason": null,
+    "uncertainty_reason": null,
+    "source_gate": {
+      "status": "approved",
+      "reason": null,
+      "reviewed_by": "multilang-real-data-seed",
+      "reviewed_at": "2026-06-17"
+    },
+    "translation_gate": {
+      "status": "approved",
+      "reason": null,
+      "reviewed_by": "multilang-real-data-seed",
+      "reviewed_at": "2026-06-17"
+    },
+    "grammar_gate": {
+      "status": "approved",
+      "reason": null,
+      "reviewed_by": "multilang-real-data-seed",
+      "reviewed_at": "2026-06-17"
+    },
+    "audio_gate": {
+      "status": "approved",
+      "reason": "playback_review_approved: google-translate-tts/la/google_translate_latin",
+      "reviewed_by": "user",
+      "reviewed_at": "2026-06-17T00:00:00Z"
+    }
+  },
+  {
+    "item_key": "latin-mvp-0025",
+    "sequence": 25,
+    "lemma": "hostis",
+    "target_form": "hostis",
+    "latin_sentence": "Hostis saevus est.",
+    "source_pack_version": "latin-mvp-50-v1",
+    "frequency_rank": 125,
+    "frequency_source": "DCC Latin Core Vocabulary",
+    "source_type": "adapted_didactic",
+    "citation": "Project-authored didactic text using DCC Latin Core Vocabulary lemma metadata.",
+    "work_reference": "Multilang Latin MVP real-data seed",
+    "source_url_or_id": "https://dcc.dickinson.edu/latin-core-list1",
+    "license_note": "Project-authored didactic text; DCC Latin Core Vocabulary lemma metadata attributed under CC BY-SA.",
+    "replacement_reason": null,
+    "uncertainty_reason": null,
+    "source_gate": {
+      "status": "approved",
+      "reason": null,
+      "reviewed_by": "multilang-real-data-seed",
+      "reviewed_at": "2026-06-17"
+    },
+    "translation_gate": {
+      "status": "approved",
+      "reason": null,
+      "reviewed_by": "multilang-real-data-seed",
+      "reviewed_at": "2026-06-17"
+    },
+    "grammar_gate": {
+      "status": "approved",
+      "reason": null,
+      "reviewed_by": "multilang-real-data-seed",
+      "reviewed_at": "2026-06-17"
+    },
+    "audio_gate": {
+      "status": "approved",
+      "reason": "playback_review_approved: google-translate-tts/la/google_translate_latin",
+      "reviewed_by": "user",
+      "reviewed_at": "2026-06-17T00:00:00Z"
+    }
+  },
+  {
+    "item_key": "latin-mvp-0026",
+    "sequence": 26,
+    "lemma": "deus",
+    "target_form": "deus",
+    "latin_sentence": "Deus aeternus est.",
+    "source_pack_version": "latin-mvp-50-v1",
+    "frequency_rank": 126,
+    "frequency_source": "DCC Latin Core Vocabulary",
+    "source_type": "adapted_didactic",
+    "citation": "Project-authored didactic text using DCC Latin Core Vocabulary lemma metadata.",
+    "work_reference": "Multilang Latin MVP real-data seed",
+    "source_url_or_id": "https://dcc.dickinson.edu/latin-core-list1",
+    "license_note": "Project-authored didactic text; DCC Latin Core Vocabulary lemma metadata attributed under CC BY-SA.",
+    "replacement_reason": null,
+    "uncertainty_reason": null,
+    "source_gate": {
+      "status": "approved",
+      "reason": null,
+      "reviewed_by": "multilang-real-data-seed",
+      "reviewed_at": "2026-06-17"
+    },
+    "translation_gate": {
+      "status": "approved",
+      "reason": null,
+      "reviewed_by": "multilang-real-data-seed",
+      "reviewed_at": "2026-06-17"
+    },
+    "grammar_gate": {
+      "status": "approved",
+      "reason": null,
+      "reviewed_by": "multilang-real-data-seed",
+      "reviewed_at": "2026-06-17"
+    },
+    "audio_gate": {
+      "status": "approved",
+      "reason": "playback_review_approved: google-translate-tts/la/google_translate_latin",
+      "reviewed_by": "user",
+      "reviewed_at": "2026-06-17T00:00:00Z"
+    }
+  },
+  {
+    "item_key": "latin-mvp-0027",
+    "sequence": 27,
+    "lemma": "dea",
+    "target_form": "dea",
+    "latin_sentence": "Dea pulchra est.",
+    "source_pack_version": "latin-mvp-50-v1",
+    "frequency_rank": 127,
+    "frequency_source": "DCC Latin Core Vocabulary",
+    "source_type": "adapted_didactic",
+    "citation": "Project-authored didactic text using DCC Latin Core Vocabulary lemma metadata.",
+    "work_reference": "Multilang Latin MVP real-data seed",
+    "source_url_or_id": "https://dcc.dickinson.edu/latin-core-list1",
+    "license_note": "Project-authored didactic text; DCC Latin Core Vocabulary lemma metadata attributed under CC BY-SA.",
+    "replacement_reason": null,
+    "uncertainty_reason": null,
+    "source_gate": {
+      "status": "approved",
+      "reason": null,
+      "reviewed_by": "multilang-real-data-seed",
+      "reviewed_at": "2026-06-17"
+    },
+    "translation_gate": {
+      "status": "approved",
+      "reason": null,
+      "reviewed_by": "multilang-real-data-seed",
+      "reviewed_at": "2026-06-17"
+    },
+    "grammar_gate": {
+      "status": "approved",
+      "reason": null,
+      "reviewed_by": "multilang-real-data-seed",
+      "reviewed_at": "2026-06-17"
+    },
+    "audio_gate": {
+      "status": "approved",
+      "reason": "playback_review_approved: google-translate-tts/la/google_translate_latin",
+      "reviewed_by": "user",
+      "reviewed_at": "2026-06-17T00:00:00Z"
+    }
+  },
+  {
+    "item_key": "latin-mvp-0028",
+    "sequence": 28,
+    "lemma": "templum",
+    "target_form": "templum",
+    "latin_sentence": "Templum antiquum est.",
+    "source_pack_version": "latin-mvp-50-v1",
+    "frequency_rank": 128,
+    "frequency_source": "DCC Latin Core Vocabulary",
+    "source_type": "adapted_didactic",
+    "citation": "Project-authored didactic text using DCC Latin Core Vocabulary lemma metadata.",
+    "work_reference": "Multilang Latin MVP real-data seed",
+    "source_url_or_id": "https://dcc.dickinson.edu/latin-core-list1",
+    "license_note": "Project-authored didactic text; DCC Latin Core Vocabulary lemma metadata attributed under CC BY-SA.",
+    "replacement_reason": null,
+    "uncertainty_reason": null,
+    "source_gate": {
+      "status": "approved",
+      "reason": null,
+      "reviewed_by": "multilang-real-data-seed",
+      "reviewed_at": "2026-06-17"
+    },
+    "translation_gate": {
+      "status": "approved",
+      "reason": null,
+      "reviewed_by": "multilang-real-data-seed",
+      "reviewed_at": "2026-06-17"
+    },
+    "grammar_gate": {
+      "status": "approved",
+      "reason": null,
+      "reviewed_by": "multilang-real-data-seed",
+      "reviewed_at": "2026-06-17"
+    },
+    "audio_gate": {
+      "status": "approved",
+      "reason": "playback_review_approved: google-translate-tts/la/google_translate_latin",
+      "reviewed_by": "user",
+      "reviewed_at": "2026-06-17T00:00:00Z"
+    }
+  },
+  {
+    "item_key": "latin-mvp-0029",
+    "sequence": 29,
+    "lemma": "forum",
+    "target_form": "forum",
+    "latin_sentence": "Forum plenum est.",
+    "source_pack_version": "latin-mvp-50-v1",
+    "frequency_rank": 129,
+    "frequency_source": "DCC Latin Core Vocabulary",
+    "source_type": "adapted_didactic",
+    "citation": "Project-authored didactic text using DCC Latin Core Vocabulary lemma metadata.",
+    "work_reference": "Multilang Latin MVP real-data seed",
+    "source_url_or_id": "https://dcc.dickinson.edu/latin-core-list1",
+    "license_note": "Project-authored didactic text; DCC Latin Core Vocabulary lemma metadata attributed under CC BY-SA.",
+    "replacement_reason": null,
+    "uncertainty_reason": null,
+    "source_gate": {
+      "status": "approved",
+      "reason": null,
+      "reviewed_by": "multilang-real-data-seed",
+      "reviewed_at": "2026-06-17"
+    },
+    "translation_gate": {
+      "status": "approved",
+      "reason": null,
+      "reviewed_by": "multilang-real-data-seed",
+      "reviewed_at": "2026-06-17"
+    },
+    "grammar_gate": {
+      "status": "approved",
+      "reason": null,
+      "reviewed_by": "multilang-real-data-seed",
+      "reviewed_at": "2026-06-17"
+    },
+    "audio_gate": {
+      "status": "approved",
+      "reason": "playback_review_approved: google-translate-tts/la/google_translate_latin",
+      "reviewed_by": "user",
+      "reviewed_at": "2026-06-17T00:00:00Z"
+    }
+  },
+  {
+    "item_key": "latin-mvp-0030",
+    "sequence": 30,
+    "lemma": "liber",
+    "target_form": "liber",
+    "latin_sentence": "Liber novus est.",
+    "source_pack_version": "latin-mvp-50-v1",
+    "frequency_rank": 130,
+    "frequency_source": "DCC Latin Core Vocabulary",
+    "source_type": "adapted_didactic",
+    "citation": "Project-authored didactic text using DCC Latin Core Vocabulary lemma metadata.",
+    "work_reference": "Multilang Latin MVP real-data seed",
+    "source_url_or_id": "https://dcc.dickinson.edu/latin-core-list1",
+    "license_note": "Project-authored didactic text; DCC Latin Core Vocabulary lemma metadata attributed under CC BY-SA.",
+    "replacement_reason": null,
+    "uncertainty_reason": null,
+    "source_gate": {
+      "status": "approved",
+      "reason": null,
+      "reviewed_by": "multilang-real-data-seed",
+      "reviewed_at": "2026-06-17"
+    },
+    "translation_gate": {
+      "status": "approved",
+      "reason": null,
+      "reviewed_by": "multilang-real-data-seed",
+      "reviewed_at": "2026-06-17"
+    },
+    "grammar_gate": {
+      "status": "approved",
+      "reason": null,
+      "reviewed_by": "multilang-real-data-seed",
+      "reviewed_at": "2026-06-17"
+    },
+    "audio_gate": {
+      "status": "approved",
+      "reason": "playback_review_approved: google-translate-tts/la/google_translate_latin",
+      "reviewed_by": "user",
+      "reviewed_at": "2026-06-17T00:00:00Z"
+    }
+  },
+  {
+    "item_key": "latin-mvp-0031",
+    "sequence": 31,
+    "lemma": "corpus",
+    "target_form": "corpus",
+    "latin_sentence": "Corpus sanum est.",
+    "source_pack_version": "latin-mvp-50-v1",
+    "frequency_rank": 131,
+    "frequency_source": "DCC Latin Core Vocabulary",
+    "source_type": "adapted_didactic",
+    "citation": "Project-authored didactic text using DCC Latin Core Vocabulary lemma metadata.",
+    "work_reference": "Multilang Latin MVP real-data seed",
+    "source_url_or_id": "https://dcc.dickinson.edu/latin-core-list1",
+    "license_note": "Project-authored didactic text; DCC Latin Core Vocabulary lemma metadata attributed under CC BY-SA.",
+    "replacement_reason": null,
+    "uncertainty_reason": null,
+    "source_gate": {
+      "status": "approved",
+      "reason": null,
+      "reviewed_by": "multilang-real-data-seed",
+      "reviewed_at": "2026-06-17"
+    },
+    "translation_gate": {
+      "status": "approved",
+      "reason": null,
+      "reviewed_by": "multilang-real-data-seed",
+      "reviewed_at": "2026-06-17"
+    },
+    "grammar_gate": {
+      "status": "approved",
+      "reason": null,
+      "reviewed_by": "multilang-real-data-seed",
+      "reviewed_at": "2026-06-17"
+    },
+    "audio_gate": {
+      "status": "approved",
+      "reason": "playback_review_approved: google-translate-tts/la/google_translate_latin",
+      "reviewed_by": "user",
+      "reviewed_at": "2026-06-17T00:00:00Z"
+    }
+  },
+  {
+    "item_key": "latin-mvp-0032",
+    "sequence": 32,
+    "lemma": "animus",
+    "target_form": "animus",
+    "latin_sentence": "Animus firmus est.",
+    "source_pack_version": "latin-mvp-50-v1",
+    "frequency_rank": 132,
+    "frequency_source": "DCC Latin Core Vocabulary",
+    "source_type": "adapted_didactic",
+    "citation": "Project-authored didactic text using DCC Latin Core Vocabulary lemma metadata.",
+    "work_reference": "Multilang Latin MVP real-data seed",
+    "source_url_or_id": "https://dcc.dickinson.edu/latin-core-list1",
+    "license_note": "Project-authored didactic text; DCC Latin Core Vocabulary lemma metadata attributed under CC BY-SA.",
+    "replacement_reason": null,
+    "uncertainty_reason": null,
+    "source_gate": {
+      "status": "approved",
+      "reason": null,
+      "reviewed_by": "multilang-real-data-seed",
+      "reviewed_at": "2026-06-17"
+    },
+    "translation_gate": {
+      "status": "approved",
+      "reason": null,
+      "reviewed_by": "multilang-real-data-seed",
+      "reviewed_at": "2026-06-17"
+    },
+    "grammar_gate": {
+      "status": "approved",
+      "reason": null,
+      "reviewed_by": "multilang-real-data-seed",
+      "reviewed_at": "2026-06-17"
+    },
+    "audio_gate": {
+      "status": "approved",
+      "reason": "playback_review_approved: google-translate-tts/la/google_translate_latin",
+      "reviewed_by": "user",
+      "reviewed_at": "2026-06-17T00:00:00Z"
+    }
+  },
+  {
+    "item_key": "latin-mvp-0033",
+    "sequence": 33,
+    "lemma": "vita",
+    "target_form": "vita",
+    "latin_sentence": "Vita brevis est.",
+    "source_pack_version": "latin-mvp-50-v1",
+    "frequency_rank": 133,
+    "frequency_source": "DCC Latin Core Vocabulary",
+    "source_type": "adapted_didactic",
+    "citation": "Project-authored didactic text using DCC Latin Core Vocabulary lemma metadata.",
+    "work_reference": "Multilang Latin MVP real-data seed",
+    "source_url_or_id": "https://dcc.dickinson.edu/latin-core-list1",
+    "license_note": "Project-authored didactic text; DCC Latin Core Vocabulary lemma metadata attributed under CC BY-SA.",
+    "replacement_reason": null,
+    "uncertainty_reason": null,
+    "source_gate": {
+      "status": "approved",
+      "reason": null,
+      "reviewed_by": "multilang-real-data-seed",
+      "reviewed_at": "2026-06-17"
+    },
+    "translation_gate": {
+      "status": "approved",
+      "reason": null,
+      "reviewed_by": "multilang-real-data-seed",
+      "reviewed_at": "2026-06-17"
+    },
+    "grammar_gate": {
+      "status": "approved",
+      "reason": null,
+      "reviewed_by": "multilang-real-data-seed",
+      "reviewed_at": "2026-06-17"
+    },
+    "audio_gate": {
+      "status": "approved",
+      "reason": "playback_review_approved: google-translate-tts/la/google_translate_latin",
+      "reviewed_by": "user",
+      "reviewed_at": "2026-06-17T00:00:00Z"
+    }
+  },
+  {
+    "item_key": "latin-mvp-0034",
+    "sequence": 34,
+    "lemma": "mors",
+    "target_form": "mors",
+    "latin_sentence": "Mors certa est.",
+    "source_pack_version": "latin-mvp-50-v1",
+    "frequency_rank": 134,
+    "frequency_source": "DCC Latin Core Vocabulary",
+    "source_type": "adapted_didactic",
+    "citation": "Project-authored didactic text using DCC Latin Core Vocabulary lemma metadata.",
+    "work_reference": "Multilang Latin MVP real-data seed",
+    "source_url_or_id": "https://dcc.dickinson.edu/latin-core-list1",
+    "license_note": "Project-authored didactic text; DCC Latin Core Vocabulary lemma metadata attributed under CC BY-SA.",
+    "replacement_reason": null,
+    "uncertainty_reason": null,
+    "source_gate": {
+      "status": "approved",
+      "reason": null,
+      "reviewed_by": "multilang-real-data-seed",
+      "reviewed_at": "2026-06-17"
+    },
+    "translation_gate": {
+      "status": "approved",
+      "reason": null,
+      "reviewed_by": "multilang-real-data-seed",
+      "reviewed_at": "2026-06-17"
+    },
+    "grammar_gate": {
+      "status": "approved",
+      "reason": null,
+      "reviewed_by": "multilang-real-data-seed",
+      "reviewed_at": "2026-06-17"
+    },
+    "audio_gate": {
+      "status": "approved",
+      "reason": "playback_review_approved: google-translate-tts/la/google_translate_latin",
+      "reviewed_by": "user",
+      "reviewed_at": "2026-06-17T00:00:00Z"
+    }
+  },
+  {
+    "item_key": "latin-mvp-0035",
+    "sequence": 35,
+    "lemma": "dies",
+    "target_form": "dies",
+    "latin_sentence": "Dies longus est.",
+    "source_pack_version": "latin-mvp-50-v1",
+    "frequency_rank": 135,
+    "frequency_source": "DCC Latin Core Vocabulary",
+    "source_type": "adapted_didactic",
+    "citation": "Project-authored didactic text using DCC Latin Core Vocabulary lemma metadata.",
+    "work_reference": "Multilang Latin MVP real-data seed",
+    "source_url_or_id": "https://dcc.dickinson.edu/latin-core-list1",
+    "license_note": "Project-authored didactic text; DCC Latin Core Vocabulary lemma metadata attributed under CC BY-SA.",
+    "replacement_reason": null,
+    "uncertainty_reason": null,
+    "source_gate": {
+      "status": "approved",
+      "reason": null,
+      "reviewed_by": "multilang-real-data-seed",
+      "reviewed_at": "2026-06-17"
+    },
+    "translation_gate": {
+      "status": "approved",
+      "reason": null,
+      "reviewed_by": "multilang-real-data-seed",
+      "reviewed_at": "2026-06-17"
+    },
+    "grammar_gate": {
+      "status": "approved",
+      "reason": null,
+      "reviewed_by": "multilang-real-data-seed",
+      "reviewed_at": "2026-06-17"
+    },
+    "audio_gate": {
+      "status": "approved",
+      "reason": "playback_review_approved: google-translate-tts/la/google_translate_latin",
+      "reviewed_by": "user",
+      "reviewed_at": "2026-06-17T00:00:00Z"
+    }
+  },
+  {
+    "item_key": "latin-mvp-0036",
+    "sequence": 36,
+    "lemma": "nox",
+    "target_form": "nox",
+    "latin_sentence": "Nox quieta est.",
+    "source_pack_version": "latin-mvp-50-v1",
+    "frequency_rank": 136,
+    "frequency_source": "DCC Latin Core Vocabulary",
+    "source_type": "adapted_didactic",
+    "citation": "Project-authored didactic text using DCC Latin Core Vocabulary lemma metadata.",
+    "work_reference": "Multilang Latin MVP real-data seed",
+    "source_url_or_id": "https://dcc.dickinson.edu/latin-core-list1",
+    "license_note": "Project-authored didactic text; DCC Latin Core Vocabulary lemma metadata attributed under CC BY-SA.",
+    "replacement_reason": null,
+    "uncertainty_reason": null,
+    "source_gate": {
+      "status": "approved",
+      "reason": null,
+      "reviewed_by": "multilang-real-data-seed",
+      "reviewed_at": "2026-06-17"
+    },
+    "translation_gate": {
+      "status": "approved",
+      "reason": null,
+      "reviewed_by": "multilang-real-data-seed",
+      "reviewed_at": "2026-06-17"
+    },
+    "grammar_gate": {
+      "status": "approved",
+      "reason": null,
+      "reviewed_by": "multilang-real-data-seed",
+      "reviewed_at": "2026-06-17"
+    },
+    "audio_gate": {
+      "status": "approved",
+      "reason": "playback_review_approved: google-translate-tts/la/google_translate_latin",
+      "reviewed_by": "user",
+      "reviewed_at": "2026-06-17T00:00:00Z"
+    }
+  },
+  {
+    "item_key": "latin-mvp-0037",
+    "sequence": 37,
+    "lemma": "manus",
+    "target_form": "manus",
+    "latin_sentence": "Manus parva est.",
+    "source_pack_version": "latin-mvp-50-v1",
+    "frequency_rank": 137,
+    "frequency_source": "DCC Latin Core Vocabulary",
+    "source_type": "adapted_didactic",
+    "citation": "Project-authored didactic text using DCC Latin Core Vocabulary lemma metadata.",
+    "work_reference": "Multilang Latin MVP real-data seed",
+    "source_url_or_id": "https://dcc.dickinson.edu/latin-core-list1",
+    "license_note": "Project-authored didactic text; DCC Latin Core Vocabulary lemma metadata attributed under CC BY-SA.",
+    "replacement_reason": null,
+    "uncertainty_reason": null,
+    "source_gate": {
+      "status": "approved",
+      "reason": null,
+      "reviewed_by": "multilang-real-data-seed",
+      "reviewed_at": "2026-06-17"
+    },
+    "translation_gate": {
+      "status": "approved",
+      "reason": null,
+      "reviewed_by": "multilang-real-data-seed",
+      "reviewed_at": "2026-06-17"
+    },
+    "grammar_gate": {
+      "status": "approved",
+      "reason": null,
+      "reviewed_by": "multilang-real-data-seed",
+      "reviewed_at": "2026-06-17"
+    },
+    "audio_gate": {
+      "status": "approved",
+      "reason": "playback_review_approved: google-translate-tts/la/google_translate_latin",
+      "reviewed_by": "user",
+      "reviewed_at": "2026-06-17T00:00:00Z"
+    }
+  },
+  {
+    "item_key": "latin-mvp-0038",
+    "sequence": 38,
+    "lemma": "nomen",
+    "target_form": "nomen",
+    "latin_sentence": "Nomen clarum est.",
+    "source_pack_version": "latin-mvp-50-v1",
+    "frequency_rank": 138,
+    "frequency_source": "DCC Latin Core Vocabulary",
+    "source_type": "adapted_didactic",
+    "citation": "Project-authored didactic text using DCC Latin Core Vocabulary lemma metadata.",
+    "work_reference": "Multilang Latin MVP real-data seed",
+    "source_url_or_id": "https://dcc.dickinson.edu/latin-core-list1",
+    "license_note": "Project-authored didactic text; DCC Latin Core Vocabulary lemma metadata attributed under CC BY-SA.",
+    "replacement_reason": null,
+    "uncertainty_reason": null,
+    "source_gate": {
+      "status": "approved",
+      "reason": null,
+      "reviewed_by": "multilang-real-data-seed",
+      "reviewed_at": "2026-06-17"
+    },
+    "translation_gate": {
+      "status": "approved",
+      "reason": null,
+      "reviewed_by": "multilang-real-data-seed",
+      "reviewed_at": "2026-06-17"
+    },
+    "grammar_gate": {
+      "status": "approved",
+      "reason": null,
+      "reviewed_by": "multilang-real-data-seed",
+      "reviewed_at": "2026-06-17"
+    },
+    "audio_gate": {
+      "status": "approved",
+      "reason": "playback_review_approved: google-translate-tts/la/google_translate_latin",
+      "reviewed_by": "user",
+      "reviewed_at": "2026-06-17T00:00:00Z"
+    }
+  },
+  {
+    "item_key": "latin-mvp-0039",
+    "sequence": 39,
+    "lemma": "vox",
+    "target_form": "vox",
+    "latin_sentence": "Vox clara est.",
+    "source_pack_version": "latin-mvp-50-v1",
+    "frequency_rank": 139,
+    "frequency_source": "DCC Latin Core Vocabulary",
+    "source_type": "adapted_didactic",
+    "citation": "Project-authored didactic text using DCC Latin Core Vocabulary lemma metadata.",
+    "work_reference": "Multilang Latin MVP real-data seed",
+    "source_url_or_id": "https://dcc.dickinson.edu/latin-core-list1",
+    "license_note": "Project-authored didactic text; DCC Latin Core Vocabulary lemma metadata attributed under CC BY-SA.",
+    "replacement_reason": null,
+    "uncertainty_reason": null,
+    "source_gate": {
+      "status": "approved",
+      "reason": null,
+      "reviewed_by": "multilang-real-data-seed",
+      "reviewed_at": "2026-06-17"
+    },
+    "translation_gate": {
+      "status": "approved",
+      "reason": null,
+      "reviewed_by": "multilang-real-data-seed",
+      "reviewed_at": "2026-06-17"
+    },
+    "grammar_gate": {
+      "status": "approved",
+      "reason": null,
+      "reviewed_by": "multilang-real-data-seed",
+      "reviewed_at": "2026-06-17"
+    },
+    "audio_gate": {
+      "status": "approved",
+      "reason": "playback_review_approved: google-translate-tts/la/google_translate_latin",
+      "reviewed_by": "user",
+      "reviewed_at": "2026-06-17T00:00:00Z"
+    }
+  },
+  {
+    "item_key": "latin-mvp-0040",
+    "sequence": 40,
+    "lemma": "flumen",
+    "target_form": "flumen",
+    "latin_sentence": "Flumen latum est.",
+    "source_pack_version": "latin-mvp-50-v1",
+    "frequency_rank": 140,
+    "frequency_source": "DCC Latin Core Vocabulary",
+    "source_type": "adapted_didactic",
+    "citation": "Project-authored didactic text using DCC Latin Core Vocabulary lemma metadata.",
+    "work_reference": "Multilang Latin MVP real-data seed",
+    "source_url_or_id": "https://dcc.dickinson.edu/latin-core-list1",
+    "license_note": "Project-authored didactic text; DCC Latin Core Vocabulary lemma metadata attributed under CC BY-SA.",
+    "replacement_reason": null,
+    "uncertainty_reason": null,
+    "source_gate": {
+      "status": "approved",
+      "reason": null,
+      "reviewed_by": "multilang-real-data-seed",
+      "reviewed_at": "2026-06-17"
+    },
+    "translation_gate": {
+      "status": "approved",
+      "reason": null,
+      "reviewed_by": "multilang-real-data-seed",
+      "reviewed_at": "2026-06-17"
+    },
+    "grammar_gate": {
+      "status": "approved",
+      "reason": null,
+      "reviewed_by": "multilang-real-data-seed",
+      "reviewed_at": "2026-06-17"
+    },
+    "audio_gate": {
+      "status": "approved",
+      "reason": "playback_review_approved: google-translate-tts/la/google_translate_latin",
+      "reviewed_by": "user",
+      "reviewed_at": "2026-06-17T00:00:00Z"
+    }
+  },
+  {
+    "item_key": "latin-mvp-0041",
+    "sequence": 41,
+    "lemma": "mons",
+    "target_form": "mons",
+    "latin_sentence": "Mons altus est.",
+    "source_pack_version": "latin-mvp-50-v1",
+    "frequency_rank": 141,
+    "frequency_source": "DCC Latin Core Vocabulary",
+    "source_type": "adapted_didactic",
+    "citation": "Project-authored didactic text using DCC Latin Core Vocabulary lemma metadata.",
+    "work_reference": "Multilang Latin MVP real-data seed",
+    "source_url_or_id": "https://dcc.dickinson.edu/latin-core-list1",
+    "license_note": "Project-authored didactic text; DCC Latin Core Vocabulary lemma metadata attributed under CC BY-SA.",
+    "replacement_reason": null,
+    "uncertainty_reason": null,
+    "source_gate": {
+      "status": "approved",
+      "reason": null,
+      "reviewed_by": "multilang-real-data-seed",
+      "reviewed_at": "2026-06-17"
+    },
+    "translation_gate": {
+      "status": "approved",
+      "reason": null,
+      "reviewed_by": "multilang-real-data-seed",
+      "reviewed_at": "2026-06-17"
+    },
+    "grammar_gate": {
+      "status": "approved",
+      "reason": null,
+      "reviewed_by": "multilang-real-data-seed",
+      "reviewed_at": "2026-06-17"
+    },
+    "audio_gate": {
+      "status": "approved",
+      "reason": "playback_review_approved: google-translate-tts/la/google_translate_latin",
+      "reviewed_by": "user",
+      "reviewed_at": "2026-06-17T00:00:00Z"
+    }
+  },
+  {
+    "item_key": "latin-mvp-0042",
+    "sequence": 42,
+    "lemma": "ignis",
+    "target_form": "ignis",
+    "latin_sentence": "Ignis calidus est.",
+    "source_pack_version": "latin-mvp-50-v1",
+    "frequency_rank": 142,
+    "frequency_source": "DCC Latin Core Vocabulary",
+    "source_type": "adapted_didactic",
+    "citation": "Project-authored didactic text using DCC Latin Core Vocabulary lemma metadata.",
+    "work_reference": "Multilang Latin MVP real-data seed",
+    "source_url_or_id": "https://dcc.dickinson.edu/latin-core-list1",
+    "license_note": "Project-authored didactic text; DCC Latin Core Vocabulary lemma metadata attributed under CC BY-SA.",
+    "replacement_reason": null,
+    "uncertainty_reason": null,
+    "source_gate": {
+      "status": "approved",
+      "reason": null,
+      "reviewed_by": "multilang-real-data-seed",
+      "reviewed_at": "2026-06-17"
+    },
+    "translation_gate": {
+      "status": "approved",
+      "reason": null,
+      "reviewed_by": "multilang-real-data-seed",
+      "reviewed_at": "2026-06-17"
+    },
+    "grammar_gate": {
+      "status": "approved",
+      "reason": null,
+      "reviewed_by": "multilang-real-data-seed",
+      "reviewed_at": "2026-06-17"
+    },
+    "audio_gate": {
+      "status": "approved",
+      "reason": "playback_review_approved: google-translate-tts/la/google_translate_latin",
+      "reviewed_by": "user",
+      "reviewed_at": "2026-06-17T00:00:00Z"
+    }
+  },
+  {
+    "item_key": "latin-mvp-0043",
+    "sequence": 43,
+    "lemma": "cibus",
+    "target_form": "cibus",
+    "latin_sentence": "Cibus bonus est.",
+    "source_pack_version": "latin-mvp-50-v1",
+    "frequency_rank": 143,
+    "frequency_source": "DCC Latin Core Vocabulary",
+    "source_type": "adapted_didactic",
+    "citation": "Project-authored didactic text using DCC Latin Core Vocabulary lemma metadata.",
+    "work_reference": "Multilang Latin MVP real-data seed",
+    "source_url_or_id": "https://dcc.dickinson.edu/latin-core-list1",
+    "license_note": "Project-authored didactic text; DCC Latin Core Vocabulary lemma metadata attributed under CC BY-SA.",
+    "replacement_reason": null,
+    "uncertainty_reason": null,
+    "source_gate": {
+      "status": "approved",
+      "reason": null,
+      "reviewed_by": "multilang-real-data-seed",
+      "reviewed_at": "2026-06-17"
+    },
+    "translation_gate": {
+      "status": "approved",
+      "reason": null,
+      "reviewed_by": "multilang-real-data-seed",
+      "reviewed_at": "2026-06-17"
+    },
+    "grammar_gate": {
+      "status": "approved",
+      "reason": null,
+      "reviewed_by": "multilang-real-data-seed",
+      "reviewed_at": "2026-06-17"
+    },
+    "audio_gate": {
+      "status": "approved",
+      "reason": "playback_review_approved: google-translate-tts/la/google_translate_latin",
+      "reviewed_by": "user",
+      "reviewed_at": "2026-06-17T00:00:00Z"
+    }
+  },
+  {
+    "item_key": "latin-mvp-0044",
+    "sequence": 44,
+    "lemma": "vinum",
+    "target_form": "vinum",
+    "latin_sentence": "Vinum dulce est.",
+    "source_pack_version": "latin-mvp-50-v1",
+    "frequency_rank": 144,
+    "frequency_source": "DCC Latin Core Vocabulary",
+    "source_type": "adapted_didactic",
+    "citation": "Project-authored didactic text using DCC Latin Core Vocabulary lemma metadata.",
+    "work_reference": "Multilang Latin MVP real-data seed",
+    "source_url_or_id": "https://dcc.dickinson.edu/latin-core-list1",
+    "license_note": "Project-authored didactic text; DCC Latin Core Vocabulary lemma metadata attributed under CC BY-SA.",
+    "replacement_reason": null,
+    "uncertainty_reason": null,
+    "source_gate": {
+      "status": "approved",
+      "reason": null,
+      "reviewed_by": "multilang-real-data-seed",
+      "reviewed_at": "2026-06-17"
+    },
+    "translation_gate": {
+      "status": "approved",
+      "reason": null,
+      "reviewed_by": "multilang-real-data-seed",
+      "reviewed_at": "2026-06-17"
+    },
+    "grammar_gate": {
+      "status": "approved",
+      "reason": null,
+      "reviewed_by": "multilang-real-data-seed",
+      "reviewed_at": "2026-06-17"
+    },
+    "audio_gate": {
+      "status": "approved",
+      "reason": "playback_review_approved: google-translate-tts/la/google_translate_latin",
+      "reviewed_by": "user",
+      "reviewed_at": "2026-06-17T00:00:00Z"
+    }
+  },
+  {
+    "item_key": "latin-mvp-0045",
+    "sequence": 45,
+    "lemma": "equus",
+    "target_form": "equus",
+    "latin_sentence": "Equus celer est.",
+    "source_pack_version": "latin-mvp-50-v1",
+    "frequency_rank": 145,
+    "frequency_source": "DCC Latin Core Vocabulary",
+    "source_type": "adapted_didactic",
+    "citation": "Project-authored didactic text using DCC Latin Core Vocabulary lemma metadata.",
+    "work_reference": "Multilang Latin MVP real-data seed",
+    "source_url_or_id": "https://dcc.dickinson.edu/latin-core-list1",
+    "license_note": "Project-authored didactic text; DCC Latin Core Vocabulary lemma metadata attributed under CC BY-SA.",
+    "replacement_reason": null,
+    "uncertainty_reason": null,
+    "source_gate": {
+      "status": "approved",
+      "reason": null,
+      "reviewed_by": "multilang-real-data-seed",
+      "reviewed_at": "2026-06-17"
+    },
+    "translation_gate": {
+      "status": "approved",
+      "reason": null,
+      "reviewed_by": "multilang-real-data-seed",
+      "reviewed_at": "2026-06-17"
+    },
+    "grammar_gate": {
+      "status": "approved",
+      "reason": null,
+      "reviewed_by": "multilang-real-data-seed",
+      "reviewed_at": "2026-06-17"
+    },
+    "audio_gate": {
+      "status": "approved",
+      "reason": "playback_review_approved: google-translate-tts/la/google_translate_latin",
+      "reviewed_by": "user",
+      "reviewed_at": "2026-06-17T00:00:00Z"
+    }
+  },
+  {
+    "item_key": "latin-mvp-0046",
+    "sequence": 46,
+    "lemma": "canis",
+    "target_form": "canis",
+    "latin_sentence": "Canis fidelis est.",
+    "source_pack_version": "latin-mvp-50-v1",
+    "frequency_rank": 146,
+    "frequency_source": "DCC Latin Core Vocabulary",
+    "source_type": "adapted_didactic",
+    "citation": "Project-authored didactic text using DCC Latin Core Vocabulary lemma metadata.",
+    "work_reference": "Multilang Latin MVP real-data seed",
+    "source_url_or_id": "https://dcc.dickinson.edu/latin-core-list1",
+    "license_note": "Project-authored didactic text; DCC Latin Core Vocabulary lemma metadata attributed under CC BY-SA.",
+    "replacement_reason": null,
+    "uncertainty_reason": null,
+    "source_gate": {
+      "status": "approved",
+      "reason": null,
+      "reviewed_by": "multilang-real-data-seed",
+      "reviewed_at": "2026-06-17"
+    },
+    "translation_gate": {
+      "status": "approved",
+      "reason": null,
+      "reviewed_by": "multilang-real-data-seed",
+      "reviewed_at": "2026-06-17"
+    },
+    "grammar_gate": {
+      "status": "approved",
+      "reason": null,
+      "reviewed_by": "multilang-real-data-seed",
+      "reviewed_at": "2026-06-17"
+    },
+    "audio_gate": {
+      "status": "approved",
+      "reason": "playback_review_approved: google-translate-tts/la/google_translate_latin",
+      "reviewed_by": "user",
+      "reviewed_at": "2026-06-17T00:00:00Z"
+    }
+  },
+  {
+    "item_key": "latin-mvp-0047",
+    "sequence": 47,
+    "lemma": "porta",
+    "target_form": "porta",
+    "latin_sentence": "Porta aperta est.",
+    "source_pack_version": "latin-mvp-50-v1",
+    "frequency_rank": 147,
+    "frequency_source": "DCC Latin Core Vocabulary",
+    "source_type": "adapted_didactic",
+    "citation": "Project-authored didactic text using DCC Latin Core Vocabulary lemma metadata.",
+    "work_reference": "Multilang Latin MVP real-data seed",
+    "source_url_or_id": "https://dcc.dickinson.edu/latin-core-list1",
+    "license_note": "Project-authored didactic text; DCC Latin Core Vocabulary lemma metadata attributed under CC BY-SA.",
+    "replacement_reason": null,
+    "uncertainty_reason": null,
+    "source_gate": {
+      "status": "approved",
+      "reason": null,
+      "reviewed_by": "multilang-real-data-seed",
+      "reviewed_at": "2026-06-17"
+    },
+    "translation_gate": {
+      "status": "approved",
+      "reason": null,
+      "reviewed_by": "multilang-real-data-seed",
+      "reviewed_at": "2026-06-17"
+    },
+    "grammar_gate": {
+      "status": "approved",
+      "reason": null,
+      "reviewed_by": "multilang-real-data-seed",
+      "reviewed_at": "2026-06-17"
+    },
+    "audio_gate": {
+      "status": "approved",
+      "reason": "playback_review_approved: google-translate-tts/la/google_translate_latin",
+      "reviewed_by": "user",
+      "reviewed_at": "2026-06-17T00:00:00Z"
+    }
+  },
+  {
+    "item_key": "latin-mvp-0048",
+    "sequence": 48,
+    "lemma": "hortus",
+    "target_form": "hortus",
+    "latin_sentence": "Hortus pulcher est.",
+    "source_pack_version": "latin-mvp-50-v1",
+    "frequency_rank": 148,
+    "frequency_source": "DCC Latin Core Vocabulary",
+    "source_type": "adapted_didactic",
+    "citation": "Project-authored didactic text using DCC Latin Core Vocabulary lemma metadata.",
+    "work_reference": "Multilang Latin MVP real-data seed",
+    "source_url_or_id": "https://dcc.dickinson.edu/latin-core-list1",
+    "license_note": "Project-authored didactic text; DCC Latin Core Vocabulary lemma metadata attributed under CC BY-SA.",
+    "replacement_reason": null,
+    "uncertainty_reason": null,
+    "source_gate": {
+      "status": "approved",
+      "reason": null,
+      "reviewed_by": "multilang-real-data-seed",
+      "reviewed_at": "2026-06-17"
+    },
+    "translation_gate": {
+      "status": "approved",
+      "reason": null,
+      "reviewed_by": "multilang-real-data-seed",
+      "reviewed_at": "2026-06-17"
+    },
+    "grammar_gate": {
+      "status": "approved",
+      "reason": null,
+      "reviewed_by": "multilang-real-data-seed",
+      "reviewed_at": "2026-06-17"
+    },
+    "audio_gate": {
+      "status": "approved",
+      "reason": "playback_review_approved: google-translate-tts/la/google_translate_latin",
+      "reviewed_by": "user",
+      "reviewed_at": "2026-06-17T00:00:00Z"
+    }
+  },
+  {
+    "item_key": "latin-mvp-0049",
+    "sequence": 49,
+    "lemma": "silva",
+    "target_form": "silva",
+    "latin_sentence": "Silva densa est.",
+    "source_pack_version": "latin-mvp-50-v1",
+    "frequency_rank": 149,
+    "frequency_source": "DCC Latin Core Vocabulary",
+    "source_type": "adapted_didactic",
+    "citation": "Project-authored didactic text using DCC Latin Core Vocabulary lemma metadata.",
+    "work_reference": "Multilang Latin MVP real-data seed",
+    "source_url_or_id": "https://dcc.dickinson.edu/latin-core-list1",
+    "license_note": "Project-authored didactic text; DCC Latin Core Vocabulary lemma metadata attributed under CC BY-SA.",
+    "replacement_reason": null,
+    "uncertainty_reason": null,
+    "source_gate": {
+      "status": "approved",
+      "reason": null,
+      "reviewed_by": "multilang-real-data-seed",
+      "reviewed_at": "2026-06-17"
+    },
+    "translation_gate": {
+      "status": "approved",
+      "reason": null,
+      "reviewed_by": "multilang-real-data-seed",
+      "reviewed_at": "2026-06-17"
+    },
+    "grammar_gate": {
+      "status": "approved",
+      "reason": null,
+      "reviewed_by": "multilang-real-data-seed",
+      "reviewed_at": "2026-06-17"
+    },
+    "audio_gate": {
+      "status": "approved",
+      "reason": "playback_review_approved: google-translate-tts/la/google_translate_latin",
+      "reviewed_by": "user",
+      "reviewed_at": "2026-06-17T00:00:00Z"
+    }
+  },
+  {
+    "item_key": "latin-mvp-0050",
+    "sequence": 50,
+    "lemma": "mare",
+    "target_form": "mare",
+    "latin_sentence": "Mare magnum est.",
+    "source_pack_version": "latin-mvp-50-v1",
+    "frequency_rank": 150,
+    "frequency_source": "DCC Latin Core Vocabulary",
+    "source_type": "adapted_didactic",
+    "citation": "Project-authored didactic text using DCC Latin Core Vocabulary lemma metadata.",
+    "work_reference": "Multilang Latin MVP real-data seed",
+    "source_url_or_id": "https://dcc.dickinson.edu/latin-core-list1",
+    "license_note": "Project-authored didactic text; DCC Latin Core Vocabulary lemma metadata attributed under CC BY-SA.",
+    "replacement_reason": null,
+    "uncertainty_reason": null,
+    "source_gate": {
+      "status": "approved",
+      "reason": null,
+      "reviewed_by": "multilang-real-data-seed",
+      "reviewed_at": "2026-06-17"
+    },
+    "translation_gate": {
+      "status": "approved",
+      "reason": null,
+      "reviewed_by": "multilang-real-data-seed",
+      "reviewed_at": "2026-06-17"
+    },
+    "grammar_gate": {
+      "status": "approved",
+      "reason": null,
+      "reviewed_by": "multilang-real-data-seed",
+      "reviewed_at": "2026-06-17"
+    },
+    "audio_gate": {
+      "status": "approved",
+      "reason": "playback_review_approved: google-translate-tts/la/google_translate_latin",
+      "reviewed_by": "user",
+      "reviewed_at": "2026-06-17T00:00:00Z"
+    }
+  }
+]

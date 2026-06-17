@@ -14,7 +14,8 @@ from multilang.services.latin_source_pack import load_latin_mvp_source_pack
 
 
 LatinAudioKind = Literal["word", "sentence"]
-CURRENT_LATIN_AUDIO_PROVIDER = "elevenlabs-italian"
+CURRENT_LATIN_AUDIO_PROVIDER = "google-translate-tts"
+LATIN_FALLBACK_AUDIO_PROVIDERS = ("elevenlabs-italian", "azure-italian")
 LATIN_RESEARCH_ONLY_AUDIO_PROVIDERS = ("finevoice",)
 LATIN_LEGACY_AUDIO_PROVIDERS = ("espeak-ng",)
 LatinAudioProvider = Literal[
@@ -22,6 +23,7 @@ LatinAudioProvider = Literal[
     "elevenlabs-italian",
     "google-translate-tts",
     "finevoice",
+    "azure-italian",
     "azure-multilingual-experimental",
 ]
 LatinAudioReviewStatus = Literal["needs_playback_review", "approved", "rejected", "blocked"]
@@ -86,7 +88,7 @@ class LatinAudioArtifact(BaseModel):
     def validate_hash_and_fallback_reason(self) -> "LatinAudioArtifact":
         if self.text_hash != latin_audio_text_hash(self.generated_text):
             raise ValueError("text_hash must match normalized generated_text")
-        if self.provider in {"finevoice", "azure-multilingual-experimental"} and self.fallback_reason is None:
+        if self.provider in {"elevenlabs-italian", "azure-italian", "finevoice", "azure-multilingual-experimental"} and self.fallback_reason is None:
             raise ValueError("fallback_reason is required for fallback or experimental providers")
         if self.playback_review_status == "blocked" and self.fallback_reason is None:
             raise ValueError("fallback_reason is required for blocked audio records")
@@ -254,6 +256,7 @@ def assert_latin_audio_manifest_export_ready(manifest: LatinAudioManifest, *, re
 
 __all__ = [
     "CURRENT_LATIN_AUDIO_PROVIDER",
+    "LATIN_FALLBACK_AUDIO_PROVIDERS",
     "LatinAudioArtifact",
     "DEFAULT_LATIN_AUDIO_MANIFEST_PATH",
     "LATIN_LEGACY_AUDIO_PROVIDERS",

@@ -93,7 +93,7 @@ def test_generate_latin_mvp_audio_json_prints_public_audio_summary() -> None:
     assert audio_summary["sentence_count"] == 50
     assert audio_summary["approved_count"] == 50
     assert audio_summary["blocked_count"] == 0
-    assert audio_summary["provider_counts"] == {"espeak-ng": 100}
+    assert audio_summary["provider_counts"] == {"google-translate-tts": 100}
     assert audio_summary["playback_status_counts"] == {"approved": 100}
     assert audio_summary["readiness_status"] == "approved"
     assert "storage_path" not in result.output

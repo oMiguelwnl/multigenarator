@@ -110,7 +110,7 @@ def test_latin_mvp_manifest_summary_can_include_public_audio_summary() -> None:
     assert audio_summary["sentence_count"] == 50
     assert audio_summary["approved_count"] == 50
     assert audio_summary["blocked_count"] == 0
-    assert audio_summary["provider_counts"] == {"espeak-ng": 100}
+    assert audio_summary["provider_counts"] == {"google-translate-tts": 100}
     assert audio_summary["playback_status_counts"] == {"approved": 100}
     assert audio_summary["readiness_status"] == "approved"
     assert "blocking_audio_by_item_key" not in audio_summary

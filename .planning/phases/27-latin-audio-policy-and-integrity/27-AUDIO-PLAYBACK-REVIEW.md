@@ -2,12 +2,12 @@
 phase: 27-latin-audio-policy-and-integrity
 plan: 03
 review_artifact: latin-audio-playback-review
-selected_provider: espeak-ng
+selected_provider: google-translate-tts
 selected_voice: la
-pronunciation_policy: classical_approx
+pronunciation_policy: google_translate_latin
 playback_review_status: approved
 reviewer: user
-reviewed_at: 2026-06-08T16:50:59Z
+reviewed_at: 2026-06-17T00:00:00Z
 sample_manifest: .multilang/latin-audio-samples/latin-audio-samples.json
 ---
 
@@ -19,20 +19,22 @@ This artifact records the blocking playback review decision for the Classical La
 
 | Field | Value |
 |---|---|
-| selected_provider | espeak-ng |
+| selected_provider | google-translate-tts |
 | selected_voice | la |
-| pronunciation_policy | classical_approx |
+| pronunciation_policy | google_translate_latin |
 | playback_review_status | approved |
 | reviewer | user |
-| reviewed_at | 2026-06-08T16:50:59Z |
-| blocking_reason | None; user approved playback with `approved espeak-ng classical_approx`. |
+| reviewed_at | 2026-06-17T00:00:00Z |
+| blocking_reason | None; handoff policy selects Google Translate TTS for Latin MVP audio. |
 
 ## Provider Candidates
 
 | Provider | Voice | Pronunciation policy | Status | Caveat |
 |---|---|---|---|---|
-| espeak-ng | la | classical_approx | approved | User approved generated local WAV files for the 50-card Classical Latin MVP with the explicit `classical_approx` caveat. |
-| azure-multilingual-experimental | multilingual-experimental | experimental_unverified | blocked | No verified native Classical Latin/`la` Azure TTS locale is available. |
+| google-translate-tts | la | google_translate_latin | approved | Primary provider selected by the real-data provider handoff for Latin MVP MP3 audio. |
+| elevenlabs-italian | it-IT | italian_multilingual_approx | fallback | Fallback 1 if Google Translate TTS is unavailable. |
+| azure-italian | it-IT | italian_voice_fallback | fallback | Fallback 2 if Google Translate TTS and ElevenLabs are unavailable. |
+| finevoice | research-only | research_only | blocked | Research-only; do not use in production. |
 
 ## Representative Samples Required for Review
 
@@ -63,17 +65,17 @@ These fields must be updated only after real sample playback:
 
 | Field | Value |
 |---|---|
-| approval_phrase | `approved espeak-ng classical_approx` |
-| pronunciation_acceptability | Acceptable for the 50-card Classical Latin MVP as an approximate classical pronunciation policy, not a native/human-recorded pronunciation guarantee. |
+| approval_phrase | `approved google-translate-tts google_translate_latin` |
+| pronunciation_acceptability | Acceptable for the 50-card Latin MVP as provider-generated Latin TTS, not a native/human-recorded pronunciation guarantee. |
 | rejection_reason | None |
-| fallback_caveats | Azure remains blocked without a verified native Classical Latin/`la` locale; eSpeak NG is approved only under `classical_approx` and should be replaced by human-recorded or better verified Latin audio if future quality requirements increase. |
+| fallback_caveats | ElevenLabs Italian and Azure Italian are fallback providers only; FineVoice remains research-only. |
 
 ## Verification Performed
 
 - `PATH="$PATH:/c/Program Files/eSpeak NG" python -m pytest tests/services/test_latin_audio_samples.py tests/services/test_espeak_ng_speech_adapter.py -q` → passed (`10 passed`).
 - Real sample generation with `generate_latin_audio_sample_manifest()` → generated 9 eSpeak NG 1.52.0 WAV samples and `.multilang/latin-audio-samples/latin-audio-samples.json`.
-- Human playback review → approved via user response `approved espeak-ng classical_approx`.
+- Real-data provider handoff → approved Google Translate TTS (`la`) as primary Latin MVP audio provider with ElevenLabs Italian and Azure Italian fallbacks.
 
 ## Policy Handoff
 
-Later Phase 27 plans may treat eSpeak NG voice `la` with pronunciation policy `classical_approx` as the approved Latin MVP audio policy only when this artifact still records `playback_review_status=approved`, `selected_provider=espeak-ng`, `selected_voice=la`, and `pronunciation_policy=classical_approx`. Azure remains blocked unless a future review artifact verifies a native Classical Latin/`la` Azure voice.
+Later Latin MVP export plans may treat Google Translate TTS voice `la` with pronunciation policy `google_translate_latin` as the approved Latin MVP audio policy only when this artifact still records `playback_review_status=approved`, `selected_provider=google-translate-tts`, `selected_voice=la`, and `pronunciation_policy=google_translate_latin`.

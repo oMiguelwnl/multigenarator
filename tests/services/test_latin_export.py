@@ -103,12 +103,14 @@ def test_build_latin_export_rows_from_committed_assets() -> None:
     first = bundle.rows[0]
     assert first.sort_index == 1
     assert first.item_key == "latin-mvp-0001"
-    assert first.latin_word == "et"
-    assert first.sentence_translation == "E o menino lê."
-    assert first.word_audio == "[sound:latin-mvp-0001-word.wav]"
-    assert first.sentence_audio == "[sound:latin-mvp-0001-sentence.wav]"
-    assert bundle.media_index[first.word_audio] == Path("data/latin_mvp/audio/latin-mvp-50-v1/latin-mvp-0001-word.wav")
-    assert bundle.media_index[first.sentence_audio] == Path("data/latin_mvp/audio/latin-mvp-50-v1/latin-mvp-0001-sentence.wav")
+    assert first.latin_word == "amor"
+    assert first.latin_sentence == "Amor magnus est."
+    assert first.sentence_translation == "O amor e grande."
+    assert first.gramatica == "subst sg Nominativus Suj"
+    assert first.word_audio == "[sound:latin-mvp-0001-word.mp3]"
+    assert first.sentence_audio == "[sound:latin-mvp-0001-sentence.mp3]"
+    assert bundle.media_index[first.word_audio] == Path("data/latin_mvp/audio/latin-mvp-50-v1/latin-mvp-0001-word.mp3")
+    assert bundle.media_index[first.sentence_audio] == Path("data/latin_mvp/audio/latin-mvp-50-v1/latin-mvp-0001-sentence.mp3")
     assert "Classe" not in first.ordered_field_mapping()
     assert "Translation" not in first.ordered_field_mapping()
     assert "Lemma" not in first.ordered_field_mapping()
@@ -197,7 +199,7 @@ def test_latin_apkg_export_writes_dedicated_model_notes_and_media(tmp_path: Path
         assert "media" in names
         media_manifest = json.loads(archive.read("media").decode("utf-8"))
         assert len(media_manifest) == 100
-        assert "latin-mvp-0001-word.wav" in set(media_manifest.values())
+        assert "latin-mvp-0001-word.mp3" in set(media_manifest.values())
         collection_path = tmp_path / "collection.anki2"
         collection_path.write_bytes(archive.read("collection.anki2"))
 
@@ -210,9 +212,9 @@ def test_latin_apkg_export_writes_dedicated_model_notes_and_media(tmp_path: Path
     latin_model = models[str(LATIN_MODEL_ID)]
     assert latin_model["name"] == LATIN_NOTE_TYPE_NAME
     assert [field["name"] for field in latin_model["flds"]] == list(LATIN_EXPORT_FIELD_NAMES)
-    assert fields[1] == "et"
-    assert fields[3] == "E o menino lê."
-    assert fields[5] == "[sound:latin-mvp-0001-word.wav]"
+    assert fields[1] == "amor"
+    assert fields[3] == "O amor e grande."
+    assert fields[5] == "[sound:latin-mvp-0001-word.mp3]"
     assert fields[7] == ""
     rendered_template = latin_model["tmpls"][0]["qfmt"] + latin_model["tmpls"][0]["afmt"]
     assert "Classe" not in rendered_template
@@ -248,8 +250,8 @@ def test_latin_tabular_exports_use_anki_headers_and_stable_fields(tmp_path: Path
     ]
     parsed_csv = list(csv.reader(csv_lines[5:]))[0]
     parsed_tsv = list(csv.reader(tsv_lines[5:], delimiter="\t"))[0]
-    assert parsed_csv[1:5] == ["et", "Et puer legit.", "E o menino lê.", "conj Conj"]
-    assert parsed_tsv[5:8] == ["[sound:latin-mvp-0001-word.wav]", "[sound:latin-mvp-0001-sentence.wav]", ""]
+    assert parsed_csv[1:5] == ["amor", "Amor magnus est.", "O amor e grande.", "subst sg Nominativus Suj"]
+    assert parsed_tsv[5:8] == ["[sound:latin-mvp-0001-word.mp3]", "[sound:latin-mvp-0001-sentence.mp3]", ""]
     assert csv_result.card_count == 50
     assert tsv_result.card_count == 50
 

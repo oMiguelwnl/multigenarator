@@ -73,7 +73,7 @@ def test_latin_exports_write_importable_apkg_csv_and_tsv(tmp_path: Path) -> None
         assert "media" in archive.namelist()
         media_manifest = json.loads(archive.read("media").decode("utf-8"))
         assert len(media_manifest) == 100
-        assert sorted(media_manifest.values())[0] == "latin-mvp-0001-sentence.wav"
+        assert sorted(media_manifest.values())[0] == "latin-mvp-0001-sentence.mp3"
         collection_path = tmp_path / "collection.anki2"
         collection_path.write_bytes(archive.read("collection.anki2"))
     with sqlite3.connect(collection_path) as connection:

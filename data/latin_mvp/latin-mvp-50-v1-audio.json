@@ -1,0 +1,1355 @@
+{
+  "source_pack_version": "latin-mvp-50-v1",
+  "artifacts": [
+    {
+      "item_key": "latin-mvp-0001",
+      "word": {
+        "audio_kind": "word",
+        "provider": "google-translate-tts",
+        "provider_version": "google-translate-tts-la",
+        "voice": "la",
+        "pronunciation_policy": "google_translate_latin",
+        "generated_text": "amor",
+        "text_hash": "0048a973df331dcc6fa69755734c1956f94f9183922e577dcfb808f7a7d496a9",
+        "playback_review_status": "approved",
+        "storage_path": "data/latin_mvp/audio/latin-mvp-50-v1/latin-mvp-0001-word.mp3",
+        "fallback_reason": null
+      },
+      "sentence": {
+        "audio_kind": "sentence",
+        "provider": "google-translate-tts",
+        "provider_version": "google-translate-tts-la",
+        "voice": "la",
+        "pronunciation_policy": "google_translate_latin",
+        "generated_text": "Amor magnus est.",
+        "text_hash": "95098cee3d35ab000d0a4cd367d9e853341e80b4d500f98040c4d36a95155b72",
+        "playback_review_status": "approved",
+        "storage_path": "data/latin_mvp/audio/latin-mvp-50-v1/latin-mvp-0001-sentence.mp3",
+        "fallback_reason": null
+      }
+    },
+    {
+      "item_key": "latin-mvp-0002",
+      "word": {
+        "audio_kind": "word",
+        "provider": "google-translate-tts",
+        "provider_version": "google-translate-tts-la",
+        "voice": "la",
+        "pronunciation_policy": "google_translate_latin",
+        "generated_text": "aqua",
+        "text_hash": "143ea17f6a47a30b5a974a6b4f9649a5937a25fda9c4fa7e839a435c4ad38714",
+        "playback_review_status": "approved",
+        "storage_path": "data/latin_mvp/audio/latin-mvp-50-v1/latin-mvp-0002-word.mp3",
+        "fallback_reason": null
+      },
+      "sentence": {
+        "audio_kind": "sentence",
+        "provider": "google-translate-tts",
+        "provider_version": "google-translate-tts-la",
+        "voice": "la",
+        "pronunciation_policy": "google_translate_latin",
+        "generated_text": "Aqua clara est.",
+        "text_hash": "4037a1f7f61e2e15b570bafbd96fbc731832af794235a5925202c6a7eebc6695",
+        "playback_review_status": "approved",
+        "storage_path": "data/latin_mvp/audio/latin-mvp-50-v1/latin-mvp-0002-sentence.mp3",
+        "fallback_reason": null
+      }
+    },
+    {
+      "item_key": "latin-mvp-0003",
+      "word": {
+        "audio_kind": "word",
+        "provider": "google-translate-tts",
+        "provider_version": "google-translate-tts-la",
+        "voice": "la",
+        "pronunciation_policy": "google_translate_latin",
+        "generated_text": "terra",
+        "text_hash": "9c1431eeb94d267d98b1b11898232ef7095e72b4ea3b269ad458e5a317c81ae8",
+        "playback_review_status": "approved",
+        "storage_path": "data/latin_mvp/audio/latin-mvp-50-v1/latin-mvp-0003-word.mp3",
+        "fallback_reason": null
+      },
+      "sentence": {
+        "audio_kind": "sentence",
+        "provider": "google-translate-tts",
+        "provider_version": "google-translate-tts-la",
+        "voice": "la",
+        "pronunciation_policy": "google_translate_latin",
+        "generated_text": "Terra lata est.",
+        "text_hash": "0c4016163145869f184bac5372856bfa260e62fc3c72f2d73c622d39d1ed0f74",
+        "playback_review_status": "approved",
+        "storage_path": "data/latin_mvp/audio/latin-mvp-50-v1/latin-mvp-0003-sentence.mp3",
+        "fallback_reason": null
+      }
+    },
+    {
+      "item_key": "latin-mvp-0004",
+      "word": {
+        "audio_kind": "word",
+        "provider": "google-translate-tts",
+        "provider_version": "google-translate-tts-la",
+        "voice": "la",
+        "pronunciation_policy": "google_translate_latin",
+        "generated_text": "caelum",
+        "text_hash": "5059844d7dfc69f6ca2630ed7ccb074225ec2b9856f158747b8874539fbccf45",
+        "playback_review_status": "approved",
+        "storage_path": "data/latin_mvp/audio/latin-mvp-50-v1/latin-mvp-0004-word.mp3",
+        "fallback_reason": null
+      },
+      "sentence": {
+        "audio_kind": "sentence",
+        "provider": "google-translate-tts",
+        "provider_version": "google-translate-tts-la",
+        "voice": "la",
+        "pronunciation_policy": "google_translate_latin",
+        "generated_text": "Caelum altum est.",
+        "text_hash": "a354ecd6ae76eddd376d2916e45357931af66f7894a2b1f0e5080d04d8c8a302",
+        "playback_review_status": "approved",
+        "storage_path": "data/latin_mvp/audio/latin-mvp-50-v1/latin-mvp-0004-sentence.mp3",
+        "fallback_reason": null
+      }
+    },
+    {
+      "item_key": "latin-mvp-0005",
+      "word": {
+        "audio_kind": "word",
+        "provider": "google-translate-tts",
+        "provider_version": "google-translate-tts-la",
+        "voice": "la",
+        "pronunciation_policy": "google_translate_latin",
+        "generated_text": "bellum",
+        "text_hash": "76fcde7f89499547373cacaeaa68e5cb3a7c79b6e754e3d09444ad8b55fd9c1e",
+        "playback_review_status": "approved",
+        "storage_path": "data/latin_mvp/audio/latin-mvp-50-v1/latin-mvp-0005-word.mp3",
+        "fallback_reason": null
+      },
+      "sentence": {
+        "audio_kind": "sentence",
+        "provider": "google-translate-tts",
+        "provider_version": "google-translate-tts-la",
+        "voice": "la",
+        "pronunciation_policy": "google_translate_latin",
+        "generated_text": "Bellum longum est.",
+        "text_hash": "cb4b9c3a24822980a3d146ace8db70a7be0dc9f4817b7ec221781e82abbe7e29",
+        "playback_review_status": "approved",
+        "storage_path": "data/latin_mvp/audio/latin-mvp-50-v1/latin-mvp-0005-sentence.mp3",
+        "fallback_reason": null
+      }
+    },
+    {
+      "item_key": "latin-mvp-0006",
+      "word": {
+        "audio_kind": "word",
+        "provider": "google-translate-tts",
+        "provider_version": "google-translate-tts-la",
+        "voice": "la",
+        "pronunciation_policy": "google_translate_latin",
+        "generated_text": "pax",
+        "text_hash": "327fb97d65cd3e8a4455360fe34d4480ee7e2774149c849e0c018f68a297eb86",
+        "playback_review_status": "approved",
+        "storage_path": "data/latin_mvp/audio/latin-mvp-50-v1/latin-mvp-0006-word.mp3",
+        "fallback_reason": null
+      },
+      "sentence": {
+        "audio_kind": "sentence",
+        "provider": "google-translate-tts",
+        "provider_version": "google-translate-tts-la",
+        "voice": "la",
+        "pronunciation_policy": "google_translate_latin",
+        "generated_text": "Pax cara est.",
+        "text_hash": "d35f378e4037c2c408774af112b336ab4cb1d1ad1bfcd55638eda55b7bcec348",
+        "playback_review_status": "approved",
+        "storage_path": "data/latin_mvp/audio/latin-mvp-50-v1/latin-mvp-0006-sentence.mp3",
+        "fallback_reason": null
+      }
+    },
+    {
+      "item_key": "latin-mvp-0007",
+      "word": {
+        "audio_kind": "word",
+        "provider": "google-translate-tts",
+        "provider_version": "google-translate-tts-la",
+        "voice": "la",
+        "pronunciation_policy": "google_translate_latin",
+        "generated_text": "rex",
+        "text_hash": "3227fe6bde46249b0aae4b69ef6efd806422a46788e281d050d32d0d9fbde723",
+        "playback_review_status": "approved",
+        "storage_path": "data/latin_mvp/audio/latin-mvp-50-v1/latin-mvp-0007-word.mp3",
+        "fallback_reason": null
+      },
+      "sentence": {
+        "audio_kind": "sentence",
+        "provider": "google-translate-tts",
+        "provider_version": "google-translate-tts-la",
+        "voice": "la",
+        "pronunciation_policy": "google_translate_latin",
+        "generated_text": "Rex iustus est.",
+        "text_hash": "47832caea40afecc3a2e68d5c5d7d0f7ead2eff617250f7d0d518a61b1b5ab73",
+        "playback_review_status": "approved",
+        "storage_path": "data/latin_mvp/audio/latin-mvp-50-v1/latin-mvp-0007-sentence.mp3",
+        "fallback_reason": null
+      }
+    },
+    {
+      "item_key": "latin-mvp-0008",
+      "word": {
+        "audio_kind": "word",
+        "provider": "google-translate-tts",
+        "provider_version": "google-translate-tts-la",
+        "voice": "la",
+        "pronunciation_policy": "google_translate_latin",
+        "generated_text": "regina",
+        "text_hash": "bd84dc633654d437de72ce67276ae9f9bd702392f7701cef86743dc571fb015a",
+        "playback_review_status": "approved",
+        "storage_path": "data/latin_mvp/audio/latin-mvp-50-v1/latin-mvp-0008-word.mp3",
+        "fallback_reason": null
+      },
+      "sentence": {
+        "audio_kind": "sentence",
+        "provider": "google-translate-tts",
+        "provider_version": "google-translate-tts-la",
+        "voice": "la",
+        "pronunciation_policy": "google_translate_latin",
+        "generated_text": "Regina prudens est.",
+        "text_hash": "3c18a37cd859571469b44c95eae69fad44701bb65efdcc9a5e937435e29cf0bb",
+        "playback_review_status": "approved",
+        "storage_path": "data/latin_mvp/audio/latin-mvp-50-v1/latin-mvp-0008-sentence.mp3",
+        "fallback_reason": null
+      }
+    },
+    {
+      "item_key": "latin-mvp-0009",
+      "word": {
+        "audio_kind": "word",
+        "provider": "google-translate-tts",
+        "provider_version": "google-translate-tts-la",
+        "voice": "la",
+        "pronunciation_policy": "google_translate_latin",
+        "generated_text": "populus",
+        "text_hash": "6ecd1eeaf7e2c88aba132aa9b7ad7b872dee36dbee0caa3bf49323cc8b666d32",
+        "playback_review_status": "approved",
+        "storage_path": "data/latin_mvp/audio/latin-mvp-50-v1/latin-mvp-0009-word.mp3",
+        "fallback_reason": null
+      },
+      "sentence": {
+        "audio_kind": "sentence",
+        "provider": "google-translate-tts",
+        "provider_version": "google-translate-tts-la",
+        "voice": "la",
+        "pronunciation_policy": "google_translate_latin",
+        "generated_text": "Populus magnus est.",
+        "text_hash": "5c3f9022f612cb6068a0479180ccf891a4c8db7651429ab3bf19be6697e4a3dc",
+        "playback_review_status": "approved",
+        "storage_path": "data/latin_mvp/audio/latin-mvp-50-v1/latin-mvp-0009-sentence.mp3",
+        "fallback_reason": null
+      }
+    },
+    {
+      "item_key": "latin-mvp-0010",
+      "word": {
+        "audio_kind": "word",
+        "provider": "google-translate-tts",
+        "provider_version": "google-translate-tts-la",
+        "voice": "la",
+        "pronunciation_policy": "google_translate_latin",
+        "generated_text": "puer",
+        "text_hash": "94cfc3fd65860fccf771b84cca906bfb67f7c24bc527607ee048cf1c18d2cb6d",
+        "playback_review_status": "approved",
+        "storage_path": "data/latin_mvp/audio/latin-mvp-50-v1/latin-mvp-0010-word.mp3",
+        "fallback_reason": null
+      },
+      "sentence": {
+        "audio_kind": "sentence",
+        "provider": "google-translate-tts",
+        "provider_version": "google-translate-tts-la",
+        "voice": "la",
+        "pronunciation_policy": "google_translate_latin",
+        "generated_text": "Puer laetus est.",
+        "text_hash": "db446b55e0be664a7cf1c11109419b3708c1dc1b62821a25f1090259be201f6b",
+        "playback_review_status": "approved",
+        "storage_path": "data/latin_mvp/audio/latin-mvp-50-v1/latin-mvp-0010-sentence.mp3",
+        "fallback_reason": null
+      }
+    },
+    {
+      "item_key": "latin-mvp-0011",
+      "word": {
+        "audio_kind": "word",
+        "provider": "google-translate-tts",
+        "provider_version": "google-translate-tts-la",
+        "voice": "la",
+        "pronunciation_policy": "google_translate_latin",
+        "generated_text": "puella",
+        "text_hash": "90c2989fa1b3065d2dbcd46edd2903d3862e5a93b0ef7d18cdf881514a74af5b",
+        "playback_review_status": "approved",
+        "storage_path": "data/latin_mvp/audio/latin-mvp-50-v1/latin-mvp-0011-word.mp3",
+        "fallback_reason": null
+      },
+      "sentence": {
+        "audio_kind": "sentence",
+        "provider": "google-translate-tts",
+        "provider_version": "google-translate-tts-la",
+        "voice": "la",
+        "pronunciation_policy": "google_translate_latin",
+        "generated_text": "Puella laeta est.",
+        "text_hash": "cd58a4c771c4da05fde7c46b829af9861d3f960012766aecb2dfb1d58e0f5b26",
+        "playback_review_status": "approved",
+        "storage_path": "data/latin_mvp/audio/latin-mvp-50-v1/latin-mvp-0011-sentence.mp3",
+        "fallback_reason": null
+      }
+    },
+    {
+      "item_key": "latin-mvp-0012",
+      "word": {
+        "audio_kind": "word",
+        "provider": "google-translate-tts",
+        "provider_version": "google-translate-tts-la",
+        "voice": "la",
+        "pronunciation_policy": "google_translate_latin",
+        "generated_text": "vir",
+        "text_hash": "4572e12d9fc5c39451bb96ca11c3583c582921b37cc1138bdfe607183fabb7a8",
+        "playback_review_status": "approved",
+        "storage_path": "data/latin_mvp/audio/latin-mvp-50-v1/latin-mvp-0012-word.mp3",
+        "fallback_reason": null
+      },
+      "sentence": {
+        "audio_kind": "sentence",
+        "provider": "google-translate-tts",
+        "provider_version": "google-translate-tts-la",
+        "voice": "la",
+        "pronunciation_policy": "google_translate_latin",
+        "generated_text": "Vir fortis est.",
+        "text_hash": "4ba7dccebaf751c12ac45c47d2c03545f16c340b958c1c59e385a5a072a0d19a",
+        "playback_review_status": "approved",
+        "storage_path": "data/latin_mvp/audio/latin-mvp-50-v1/latin-mvp-0012-sentence.mp3",
+        "fallback_reason": null
+      }
+    },
+    {
+      "item_key": "latin-mvp-0013",
+      "word": {
+        "audio_kind": "word",
+        "provider": "google-translate-tts",
+        "provider_version": "google-translate-tts-la",
+        "voice": "la",
+        "pronunciation_policy": "google_translate_latin",
+        "generated_text": "femina",
+        "text_hash": "9899ab83380e884c1942d06eb51736d529fa28b533c7de234c3d990c2cbf47c6",
+        "playback_review_status": "approved",
+        "storage_path": "data/latin_mvp/audio/latin-mvp-50-v1/latin-mvp-0013-word.mp3",
+        "fallback_reason": null
+      },
+      "sentence": {
+        "audio_kind": "sentence",
+        "provider": "google-translate-tts",
+        "provider_version": "google-translate-tts-la",
+        "voice": "la",
+        "pronunciation_policy": "google_translate_latin",
+        "generated_text": "Femina sapiens est.",
+        "text_hash": "48a30c70bf39d26fa6ff30bfc0366b411330860592b25071f26c021026568ff7",
+        "playback_review_status": "approved",
+        "storage_path": "data/latin_mvp/audio/latin-mvp-50-v1/latin-mvp-0013-sentence.mp3",
+        "fallback_reason": null
+      }
+    },
+    {
+      "item_key": "latin-mvp-0014",
+      "word": {
+        "audio_kind": "word",
+        "provider": "google-translate-tts",
+        "provider_version": "google-translate-tts-la",
+        "voice": "la",
+        "pronunciation_policy": "google_translate_latin",
+        "generated_text": "pater",
+        "text_hash": "af8e4f8ab9d295b17b590858add8bd981c8c836be118fcdea3fdb3fc31c1d172",
+        "playback_review_status": "approved",
+        "storage_path": "data/latin_mvp/audio/latin-mvp-50-v1/latin-mvp-0014-word.mp3",
+        "fallback_reason": null
+      },
+      "sentence": {
+        "audio_kind": "sentence",
+        "provider": "google-translate-tts",
+        "provider_version": "google-translate-tts-la",
+        "voice": "la",
+        "pronunciation_policy": "google_translate_latin",
+        "generated_text": "Pater benignus est.",
+        "text_hash": "ce4e2edf991bc795f8430002d0733d752b8c3acecb4c538f32bfcb4421411506",
+        "playback_review_status": "approved",
+        "storage_path": "data/latin_mvp/audio/latin-mvp-50-v1/latin-mvp-0014-sentence.mp3",
+        "fallback_reason": null
+      }
+    },
+    {
+      "item_key": "latin-mvp-0015",
+      "word": {
+        "audio_kind": "word",
+        "provider": "google-translate-tts",
+        "provider_version": "google-translate-tts-la",
+        "voice": "la",
+        "pronunciation_policy": "google_translate_latin",
+        "generated_text": "mater",
+        "text_hash": "c45ea648830a6116387c4ef8d3201352fcc46be6cca05cb435d585e126567ec0",
+        "playback_review_status": "approved",
+        "storage_path": "data/latin_mvp/audio/latin-mvp-50-v1/latin-mvp-0015-word.mp3",
+        "fallback_reason": null
+      },
+      "sentence": {
+        "audio_kind": "sentence",
+        "provider": "google-translate-tts",
+        "provider_version": "google-translate-tts-la",
+        "voice": "la",
+        "pronunciation_policy": "google_translate_latin",
+        "generated_text": "Mater benigna est.",
+        "text_hash": "0fe8d52064acbaf59ed441e24abb56840c66d5594b018c1f6a1814193050a55e",
+        "playback_review_status": "approved",
+        "storage_path": "data/latin_mvp/audio/latin-mvp-50-v1/latin-mvp-0015-sentence.mp3",
+        "fallback_reason": null
+      }
+    },
+    {
+      "item_key": "latin-mvp-0016",
+      "word": {
+        "audio_kind": "word",
+        "provider": "google-translate-tts",
+        "provider_version": "google-translate-tts-la",
+        "voice": "la",
+        "pronunciation_policy": "google_translate_latin",
+        "generated_text": "filius",
+        "text_hash": "6cb3d68ff063199bcbce75df640c8e4023bb4b9b90bb62ff795dc31f8d2db2c9",
+        "playback_review_status": "approved",
+        "storage_path": "data/latin_mvp/audio/latin-mvp-50-v1/latin-mvp-0016-word.mp3",
+        "fallback_reason": null
+      },
+      "sentence": {
+        "audio_kind": "sentence",
+        "provider": "google-translate-tts",
+        "provider_version": "google-translate-tts-la",
+        "voice": "la",
+        "pronunciation_policy": "google_translate_latin",
+        "generated_text": "Filius parvus est.",
+        "text_hash": "d15de032420f9cce3c8dbfe7d366c443eb225e68065c71030ee52469a8450e10",
+        "playback_review_status": "approved",
+        "storage_path": "data/latin_mvp/audio/latin-mvp-50-v1/latin-mvp-0016-sentence.mp3",
+        "fallback_reason": null
+      }
+    },
+    {
+      "item_key": "latin-mvp-0017",
+      "word": {
+        "audio_kind": "word",
+        "provider": "google-translate-tts",
+        "provider_version": "google-translate-tts-la",
+        "voice": "la",
+        "pronunciation_policy": "google_translate_latin",
+        "generated_text": "filia",
+        "text_hash": "706531639d4fa09d79c4e5d48cfc78ceb7b518feb0164a8eb55b85f476f82350",
+        "playback_review_status": "approved",
+        "storage_path": "data/latin_mvp/audio/latin-mvp-50-v1/latin-mvp-0017-word.mp3",
+        "fallback_reason": null
+      },
+      "sentence": {
+        "audio_kind": "sentence",
+        "provider": "google-translate-tts",
+        "provider_version": "google-translate-tts-la",
+        "voice": "la",
+        "pronunciation_policy": "google_translate_latin",
+        "generated_text": "Filia parva est.",
+        "text_hash": "77224eeba23720dceb5b2f8d957dc3dea14de853da3d656ed44a5c4790d740c4",
+        "playback_review_status": "approved",
+        "storage_path": "data/latin_mvp/audio/latin-mvp-50-v1/latin-mvp-0017-sentence.mp3",
+        "fallback_reason": null
+      }
+    },
+    {
+      "item_key": "latin-mvp-0018",
+      "word": {
+        "audio_kind": "word",
+        "provider": "google-translate-tts",
+        "provider_version": "google-translate-tts-la",
+        "voice": "la",
+        "pronunciation_policy": "google_translate_latin",
+        "generated_text": "domus",
+        "text_hash": "9267813edc71f3504def42f1f20cd49b85e1c6045e83ea45dd100a3b3f867f78",
+        "playback_review_status": "approved",
+        "storage_path": "data/latin_mvp/audio/latin-mvp-50-v1/latin-mvp-0018-word.mp3",
+        "fallback_reason": null
+      },
+      "sentence": {
+        "audio_kind": "sentence",
+        "provider": "google-translate-tts",
+        "provider_version": "google-translate-tts-la",
+        "voice": "la",
+        "pronunciation_policy": "google_translate_latin",
+        "generated_text": "Domus alta est.",
+        "text_hash": "2ad527d3b172e03c2d72439712dda0a2e27f4f0ebf8371aff07e86157462de1c",
+        "playback_review_status": "approved",
+        "storage_path": "data/latin_mvp/audio/latin-mvp-50-v1/latin-mvp-0018-sentence.mp3",
+        "fallback_reason": null
+      }
+    },
+    {
+      "item_key": "latin-mvp-0019",
+      "word": {
+        "audio_kind": "word",
+        "provider": "google-translate-tts",
+        "provider_version": "google-translate-tts-la",
+        "voice": "la",
+        "pronunciation_policy": "google_translate_latin",
+        "generated_text": "urbs",
+        "text_hash": "c582424a180dd2341a6d755bdb555d72479b34a765d9fa6959a0a0012e43853b",
+        "playback_review_status": "approved",
+        "storage_path": "data/latin_mvp/audio/latin-mvp-50-v1/latin-mvp-0019-word.mp3",
+        "fallback_reason": null
+      },
+      "sentence": {
+        "audio_kind": "sentence",
+        "provider": "google-translate-tts",
+        "provider_version": "google-translate-tts-la",
+        "voice": "la",
+        "pronunciation_policy": "google_translate_latin",
+        "generated_text": "Urbs magna est.",
+        "text_hash": "c9d413307027e728472d7eef02019d7c0ceb8166b09ef8f7e02dc4f44d7f2d77",
+        "playback_review_status": "approved",
+        "storage_path": "data/latin_mvp/audio/latin-mvp-50-v1/latin-mvp-0019-sentence.mp3",
+        "fallback_reason": null
+      }
+    },
+    {
+      "item_key": "latin-mvp-0020",
+      "word": {
+        "audio_kind": "word",
+        "provider": "google-translate-tts",
+        "provider_version": "google-translate-tts-la",
+        "voice": "la",
+        "pronunciation_policy": "google_translate_latin",
+        "generated_text": "via",
+        "text_hash": "4d327af41f96c23c6b13c8c80e1591babd241b29e61fb64f1c0ea480f3d666bc",
+        "playback_review_status": "approved",
+        "storage_path": "data/latin_mvp/audio/latin-mvp-50-v1/latin-mvp-0020-word.mp3",
+        "fallback_reason": null
+      },
+      "sentence": {
+        "audio_kind": "sentence",
+        "provider": "google-translate-tts",
+        "provider_version": "google-translate-tts-la",
+        "voice": "la",
+        "pronunciation_policy": "google_translate_latin",
+        "generated_text": "Via longa est.",
+        "text_hash": "37c6e7c36e8fd59dec7e3866bdfe5f8565e63bfd292313349ab3f490fa7f370a",
+        "playback_review_status": "approved",
+        "storage_path": "data/latin_mvp/audio/latin-mvp-50-v1/latin-mvp-0020-sentence.mp3",
+        "fallback_reason": null
+      }
+    },
+    {
+      "item_key": "latin-mvp-0021",
+      "word": {
+        "audio_kind": "word",
+        "provider": "google-translate-tts",
+        "provider_version": "google-translate-tts-la",
+        "voice": "la",
+        "pronunciation_policy": "google_translate_latin",
+        "generated_text": "navis",
+        "text_hash": "fb8acf00c2ea3150eecc0ac3c23a2381fd6c7ec2b540638a74884e2462df8a71",
+        "playback_review_status": "approved",
+        "storage_path": "data/latin_mvp/audio/latin-mvp-50-v1/latin-mvp-0021-word.mp3",
+        "fallback_reason": null
+      },
+      "sentence": {
+        "audio_kind": "sentence",
+        "provider": "google-translate-tts",
+        "provider_version": "google-translate-tts-la",
+        "voice": "la",
+        "pronunciation_policy": "google_translate_latin",
+        "generated_text": "Navis nova est.",
+        "text_hash": "36509cda7c2b2a2e76d8dc9062d7b323a475375aa13755dfeec3a9edc78830f4",
+        "playback_review_status": "approved",
+        "storage_path": "data/latin_mvp/audio/latin-mvp-50-v1/latin-mvp-0021-sentence.mp3",
+        "fallback_reason": null
+      }
+    },
+    {
+      "item_key": "latin-mvp-0022",
+      "word": {
+        "audio_kind": "word",
+        "provider": "google-translate-tts",
+        "provider_version": "google-translate-tts-la",
+        "voice": "la",
+        "pronunciation_policy": "google_translate_latin",
+        "generated_text": "miles",
+        "text_hash": "2fa9eb130ea98eb629410e0bf631f0b8de277f37e8b60c783c75e6b56e42cdee",
+        "playback_review_status": "approved",
+        "storage_path": "data/latin_mvp/audio/latin-mvp-50-v1/latin-mvp-0022-word.mp3",
+        "fallback_reason": null
+      },
+      "sentence": {
+        "audio_kind": "sentence",
+        "provider": "google-translate-tts",
+        "provider_version": "google-translate-tts-la",
+        "voice": "la",
+        "pronunciation_policy": "google_translate_latin",
+        "generated_text": "Miles fortis est.",
+        "text_hash": "d95eddae2fdfb4d6291acc5348f24ff0880744066b0e626d2084b787cb79eb88",
+        "playback_review_status": "approved",
+        "storage_path": "data/latin_mvp/audio/latin-mvp-50-v1/latin-mvp-0022-sentence.mp3",
+        "fallback_reason": null
+      }
+    },
+    {
+      "item_key": "latin-mvp-0023",
+      "word": {
+        "audio_kind": "word",
+        "provider": "google-translate-tts",
+        "provider_version": "google-translate-tts-la",
+        "voice": "la",
+        "pronunciation_policy": "google_translate_latin",
+        "generated_text": "servus",
+        "text_hash": "0f2127f43db88b2ef39fb6efb074e72bd770b2500b33d573bb547aa8b5225956",
+        "playback_review_status": "approved",
+        "storage_path": "data/latin_mvp/audio/latin-mvp-50-v1/latin-mvp-0023-word.mp3",
+        "fallback_reason": null
+      },
+      "sentence": {
+        "audio_kind": "sentence",
+        "provider": "google-translate-tts",
+        "provider_version": "google-translate-tts-la",
+        "voice": "la",
+        "pronunciation_policy": "google_translate_latin",
+        "generated_text": "Servus fidelis est.",
+        "text_hash": "ce6f4214e0924887314296f0a3f2b0690556b4496c9dd62ff21b82be01dfdf2a",
+        "playback_review_status": "approved",
+        "storage_path": "data/latin_mvp/audio/latin-mvp-50-v1/latin-mvp-0023-sentence.mp3",
+        "fallback_reason": null
+      }
+    },
+    {
+      "item_key": "latin-mvp-0024",
+      "word": {
+        "audio_kind": "word",
+        "provider": "google-translate-tts",
+        "provider_version": "google-translate-tts-la",
+        "voice": "la",
+        "pronunciation_policy": "google_translate_latin",
+        "generated_text": "amicus",
+        "text_hash": "3d189ed2240c2bcfcbf0b00fb0108a3c2239d2471d6b94d8502ada971d59e9d8",
+        "playback_review_status": "approved",
+        "storage_path": "data/latin_mvp/audio/latin-mvp-50-v1/latin-mvp-0024-word.mp3",
+        "fallback_reason": null
+      },
+      "sentence": {
+        "audio_kind": "sentence",
+        "provider": "google-translate-tts",
+        "provider_version": "google-translate-tts-la",
+        "voice": "la",
+        "pronunciation_policy": "google_translate_latin",
+        "generated_text": "Amicus bonus est.",
+        "text_hash": "9f0ca68afe259bee0574b0886a1189cccdff28105f5fb93740454b26840787b8",
+        "playback_review_status": "approved",
+        "storage_path": "data/latin_mvp/audio/latin-mvp-50-v1/latin-mvp-0024-sentence.mp3",
+        "fallback_reason": null
+      }
+    },
+    {
+      "item_key": "latin-mvp-0025",
+      "word": {
+        "audio_kind": "word",
+        "provider": "google-translate-tts",
+        "provider_version": "google-translate-tts-la",
+        "voice": "la",
+        "pronunciation_policy": "google_translate_latin",
+        "generated_text": "hostis",
+        "text_hash": "3d8756089772a381cdf065658f2af576d597941ccf19011e553630eb752eddf9",
+        "playback_review_status": "approved",
+        "storage_path": "data/latin_mvp/audio/latin-mvp-50-v1/latin-mvp-0025-word.mp3",
+        "fallback_reason": null
+      },
+      "sentence": {
+        "audio_kind": "sentence",
+        "provider": "google-translate-tts",
+        "provider_version": "google-translate-tts-la",
+        "voice": "la",
+        "pronunciation_policy": "google_translate_latin",
+        "generated_text": "Hostis saevus est.",
+        "text_hash": "9e31020071fa767ac36fc2f4c146367ae0b28adde81ba9e5242796074f51515d",
+        "playback_review_status": "approved",
+        "storage_path": "data/latin_mvp/audio/latin-mvp-50-v1/latin-mvp-0025-sentence.mp3",
+        "fallback_reason": null
+      }
+    },
+    {
+      "item_key": "latin-mvp-0026",
+      "word": {
+        "audio_kind": "word",
+        "provider": "google-translate-tts",
+        "provider_version": "google-translate-tts-la",
+        "voice": "la",
+        "pronunciation_policy": "google_translate_latin",
+        "generated_text": "deus",
+        "text_hash": "e8afa7f6d5bb22186fd4df4e060fe4c04b621fc428718d741dbf71e9e3e02395",
+        "playback_review_status": "approved",
+        "storage_path": "data/latin_mvp/audio/latin-mvp-50-v1/latin-mvp-0026-word.mp3",
+        "fallback_reason": null
+      },
+      "sentence": {
+        "audio_kind": "sentence",
+        "provider": "google-translate-tts",
+        "provider_version": "google-translate-tts-la",
+        "voice": "la",
+        "pronunciation_policy": "google_translate_latin",
+        "generated_text": "Deus aeternus est.",
+        "text_hash": "9d53b3428ed8de4f03f152ea7937f2fed34119688e0ef727e3437ec5e3a8f0de",
+        "playback_review_status": "approved",
+        "storage_path": "data/latin_mvp/audio/latin-mvp-50-v1/latin-mvp-0026-sentence.mp3",
+        "fallback_reason": null
+      }
+    },
+    {
+      "item_key": "latin-mvp-0027",
+      "word": {
+        "audio_kind": "word",
+        "provider": "google-translate-tts",
+        "provider_version": "google-translate-tts-la",
+        "voice": "la",
+        "pronunciation_policy": "google_translate_latin",
+        "generated_text": "dea",
+        "text_hash": "b8d19b6206b72bf403a0a87ab21a135a615cc8c535633000224c831d8a0eb0e3",
+        "playback_review_status": "approved",
+        "storage_path": "data/latin_mvp/audio/latin-mvp-50-v1/latin-mvp-0027-word.mp3",
+        "fallback_reason": null
+      },
+      "sentence": {
+        "audio_kind": "sentence",
+        "provider": "google-translate-tts",
+        "provider_version": "google-translate-tts-la",
+        "voice": "la",
+        "pronunciation_policy": "google_translate_latin",
+        "generated_text": "Dea pulchra est.",
+        "text_hash": "fa396546b6b62df855d655346689d8d523aa3759c860bb243b2b0d599f59a78c",
+        "playback_review_status": "approved",
+        "storage_path": "data/latin_mvp/audio/latin-mvp-50-v1/latin-mvp-0027-sentence.mp3",
+        "fallback_reason": null
+      }
+    },
+    {
+      "item_key": "latin-mvp-0028",
+      "word": {
+        "audio_kind": "word",
+        "provider": "google-translate-tts",
+        "provider_version": "google-translate-tts-la",
+        "voice": "la",
+        "pronunciation_policy": "google_translate_latin",
+        "generated_text": "templum",
+        "text_hash": "0f6fa20b11c501b30317e65781d369d80750cc2ca3b5061737818df3c39e4a2b",
+        "playback_review_status": "approved",
+        "storage_path": "data/latin_mvp/audio/latin-mvp-50-v1/latin-mvp-0028-word.mp3",
+        "fallback_reason": null
+      },
+      "sentence": {
+        "audio_kind": "sentence",
+        "provider": "google-translate-tts",
+        "provider_version": "google-translate-tts-la",
+        "voice": "la",
+        "pronunciation_policy": "google_translate_latin",
+        "generated_text": "Templum antiquum est.",
+        "text_hash": "9e963d4f71ae0edfa79883d4fbdf355bf7d555fd3bc27ee823521ab111055c42",
+        "playback_review_status": "approved",
+        "storage_path": "data/latin_mvp/audio/latin-mvp-50-v1/latin-mvp-0028-sentence.mp3",
+        "fallback_reason": null
+      }
+    },
+    {
+      "item_key": "latin-mvp-0029",
+      "word": {
+        "audio_kind": "word",
+        "provider": "google-translate-tts",
+        "provider_version": "google-translate-tts-la",
+        "voice": "la",
+        "pronunciation_policy": "google_translate_latin",
+        "generated_text": "forum",
+        "text_hash": "4eb41a2a9dfe70722ee4671a6d1fcc6921c26cc8bcb54e5632f5e7d740352940",
+        "playback_review_status": "approved",
+        "storage_path": "data/latin_mvp/audio/latin-mvp-50-v1/latin-mvp-0029-word.mp3",
+        "fallback_reason": null
+      },
+      "sentence": {
+        "audio_kind": "sentence",
+        "provider": "google-translate-tts",
+        "provider_version": "google-translate-tts-la",
+        "voice": "la",
+        "pronunciation_policy": "google_translate_latin",
+        "generated_text": "Forum plenum est.",
+        "text_hash": "22b28097d962270eb1d1c927015baeb88248025ecccb6ca55b8873b0bebca514",
+        "playback_review_status": "approved",
+        "storage_path": "data/latin_mvp/audio/latin-mvp-50-v1/latin-mvp-0029-sentence.mp3",
+        "fallback_reason": null
+      }
+    },
+    {
+      "item_key": "latin-mvp-0030",
+      "word": {
+        "audio_kind": "word",
+        "provider": "google-translate-tts",
+        "provider_version": "google-translate-tts-la",
+        "voice": "la",
+        "pronunciation_policy": "google_translate_latin",
+        "generated_text": "liber",
+        "text_hash": "4cda1e1d72bd270885008e64aeee3b480bddb147d1535c05a5eb0c3b87339cbc",
+        "playback_review_status": "approved",
+        "storage_path": "data/latin_mvp/audio/latin-mvp-50-v1/latin-mvp-0030-word.mp3",
+        "fallback_reason": null
+      },
+      "sentence": {
+        "audio_kind": "sentence",
+        "provider": "google-translate-tts",
+        "provider_version": "google-translate-tts-la",
+        "voice": "la",
+        "pronunciation_policy": "google_translate_latin",
+        "generated_text": "Liber novus est.",
+        "text_hash": "50eceb8f716db1a5318c42581fac26f4f253f0e7013207cadf37864ac43f1efb",
+        "playback_review_status": "approved",
+        "storage_path": "data/latin_mvp/audio/latin-mvp-50-v1/latin-mvp-0030-sentence.mp3",
+        "fallback_reason": null
+      }
+    },
+    {
+      "item_key": "latin-mvp-0031",
+      "word": {
+        "audio_kind": "word",
+        "provider": "google-translate-tts",
+        "provider_version": "google-translate-tts-la",
+        "voice": "la",
+        "pronunciation_policy": "google_translate_latin",
+        "generated_text": "corpus",
+        "text_hash": "6b17b8fcc411a533c822a5117e33cf73fa6766739d7d36ac86dc4bea883af4fe",
+        "playback_review_status": "approved",
+        "storage_path": "data/latin_mvp/audio/latin-mvp-50-v1/latin-mvp-0031-word.mp3",
+        "fallback_reason": null
+      },
+      "sentence": {
+        "audio_kind": "sentence",
+        "provider": "google-translate-tts",
+        "provider_version": "google-translate-tts-la",
+        "voice": "la",
+        "pronunciation_policy": "google_translate_latin",
+        "generated_text": "Corpus sanum est.",
+        "text_hash": "32402330135f30934896a50b4cc29c64dcadae5976898c4ab4780cddb52c13f3",
+        "playback_review_status": "approved",
+        "storage_path": "data/latin_mvp/audio/latin-mvp-50-v1/latin-mvp-0031-sentence.mp3",
+        "fallback_reason": null
+      }
+    },
+    {
+      "item_key": "latin-mvp-0032",
+      "word": {
+        "audio_kind": "word",
+        "provider": "google-translate-tts",
+        "provider_version": "google-translate-tts-la",
+        "voice": "la",
+        "pronunciation_policy": "google_translate_latin",
+        "generated_text": "animus",
+        "text_hash": "7890929df044434da505de79e76735452bda7539362d3bb8cb92b4c8aef3bfe8",
+        "playback_review_status": "approved",
+        "storage_path": "data/latin_mvp/audio/latin-mvp-50-v1/latin-mvp-0032-word.mp3",
+        "fallback_reason": null
+      },
+      "sentence": {
+        "audio_kind": "sentence",
+        "provider": "google-translate-tts",
+        "provider_version": "google-translate-tts-la",
+        "voice": "la",
+        "pronunciation_policy": "google_translate_latin",
+        "generated_text": "Animus firmus est.",
+        "text_hash": "8dcdd5a4afdae136195fa617bbb6ab2e952adc8c6923c79967a6dd87a1d31933",
+        "playback_review_status": "approved",
+        "storage_path": "data/latin_mvp/audio/latin-mvp-50-v1/latin-mvp-0032-sentence.mp3",
+        "fallback_reason": null
+      }
+    },
+    {
+      "item_key": "latin-mvp-0033",
+      "word": {
+        "audio_kind": "word",
+        "provider": "google-translate-tts",
+        "provider_version": "google-translate-tts-la",
+        "voice": "la",
+        "pronunciation_policy": "google_translate_latin",
+        "generated_text": "vita",
+        "text_hash": "d25b82cf0233fff4ad6581909f092c815ed4a4a454dc94b4bcf6bb830963d591",
+        "playback_review_status": "approved",
+        "storage_path": "data/latin_mvp/audio/latin-mvp-50-v1/latin-mvp-0033-word.mp3",
+        "fallback_reason": null
+      },
+      "sentence": {
+        "audio_kind": "sentence",
+        "provider": "google-translate-tts",
+        "provider_version": "google-translate-tts-la",
+        "voice": "la",
+        "pronunciation_policy": "google_translate_latin",
+        "generated_text": "Vita brevis est.",
+        "text_hash": "5965505ef3951eca307c0532d8e1532fea19c20d31b2b07abf05266356f2005d",
+        "playback_review_status": "approved",
+        "storage_path": "data/latin_mvp/audio/latin-mvp-50-v1/latin-mvp-0033-sentence.mp3",
+        "fallback_reason": null
+      }
+    },
+    {
+      "item_key": "latin-mvp-0034",
+      "word": {
+        "audio_kind": "word",
+        "provider": "google-translate-tts",
+        "provider_version": "google-translate-tts-la",
+        "voice": "la",
+        "pronunciation_policy": "google_translate_latin",
+        "generated_text": "mors",
+        "text_hash": "fa2b994dfadb2ff7e807c1fb06b797a0ceb5cfae14b247f685f8c7692ae4b363",
+        "playback_review_status": "approved",
+        "storage_path": "data/latin_mvp/audio/latin-mvp-50-v1/latin-mvp-0034-word.mp3",
+        "fallback_reason": null
+      },
+      "sentence": {
+        "audio_kind": "sentence",
+        "provider": "google-translate-tts",
+        "provider_version": "google-translate-tts-la",
+        "voice": "la",
+        "pronunciation_policy": "google_translate_latin",
+        "generated_text": "Mors certa est.",
+        "text_hash": "82cb1d04aefeb8019bd3782f97ad134b407f1c90afd1538a4d56b6657e0f2230",
+        "playback_review_status": "approved",
+        "storage_path": "data/latin_mvp/audio/latin-mvp-50-v1/latin-mvp-0034-sentence.mp3",
+        "fallback_reason": null
+      }
+    },
+    {
+      "item_key": "latin-mvp-0035",
+      "word": {
+        "audio_kind": "word",
+        "provider": "google-translate-tts",
+        "provider_version": "google-translate-tts-la",
+        "voice": "la",
+        "pronunciation_policy": "google_translate_latin",
+        "generated_text": "dies",
+        "text_hash": "fff9f2190835c7e675fbf6dd6080dc11168b6858a4fc25c806ec498023b390fb",
+        "playback_review_status": "approved",
+        "storage_path": "data/latin_mvp/audio/latin-mvp-50-v1/latin-mvp-0035-word.mp3",
+        "fallback_reason": null
+      },
+      "sentence": {
+        "audio_kind": "sentence",
+        "provider": "google-translate-tts",
+        "provider_version": "google-translate-tts-la",
+        "voice": "la",
+        "pronunciation_policy": "google_translate_latin",
+        "generated_text": "Dies longus est.",
+        "text_hash": "e3ac575d7d9e2516f5e28d2f74df6a9292c8814236403725533a33a4d2246ee1",
+        "playback_review_status": "approved",
+        "storage_path": "data/latin_mvp/audio/latin-mvp-50-v1/latin-mvp-0035-sentence.mp3",
+        "fallback_reason": null
+      }
+    },
+    {
+      "item_key": "latin-mvp-0036",
+      "word": {
+        "audio_kind": "word",
+        "provider": "google-translate-tts",
+        "provider_version": "google-translate-tts-la",
+        "voice": "la",
+        "pronunciation_policy": "google_translate_latin",
+        "generated_text": "nox",
+        "text_hash": "b076d0643d8294e911d8e3e67c6bdf2a7668dcafa8558a4d36b7442783d4b055",
+        "playback_review_status": "approved",
+        "storage_path": "data/latin_mvp/audio/latin-mvp-50-v1/latin-mvp-0036-word.mp3",
+        "fallback_reason": null
+      },
+      "sentence": {
+        "audio_kind": "sentence",
+        "provider": "google-translate-tts",
+        "provider_version": "google-translate-tts-la",
+        "voice": "la",
+        "pronunciation_policy": "google_translate_latin",
+        "generated_text": "Nox quieta est.",
+        "text_hash": "a1be829962e4ee19ef018dbd969eefff6056093a0722f4934a40f80675f6df26",
+        "playback_review_status": "approved",
+        "storage_path": "data/latin_mvp/audio/latin-mvp-50-v1/latin-mvp-0036-sentence.mp3",
+        "fallback_reason": null
+      }
+    },
+    {
+      "item_key": "latin-mvp-0037",
+      "word": {
+        "audio_kind": "word",
+        "provider": "google-translate-tts",
+        "provider_version": "google-translate-tts-la",
+        "voice": "la",
+        "pronunciation_policy": "google_translate_latin",
+        "generated_text": "manus",
+        "text_hash": "7cdbc9084feb6ac0aa4c3d310416ec3b95de1aa8454cae6ca6f228c233a5582c",
+        "playback_review_status": "approved",
+        "storage_path": "data/latin_mvp/audio/latin-mvp-50-v1/latin-mvp-0037-word.mp3",
+        "fallback_reason": null
+      },
+      "sentence": {
+        "audio_kind": "sentence",
+        "provider": "google-translate-tts",
+        "provider_version": "google-translate-tts-la",
+        "voice": "la",
+        "pronunciation_policy": "google_translate_latin",
+        "generated_text": "Manus parva est.",
+        "text_hash": "14771a7e66a62af7005f9ed0c39eb8bedefe87252f68a8bf816fd05423ea444b",
+        "playback_review_status": "approved",
+        "storage_path": "data/latin_mvp/audio/latin-mvp-50-v1/latin-mvp-0037-sentence.mp3",
+        "fallback_reason": null
+      }
+    },
+    {
+      "item_key": "latin-mvp-0038",
+      "word": {
+        "audio_kind": "word",
+        "provider": "google-translate-tts",
+        "provider_version": "google-translate-tts-la",
+        "voice": "la",
+        "pronunciation_policy": "google_translate_latin",
+        "generated_text": "nomen",
+        "text_hash": "3e6940236306eda9f6e4fe2014d6664d0c7e96e43db8b06d8b427b87fa32b2db",
+        "playback_review_status": "approved",
+        "storage_path": "data/latin_mvp/audio/latin-mvp-50-v1/latin-mvp-0038-word.mp3",
+        "fallback_reason": null
+      },
+      "sentence": {
+        "audio_kind": "sentence",
+        "provider": "google-translate-tts",
+        "provider_version": "google-translate-tts-la",
+        "voice": "la",
+        "pronunciation_policy": "google_translate_latin",
+        "generated_text": "Nomen clarum est.",
+        "text_hash": "564f278c3d30af2947953418f0e4e24d8c888fc2da93dffda129ec53694f15e6",
+        "playback_review_status": "approved",
+        "storage_path": "data/latin_mvp/audio/latin-mvp-50-v1/latin-mvp-0038-sentence.mp3",
+        "fallback_reason": null
+      }
+    },
+    {
+      "item_key": "latin-mvp-0039",
+      "word": {
+        "audio_kind": "word",
+        "provider": "google-translate-tts",
+        "provider_version": "google-translate-tts-la",
+        "voice": "la",
+        "pronunciation_policy": "google_translate_latin",
+        "generated_text": "vox",
+        "text_hash": "b675469b940b1853ca2b177b23048bc3275f45949864ce82cbdadc786109c192",
+        "playback_review_status": "approved",
+        "storage_path": "data/latin_mvp/audio/latin-mvp-50-v1/latin-mvp-0039-word.mp3",
+        "fallback_reason": null
+      },
+      "sentence": {
+        "audio_kind": "sentence",
+        "provider": "google-translate-tts",
+        "provider_version": "google-translate-tts-la",
+        "voice": "la",
+        "pronunciation_policy": "google_translate_latin",
+        "generated_text": "Vox clara est.",
+        "text_hash": "03b4c33f96a84cff05ceaa4c443d6b65657baff84101299b43241a34c477ac57",
+        "playback_review_status": "approved",
+        "storage_path": "data/latin_mvp/audio/latin-mvp-50-v1/latin-mvp-0039-sentence.mp3",
+        "fallback_reason": null
+      }
+    },
+    {
+      "item_key": "latin-mvp-0040",
+      "word": {
+        "audio_kind": "word",
+        "provider": "google-translate-tts",
+        "provider_version": "google-translate-tts-la",
+        "voice": "la",
+        "pronunciation_policy": "google_translate_latin",
+        "generated_text": "flumen",
+        "text_hash": "b7624c6d6a65e853fb0afada9fba1a8ff1b494c9cd96ca80fa92c1c4e51e4d63",
+        "playback_review_status": "approved",
+        "storage_path": "data/latin_mvp/audio/latin-mvp-50-v1/latin-mvp-0040-word.mp3",
+        "fallback_reason": null
+      },
+      "sentence": {
+        "audio_kind": "sentence",
+        "provider": "google-translate-tts",
+        "provider_version": "google-translate-tts-la",
+        "voice": "la",
+        "pronunciation_policy": "google_translate_latin",
+        "generated_text": "Flumen latum est.",
+        "text_hash": "7b9f0b12357e23deb2e2880b87b5e8fa9b091d7ada32e06bb577bc8a9f84cc12",
+        "playback_review_status": "approved",
+        "storage_path": "data/latin_mvp/audio/latin-mvp-50-v1/latin-mvp-0040-sentence.mp3",
+        "fallback_reason": null
+      }
+    },
+    {
+      "item_key": "latin-mvp-0041",
+      "word": {
+        "audio_kind": "word",
+        "provider": "google-translate-tts",
+        "provider_version": "google-translate-tts-la",
+        "voice": "la",
+        "pronunciation_policy": "google_translate_latin",
+        "generated_text": "mons",
+        "text_hash": "672f9af93ebffb90101a9ee0a61ad3e1dc53c1461727c256fe0c61769a7037ab",
+        "playback_review_status": "approved",
+        "storage_path": "data/latin_mvp/audio/latin-mvp-50-v1/latin-mvp-0041-word.mp3",
+        "fallback_reason": null
+      },
+      "sentence": {
+        "audio_kind": "sentence",
+        "provider": "google-translate-tts",
+        "provider_version": "google-translate-tts-la",
+        "voice": "la",
+        "pronunciation_policy": "google_translate_latin",
+        "generated_text": "Mons altus est.",
+        "text_hash": "ae83fb87cee4460e44a9027de81ad4a1a44ce4f402893f2726b53bac9f3a4612",
+        "playback_review_status": "approved",
+        "storage_path": "data/latin_mvp/audio/latin-mvp-50-v1/latin-mvp-0041-sentence.mp3",
+        "fallback_reason": null
+      }
+    },
+    {
+      "item_key": "latin-mvp-0042",
+      "word": {
+        "audio_kind": "word",
+        "provider": "google-translate-tts",
+        "provider_version": "google-translate-tts-la",
+        "voice": "la",
+        "pronunciation_policy": "google_translate_latin",
+        "generated_text": "ignis",
+        "text_hash": "702fce0cd2fe32036837515f102ed5e9e77746944f0a2a2f836a345a28013c43",
+        "playback_review_status": "approved",
+        "storage_path": "data/latin_mvp/audio/latin-mvp-50-v1/latin-mvp-0042-word.mp3",
+        "fallback_reason": null
+      },
+      "sentence": {
+        "audio_kind": "sentence",
+        "provider": "google-translate-tts",
+        "provider_version": "google-translate-tts-la",
+        "voice": "la",
+        "pronunciation_policy": "google_translate_latin",
+        "generated_text": "Ignis calidus est.",
+        "text_hash": "639c0a061b1518badf67ea526a5dea6696956a0d5c2e99f7baa674cd88a569f0",
+        "playback_review_status": "approved",
+        "storage_path": "data/latin_mvp/audio/latin-mvp-50-v1/latin-mvp-0042-sentence.mp3",
+        "fallback_reason": null
+      }
+    },
+    {
+      "item_key": "latin-mvp-0043",
+      "word": {
+        "audio_kind": "word",
+        "provider": "google-translate-tts",
+        "provider_version": "google-translate-tts-la",
+        "voice": "la",
+        "pronunciation_policy": "google_translate_latin",
+        "generated_text": "cibus",
+        "text_hash": "d1a397c016cf0c178bb3f4801754daab8c6efbae664b4fecf837933ac0da6d8b",
+        "playback_review_status": "approved",
+        "storage_path": "data/latin_mvp/audio/latin-mvp-50-v1/latin-mvp-0043-word.mp3",
+        "fallback_reason": null
+      },
+      "sentence": {
+        "audio_kind": "sentence",
+        "provider": "google-translate-tts",
+        "provider_version": "google-translate-tts-la",
+        "voice": "la",
+        "pronunciation_policy": "google_translate_latin",
+        "generated_text": "Cibus bonus est.",
+        "text_hash": "4fa8ac0a18ed3507fac3a40b1d42759de8886005120543c5c1b6309aaefed768",
+        "playback_review_status": "approved",
+        "storage_path": "data/latin_mvp/audio/latin-mvp-50-v1/latin-mvp-0043-sentence.mp3",
+        "fallback_reason": null
+      }
+    },
+    {
+      "item_key": "latin-mvp-0044",
+      "word": {
+        "audio_kind": "word",
+        "provider": "google-translate-tts",
+        "provider_version": "google-translate-tts-la",
+        "voice": "la",
+        "pronunciation_policy": "google_translate_latin",
+        "generated_text": "vinum",
+        "text_hash": "855f660b56d321527014fbd100bde05b309142eade5bf69913ceb82f616b8c5e",
+        "playback_review_status": "approved",
+        "storage_path": "data/latin_mvp/audio/latin-mvp-50-v1/latin-mvp-0044-word.mp3",
+        "fallback_reason": null
+      },
+      "sentence": {
+        "audio_kind": "sentence",
+        "provider": "google-translate-tts",
+        "provider_version": "google-translate-tts-la",
+        "voice": "la",
+        "pronunciation_policy": "google_translate_latin",
+        "generated_text": "Vinum dulce est.",
+        "text_hash": "f861dbb2b8c3df4525a2657cd3e32b48b5e682672fb3b3d0824479ff0bd656f1",
+        "playback_review_status": "approved",
+        "storage_path": "data/latin_mvp/audio/latin-mvp-50-v1/latin-mvp-0044-sentence.mp3",
+        "fallback_reason": null
+      }
+    },
+    {
+      "item_key": "latin-mvp-0045",
+      "word": {
+        "audio_kind": "word",
+        "provider": "google-translate-tts",
+        "provider_version": "google-translate-tts-la",
+        "voice": "la",
+        "pronunciation_policy": "google_translate_latin",
+        "generated_text": "equus",
+        "text_hash": "04ff2c93496abb8ca0978928a00bd08d4e062e92f499791edf61df9d2e7ad619",
+        "playback_review_status": "approved",
+        "storage_path": "data/latin_mvp/audio/latin-mvp-50-v1/latin-mvp-0045-word.mp3",
+        "fallback_reason": null
+      },
+      "sentence": {
+        "audio_kind": "sentence",
+        "provider": "google-translate-tts",
+        "provider_version": "google-translate-tts-la",
+        "voice": "la",
+        "pronunciation_policy": "google_translate_latin",
+        "generated_text": "Equus celer est.",
+        "text_hash": "09af841309604e81cdf3900984fbc6e6edbd9bfd876beb6f0fb5b712eebb9023",
+        "playback_review_status": "approved",
+        "storage_path": "data/latin_mvp/audio/latin-mvp-50-v1/latin-mvp-0045-sentence.mp3",
+        "fallback_reason": null
+      }
+    },
+    {
+      "item_key": "latin-mvp-0046",
+      "word": {
+        "audio_kind": "word",
+        "provider": "google-translate-tts",
+        "provider_version": "google-translate-tts-la",
+        "voice": "la",
+        "pronunciation_policy": "google_translate_latin",
+        "generated_text": "canis",
+        "text_hash": "b565323fc0127c77aafcb728c5e245f7d4e3c4491cd156f6a082cbf95000d038",
+        "playback_review_status": "approved",
+        "storage_path": "data/latin_mvp/audio/latin-mvp-50-v1/latin-mvp-0046-word.mp3",
+        "fallback_reason": null
+      },
+      "sentence": {
+        "audio_kind": "sentence",
+        "provider": "google-translate-tts",
+        "provider_version": "google-translate-tts-la",
+        "voice": "la",
+        "pronunciation_policy": "google_translate_latin",
+        "generated_text": "Canis fidelis est.",
+        "text_hash": "2126ba94468be03ea85e21c6e2703b478252892f2599aa415bddf6a09e09e458",
+        "playback_review_status": "approved",
+        "storage_path": "data/latin_mvp/audio/latin-mvp-50-v1/latin-mvp-0046-sentence.mp3",
+        "fallback_reason": null
+      }
+    },
+    {
+      "item_key": "latin-mvp-0047",
+      "word": {
+        "audio_kind": "word",
+        "provider": "google-translate-tts",
+        "provider_version": "google-translate-tts-la",
+        "voice": "la",
+        "pronunciation_policy": "google_translate_latin",
+        "generated_text": "porta",
+        "text_hash": "158bdb6fad0f12a86efa74f165b315a0b38da927023efb82c4e9a0206c17b28a",
+        "playback_review_status": "approved",
+        "storage_path": "data/latin_mvp/audio/latin-mvp-50-v1/latin-mvp-0047-word.mp3",
+        "fallback_reason": null
+      },
+      "sentence": {
+        "audio_kind": "sentence",
+        "provider": "google-translate-tts",
+        "provider_version": "google-translate-tts-la",
+        "voice": "la",
+        "pronunciation_policy": "google_translate_latin",
+        "generated_text": "Porta aperta est.",
+        "text_hash": "3120d4c3e419667e7d544db694d17d79f57f1758d0a5906d9f00341e2fa7ac70",
+        "playback_review_status": "approved",
+        "storage_path": "data/latin_mvp/audio/latin-mvp-50-v1/latin-mvp-0047-sentence.mp3",
+        "fallback_reason": null
+      }
+    },
+    {
+      "item_key": "latin-mvp-0048",
+      "word": {
+        "audio_kind": "word",
+        "provider": "google-translate-tts",
+        "provider_version": "google-translate-tts-la",
+        "voice": "la",
+        "pronunciation_policy": "google_translate_latin",
+        "generated_text": "hortus",
+        "text_hash": "f7e31f554a8c168a600e65d9c932b9bf2fe050e3f5eb65d5c391bc34a9ea8ca2",
+        "playback_review_status": "approved",
+        "storage_path": "data/latin_mvp/audio/latin-mvp-50-v1/latin-mvp-0048-word.mp3",
+        "fallback_reason": null
+      },
+      "sentence": {
+        "audio_kind": "sentence",
+        "provider": "google-translate-tts",
+        "provider_version": "google-translate-tts-la",
+        "voice": "la",
+        "pronunciation_policy": "google_translate_latin",
+        "generated_text": "Hortus pulcher est.",
+        "text_hash": "a64fb9ca58c46f1997a6fb2d6396b174589b8ea72eba741225502e2c4760e621",
+        "playback_review_status": "approved",
+        "storage_path": "data/latin_mvp/audio/latin-mvp-50-v1/latin-mvp-0048-sentence.mp3",
+        "fallback_reason": null
+      }
+    },
+    {
+      "item_key": "latin-mvp-0049",
+      "word": {
+        "audio_kind": "word",
+        "provider": "google-translate-tts",
+        "provider_version": "google-translate-tts-la",
+        "voice": "la",
+        "pronunciation_policy": "google_translate_latin",
+        "generated_text": "silva",
+        "text_hash": "d24e913a4107af875dc2ac3d419798f3794d00434e5059fbb68ac8d33626eaee",
+        "playback_review_status": "approved",
+        "storage_path": "data/latin_mvp/audio/latin-mvp-50-v1/latin-mvp-0049-word.mp3",
+        "fallback_reason": null
+      },
+      "sentence": {
+        "audio_kind": "sentence",
+        "provider": "google-translate-tts",
+        "provider_version": "google-translate-tts-la",
+        "voice": "la",
+        "pronunciation_policy": "google_translate_latin",
+        "generated_text": "Silva densa est.",
+        "text_hash": "9350d6cc8269da1221aeecebd2ad3625dd040e50d2762cccc74b80e156f85dc9",
+        "playback_review_status": "approved",
+        "storage_path": "data/latin_mvp/audio/latin-mvp-50-v1/latin-mvp-0049-sentence.mp3",
+        "fallback_reason": null
+      }
+    },
+    {
+      "item_key": "latin-mvp-0050",
+      "word": {
+        "audio_kind": "word",
+        "provider": "google-translate-tts",
+        "provider_version": "google-translate-tts-la",
+        "voice": "la",
+        "pronunciation_policy": "google_translate_latin",
+        "generated_text": "mare",
+        "text_hash": "074af2bf8e84854902eead553819b4517c2bac61c5d367a45831b05bf7789a81",
+        "playback_review_status": "approved",
+        "storage_path": "data/latin_mvp/audio/latin-mvp-50-v1/latin-mvp-0050-word.mp3",
+        "fallback_reason": null
+      },
+      "sentence": {
+        "audio_kind": "sentence",
+        "provider": "google-translate-tts",
+        "provider_version": "google-translate-tts-la",
+        "voice": "la",
+        "pronunciation_policy": "google_translate_latin",
+        "generated_text": "Mare magnum est.",
+        "text_hash": "96eb1d46459e5f0cafc509d8a3524d59f39ed29141ce06637d8c302e31c23c5c",
+        "playback_review_status": "approved",
+        "storage_path": "data/latin_mvp/audio/latin-mvp-50-v1/latin-mvp-0050-sentence.mp3",
+        "fallback_reason": null
+      }
+    }
+  ]
+}

@@ -11,6 +11,7 @@ from pydantic import ValidationError
 
 from multilang.services.latin_audio import (
     CURRENT_LATIN_AUDIO_PROVIDER,
+    LATIN_FALLBACK_AUDIO_PROVIDERS,
     LATIN_LEGACY_AUDIO_PROVIDERS,
     LATIN_RESEARCH_ONLY_AUDIO_PROVIDERS,
     LatinAudioArtifact,
@@ -175,6 +176,11 @@ def test_fallback_reason_required_for_reserve_or_blocked_provider_records() -> N
     assert no_fallback.fallback_reason is None
     active = make_artifact(provider=CURRENT_LATIN_AUDIO_PROVIDER, fallback_reason=None)
     assert active.fallback_reason is None
+    fallback_provider = make_artifact(
+        provider="elevenlabs-italian",
+        fallback_reason="Google Translate TTS unavailable; using ElevenLabs Italian fallback.",
+    )
+    assert fallback_provider.fallback_reason.startswith("Google Translate TTS")
 
     fallback = make_artifact(
         provider="finevoice",
@@ -190,8 +196,9 @@ def test_fallback_reason_required_for_reserve_or_blocked_provider_records() -> N
         make_artifact(playback_review_status="blocked", fallback_reason="   ")
 
 
-def test_current_latin_audio_policy_keeps_espeak_legacy_and_finevoice_research_only() -> None:
-    assert CURRENT_LATIN_AUDIO_PROVIDER == "elevenlabs-italian"
+def test_current_latin_audio_policy_uses_google_tts_with_italian_fallbacks() -> None:
+    assert CURRENT_LATIN_AUDIO_PROVIDER == "google-translate-tts"
+    assert LATIN_FALLBACK_AUDIO_PROVIDERS == ("elevenlabs-italian", "azure-italian")
     assert LATIN_LEGACY_AUDIO_PROVIDERS == ("espeak-ng",)
     assert LATIN_RESEARCH_ONLY_AUDIO_PROVIDERS == ("finevoice",)
 

@@ -41,7 +41,7 @@ def _assert_repository_relative_media_path(storage_path: str) -> Path:
     absolute_media_path = REPO_ROOT / media_path
     assert absolute_media_path.exists()
     assert absolute_media_path.stat().st_size > 0
-    assert absolute_media_path.read_bytes().startswith(b"RIFF")
+    assert absolute_media_path.read_bytes().startswith(b"ID3")
     return absolute_media_path
 
 
@@ -85,10 +85,10 @@ def test_full_manifest_has_approved_source_aligned_word_and_sentence_audio() -> 
             (pair.sentence, "sentence", entry.latin_sentence),
         ):
             assert artifact.audio_kind == expected_kind
-            assert artifact.provider == "espeak-ng"
+            assert artifact.provider == "google-translate-tts"
             assert artifact.provider_version
             assert artifact.voice == "la"
-            assert artifact.pronunciation_policy == "classical_approx"
+            assert artifact.pronunciation_policy == "google_translate_latin"
             assert artifact.generated_text == expected_text
             assert artifact.text_hash == latin_audio_text_hash(expected_text)
             assert artifact.playback_review_status == "approved"
@@ -155,17 +155,16 @@ def test_audio_gate_approval_matches_playback_review_without_changing_other_gate
     records = load_latin_curated_records()
 
     assert review_status == "approved"
-    assert selected_provider == "espeak-ng"
+    assert selected_provider == "google-translate-tts"
     assert selected_voice == "la"
-    assert pronunciation_policy == "classical_approx"
+    assert pronunciation_policy == "google_translate_latin"
     assert len(records) == 50
 
     for record in records:
         assert record.audio_gate.status == "approved"
-        assert record.audio_gate.reason == "playback_review_approved: espeak-ng/la/classical_approx"
+        assert record.audio_gate.reason == "playback_review_approved: google-translate-tts/la/google_translate_latin"
         assert record.audio_gate.reviewed_by == reviewer
         assert record.audio_gate.reviewed_at == reviewed_at
         assert record.source_gate.status == "approved"
         assert record.grammar_gate.status == "approved"
-        assert record.translation_gate.status == "needs_review"
-        assert record.translation_gate.reason == "translation_pending_phase_26"
+        assert record.translation_gate.status == "approved"

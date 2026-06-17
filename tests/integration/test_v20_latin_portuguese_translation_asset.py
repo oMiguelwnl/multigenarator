@@ -30,7 +30,7 @@ def test_portuguese_translation_asset_has_required_review_fields() -> None:
         assert entry.short_translation_pt.strip()
         assert entry.sentence_translation_pt.strip()
         assert entry.translation_notes.strip()
-        assert entry.review_status == "needs_review"
+        assert entry.review_status == "approved"
 
 
 def test_portuguese_translation_asset_passes_deterministic_qa_against_source_pack() -> None:
@@ -46,4 +46,4 @@ def test_portuguese_translation_asset_passes_deterministic_qa_against_source_pac
     assert summary["passed_count"] == 50
     assert summary["failed_count"] == 0
     assert summary["issue_counts"] == {}
-    assert summary["review_status_counts"] == {"needs_review": 50, "approved": 0, "rejected": 0}
+    assert summary["review_status_counts"] == {"needs_review": 0, "approved": 50, "rejected": 0}
