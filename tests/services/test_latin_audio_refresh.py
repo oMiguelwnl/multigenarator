@@ -5,8 +5,10 @@ from __future__ import annotations
 from pathlib import Path
 
 from multilang.services.audio_synthesis import AudioSynthesisResponse
-from multilang.services.latin_audio import CURRENT_LATIN_AUDIO_PROVIDER, LatinAudioManifest
+from multilang.services.latin_audio import LatinAudioManifest
 from multilang.services.latin_audio_refresh import (
+    LATIN_ELEVENLABS_DEFERRED_PROVIDER,
+    LATIN_ELEVENLABS_FALLBACK_REASON,
     LATIN_ELEVENLABS_PRONUNCIATION_POLICY,
     generate_latin_elevenlabs_full_manifest,
     generate_latin_elevenlabs_samples,
@@ -75,7 +77,7 @@ def test_generate_latin_elevenlabs_samples_writes_manifest_and_mp3_metadata(tmp_
         repo_root=tmp_path,
     )
 
-    assert result.provider == CURRENT_LATIN_AUDIO_PROVIDER
+    assert result.provider == LATIN_ELEVENLABS_DEFERRED_PROVIDER
     assert result.provider_version == "eleven_multilingual_v2"
     assert result.pronunciation_policy == LATIN_ELEVENLABS_PRONUNCIATION_POLICY
     assert result.sample_manifest_path == "samples/latin-audio-samples.json"
@@ -85,10 +87,10 @@ def test_generate_latin_elevenlabs_samples_writes_manifest_and_mp3_metadata(tmp_
     assert len(list((tmp_path / "samples").glob("*.mp3"))) == 9
 
     first = result.artifacts[0].artifact
-    assert first.provider == CURRENT_LATIN_AUDIO_PROVIDER
+    assert first.provider == LATIN_ELEVENLABS_DEFERRED_PROVIDER
     assert first.playback_review_status == "needs_playback_review"
     assert first.storage_path == "samples/word-01-virum.mp3"
-    assert first.fallback_reason is None
+    assert first.fallback_reason == LATIN_ELEVENLABS_FALLBACK_REASON
 
 
 def test_generate_latin_elevenlabs_full_manifest_uses_source_pack_text_and_mp3_paths(tmp_path: Path) -> None:
@@ -108,7 +110,7 @@ def test_generate_latin_elevenlabs_full_manifest_uses_source_pack_text_and_mp3_p
     assert first.item_key == "latin-mvp-0001"
     assert first.word is not None
     assert first.sentence is not None
-    assert first.word.provider == CURRENT_LATIN_AUDIO_PROVIDER
+    assert first.word.provider == LATIN_ELEVENLABS_DEFERRED_PROVIDER
     assert first.word.generated_text == "et"
     assert first.word.storage_path == "audio/latin-mvp-0001-word.mp3"
     assert first.sentence.storage_path == "audio/latin-mvp-0001-sentence.mp3"

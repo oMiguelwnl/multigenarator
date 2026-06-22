@@ -9,6 +9,7 @@ import zipfile
 from pathlib import Path
 
 from multilang.domain.exporting import ExportArtifactFormat
+from multilang.services.latin_audio import load_latin_audio_manifest
 from multilang.services.latin_export import (
     LATIN_EXPORT_FIELD_NAMES,
     LATIN_MODEL_ID,
@@ -38,10 +39,16 @@ def test_phase_28_export_requirements_are_scanner_readable() -> None:
 
 def test_committed_latin_export_bundle_has_50_safe_rows_and_100_media_refs() -> None:
     bundle = build_latin_export_rows(repo_root=REPO_ROOT)
+    audio_manifest = load_latin_audio_manifest()
 
     assert len(bundle.rows) == 50
     assert [row.item_key for row in bundle.rows] == [f"latin-mvp-{index:04d}" for index in range(1, 51)]
     assert len(bundle.media_index) == 100
+    assert sum(1 for pair in audio_manifest.artifacts for artifact in (pair.word, pair.sentence) if artifact.provider == "google-translate-tts") == 100
+    assert {artifact.voice for pair in audio_manifest.artifacts for artifact in (pair.word, pair.sentence)} == {"la"}
+    assert {artifact.provider_version for pair in audio_manifest.artifacts for artifact in (pair.word, pair.sentence)} == {
+        "google-translate-tts-la"
+    }
     for row in bundle.rows:
         mapping = row.ordered_field_mapping()
         assert tuple(mapping) == LATIN_EXPORT_FIELD_NAMES

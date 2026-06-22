@@ -48,19 +48,20 @@ def test_policy_records_deepl_primary_and_google_translation_candidate(tmp_path:
     assert google["reason"] == GOOGLE_TRANSLATE_CANDIDATE_REASON
 
 
-def test_policy_records_elevenlabs_primary_google_reserve_and_finevoice_research_only(tmp_path: Path) -> None:
+def test_policy_records_google_final_elevenlabs_deferred_and_finevoice_research_only(tmp_path: Path) -> None:
     manifest = generate_latin_audio_sample_manifest(output_dir=tmp_path)
 
     google_tts = manifest.provider_candidates["google-translate-tts"]
-    assert google_tts["status"] == "reserve_audio_candidate"
+    assert google_tts["status"] == "final_audio_provider"
     assert google_tts["voice"] == "la"
-    assert google_tts["pronunciation_policy"] == "google_translate_latin_tts"
+    assert google_tts["pronunciation_policy"] == "google_translate_latin"
     assert google_tts["reason"] == GOOGLE_TRANSLATE_TTS_REASON
 
     elevenlabs = manifest.provider_candidates["elevenlabs-italian"]
-    assert elevenlabs["status"] == "primary_audio_candidate"
+    assert elevenlabs["status"] == "deferred_billing_blocked"
     assert elevenlabs["voice"] == "it-IT"
     assert elevenlabs["pronunciation_policy"] == "italian_multilingual_approx"
+    assert elevenlabs["blocking_reason"] == "HTTP 402 Payment Required for key1, key2, and key3."
     assert elevenlabs["reason"] == ELEVENLABS_ITALIAN_RESERVE_REASON
 
     finevoice = manifest.provider_candidates["finevoice"]

@@ -1,4 +1,4 @@
-"""ElevenLabs-first Latin MVP audio refresh helpers."""
+"""Deferred ElevenLabs Latin MVP audio refresh helpers."""
 
 from __future__ import annotations
 
@@ -12,7 +12,6 @@ from pydantic import BaseModel, Field
 from multilang.services.audio_synthesis import AudioSynthesisResponse
 from multilang.services.elevenlabs_speech_adapter import ElevenLabsSpeechAdapter
 from multilang.services.latin_audio import (
-    CURRENT_LATIN_AUDIO_PROVIDER,
     LatinAudioArtifact,
     LatinAudioManifest,
     LatinAudioPair,
@@ -28,11 +27,12 @@ from multilang.services.latin_audio_samples import (
 from multilang.services.latin_source_pack import load_latin_mvp_source_pack
 from multilang.settings import Settings
 
+LATIN_ELEVENLABS_DEFERRED_PROVIDER = "elevenlabs-italian"
 LATIN_ELEVENLABS_VOICE = "it-IT"
 LATIN_ELEVENLABS_LOCALE = "it-IT"
 LATIN_ELEVENLABS_PRONUNCIATION_POLICY = "italian_multilingual_approx"
 LATIN_ELEVENLABS_DEFAULT_VOICE_ID = "AZnzlk1XvdvUeBnXmlld"
-LATIN_ELEVENLABS_FALLBACK_REASON = None
+LATIN_ELEVENLABS_FALLBACK_REASON = "Deferred after configured ElevenLabs keys returned HTTP 402 Payment Required."
 
 
 class LatinAudioSynthesizer(Protocol):
@@ -57,7 +57,7 @@ class LatinAudioRefreshArtifact(BaseModel):
 class LatinAudioRefreshSampleResult(BaseModel):
     """Result for representative Latin audio sample generation."""
 
-    provider: str = CURRENT_LATIN_AUDIO_PROVIDER
+    provider: str = LATIN_ELEVENLABS_DEFERRED_PROVIDER
     provider_version: str
     voice: str
     pronunciation_policy: str
@@ -95,7 +95,7 @@ def _artifact_for_generated_audio(
     return LatinAudioArtifact.model_validate(
         {
             "audio_kind": audio_kind,
-            "provider": CURRENT_LATIN_AUDIO_PROVIDER,
+            "provider": LATIN_ELEVENLABS_DEFERRED_PROVIDER,
             "provider_version": provider_version,
             "voice": voice,
             "pronunciation_policy": LATIN_ELEVENLABS_PRONUNCIATION_POLICY,
@@ -256,18 +256,18 @@ def _write_json(path: Path, payload: object) -> None:
 
 
 def _build_parser() -> argparse.ArgumentParser:
-    parser = argparse.ArgumentParser(description="Generate Latin MVP ElevenLabs audio refresh artifacts.")
+    parser = argparse.ArgumentParser(description="Generate deferred Latin MVP ElevenLabs audio refresh artifacts.")
     subcommands = parser.add_subparsers(dest="command", required=True)
 
     samples = subcommands.add_parser("generate-samples")
     samples.add_argument("--output-dir", type=Path, default=DEFAULT_LATIN_AUDIO_SAMPLE_DIR)
     samples.add_argument("--review-path", type=Path, required=False)
-    samples.add_argument("--provider", choices=[CURRENT_LATIN_AUDIO_PROVIDER], default=CURRENT_LATIN_AUDIO_PROVIDER)
+    samples.add_argument("--provider", choices=[LATIN_ELEVENLABS_DEFERRED_PROVIDER], default=LATIN_ELEVENLABS_DEFERRED_PROVIDER)
 
     full_pack = subcommands.add_parser("generate-full-pack")
     full_pack.add_argument("--output-dir", type=Path, default=Path("data") / "latin_mvp" / "audio" / "latin-mvp-50-v1")
     full_pack.add_argument("--manifest", type=Path, default=Path("data") / "latin_mvp" / "latin-mvp-50-v1-audio.json")
-    full_pack.add_argument("--provider", choices=[CURRENT_LATIN_AUDIO_PROVIDER], default=CURRENT_LATIN_AUDIO_PROVIDER)
+    full_pack.add_argument("--provider", choices=[LATIN_ELEVENLABS_DEFERRED_PROVIDER], default=LATIN_ELEVENLABS_DEFERRED_PROVIDER)
     return parser
 
 
@@ -301,6 +301,7 @@ if __name__ == "__main__":
 
 __all__ = [
     "LATIN_ELEVENLABS_DEFAULT_VOICE_ID",
+    "LATIN_ELEVENLABS_DEFERRED_PROVIDER",
     "LATIN_ELEVENLABS_LOCALE",
     "LATIN_ELEVENLABS_PRONUNCIATION_POLICY",
     "LATIN_ELEVENLABS_VOICE",

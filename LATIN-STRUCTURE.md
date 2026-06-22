@@ -219,34 +219,29 @@ Ponto para discutir: se frases podem ser adaptadas para ficarem mais didaticas o
 
 O requisito atual e audio da palavra e audio da frase.
 
-### Ferramenta candidata confirmada inicialmente
+### Provedor atual aprovado para o MVP 50
 
-eSpeak NG lista suporte a Latim com codigo `la`.
+O pacote Latin MVP atual usa Google Translate TTS com codigo `la` para audio da palavra e da frase.
 
-Uso proposto:
+Estado atual:
 
-```text
-espeak-ng -v la "Arma virumque cano."
-```
+- provedor final do MVP 50: `google-translate-tts`;
+- voz/codigo: `la`;
+- politica de pronuncia: `google_translate_latin`;
+- manifest: `data/latin_mvp/latin-mvp-50-v1-audio.json`;
+- midia: 100 arquivos MP3 em `data/latin_mvp/audio/latin-mvp-50-v1/`;
+- status de review: aprovado para o escopo `latin-mvp-50-v1`.
 
-Vantagens:
+### Candidatos deferidos
 
-- suporte explicito a Latim;
-- roda localmente;
-- automatizavel;
-- bom para prototipo.
+ElevenLabs italiano permanece deferido depois de falha de billing/quota (`HTTP 402 Payment Required`) nas chaves configuradas. Ele nao e requisito para exportar o MVP 50 atual.
 
-Riscos:
+Azure italiano permanece fallback, nao provider final. FineVoice permanece somente pesquisa e nao deve ser ligado como provider ativo sem plano futuro.
 
-- voz sintetica;
-- qualidade pode nao ser boa para estudo diario;
-- pronuncia pode nao bater com a preferencia eclesiastica/tradicional;
-- precisa de avaliacao auditiva com exemplos reais.
+### Ferramentas futuras a pesquisar
 
-### Ferramentas ainda a pesquisar
-
-- Azure TTS com voz multilingual, se aceitar Latim de forma convincente.
-- Google Cloud TTS com voz multilingual, se aceitar Latim de forma convincente.
+- Azure TTS com voz multilingual ou voz adequada, se aceitar Latim de forma convincente.
+- Google Cloud TTS com voz multilingual, se aceitar Latim de forma convincente e qualidade superior ao pacote atual.
 - servicos comerciais com TTS em Latim.
 - gravacao humana ou voz custom, se TTS automatico for ruim.
 
@@ -446,7 +441,7 @@ O card nao deve ser aceito se:
 
 29. Audio deve ser obrigatorio no MVP?
 30. Audio da palavra e da frase entram sempre?
-31. eSpeak NG e aceitavel se a qualidade for sintetica?
+31. Google Translate TTS `la` continua aceitavel para o MVP 50 apos review?
 32. Pronuncia deve ser eclesiastica/tradicional desde o primeiro milestone?
 33. Se nao houver TTS bom, devemos permitir audio vazio temporariamente?
 
@@ -468,6 +463,6 @@ Proposta:
 - usar frases reais ou didaticas rastreaveis;
 - seguir metodo Rafael Falcon na selecao e ordem;
 - incluir campo `Gramatica` curto;
-- incluir audio da palavra e da frase com eSpeak NG como primeira tentativa;
+- incluir audio da palavra e da frase com Google Translate TTS `la` no MVP 50 aprovado;
 - exportar `.apkg` de teste;
 - registrar incertezas para discussao antes de escalar.

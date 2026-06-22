@@ -64,9 +64,9 @@ def test_phase_27_evidence_loads_real_assets_and_approved_playback_policy() -> N
     assert PLAYBACK_REVIEW_PATH.exists()
     assert LATIN_AUDIO_MANIFEST_PATH.exists()
     assert _playback_review_field("playback_review_status") == "approved"
-    assert _playback_review_field("selected_provider") == "espeak-ng"
+    assert _playback_review_field("selected_provider") == "google-translate-tts"
     assert _playback_review_field("selected_voice") == "la"
-    assert _playback_review_field("pronunciation_policy") == "classical_approx"
+    assert _playback_review_field("pronunciation_policy") == "google_translate_latin"
     assert source_pack.source_pack_version == audio_manifest.source_pack_version == "latin-mvp-50-v1"
     assert len(source_pack.entries) == len(curation_records) == len(audio_manifest.artifacts) == 50
 
@@ -84,9 +84,9 @@ def test_every_latin_mvp_card_has_approved_or_explicitly_rejected_audio() -> Non
         assert pair.sentence is not None
         for artifact, expected_text in ((pair.word, entry.target_form), (pair.sentence, entry.latin_sentence)):
             if artifact.playback_review_status == "approved":
-                assert artifact.provider == "espeak-ng"
+                assert artifact.provider == "google-translate-tts"
                 assert artifact.voice == "la"
-                assert artifact.pronunciation_policy == "classical_approx"
+                assert artifact.pronunciation_policy == "google_translate_latin"
                 assert artifact.generated_text == expected_text
                 continue
             assert artifact.playback_review_status in {"blocked", "rejected"}
@@ -140,26 +140,16 @@ def test_public_summary_and_integrity_gate_are_scanner_readable_and_path_safe() 
         assert audio_summary["sentence_count"] == 50
         assert audio_summary["approved_count"] == 50
         assert audio_summary["blocked_count"] == 0
-        assert audio_summary["provider_counts"] == {"espeak-ng": 100}
+        assert audio_summary["provider_counts"] == {"google-translate-tts": 100}
         assert audio_summary["playback_status_counts"] == {"approved": 100}
         assert audio_summary["readiness_status"] == "approved"
 
 
-def test_phase_27_boundary_keeps_latin_outside_modern_generation_and_phase_28_export_scope() -> None:
+def test_phase_27_boundary_keeps_latin_outside_modern_frequency_generation() -> None:
     assert "la" not in {language.value for language in SupportedLanguage}
     generate_result = CliRunner().invoke(create_app(), ["generate", "--language", "la", "--source", "frequency"])
     assert generate_result.exit_code != 0
 
     records = load_latin_curated_records()
-    assert {record.translation_gate.status for record in records} == {"needs_review"}
-
-    forbidden_export_artifacts = [
-        path
-        for path in (REPO_ROOT / "data/latin_mvp").glob("latin-mvp-50-v1.*")
-        if path.suffix in {".apkg", ".csv", ".tsv"}
-    ]
-    forbidden_latin_export_modules = [
-        path for path in (REPO_ROOT / "src/multilang").rglob("*latin*export*.py") if path.is_file()
-    ]
-    assert forbidden_export_artifacts == []
-    assert forbidden_latin_export_modules == []
+    assert {record.translation_gate.status for record in records} == {"approved"}
+    assert {record.audio_gate.status for record in records} == {"approved"}

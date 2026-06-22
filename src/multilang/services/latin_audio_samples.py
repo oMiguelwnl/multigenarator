@@ -25,11 +25,11 @@ AZURE_LATIN_FALLBACK_REASON = "no verified native Classical Latin/`la` Azure TTS
 DEEPL_PRIMARY_TRANSLATION_REASON = "DeepL is the primary configured translation provider for generated text."
 GOOGLE_TRANSLATE_CANDIDATE_REASON = "Google Translate is retained as a candidate translation provider."
 GOOGLE_TRANSLATE_TTS_REASON = (
-    "Google Translate TTS is retained as a reserve Latin audio candidate and requires playback review before export approval."
+    "Google Translate TTS is the approved final provider for the current 50-card Latin MVP audio pack."
 )
 ELEVENLABS_ITALIAN_RESERVE_REASON = (
-    "ElevenLabs multilingual TTS is the preferred Latin replacement candidate using an Italian locale/voice; "
-    "playback review is required before export approval."
+    "ElevenLabs multilingual TTS is deferred after all configured keys returned HTTP 402 Payment Required; "
+    "it remains a future fallback candidate only."
 )
 FINEVOICE_RESERVE_REASON = (
     "FineVoice is research-only for future evaluation; no live FineVoice adapter is implemented yet."
@@ -74,15 +74,16 @@ def generate_latin_audio_sample_manifest(
                 "reason": GOOGLE_TRANSLATE_CANDIDATE_REASON,
             },
             "google-translate-tts": {
-                "status": "reserve_audio_candidate",
+                "status": "final_audio_provider",
                 "voice": "la",
-                "pronunciation_policy": "google_translate_latin_tts",
+                "pronunciation_policy": "google_translate_latin",
                 "reason": GOOGLE_TRANSLATE_TTS_REASON,
             },
             "elevenlabs-italian": {
-                "status": "primary_audio_candidate",
+                "status": "deferred_billing_blocked",
                 "voice": "it-IT",
                 "pronunciation_policy": "italian_multilingual_approx",
+                "blocking_reason": "HTTP 402 Payment Required for key1, key2, and key3.",
                 "reason": ELEVENLABS_ITALIAN_RESERVE_REASON,
             },
             "finevoice": {

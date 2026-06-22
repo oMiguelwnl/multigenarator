@@ -5,15 +5,15 @@
 
 ## v2.1 Requirements
 
-Requirements for replacing the Classical Latin MVP's current eSpeak NG-based audio with a better approved provider while preserving the 50-card export contract.
+Requirements for finalizing the Classical Latin MVP's current Google Translate TTS audio after ElevenLabs sample generation was blocked by billing/quota, while preserving the 50-card export contract.
 
-### Latin Audio Provider Refresh
+### Latin Google TTS Finalization
 
-- [ ] **AUDR-01**: User can review representative Latin word and sentence samples for the replacement provider, preferably ElevenLabs, before the refreshed Latin MVP audio policy is locked.
-- [ ] **AUDR-02**: User receives a committed refreshed 50-card Latin MVP audio manifest and 100 playable media files whose approved provider metadata no longer depends on eSpeak NG.
+- [ ] **AUDR-01**: User can inspect provider evidence that locks Google Translate TTS (`la`) as the final provider for the current 50-card Latin MVP and records ElevenLabs as deferred after configured keys returned `HTTP 402 Payment Required`.
+- [ ] **AUDR-02**: User receives a committed 50-card Latin MVP audio manifest and 100 playable media files whose approved provider metadata uses Google Translate TTS and no longer depends on eSpeak NG.
 - [ ] **AUDR-03**: FineVoice is captured only as a research candidate for future evaluation and is not wired as an active Latin audio provider in this phase.
-- [ ] **AUDR-04**: Latin audio readiness and export tests prove the refreshed manifest blocks stale eSpeak NG dependence, unapproved replacement audio, text mismatches, unsafe paths, missing media, and source-pack drift.
-- [ ] **AUDR-05**: Project-level eSpeak NG references, adapters, tests, and docs are removed only after the refreshed manifest, approved media, tests, and Latin export evidence pass; eSpeak NG is not uninstalled from the user/system environment.
+- [ ] **AUDR-04**: Latin audio readiness and export tests prove the Google TTS manifest blocks stale eSpeak NG dependence, unapproved audio, text mismatches, unsafe paths, missing media, and source-pack drift.
+- [ ] **AUDR-05**: Current project source, tests, and active docs do not require eSpeak NG or live ElevenLabs for the current Latin MVP export path; historical artifacts may still mention them, and eSpeak NG is not uninstalled from the user/system environment.
 
 ## v2.0 Requirements
 

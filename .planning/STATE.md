@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: complete
-stopped_at: Verified Phase 28
-last_updated: "2026-06-08T22:48:11Z"
-last_activity: 2026-06-08
+stopped_at: Verified Phase 29
+last_updated: "2026-06-22T00:00:00Z"
+last_activity: 2026-06-22
 progress:
-  total_phases: 7
-  completed_phases: 7
-  total_plans: 27
-  completed_plans: 27
+  total_phases: 8
+  completed_phases: 8
+  total_plans: 28
+  completed_plans: 28
   percent: 100
 ---
 
@@ -21,14 +21,14 @@ progress:
 See: .planning/PROJECT.md (updated 2026-06-01)
 
 **Core value:** Generate reliable, high-quality Anki cards for real vocabulary the learner needs to study, with accurate definitions, examples, translations where appropriate, and audio.  
-**Current focus:** v2.0 Classical Latin MVP complete
+**Current focus:** v2.1 Classical Latin Google TTS finalization
 
 ## Current Position
 
-Phase: 28
-Plan: Complete
-Status: Phase verified — v2.0 milestone complete
-Last activity: 2026-06-08
+Phase: 29
+Plan: 29-01
+Status: Phase verified - v2.1 Google TTS finalization complete
+Last activity: 2026-06-22
 
 Progress: [██████████] 100%
 
@@ -132,11 +132,11 @@ Full decision history is in `.planning/PROJECT.md`. Current v2.0 decisions affec
 - [Phase 27-latin-audio-policy-and-integrity]: Export readiness requires both word and sentence artifacts to be approved and exact-text aligned with the frozen source pack.
 - [Phase 27-latin-audio-policy-and-integrity]: Latin audio readiness is source-pack aligned: item order and source_pack_version must match latin-mvp-50-v1 before export can pass.
 - [Phase 27-latin-audio-policy-and-integrity]: Latin audio diagnostics expose item_key, audio_kind, and field names only, avoiding local paths and provider-sensitive details.
-- [Phase 27-latin-audio-policy-and-integrity]: eSpeak NG la is the only locally synthesizeable Latin candidate for playback review; Azure multilingual remains blocked without a verified native Classical Latin/la locale.
+- [Phase 27-latin-audio-policy-and-integrity]: Initial local playback exploration used eSpeak NG la; Phase 29 supersedes that provider decision for the current MVP export.
 - [Phase 27-latin-audio-policy-and-integrity]: Sample generation is local-only and does not contact Azure or any network provider.
-- [Phase 27-latin-audio-policy-and-integrity]: Approved eSpeak NG voice la for the 50-card Classical Latin MVP only under pronunciation policy classical_approx.
+- [Phase 29-latin-elevenlabs-audio-refresh]: Google Translate TTS voice `la` is the final approved provider for the current 50-card Classical Latin MVP under pronunciation policy `google_translate_latin`.
 - [Phase 27-latin-audio-policy-and-integrity]: Azure remains blocked for Classical Latin until a future review verifies a native Classical Latin/la Azure voice.
-- [Phase 27-latin-audio-policy-and-integrity]: The full Latin MVP manifest uses the Plan 27-03 approved eSpeak NG provider espeak-ng, voice la, and pronunciation policy classical_approx.
+- [Phase 29-latin-elevenlabs-audio-refresh]: The full Latin MVP manifest uses `google-translate-tts`, voice `la`, provider version `google-translate-tts-la`, and 100 approved MP3 media artifacts.
 - [Phase 27-latin-audio-policy-and-integrity]: Curation audio_gate approval is copied from the playback review artifact while source, translation, grammar, provenance, and sequence fields remain unchanged.
 - [Phase 27-latin-audio-policy-and-integrity]: Latin audio readiness output is opt-in through --audio-json and contains aggregate counts only, not media paths or provider raw details.
 - [Phase 27-latin-audio-policy-and-integrity]: Phase 27 evidence uses committed source, curation, playback review, and audio manifest assets rather than mocks.
@@ -152,6 +152,9 @@ Full decision history is in `.planning/PROJECT.md`. Current v2.0 decisions affec
 - [Phase 28-latin-export-and-milestone-evidence]: Final milestone evidence treats all 30 v2.0 requirement IDs as an exact set from MODE-01 through EVID-03.
 - [Phase 28-latin-export-and-milestone-evidence]: Existing-mode evidence directly asserts frequency, manual, highlight, and phonetics contracts rather than relying on the known broad-suite drift.
 - [Phase 28-latin-export-and-milestone-evidence]: Latin model and deck IDs are distinct from phoneme and shipped export IDs.
+- [Phase 29-latin-elevenlabs-audio-refresh]: ElevenLabs Italian is deferred after all configured keys returned HTTP 402 Payment Required; it is not required for the current Latin MVP export.
+- [Phase 29-latin-elevenlabs-audio-refresh]: FineVoice remains research-only and is not wired as an active provider.
+- [Phase 29-latin-elevenlabs-audio-refresh]: Current Latin export does not require live provider calls or system-level audio provider uninstall steps.
 
 ### Pending Todos
 
@@ -159,7 +162,7 @@ Full decision history is in `.planning/PROJECT.md`. Current v2.0 decisions affec
 
 ### Blockers/Concerns
 
-- Latin TTS quality remains an explicit `classical_approx` caveat even after user approval; future higher-quality Latin audio should use a new review artifact.
+- Latin TTS quality is approved only for the current 50-card Google Translate TTS MVP pack; future higher-quality Latin audio should use a new review artifact.
 - Source licensing for Phase 23 is license-gated in the frozen source pack; later phases must preserve those provenance fields.
 - Broad-suite drift remains known debt; focused regression evidence should stay authoritative until repaired.
 - Plan 22-02 listed verification exposes existing CLI/audio drift: `tests/cli/test_generate_command.py::test_generate_command_default_runtime_reports_audio_counters` expects `fallback_audio_items=1`, but current runtime output omits it.
@@ -177,6 +180,6 @@ Items acknowledged and carried forward:
 
 ## Session Continuity
 
-Last session: 2026-06-08T22:48:11Z
-Stopped at: Verified Phase 28
+Last session: 2026-06-22T00:00:00Z
+Stopped at: Verified Phase 29
 Resume file: None

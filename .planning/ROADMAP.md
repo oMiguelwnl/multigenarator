@@ -7,15 +7,15 @@
 - [x] **v1.2 Kindle Highlights and Template Refresh** - Phases 09-16 completed 2026-05-08 with local Kindle highlights, highlight export, WebDAV fetch, phonetics template refresh, and end-to-end evidence.
 - [x] **v1.3 Card Quality Remediation and Deck Validation** - Phases 17-21 shipped 2026-05-16. Archive: [v1.3-ROADMAP.md](./milestones/v1.3-ROADMAP.md). Requirements: [v1.3-REQUIREMENTS.md](./milestones/v1.3-REQUIREMENTS.md).
 - [x] **v2.0 Classical Latin MVP** - Phases 22-28 shipped 2026-06-08 for a reviewed 50-card Classical Latin deck; scale beyond 50 cards is deferred.
-- [ ] **v2.1 Latin Audio Provider Refresh** - Phase 29 replaces the current eSpeak NG-based Latin MVP audio with a reviewed higher-quality provider, preferably ElevenLabs, while keeping export fail-closed.
+- [ ] **v2.1 Latin Google TTS Finalization** - Phase 29 finalizes Google Translate TTS (`la`) as the current Latin MVP audio provider after ElevenLabs sample generation was blocked by billing/quota, while keeping export fail-closed.
 
 ## Current Focus
 
-Plan and execute v2.1 Latin Audio Provider Refresh starting at Phase 29 without resetting phase numbers.
+Plan and execute v2.1 Latin Google TTS Finalization starting at Phase 29 without resetting phase numbers.
 
 ## Overview
 
-v2.0 added a separate Classical Latin generation path that produces a reviewed, reproducible 50-card MVP rather than extending the modern-language frequency deck flow. v2.1 refreshes only the Latin MVP audio provider layer: it replaces the approved eSpeak NG `classical_approx` audio pack with a better reviewed provider, preferably the already-connected ElevenLabs adapter, and updates the manifest, media, tests, review evidence, and export artifacts before removing project-level eSpeak NG dependence. Full 300-card, 1000-card, and 3000-card Latin scale remains explicitly deferred until the 50-card contract is proven.
+v2.0 added a separate Classical Latin generation path that produces a reviewed, reproducible 50-card MVP rather than extending the modern-language frequency deck flow. v2.1 finalizes the current Latin MVP audio provider layer: it records Google Translate TTS (`la`) as the approved current provider, defers ElevenLabs after live sample generation returned `HTTP 402 Payment Required` for all configured keys, keeps FineVoice research-only, and proves the manifest, media, tests, review evidence, and export artifacts remain fail-closed without active eSpeak NG dependence. Full 300-card, 1000-card, and 3000-card Latin scale remains explicitly deferred until the 50-card contract is proven.
 
 ## Phases
 
@@ -28,7 +28,7 @@ v2.0 added a separate Classical Latin generation path that produces a reviewed, 
 - [x] **Phase 26: Portuguese Translation Quality** - Users receive Portuguese lemma and sentence translations that match the chosen Latin context. (completed 2026-06-03)
 - [x] **Phase 27: Latin Audio Policy and Integrity** - Users receive approved playable Latin word and sentence audio with provider metadata and exact-text checks. (completed 2026-06-08; gap closure planned)
 - [x] **Phase 28: Latin Export and Milestone Evidence** - Users can export approved Latin MVP cards and inspect evidence proving Latin coverage and existing-mode safety. (completed 2026-06-08)
-- [ ] **Phase 29: Latin ElevenLabs Audio Refresh** - Users receive a refreshed Latin MVP audio pack from an approved higher-quality provider, preferably ElevenLabs, with FineVoice retained only as a research candidate and eSpeak NG removed from project dependencies only after replacement export works.
+- [ ] **Phase 29: Latin Google TTS Finalization** - Users receive a finalized Google Translate TTS Latin MVP audio pack with reviewed provider evidence, FineVoice retained only as a research candidate, ElevenLabs deferred after billing/quota failure, and eSpeak NG kept out of the current export dependency path.
 
 ## Phase Details
 
@@ -145,19 +145,19 @@ Plans:
 - [x] 28-02-PLAN.md — Export Latin APKG/CSV/TSV artifacts and CLI command.
 - [x] 28-03-PLAN.md — Add Phase 28, milestone, privacy, and existing-mode evidence.
 
-### Phase 29: Latin ElevenLabs Audio Refresh
-**Goal**: Users receive a higher-quality approved Latin MVP word and sentence audio pack, preferably generated through the existing ElevenLabs integration, without breaking Latin export readiness or removing eSpeak NG before the project no longer depends on it.
+### Phase 29: Latin Google TTS Finalization
+**Goal**: Users receive a finalized approved Latin MVP word and sentence audio pack using Google Translate TTS (`la`), with ElevenLabs deferred after billing/quota failure, FineVoice research-only, and Latin export readiness preserved without active eSpeak NG dependence.
 **Depends on**: Phase 28
 **Requirements**: AUDR-01, AUDR-02, AUDR-03, AUDR-04, AUDR-05
 **Success Criteria** (what must be TRUE):
-  1. User can inspect provider research and representative playback-review evidence that promotes ElevenLabs only after sample audio is generated and approved; FineVoice is documented only as a future research candidate and is not wired as an active provider.
-  2. The committed Latin MVP audio manifest and 100 media files are regenerated or replaced with approved higher-quality provider artifacts whose metadata records provider, provider version/model, voice, pronunciation policy, exact generated text, text hash, audio kind, playback review status, storage path, and fallback reason when applicable.
-  3. Latin audio validators, tests, and scanner-readable evidence fail closed when old eSpeak NG manifest/media are still required, when replacement audio is unapproved, or when manifest text/media paths drift from the frozen source pack.
-  4. Latin `.apkg`, CSV, and TSV export works with the refreshed audio manifest and packages the refreshed media references without regressing existing Latin field order, review gates, privacy safeguards, or existing modern-language export modes.
-  5. Project-level eSpeak NG code/test/documentation dependencies are removed only after the refreshed Latin manifest, approved audio files, tests, and export evidence pass; no instruction uninstalls eSpeak NG from the user/system environment.
+  1. User can inspect provider evidence that records Google Translate TTS (`la`) as the final provider for the current 50-card Latin MVP, with ElevenLabs deferred after `HTTP 402 Payment Required` and FineVoice documented only as a future research candidate.
+  2. The committed Latin MVP audio manifest and 100 media files are approved Google TTS artifacts whose metadata records provider, provider version, voice, pronunciation policy, exact generated text, text hash, audio kind, playback review status, storage path, and fallback reason when applicable.
+  3. Latin audio validators, tests, and scanner-readable evidence fail closed when eSpeak NG manifest/media are treated as current, when audio is unapproved, or when manifest text/media paths drift from the frozen source pack.
+  4. Latin `.apkg`, CSV, and TSV export works with the Google TTS audio manifest and packages 100 media references without regressing existing Latin field order, review gates, privacy safeguards, or existing modern-language export modes.
+  5. Current project source, tests, and active docs do not require eSpeak NG or live ElevenLabs for the Latin MVP export path; historical archives may still mention them and no instruction uninstalls eSpeak NG from the user/system environment.
 **Plans:** 0/1 plans complete
 Plans:
-- [ ] 29-01-PLAN.md — Replace Latin MVP eSpeak NG audio with reviewed ElevenLabs-first audio assets and remove project dependency.
+- [ ] 29-01-PLAN.md — Finalize Latin MVP audio on approved Google Translate TTS assets and remove active eSpeak/ElevenLabs dependency claims.
 
 ## Progress
 
@@ -172,7 +172,7 @@ Plans:
 | 26. Portuguese Translation Quality | v2.0 | 3/3 | Complete   | 2026-06-03 |
 | 27. Latin Audio Policy and Integrity | v2.0 | 6/6 | Complete    | 2026-06-08 |
 | 28. Latin Export and Milestone Evidence | v2.0 | 3/3 | Complete   | 2026-06-08 |
-| 29. Latin ElevenLabs Audio Refresh | v2.1 | 0/1 | Not Started | TBD |
+| 29. Latin Google TTS Finalization | v2.1 | 0/1 | Not Started | TBD |
 
 ## Coverage
 

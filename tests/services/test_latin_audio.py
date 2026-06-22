@@ -177,10 +177,10 @@ def test_fallback_reason_required_for_reserve_or_blocked_provider_records() -> N
     active = make_artifact(provider=CURRENT_LATIN_AUDIO_PROVIDER, fallback_reason=None)
     assert active.fallback_reason is None
     fallback_provider = make_artifact(
-        provider="elevenlabs-italian",
-        fallback_reason="Google Translate TTS unavailable; using ElevenLabs Italian fallback.",
+        provider="azure-italian",
+        fallback_reason="ElevenLabs Italian unavailable; using Azure Italian fallback.",
     )
-    assert fallback_provider.fallback_reason.startswith("Google Translate TTS")
+    assert fallback_provider.fallback_reason.startswith("ElevenLabs Italian")
 
     fallback = make_artifact(
         provider="finevoice",
