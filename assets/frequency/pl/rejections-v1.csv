@@ -16,6 +16,7 @@ pl,v1,530,http,web_noise
 pl,v1,537,0,digit
 pl,v1,576,m.in,contains_dot
 pl,v1,586,0.0,digit
+pl,v1,1084,google,punctuation
 pl,v1,1096,°,punctuation
 pl,v1,1219,00.00,digit
 pl,v1,1355,"0,00",digit

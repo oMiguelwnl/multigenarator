@@ -17,10 +17,12 @@ es,v1,625,0,digit
 es,v1,737,00.000,digit
 es,v1,868,°,punctuation
 es,v1,877,"0,0",digit
+es,v1,884,facebook,punctuation
 es,v1,1138,0.00,digit
 es,v1,1180,http,web_noise
 es,v1,1240,"00,0",digit
 es,v1,1344,"0,000",digit
+es,v1,1357,google,punctuation
 es,v1,1375,000.000,digit
 es,v1,1408,"0,00",digit
 es,v1,1446,00000,digit
@@ -28,4 +30,5 @@ es,v1,1476,00.00,digit
 es,v1,1639,00.0,digit
 es,v1,1679,"00,000",digit
 es,v1,2209,"00,00",digit
+es,v1,2547,trump,punctuation
 es,v1,2843,ee.uu,contains_dot

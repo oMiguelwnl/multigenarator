@@ -1,0 +1,11 @@
+language,frequency_list_version,level,rank,source_rank,display_form,lemma,lemma_key,part_of_speech,definition_seed,source_provenance,curation_flags
+la,v1,1,1,1,sum,sum,sum,unknown,sum,mylittlewordland:la,mylittlewordland_seeded;deterministically_filtered;structurally_curated
+la,v1,1,2,2,et,et,et,unknown,et,mylittlewordland:la,mylittlewordland_seeded;deterministically_filtered;structurally_curated
+la,v1,1,3,3,in,in,in,unknown,in,mylittlewordland:la,mylittlewordland_seeded;deterministically_filtered;structurally_curated
+la,v1,1,4,4,non,non,non,unknown,non,mylittlewordland:la,mylittlewordland_seeded;deterministically_filtered;structurally_curated
+la,v1,1,5,5,qui,qui,qui,unknown,qui,mylittlewordland:la,mylittlewordland_seeded;deterministically_filtered;structurally_curated
+la,v1,1,6,6,hic,hic,hic,unknown,hic,mylittlewordland:la,mylittlewordland_seeded;deterministically_filtered;structurally_curated
+la,v1,1,7,7,esse,esse,esse,unknown,esse,mylittlewordland:la,mylittlewordland_seeded;deterministically_filtered;structurally_curated
+la,v1,1,8,8,cum,cum,cum,unknown,cum,mylittlewordland:la,mylittlewordland_seeded;deterministically_filtered;structurally_curated
+la,v1,1,9,9,ego,ego,ego,unknown,ego,mylittlewordland:la,mylittlewordland_seeded;deterministically_filtered;structurally_curated
+la,v1,1,10,10,is,is,is,unknown,is,mylittlewordland:la,mylittlewordland_seeded;deterministically_filtered;structurally_curated

@@ -1,0 +1,3 @@
+language,frequency_list_version,source_rank,token,reason_code
+la,v1,11,# TODO: Download full list from the site https://mylittlewordland.com/course/415114/as-mil-palavras-mais-frequentes-do-latim,digit
+la,v1,12,"# Paste the lemmas here, one per line, most frequent first.",contains_dot

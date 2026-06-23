@@ -25,11 +25,16 @@ de,v1,725,°,punctuation
 de,v1,726,"00,00",digit
 de,v1,819,z.b,contains_dot
 de,v1,934,000.000,digit
+de,v1,963,facebook,punctuation
+de,v1,1007,google,punctuation
 de,v1,1172,http,web_noise
 de,v1,1391,0.00,digit
 de,v1,1392,00er,digit
+de,v1,1731,trump,punctuation
 de,v1,1885,00.0,digit
+de,v1,1972,amazon,punctuation
 de,v1,2298,0000er,digit
+de,v1,2397,apple,punctuation
 de,v1,2434,u.a,contains_dot
 de,v1,2442,000000,digit
 de,v1,2891,"0,000",digit

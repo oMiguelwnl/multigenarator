@@ -1,0 +1,12 @@
+sum
+et
+in
+non
+qui
+hic
+esse
+cum
+ego
+is
+# TODO: Download full list from the site https://mylittlewordland.com/course/415114/as-mil-palavras-mais-frequentes-do-latim
+# Paste the lemmas here, one per line, most frequent first.

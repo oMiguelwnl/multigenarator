@@ -20,11 +20,14 @@ fr,v1,806,00000,digit
 fr,v1,844,00h,digit
 fr,v1,871,00h00,digit
 fr,v1,902,1er,digit
+fr,v1,1172,facebook,punctuation
 fr,v1,1184,0.0,digit
 fr,v1,1363,"00,00",digit
 fr,v1,1364,00e,digit
+fr,v1,1492,google,punctuation
 fr,v1,1881,http,web_noise
 fr,v1,2172,0.000,digit
 fr,v1,2416,00.000,digit
+fr,v1,2671,apple,punctuation
 fr,v1,2920,2e,digit
 fr,v1,2990,0.00,digit

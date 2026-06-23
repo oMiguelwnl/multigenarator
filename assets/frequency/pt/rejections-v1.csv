@@ -14,6 +14,7 @@ pt,v1,436,9,digit
 pt,v1,550,"0,0",digit
 pt,v1,597,0.000,digit
 pt,v1,668,0.0,digit
+pt,v1,693,facebook,punctuation
 pt,v1,755,0,digit
 pt,v1,794,http,web_noise
 pt,v1,1006,°,punctuation
@@ -23,6 +24,7 @@ pt,v1,1113,"00,0",digit
 pt,v1,1114,00.000,digit
 pt,v1,1277,"00,00",digit
 pt,v1,1387,1º,digit
+pt,v1,1504,google,punctuation
 pt,v1,1743,00º,digit
 pt,v1,2226,00000,digit
 pt,v1,2312,00h00,digit

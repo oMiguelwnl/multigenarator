@@ -24,9 +24,12 @@ tr,v1,1166,00000,digit
 tr,v1,1191,0.000,digit
 tr,v1,1282,00.0,digit
 tr,v1,1530,https,web_noise
+tr,v1,1603,google,punctuation
 tr,v1,1714,00.00.0000,digit
+tr,v1,1725,facebook,punctuation
 tr,v1,2096,"00,00",digit
 tr,v1,2316,000.000,digit
+tr,v1,2319,apple,punctuation
 tr,v1,2413,t.c,contains_dot
 tr,v1,2792,°,punctuation
 tr,v1,2798,"0,000",digit

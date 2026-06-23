@@ -12,11 +12,13 @@ it,v1,297,7,digit
 it,v1,310,8,digit
 it,v1,374,°,punctuation
 it,v1,382,9,digit
+it,v1,432,facebook,punctuation
 it,v1,676,0,digit
 it,v1,722,"0,0",digit
 it,v1,732,0.0,digit
 it,v1,774,0.000,digit
 it,v1,819,00.000,digit
+it,v1,1165,google,punctuation
 it,v1,1234,"00,0",digit
 it,v1,1291,00.00,digit
 it,v1,1319,"0,00",digit
@@ -26,3 +28,4 @@ it,v1,1752,000.000,digit
 it,v1,1933,m5s,digit
 it,v1,2044,0.00,digit
 it,v1,2045,"00,00",digit
+it,v1,2957,apple,punctuation
