@@ -21,6 +21,7 @@ class SupportedLanguage(str, Enum):
     RO = "ro"
     RU = "ru"
     NL = "nl"
+    NB = "nb"
     LA = "la"
 
 

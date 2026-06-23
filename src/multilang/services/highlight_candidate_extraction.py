@@ -34,6 +34,7 @@ _STOPWORDS: dict[SupportedLanguage, set[str]] = {
     SupportedLanguage.RO: {"acest", "aceasta", "cu", "de", "în", "la", "o", "și", "un", "una"},
     SupportedLanguage.RU: {"а", "в", "и", "на", "не", "с", "то", "этот", "это"},
     SupportedLanguage.NL: {"de", "een", "en", "het", "in", "van"},
+    SupportedLanguage.NB: {"av", "de", "den", "det", "en", "er", "et", "i", "og", "på"},
 }
 
 

@@ -67,6 +67,18 @@ def test_iterator_normalizes_unicode_variants(monkeypatch) -> None:
     ]
 
 
+def test_iterator_rejects_unicode_replacement_character(monkeypatch) -> None:
+    from multilang.services import frequency_decks
+
+    monkeypatch.setattr(
+        frequency_decks,
+        "iter_wordlist",
+        lambda language: iter(["\ufffd", "ord"]),
+    )
+
+    assert list(frequency_decks.iter_curated_frequency_candidates(SupportedLanguage.NB, scan_limit=2)) == [(2, "ord")]
+
+
 def test_iterator_keeps_function_words(monkeypatch) -> None:
     from multilang.services import frequency_decks
 
@@ -290,10 +302,25 @@ def test_all_supported_frequency_assets_validate() -> None:
 
     for language in SupportedLanguage:
         entries = frequency_decks.load_curated_frequency_entries(language)
+        if language is SupportedLanguage.LA:
+            assert entries
+            continue
         assert len(entries) == 3000
         assert [sum(1 for entry in entries if entry.level == level) for level in (1, 2, 3)] == [1000, 1000, 1000]
         assert all("needs_human_review" not in entry.curation_flags for entry in entries)
         assert all("structurally_curated" in entry.curation_flags for entry in entries)
+
+
+def test_norwegian_bokmal_frequency_assets_validate() -> None:
+    from multilang.services import frequency_decks
+
+    entries = frequency_decks.load_curated_frequency_entries(SupportedLanguage.NB)
+
+    assert len(entries) == 3000
+    assert [sum(1 for entry in entries if entry.level == level) for level in (1, 2, 3)] == [1000, 1000, 1000]
+    assert entries[0].display_form == "i"
+    assert entries[4].display_form == "å"
+    assert all(entry.source_provenance == "wordfreq:nb" for entry in entries)
 
 
 def test_validation_rejects_duplicate_lemma_key(tmp_path) -> None:

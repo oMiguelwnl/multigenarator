@@ -85,6 +85,8 @@ def _is_curated_token(token: str) -> bool:
     token = _normalize_frequency_token(token)
     if not token:
         return False
+    if "\ufffd" in token:
+        return False
     if _URL_OR_EMAIL_RE.search(token):
         return False
     if _HANDLE_OR_HASHTAG_RE.match(token):

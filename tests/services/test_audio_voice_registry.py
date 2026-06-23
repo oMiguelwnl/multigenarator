@@ -17,19 +17,7 @@ from multilang.settings import Settings
 def test_voice_registry_resolves_supported_languages() -> None:
     registry = get_voice_registry()
 
-    assert set(registry) == {
-        SupportedLanguage.PT,
-        SupportedLanguage.ES,
-        SupportedLanguage.EN,
-        SupportedLanguage.FR,
-        SupportedLanguage.DE,
-        SupportedLanguage.IT,
-        SupportedLanguage.PL,
-        SupportedLanguage.TR,
-        SupportedLanguage.RO,
-        SupportedLanguage.RU,
-        SupportedLanguage.NL,
-    }
+    assert set(registry) == set(SupportedLanguage)
 
     for language in registry:
         selection = select_voice(language)
@@ -75,6 +63,14 @@ def test_voice_registry_uses_requested_preferred_voices() -> None:
     assert select_voice(SupportedLanguage.FR).voice_id == "fr-FR-Remy:DragonHDLatestNeural"
     assert select_voice(SupportedLanguage.IT).voice_id == "it-IT-GiuseppeMultilingualNeural"
     assert select_voice(SupportedLanguage.RU).voice_id == "ru-RU-DmitryNeural"
+
+
+def test_voice_registry_selects_norwegian_bokmal_voice() -> None:
+    selection = select_voice(SupportedLanguage.NB)
+
+    assert selection.voice_id == "nb-NO-PernilleNeural"
+    assert selection.locale == "nb-NO"
+    assert selection.registry_version == VOICE_REGISTRY_VERSION
 
 
 def test_settings_expose_azure_speech_configuration() -> None:

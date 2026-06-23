@@ -72,6 +72,16 @@ def test_google_translate_adapter_selects_language_code_voice() -> None:
     assert selection.registry_version == "google-translate-tts-v1"
 
 
+def test_google_translate_adapter_selects_norwegian_bokmal_language() -> None:
+    adapter = GoogleTranslateSpeechAdapter(Settings(_env_file=None))
+
+    selection = adapter.select_voice(SupportedLanguage.NB)
+
+    assert selection.voice_id == "no"
+    assert selection.locale == "no"
+    assert selection.registry_version == "google-translate-tts-v1"
+
+
 def test_google_translate_adapter_rejects_empty_or_non_mp3_audio(tmp_path: Path) -> None:
     adapter = GoogleTranslateSpeechAdapter(
         Settings(_env_file=None),

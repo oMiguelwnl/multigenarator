@@ -26,12 +26,19 @@ def test_supported_languages() -> None:
         "ro",
         "ru",
         "nl",
+        "nb",
+        "la",
     }
-    assert "la" not in {language.value for language in SupportedLanguage}
 
     request = GenerationRequest(language="pt", source_type="frequency", level=1)
 
     assert request.language is SupportedLanguage.PT
+
+
+def test_generation_request_accepts_norwegian_bokmal() -> None:
+    request = GenerationRequest(language="nb", source_type="frequency", level=1)
+
+    assert request.language is SupportedLanguage.NB
 
 
 def test_generation_request_accepts_latin_mvp_source_for_shared_infrastructure() -> None:
@@ -41,9 +48,10 @@ def test_generation_request_accepts_latin_mvp_source_for_shared_infrastructure()
     assert request.source_type == "latin-mvp"
 
 
-def test_generation_request_keeps_la_out_of_modern_language_contract() -> None:
-    with pytest.raises(ValidationError):
-        GenerationRequest(language="la", source_type="frequency")
+def test_generation_request_accepts_latin_for_shared_infrastructure() -> None:
+    request = GenerationRequest(language="la", source_type="word-list")
+
+    assert request.language is SupportedLanguage.LA
 
 
 def test_latin_contracts_remain_importable_separate_from_modern_generation_request() -> None:

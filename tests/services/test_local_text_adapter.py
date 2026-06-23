@@ -151,6 +151,27 @@ def test_local_translation_adapter_localizes_definition_requests() -> None:
     assert result.provenance["source"] == "runtime-local-definition-translator"
 
 
+def test_local_runtime_supports_norwegian_bokmal_without_live_providers() -> None:
+    sentence = LocalSentenceAdapter().generate_sentence(
+        SentenceGenerationRequest(
+            display_form="bruke",
+            lemma="bruke",
+            definitions_html="verb: to use",
+            target_language="nb",
+            translation_target_language="en",
+        )
+    )
+    translation = LocalTranslationAdapter().translate_sentence(
+        SentenceTranslationRequest.from_sentence(
+            sentence_result=sentence,
+            translation_target_language="en",
+        )
+    )
+
+    assert sentence.sentence == "Broren min vil bruke i morgen."
+    assert translation.translation == "My brother wants to use tomorrow."
+
+
 def test_text_generation_service_accepts_representative_grounded_candidates() -> None:
     service = TextGenerationService(
         sentence_adapter=LocalSentenceAdapter(),

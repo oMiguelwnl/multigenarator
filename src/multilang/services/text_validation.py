@@ -118,6 +118,7 @@ _LANGUAGE_MARKERS = {
     "tr": {"ve", "bir", "bu", "için", "ile", "de", "da", "ben", "o", "çok"},
     "ro": {"și", "de", "la", "în", "este", "pentru", "cu", "eu", "el", "ea"},
     "nl": {"de", "het", "een", "en", "is", "in", "voor", "met", "ik", "hij", "zij"},
+    "nb": {"det", "en", "er", "et", "for", "han", "hun", "i", "jeg", "med", "og", "på"},
 }
 _FOREIGN_TOKEN_BLOCKLIST = {
     "pl": {"the", "le", "el", "la", "los", "las"},

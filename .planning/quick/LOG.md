@@ -7,3 +7,4 @@
 | 260527 | leia @latin-real-data-provider-handoff.md e realize TODAS as mudanças | 2026-06-17 | passed | [260527-leia-latin-real-data-provider-handoff-md](./260527-leia-latin-real-data-provider-handoff-md/) |
 | 260528 | Consolidar decisões de geração de cards em latim e alinhar evidência de áudio | 2026-06-22 | passed | [260528-latin-card-generation-decisions](./260528-latin-card-generation-decisions/) |
 | 006 | Corrigir ícone de áudio duplicado no tablet para cards fonéticos | 2026-06-23 | passed | [006-fix-phoneme-tablet-audio-icon](./006-fix-phoneme-tablet-audio-icon/) |
+| 007 | adicionar ao projeto a lingua Norueguesa | 2026-06-23 | passed | [007-adicionar-lingua-norueguesa](./007-adicionar-lingua-norueguesa/) |

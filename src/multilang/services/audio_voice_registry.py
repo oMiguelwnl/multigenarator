@@ -6,7 +6,7 @@ from pydantic import BaseModel, Field
 
 from multilang.domain.jobs import SupportedLanguage
 
-VOICE_REGISTRY_VERSION = "2026-04-26b"
+VOICE_REGISTRY_VERSION = "2026-06-23a"
 
 
 class VoiceSelectionError(ValueError):
@@ -93,6 +93,10 @@ _VOICE_REGISTRY: dict[SupportedLanguage, VoicePlan] = {
         preferred=VoiceOption(voice_id="nl-NL-ColetteNeural", locale="nl-NL"),
         same_locale_alternates=(VoiceOption(voice_id="nl-NL-MaartenNeural", locale="nl-NL"),),
         alternate_locale_alternates=(VoiceOption(voice_id="nl-BE-DenaNeural", locale="nl-BE"),),
+    ),
+    SupportedLanguage.NB: VoicePlan(
+        preferred=VoiceOption(voice_id="nb-NO-PernilleNeural", locale="nb-NO"),
+        same_locale_alternates=(VoiceOption(voice_id="nb-NO-FinnNeural", locale="nb-NO"),),
     ),
     SupportedLanguage.LA: VoicePlan(
         preferred=VoiceOption(voice_id="it-IT-IsabellaNeural", locale="it-IT"),
