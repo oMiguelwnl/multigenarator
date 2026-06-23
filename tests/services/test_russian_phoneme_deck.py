@@ -173,6 +173,9 @@ def test_build_russian_phoneme_model_uses_intro_template() -> None:
     assert _template_references(front).isdisjoint(forbidden_references)
     assert _template_references(back).isdisjoint(forbidden_references)
     assert "--color-audio-button: #8b6cff" in model.css
+    assert ".replay-button::before" not in model.css
+    assert ".replay-button svg { display: none; }" not in model.css
+    assert ".replay-button svg path" in model.css
     assert "pronunciationHighlight" not in front
     assert ".pronunciationHighlight" not in model.css
     assert note.fields == [

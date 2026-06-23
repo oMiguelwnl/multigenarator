@@ -288,16 +288,18 @@ body {
   line-height: 0;
 }
 
-.replay-button svg { display: none; }
+.replay-button svg {
+  width: 22px;
+  height: 22px;
+}
 
-.replay-button::before {
-  content: "";
-  display: block;
-  width: 0;
-  height: 0;
-  border-top: 9px solid transparent;
-  border-bottom: 9px solid transparent;
-  border-left: 16px solid var(--color-audio-button);
+.replay-button svg path {
+  fill: var(--color-audio-button);
+}
+
+.replay-button svg circle {
+  fill: none;
+  stroke: none;
 }
 
 .backRevealFallback { margin-top: 12px; }
