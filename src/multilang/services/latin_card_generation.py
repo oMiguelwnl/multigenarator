@@ -22,6 +22,7 @@ class LatinGeneratedCard(BaseModel):
     sequence: int = Field(ge=1)
     lemma: str = Field(min_length=1)
     target_form: str = Field(min_length=1)
+    definition: str = Field(min_length=1)
     latin_sentence: str = Field(min_length=1)
     gramatica: str = Field(min_length=1)
     morphology_note: str = Field(min_length=1)

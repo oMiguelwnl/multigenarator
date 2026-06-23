@@ -8,10 +8,11 @@ import re
 
 import genanki
 
-from multilang.domain.exporting import ExportCardRow, export_field_names_for_source_type
+from multilang.domain.exporting import ExportCardRow, export_field_names_for_source_type, LATIN_EXPORT_CARD_FIELD_NAMES
 from multilang.domain.jobs import SupportedLanguage
 from multilang.domain.source_profiles import get_source_profile
 from multilang.services.card_template_loader import load_card_template
+from multilang.services.latin_export import LATIN_MODEL_ID
 
 MODEL_ID = 1_602_300_501
 DECK_ID = 1_602_300_502
@@ -56,10 +57,14 @@ def build_multilang_model(
         "word-list": MANUAL_MODEL_ID,
         "kindle-highlights": HIGHLIGHT_MODEL_ID,
     }[profile.source_type]
+    # For la use Latin fields (Definition + Grammar) even if source_type is not latin-mvp
+    # Note: caller passes rows or we decide here; for simplicity if la force
+    is_la = language is not None and (language == "la" or getattr(language, "value", None) == "la")
+    fields_for_model = LATIN_EXPORT_CARD_FIELD_NAMES if is_la else export_field_names_for_source_type(source_type)
     return genanki.Model(
-        model_id,
-        profile.note_type_name,
-        fields=[{"name": field_name} for field_name in export_field_names_for_source_type(source_type)],
+        LATIN_MODEL_ID if is_la else model_id,
+        "Multilang::Classical Latin MVP" if is_la else profile.note_type_name,
+        fields=[{"name": field_name} for field_name in fields_for_model],
         templates=[
             {
                 "name": "Card 1",
@@ -72,7 +77,9 @@ def build_multilang_model(
 
 
 def build_multilang_note(row: ExportCardRow, *, model: genanki.Model | None = None) -> genanki.Note:
-    field_names = export_field_names_for_source_type(row.identity.source_type)
+    # For la force latin fields (even dynamic)
+    is_la = row.identity.language == "la" or getattr(row.identity.language, "value", None) == "la"
+    field_names = LATIN_EXPORT_CARD_FIELD_NAMES if is_la else export_field_names_for_source_type(row.identity.source_type)
     note = MultilangNote(
         model=model or build_multilang_model(
             source_type=row.identity.source_type,

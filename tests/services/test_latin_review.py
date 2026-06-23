@@ -28,7 +28,7 @@ def _record(**overrides: object) -> LatinCuratedRecord:
         "latin_sentence": "Et puer legit.",
         "source_pack_version": "latin-mvp-50-v1",
         "frequency_rank": 1,
-        "frequency_source": "DCC Latin Core Vocabulary",
+        "frequency_source": "As mil palavras mais frequentes do latim (mylittlewordland)",
         "source_type": "reference_example",
         "citation": "Reference example composed from standard classroom Latin usage",
         "work_reference": "Multilang Latin MVP reference example set",
@@ -70,7 +70,7 @@ def test_curated_record_requires_four_gates_and_preserves_provenance() -> None:
 
     assert record.item_key == "latin-mvp-0001"
     assert record.frequency_rank == 1
-    assert record.frequency_source == "DCC Latin Core Vocabulary"
+    assert record.frequency_source == "As mil palavras mais frequentes do latim (mylittlewordland)"
     assert record.source_type == "reference_example"
     assert record.citation.startswith("Reference example")
     assert record.source_gate.status == "approved"

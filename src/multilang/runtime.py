@@ -84,6 +84,7 @@ _LANGUAGE_NAMES = {
     SupportedLanguage.RO: "Romanian",
     SupportedLanguage.RU: "Russian",
     SupportedLanguage.NL: "Dutch",
+    SupportedLanguage.LA: "Latin",
 }
 
 
@@ -530,6 +531,17 @@ def build_runtime_service(
         retry_max_delay_seconds=runtime_settings.provider_retry_max_delay_seconds,
         retry_jitter_ratio=runtime_settings.provider_retry_jitter_ratio,
     )
+
+    # Latin structured generation service (uses the model for gramatica, definition etc. in dynamic flow)
+    latin_card_service = None
+    if hasattr(sentence_adapter, "generate_latin_cards"):
+        try:
+            from multilang.services.latin_card_generation import LatinCardGenerationService
+            latin_card_service = LatinCardGenerationService(
+                generator=lambda seeds: sentence_adapter.generate_latin_cards(seeds)
+            )
+        except Exception:
+            latin_card_service = None
     text_validation_service = TextValidationService()
     tatoeba_sentence_source = TatoebaSentenceSource(
         candidate_provider=(
@@ -567,6 +579,7 @@ def build_runtime_service(
             text_validation_service=text_validation_service,
             tatoeba_sentence_source=tatoeba_sentence_source,
             highlight_import_repository=highlight_import_repository,
+            latin_card_service=latin_card_service,
         ),
         regenerate_text_item_service=RegenerateTextItemService(
             job_repository=job_repository,
@@ -606,4 +619,10 @@ def _note_type_name_for_rows(rows: list[object]) -> str:
     if len(source_types) > 1:
         raise ValueError("cannot export mixed source types in one note model")
     source_type = next(iter(source_types), "frequency")
+    # For Latin (la), prefer the dedicated template that includes Definition + Grammar
+    # even in dynamic flows (non frozen). This keeps Latin card style.
+    # If using legacy latin-mvp source, it already maps to it.
+    deck_language = getattr(rows[0].identity, 'language', None) if rows else None
+    if deck_language == "la" or (hasattr(deck_language, 'value') and deck_language.value == "la"):
+        return "Multilang::Classical Latin MVP"
     return get_source_profile(source_type).note_type_name

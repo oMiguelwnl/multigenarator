@@ -28,6 +28,7 @@ def test_latin_export_field_order_excludes_removed_fields_and_classe() -> None:
     assert LATIN_EXPORT_FIELD_NAMES == (
         "SortIndex",
         "Word",
+        "Definition",
         "Sentence",
         "Sentence Translation",
         "Grammar",
@@ -54,6 +55,7 @@ def test_latin_export_row_mapping_preserves_blank_image_and_no_classe() -> None:
         sort_index=1,
         item_key="latin-mvp-0001",
         latin_word="puella",
+        definition="girl (nominative)",
         latin_sentence="Puella legit.",
         sentence_translation="A menina lê.",
         gramatica="subst Nominativus sg Suj",
@@ -84,6 +86,7 @@ def test_latin_export_row_rejects_nonblank_image() -> None:
             sort_index=1,
             item_key="latin-mvp-0001",
             latin_word="puella",
+            definition="girl (nominative)",
             latin_sentence="Puella legit.",
             sentence_translation="A menina lê.",
             gramatica="subst Nominativus sg Suj",
@@ -212,10 +215,12 @@ def test_latin_apkg_export_writes_dedicated_model_notes_and_media(tmp_path: Path
     latin_model = models[str(LATIN_MODEL_ID)]
     assert latin_model["name"] == LATIN_NOTE_TYPE_NAME
     assert [field["name"] for field in latin_model["flds"]] == list(LATIN_EXPORT_FIELD_NAMES)
-    assert fields[1] == "amor"
-    assert fields[3] == "O amor e grande."
-    assert fields[5] == "[sound:latin-mvp-0001-word.mp3]"
-    assert fields[7] == ""
+    assert fields[1] == "amor"  # Word
+    assert fields[2] == "amor"  # Definition (short PT in frozen assets)
+    assert fields[3] == "Amor magnus est."  # Sentence
+    assert fields[4] == "O amor e grande."  # Sentence Translation
+    assert fields[6] == "[sound:latin-mvp-0001-word.mp3]"
+    assert fields[8] == ""
     rendered_template = latin_model["tmpls"][0]["qfmt"] + latin_model["tmpls"][0]["afmt"]
     assert "Classe" not in rendered_template
     assert "{{Translation}}" not in rendered_template
@@ -250,8 +255,10 @@ def test_latin_tabular_exports_use_anki_headers_and_stable_fields(tmp_path: Path
     ]
     parsed_csv = list(csv.reader(csv_lines[5:]))[0]
     parsed_tsv = list(csv.reader(tsv_lines[5:], delimiter="\t"))[0]
-    assert parsed_csv[1:5] == ["amor", "Amor magnus est.", "O amor e grande.", "subst sg Nominativus Suj"]
-    assert parsed_tsv[5:8] == ["[sound:latin-mvp-0001-word.mp3]", "[sound:latin-mvp-0001-sentence.mp3]", ""]
+    # With Definition inserted: Word, Definition, Sentence, Sentence Translation, Grammar
+    assert parsed_csv[1:5] == ["amor", "amor", "Amor magnus est.", "O amor e grande."]
+    # audio positions shifted due to Definition field
+    assert parsed_tsv[6:9] == ["[sound:latin-mvp-0001-word.mp3]", "[sound:latin-mvp-0001-sentence.mp3]", ""]
     assert csv_result.card_count == 50
     assert tsv_result.card_count == 50
 

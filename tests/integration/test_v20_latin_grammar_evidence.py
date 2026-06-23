@@ -139,7 +139,7 @@ def test_phase_23_source_and_license_keys_remain_present_after_grammar_additions
     pack = load_latin_mvp_source_pack()
 
     assert {entry.license_gate for entry in pack.entries} == {"approved"}
-    assert all(entry.frequency_source == "DCC Latin Core Vocabulary" for entry in pack.entries)
+    assert all(entry.frequency_source == "As mil palavras mais frequentes do latim (mylittlewordland)" for entry in pack.entries)
     assert all(entry.citation and entry.work_reference and entry.source_url_or_id for entry in pack.entries)
     assert all(entry.inclusion_rationale and entry.didactic_order_rationale for entry in pack.entries)
     assert {entry.source_type for entry in pack.entries} <= {

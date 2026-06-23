@@ -29,6 +29,8 @@ class LatinCardValidationService:
 
     def validate(self, card: LatinGeneratedCard) -> list[LatinCardValidationIssue]:
         issues: list[LatinCardValidationIssue] = []
+        if not card.definition or not card.definition.strip():
+            issues.append(self._issue(card, "missing_definition", "definition must be provided"))
         if not validate_latin_target_presence(card.target_form, card.latin_sentence, "orthographic_normalization"):
             issues.append(self._issue(card, "target_form_missing", "target form must appear in the Latin sentence"))
         try:

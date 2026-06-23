@@ -34,9 +34,9 @@ def test_latin_source_candidates_preserve_new2_links() -> None:
         "https://finevoice.ai/voicelibrary/latin",
         "https://mylittlewordland.com/course/415114/as-mil-palavras-mais-frequentes-do-latim",
         "https://bridge.haverford.edu/",
-        "https://dcc.dickinson.edu/latin-core-list1",
-        "https://dcc.dickinson.edu/greek-core-list",
-        "https://dcc.dickinson.edu/pt/latin-core-list1",
+        "https://mylittlewordland.com/course/415114/as-mil-palavras-mais-frequentes-do-latim",
+        "https://mylittlewordland.com/greek-core-list",
+        "https://mylittlewordland.com/pt/latin-core-list1",
     }
 
 
@@ -56,7 +56,7 @@ def test_latin_source_candidates_mark_greek_as_related_reference_only() -> None:
 
     greek = candidates["reference-dcc-greek-core-list"]
 
-    assert greek["url"] == "https://dcc.dickinson.edu/greek-core-list"
+    assert greek["url"] == "https://mylittlewordland.com/greek-core-list"
     assert greek["category"] == "reference"
     assert greek["classification"] == "related_reference_only"
 

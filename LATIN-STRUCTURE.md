@@ -2,7 +2,7 @@
 
 Este arquivo serve como base para discutir um novo milestone GSD sobre suporte a Latim no Multilang.
 
-O escopo atual e somente Latim. Grego fica fora deste milestone.
+O escopo atual e Latim (dinamico via generate --language la). O caminho de dados congelados (latin-mvp 50 cards) e legacy e nao deve ser usado para novas geracoes.
 
 ## Direcao geral
 
@@ -185,7 +185,7 @@ Como `wordfreq` nao cobre Latim, precisamos buscar outra ferramenta ou montar no
 - Whitaker's Words: candidato para analise morfologica e formas latinas.
 - LemLat: candidato a avaliar para lematizacao latina.
 - Universal Dependencies Latin treebanks: candidato para corpus anotado e avaliacao morfologica.
-- Dickinson College Core Latin Vocabulary: candidato como lista pedagogica/frequencial de apoio.
+- https://mylittlewordland.com/course/415114/as-mil-palavras-mais-frequentes-do-latim : lista das mil palavras mais frequentes do Latim (baseado em DCC).
 
 Ponto para discutir: escolher uma ferramenta principal ou combinar varias com fallback.
 
@@ -207,7 +207,7 @@ O usuario quer gerar a partir de textos classicos e tambem procurar algum site/l
 ### Fontes candidatas para buscar frases
 
 - Perseus.
-- Dickinson College Commentaries.
+- O site mylittlewordland apresenta a lista de frequência.
 - Latin Library.
 - The Latin Library, se licenca/uso forem aceitaveis.
 - DCC Core Vocabulary, como apoio de vocabulario.
@@ -401,7 +401,7 @@ O card nao deve ser aceito se:
 
 4. A frequencia deve vir de qual corpus?
 5. A frequencia deve ser geral do Latim classico ou focada nos textos escolhidos?
-6. Devemos usar DCC Core Vocabulary como guia pedagogico junto com frequencia?
+6. Devemos usar a lista do mylittlewordland (baseado em DCC) como guia de frequencia para Latim?
 7. O ranking deve ser somente por lema ou ponderado por utilidade didatica?
 8. Como tratar palavras muito frequentes mas gramaticalmente complexas?
 

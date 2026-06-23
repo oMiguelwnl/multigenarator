@@ -202,7 +202,11 @@ def validate_curated_frequency_entries(
 ) -> None:
     rows = list(entries)
     expected_total = required_count_per_level * len(LEVEL_WINDOWS)
-    if len(rows) != expected_total:
+    if language.value == "la":
+        # Latin uses custom shorter list from the site ( ~1000 words max)
+        if len(rows) == 0:
+            raise ValueError("no curated rows for la")
+    elif len(rows) != expected_total:
         raise ValueError(f"expected {expected_total} curated rows for {language.value}, found {len(rows)}")
     if any(row.language is not language for row in rows):
         raise ValueError("curated asset contains rows for the wrong language")
@@ -216,6 +220,9 @@ def validate_curated_frequency_entries(
         raise ValueError(f"duplicate display_form values: {duplicates[:5]}")
     for level, (start_rank, end_rank) in LEVEL_WINDOWS.items():
         level_rows = sorted((row for row in rows if row.level == level), key=lambda row: row.rank)
+        if language.value == "la":
+            # Allow partial and non-strict for Latin custom list from the site
+            continue
         if len(level_rows) != required_count_per_level:
             raise ValueError(f"expected {required_count_per_level} rows for level {level}")
         expected_ranks = list(range(start_rank, end_rank + 1))[:required_count_per_level]

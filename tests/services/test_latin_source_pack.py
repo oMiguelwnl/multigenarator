@@ -25,8 +25,8 @@ def _entry(sequence: int = 1, **overrides: object) -> dict[str, object]:
         "target_form": f"lemma{sequence}",
         "latin_sentence": f"lemma{sequence} amat.",
         "frequency_rank": sequence,
-        "frequency_source": "DCC Latin Core Vocabulary",
-        "frequency_source_url": "https://dcc.dickinson.edu/latin-core-list1",
+        "frequency_source": "As mil palavras mais frequentes do latim (mylittlewordland)",
+        "frequency_source_url": "https://mylittlewordland.com/course/415114/as-mil-palavras-mais-frequentes-do-latim",
         "source_pack_version": "latin-mvp-50-v1",
         "inclusion_status": "included",
         "inclusion_rationale": "Core DCC lemma retained for the 50-card MVP.",
@@ -64,8 +64,8 @@ def _pack(**entry_overrides: object) -> dict[str, object]:
         "variant": "classical",
         "source_pack_version": "latin-mvp-50-v1",
         "card_count": 50,
-        "frequency_attribution": "DCC Latin Core Vocabulary, CC BY-SA.",
-        "license_attribution": "DCC Latin Core Vocabulary lemma metadata under CC BY-SA; adapted sentences are project-authored.",
+        "frequency_attribution": "As mil palavras mais frequentes do latim (mylittlewordland), CC BY-SA.",
+        "license_attribution": "As mil palavras mais frequentes do latim (mylittlewordland) lemma metadata under CC BY-SA; adapted sentences are project-authored.",
         "entries": entries,
     }
 

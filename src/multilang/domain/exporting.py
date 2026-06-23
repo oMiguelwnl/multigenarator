@@ -27,6 +27,7 @@ FREQUENCY_EXPORT_CARD_FIELD_NAMES = (
 LATIN_EXPORT_CARD_FIELD_NAMES = (
     "SortIndex",
     "Word",
+    "Definition",
     "Sentence",
     "Sentence Translation",
     "Grammar",
@@ -121,10 +122,24 @@ class ExportCardRow(BaseModel):
 
     def ordered_field_mapping(self, *, field_names: tuple[str, ...] | None = None) -> dict[str, object]:
         resolved_field_names = field_names or export_field_names_for_source_type(self.identity.source_type)
-        values = self.model_dump(by_alias=True, exclude={"identity", "note_guid"})
-        values["Word"] = values["word"]
-        values["Definition"] = values["Definitions"]
-        return {field_name: values[field_name] for field_name in resolved_field_names}
+        # Use non-alias for python attrs, then map to export names
+        data = self.model_dump(exclude={"identity", "note_guid"})
+        values: dict[str, object] = {}
+        values["Word"] = data.get("word") or data.get("Word") or ""
+        values["Definition"] = data.get("definitions") or data.get("Definitions") or data.get("definition") or ""
+        # For Latin dynamic (la), provide Grammar (fallback to Definition if no gramatica)
+        if "Grammar" in resolved_field_names:
+            values["Grammar"] = data.get("gramatica") or data.get("Grammar") or data.get("definitions") or data.get("Definitions") or ""
+        # Map sentence from normal attrs (example_sentence -> Sentence)
+        if "Sentence" in resolved_field_names:
+            values["Sentence"] = data.get("example_sentence") or data.get("Sentence") or ""
+        if "Sentence Translation" in resolved_field_names:
+            values["Sentence Translation"] = data.get("translation") or data.get("Translation") or data.get("sentence_translation") or ""
+        # Also carry audio/image if present in data
+        for k in ("word_audio", "sentence_audio", "Image", "SortIndex"):
+            if k in data:
+                values[k] = data[k]
+        return {field_name: values.get(field_name, "") for field_name in resolved_field_names}
 
 
 def export_field_names_for_source_type(source_type: str) -> tuple[str, ...]:
@@ -143,6 +158,14 @@ def export_field_names_for_rows(rows: list[ExportCardRow]) -> tuple[str, ...]:
     if len(source_types) > 1:
         raise ValueError("cannot resolve export field names for mixed source types")
     source_type = next(iter(source_types), "frequency")
+    # Dynamic Latin (any source_type with la) uses the Latin field set (includes Definition + Grammar)
+    # to support the dedicated template. This allows dropping frozen data while keeping Latin style.
+    languages = {getattr(row.identity, "language", None) for row in rows}
+    has_la = any(
+        (lang.value if hasattr(lang, "value") else lang) == "la" for lang in languages if lang is not None
+    )
+    if has_la:
+        return LATIN_EXPORT_CARD_FIELD_NAMES
     return export_field_names_for_source_type(source_type)
 
 

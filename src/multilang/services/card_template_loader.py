@@ -7,7 +7,7 @@ from importlib.resources import files
 from importlib.resources.abc import Traversable
 import re
 
-from multilang.domain.exporting import export_field_names_for_source_type
+from multilang.domain.exporting import export_field_names_for_source_type, LATIN_EXPORT_CARD_FIELD_NAMES
 from multilang.domain.jobs import SupportedLanguage
 from multilang.domain.source_profiles import get_source_profile
 
@@ -39,6 +39,12 @@ class CardTemplate:
 def load_card_template(source_type: str, *, language: SupportedLanguage | None = None) -> CardTemplate:
     """Load and validate the card template selected by a source profile."""
 
+    # For Latin (la), always use the dedicated template (supports Definition + Grammar).
+    # This works for both legacy latin-mvp and dynamic flows (word-list etc.),
+    # allowing drop of frozen data dependency while preserving Latin card structure.
+    is_la = language is not None and (language == "la" or getattr(language, "value", None) == "la")
+    if is_la:
+        source_type = "latin-mvp"
     profile = get_source_profile(source_type)
     template_path = TEMPLATE_ROOT.joinpath(_TEMPLATE_FILES[profile.template_name])
     content = template_path.read_text(encoding="utf-8")
@@ -49,9 +55,10 @@ def load_card_template(source_type: str, *, language: SupportedLanguage | None =
     )
     if profile.source_type == "frequency" and language is SupportedLanguage.EN:
         template = _localize_english_frequency_labels(template)
+    field_names = LATIN_EXPORT_CARD_FIELD_NAMES if is_la else export_field_names_for_source_type(profile.source_type)
     validate_template_references(
         template,
-        field_names=export_field_names_for_source_type(profile.source_type),
+        field_names=field_names,
     )
     return template
 

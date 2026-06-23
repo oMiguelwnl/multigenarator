@@ -94,6 +94,11 @@ _VOICE_REGISTRY: dict[SupportedLanguage, VoicePlan] = {
         same_locale_alternates=(VoiceOption(voice_id="nl-NL-MaartenNeural", locale="nl-NL"),),
         alternate_locale_alternates=(VoiceOption(voice_id="nl-BE-DenaNeural", locale="nl-BE"),),
     ),
+    SupportedLanguage.LA: VoicePlan(
+        preferred=VoiceOption(voice_id="it-IT-IsabellaNeural", locale="it-IT"),
+        same_locale_alternates=(VoiceOption(voice_id="it-IT-DiegoNeural", locale="it-IT"),),
+        alternate_locale_alternates=(),
+    ),
 }
 
 

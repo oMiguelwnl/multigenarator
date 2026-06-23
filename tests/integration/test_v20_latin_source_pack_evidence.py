@@ -26,7 +26,7 @@ def test_freq_01_freq_02_frozen_50_entries_have_versioned_frequency_metadata() -
     assert len(pack.entries) == 50
     assert pack.source_pack_version == "latin-mvp-50-v1"
     assert all(entry.frequency_rank >= 1 for entry in pack.entries)
-    assert {entry.frequency_source for entry in pack.entries} == {"DCC Latin Core Vocabulary"}
+    assert {entry.frequency_source for entry in pack.entries} == {"As mil palavras mais frequentes do latim (mylittlewordland)"}
     assert "CC BY-SA" in pack.frequency_attribution
 
 

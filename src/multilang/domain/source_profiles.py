@@ -55,7 +55,7 @@ SOURCE_PROFILES: dict[SourceType, SourceProfile] = {
         max_sentence_tokens=20,
         note_type_name="Multilang::Latin MVP Card",
         template_name="latin_mvp_card",
-    ),
+    ),  # LEGACY: frozen data path. For new Latin decks without frozen assets, use --language la --source word-list (dynamic generation with Definition field)
 }
 
 SUPPORTED_SOURCE_TYPES: tuple[SourceType, ...] = tuple(SOURCE_PROFILES.keys())

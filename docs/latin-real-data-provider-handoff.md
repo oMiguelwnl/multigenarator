@@ -30,7 +30,7 @@ Files that must be regenerated:
 
 ## Required Changes
 
-1. Replace dummy source data with real Latin lemmas, preferably from DCC Latin Core Vocabulary or another verified Latin source.
+1. Replace dummy source data with real Latin lemmas from the frequency list at https://mylittlewordland.com/course/415114/as-mil-palavras-mais-frequentes-do-latim (or the DCC equivalent it is based on).
 2. Generate real short Latin learner sentences for each lemma using OpenRouter.
 3. Validate each card locally and with OpenRouter:
    - target form appears in the sentence

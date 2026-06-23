@@ -711,6 +711,8 @@ def create_app(
     ) -> None:
         if source not in {"frequency", "word-list", "highlights"}:
             raise typer.BadParameter("--source must be one of: frequency, word-list, highlights")
+        if language == SupportedLanguage.LA and source == "frequency":
+            raise typer.BadParameter("--source frequency is not supported for Latin (la); use --source word-list with a list of lemmas instead (frozen data path is legacy)")
         if webdav_remote_path is not None and source != "highlights":
             raise typer.BadParameter("--webdav-remote-path is only valid when --source highlights")
         if webdav_remote_path is not None and input_file is not None:
@@ -882,6 +884,10 @@ def create_app(
             ),
         ] = False,
     ) -> None:
+        # LEGACY FROZEN DATA:
+        # These latin-mvp commands use the curated/frozen assets under data/latin_mvp/.
+        # To stop using frozen data and generate Latin dynamically (with Definition field etc.):
+        #   uv run multilang generate --language la --source word-list --input-file your-lemmas.txt
         request = LatinGenerationRequest(source_pack_version=source_pack_version)
         try:
             latin_service = resolve_latin_mvp_service()
@@ -991,7 +997,7 @@ def create_app(
     def export_latin_mvp(
         format: Annotated[
             ExportArtifactFormat,
-            typer.Option("--format", help="Latin export format: apkg, csv, or tsv."),
+            typer.Option("--format", help="Latin export format: apkg, csv, or tsv. (LEGACY: frozen curated data; for dynamic non-frozen use 'generate --language la --source word-list')"),
         ],
         output_dir: Annotated[
             Path,

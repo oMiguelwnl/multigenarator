@@ -47,6 +47,7 @@ class LatinExportRow:
     sort_index: int
     item_key: str
     latin_word: str
+    definition: str
     latin_sentence: str
     sentence_translation: str
     gramatica: str
@@ -62,6 +63,7 @@ class LatinExportRow:
         for field_name in (
             "item_key",
             "latin_word",
+            "definition",
             "latin_sentence",
             "sentence_translation",
             "gramatica",
@@ -78,6 +80,7 @@ class LatinExportRow:
         return {
             "SortIndex": self.sort_index,
             "Word": self.latin_word,
+            "Definition": self.definition,
             "Sentence": self.latin_sentence,
             "Sentence Translation": self.sentence_translation,
             "Grammar": self.gramatica,
@@ -177,6 +180,7 @@ def build_latin_export_rows(
                 sort_index=source_entry.sequence,
                 item_key=source_entry.item_key,
                 latin_word=source_entry.target_form,
+                definition=translation.short_translation_pt,
                 latin_sentence=source_entry.latin_sentence,
                 sentence_translation=translation.sentence_translation_pt,
                 gramatica=source_entry.gramatica,

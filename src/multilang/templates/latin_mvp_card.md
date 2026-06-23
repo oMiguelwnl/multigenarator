@@ -21,6 +21,15 @@ It intentionally mirrors the wordfreq `normal_card.md` structure and styling whi
   <div class="dividerLine"></div>
 
   <div class="horizontalPadding">
+    <div class="header">Definition:</div>
+    <div class="indent">
+      <ul class="definitionsList">
+        <li>{{Definition}}</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="horizontalPadding">
     <div class="header">Grammar:</div>
     <div class="indent">
       <ul class="definitionsList">
@@ -458,6 +467,7 @@ body {
 
 ## Notes
 
+- Added `Definition` field (populated from short Portuguese translation in current frozen MVP assets; will be LLM-generated in dynamic flow).
 - The `Sentence Translation` field is hidden on the front and revealed on the back via the inline `<script>` tag.
 - The `Image` field renders directly below the grammar note when populated; the `{{#Image}}...{{/Image}}` conditional keeps the card clean when blank.
 - The template keeps the wordfreq/normal-card layout, spacing, audio placement, image handling, and CSS so Latin MVP exports share the same visual base.
