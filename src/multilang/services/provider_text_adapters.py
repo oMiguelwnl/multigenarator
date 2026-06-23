@@ -18,6 +18,16 @@ from multilang.services.text_generation import (
 )
 from multilang.settings import Settings
 
+# Import for Latin structured (lazy to avoid circular if needed)
+try:
+    from multilang.services.latin_card_generation import LatinCardGenerationSeed
+    from multilang.services.latin_card_validation import LatinCardValidationService
+    from multilang.services.latin_card_generation import LatinGeneratedCard
+except Exception:
+    LatinCardGenerationSeed = None  # type: ignore
+    LatinCardValidationService = None  # type: ignore
+    LatinGeneratedCard = None  # type: ignore
+
 
 CompletionFunc = Callable[..., Any]
 TranslatorFactory = Callable[[str], Any]
@@ -137,6 +147,133 @@ class LiteLLMSentenceAdapter:
                 **_usage_metadata(response),
             },
         )
+
+    def generate_latin_cards(self, seeds: list) -> list[dict]:
+        """Use structured LLM output to generate full Latin cards matching LatinGeneratedCard.
+        Ensures 'gramatica' follows the exact short format from LATIN-STRUCTURE.md.
+        Includes basic self-correction loop using LatinCardValidationService to reduce errors.
+        """
+        if not seeds or LatinCardGenerationSeed is None:
+            return []
+
+        validator = LatinCardValidationService() if LatinCardValidationService else None
+        max_attempts = 3
+
+        gramatica_rules = (
+            "For the 'gramatica' field use EXACTLY this short standardized format:\n"
+            "target_form: [pos] [gender?], [decl/conj], [case] [number], [function].\n"
+            "Examples:\n"
+            "virum: subst masc, 2a declinacao, Accusativus singularis, OD.\n"
+            "puella: subst fem, 1a declinacao, Nominativus singularis, Suj.\n"
+            "cano: v, 3a conjugacao, 1a pessoa singular, praesens indicativus activus, verbo principal.\n"
+            "cum: prep + Ablativus, introduz complemento circunstancial.\n"
+            "Allowed tokens ONLY: subst, adj, v, pron, prep, conj, adv, masc, fem, neut, sg, pl, "
+            "Nominativus, Vocativus, Accusativus, Genitivus, Dativus, Ablativus, "
+            "Suj, OD, OI, Pred, Circ, Conj, Mod, V, pres, imperf, fut, perf, plup, ind, subj, imp, inf, act, pass, "
+            "1sg, 2sg, 3sg, 1pl, 2pl, 3pl.\n"
+            "Keep 'gramatica' very short and direct. It must describe ONLY the grammatical form of the target word AS IT APPEARS in the sentence."
+        )
+
+        few_shot = (
+            "=== EXAMPLES OF CORRECT OUTPUT ===\n"
+            "Seed: lemma=vir, target_form=virum, part_of_speech=subst\n"
+            "Output card:\n"
+            "{\n"
+            '  "sequence": 1, "lemma": "vir", "target_form": "virum",\n'
+            '  "definition": "homem (acusativo)",\n'
+            '  "latin_sentence": "Arma virumque cano.",\n'
+            '  "gramatica": "virum: subst masc, 2a declinacao, Accusativus singularis, OD.",\n'
+            '  "morphology_note": "virum is accusative singular of vir, 2nd declension, functioning as direct object."\n'
+            "}\n\n"
+            "Seed: lemma=puella, target_form=puella, part_of_speech=subst\n"
+            "Output card:\n"
+            "{\n"
+            '  "sequence": 2, "lemma": "puella", "target_form": "puella",\n'
+            '  "definition": "menina, moça",\n'
+            '  "latin_sentence": "Puella in horto legit.",\n'
+            '  "gramatica": "puella: subst fem, 1a declinacao, Nominativus singularis, Suj.",\n'
+            '  "morphology_note": "puella is nominative singular feminine subject."\n'
+            "}\n"
+        )
+
+        base_user_prompt = (
+            "You are an expert teacher of Classical Latin creating high-quality Anki cards for beginners.\n"
+            "Follow Rafael Falcon style: short, clear, natural sentences that help the student read real Latin.\n\n"
+            "CRITICAL RULES:\n"
+            "- The 'latin_sentence' MUST contain the exact 'target_form' as a whole word/token (use orthographic normalization for matching).\n"
+            "- Choose a simple, plausible classical-style sentence suitable for learners.\n"
+            "- Use correct morphology: the target_form must be grammatically correct in its syntactic role in the sentence.\n"
+            "- Reason internally: determine the required case/number/person/function for the target_form BEFORE writing the sentence.\n"
+            "- 'definition' = short Portuguese learner definition.\n"
+            "- 'gramatica' must follow the EXACT format and allowed tokens only.\n"
+            "- 'morphology_note' briefly explains the form and function.\n\n"
+            f"{few_shot}\n\n"
+            f"{gramatica_rules}\n\n"
+            "Return ONLY a JSON object with key 'cards' containing an array of objects.\n"
+            "Each object MUST have exactly: sequence, lemma, target_form, definition, latin_sentence, gramatica, morphology_note.\n\n"
+        )
+
+        previous_feedback = ""
+        for attempt in range(1, max_attempts + 1):
+            if attempt == 1:
+                user_content = base_user_prompt + (
+                    f"Seeds: {[ {'sequence': s.sequence, 'lemma': s.lemma, 'target_form': s.target_form, 'part_of_speech': s.part_of_speech} for s in seeds ]}"
+                )
+            else:
+                user_content = base_user_prompt + (
+                    "PREVIOUS ATTEMPT HAD VALIDATION ERRORS. Fix them strictly.\n"
+                    f"Problems from last attempt: {previous_feedback}\n\n"
+                    "Fix every listed problem (especially: target_form must appear in the sentence, correct gramatica format, correct morphology).\n"
+                    f"Seeds: {[ {'sequence': s.sequence, 'lemma': s.lemma, 'target_form': s.target_form, 'part_of_speech': s.part_of_speech} for s in seeds ]}"
+                )
+
+            response = self._completion(
+                model=self._model,
+                messages=[
+                    {"role": "system", "content": "Output only valid JSON. Never add explanations outside the JSON."},
+                    {"role": "user", "content": user_content},
+                ],
+                temperature=0.1 if attempt == 1 else 0.05,
+                response_format={"type": "json_object"},
+                **({"api_key": self._api_key} if self._api_key else {}),
+            )
+            payload = _json_payload_from_response(response)
+            cards = payload.get("cards") or payload
+            if isinstance(cards, dict):
+                cards = [cards]
+            cards = [c for c in cards if isinstance(c, dict)]
+
+            if not validator or not cards:
+                return cards
+
+            # Validate and keep only clean ones; if all good or last attempt, return
+            clean_cards = []
+            all_issues = []
+            for c in cards:
+                try:
+                    card_obj = LatinGeneratedCard.model_validate(c) if LatinGeneratedCard else None
+                    if card_obj:
+                        issues = validator.validate(card_obj)
+                        if not issues:
+                            clean_cards.append(c)
+                        else:
+                            all_issues.extend([f"seq {i.sequence}: {i.code} - {i.detail}" for i in issues])
+                    else:
+                        clean_cards.append(c)
+                except Exception:
+                    # If validation model fails, still return raw for upper layer
+                    clean_cards.append(c)
+
+            previous_feedback = "; ".join(all_issues) if all_issues else ""
+
+            if clean_cards and (len(clean_cards) >= len(seeds) or attempt == max_attempts):
+                return clean_cards or cards
+
+            if attempt == max_attempts:
+                return cards or clean_cards
+
+            # Continue to next attempt with feedback
+        return cards or []
 
 
 class DeepLTranslationAdapter:

@@ -22,6 +22,7 @@ from multilang.domain.text_quality import (
     ValidationStatus,
 )
 from multilang.services.text_generation import (
+    GeneratedSentence,
     GeneratedTextBundle,
     SentenceGenerationFallback,
     SentenceGenerationResult,
@@ -29,6 +30,14 @@ from multilang.services.text_generation import (
 )
 from multilang.services.rate_limit import RateLimiter
 from multilang.services.text_validation import TextValidationResult, TextValidationService
+
+# For dynamic Latin structured generation (using the model for gramatica etc.)
+try:
+    from multilang.services.latin_card_generation import LatinCardGenerationSeed, LatinCardGenerationService, LatinGeneratedCard
+except Exception:
+    LatinCardGenerationSeed = None  # type: ignore
+    LatinCardGenerationService = None  # type: ignore
+    LatinGeneratedCard = None  # type: ignore
 
 
 class TatoebaSentenceSource(Protocol):
@@ -78,6 +87,7 @@ class GenerateTextItemsService:
         text_validation_service: TextValidationService,
         tatoeba_sentence_source: TatoebaSentenceSource,
         highlight_import_repository: Any | None = None,
+        latin_card_service: Any | None = None,
     ) -> None:
         self.job_repository = job_repository
         self.lexical_repository = lexical_repository
@@ -86,6 +96,7 @@ class GenerateTextItemsService:
         self.text_validation_service = text_validation_service
         self.tatoeba_sentence_source = tatoeba_sentence_source
         self.highlight_import_repository = highlight_import_repository
+        self.latin_card_service = latin_card_service  # for dynamic la using the structured model
 
     def execute(
         self,
@@ -132,7 +143,32 @@ class GenerateTextItemsService:
         if max_items is not None and not repair_only and not callable(getattr(self.text_repository, "claim_generation_candidates", None)):
             candidates = candidates[:max_items]
 
-        for persisted_candidate in candidates:
+        # For dynamic Latin (la), use the LatinCardGenerationService + model so the AI fills
+        # gramatica (and definition/sentence) using the structured schema + gramatica template.
+        latin_cards_by_index: dict[int, Any] = {}
+        if deck_language == SupportedLanguage.LA and self.latin_card_service is not None and candidates:
+            seeds = []
+            for i, c in enumerate(candidates):
+                try:
+                    seed = LatinCardGenerationSeed(
+                        sequence=i + 1,
+                        lemma=str(getattr(c, 'lemma', getattr(c, 'display_form', 'unknown'))),
+                        target_form=str(getattr(c, 'display_form', getattr(c, 'lemma', 'unknown'))),
+                        part_of_speech=str(getattr(c, 'part_of_speech', 'unknown')),
+                    )
+                    seeds.append(seed)
+                except Exception:
+                    pass
+            if seeds:
+                try:
+                    # Generate for all candidates (structured + gramatica rules + internal validation+retry)
+                    _cards = self.latin_card_service.generate(seeds)
+                    for idx, card in enumerate(_cards):
+                        latin_cards_by_index[idx] = card
+                except Exception:
+                    pass  # fall back to general mapping
+
+        for candidate_index, persisted_candidate in enumerate(candidates):
             candidate_id = getattr(persisted_candidate, "id")
             item_key = getattr(persisted_candidate, "item_key")
             lexical_candidate = self._to_candidate(persisted_candidate)
@@ -153,6 +189,26 @@ class GenerateTextItemsService:
                 highlight_context=highlight_context,
                 rate_limiter=rate_limiter,
             )
+
+            # Use pre-generated high-quality Latin card (with correct gramatica + sentence) when available.
+            # This is the main way to get low-error Latin output.
+            if deck_language == SupportedLanguage.LA and candidate_index in latin_cards_by_index:
+                lat_card = latin_cards_by_index[candidate_index]
+                try:
+                    lat_sentence = getattr(lat_card, "latin_sentence", None) or (lat_card.get("latin_sentence") if isinstance(lat_card, dict) else None)
+                    if lat_sentence:
+                        lat_gramatica = getattr(lat_card, "gramatica", None) or (lat_card.get("gramatica") if isinstance(lat_card, dict) else None)
+                        prov = {"provider": "latin-structured", "via": "latin_card_service"}
+                        if lat_gramatica:
+                            prov["gramatica"] = str(lat_gramatica)
+                        # Override the sentence in the bundle with the structured Latin one (better grammar control)
+                        generated_bundle.sentence = GeneratedSentence(
+                            text=str(lat_sentence),
+                            target_language=deck_language.value,
+                            provenance=prov,
+                        )
+                except Exception:
+                    pass
             validation = self._validate_bundle(
                 bundle=generated_bundle,
                 candidate=lexical_candidate,
