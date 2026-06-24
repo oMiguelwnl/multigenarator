@@ -29,6 +29,7 @@ _LANGUAGE_LOCALES = {
     SupportedLanguage.RU: "ru-RU",
     SupportedLanguage.NL: "nl-NL",
     SupportedLanguage.NB: "nb-NO",
+    SupportedLanguage.SV: "sv-SE",
 }
 _VOICE_REGISTRY_VERSION = "elevenlabs-premade-v1"
 _VOICE_BY_LANGUAGE = {
@@ -46,6 +47,7 @@ _VOICE_BY_LANGUAGE = {
     SupportedLanguage.RU: "VR6AewLTigWG4xSOukaG",  # Arnold
     SupportedLanguage.NL: "TxGEqnHWrfWFTfGW9XjX",  # Josh
     SupportedLanguage.NB: "TxGEqnHWrfWFTfGW9XjX",  # Josh
+    SupportedLanguage.SV: "TxGEqnHWrfWFTfGW9XjX",  # Josh
 }
 
 

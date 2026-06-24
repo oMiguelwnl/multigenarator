@@ -179,7 +179,7 @@ def test_generate_command_rejects_unsupported_language() -> None:
 
     result = runner.invoke(
         app,
-        ["generate", "--language", "sv", "--source", "frequency", "--level", "1"],
+        ["generate", "--language", "zz", "--source", "frequency", "--level", "1"],
     )
 
     assert result.exit_code != 0
@@ -775,6 +775,7 @@ def test_generate_command_default_runtime_reports_audio_counters(tmp_path: Path,
             database_url=f"sqlite+pysqlite:///{database_path}",
             lexicon_data_dir=lexicon_dir,
             audio_storage_dir=tmp_path / "audio",
+            audio_provider="azure",
             azure_speech_key="key",
             azure_speech_region="eastus",
             tatoeba_enabled=False,

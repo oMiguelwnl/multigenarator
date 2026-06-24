@@ -96,6 +96,15 @@ def test_elevenlabs_adapter_uses_default_voice_for_norwegian_bokmal() -> None:
     assert selection.locale == "nb-NO"
 
 
+def test_elevenlabs_adapter_uses_default_voice_for_swedish() -> None:
+    adapter = ElevenLabsSpeechAdapter(Settings(_env_file=None))
+
+    selection = adapter.select_voice(SupportedLanguage.SV)
+
+    assert selection.voice_id == "TxGEqnHWrfWFTfGW9XjX"
+    assert selection.locale == "sv-SE"
+
+
 def test_elevenlabs_adapter_requires_credentials(tmp_path: Path) -> None:
     adapter = ElevenLabsSpeechAdapter(Settings(_env_file=None))
 

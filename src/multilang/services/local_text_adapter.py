@@ -38,6 +38,7 @@ _SENSE_TRANSLATIONS = {
         "pt": "usar",
         "ro": "folosi",
         "ru": "использовать",
+        "sv": "använda",
         "tr": "kullanmak",
     },
     "wash": {
@@ -52,6 +53,7 @@ _SENSE_TRANSLATIONS = {
         "pt": "lavar",
         "ro": "a se spăla",
         "ru": "мыться",
+        "sv": "tvätta sig",
         "tr": "yıkanmak",
     },
 }
@@ -68,6 +70,7 @@ _VERB_TEMPLATES = {
     "pt": "Meu irmão quer {term} amanhã.",
     "ro": "Fratele meu vrea să {term} mâine.",
     "ru": "Мой брат хочет {term} завтра.",
+    "sv": "Min bror vill {term} i morgon.",
     "tr": "Kardeşim yarın {term} istiyor.",
 }
 
@@ -83,6 +86,7 @@ _TERM_TEMPLATES = {
     "pt": "Amigos comentam {term} durante o almoço.",
     "ro": "Vecinii discută {term} în timpul cinei.",
     "ru": "Соседи обсуждают {term} за ужином.",
+    "sv": "Grannar diskuterar {term} under middagen.",
     "tr": "Komşular akşam yemeğinde {term} tartışır.",
 }
 
@@ -98,6 +102,7 @@ _HIGHLIGHT_TEMPLATES = {
     "pt": "Leitores percebem {term} durante o capítulo silencioso.",
     "ro": "Cititorii observă {term} în timpul capitolului liniștit.",
     "ru": "Читатели замечают {term} во время тихой главы.",
+    "sv": "Läsare lägger märke till {term} i det lugna kapitlet.",
     "tr": "Okurlar sakin bölümde {term} ifadesini fark eder.",
 }
 
@@ -308,6 +313,7 @@ _DEFINITION_LABELS = {
     "pt": {"noun": "substantivo", "verb": "verbo", "adjective": "adjetivo", "adverb": "advérbio"},
     "ro": {"noun": "substantiv", "verb": "verb", "adjective": "adjectiv", "adverb": "adverb"},
     "ru": {"noun": "существительное", "verb": "глагол", "adjective": "прилагательное", "adverb": "наречие"},
+    "sv": {"noun": "substantiv", "verb": "verb", "adjective": "adjektiv", "adverb": "adverb"},
     "tr": {"noun": "isim", "verb": "fiil", "adjective": "sıfat", "adverb": "zarf"},
 }
 
@@ -345,6 +351,7 @@ def _translate_definition_meaning(meaning: str, language: str) -> str:
             "pt": "definição de",
             "ro": "definiție pentru",
             "ru": "определение для",
+            "sv": "definition av",
             "tr": "tanımı",
         }
         return f"{prefixes.get(language, 'definition for')} {term}".strip()

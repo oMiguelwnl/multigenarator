@@ -56,6 +56,7 @@ _TATOEBA_API_CODES = {
     "pt": "por",
     "ro": "ron",
     "ru": "rus",
+    "sv": "swe",
     "tr": "tur",
 }
 

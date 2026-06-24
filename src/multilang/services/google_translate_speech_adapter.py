@@ -28,6 +28,7 @@ _LANGUAGE_CODES = {
     SupportedLanguage.RU: "ru",
     SupportedLanguage.NL: "nl",
     SupportedLanguage.NB: "no",
+    SupportedLanguage.SV: "sv",
 }
 _VOICE_REGISTRY_VERSION = "google-translate-tts-v1"
 

@@ -48,6 +48,7 @@ _LANGUAGE_NAMES = {
     "ru": "Russian",
     "nl": "Dutch",
     "nb": "Norwegian Bokmal",
+    "sv": "Swedish",
     "la": "Latin",
 }
 
@@ -64,6 +65,7 @@ _DEEPL_TARGET_LANGUAGES = {
     "ru": "RU",
     "nl": "NL",
     "nb": "NB",
+    "sv": "SV",
 }
 
 _SYSTEM_PROMPT = """You create one natural learner example sentence for an Anki vocabulary card.

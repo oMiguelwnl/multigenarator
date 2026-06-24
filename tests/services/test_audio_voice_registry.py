@@ -73,6 +73,14 @@ def test_voice_registry_selects_norwegian_bokmal_voice() -> None:
     assert selection.registry_version == VOICE_REGISTRY_VERSION
 
 
+def test_voice_registry_selects_swedish_voice() -> None:
+    selection = select_voice(SupportedLanguage.SV)
+
+    assert selection.voice_id == "sv-SE-SofieNeural"
+    assert selection.locale == "sv-SE"
+    assert selection.registry_version == VOICE_REGISTRY_VERSION
+
+
 def test_settings_expose_azure_speech_configuration() -> None:
     settings = Settings(
         _env_file=None,

@@ -27,6 +27,7 @@ def test_supported_languages() -> None:
         "ru",
         "nl",
         "nb",
+        "sv",
         "la",
     }
 
@@ -39,6 +40,12 @@ def test_generation_request_accepts_norwegian_bokmal() -> None:
     request = GenerationRequest(language="nb", source_type="frequency", level=1)
 
     assert request.language is SupportedLanguage.NB
+
+
+def test_generation_request_accepts_swedish() -> None:
+    request = GenerationRequest(language="sv", source_type="frequency", level=1)
+
+    assert request.language is SupportedLanguage.SV
 
 
 def test_generation_request_accepts_latin_mvp_source_for_shared_infrastructure() -> None:
@@ -64,7 +71,7 @@ def test_latin_contracts_remain_importable_separate_from_modern_generation_reque
 
 def test_generation_request_rejects_unsupported_language() -> None:
     with pytest.raises(ValidationError):
-        GenerationRequest(language="sv", source_type="frequency", level=1)
+        GenerationRequest(language="zz", source_type="frequency", level=1)
 
 
 def test_generation_request_accepts_existing_frequency_source_type() -> None:

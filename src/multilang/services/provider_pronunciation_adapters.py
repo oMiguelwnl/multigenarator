@@ -32,6 +32,7 @@ _LANGUAGE_NAMES = {
     "ru": "Russian",
     "nl": "Dutch",
     "nb": "Norwegian Bokmal",
+    "sv": "Swedish",
 }
 
 
