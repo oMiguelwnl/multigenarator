@@ -84,6 +84,7 @@ _LANGUAGE_NAMES = {
     SupportedLanguage.RO: "Romanian",
     SupportedLanguage.RU: "Russian",
     SupportedLanguage.NL: "Dutch",
+    SupportedLanguage.DA: "Danish",
     SupportedLanguage.NB: "Norwegian Bokmal",
     SupportedLanguage.SV: "Swedish",
     SupportedLanguage.LA: "Latin",

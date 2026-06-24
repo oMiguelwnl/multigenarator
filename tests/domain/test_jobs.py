@@ -26,6 +26,7 @@ def test_supported_languages() -> None:
         "ro",
         "ru",
         "nl",
+        "da",
         "nb",
         "sv",
         "la",
@@ -40,6 +41,12 @@ def test_generation_request_accepts_norwegian_bokmal() -> None:
     request = GenerationRequest(language="nb", source_type="frequency", level=1)
 
     assert request.language is SupportedLanguage.NB
+
+
+def test_generation_request_accepts_danish() -> None:
+    request = GenerationRequest(language="da", source_type="frequency", level=1)
+
+    assert request.language is SupportedLanguage.DA
 
 
 def test_generation_request_accepts_swedish() -> None:

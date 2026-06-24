@@ -35,44 +35,92 @@ def _rejection_reason(token: str) -> str | None:
     return None
 
 
-def build_assets(*, assets_dir: Path, version: str, scan_limit: int = 25000) -> None:
-    for code in DEFAULT_SUPPORTED_LANGUAGES:
-        language = SupportedLanguage(code)
-        target_dir = assets_dir / code
-        target_dir.mkdir(parents=True, exist_ok=True)
-        curated_rows: list[dict[str, object]] = []
-        rejection_rows: list[dict[str, object]] = []
-        seen_lemmas: set[str] = set()
-        seen_displays: set[str] = set()
-        if code == "la":
-            # Latin uses custom frequency list from the site (e.g. https://mylittlewordland.com/course/415114/as-mil-palavras-mais-frequentes-do-latim )
-            # Expect a file assets/frequency/la/source-list.txt with one lemma per line, in frequency order.
-            source_list_path = target_dir / "source-list.txt"
-            if not source_list_path.exists():
-                print(f"Warning: {source_list_path} not found. Using sample data. Download the list from the site and save as source-list.txt (one word per line).")
-                tokens = ["sum", "et", "in", "non", "qui", "hic", "esse", "cum", "ego", "is"]  # minimal sample
-            else:
-                with source_list_path.open(encoding="utf-8") as f:
-                    tokens = [line.strip() for line in f if line.strip()]
-            source_rank = 0
-            for token in tokens:
-                source_rank += 1
-                if source_rank > scan_limit or len(curated_rows) >= 3000:
-                    break
-                reason = _rejection_reason(token)
-                lemma_key = token.casefold()
-                display_key = token.casefold()
-                if reason is None and lemma_key in seen_lemmas:
-                    reason = "duplicate_lemma_key"
-                if reason is None and display_key in seen_displays:
-                    reason = "duplicate_display_form"
-                if reason is not None:
-                    rejection_rows.append(_rejection_row(language, version, source_rank, token, reason))
-                    continue
-                rank = len(curated_rows) + 1
-                seen_lemmas.add(lemma_key)
-                seen_displays.add(display_key)
-                curated_rows.append({
+def build_assets(
+    *,
+    assets_dir: Path,
+    version: str,
+    scan_limit: int = 25000,
+    language_code: str | None = None,
+) -> None:
+    for code in _language_codes(language_code):
+        _build_language_asset(code=code, assets_dir=assets_dir, version=version, scan_limit=scan_limit)
+
+
+def _language_codes(language_code: str | None) -> tuple[str, ...]:
+    if language_code is None:
+        return DEFAULT_SUPPORTED_LANGUAGES
+    return (language_code,)
+
+
+def _build_language_asset(*, code: str, assets_dir: Path, version: str, scan_limit: int) -> None:
+    language = SupportedLanguage(code)
+    target_dir = assets_dir / code
+    target_dir.mkdir(parents=True, exist_ok=True)
+    curated_rows: list[dict[str, object]] = []
+    rejection_rows: list[dict[str, object]] = []
+    seen_lemmas: set[str] = set()
+    seen_displays: set[str] = set()
+    if code == "la":
+        # Latin uses custom frequency list from the site (e.g. https://mylittlewordland.com/course/415114/as-mil-palavras-mais-frequentes-do-latim )
+        # Expect a file assets/frequency/la/source-list.txt with one lemma per line, in frequency order.
+        source_list_path = target_dir / "source-list.txt"
+        if not source_list_path.exists():
+            print(f"Warning: {source_list_path} not found. Using sample data. Download the list from the site and save as source-list.txt (one word per line).")
+            tokens = ["sum", "et", "in", "non", "qui", "hic", "esse", "cum", "ego", "is"]  # minimal sample
+        else:
+            with source_list_path.open(encoding="utf-8") as f:
+                tokens = [line.strip() for line in f if line.strip()]
+        source_rank = 0
+        for token in tokens:
+            source_rank += 1
+            if source_rank > scan_limit or len(curated_rows) >= 3000:
+                break
+            reason = _rejection_reason(token)
+            lemma_key = token.casefold()
+            display_key = token.casefold()
+            if reason is None and lemma_key in seen_lemmas:
+                reason = "duplicate_lemma_key"
+            if reason is None and display_key in seen_displays:
+                reason = "duplicate_display_form"
+            if reason is not None:
+                rejection_rows.append(_rejection_row(language, version, source_rank, token, reason))
+                continue
+            rank = len(curated_rows) + 1
+            seen_lemmas.add(lemma_key)
+            seen_displays.add(display_key)
+            curated_rows.append({
+                "language": code,
+                "frequency_list_version": version,
+                "level": ((rank - 1) // 1000) + 1,
+                "rank": rank,
+                "source_rank": source_rank,
+                "display_form": token,
+                "lemma": token,
+                "lemma_key": lemma_key,
+                "part_of_speech": "unknown",
+                "definition_seed": token,
+                "source_provenance": f"mylittlewordland:{code}",
+                "curation_flags": "mylittlewordland_seeded;deterministically_filtered;structurally_curated",
+            })
+    else:
+        for source_rank, token in enumerate(iter_wordlist(code), start=1):
+            if source_rank > scan_limit or len(curated_rows) >= 3000:
+                break
+            reason = _rejection_reason(token)
+            lemma_key = token.casefold()
+            display_key = token.casefold()
+            if reason is None and lemma_key in seen_lemmas:
+                reason = "duplicate_lemma_key"
+            if reason is None and display_key in seen_displays:
+                reason = "duplicate_display_form"
+            if reason is not None:
+                rejection_rows.append(_rejection_row(language, version, source_rank, token, reason))
+                continue
+            rank = len(curated_rows) + 1
+            seen_lemmas.add(lemma_key)
+            seen_displays.add(display_key)
+            curated_rows.append(
+                {
                     "language": code,
                     "frequency_list_version": version,
                     "level": ((rank - 1) // 1000) + 1,
@@ -83,52 +131,20 @@ def build_assets(*, assets_dir: Path, version: str, scan_limit: int = 25000) -> 
                     "lemma_key": lemma_key,
                     "part_of_speech": "unknown",
                     "definition_seed": token,
-                    "source_provenance": f"mylittlewordland:{code}",
-                    "curation_flags": "mylittlewordland_seeded;deterministically_filtered;structurally_curated",
-                })
-        else:
-            for source_rank, token in enumerate(iter_wordlist(code), start=1):
-                if source_rank > scan_limit or len(curated_rows) >= 3000:
-                    break
-                reason = _rejection_reason(token)
-                lemma_key = token.casefold()
-                display_key = token.casefold()
-                if reason is None and lemma_key in seen_lemmas:
-                    reason = "duplicate_lemma_key"
-                if reason is None and display_key in seen_displays:
-                    reason = "duplicate_display_form"
-                if reason is not None:
-                    rejection_rows.append(_rejection_row(language, version, source_rank, token, reason))
-                    continue
-                rank = len(curated_rows) + 1
-                seen_lemmas.add(lemma_key)
-                seen_displays.add(display_key)
-                curated_rows.append(
-                    {
-                        "language": code,
-                        "frequency_list_version": version,
-                        "level": ((rank - 1) // 1000) + 1,
-                        "rank": rank,
-                        "source_rank": source_rank,
-                        "display_form": token,
-                        "lemma": token,
-                        "lemma_key": lemma_key,
-                        "part_of_speech": "unknown",
-                        "definition_seed": token,
-                        "source_provenance": f"wordfreq:{code}",
-                        "curation_flags": "wordfreq_seeded;deterministically_filtered;structurally_curated",
-                    }
-                )
-        if code != "la" and len(curated_rows) != 3000:
-            raise RuntimeError(f"could not build 3000 rows for {code}; got {len(curated_rows)}")
-        if code == "la" and len(curated_rows) == 0:
-            print("No curated rows for la; add source-list.txt from the site to generate.")
-        _write_csv(target_dir / f"curated-{version}.csv", CURATED_COLUMNS, curated_rows)
-        if not rejection_rows:
-            rejection_rows.append(_rejection_row(language, version, 1, "__none__", "punctuation"))
-        assert all(row["reason_code"] in VALID_REJECTION_REASON_CODES for row in rejection_rows)
-        _write_csv(target_dir / f"rejections-{version}.csv", REJECTION_COLUMNS, rejection_rows)
-        load_curated_frequency_entries(language, version=version, assets_dir=assets_dir)
+                    "source_provenance": f"wordfreq:{code}",
+                    "curation_flags": "wordfreq_seeded;deterministically_filtered;structurally_curated",
+                }
+            )
+    if code != "la" and len(curated_rows) != 3000:
+        raise RuntimeError(f"could not build 3000 rows for {code}; got {len(curated_rows)}")
+    if code == "la" and len(curated_rows) == 0:
+        print("No curated rows for la; add source-list.txt from the site to generate.")
+    _write_csv(target_dir / f"curated-{version}.csv", CURATED_COLUMNS, curated_rows)
+    if not rejection_rows:
+        rejection_rows.append(_rejection_row(language, version, 1, "__none__", "punctuation"))
+    assert all(row["reason_code"] in VALID_REJECTION_REASON_CODES for row in rejection_rows)
+    _write_csv(target_dir / f"rejections-{version}.csv", REJECTION_COLUMNS, rejection_rows)
+    load_curated_frequency_entries(language, version=version, assets_dir=assets_dir)
 
 
 def _rejection_row(language: SupportedLanguage, version: str, source_rank: int, token: str, reason: str) -> dict[str, object]:
@@ -148,8 +164,8 @@ def _write_csv(path: Path, columns: tuple[str, ...], rows: list[dict[str, object
         writer.writerows(rows)
 
 
-def check_assets(*, assets_dir: Path, version: str) -> None:
-    for code in DEFAULT_SUPPORTED_LANGUAGES:
+def check_assets(*, assets_dir: Path, version: str, language_code: str | None = None) -> None:
+    for code in _language_codes(language_code):
         load_curated_frequency_entries(SupportedLanguage(code), version=version, assets_dir=assets_dir)
 
 
@@ -157,12 +173,13 @@ def main() -> None:
     parser = argparse.ArgumentParser()
     parser.add_argument("--assets-dir", type=Path, default=Path("assets/frequency"))
     parser.add_argument("--version", default="v1")
+    parser.add_argument("--language", choices=DEFAULT_SUPPORTED_LANGUAGES, help="Build or check one language code only.")
     parser.add_argument("--check", action="store_true")
     args = parser.parse_args()
     if args.check:
-        check_assets(assets_dir=args.assets_dir, version=args.version)
+        check_assets(assets_dir=args.assets_dir, version=args.version, language_code=args.language)
     else:
-        build_assets(assets_dir=args.assets_dir, version=args.version)
+        build_assets(assets_dir=args.assets_dir, version=args.version, language_code=args.language)
 
 
 if __name__ == "__main__":

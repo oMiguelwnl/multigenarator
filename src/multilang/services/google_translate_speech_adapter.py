@@ -27,6 +27,7 @@ _LANGUAGE_CODES = {
     SupportedLanguage.RO: "ro",
     SupportedLanguage.RU: "ru",
     SupportedLanguage.NL: "nl",
+    SupportedLanguage.DA: "da",
     SupportedLanguage.NB: "no",
     SupportedLanguage.SV: "sv",
 }

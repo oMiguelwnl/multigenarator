@@ -47,6 +47,7 @@ _LANGUAGE_NAMES = {
     "ro": "Romanian",
     "ru": "Russian",
     "nl": "Dutch",
+    "da": "Danish",
     "nb": "Norwegian Bokmal",
     "sv": "Swedish",
     "la": "Latin",
@@ -64,6 +65,7 @@ _DEEPL_TARGET_LANGUAGES = {
     "ro": "RO",
     "ru": "RU",
     "nl": "NL",
+    "da": "DA",
     "nb": "NB",
     "sv": "SV",
 }

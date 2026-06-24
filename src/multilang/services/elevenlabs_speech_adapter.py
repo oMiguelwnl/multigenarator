@@ -28,6 +28,7 @@ _LANGUAGE_LOCALES = {
     SupportedLanguage.RO: "ro-RO",
     SupportedLanguage.RU: "ru-RU",
     SupportedLanguage.NL: "nl-NL",
+    SupportedLanguage.DA: "da-DK",
     SupportedLanguage.NB: "nb-NO",
     SupportedLanguage.SV: "sv-SE",
 }
@@ -46,6 +47,7 @@ _VOICE_BY_LANGUAGE = {
     SupportedLanguage.RO: "EXAVITQu4vr4xnSDxMaL",  # Bella
     SupportedLanguage.RU: "VR6AewLTigWG4xSOukaG",  # Arnold
     SupportedLanguage.NL: "TxGEqnHWrfWFTfGW9XjX",  # Josh
+    SupportedLanguage.DA: "TxGEqnHWrfWFTfGW9XjX",  # Josh
     SupportedLanguage.NB: "TxGEqnHWrfWFTfGW9XjX",  # Josh
     SupportedLanguage.SV: "TxGEqnHWrfWFTfGW9XjX",  # Josh
 }

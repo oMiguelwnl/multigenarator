@@ -73,6 +73,14 @@ def test_voice_registry_selects_norwegian_bokmal_voice() -> None:
     assert selection.registry_version == VOICE_REGISTRY_VERSION
 
 
+def test_voice_registry_selects_danish_voice() -> None:
+    selection = select_voice(SupportedLanguage.DA)
+
+    assert selection.voice_id == "da-DK-ChristelNeural"
+    assert selection.locale == "da-DK"
+    assert selection.registry_version == VOICE_REGISTRY_VERSION
+
+
 def test_voice_registry_selects_swedish_voice() -> None:
     selection = select_voice(SupportedLanguage.SV)
 

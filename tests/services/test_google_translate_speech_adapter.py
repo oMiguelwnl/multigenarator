@@ -82,6 +82,16 @@ def test_google_translate_adapter_selects_norwegian_bokmal_language() -> None:
     assert selection.registry_version == "google-translate-tts-v1"
 
 
+def test_google_translate_adapter_selects_danish_language() -> None:
+    adapter = GoogleTranslateSpeechAdapter(Settings(_env_file=None))
+
+    selection = adapter.select_voice(SupportedLanguage.DA)
+
+    assert selection.voice_id == "da"
+    assert selection.locale == "da"
+    assert selection.registry_version == "google-translate-tts-v1"
+
+
 def test_google_translate_adapter_selects_swedish_language() -> None:
     adapter = GoogleTranslateSpeechAdapter(Settings(_env_file=None))
 

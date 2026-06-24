@@ -333,6 +333,18 @@ def test_swedish_frequency_assets_validate() -> None:
     assert all(entry.source_provenance == "wordfreq:sv" for entry in entries)
 
 
+def test_danish_frequency_assets_validate() -> None:
+    from multilang.services import frequency_decks
+
+    entries = frequency_decks.load_curated_frequency_entries(SupportedLanguage.DA)
+
+    assert len(entries) == 3000
+    assert [sum(1 for entry in entries if entry.level == level) for level in (1, 2, 3)] == [1000, 1000, 1000]
+    assert entries[0].display_form == "i"
+    assert entries[1].display_form == "og"
+    assert all(entry.source_provenance == "wordfreq:da" for entry in entries)
+
+
 def test_validation_rejects_duplicate_lemma_key(tmp_path) -> None:
     from multilang.services import frequency_decks
 

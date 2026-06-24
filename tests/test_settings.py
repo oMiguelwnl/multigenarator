@@ -18,6 +18,7 @@ def test_default_supported_languages_include_swedish(settings: Settings) -> None
         "ro",
         "ru",
         "nl",
+        "da",
         "nb",
         "sv",
         "la",
