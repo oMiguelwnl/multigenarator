@@ -119,6 +119,7 @@ _LANGUAGE_MARKERS = {
     "tr": {"ve", "bir", "bu", "için", "ile", "de", "da", "ben", "o", "çok"},
     "ro": {"și", "de", "la", "în", "este", "pentru", "cu", "eu", "el", "ea"},
     "nl": {"de", "het", "een", "en", "is", "in", "voor", "met", "ik", "hij", "zij"},
+    "da": {"det", "en", "er", "et", "for", "han", "hun", "i", "jeg", "med", "og", "på", "ikke", "at", "vi", "de", "sig"},
     "nb": {"det", "en", "er", "et", "for", "han", "hun", "i", "jeg", "med", "og", "på"},
 }
 _FOREIGN_TOKEN_BLOCKLIST = {
@@ -324,6 +325,7 @@ class TextValidationService:
             context.sentence_tokens,
             display_form=display_form,
             lemma=lemma,
+            definitions_html=definitions_html,
         ) or _has_unexpected_target_capitalization(
             context.sentence_text,
             target_language=context.target_language,
@@ -677,6 +679,7 @@ def _looks_like_short_command(
     *,
     display_form: str,
     lemma: str,
+    definitions_html: str | None = None,
 ) -> bool:
     stripped = value.strip()
     if len(tokens) <= 4 and stripped.endswith("!"):
@@ -684,9 +687,14 @@ def _looks_like_short_command(
 
     if len(tokens) <= 5 and tokens:
         targets = _match_keys(display_form) | _match_keys(lemma)
-        return tokens[0] in _GENERIC_SUPPORT_VERBS or tokens[0] in targets
+        return tokens[0] in _GENERIC_SUPPORT_VERBS or (tokens[0] in targets and _definition_looks_verbal(definitions_html))
 
     return False
+
+
+def _definition_looks_verbal(value: str | None) -> bool:
+    normalized = _normalize_text(value or "")
+    return normalized.startswith(("to ", "v ", "verb ", "verbo ", "verbe "))
 
 
 def _has_unexpected_target_capitalization(

@@ -122,23 +122,25 @@ class ExportCardRow(BaseModel):
 
     def ordered_field_mapping(self, *, field_names: tuple[str, ...] | None = None) -> dict[str, object]:
         resolved_field_names = field_names or export_field_names_for_source_type(self.identity.source_type)
-        # Use non-alias for python attrs, then map to export names
         data = self.model_dump(exclude={"identity", "note_guid"})
-        values: dict[str, object] = {}
-        values["Word"] = data.get("word") or data.get("Word") or ""
-        values["Definition"] = data.get("definitions") or data.get("Definitions") or data.get("definition") or ""
-        # For Latin dynamic (la), provide Grammar (fallback to Definition if no gramatica)
+        sort_index = data.get("sort_index") if data.get("sort_index") is not None else self.identity.sort_index
+        values: dict[str, object] = {
+            "SortIndex": sort_index,
+            "word": data.get("word") or "",
+            "Word": data.get("word") or "",
+            "IPA": data.get("ipa") or "",
+            "Definitions": data.get("definitions") or "",
+            "Definition": data.get("definitions") or "",
+            "Example Sentence": data.get("example_sentence") or "",
+            "Sentence": data.get("example_sentence") or "",
+            "Translation": data.get("translation") or "",
+            "Sentence Translation": data.get("translation") or "",
+            "word_audio": data.get("word_audio") or "",
+            "sentence_audio": data.get("sentence_audio") or "",
+            "Image": data.get("image") or "",
+        }
         if "Grammar" in resolved_field_names:
-            values["Grammar"] = data.get("gramatica") or data.get("Grammar") or data.get("definitions") or data.get("Definitions") or ""
-        # Map sentence from normal attrs (example_sentence -> Sentence)
-        if "Sentence" in resolved_field_names:
-            values["Sentence"] = data.get("example_sentence") or data.get("Sentence") or ""
-        if "Sentence Translation" in resolved_field_names:
-            values["Sentence Translation"] = data.get("translation") or data.get("Translation") or data.get("sentence_translation") or ""
-        # Also carry audio/image if present in data
-        for k in ("word_audio", "sentence_audio", "Image", "SortIndex"):
-            if k in data:
-                values[k] = data[k]
+            values["Grammar"] = data.get("gramatica") or values["Definition"]
         return {field_name: values.get(field_name, "") for field_name in resolved_field_names}
 
 

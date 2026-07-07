@@ -1,0 +1,124 @@
+{
+  "blocking_issues": [],
+  "completed_items": 5,
+  "export": {
+    "card_count": 2,
+    "format": "apkg",
+    "path": "danish-test-deck\\1b268cfa-e1a7-4091-9351-5de4b7982b69.apkg",
+    "sha256": "c031440c11259d415ac323e8bae3682db18df68dc99df7001652777407bb81fb",
+    "status": "partial"
+  },
+  "failed_items": 3,
+  "gates": {
+    "failed": [],
+    "partial": true,
+    "passed": true,
+    "warnings": [
+      "incomplete_frequency_deck",
+      "review_required_text"
+    ]
+  },
+  "job_id": "1b268cfa-e1a7-4091-9351-5de4b7982b69",
+  "job_status": "partial",
+  "language": "da",
+  "level_counts": {
+    "1": 2,
+    "2": 0,
+    "3": 0
+  },
+  "provider_calls": [
+    {
+      "calls": 2,
+      "circuit_open_blocks": 0,
+      "estimated_cost": 0.0,
+      "fallback_count": 0,
+      "input_tokens": 0,
+      "latency_ms_avg": 0.0,
+      "latency_ms_p95": 0,
+      "latency_ms_total": 0,
+      "operation": "audio_sentence",
+      "output_tokens": 0,
+      "provider": "elevenlabs",
+      "retry_attempts": 0,
+      "status": "failure",
+      "total_tokens": 0
+    },
+    {
+      "calls": 2,
+      "circuit_open_blocks": 0,
+      "estimated_cost": 0.0,
+      "fallback_count": 0,
+      "input_tokens": 0,
+      "latency_ms_avg": 871.5,
+      "latency_ms_p95": 0,
+      "latency_ms_total": 1743,
+      "operation": "audio_word",
+      "output_tokens": 0,
+      "provider": "elevenlabs",
+      "retry_attempts": 0,
+      "status": "failure",
+      "total_tokens": 0
+    },
+    {
+      "calls": 2,
+      "circuit_open_blocks": 0,
+      "estimated_cost": 0.0,
+      "fallback_count": 0,
+      "input_tokens": 0,
+      "latency_ms_avg": 371.0,
+      "latency_ms_p95": 270,
+      "latency_ms_total": 742,
+      "operation": "audio_sentence",
+      "output_tokens": 0,
+      "provider": "google_translate",
+      "retry_attempts": 0,
+      "status": "success",
+      "total_tokens": 0
+    },
+    {
+      "calls": 2,
+      "circuit_open_blocks": 0,
+      "estimated_cost": 0.0,
+      "fallback_count": 0,
+      "input_tokens": 0,
+      "latency_ms_avg": 362.5,
+      "latency_ms_p95": 362,
+      "latency_ms_total": 725,
+      "operation": "audio_word",
+      "output_tokens": 0,
+      "provider": "google_translate",
+      "retry_attempts": 0,
+      "status": "success",
+      "total_tokens": 0
+    }
+  ],
+  "providers": {
+    "audio": {
+      "google_translate": 4
+    },
+    "sentence": {
+      "provider-text-generator": 5
+    },
+    "translation": {
+      "provider-translator": 5
+    }
+  },
+  "quality_counts": {
+    "audio_fallback_count": 0,
+    "duplicate_lemma_keys": 0,
+    "duplicate_words": 0,
+    "invalid_translations": 0
+  },
+  "source_type": "frequency",
+  "text_counts": {
+    "accepted": 2,
+    "failed": 3,
+    "review_required": 3,
+    "total": 5
+  },
+  "total_items": 5,
+  "warnings": [
+    "frequency deck has 2/3000 cards, total missing 2998 cards, level_1 missing 998 cards, level_2 missing 1000 cards, level_3 missing 1000 cards",
+    "review_required text records: 3"
+  ]
+}

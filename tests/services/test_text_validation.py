@@ -254,6 +254,19 @@ def test_validation_rejects_short_command_like_fallback_sentences_without_exclam
     assert ValidationFlagCode.BANNED_PATTERN in {flag.code for flag in result.validation_flags}
 
 
+def test_validation_allows_short_danish_declarative_starting_with_pronoun_target() -> None:
+    result = build_service().validate(
+        sentence=build_sentence(text="Det regner meget i dag.", target_language="da"),
+        translation=build_translation(text="It is raining a lot today.", target_language="en"),
+        display_form="det",
+        lemma="det",
+        definitions_html="pronoun: it<br>pronoun: that",
+    )
+
+    assert result.validation_status is ValidationStatus.PASSED
+    assert ValidationFlagCode.BANNED_PATTERN not in {flag.code for flag in result.validation_flags}
+
+
 def test_validation_requires_translation_to_pass_for_otherwise_valid_fallback_sentence() -> None:
     result = build_service().validate(
         sentence=build_sentence(text="I wash the cup at home."),
