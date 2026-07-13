@@ -100,8 +100,16 @@ def classify_provider_error(exc: BaseException) -> str:
     return "permanent"
 
 
+# Classifications that must not be retried: they will not recover within the
+# retry/backoff window, so retrying only wastes latency before failing anyway.
+# ``quota_exceeded`` (exhausted credits/quota) is a hard stop; ``permanent`` is
+# the catch-all for unclassified errors. Transient ``temporary_forbidden`` (some
+# providers surface throttling as 403) is intentionally left retryable.
+NON_RETRYABLE_CLASSIFICATIONS = frozenset({"permanent", "quota_exceeded"})
+
+
 def is_temporary_provider_error(exc: BaseException) -> bool:
-    return classify_provider_error(exc) != "permanent"
+    return classify_provider_error(exc) not in NON_RETRYABLE_CLASSIFICATIONS
 
 
 def safe_provider_error_summary(exc: BaseException) -> str:
@@ -165,7 +173,7 @@ def retry_provider_call(
             return result
         except Exception as exc:  # noqa: BLE001 - provider adapters expose heterogeneous errors.
             classification = classify_provider_error(exc)
-            if classification == "permanent":
+            if not is_temporary_provider_error(exc):
                 raise
             last_error = exc
             _log_retry_event(
@@ -244,6 +252,7 @@ def _log_retry_event(
 
 __all__ = [
     "DEFAULT_PROVIDER_RETRY_ATTEMPTS",
+    "NON_RETRYABLE_CLASSIFICATIONS",
     "ProviderRetryError",
     "ProviderCircuitBreaker",
     "ProviderCircuitOpenError",

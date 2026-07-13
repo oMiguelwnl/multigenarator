@@ -94,6 +94,7 @@ class AssembleExportCardsService:
                 translation=escape(text_record.translation_text or "") if source_profile.exports_translation_field else "",
                 word_audio=self._to_sound_tag(word_audio) if word_audio is not None else "",
                 sentence_audio=self._to_sound_tag(sentence_audio),
+                gramatica=self._render_gramatica(text_record),
             )
             cards.append(row)
 
@@ -150,6 +151,15 @@ class AssembleExportCardsService:
         if not parts:
             raise AssembleExportCardsError(f"missing definitions for item {candidate.lemma_key}")
         return "<br>".join(parts)
+
+    def _render_gramatica(self, text_record: TextQualityRecord) -> str | None:
+        provenance = getattr(text_record, "sentence_provenance", None)
+        metadata = getattr(provenance, "metadata", None) or {}
+        gramatica = metadata.get("gramatica")
+        if not gramatica:
+            return None
+        cleaned = " ".join(str(gramatica).split())
+        return escape(cleaned) if cleaned else None
 
     def _render_ipa(self, ipa: str | None, spoken_form: str | None) -> str:
         if not ipa:

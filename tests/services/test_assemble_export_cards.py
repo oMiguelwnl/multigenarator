@@ -11,6 +11,7 @@ from multilang.domain.audio import AudioAssetKind, AudioAssetRecord, AudioFormat
 from multilang.domain.jobs import SupportedLanguage
 from multilang.domain.lexicon import DefinitionRecord, GroundingStatus, LexicalCardCandidate, LexicalProvenance
 from multilang.domain.text_quality import ConfidenceLabel, ReviewStatus, TextGenerationStatus, TextProvenance, TextQualityRecord, ValidationStatus
+from multilang.domain.exporting import export_field_names_for_rows
 from multilang.services.assemble_export_cards import AssembleExportCardsError, AssembleExportCardsService
 
 
@@ -473,3 +474,49 @@ def test_assemble_export_cards_rejects_missing_pronunciation_data(
 
     with pytest.raises(AssembleExportCardsError, match=message):
         service.execute(job_id="job-1", deck_language=SupportedLanguage.EN)
+
+
+def test_assemble_carries_structured_gramatica_into_export_row() -> None:
+    record = make_text_record(item_key="vir")
+    record = record.model_copy(
+        update={
+            "sentence_provenance": TextProvenance(
+                source="latin-structured",
+                provider="latin-structured",
+                metadata={"gramatica": "vir: subst masc, 2a declinacao, Nominativus singularis, Suj."},
+            )
+        }
+    )
+    service, _ = build_service(
+        accepted_records=[record],
+        candidates={"vir": make_candidate(item_key="vir", definitions_html="substantivo: homem")},
+        assets={
+            ("vir", AudioAssetKind.WORD.value): make_asset(item_key="vir", asset_kind=AudioAssetKind.WORD, storage_path="vir-word.mp3"),
+            ("vir", AudioAssetKind.SENTENCE.value): make_asset(item_key="vir", asset_kind=AudioAssetKind.SENTENCE, storage_path="vir-sentence.mp3"),
+        },
+    )
+
+    result = service.execute(job_id="job-1", deck_language=SupportedLanguage.LA)
+    row = result.cards[0]
+
+    assert row.gramatica == "vir: subst masc, 2a declinacao, Nominativus singularis, Suj."
+    # The dynamic Latin export path resolves field names by language (has_la).
+    field_names = export_field_names_for_rows([row])
+    mapping = row.ordered_field_mapping(field_names=field_names)
+    assert mapping["Grammar"] == row.gramatica
+    assert mapping["Grammar"] != mapping["Definition"]
+
+
+def test_assemble_leaves_gramatica_blank_without_structured_metadata() -> None:
+    service, _ = build_service(
+        accepted_records=[make_text_record(item_key="run")],
+        candidates={"run": make_candidate(item_key="run")},
+        assets={
+            ("run", AudioAssetKind.WORD.value): make_asset(item_key="run", asset_kind=AudioAssetKind.WORD, storage_path="run-word.mp3"),
+            ("run", AudioAssetKind.SENTENCE.value): make_asset(item_key="run", asset_kind=AudioAssetKind.SENTENCE, storage_path="run-sentence.mp3"),
+        },
+    )
+
+    result = service.execute(job_id="job-1", deck_language=SupportedLanguage.EN)
+
+    assert result.cards[0].gramatica is None

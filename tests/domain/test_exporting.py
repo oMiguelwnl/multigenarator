@@ -160,6 +160,40 @@ def test_visible_sort_index_must_match_stable_identity() -> None:
         make_row(SortIndex=2)
 
 
+def make_latin_identity(*, item_key: str = "line-1") -> ExportCardIdentity:
+    return ExportCardIdentity(
+        language=SupportedLanguage.LA,
+        source_type="latin-mvp",
+        job_id="job-la",
+        item_key=item_key,
+        lemma_key="la:vir",
+        sort_index=1,
+    )
+
+
+def test_latin_grammar_field_uses_gramatica_not_definition() -> None:
+    row = make_row(
+        identity=make_latin_identity(),
+        definitions="substantivo: homem",
+        gramatica="virum: subst masc, 2a declinacao, Accusativus singularis, OD.",
+    )
+
+    mapping = row.ordered_field_mapping()
+
+    assert "Grammar" in mapping
+    assert mapping["Grammar"] == "virum: subst masc, 2a declinacao, Accusativus singularis, OD."
+    assert mapping["Grammar"] != mapping["Definition"]
+
+
+def test_latin_grammar_field_falls_back_to_definition_when_gramatica_absent() -> None:
+    row = make_row(identity=make_latin_identity(), definitions="substantivo: homem")
+
+    mapping = row.ordered_field_mapping()
+
+    # Without a structured grammar the field intentionally mirrors Definition.
+    assert mapping["Grammar"] == mapping["Definition"] == "substantivo: homem"
+
+
 def test_export_gate_blocks_fallback_audio_by_default_and_warns_when_partial_allowed() -> None:
     rows = [
         make_row(

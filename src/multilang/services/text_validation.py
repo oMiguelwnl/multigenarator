@@ -49,6 +49,15 @@ _INVALID_TRANSLATION_PATTERNS = (
     re.compile(r"request\s+(?:blocked|forbidden|denied)", re.IGNORECASE),
     re.compile(r"temporarily\s+blocked", re.IGNORECASE),
 )
+# Deterministic fallback used ONLY when the morphological analyzer is
+# unavailable/unreliable (Stanza is an optional, usually-absent dependency, so
+# in practice this heuristic decides target-form presence for most runs).
+# It is a precision/recall trade-off: recursive single-character suffix stripping
+# is what lets plural/inflected forms match the lemma (e.g. "gatos" -> "gato"),
+# but it can also over-generate short shared stems and produce false matches
+# between unrelated words (e.g. "casa" vs "caso" both reduce to "cas"). Retuning
+# this list changes both error classes and should be validated against a labelled
+# multilingual set rather than adjusted ad hoc.
 _MATCHABLE_SUFFIXES = (
     "ami",
     "ach",

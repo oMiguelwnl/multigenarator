@@ -16,6 +16,7 @@ from multilang.domain.text_quality import (
     ConfidenceLabel,
     ReviewStatus,
     TextGenerationStatus,
+    TextProvenance,
     TextQualityRecord,
     ValidationFlag,
     ValidationFlagCode,
@@ -198,14 +199,24 @@ class GenerateTextItemsService:
                     lat_sentence = getattr(lat_card, "latin_sentence", None) or (lat_card.get("latin_sentence") if isinstance(lat_card, dict) else None)
                     if lat_sentence:
                         lat_gramatica = getattr(lat_card, "gramatica", None) or (lat_card.get("gramatica") if isinstance(lat_card, dict) else None)
-                        prov = {"provider": "latin-structured", "via": "latin_card_service"}
+                        # Carry the structured grammar through provenance metadata so it
+                        # survives to export (the exported "Grammar" field reads it there).
+                        # NOTE: GeneratedSentence.provenance is a TextProvenance, which
+                        # requires a non-empty source; a bare dict here raised a swallowed
+                        # ValidationError, silently dropping the structured sentence.
+                        metadata: dict[str, Any] = {"via": "latin_card_service"}
                         if lat_gramatica:
-                            prov["gramatica"] = str(lat_gramatica)
+                            metadata["gramatica"] = str(lat_gramatica)
+                        provenance = TextProvenance(
+                            source="latin-structured",
+                            provider="latin-structured",
+                            metadata=metadata,
+                        )
                         # Override the sentence in the bundle with the structured Latin one (better grammar control)
                         generated_bundle.sentence = GeneratedSentence(
                             text=str(lat_sentence),
                             target_language=deck_language.value,
-                            provenance=prov,
+                            provenance=provenance,
                         )
                 except Exception:
                     pass

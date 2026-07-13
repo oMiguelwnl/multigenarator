@@ -103,6 +103,9 @@ class ExportCardRow(BaseModel):
     word_audio: str = Field(default="", alias="word_audio")
     sentence_audio: str = Field(default="", alias="sentence_audio")
     image: str = Field(default="", alias="Image")
+    # Grammatical analysis for the dynamic Latin card path. When present it feeds
+    # the exported "Grammar" field; absent, that field falls back to Definition.
+    gramatica: str | None = Field(default=None, alias="gramatica")
 
     @model_validator(mode="after")
     def populate_stable_fields(self) -> "ExportCardRow":
