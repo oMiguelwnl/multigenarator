@@ -106,6 +106,10 @@ _VOICE_REGISTRY: dict[SupportedLanguage, VoicePlan] = {
         preferred=VoiceOption(voice_id="sv-SE-SofieNeural", locale="sv-SE"),
         same_locale_alternates=(VoiceOption(voice_id="sv-SE-MattiasNeural", locale="sv-SE"),),
     ),
+    SupportedLanguage.FI: VoicePlan(
+        preferred=VoiceOption(voice_id="fi-FI-NooraNeural", locale="fi-FI"),
+        same_locale_alternates=(VoiceOption(voice_id="fi-FI-HarriNeural", locale="fi-FI"),),
+    ),
     SupportedLanguage.LA: VoicePlan(
         preferred=VoiceOption(voice_id="it-IT-IsabellaNeural", locale="it-IT"),
         same_locale_alternates=(VoiceOption(voice_id="it-IT-DiegoNeural", locale="it-IT"),),

@@ -9,7 +9,7 @@ from typing import Protocol
 from wordfreq import zipf_frequency
 
 
-SUPPORTED_LANGUAGE_CODES = ("pt", "es", "en", "fr", "de", "it", "pl", "tr", "ro", "ru", "nl", "da", "nb", "sv")
+SUPPORTED_LANGUAGE_CODES = ("pt", "es", "en", "fr", "de", "it", "pl", "tr", "ro", "ru", "nl", "da", "nb", "sv", "fi")
 _TOKEN_RE = re.compile(r"\b[\w'-]+\b", re.UNICODE)
 
 

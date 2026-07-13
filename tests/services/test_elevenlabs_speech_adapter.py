@@ -114,6 +114,15 @@ def test_elevenlabs_adapter_uses_default_voice_for_swedish() -> None:
     assert selection.locale == "sv-SE"
 
 
+def test_elevenlabs_adapter_uses_default_voice_for_finnish() -> None:
+    adapter = ElevenLabsSpeechAdapter(Settings(_env_file=None))
+
+    selection = adapter.select_voice(SupportedLanguage.FI)
+
+    assert selection.voice_id == "TxGEqnHWrfWFTfGW9XjX"
+    assert selection.locale == "fi-FI"
+
+
 def test_elevenlabs_adapter_requires_credentials(tmp_path: Path) -> None:
     adapter = ElevenLabsSpeechAdapter(Settings(_env_file=None))
 

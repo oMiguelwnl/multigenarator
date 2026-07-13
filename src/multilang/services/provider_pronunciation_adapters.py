@@ -33,6 +33,7 @@ _LANGUAGE_NAMES = {
     "nl": "Dutch",
     "nb": "Norwegian Bokmal",
     "sv": "Swedish",
+    "fi": "Finnish",
 }
 
 

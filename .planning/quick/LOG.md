@@ -11,3 +11,4 @@
 | 008 | adiciona a lingua Swedish | 2026-06-24 | passed | [008-adiciona-lingua-swedish](./008-adiciona-lingua-swedish/) |
 | 001 | adicione Danish ao projeto | 2026-06-24 | passed | [001-adicione-danish-ao-projeto](./001-adicione-danish-ao-projeto/) |
 | 009 | gerar assets frequency Danish | 2026-06-24 | passed | [009-gerar-assets-frequency-danish](./009-gerar-assets-frequency-danish/) |
+| 010 | adicione o Finnish ao projeto | 2026-07-13 | passed | [010-adicione-finnish-ao-projeto](./010-adicione-finnish-ao-projeto/) |

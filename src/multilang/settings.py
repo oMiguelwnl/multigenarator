@@ -8,7 +8,7 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 
 from multilang.services.audio_voice_registry import VOICE_REGISTRY_VERSION
 
-SupportedLanguageCode = Literal["pt", "es", "en", "fr", "de", "it", "pl", "tr", "ro", "ru", "nl", "da", "nb", "sv", "la"]
+SupportedLanguageCode = Literal["pt", "es", "en", "fr", "de", "it", "pl", "tr", "ro", "ru", "nl", "da", "nb", "sv", "fi", "la"]
 TextGenerationProvider = Literal["litellm", "local"]
 TranslationProvider = Literal["deepl", "google", "local"]
 AudioProviderName = Literal["azure", "elevenlabs", "google_translate"]
@@ -30,6 +30,7 @@ DEFAULT_SUPPORTED_LANGUAGES: tuple[SupportedLanguageCode, ...] = (
     "da",
     "nb",
     "sv",
+    "fi",
     "la",
 )
 

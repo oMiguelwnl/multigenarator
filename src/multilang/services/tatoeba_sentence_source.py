@@ -48,6 +48,7 @@ _TATOEBA_API_CODES = {
     "de": "deu",
     "en": "eng",
     "es": "spa",
+    "fi": "fin",
     "fr": "fra",
     "it": "ita",
     "nb": "nob",

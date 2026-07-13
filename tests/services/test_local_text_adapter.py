@@ -193,6 +193,27 @@ def test_local_adapter_supports_swedish() -> None:
     assert translation.translation == "My brother wants to use tomorrow."
 
 
+def test_local_adapter_supports_finnish() -> None:
+    sentence = LocalSentenceAdapter().generate_sentence(
+        SentenceGenerationRequest(
+            display_form="käyttää",
+            lemma="käyttää",
+            definitions_html="verb: to use",
+            target_language="fi",
+            translation_target_language="en",
+        )
+    )
+    translation = LocalTranslationAdapter().translate_sentence(
+        SentenceTranslationRequest.from_sentence(
+            sentence_result=sentence,
+            translation_target_language="en",
+        )
+    )
+
+    assert sentence.sentence == "Veljeni haluaa käyttää huomenna."
+    assert translation.translation == "My brother wants to use tomorrow."
+
+
 def test_text_generation_service_accepts_representative_grounded_candidates() -> None:
     service = TextGenerationService(
         sentence_adapter=LocalSentenceAdapter(),

@@ -87,6 +87,7 @@ _LANGUAGE_NAMES = {
     SupportedLanguage.DA: "Danish",
     SupportedLanguage.NB: "Norwegian Bokmal",
     SupportedLanguage.SV: "Swedish",
+    SupportedLanguage.FI: "Finnish",
     SupportedLanguage.LA: "Latin",
 }
 
