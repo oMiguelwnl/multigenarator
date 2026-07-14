@@ -5,7 +5,7 @@ from pathlib import Path
 from multilang.settings import Settings
 
 
-def test_default_supported_languages_include_finnish(settings: Settings) -> None:
+def test_default_supported_languages_include_czech(settings: Settings) -> None:
     assert settings.supported_languages == [
         "pt",
         "es",
@@ -22,6 +22,7 @@ def test_default_supported_languages_include_finnish(settings: Settings) -> None
         "nb",
         "sv",
         "fi",
+        "cs",
         "la",
     ]
 

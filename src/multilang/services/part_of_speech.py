@@ -262,6 +262,14 @@ _FUNCTION_WORD_LABELS = {
             "particle": ("ei",),
         }
     ),
+    "cs": _language_map(
+        {
+            "preposition": ("v", "ve", "na", "s", "se", "z", "do", "od", "pro", "bez", "mezi", "po", "před", "za", "u"),
+            "conjunction": ("a", "nebo", "ale", "že", "když", "protože"),
+            "pronoun": ("já", "ty", "on", "ona", "ono", "my", "vy", "oni", "to", "něco", "nic", "všechno", "někdo", "nikdo"),
+            "particle": ("ne",),
+        }
+    ),
     "la": _language_map(
         {
             "preposition": ("in", "cum", "ad", "de", "ex", "per", "sine", "inter"),

@@ -51,6 +51,7 @@ _LANGUAGE_NAMES = {
     "nb": "Norwegian Bokmal",
     "sv": "Swedish",
     "fi": "Finnish",
+    "cs": "Czech",
     "la": "Latin",
 }
 
@@ -70,6 +71,7 @@ _DEEPL_TARGET_LANGUAGES = {
     "nb": "NB",
     "sv": "SV",
     "fi": "FI",
+    "cs": "CS",
 }
 
 _SYSTEM_PROMPT = """You create one natural learner example sentence for an Anki vocabulary card.

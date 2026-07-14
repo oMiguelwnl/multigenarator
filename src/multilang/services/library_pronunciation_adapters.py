@@ -42,6 +42,7 @@ _PHONEMIZER_ESPEAK_LANG_CODES = {
     "nb": "nb",
     "sv": "sv",
     "fi": "fi",
+    "cs": "cs",
 }
 
 _EPITRAN_LANG_CODES = {
@@ -58,6 +59,7 @@ _EPITRAN_LANG_CODES = {
     "nl": "nld-Latn",
     "sv": "swe-Latn",
     "fi": "fin-Latn",
+    "cs": "ces-Latn",
 }
 
 _WINDOWS_ESPEAK_LIBRARY_CANDIDATES = (

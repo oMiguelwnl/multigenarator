@@ -34,6 +34,7 @@ _LANGUAGE_NAMES = {
     "nb": "Norwegian Bokmal",
     "sv": "Swedish",
     "fi": "Finnish",
+    "cs": "Czech",
 }
 
 

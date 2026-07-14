@@ -30,6 +30,7 @@ def test_supported_languages() -> None:
         "nb",
         "sv",
         "fi",
+        "cs",
         "la",
     }
 
@@ -60,6 +61,12 @@ def test_generation_request_accepts_finnish() -> None:
     request = GenerationRequest(language="fi", source_type="frequency", level=1)
 
     assert request.language is SupportedLanguage.FI
+
+
+def test_generation_request_accepts_czech() -> None:
+    request = GenerationRequest(language="cs", source_type="frequency", level=1)
+
+    assert request.language is SupportedLanguage.CS
 
 
 def test_generation_request_accepts_latin_mvp_source_for_shared_infrastructure() -> None:

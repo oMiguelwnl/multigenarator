@@ -97,6 +97,14 @@ def test_voice_registry_selects_finnish_voice() -> None:
     assert selection.registry_version == VOICE_REGISTRY_VERSION
 
 
+def test_voice_registry_selects_czech_voice() -> None:
+    selection = select_voice(SupportedLanguage.CS)
+
+    assert selection.voice_id == "cs-CZ-VlastaNeural"
+    assert selection.locale == "cs-CZ"
+    assert selection.registry_version == VOICE_REGISTRY_VERSION
+
+
 def test_settings_expose_azure_speech_configuration() -> None:
     settings = Settings(
         _env_file=None,
