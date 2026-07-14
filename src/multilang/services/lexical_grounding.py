@@ -18,12 +18,21 @@ from multilang.domain.lexicon import (
     policy_for_language,
 )
 from multilang.services.lexical_lookup import LexicalLookup, LexicalRecord, normalize_lexical_key
+from multilang.services.part_of_speech import canonical_part_of_speech_label, resolve_part_of_speech_label
 from multilang.services.polish_function_words import lookup_polish_function_word
 from multilang.services.provider_pronunciation_adapters import PronunciationGenerationRequest
 from multilang.services.rate_limit import RateLimiter
 from multilang.services.text_field_remediation import remediate_definition_html
 from multilang.services.text_generation import DefinitionGenerationRequest, DefinitionGenerationResult
 from multilang.services.word_list_parser import ParsedWordListItem
+
+_GERMAN_LEXICAL_OVERRIDES = {
+    "pause": {
+        "display_form": "Pause",
+        "lemma": "Pause",
+        "part_of_speech": "noun",
+    },
+}
 
 
 def build_lexical_grounding_service(lexicon_data_dir: str | Path) -> "LexicalGroundingService":
@@ -203,24 +212,32 @@ class LexicalGroundingService:
         definition_language: str | None = None,
         rate_limiter: RateLimiter | None = None,
     ) -> LexicalCardCandidate:
+        record = _apply_language_lexical_overrides(language=language, record=record)
         policy = policy_for_language(language)
         resolved_definition_language = definition_language or policy.definition_language
         learner_display_form = self._select_display_form(default=display_form, record=record)
+        resolved_part_of_speech = resolve_part_of_speech_label(
+            part_of_speech=record.part_of_speech,
+            source_language=language.value,
+            display_form=learner_display_form,
+            lemma=record.lemma,
+        )
         definition_result = self._generate_definition(
             display_form=learner_display_form,
             lemma=record.lemma,
             source_language=language.value,
             target_language=resolved_definition_language,
-            part_of_speech=record.part_of_speech,
+            part_of_speech=resolved_part_of_speech,
             rate_limiter=rate_limiter,
         )
         generated_definitions_html = definition_result.definitions_html if definition_result is not None else None
         definitions_html = remediate_definition_html(
             display_form=learner_display_form,
             lemma=record.lemma,
-            part_of_speech=record.part_of_speech,
+            part_of_speech=resolved_part_of_speech,
             generated_html=generated_definitions_html,
             source_definitions=record.definitions,
+            source_language=language.value,
         )
         ipa = record.ipa.strip() if record.ipa else None
         spoken_form: str | None = learner_display_form if ipa else None
@@ -379,33 +396,6 @@ class LexicalGroundingService:
         return escape(formatted)
 
 
-_PART_OF_SPEECH_LABELS = {
-    "adj": "adjective",
-    "adjective": "adjective",
-    "adv": "adverb",
-    "adverb": "adverb",
-    "article": "article",
-    "aux": "auxiliary verb",
-    "conj": "conjunction",
-    "conjunction": "conjunction",
-    "det": "determiner",
-    "determiner": "determiner",
-    "interj": "interjection",
-    "interjection": "interjection",
-    "noun": "noun",
-    "num": "numeral",
-    "numeral": "numeral",
-    "particle": "particle",
-    "postp": "postposition",
-    "prep": "preposition",
-    "preposition": "preposition",
-    "pron": "pronoun",
-    "pronoun": "pronoun",
-    "proper": "proper noun",
-    "proper noun": "proper noun",
-    "verb": "verb",
-}
-
 _RELATION_PREFIX_RE = re.compile(
     r"^(?:abbreviation|acronym|alternative form|alternative spelling|archaic spelling|"
     r"clipping|initialism|misspelling|obsolete spelling|pre-1918 spelling|"
@@ -508,19 +498,10 @@ def _format_definition_text(
     *,
     part_of_speech: str | None,
 ) -> str:
-    label = _part_of_speech_label(part_of_speech)
+    label = canonical_part_of_speech_label(part_of_speech)
     if label is None:
         return meaning
     return f"{label}: {meaning}"
-
-
-def _part_of_speech_label(value: str | None) -> str | None:
-    if value is None:
-        return None
-    normalized = " ".join(value.replace("-", " ").replace("_", " ").casefold().split())
-    if not normalized:
-        return None
-    return _PART_OF_SPEECH_LABELS.get(normalized, normalized)
 
 
 def _clean_definition_text(value: str) -> str:
@@ -534,6 +515,17 @@ def _clean_definition_text(value: str) -> str:
             return first_segment
 
     return cleaned[:_MAX_CARD_DEFINITION_CHARS].rsplit(" ", 1)[0].strip() + "..."
+
+
+def _apply_language_lexical_overrides(*, language: SupportedLanguage, record: LexicalRecord) -> LexicalRecord:
+    if language is not SupportedLanguage.DE:
+        return record
+    override = _GERMAN_LEXICAL_OVERRIDES.get(normalize_lexical_key(record.display_form)) or _GERMAN_LEXICAL_OVERRIDES.get(
+        normalize_lexical_key(record.lemma)
+    )
+    if override is None:
+        return record
+    return record.model_copy(update=override)
 
 
 __all__ = ["LexicalGroundingService", "build_lexical_grounding_service"]

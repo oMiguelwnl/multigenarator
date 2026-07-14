@@ -13,5 +13,10 @@
 | 009 | gerar assets frequency Danish | 2026-06-24 | passed | [009-gerar-assets-frequency-danish](./009-gerar-assets-frequency-danish/) |
 | 001 | Merge Claude branch into Monarch | 2026-07-13 | passed | [001-merge-claude-branch](./001-merge-claude-branch/) |
 | 010 | adicione o Finnish ao projeto | 2026-07-13 | passed | [010-adicione-finnish-ao-projeto](./010-adicione-finnish-ao-projeto/) |
-| 011 | Implement deterministic IPA library resolvers with AI fallback | 2026-07-13 | passed | [011-ipa-library-resolvers](./011-ipa-library-resolvers/) |
-| 012 | Autodetect Windows eSpeak NG for phonemizer fallback | 2026-07-13 | passed | [012-espeak-windows-autodetect](./012-espeak-windows-autodetect/) |
+| 011 | Implement deterministic IPA library resolvers with AI fallback | 2026-07-14 | passed | [011-ipa-library-resolvers](./011-ipa-library-resolvers/) |
+| 012 | Autodetect Windows eSpeak NG for phonemizer fallback | 2026-07-14 | passed | [012-espeak-windows-autodetect](./012-espeak-windows-autodetect/) |
+| 013 | Repair full pytest suite failures after IPA resolver work | 2026-07-14 | passed | [013-full-suite-repair](./013-full-suite-repair/) |
+| 014 | Standardize definition POS labels and fix German article labels | 2026-07-14 | passed | [014-definition-pos-standardization](./014-definition-pos-standardization/) |
+| 015 | Normalize German POS labels and display forms in generated cards | 2026-07-14 | passed | [015-german-pos-display-normalization](./015-german-pos-display-normalization/) |
+| 016 | Classify German etwas as pronoun in definition labels | 2026-07-14 | passed | [016-german-etwas-pronoun](./016-german-etwas-pronoun/) |
+| 017 | Universal POS normalization across supported languages | 2026-07-14 | passed | [017-universal-pos-normalization](./017-universal-pos-normalization/) |

@@ -6,6 +6,8 @@ import re
 import unicodedata
 from html import escape
 
+from multilang.services.part_of_speech import canonical_part_of_speech_label, resolve_part_of_speech_label
+
 _KNOWN_DEFINITION_CORRECTIONS = {
     "достичь": "verb: to achieve, to attain, to reach",
 }
@@ -35,14 +37,6 @@ _GRAMMAR_ONLY_TERMS = {
     "singular",
     "vocative",
 }
-_PART_OF_SPEECH_LABELS = {
-    "adj": "adjective",
-    "adjective": "adjective",
-    "adv": "adverb",
-    "adverb": "adverb",
-    "noun": "noun",
-    "verb": "verb",
-}
 
 
 def remediate_definition_html(
@@ -52,6 +46,7 @@ def remediate_definition_html(
     part_of_speech: str | None,
     generated_html: str | None,
     source_definitions: list[str],
+    source_language: str | None = None,
 ) -> str | None:
     """Return learner-safe definition HTML when deterministic remediation is possible."""
 
@@ -61,14 +56,21 @@ def remediate_definition_html(
     if known is not None:
         return known
 
+    label = _definition_label(
+        display_form=display_form,
+        lemma=lemma,
+        part_of_speech=part_of_speech,
+        source_language=source_language,
+        generated_html=generated_html,
+    ) or "term"
+
     if generated_html and _is_learner_safe_definition(generated_html):
-        return generated_html
+        return _normalize_definition_label(generated_html, label=label)
 
     source_meaning = _select_substantive_source_definition(source_definitions)
     if source_meaning is None:
         return generated_html
 
-    label = _part_of_speech_label(part_of_speech)
     formatted = f"{label}: {source_meaning}" if label else source_meaning
     return escape(formatted)
 
@@ -129,11 +131,43 @@ def _without_label(value: str) -> str:
     return re.sub(r"^[a-z][a-z -]{1,40}:\s+", "", value).strip()
 
 
-def _part_of_speech_label(value: str | None) -> str | None:
-    if value is None:
+def _definition_label(
+    *,
+    display_form: str,
+    lemma: str,
+    part_of_speech: str | None,
+    source_language: str | None,
+    generated_html: str | None,
+) -> str | None:
+    return resolve_part_of_speech_label(
+        part_of_speech=part_of_speech,
+        source_language=source_language,
+        display_form=display_form,
+        lemma=lemma,
+    ) or _provider_part_of_speech_label(generated_html)
+
+
+def _normalize_definition_label(definitions_html: str, *, label: str | None) -> str:
+    return "<br>".join(_replace_definition_part_label(part, label=label) for part in _definition_parts(definitions_html))
+
+
+def _provider_part_of_speech_label(definitions_html: str | None) -> str | None:
+    if not definitions_html:
         return None
-    normalized = " ".join(value.replace("-", " ").replace("_", " ").casefold().split())
-    return _PART_OF_SPEECH_LABELS.get(normalized, normalized or None)
+    parts = _definition_parts(definitions_html)
+    if not parts:
+        return None
+    raw_label, separator, _meaning = parts[0].partition(":")
+    if not separator:
+        return None
+    return canonical_part_of_speech_label(raw_label)
+
+
+def _replace_definition_part_label(part: str, *, label: str | None) -> str:
+    meaning = _without_label(part)
+    if label is None:
+        return meaning or part
+    return f"{label}: {meaning}" if meaning else f"{label}: {part}"
 
 
 def _normalize_key(value: str) -> str:

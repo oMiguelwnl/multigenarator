@@ -66,8 +66,10 @@ class StubDefinitionGenerator:
 class FixedDefinitionGenerator:
     def __init__(self, definitions_html: str) -> None:
         self.definitions_html = definitions_html
+        self.calls: list[object] = []
 
     def generate_definition(self, request: object) -> DefinitionGenerationResult:
+        self.calls.append(request)
         return DefinitionGenerationResult(
             definitions_html=self.definitions_html,
             provenance={"source": "fixed-definition-generator"},
@@ -293,8 +295,8 @@ def test_grounding_uses_llm_definition_generator_instead_of_cache_definitions() 
 
     expected = {
         "casa": "noun: LLM definition for casa",
-        "bonito": "adj: LLM definition for bonito",
-        "em": "prep: LLM definition for em",
+        "bonito": "adjective: LLM definition for bonito",
+        "em": "preposition: LLM definition for em",
     }
     for item_key, definition in expected.items():
         candidate = service.ground_word_list_item(
@@ -522,6 +524,144 @@ def test_frequency_uses_lexical_lookup_without_cache_definition_for_card_definit
     assert candidate.grounding_status is GroundingStatus.GROUNDED
     assert candidate.definitions_html == "term: LLM definition for casas"
     assert generator.calls[0].lemma == "casas"
+
+
+def test_grounding_standardizes_german_article_definition_label() -> None:
+    service = LexicalGroundingService(
+        lookup=StubLookup(
+            {
+                "die": LexicalRecord(
+                    term="die",
+                    display_form="die",
+                    lemma="die",
+                    definitions=[],
+                    part_of_speech="unknown",
+                    ipa=None,
+                    source="wordfreq",
+                )
+            }
+        ),
+        definition_generator=FixedDefinitionGenerator("noun: the definite article used for feminine nouns in German"),
+    )
+    seed = LexicalCardCandidate(
+        submitted_form="die",
+        display_form="die",
+        lemma="die",
+        lemma_key="die",
+        frequency_rank=1,
+        frequency_level=1,
+        translation_target_language="en",
+        grounding_status=GroundingStatus.PENDING,
+        provenance=LexicalProvenance(source="wordfreq"),
+    )
+
+    candidate = service.ground_frequency_candidate(language=SupportedLanguage.DE, candidate=seed)
+
+    assert candidate.definitions_html == "article: the definite article used for feminine nouns in German"
+
+
+def test_grounding_preserves_provider_verb_label_when_asset_pos_is_unknown() -> None:
+    service = LexicalGroundingService(
+        lookup=StubLookup(
+            {
+                "blieb": LexicalRecord(
+                    term="blieb",
+                    display_form="blieb",
+                    lemma="blieb",
+                    definitions=[],
+                    part_of_speech="unknown",
+                    ipa=None,
+                    source="wordfreq",
+                )
+            }
+        ),
+        definition_generator=FixedDefinitionGenerator("verb: remained"),
+    )
+    seed = LexicalCardCandidate(
+        submitted_form="blieb",
+        display_form="blieb",
+        lemma="blieb",
+        lemma_key="blieb",
+        frequency_rank=1001,
+        frequency_level=2,
+        translation_target_language="en",
+        grounding_status=GroundingStatus.PENDING,
+        provenance=LexicalProvenance(source="wordfreq"),
+    )
+
+    candidate = service.ground_frequency_candidate(language=SupportedLanguage.DE, candidate=seed)
+
+    assert candidate.display_form == "blieb"
+    assert candidate.definitions_html == "verb: remained"
+
+
+def test_grounding_passes_inferred_function_word_pos_to_definition_generator() -> None:
+    generator = StubDefinitionGenerator()
+    service = LexicalGroundingService(
+        lookup=StubLookup(
+            {
+                "et": LexicalRecord(
+                    term="et",
+                    display_form="et",
+                    lemma="et",
+                    definitions=[],
+                    part_of_speech="unknown",
+                    ipa=None,
+                    source="wordfreq",
+                )
+            }
+        ),
+        definition_generator=generator,
+    )
+
+    candidate = service.ground_word_list_item(
+        language=SupportedLanguage.FR,
+        item=ParsedWordListItem(line_number=1, submitted_form="et", display_form="et", item_key="et"),
+    )
+
+    assert candidate.definitions_html == "conjunction: LLM definition for et"
+    assert generator.calls[0].part_of_speech == "conjunction"
+
+
+def test_grounding_normalizes_german_pause_display_and_definition_label() -> None:
+    generator = FixedDefinitionGenerator("noun: a temporary stop or break in activity")
+    service = LexicalGroundingService(
+        lookup=StubLookup(
+            {
+                "pause": LexicalRecord(
+                    term="pause",
+                    display_form="pause",
+                    lemma="pause",
+                    definitions=[],
+                    part_of_speech="unknown",
+                    ipa=None,
+                    source="wordfreq",
+                )
+            }
+        ),
+        definition_generator=generator,
+    )
+    seed = LexicalCardCandidate(
+        submitted_form="pause",
+        display_form="pause",
+        lemma="pause",
+        lemma_key="pause",
+        frequency_rank=2001,
+        frequency_level=3,
+        translation_target_language="en",
+        grounding_status=GroundingStatus.PENDING,
+        provenance=LexicalProvenance(source="wordfreq"),
+    )
+
+    candidate = service.ground_frequency_candidate(language=SupportedLanguage.DE, candidate=seed)
+
+    assert candidate.display_form == "Pause"
+    assert candidate.lemma == "Pause"
+    assert candidate.lemma_key == "pause"
+    assert candidate.definitions_html == "noun: a temporary stop or break in activity"
+    assert generator.calls[0].display_form == "Pause"
+    assert generator.calls[0].lemma == "Pause"
+    assert generator.calls[0].part_of_speech == "noun"
 
 
 def test_grounding_remediates_morphology_only_definition_from_source_meaning() -> None:
