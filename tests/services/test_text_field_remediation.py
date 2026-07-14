@@ -125,6 +125,7 @@ def test_canonical_part_of_speech_label_rejects_unknown_labels() -> None:
         ("ro", "și", "conjunction"),
         ("ru", "и", "conjunction"),
         ("nl", "het", "article"),
+        ("hu", "és", "conjunction"),
         ("cs", "a", "conjunction"),
     ],
 )

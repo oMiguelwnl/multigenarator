@@ -31,6 +31,7 @@ _LANGUAGE_CODES = {
     SupportedLanguage.NB: "no",
     SupportedLanguage.SV: "sv",
     SupportedLanguage.FI: "fi",
+    SupportedLanguage.HU: "hu",
     SupportedLanguage.CS: "cs",
 }
 _VOICE_REGISTRY_VERSION = "google-translate-tts-v1"

@@ -97,6 +97,14 @@ def test_voice_registry_selects_finnish_voice() -> None:
     assert selection.registry_version == VOICE_REGISTRY_VERSION
 
 
+def test_voice_registry_selects_hungarian_voice() -> None:
+    selection = select_voice(SupportedLanguage.HU)
+
+    assert selection.voice_id == "hu-HU-NoemiNeural"
+    assert selection.locale == "hu-HU"
+    assert selection.registry_version == VOICE_REGISTRY_VERSION
+
+
 def test_voice_registry_selects_czech_voice() -> None:
     selection = select_voice(SupportedLanguage.CS)
 

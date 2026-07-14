@@ -214,6 +214,27 @@ def test_local_adapter_supports_finnish() -> None:
     assert translation.translation == "My brother wants to use tomorrow."
 
 
+def test_local_adapter_supports_hungarian() -> None:
+    sentence = LocalSentenceAdapter().generate_sentence(
+        SentenceGenerationRequest(
+            display_form="használni",
+            lemma="használni",
+            definitions_html="verb: to use",
+            target_language="hu",
+            translation_target_language="en",
+        )
+    )
+    translation = LocalTranslationAdapter().translate_sentence(
+        SentenceTranslationRequest.from_sentence(
+            sentence_result=sentence,
+            translation_target_language="en",
+        )
+    )
+
+    assert sentence.sentence == "A testvérem holnap használni akar."
+    assert translation.translation == "My brother wants to use tomorrow."
+
+
 def test_local_adapter_supports_czech() -> None:
     sentence = LocalSentenceAdapter().generate_sentence(
         SentenceGenerationRequest(

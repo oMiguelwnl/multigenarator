@@ -20,4 +20,5 @@
 | 015 | Normalize German POS labels and display forms in generated cards | 2026-07-14 | passed | [015-german-pos-display-normalization](./015-german-pos-display-normalization/) |
 | 016 | Classify German etwas as pronoun in definition labels | 2026-07-14 | passed | [016-german-etwas-pronoun](./016-german-etwas-pronoun/) |
 | 017 | Universal POS normalization across supported languages | 2026-07-14 | passed | [017-universal-pos-normalization](./017-universal-pos-normalization/) |
+| 018 | adicione a lingua Hungarian | 2026-07-14 | passed | [018-adicione-a-lingua-hungarian](./018-adicione-a-lingua-hungarian/) |
 | 019 | adicione a lingua Czech ao programa | 2026-07-14 | passed | [019-adicione-czech-ao-programa](./019-adicione-czech-ao-programa/) |

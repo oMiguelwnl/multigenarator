@@ -262,6 +262,15 @@ _FUNCTION_WORD_LABELS = {
             "particle": ("ei",),
         }
     ),
+    "hu": _language_map(
+        {
+            "article": ("a", "az"),
+            "postposition": ("után", "előtt", "nélkül", "mellett", "miatt", "között"),
+            "conjunction": ("és", "vagy", "de", "hogy"),
+            "pronoun": ("én", "te", "ő", "mi", "ti", "ők", "ez", "valami", "semmi", "minden", "valaki", "senki"),
+            "particle": ("nem",),
+        }
+    ),
     "cs": _language_map(
         {
             "preposition": ("v", "ve", "na", "s", "se", "z", "do", "od", "pro", "bez", "mezi", "po", "před", "za", "u"),

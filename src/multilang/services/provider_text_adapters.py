@@ -51,6 +51,7 @@ _LANGUAGE_NAMES = {
     "nb": "Norwegian Bokmal",
     "sv": "Swedish",
     "fi": "Finnish",
+    "hu": "Hungarian",
     "cs": "Czech",
     "la": "Latin",
 }
@@ -71,6 +72,7 @@ _DEEPL_TARGET_LANGUAGES = {
     "nb": "NB",
     "sv": "SV",
     "fi": "FI",
+    "hu": "HU",
     "cs": "CS",
 }
 

@@ -22,6 +22,7 @@ def test_default_supported_languages_include_czech(settings: Settings) -> None:
         "nb",
         "sv",
         "fi",
+        "hu",
         "cs",
         "la",
     ]

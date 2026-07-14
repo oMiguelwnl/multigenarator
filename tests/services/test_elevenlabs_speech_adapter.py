@@ -123,6 +123,15 @@ def test_elevenlabs_adapter_uses_default_voice_for_finnish() -> None:
     assert selection.locale == "fi-FI"
 
 
+def test_elevenlabs_adapter_uses_default_voice_for_hungarian() -> None:
+    adapter = ElevenLabsSpeechAdapter(Settings(_env_file=None))
+
+    selection = adapter.select_voice(SupportedLanguage.HU)
+
+    assert selection.voice_id == "TxGEqnHWrfWFTfGW9XjX"
+    assert selection.locale == "hu-HU"
+
+
 def test_elevenlabs_adapter_uses_default_voice_for_czech() -> None:
     adapter = ElevenLabsSpeechAdapter(Settings(_env_file=None))
 

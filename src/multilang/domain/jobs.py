@@ -25,6 +25,7 @@ class SupportedLanguage(str, Enum):
     NB = "nb"
     SV = "sv"
     FI = "fi"
+    HU = "hu"
     CS = "cs"
     LA = "la"
 

@@ -42,6 +42,7 @@ _PHONEMIZER_ESPEAK_LANG_CODES = {
     "nb": "nb",
     "sv": "sv",
     "fi": "fi",
+    "hu": "hu",
     "cs": "cs",
 }
 
@@ -59,6 +60,7 @@ _EPITRAN_LANG_CODES = {
     "nl": "nld-Latn",
     "sv": "swe-Latn",
     "fi": "fin-Latn",
+    "hu": "hun-Latn",
     "cs": "ces-Latn",
 }
 

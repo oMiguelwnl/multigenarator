@@ -110,6 +110,10 @@ _VOICE_REGISTRY: dict[SupportedLanguage, VoicePlan] = {
         preferred=VoiceOption(voice_id="fi-FI-NooraNeural", locale="fi-FI"),
         same_locale_alternates=(VoiceOption(voice_id="fi-FI-HarriNeural", locale="fi-FI"),),
     ),
+    SupportedLanguage.HU: VoicePlan(
+        preferred=VoiceOption(voice_id="hu-HU-NoemiNeural", locale="hu-HU"),
+        same_locale_alternates=(VoiceOption(voice_id="hu-HU-TamasNeural", locale="hu-HU"),),
+    ),
     SupportedLanguage.CS: VoicePlan(
         preferred=VoiceOption(voice_id="cs-CZ-VlastaNeural", locale="cs-CZ"),
         same_locale_alternates=(VoiceOption(voice_id="cs-CZ-AntoninNeural", locale="cs-CZ"),),
