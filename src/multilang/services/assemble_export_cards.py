@@ -150,7 +150,9 @@ class AssembleExportCardsService:
             parts.append(escape(_require_definition_template(candidate, part)))
         if not parts:
             raise AssembleExportCardsError(f"missing definitions for item {candidate.lemma_key}")
-        return "<br>".join(parts)
+        # Multiple senses stay on a single line (no <br> line breaks); joined with
+        # a semicolon in the standard dictionary style.
+        return _DEFINITION_SENSE_SEPARATOR.join(parts)
 
     def _render_gramatica(self, text_record: TextQualityRecord) -> str | None:
         provenance = getattr(text_record, "sentence_provenance", None)
@@ -254,6 +256,7 @@ def _candidate_source_type(candidate: object) -> str:
     return "word-list"
 
 
+_DEFINITION_SENSE_SEPARATOR = "; "
 _DEFINITION_TEMPLATE_RE = re.compile(r"^[^\W\d_](?:[^\W\d_]|[ -]){1,40}:\s+\S")
 
 

@@ -313,7 +313,7 @@ def test_assemble_export_cards_builds_highlight_row_without_translation_field() 
     assert mapping["sentence_audio"] == "[sound:wash-sentence.mp3]"
 
 
-def test_assemble_export_cards_joins_definitions_with_br_and_preserves_image_blank() -> None:
+def test_assemble_export_cards_joins_definitions_on_one_line_and_preserves_image_blank() -> None:
     service, _ = build_service(
         accepted_records=[make_text_record(item_key="jump")],
         candidates={"jump": make_candidate(item_key="jump", definitions_html="noun: first sense<ul><li>noun: nested</li></ul>noun: second & third")},
@@ -325,13 +325,15 @@ def test_assemble_export_cards_joins_definitions_with_br_and_preserves_image_bla
 
     row = service.execute(job_id="job-1", deck_language=SupportedLanguage.EN).cards[0]
 
-    assert row.definitions == "noun: first sense<br>noun: nested<br>noun: second &amp; third"
+    # Multiple senses stay on a single line (semicolon-joined, no <br> breaks).
+    assert row.definitions == "noun: first sense; noun: nested; noun: second &amp; third"
+    assert "<br>" not in row.definitions
     assert "<ul>" not in row.definitions
     assert "<li>" not in row.definitions
     assert row.image == ""
 
 
-def test_assemble_export_cards_normalizes_existing_br_separators() -> None:
+def test_assemble_export_cards_flattens_existing_br_separators_to_one_line() -> None:
     service, _ = build_service(
         accepted_records=[make_text_record(item_key="harbor")],
         candidates={"harbor": make_candidate(item_key="harbor", definitions_html="noun: first sense<br>noun: second & third")},
@@ -343,7 +345,9 @@ def test_assemble_export_cards_normalizes_existing_br_separators() -> None:
 
     row = service.execute(job_id="job-1", deck_language=SupportedLanguage.EN).cards[0]
 
-    assert row.definitions == "noun: first sense<br>noun: second &amp; third"
+    # Incoming <br> senses are flattened to a single semicolon-joined line.
+    assert row.definitions == "noun: first sense; noun: second &amp; third"
+    assert "<br>" not in row.definitions
 
 
 def test_assemble_export_cards_accepts_portuguese_definition_labels() -> None:
