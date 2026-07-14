@@ -132,6 +132,7 @@ class ExportRepository:
             "word_audio": record.word_audio,
             "sentence_audio": record.sentence_audio,
             "image": record.image,
+            "gramatica": record.gramatica,
         }
 
     def _to_card_domain(self, row: CardExportModel) -> ExportCardRow:
@@ -155,6 +156,7 @@ class ExportRepository:
             word_audio=row.word_audio,
             sentence_audio=row.sentence_audio,
             image=row.image,
+            gramatica=row.gramatica,
         )
 
     def _to_artifact_domain(self, row: DeckExportModel) -> ExportDeckArtifact:

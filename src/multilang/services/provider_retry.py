@@ -85,12 +85,16 @@ class ProviderCircuitBreaker:
 def classify_provider_error(exc: BaseException) -> str:
     text = f"{type(exc).__name__} {exc}".casefold()
     status_code = str(getattr(getattr(exc, "response", None), "status_code", "") or getattr(exc, "status_code", ""))
+    # Quota/credit exhaustion is non-retryable and must be detected BEFORE the
+    # generic 429/rate-limit branch: providers frequently surface it as an HTTP
+    # 429 (e.g. "429 insufficient credits"), which would otherwise be retried
+    # through the full backoff window before failing anyway.
+    if "quota" in text or "insufficient credits" in text:
+        return "quota_exceeded"
     if "429" in text or status_code == "429" or "rate limit" in text:
         return "rate_limited"
     if "temporary 403" in text or " 403" in text or status_code == "403" or "forbidden" in text:
         return "temporary_forbidden"
-    if "quota" in text or "insufficient credits" in text:
-        return "quota_exceeded"
     if "timeout" in text or "timed out" in text:
         return "timeout"
     if "network" in text or "connection" in text:

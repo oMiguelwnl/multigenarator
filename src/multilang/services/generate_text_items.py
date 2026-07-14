@@ -212,12 +212,25 @@ class GenerateTextItemsService:
                             provider="latin-structured",
                             metadata=metadata,
                         )
-                        # Override the sentence in the bundle with the structured Latin one (better grammar control)
-                        generated_bundle.sentence = GeneratedSentence(
+                        new_sentence = GeneratedSentence(
                             text=str(lat_sentence),
                             target_language=deck_language.value,
                             provenance=provenance,
                         )
+                        # The bundle translation was produced for the ORIGINAL
+                        # generated sentence. Regenerate it for the structured
+                        # Latin sentence BEFORE mutating the bundle so a failure
+                        # leaves the original sentence+translation pair intact
+                        # instead of pairing the new sentence with a stale one.
+                        new_translation = self.text_generation_service.translate_sentence_text(
+                            sentence=str(lat_sentence),
+                            translation_target_language=generated_bundle.translation.target_language,
+                            deck_language=deck_language,
+                            rate_limiter=rate_limiter,
+                        )
+                        # Override sentence + translation together (better grammar control).
+                        generated_bundle.sentence = new_sentence
+                        generated_bundle.translation = new_translation
                 except Exception:
                     pass
             validation = self._validate_bundle(
