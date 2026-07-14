@@ -134,7 +134,7 @@ def test_existing_generate_command_rejects_latin_language_frequency_path() -> No
     )
 
     assert result.exit_code != 0
-    assert "Invalid value for '--language'" in result.output
+    assert "--source frequency is not supported for Latin (la)" in result.output
 
 
 def test_existing_generate_command_rejects_latin_mvp_source_option() -> None:

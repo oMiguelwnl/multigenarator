@@ -84,9 +84,11 @@ def test_export_command_runtime_path_writes_apkg_csv_and_tsv_artifacts(tmp_path:
     monkeypatch.setattr(runtime_module, "AzureSpeechAdapter", FakeAzureSpeechAdapter)
     service = build_runtime_service(
         Settings(
+            _env_file=None,
             database_url=f"sqlite+pysqlite:///{database_path}",
             lexicon_data_dir=lexicon_dir,
             audio_storage_dir=tmp_path / "audio",
+            audio_provider="azure",
             azure_speech_key="key",
             azure_speech_region="eastus",
             tatoeba_enabled=False,
@@ -152,9 +154,11 @@ def test_export_command_runtime_path_fails_loudly_when_audio_is_missing(
     monkeypatch.setattr(runtime_module, "AzureSpeechAdapter", FakeAzureSpeechAdapter)
     service = build_runtime_service(
         Settings(
+            _env_file=None,
             database_url=f"sqlite+pysqlite:///{database_path}",
             lexicon_data_dir=lexicon_dir,
             audio_storage_dir=tmp_path / "audio",
+            audio_provider="azure",
             azure_speech_key="key",
             azure_speech_region="eastus",
             tatoeba_enabled=False,
@@ -207,9 +211,11 @@ def test_export_command_runtime_path_blocks_persisted_word_audio_mismatches(
     monkeypatch.setattr(runtime_module, "AzureSpeechAdapter", FakeAzureSpeechAdapter)
     service = build_runtime_service(
         Settings(
+            _env_file=None,
             database_url=f"sqlite+pysqlite:///{database_path}",
             lexicon_data_dir=lexicon_dir,
             audio_storage_dir=tmp_path / "audio",
+            audio_provider="azure",
             azure_speech_key="key",
             azure_speech_region="eastus",
             tatoeba_enabled=False,

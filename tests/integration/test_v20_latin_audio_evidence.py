@@ -145,10 +145,11 @@ def test_public_summary_and_integrity_gate_are_scanner_readable_and_path_safe() 
         assert audio_summary["readiness_status"] == "approved"
 
 
-def test_phase_27_boundary_keeps_latin_outside_modern_frequency_generation() -> None:
-    assert "la" not in {language.value for language in SupportedLanguage}
+def test_phase_27_boundary_keeps_latin_frequency_generation_disabled() -> None:
+    assert SupportedLanguage.LA.value == "la"
     generate_result = CliRunner().invoke(create_app(), ["generate", "--language", "la", "--source", "frequency"])
     assert generate_result.exit_code != 0
+    assert "--source frequency is not supported for Latin (la)" in generate_result.output
 
     records = load_latin_curated_records()
     assert {record.translation_gate.status for record in records} == {"approved"}

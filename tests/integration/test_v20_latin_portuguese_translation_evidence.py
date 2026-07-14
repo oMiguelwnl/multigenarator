@@ -43,7 +43,7 @@ def test_pt_03_deterministic_qa_summary_exposes_quality_and_review_status_counts
     assert summary["passed_count"] == 50
     assert summary["failed_count"] == 0
     assert summary["issue_counts"] == {}
-    assert summary["review_status_counts"] == {"needs_review": 50, "approved": 0, "rejected": 0}
+    assert summary["review_status_counts"] == {"needs_review": 0, "approved": 50, "rejected": 0}
 
 
 def test_phase_26_cli_service_summary_is_public_and_scanner_readable() -> None:

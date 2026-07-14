@@ -1,0 +1,78 @@
+{
+  "status": "candidate_only",
+  "runtime_enabled": false,
+  "decision": "unreviewed",
+  "source_input": "new2.md",
+  "candidates": [
+    {
+      "id": "audio-finevoice-latin",
+      "category": "audio",
+      "classification": "candidate_provider",
+      "url": "https://finevoice.ai/voicelibrary/latin",
+      "status": "candidate_only",
+      "runtime_enabled": false,
+      "decision": "unreviewed",
+      "source_input": "new2.md"
+    },
+    {
+      "id": "frequency-mylittlewordland-latin",
+      "category": "frequency",
+      "classification": "candidate_frequency_source",
+      "url": "https://mylittlewordland.com/course/415114/as-mil-palavras-mais-frequentes-do-latim",
+      "status": "candidate_only",
+      "runtime_enabled": false,
+      "decision": "unreviewed",
+      "source_input": "new2.md"
+    },
+    {
+      "id": "reference-bridge-haverford",
+      "category": "reference",
+      "classification": "candidate_reference_source",
+      "url": "https://bridge.haverford.edu/",
+      "status": "candidate_only",
+      "runtime_enabled": false,
+      "decision": "unreviewed",
+      "source_input": "new2.md"
+    },
+    {
+      "id": "reference-dcc-greek-core-list",
+      "category": "reference",
+      "classification": "related_reference_only",
+      "url": "https://mylittlewordland.com/greek-core-list",
+      "status": "candidate_only",
+      "runtime_enabled": false,
+      "decision": "unreviewed",
+      "source_input": "new2.md"
+    },
+    {
+      "id": "reference-mylittlewordland-latin-core-list",
+      "category": "reference",
+      "classification": "candidate_reference_source",
+      "url": "https://mylittlewordland.com/pt/latin-core-list1",
+      "status": "candidate_only",
+      "runtime_enabled": false,
+      "decision": "unreviewed",
+      "source_input": "new2.md"
+    },
+    {
+      "id": "audio-google-translate-latin-mention",
+      "category": "audio",
+      "classification": "audio_provider_mention",
+      "url": null,
+      "status": "candidate_only",
+      "runtime_enabled": false,
+      "decision": "unreviewed",
+      "source_input": "new2.md"
+    },
+    {
+      "id": "audio-elevenlabs-italian-mention",
+      "category": "audio",
+      "classification": "audio_provider_mention",
+      "url": null,
+      "status": "candidate_only",
+      "runtime_enabled": false,
+      "decision": "unreviewed",
+      "source_input": "new2.md"
+    }
+  ]
+}

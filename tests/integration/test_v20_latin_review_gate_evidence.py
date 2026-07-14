@@ -39,19 +39,14 @@ def test_rev_01_all_curated_records_expose_four_independent_review_gates() -> No
         assert record.audio_gate.status in _VALID_REVIEW_STATUSES
 
 
-def test_rev_02_export_is_blocked_while_any_required_gate_is_not_approved() -> None:
-    """REV-02: learner-ready export fails closed until source, translation, grammar, and audio are approved."""
+def test_rev_02_export_is_allowed_when_all_required_gates_are_approved() -> None:
+    """REV-02: learner-ready export is allowed only after all required gates are approved."""
 
     records = load_latin_curated_records()
 
-    assert any(record.translation_gate.status != "approved" or record.audio_gate.status != "approved" for record in records)
-    with pytest.raises(ValueError) as exc_info:
-        assert_latin_records_export_ready(records)
-
-    message = str(exc_info.value)
-    assert "latin_export_blocked" in message
-    assert "item_key=latin-mvp-0001" in message
-    assert "gates=translation,audio" in message
+    assert all(record.translation_gate.status == "approved" for record in records)
+    assert all(record.audio_gate.status == "approved" for record in records)
+    assert_latin_records_export_ready(records)
 
 
 def test_rev_03_curated_records_preserve_original_source_and_frequency_provenance() -> None:
@@ -68,21 +63,19 @@ def test_rev_03_curated_records_preserve_original_source_and_frequency_provenanc
         assert record.uncertainty_reason is None
 
 
-def test_phase_25_does_not_prematurely_approve_translation_or_audio_gates() -> None:
-    """No-scope-creep: Phase 26/27 work remains pending after Phase 25 review gate setup."""
+def test_phase_25_records_reflect_later_translation_and_audio_approvals() -> None:
+    """Milestone state: Phase 26/27 approvals are reflected in the committed curation asset."""
 
     records = load_latin_curated_records()
 
-    assert {record.translation_gate.status for record in records} == {"needs_review"}
-    assert {record.audio_gate.status for record in records} == {"needs_review"}
-    assert {record.translation_gate.reason for record in records} == {"translation_pending_phase_26"}
-    assert {record.audio_gate.reason for record in records} == {"audio_pending_phase_27"}
+    assert {record.translation_gate.status for record in records} == {"approved"}
+    assert {record.audio_gate.status for record in records} == {"approved"}
 
 
-def test_phase_25_keeps_latin_outside_modern_supported_language_enum() -> None:
-    """No-scope-creep: Classical Latin remains isolated from modern SupportedLanguage values."""
+def test_phase_25_keeps_latin_frequency_generation_disabled() -> None:
+    """Classical Latin is registered but remains blocked from modern frequency generation."""
 
-    assert "la" not in {language.value for language in SupportedLanguage}
+    assert SupportedLanguage.LA.value == "la"
 
 
 def test_phase_25_does_not_mutate_phase_23_source_pack_count_or_ordering() -> None:

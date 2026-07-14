@@ -65,9 +65,13 @@ def test_sent_01_sent_02_target_forms_validate_and_sequence_favors_clear_context
         validate_latin_target_presence(entry.target_form, entry.latin_sentence, entry.target_match_mode)
         for entry in pack.entries
     )
-    assert any(entry.target_match_mode == "enclitic_normalization" for entry in pack.entries)
-    assert any(entry.target_match_mode == "orthographic_normalization" for entry in pack.entries)
-    assert all("Rafael Falcon-style" in entry.didactic_order_rationale or "Didactic reorder" in entry.didactic_order_rationale for entry in pack.entries)
+    assert {entry.target_match_mode for entry in pack.entries} == {"exact"}
+    assert all(
+        "Rafael Falcon-style" in entry.didactic_order_rationale
+        or "Didactic reorder" in entry.didactic_order_rationale
+        or "Real-data reorder" in entry.didactic_order_rationale
+        for entry in pack.entries
+    )
 
 
 def test_phase_23_asset_has_no_later_phase_payload_fields_or_large_scale_artifacts() -> None:

@@ -24,7 +24,8 @@ def test_committed_latin_source_pack_loads_in_manifest_order() -> None:
 def test_committed_latin_source_pack_has_required_frequency_source_and_license_evidence() -> None:
     pack = load_latin_mvp_source_pack()
 
-    assert "As mil palavras mais frequentes do latim (mylittlewordland)" in pack.frequency_attribution
+    assert "mylittlewordland" in pack.frequency_attribution
+    assert "based on DCC" in pack.frequency_attribution
     assert "CC BY-SA" in pack.license_attribution
     for entry in pack.entries:
         assert entry.license_gate == "approved"

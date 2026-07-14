@@ -11,4 +11,7 @@
 | 008 | adiciona a lingua Swedish | 2026-06-24 | passed | [008-adiciona-lingua-swedish](./008-adiciona-lingua-swedish/) |
 | 001 | adicione Danish ao projeto | 2026-06-24 | passed | [001-adicione-danish-ao-projeto](./001-adicione-danish-ao-projeto/) |
 | 009 | gerar assets frequency Danish | 2026-06-24 | passed | [009-gerar-assets-frequency-danish](./009-gerar-assets-frequency-danish/) |
+| 001 | Merge Claude branch into Monarch | 2026-07-13 | passed | [001-merge-claude-branch](./001-merge-claude-branch/) |
 | 010 | adicione o Finnish ao projeto | 2026-07-13 | passed | [010-adicione-finnish-ao-projeto](./010-adicione-finnish-ao-projeto/) |
+| 011 | Implement deterministic IPA library resolvers with AI fallback | 2026-07-13 | passed | [011-ipa-library-resolvers](./011-ipa-library-resolvers/) |
+| 012 | Autodetect Windows eSpeak NG for phonemizer fallback | 2026-07-13 | passed | [012-espeak-windows-autodetect](./012-espeak-windows-autodetect/) |

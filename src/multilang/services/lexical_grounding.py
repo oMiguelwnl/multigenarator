@@ -234,23 +234,27 @@ class LexicalGroundingService:
         if self._pronunciation_generator is not None and ipa is None:
             if rate_limiter is not None:
                 rate_limiter.wait()
-            pronunciation = self._pronunciation_generator.generate_pronunciation(
-                PronunciationGenerationRequest(
-                    target_language=language.value,
-                    display_form=learner_display_form,
-                    lemma=record.lemma,
-                    definitions_html=definitions_html,
+            try:
+                pronunciation = self._pronunciation_generator.generate_pronunciation(
+                    PronunciationGenerationRequest(
+                        target_language=language.value,
+                        display_form=learner_display_form,
+                        lemma=record.lemma,
+                        definitions_html=definitions_html,
+                    )
                 )
-            )
-            ipa = str(getattr(pronunciation, "ipa")).strip()
-            spoken_form = str(getattr(pronunciation, "spoken_form")).strip()
-            pronunciation_source = str(
-                getattr(pronunciation, "provenance", {}).get(
-                    "source", "provider-pronunciation-generator"
+            except Exception:
+                notes.append("pronunciation generator failed; word fallback will be used")
+            else:
+                ipa = str(getattr(pronunciation, "ipa")).strip()
+                spoken_form = str(getattr(pronunciation, "spoken_form")).strip()
+                pronunciation_source = str(
+                    getattr(pronunciation, "provenance", {}).get(
+                        "source", "provider-pronunciation-generator"
+                    )
                 )
-            )
-            pronunciation_authoritative = True
-            notes.append("provider IPA used because authoritative IPA was missing")
+                pronunciation_authoritative = True
+                notes.append("provider IPA used because authoritative IPA was missing")
         if not ipa:
             ipa = learner_display_form
             spoken_form = learner_display_form

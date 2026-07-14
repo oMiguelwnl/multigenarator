@@ -24,8 +24,8 @@ def test_load_latin_curated_records_returns_50_models_from_default_asset() -> No
     assert records[-1].item_key == "latin-mvp-0050"
     assert all(record.source_gate.status == "approved" for record in records)
     assert all(record.grammar_gate.status == "approved" for record in records)
-    assert all(record.translation_gate.reason == "translation_pending_phase_26" for record in records)
-    assert all(record.audio_gate.reason == "audio_pending_phase_27" for record in records)
+    assert all(record.translation_gate.status == "approved" for record in records)
+    assert all(record.audio_gate.status == "approved" for record in records)
 
 
 def test_loader_rejects_malformed_json_and_invalid_review_states(tmp_path: Path) -> None:
@@ -69,16 +69,15 @@ def test_loader_fails_on_source_pack_provenance_drift(tmp_path: Path) -> None:
         load_latin_curated_records(drifted)
 
 
-def test_curation_asset_is_not_export_ready_until_later_gates_are_approved() -> None:
+def test_curation_asset_is_export_ready_after_later_gates_are_approved() -> None:
     records = load_latin_curated_records()
     summary = summarize_latin_review_records(records)
 
     assert summary.total_records == 50
-    assert summary.learner_ready_records == 0
-    assert summary.blocked_records == 50
+    assert summary.learner_ready_records == 50
+    assert summary.blocked_records == 0
     assert summary.gate_counts["source"]["approved"] == 50
-    assert summary.gate_counts["translation"]["needs_review"] == 50
+    assert summary.gate_counts["translation"]["approved"] == 50
     assert summary.gate_counts["grammar"]["approved"] == 50
-    assert summary.gate_counts["audio"]["needs_review"] == 50
-    with pytest.raises(ValueError, match="latin_export_blocked item_key=latin-mvp-0001 gates=translation,audio"):
-        assert_latin_records_export_ready(records)
+    assert summary.gate_counts["audio"]["approved"] == 50
+    assert_latin_records_export_ready(records)

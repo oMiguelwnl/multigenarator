@@ -7,6 +7,10 @@ import pytest
 from multilang.runtime import build_runtime_service
 from multilang.services.audio_synthesis import AudioSynthesisResponse
 from multilang.services.fallback_audio_adapter import FallbackAudioAdapter
+from multilang.services.library_pronunciation_adapters import (
+    FallbackPronunciationAdapter,
+    LibraryPronunciationAdapter,
+)
 from multilang.services.local_text_adapter import LocalSentenceAdapter, LocalTranslationAdapter
 from multilang.services.provider_pronunciation_adapters import LiteLLMPronunciationAdapter
 from multilang.services.text_generation import SentenceGenerationRequest, SentenceTranslationRequest
@@ -95,6 +99,7 @@ def test_runtime_allows_local_text_services_only_when_explicitly_configured(tmp_
     )
 
     assert service is not None
+    assert isinstance(service.grounding_service._pronunciation_generator, LibraryPronunciationAdapter)
 
 
 def test_runtime_wires_litellm_pronunciation_adapter_when_configured(tmp_path) -> None:
@@ -108,10 +113,11 @@ def test_runtime_wires_litellm_pronunciation_adapter_when_configured(tmp_path) -
         )
     )
 
-    assert isinstance(
-        service.grounding_service._pronunciation_generator,
-        LiteLLMPronunciationAdapter,
-    )
+    adapter = service.grounding_service._pronunciation_generator
+
+    assert isinstance(adapter, FallbackPronunciationAdapter)
+    assert isinstance(adapter.adapters[0], LibraryPronunciationAdapter)
+    assert isinstance(adapter.adapters[1], LiteLLMPronunciationAdapter)
 
 
 def test_runtime_wires_elevenlabs_audio_provider(tmp_path, monkeypatch) -> None:

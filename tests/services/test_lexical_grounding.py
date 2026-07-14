@@ -41,6 +41,15 @@ class StubPronunciationGenerator:
         )()
 
 
+class FailingPronunciationGenerator:
+    def __init__(self) -> None:
+        self.calls: list[object] = []
+
+    def generate_pronunciation(self, request: object) -> object:
+        self.calls.append(request)
+        raise ValueError("all pronunciation adapters failed")
+
+
 class StubDefinitionGenerator:
     def __init__(self) -> None:
         self.calls: list[object] = []
@@ -631,6 +640,38 @@ def test_grounding_uses_ai_pronunciation_when_authoritative_ipa_is_missing() -> 
     assert candidate.provenance.pronunciation.source == "provider-pronunciation-generator"
     assert generator.calls
     assert "provider IPA used because authoritative IPA was missing" in candidate.provenance.notes
+
+
+def test_grounding_uses_word_fallback_when_pronunciation_generator_fails() -> None:
+    generator = FailingPronunciationGenerator()
+    service = LexicalGroundingService(
+        lookup=StubLookup(
+            {
+                "casa": LexicalRecord(
+                    term="casa",
+                    display_form="casa",
+                    lemma="casa",
+                    definitions=["house"],
+                    ipa=None,
+                )
+            }
+        ),
+        pronunciation_generator=generator,
+    )
+
+    candidate = service.ground_word_list_item(
+        language=SupportedLanguage.PT,
+        item=ParsedWordListItem(line_number=1, submitted_form="casa", display_form="casa", item_key="casa"),
+    )
+
+    assert candidate.ipa == "casa"
+    assert candidate.spoken_form == "casa"
+    assert candidate.provenance.pronunciation is not None
+    assert candidate.provenance.pronunciation.source == "manual_missing"
+    assert candidate.provenance.pronunciation.authoritative is False
+    assert generator.calls
+    assert "pronunciation generator failed; word fallback will be used" in candidate.provenance.notes
+    assert "word fallback used because authoritative IPA was missing" in candidate.provenance.notes
 
 
 def test_grounding_preserves_authoritative_ipa_for_frequency_candidates() -> None:

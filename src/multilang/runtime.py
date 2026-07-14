@@ -48,6 +48,10 @@ from multilang.services.lexical_lookup import LexicalLookup
 from multilang.services.lexical_grounding import LexicalGroundingService
 from multilang.services.rate_limit import RateLimiter
 from multilang.services.local_text_adapter import LocalSentenceAdapter, LocalTranslationAdapter
+from multilang.services.library_pronunciation_adapters import (
+    FallbackPronunciationAdapter,
+    LibraryPronunciationAdapter,
+)
 from multilang.services.provider_text_adapters import (
     DeepLTranslationAdapter,
     GoogleTranslateAdapter,
@@ -475,10 +479,13 @@ def _build_sentence_adapter(runtime_settings: Settings) -> object:
     raise ValueError(f"unsupported text generation provider: {runtime_settings.text_generation_provider}")
 
 
-def _build_pronunciation_adapter(runtime_settings: Settings) -> object | None:
+def _build_pronunciation_adapter(runtime_settings: Settings) -> object:
+    adapters: list[object] = [LibraryPronunciationAdapter()]
     if can_use_litellm(runtime_settings):
-        return LiteLLMPronunciationAdapter(runtime_settings)
-    return None
+        adapters.append(LiteLLMPronunciationAdapter(runtime_settings))
+    if len(adapters) == 1:
+        return adapters[0]
+    return FallbackPronunciationAdapter(adapters)
 
 
 def _build_audio_adapter(runtime_settings: Settings) -> AudioSynthesisAdapter:

@@ -83,9 +83,11 @@ def test_custom_word_list_generates_audio_and_exports_all_formats(tmp_path: Path
     monkeypatch.setattr(runtime_module, "AzureSpeechAdapter", FakeAzureSpeechAdapter)
     service = build_runtime_service(
         Settings(
+            _env_file=None,
             database_url=f"sqlite+pysqlite:///{database_path}",
             lexicon_data_dir=lexicon_dir,
             audio_storage_dir=tmp_path / "audio",
+            audio_provider="azure",
             azure_speech_key="key",
             azure_speech_region="eastus",
             tatoeba_enabled=False,
