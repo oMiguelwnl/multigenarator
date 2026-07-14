@@ -150,9 +150,11 @@ class AssembleExportCardsService:
             parts.append(escape(_require_definition_template(candidate, part)))
         if not parts:
             raise AssembleExportCardsError(f"missing definitions for item {candidate.lemma_key}")
-        # Multiple senses stay on a single line (no <br> line breaks); joined with
-        # a semicolon in the standard dictionary style.
-        return _DEFINITION_SENSE_SEPARATOR.join(parts)
+        # Multiple senses stay on a single line (no <br> line breaks), joined with
+        # a semicolon in the standard dictionary style. Consecutive senses that
+        # share the same part-of-speech label drop the repeated label, e.g.
+        # "verb: to run; to operate" instead of "verb: to run; verb: to operate".
+        return _join_definition_senses(parts)
 
     def _render_gramatica(self, text_record: TextQualityRecord) -> str | None:
         provenance = getattr(text_record, "sentence_provenance", None)
@@ -258,6 +260,33 @@ def _candidate_source_type(candidate: object) -> str:
 
 _DEFINITION_SENSE_SEPARATOR = "; "
 _DEFINITION_TEMPLATE_RE = re.compile(r"^[^\W\d_](?:[^\W\d_]|[ -]){1,40}:\s+\S")
+
+
+def _join_definition_senses(parts: list[str]) -> str:
+    """Join senses on one line, dropping a repeated part-of-speech label.
+
+    Each part is validated as ``[label]: [meaning]`` upstream. When a sense
+    repeats the label of the previously shown sense, only its meaning is kept
+    so the label appears once: ``verb: to run; to operate``. A sense with a
+    different label keeps it: ``verb: to run; noun: a jog``.
+    """
+
+    rendered: list[str] = []
+    last_label: str | None = None
+    for part in parts:
+        label, separator, meaning = part.partition(":")
+        label = label.strip()
+        meaning = meaning.strip()
+        if separator and meaning:
+            if last_label is not None and label.casefold() == last_label.casefold():
+                rendered.append(meaning)
+            else:
+                rendered.append(f"{label}: {meaning}")
+                last_label = label
+        else:
+            rendered.append(part)
+            last_label = None
+    return _DEFINITION_SENSE_SEPARATOR.join(rendered)
 
 
 def _require_definition_template(candidate: LexicalCardCandidate, definition: str) -> str:

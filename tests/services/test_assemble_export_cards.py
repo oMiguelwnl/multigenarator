@@ -325,8 +325,9 @@ def test_assemble_export_cards_joins_definitions_on_one_line_and_preserves_image
 
     row = service.execute(job_id="job-1", deck_language=SupportedLanguage.EN).cards[0]
 
-    # Multiple senses stay on a single line (semicolon-joined, no <br> breaks).
-    assert row.definitions == "noun: first sense; noun: nested; noun: second &amp; third"
+    # Multiple senses stay on a single line (semicolon-joined, no <br> breaks);
+    # the repeated "noun" label is shown only once.
+    assert row.definitions == "noun: first sense; nested; second &amp; third"
     assert "<br>" not in row.definitions
     assert "<ul>" not in row.definitions
     assert "<li>" not in row.definitions
@@ -345,9 +346,26 @@ def test_assemble_export_cards_flattens_existing_br_separators_to_one_line() -> 
 
     row = service.execute(job_id="job-1", deck_language=SupportedLanguage.EN).cards[0]
 
-    # Incoming <br> senses are flattened to a single semicolon-joined line.
-    assert row.definitions == "noun: first sense; noun: second &amp; third"
+    # Incoming <br> senses are flattened to a single semicolon-joined line,
+    # with the repeated "noun" label shown only once.
+    assert row.definitions == "noun: first sense; second &amp; third"
     assert "<br>" not in row.definitions
+
+
+def test_assemble_export_cards_keeps_distinct_labels_for_different_parts_of_speech() -> None:
+    service, _ = build_service(
+        accepted_records=[make_text_record(item_key="run")],
+        candidates={"run": make_candidate(item_key="run", definitions_html="verb: to move quickly<br>noun: a short trip")},
+        assets={
+            ("run", AudioAssetKind.WORD.value): make_asset(item_key="run", asset_kind=AudioAssetKind.WORD, storage_path="run-word.mp3"),
+            ("run", AudioAssetKind.SENTENCE.value): make_asset(item_key="run", asset_kind=AudioAssetKind.SENTENCE, storage_path="run-sentence.mp3"),
+        },
+    )
+
+    row = service.execute(job_id="job-1", deck_language=SupportedLanguage.EN).cards[0]
+
+    # A sense with a different part of speech keeps its own label.
+    assert row.definitions == "verb: to move quickly; noun: a short trip"
 
 
 def test_assemble_export_cards_accepts_portuguese_definition_labels() -> None:
