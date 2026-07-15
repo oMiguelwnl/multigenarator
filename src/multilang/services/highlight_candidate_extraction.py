@@ -41,6 +41,7 @@ _STOPWORDS: dict[SupportedLanguage, set[str]] = {
     SupportedLanguage.FI: {"ei", "että", "ja", "joka", "kun", "minä", "on", "se", "tämä", "yksi"},
     SupportedLanguage.HU: {"a", "az", "egy", "és", "hogy", "is", "meg", "mert", "nem", "van"},
     SupportedLanguage.CS: {"a", "ale", "do", "je", "jsem", "na", "ne", "pro", "se", "ta", "ten", "to", "v", "ve", "že"},
+    SupportedLanguage.HR: {"da", "do", "i", "je", "na", "ne", "od", "on", "ona", "se", "to", "u", "za"},
 }
 
 

@@ -35,6 +35,7 @@ _LANGUAGE_LOCALES = {
     SupportedLanguage.FI: "fi-FI",
     SupportedLanguage.HU: "hu-HU",
     SupportedLanguage.CS: "cs-CZ",
+    SupportedLanguage.HR: "hr-HR",
 }
 _VOICE_REGISTRY_VERSION = "elevenlabs-premade-v1"
 _VOICE_BY_LANGUAGE = {
@@ -58,6 +59,7 @@ _VOICE_BY_LANGUAGE = {
     SupportedLanguage.FI: "TxGEqnHWrfWFTfGW9XjX",  # Josh
     SupportedLanguage.HU: "TxGEqnHWrfWFTfGW9XjX",  # Josh
     SupportedLanguage.CS: "TxGEqnHWrfWFTfGW9XjX",  # Josh
+    SupportedLanguage.HR: "TxGEqnHWrfWFTfGW9XjX",  # Josh
 }
 
 

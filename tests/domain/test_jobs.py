@@ -33,6 +33,7 @@ def test_supported_languages() -> None:
         "fi",
         "hu",
         "cs",
+        "hr",
         "la",
     }
 
@@ -81,6 +82,12 @@ def test_generation_request_accepts_greek() -> None:
     request = GenerationRequest(language="el", source_type="frequency", level=1)
 
     assert request.language is SupportedLanguage.EL
+
+
+def test_generation_request_accepts_croatian() -> None:
+    request = GenerationRequest(language="hr", source_type="frequency", level=1)
+
+    assert request.language is SupportedLanguage.HR
 
 
 def test_generation_request_accepts_latin_mvp_source_for_shared_infrastructure() -> None:

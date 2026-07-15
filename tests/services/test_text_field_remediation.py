@@ -128,6 +128,7 @@ def test_canonical_part_of_speech_label_rejects_unknown_labels() -> None:
         ("nl", "het", "article"),
         ("hu", "és", "conjunction"),
         ("cs", "a", "conjunction"),
+        ("hr", "i", "conjunction"),
     ],
 )
 def test_remediate_definition_html_infers_function_word_labels_across_supported_languages(

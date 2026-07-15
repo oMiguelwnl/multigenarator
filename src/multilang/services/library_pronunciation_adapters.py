@@ -45,6 +45,7 @@ _PHONEMIZER_ESPEAK_LANG_CODES = {
     "fi": "fi",
     "hu": "hu",
     "cs": "cs",
+    "hr": "hr",
 }
 
 _EPITRAN_LANG_CODES = {
@@ -64,6 +65,7 @@ _EPITRAN_LANG_CODES = {
     "fi": "fin-Latn",
     "hu": "hun-Latn",
     "cs": "ces-Latn",
+    "hr": "hrv-Latn",
 }
 
 _WINDOWS_ESPEAK_LIBRARY_CANDIDATES = (

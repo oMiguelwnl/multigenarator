@@ -17,6 +17,8 @@ from multilang.services.frequency_decks import (
 from multilang.settings import DEFAULT_SUPPORTED_LANGUAGES
 from wordfreq import iter_wordlist
 
+_WORDFREQ_LANGUAGE_ALIASES = {"hr": "sh"}
+
 
 def _rejection_reason(token: str) -> str | None:
     if not token:
@@ -103,7 +105,8 @@ def _build_language_asset(*, code: str, assets_dir: Path, version: str, scan_lim
                 "curation_flags": "mylittlewordland_seeded;deterministically_filtered;structurally_curated",
             })
     else:
-        for source_rank, token in enumerate(iter_wordlist(code), start=1):
+        wordfreq_code = _wordfreq_language_code(code)
+        for source_rank, token in enumerate(iter_wordlist(wordfreq_code), start=1):
             if source_rank > scan_limit or len(curated_rows) >= 3000:
                 break
             reason = _rejection_reason(token)
@@ -131,7 +134,7 @@ def _build_language_asset(*, code: str, assets_dir: Path, version: str, scan_lim
                     "lemma_key": lemma_key,
                     "part_of_speech": "unknown",
                     "definition_seed": token,
-                    "source_provenance": f"wordfreq:{code}",
+                    "source_provenance": f"wordfreq:{wordfreq_code}",
                     "curation_flags": "wordfreq_seeded;deterministically_filtered;structurally_curated",
                 }
             )
@@ -155,6 +158,10 @@ def _rejection_row(language: SupportedLanguage, version: str, source_rank: int, 
         "token": token or "<empty>",
         "reason_code": reason,
     }
+
+
+def _wordfreq_language_code(language_code: str) -> str:
+    return _WORDFREQ_LANGUAGE_ALIASES.get(language_code, language_code)
 
 
 def _write_csv(path: Path, columns: tuple[str, ...], rows: list[dict[str, object]]) -> None:

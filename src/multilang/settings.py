@@ -27,6 +27,7 @@ SupportedLanguageCode = Literal[
     "fi",
     "hu",
     "cs",
+    "hr",
     "la",
 ]
 TextGenerationProvider = Literal["litellm", "local"]
@@ -54,6 +55,7 @@ DEFAULT_SUPPORTED_LANGUAGES: tuple[SupportedLanguageCode, ...] = (
     "fi",
     "hu",
     "cs",
+    "hr",
     "la",
 )
 

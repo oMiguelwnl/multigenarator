@@ -113,6 +113,14 @@ def test_voice_registry_selects_czech_voice() -> None:
     assert selection.registry_version == VOICE_REGISTRY_VERSION
 
 
+def test_voice_registry_selects_croatian_voice() -> None:
+    selection = select_voice(SupportedLanguage.HR)
+
+    assert selection.voice_id == "hr-HR-GabrijelaNeural"
+    assert selection.locale == "hr-HR"
+    assert selection.registry_version == VOICE_REGISTRY_VERSION
+
+
 def test_voice_registry_selects_greek_voice() -> None:
     selection = select_voice(SupportedLanguage.EL)
 

@@ -37,6 +37,7 @@ _LANGUAGE_NAMES = {
     "fi": "Finnish",
     "hu": "Hungarian",
     "cs": "Czech",
+    "hr": "Croatian",
 }
 
 

@@ -256,6 +256,27 @@ def test_local_adapter_supports_czech() -> None:
     assert translation.translation == "My brother wants to use tomorrow."
 
 
+def test_local_adapter_supports_croatian() -> None:
+    sentence = LocalSentenceAdapter().generate_sentence(
+        SentenceGenerationRequest(
+            display_form="koristiti",
+            lemma="koristiti",
+            definitions_html="verb: to use",
+            target_language="hr",
+            translation_target_language="en",
+        )
+    )
+    translation = LocalTranslationAdapter().translate_sentence(
+        SentenceTranslationRequest.from_sentence(
+            sentence_result=sentence,
+            translation_target_language="en",
+        )
+    )
+
+    assert sentence.sentence == "Moj brat želi sutra koristiti."
+    assert translation.translation == "My brother wants to use tomorrow."
+
+
 def test_local_adapter_supports_greek() -> None:
     sentence = LocalSentenceAdapter().generate_sentence(
         SentenceGenerationRequest(

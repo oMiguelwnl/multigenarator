@@ -25,6 +25,7 @@ def test_default_supported_languages_include_greek(settings: Settings) -> None:
         "fi",
         "hu",
         "cs",
+        "hr",
         "la",
     ]
 

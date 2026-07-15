@@ -28,6 +28,7 @@ class SupportedLanguage(str, Enum):
     FI = "fi"
     HU = "hu"
     CS = "cs"
+    HR = "hr"
     LA = "la"
 
 

@@ -288,6 +288,14 @@ _FUNCTION_WORD_LABELS = {
             "particle": ("ne",),
         }
     ),
+    "hr": _language_map(
+        {
+            "preposition": ("u", "na", "s", "sa", "iz", "do", "od", "za", "bez", "među", "po", "pred", "kod"),
+            "conjunction": ("i", "ili", "ali", "da", "jer", "kad", "kada"),
+            "pronoun": ("ja", "ti", "on", "ona", "ono", "mi", "vi", "oni", "to", "nešto", "ništa", "sve", "netko", "nitko"),
+            "particle": ("ne",),
+        }
+    ),
     "la": _language_map(
         {
             "preposition": ("in", "cum", "ad", "de", "ex", "per", "sine", "inter"),

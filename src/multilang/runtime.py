@@ -95,6 +95,7 @@ _LANGUAGE_NAMES = {
     SupportedLanguage.FI: "Finnish",
     SupportedLanguage.HU: "Hungarian",
     SupportedLanguage.CS: "Czech",
+    SupportedLanguage.HR: "Croatian",
     SupportedLanguage.LA: "Latin",
 }
 

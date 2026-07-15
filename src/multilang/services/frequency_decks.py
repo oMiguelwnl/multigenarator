@@ -16,6 +16,7 @@ from multilang.domain.lexicon import GroundingStatus, LexicalCardCandidate, Lexi
 from multilang.domain.jobs import SupportedLanguage
 
 WEB_NOISE_TOKENS = {"http", "https", "www", "nbsp"}
+_WORDFREQ_LANGUAGE_ALIASES = {"hr": "sh"}
 _URL_OR_EMAIL_RE = re.compile(r"(?:https?://|www\.|\S+@\S+\.\S+)", re.IGNORECASE)
 _HANDLE_OR_HASHTAG_RE = re.compile(r"^[#@]\w+")
 _EMOTICON_RE = re.compile(r"^(?:[:;=8][\-o\*']?[)D(P/\\]|[)D(P/\\][\-o\*']?[:;=8])$")
@@ -140,12 +141,16 @@ def iter_curated_frequency_candidates(
 ) -> Iterator[tuple[int, str]]:
     """Yield deterministic ranked candidates after mandatory curation filters."""
 
-    for rank, token in enumerate(iter_wordlist(language.value), start=1):
+    for rank, token in enumerate(iter_wordlist(_wordfreq_language_code(language.value)), start=1):
         if rank > scan_limit:
             break
         normalized = _normalize_frequency_token(token)
         if _is_curated_token(normalized):
             yield rank, normalized
+
+
+def _wordfreq_language_code(language_code: str) -> str:
+    return _WORDFREQ_LANGUAGE_ALIASES.get(language_code, language_code)
 
 
 def _asset_path(*, language: SupportedLanguage, version: str, assets_dir: Path, kind: str) -> Path:

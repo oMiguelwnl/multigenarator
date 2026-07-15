@@ -139,6 +139,7 @@ _LANGUAGE_MARKERS = {
     "fi": {"että", "ei", "hän", "ja", "kun", "minä", "on", "se", "tämä", "yksi"},
     "hu": {"a", "az", "egy", "én", "és", "ez", "hogy", "is", "mert", "nem", "ő", "van"},
     "cs": {"a", "ale", "do", "já", "je", "jsem", "na", "ne", "ona", "on", "pro", "se", "to", "v", "že"},
+    "hr": {"da", "i", "je", "ja", "mi", "na", "ne", "on", "ona", "sam", "se", "to", "u", "za"},
     "tr": {"ve", "bir", "bu", "için", "ile", "de", "da", "ben", "o", "çok"},
     "ro": {"și", "de", "la", "în", "este", "pentru", "cu", "eu", "el", "ea"},
     "nl": {"de", "het", "een", "en", "is", "in", "voor", "met", "ik", "hij", "zij"},

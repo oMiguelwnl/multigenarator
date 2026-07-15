@@ -28,6 +28,7 @@ SUPPORTED_LANGUAGE_CODES = (
     "fi",
     "hu",
     "cs",
+    "hr",
 )
 _TOKEN_RE = re.compile(r"\b[\w'-]+\b", re.UNICODE)
 
