@@ -128,6 +128,47 @@ def test_upsert_card_snapshots_persists_batch_with_single_job_scope() -> None:
     assert repository.list_card_snapshots(job.id)[1].translation == "Linha dois atualizada."
 
 
+def test_card_snapshot_round_trip_preserves_gramatica() -> None:
+    repository, job_repository, session = build_repositories()
+    job = job_repository.create_job(
+        request=make_request(),
+        run_key="run-export-gramatica",
+        source_fingerprint="list-la",
+        total_items=1,
+    )
+
+    grammar = "vir: subst masc, 2a declinacao, Nominativus singularis, Suj."
+    row = make_card_row(item_key="vir", sort_index=1).model_copy(update={"gramatica": grammar})
+    stored = repository.upsert_card_snapshot(
+        row.model_copy(update={"identity": row.identity.model_copy(update={"job_id": job.id})})
+    )
+
+    # The value must survive the upsert return path...
+    assert stored.gramatica == grammar
+    # ...and a fresh read from the persisted row (not just the in-memory object).
+    session.expire_all()
+    reloaded = repository.list_card_snapshots(job.id)
+    assert reloaded[0].gramatica == grammar
+
+
+def test_card_snapshot_round_trip_keeps_gramatica_null_when_absent() -> None:
+    repository, job_repository, session = build_repositories()
+    job = job_repository.create_job(
+        request=make_request(),
+        run_key="run-export-no-gramatica",
+        source_fingerprint="list-plain",
+        total_items=1,
+    )
+
+    row = make_card_row(item_key="run", sort_index=1)
+    repository.upsert_card_snapshot(
+        row.model_copy(update={"identity": row.identity.model_copy(update={"job_id": job.id})})
+    )
+
+    session.expire_all()
+    assert repository.list_card_snapshots(job.id)[0].gramatica is None
+
+
 def test_artifacts_and_card_queries_are_job_scoped_and_sorted() -> None:
     repository, job_repository, _ = build_repositories()
     job = job_repository.create_job(

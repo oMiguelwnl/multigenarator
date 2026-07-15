@@ -1093,3 +1093,81 @@ def test_generate_text_items_forwards_highlight_context_to_repair_attempts() -> 
     assert generation.request_metadata[0] == generation.request_metadata[1]
     assert generation.request_metadata[0]["source_type"] == "kindle-highlights"
     assert "wash every cup" in str(generation.request_metadata[0]["highlight_context"])
+
+
+@dataclass
+class FakeLatinGenerationService:
+    """Fake text-generation service exposing the dynamic-Latin translation hook."""
+
+    bundles: list[GeneratedTextBundle]
+    translate_calls: list[str] = field(default_factory=list)
+
+    def generate_bundle(self, **kwargs: object) -> GeneratedTextBundle:
+        return self.bundles.pop(0)
+
+    def generate_bundle_from_fallback(self, **kwargs: object) -> GeneratedTextBundle:
+        return self.bundles.pop(0)
+
+    def translate_sentence_text(
+        self,
+        *,
+        sentence: str,
+        translation_target_language: str,
+        deck_language: SupportedLanguage,
+        intended_sense: str | None = None,
+        rate_limiter: object | None = None,
+        job_id: str | None = None,
+        item_key: str | None = None,
+    ) -> GeneratedTranslation:
+        self.translate_calls.append(sentence)
+        return GeneratedTranslation(
+            text=f"[pt de] {sentence}",
+            target_language=translation_target_language,
+            provenance=TextProvenance(source="translator", provider="fake-retranslate"),
+        )
+
+
+class _FakeLatinCard:
+    def __init__(self, latin_sentence: str, gramatica: str) -> None:
+        self.latin_sentence = latin_sentence
+        self.gramatica = gramatica
+
+
+@dataclass
+class FakeLatinCardService:
+    cards: list[_FakeLatinCard]
+
+    def generate(self, seeds: object) -> list[_FakeLatinCard]:
+        return list(self.cards)
+
+
+def test_dynamic_latin_override_regenerates_translation_for_new_sentence() -> None:
+    repository = FakeTextRepository(
+        candidates=[PersistedCandidate(id="lex-1", item_key="line-1", candidate=make_candidate(lemma="vir", item_key="line-1", translation_target_language="pt"))]
+    )
+    # The bundle translation here belongs to the ORIGINAL sentence and must not survive.
+    generation = FakeLatinGenerationService(
+        bundles=[make_bundle(sentence="Original sentence.", translation="Traducao da frase original.", sentence_language="la")]
+    )
+    validation = FakeValidationService(results=[make_validation_result(status=ValidationStatus.PASSED, label=ConfidenceLabel.HIGH, score=0.93)])
+    service = GenerateTextItemsService(
+        job_repository=FakeJobRepository(),
+        lexical_repository=None,
+        text_repository=repository,
+        text_generation_service=generation,
+        text_validation_service=validation,
+        tatoeba_sentence_source=FakeTatoebaSentenceSource(fallback=None),
+        latin_card_service=FakeLatinCardService(cards=[_FakeLatinCard(latin_sentence="Vir bonus est.", gramatica="vir: subst masc, Nom sing, Suj.")]),
+    )
+
+    service.execute(job_id="job-1", deck_language=SupportedLanguage.LA, max_items=1)
+
+    saved = repository.saved_records[0]
+    # The structured Latin sentence replaced the original...
+    assert saved.example_sentence == "Vir bonus est."
+    # ...and the translation was regenerated for it, not left tied to the old sentence.
+    assert generation.translate_calls == ["Vir bonus est."]
+    assert saved.translation_text == "[pt de] Vir bonus est."
+    assert saved.translation_text != "Traducao da frase original."
+    # And the structured grammar rode along in provenance for export.
+    assert saved.sentence_provenance.metadata.get("gramatica") == "vir: subst masc, Nom sing, Suj."

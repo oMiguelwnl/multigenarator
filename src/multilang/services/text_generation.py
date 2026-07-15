@@ -205,6 +205,45 @@ class TextGenerationService:
             job_id=job_id,
         )
 
+    def translate_sentence_text(
+        self,
+        *,
+        sentence: str,
+        translation_target_language: str,
+        deck_language: SupportedLanguage,
+        intended_sense: str | None = None,
+        rate_limiter: RateLimiter | None = None,
+        job_id: str | None = None,
+        item_key: str | None = None,
+    ) -> GeneratedTranslation:
+        """Translate a specific sentence.
+
+        Used when the generated sentence is replaced after ``generate_bundle``
+        (e.g. the structured Latin sentence override) so the bundle translation
+        is regenerated for the new sentence instead of staying tied to the old
+        one.
+        """
+
+        if translation_target_language == deck_language.value:
+            return GeneratedTranslation(
+                text=sentence,
+                target_language=translation_target_language,
+                provenance=_normalize_provenance({"source": "same-language-translator"}),
+            )
+        request = SentenceTranslationRequest(
+            sentence=sentence,
+            translation_target_language=translation_target_language,
+            intended_sense=intended_sense,
+        )
+        if rate_limiter is not None:
+            rate_limiter.wait()
+        translation_result = self._translate_sentence(request, job_id=job_id, item_key=item_key)
+        return GeneratedTranslation(
+            text=translation_result.translation,
+            target_language=translation_target_language,
+            provenance=_normalize_provenance(translation_result.provenance),
+        )
+
     def _build_bundle(
         self,
         *,

@@ -10,7 +10,7 @@ from pathlib import Path
 from sqlalchemy import create_engine
 from sqlalchemy.orm import Session
 
-from multilang.db.base import Base
+from multilang.db.provisioning import ensure_database_schema
 from multilang.repositories.audio_repository import AudioRepository
 from multilang.repositories.export_repository import ExportRepository
 from multilang.repositories.highlight_import_repository import HighlightImportRepository
@@ -519,7 +519,9 @@ def build_runtime_service(
 
     runtime_settings = settings or Settings()
     engine = create_engine(runtime_settings.database_url)
-    Base.metadata.create_all(engine)
+    # SQLite (dev/tests) is created in-place; Postgres is migrated with Alembic
+    # so the migrations remain the single source of truth for the schema.
+    ensure_database_schema(engine, runtime_settings.database_url)
     session = Session(engine)
     job_repository = JobRepository(session)
     lexical_repository = LexicalRepository(session)

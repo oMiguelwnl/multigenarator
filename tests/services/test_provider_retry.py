@@ -120,6 +120,21 @@ def test_transient_forbidden_remains_retryable() -> None:
     assert is_temporary_provider_error(RuntimeError("403 forbidden")) is True
 
 
+def test_quota_carrying_http_429_is_not_retried() -> None:
+    # Providers often return quota exhaustion as an HTTP 429; it must be
+    # classified as quota (non-retryable), not as a transient rate limit.
+    quota_429 = RuntimeError("429 insufficient credits")
+    assert classify_provider_error(quota_429) == "quota_exceeded"
+    assert is_temporary_provider_error(quota_429) is False
+
+
+def test_plain_rate_limit_429_stays_retryable() -> None:
+    # A genuine rate limit (no quota text) must remain a retryable rate_limited.
+    rate_limited = RuntimeError("429 Too Many Requests")
+    assert classify_provider_error(rate_limited) == "rate_limited"
+    assert is_temporary_provider_error(rate_limited) is True
+
+
 def test_circuit_breaker_opens_half_opens_and_closes() -> None:
     clock = {"now": 0.0}
     breaker = ProviderCircuitBreaker(failure_threshold=1, cooldown_seconds=5)
