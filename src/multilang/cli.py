@@ -37,10 +37,13 @@ from multilang.services.latin_review import (
     write_latin_curated_records,
 )
 from multilang.services.russian_phoneme_deck import (
+    DEFAULT_GREEK_PHONEME_DECK_NAME,
     DEFAULT_POLISH_PHONEME_DECK_NAME,
     DEFAULT_RUSSIAN_PHONEME_DECK_NAME,
+    GREEK_PHONEME_CARDS,
     POLISH_PHONEME_CARDS,
     RUSSIAN_PHONEME_CARDS,
+    export_greek_phoneme_deck,
     export_polish_phoneme_deck,
     export_russian_phoneme_deck,
 )
@@ -1220,6 +1223,32 @@ def create_app(
         cards = POLISH_PHONEME_CARDS[:limit] if limit is not None else POLISH_PHONEME_CARDS
         settings = Settings()
         result = export_polish_phoneme_deck(output_path=output_path, deck_name=deck_name, cards=cards, settings=settings)
+        typer.echo(f"artifact_path={result.output_path}")
+        typer.echo(f"card_count={result.card_count}")
+
+    @cli.command("export-greek-phonemes")
+    def export_greek_phonemes(
+        output_path: Annotated[
+            Path,
+            typer.Option(
+                "--output-path",
+                dir_okay=False,
+                writable=True,
+                help="Path for the Greek introductory phoneme .apkg deck.",
+            ),
+        ] = Settings().export_output_dir / "greek-phonemes.apkg",
+        deck_name: Annotated[
+            str,
+            typer.Option("--deck-name", help="Deck name for the Greek phoneme package."),
+        ] = DEFAULT_GREEK_PHONEME_DECK_NAME,
+        limit: Annotated[
+            int | None,
+            typer.Option("--limit", min=1, help="Export only the first N Greek phoneme cards."),
+        ] = None,
+    ) -> None:
+        cards = GREEK_PHONEME_CARDS[:limit] if limit is not None else GREEK_PHONEME_CARDS
+        settings = Settings()
+        result = export_greek_phoneme_deck(output_path=output_path, deck_name=deck_name, cards=cards, settings=settings)
         typer.echo(f"artifact_path={result.output_path}")
         typer.echo(f"card_count={result.card_count}")
 

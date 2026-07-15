@@ -22,6 +22,12 @@ POLISH_PHONEME_MODEL_ID = 1_602_300_603
 POLISH_PHONEME_DECK_ID = 1_602_300_604
 POLISH_PHONEME_NOTE_TYPE_NAME = "Multilang::Polish Phoneme"
 DEFAULT_POLISH_PHONEME_DECK_NAME = "Multilang Polish::Intro Phonemes"
+GREEK_PHONEME_MODEL_ID = 1_602_300_605
+GREEK_PHONEME_DECK_ID = 1_602_300_606
+GREEK_PHONEME_NOTE_TYPE_NAME = "Multilang::Greek Phoneme"
+DEFAULT_GREEK_PHONEME_DECK_NAME = "Multilang Greek::Intro Phonemes"
+GREEK_PHONEME_VOICE_ID = "el-GR-AthinaNeural"
+GREEK_PHONEME_LOCALE = "el-GR"
 POLISH_PHONEME_VOICE_ID = "pl-PL-AgnieszkaNeural"
 POLISH_PHONEME_LOCALE = "pl-PL"
 RUSSIAN_PHONEME_VOICE_ID = "ru-RU-DmitryNeural"
@@ -137,6 +143,38 @@ POLISH_PHONEME_CARDS: tuple[RussianPhonemeCard, ...] = (
 )
 
 
+GREEK_PHONEME_CARDS: tuple[RussianPhonemeCard, ...] = (
+    RussianPhonemeCard(1, "α", "/a/", "αγάπη", "amor", "Η αγάπη είναι δυνατή.", "O amor é forte.", language_code="el"),
+    RussianPhonemeCard(2, "ε, αι", "/e/", "ένα", "um", "Ένα παιδί γελά.", "Uma criança ri.", language_code="el"),
+    RussianPhonemeCard(3, "η, ι, υ, ει, οι", "/i/", "ήλιος", "sol", "Ο ήλιος λάμπει.", "O sol brilha.", language_code="el"),
+    RussianPhonemeCard(4, "ο, ω", "/o/", "ώρα", "hora", "Η ώρα περνά.", "A hora passa.", language_code="el"),
+    RussianPhonemeCard(5, "ου", "/u/", "ουρανός", "céu", "Ο ουρανός είναι καθαρός.", "O céu está limpo.", language_code="el"),
+    RussianPhonemeCard(6, "β", "/v/", "βιβλίο", "livro", "Το βιβλίο είναι νέο.", "O livro é novo.", language_code="el"),
+    RussianPhonemeCard(7, "γ + α/ο/ου", "/ɣ/", "γάλα", "leite", "Το γάλα είναι κρύο.", "O leite está frio.", language_code="el"),
+    RussianPhonemeCard(8, "γ + ε/ι", "/ʝ/", "γέλιο", "riso", "Το γέλιο βοηθά.", "O riso ajuda.", language_code="el"),
+    RussianPhonemeCard(9, "δ", "/ð/", "δρόμος", "estrada", "Ο δρόμος είναι μακρύς.", "A estrada é longa.", language_code="el"),
+    RussianPhonemeCard(10, "ζ", "/z/", "ζάχαρη", "açúcar", "Η ζάχαρη είναι γλυκιά.", "O açúcar é doce.", language_code="el"),
+    RussianPhonemeCard(11, "θ", "/θ/", "θέμα", "tema", "Το θέμα είναι απλό.", "O tema é simples.", language_code="el"),
+    RussianPhonemeCard(12, "κ", "/k/", "καφές", "café", "Ο καφές είναι ζεστός.", "O café está quente.", language_code="el"),
+    RussianPhonemeCard(13, "λ", "/l/", "λεμόνι", "limão", "Το λεμόνι είναι ξινό.", "O limão é azedo.", language_code="el"),
+    RussianPhonemeCard(14, "μ", "/m/", "μήλο", "maçã", "Το μήλο είναι κόκκινο.", "A maçã é vermelha.", language_code="el"),
+    RussianPhonemeCard(15, "ν", "/n/", "νύχτα", "noite", "Η νύχτα είναι ήσυχη.", "A noite é tranquila.", language_code="el"),
+    RussianPhonemeCard(16, "π", "/p/", "πόρτα", "porta", "Η πόρτα ανοίγει.", "A porta abre.", language_code="el"),
+    RussianPhonemeCard(17, "ρ", "/r/", "νερό", "água", "Το νερό είναι κρύο.", "A água está fria.", language_code="el"),
+    RussianPhonemeCard(18, "σ, ς", "/s/", "σπίτι", "casa", "Το σπίτι είναι μικρό.", "A casa é pequena.", language_code="el"),
+    RussianPhonemeCard(19, "τ", "/t/", "τραπέζι", "mesa", "Το τραπέζι είναι μεγάλο.", "A mesa é grande.", language_code="el"),
+    RussianPhonemeCard(20, "φ", "/f/", "φως", "luz", "Το φως λάμπει.", "A luz brilha.", language_code="el"),
+    RussianPhonemeCard(21, "χ + α/ο/ου", "/x/", "χάρτης", "mapa", "Ο χάρτης είναι παλιός.", "O mapa é antigo.", language_code="el"),
+    RussianPhonemeCard(22, "χ + ε/ι", "/ç/", "χέρι", "mão", "Το χέρι γράφει.", "A mão escreve.", language_code="el"),
+    RussianPhonemeCard(23, "ψ", "/ps/", "ψάρι", "peixe", "Το ψάρι κολυμπά.", "O peixe nada.", language_code="el"),
+    RussianPhonemeCard(24, "ξ", "/ks/", "ξύλο", "madeira", "Το ξύλο είναι στεγνό.", "A madeira está seca.", language_code="el"),
+    RussianPhonemeCard(25, "μπ", "/b/", "μπαμπάς", "pai", "Ο μπαμπάς μιλά.", "O pai fala.", language_code="el"),
+    RussianPhonemeCard(26, "ντ", "/d/", "ντομάτα", "tomate", "Η ντομάτα είναι κόκκινη.", "O tomate é vermelho.", language_code="el"),
+    RussianPhonemeCard(27, "τσ", "/ts/", "τσάι", "chá", "Το τσάι είναι ζεστό.", "O chá está quente.", language_code="el"),
+    RussianPhonemeCard(28, "τζ", "/dz/", "τζάμι", "vidro", "Το τζάμι λάμπει.", "O vidro brilha.", language_code="el"),
+)
+
+
 class RussianPhonemeNote(genanki.Note):
     @property
     def guid(self) -> str:
@@ -155,6 +193,10 @@ def build_russian_phoneme_model() -> genanki.Model:
 
 def build_polish_phoneme_model() -> genanki.Model:
     return _build_phoneme_model(model_id=POLISH_PHONEME_MODEL_ID, note_type_name=POLISH_PHONEME_NOTE_TYPE_NAME)
+
+
+def build_greek_phoneme_model() -> genanki.Model:
+    return _build_phoneme_model(model_id=GREEK_PHONEME_MODEL_ID, note_type_name=GREEK_PHONEME_NOTE_TYPE_NAME)
 
 
 def _build_phoneme_model(*, model_id: int, note_type_name: str) -> genanki.Model:
@@ -188,6 +230,14 @@ def build_polish_phoneme_note(
     model: genanki.Model | None = None,
 ) -> genanki.Note:
     return _build_phoneme_note(card, model=model or build_polish_phoneme_model())
+
+
+def build_greek_phoneme_note(
+    card: RussianPhonemeCard,
+    *,
+    model: genanki.Model | None = None,
+) -> genanki.Note:
+    return _build_phoneme_note(card, model=model or build_greek_phoneme_model())
 
 
 def _build_phoneme_note(card: RussianPhonemeCard, *, model: genanki.Model) -> genanki.Note:
@@ -236,6 +286,26 @@ def export_polish_phoneme_deck(
         language_code="pl",
         voice_id=POLISH_PHONEME_VOICE_ID,
         locale=POLISH_PHONEME_LOCALE,
+    )
+
+
+def export_greek_phoneme_deck(
+    *,
+    output_path: Path,
+    deck_name: str = DEFAULT_GREEK_PHONEME_DECK_NAME,
+    cards: tuple[RussianPhonemeCard, ...] = GREEK_PHONEME_CARDS,
+    settings: Settings | None = None,
+) -> RussianPhonemeDeckExportResult:
+    return _export_phoneme_deck(
+        output_path=output_path,
+        deck_id=GREEK_PHONEME_DECK_ID,
+        deck_name=deck_name,
+        model=build_greek_phoneme_model(),
+        cards=cards,
+        settings=settings,
+        language_code="el",
+        voice_id=GREEK_PHONEME_VOICE_ID,
+        locale=GREEK_PHONEME_LOCALE,
     )
 
 
@@ -417,8 +487,15 @@ def _load_phoneme_template() -> dict[str, str]:
 
 
 __all__ = [
+    "DEFAULT_GREEK_PHONEME_DECK_NAME",
     "DEFAULT_POLISH_PHONEME_DECK_NAME",
     "DEFAULT_RUSSIAN_PHONEME_DECK_NAME",
+    "GREEK_PHONEME_CARDS",
+    "GREEK_PHONEME_DECK_ID",
+    "GREEK_PHONEME_LOCALE",
+    "GREEK_PHONEME_MODEL_ID",
+    "GREEK_PHONEME_NOTE_TYPE_NAME",
+    "GREEK_PHONEME_VOICE_ID",
     "PHONEME_DECK_ID",
     "PHONEME_FIELD_NAMES",
     "PHONEME_MODEL_ID",
@@ -434,10 +511,13 @@ __all__ = [
     "RUSSIAN_PHONEME_VOICE_ID",
     "RussianPhonemeCard",
     "RussianPhonemeDeckExportResult",
+    "build_greek_phoneme_model",
+    "build_greek_phoneme_note",
     "build_polish_phoneme_model",
     "build_polish_phoneme_note",
     "build_russian_phoneme_model",
     "build_russian_phoneme_note",
+    "export_greek_phoneme_deck",
     "export_polish_phoneme_deck",
     "export_russian_phoneme_deck",
 ]

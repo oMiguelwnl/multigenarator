@@ -876,3 +876,19 @@ def test_export_polish_phonemes_command_writes_limited_deck(tmp_path: Path, monk
     assert output_path.exists()
     assert f"artifact_path={output_path}" in result.output
     assert "card_count=2" in result.output
+
+
+def test_export_greek_phonemes_command_writes_limited_deck(tmp_path: Path, monkeypatch) -> None:
+    output_path = tmp_path / "greek-phonemes.apkg"
+    app = create_app()
+    monkeypatch.setattr(phoneme_deck_module, "AzureSpeechAdapter", FakeAzureSpeechAdapter)
+
+    result = runner.invoke(
+        app,
+        ["export-greek-phonemes", "--output-path", str(output_path), "--limit", "2"],
+    )
+
+    assert result.exit_code == 0
+    assert output_path.exists()
+    assert f"artifact_path={output_path}" in result.output
+    assert "card_count=2" in result.output

@@ -363,6 +363,16 @@ def test_czech_frequency_assets_validate() -> None:
     assert all(entry.source_provenance == "wordfreq:cs" for entry in entries)
 
 
+def test_greek_frequency_assets_validate() -> None:
+    from multilang.services import frequency_decks
+
+    entries = frequency_decks.load_curated_frequency_entries(SupportedLanguage.EL)
+
+    assert len(entries) == 3000
+    assert [sum(1 for entry in entries if entry.level == level) for level in (1, 2, 3)] == [1000, 1000, 1000]
+    assert all(entry.source_provenance == "wordfreq:el" for entry in entries)
+
+
 def test_danish_frequency_assets_validate() -> None:
     from multilang.services import frequency_decks
 

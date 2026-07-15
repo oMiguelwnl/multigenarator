@@ -132,6 +132,16 @@ def test_google_translate_adapter_selects_czech_language() -> None:
     assert selection.registry_version == "google-translate-tts-v1"
 
 
+def test_google_translate_adapter_selects_greek_language() -> None:
+    adapter = GoogleTranslateSpeechAdapter(Settings(_env_file=None))
+
+    selection = adapter.select_voice(SupportedLanguage.EL)
+
+    assert selection.voice_id == "el"
+    assert selection.locale == "el"
+    assert selection.registry_version == "google-translate-tts-v1"
+
+
 def test_google_translate_adapter_rejects_empty_or_non_mp3_audio(tmp_path: Path) -> None:
     adapter = GoogleTranslateSpeechAdapter(
         Settings(_env_file=None),

@@ -7,14 +7,18 @@ import zipfile
 from pathlib import Path
 
 from multilang.services.russian_phoneme_deck import (
+    GREEK_PHONEME_CARDS,
     PHONEME_FIELD_NAMES,
     POLISH_PHONEME_CARDS,
     RUSSIAN_PHONEME_CARDS,
     RussianPhonemeCard,
+    build_greek_phoneme_model,
+    build_greek_phoneme_note,
     build_polish_phoneme_model,
     build_polish_phoneme_note,
     build_russian_phoneme_model,
     build_russian_phoneme_note,
+    export_greek_phoneme_deck,
     export_polish_phoneme_deck,
     export_russian_phoneme_deck,
 )
@@ -89,6 +93,28 @@ def test_polish_phoneme_cards_use_supplied_field_data() -> None:
     assert first_card.example_sentence_translation == "Este é meu marido."
 
 
+def test_greek_phoneme_cards_use_supplied_field_data() -> None:
+    assert len(GREEK_PHONEME_CARDS) == 28
+    assert [card.sort_index for card in GREEK_PHONEME_CARDS] == list(
+        range(1, len(GREEK_PHONEME_CARDS) + 1)
+    )
+    assert {card.language_code for card in GREEK_PHONEME_CARDS} == {"el"}
+    assert [card.letters for card in GREEK_PHONEME_CARDS[:5]] == [
+        "α",
+        "ε, αι",
+        "η, ι, υ, ει, οι",
+        "ο, ω",
+        "ου",
+    ]
+
+    first_card = GREEK_PHONEME_CARDS[0]
+    assert first_card.ipa == "/a/"
+    assert first_card.example_word == "αγάπη"
+    assert first_card.example_word_translation == "amor"
+    assert first_card.example_sentence == "Η αγάπη είναι δυνατή."
+    assert first_card.example_sentence_translation == "O amor é forte."
+
+
 def test_build_polish_phoneme_model_reuses_intro_template() -> None:
     polish_model = build_polish_phoneme_model()
     russian_model = build_russian_phoneme_model()
@@ -107,6 +133,27 @@ def test_build_polish_phoneme_model_reuses_intro_template() -> None:
         "To jest mój mąż.",
         "",
         "Este é meu marido.",
+    ]
+
+
+def test_build_greek_phoneme_model_reuses_intro_template() -> None:
+    greek_model = build_greek_phoneme_model()
+    russian_model = build_russian_phoneme_model()
+    note = build_greek_phoneme_note(GREEK_PHONEME_CARDS[0], model=greek_model)
+
+    assert [field["name"] for field in greek_model.fields] == list(PHONEME_FIELD_NAMES)
+    assert greek_model.templates[0] == russian_model.templates[0]
+    assert greek_model.css == russian_model.css
+    assert note.fields == [
+        "α",
+        "/a/",
+        "",
+        "αγάπη",
+        "",
+        "amor",
+        "Η αγάπη είναι δυνατή.",
+        "",
+        "O amor é forte.",
     ]
 
 
@@ -211,6 +258,18 @@ def test_export_polish_phoneme_deck_writes_apkg(tmp_path: Path, monkeypatch) -> 
 
     assert result.output_path == output_path
     assert result.card_count == len(POLISH_PHONEME_CARDS)
+    with zipfile.ZipFile(output_path) as archive:
+        assert "collection.anki2" in archive.namelist()
+
+
+def test_export_greek_phoneme_deck_writes_apkg(tmp_path: Path, monkeypatch) -> None:
+    monkeypatch.setattr("multilang.services.russian_phoneme_deck.AzureSpeechAdapter", NoOpAzureSpeechAdapter)
+    output_path = tmp_path / "greek-phonemes.apkg"
+
+    result = export_greek_phoneme_deck(output_path=output_path)
+
+    assert result.output_path == output_path
+    assert result.card_count == len(GREEK_PHONEME_CARDS)
     with zipfile.ZipFile(output_path) as archive:
         assert "collection.anki2" in archive.namelist()
 

@@ -141,6 +141,15 @@ def test_elevenlabs_adapter_uses_default_voice_for_czech() -> None:
     assert selection.locale == "cs-CZ"
 
 
+def test_elevenlabs_adapter_uses_default_voice_for_greek() -> None:
+    adapter = ElevenLabsSpeechAdapter(Settings(_env_file=None))
+
+    selection = adapter.select_voice(SupportedLanguage.EL)
+
+    assert selection.voice_id == "MF3mGyEYCl7XYWbV9V6O"
+    assert selection.locale == "el-GR"
+
+
 def test_elevenlabs_adapter_requires_credentials(tmp_path: Path) -> None:
     adapter = ElevenLabsSpeechAdapter(Settings(_env_file=None))
 

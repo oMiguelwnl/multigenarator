@@ -256,6 +256,27 @@ def test_local_adapter_supports_czech() -> None:
     assert translation.translation == "My brother wants to use tomorrow."
 
 
+def test_local_adapter_supports_greek() -> None:
+    sentence = LocalSentenceAdapter().generate_sentence(
+        SentenceGenerationRequest(
+            display_form="χρησιμοποιήσει",
+            lemma="χρησιμοποιήσει",
+            definitions_html="verb: to use",
+            target_language="el",
+            translation_target_language="en",
+        )
+    )
+    translation = LocalTranslationAdapter().translate_sentence(
+        SentenceTranslationRequest.from_sentence(
+            sentence_result=sentence,
+            translation_target_language="en",
+        )
+    )
+
+    assert sentence.sentence == "Ο αδελφός μου θέλει να χρησιμοποιήσει αύριο."
+    assert translation.translation == "My brother wants to use tomorrow."
+
+
 def test_text_generation_service_accepts_representative_grounded_candidates() -> None:
     service = TextGenerationService(
         sentence_adapter=LocalSentenceAdapter(),

@@ -69,6 +69,15 @@ _MATCHABLE_SUFFIXES = (
     "ему",
     "ами",
     "ях",
+    "ους",
+    "εις",
+    "ων",
+    "ος",
+    "ου",
+    "ες",
+    "ης",
+    "ας",
+    "ει",
     "arse",
     "erse",
     "irse",
@@ -114,6 +123,7 @@ _MATCHABLE_SUFFIXES = (
 )
 
 _LANGUAGE_SCRIPTS = {
+    "el": "GREEK",
     "ru": "CYRILLIC",
 }
 _LANGUAGE_MARKERS = {
@@ -122,6 +132,7 @@ _LANGUAGE_MARKERS = {
     "es": {"el", "la", "los", "las", "de", "que", "y", "en", "para", "con", "yo", "él", "ella"},
     "fr": {"le", "la", "les", "de", "des", "du", "et", "est", "dans", "pour", "avec", "je", "il", "elle"},
     "de": {"der", "die", "das", "und", "ist", "im", "in", "für", "mit", "ich", "er", "sie"},
+    "el": {"από", "για", "δεν", "είμαι", "είναι", "εγώ", "η", "και", "με", "να", "ο", "που", "σε", "το", "του"},
     "it": {"il", "la", "lo", "gli", "di", "che", "e", "in", "per", "con", "io", "lui", "lei"},
     "pl": {"i", "w", "na", "do", "że", "to", "jest", "się", "nie", "z", "po", "dla"},
     "sv": {"att", "av", "det", "en", "ett", "för", "han", "hon", "i", "jag", "med", "och", "på", "som", "är"},

@@ -21,6 +21,7 @@ _LANGUAGE_CODES = {
     SupportedLanguage.EN: "en",
     SupportedLanguage.FR: "fr",
     SupportedLanguage.DE: "de",
+    SupportedLanguage.EL: "el",
     SupportedLanguage.IT: "it",
     SupportedLanguage.PL: "pl",
     SupportedLanguage.TR: "tr",

@@ -22,6 +22,7 @@ _LANGUAGE_LOCALES = {
     SupportedLanguage.EN: "en-US",
     SupportedLanguage.FR: "fr-FR",
     SupportedLanguage.DE: "de-DE",
+    SupportedLanguage.EL: "el-GR",
     SupportedLanguage.IT: "it-IT",
     SupportedLanguage.PL: "pl-PL",
     SupportedLanguage.TR: "tr-TR",
@@ -44,6 +45,7 @@ _VOICE_BY_LANGUAGE = {
     SupportedLanguage.EN: "21m00Tcm4TlvDq8ikWAM",  # Rachel
     SupportedLanguage.FR: "MF3mGyEYCl7XYWbV9V6O",  # Elli
     SupportedLanguage.DE: "VR6AewLTigWG4xSOukaG",  # Arnold
+    SupportedLanguage.EL: "MF3mGyEYCl7XYWbV9V6O",  # Elli
     SupportedLanguage.IT: "AZnzlk1XvdvUeBnXmlld",  # Domi
     SupportedLanguage.PL: "ErXwobaYiN019PkySvjV",  # Antoni
     SupportedLanguage.TR: "pNInz6obpgDQGcFmaJgB",  # Adam

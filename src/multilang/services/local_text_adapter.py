@@ -29,6 +29,7 @@ _SENSE_TRANSLATIONS = {
     "use": {
         "cs": "používat",
         "de": "benutzen",
+        "el": "χρησιμοποιήσει",
         "en": "use",
         "es": "usar",
         "fi": "käyttää",
@@ -47,6 +48,7 @@ _SENSE_TRANSLATIONS = {
     "wash": {
         "cs": "umýt se",
         "de": "waschen",
+        "el": "πλυθεί",
         "en": "wash",
         "es": "lavarse",
         "fi": "peseytyä",
@@ -67,6 +69,7 @@ _SENSE_TRANSLATIONS = {
 _VERB_TEMPLATES = {
     "cs": "Můj bratr chce zítra {term}.",
     "de": "Meine Schwester möchte morgen {term}.",
+    "el": "Ο αδελφός μου θέλει να {term} αύριο.",
     "en": "My brother wants to {term} tomorrow.",
     "es": "Mi hermano quiere {term} mañana.",
     "fi": "Veljeni haluaa {term} huomenna.",
@@ -86,6 +89,7 @@ _VERB_TEMPLATES = {
 _TERM_TEMPLATES = {
     "cs": "Sousedé diskutují o {term} během večeře.",
     "de": "Nachbarn besprechen {term} beim Abendessen.",
+    "el": "Οι γείτονες συζητούν για {term} στο δείπνο.",
     "en": "Friends discuss {term} during lunch.",
     "es": "Los vecinos comentan {term} durante la cena.",
     "fi": "Naapurit keskustelevat {term} päivällisellä.",
@@ -105,6 +109,7 @@ _TERM_TEMPLATES = {
 _HIGHLIGHT_TEMPLATES = {
     "cs": "Čtenáři si všimnou {term} v klidné kapitole.",
     "de": "Die Leserin bemerkt {term} in der stillen Szene.",
+    "el": "Οι αναγνώστες παρατηρούν {term} στο ήσυχο κεφάλαιο.",
     "en": "Readers notice {term} during the quiet chapter tonight.",
     "es": "Los lectores notan {term} durante el capítulo tranquilo.",
     "fi": "Lukijat huomaavat {term} rauhallisessa luvussa.",
@@ -319,6 +324,7 @@ def _localized_sense(sense_hint: str | None, *, language: str) -> str:
 _DEFINITION_LABELS = {
     "cs": {"noun": "podstatné jméno", "verb": "sloveso", "adjective": "přídavné jméno", "adverb": "příslovce"},
     "de": {"noun": "Substantiv", "verb": "Verb", "adjective": "Adjektiv", "adverb": "Adverb"},
+    "el": {"noun": "ουσιαστικό", "verb": "ρήμα", "adjective": "επίθετο", "adverb": "επίρρημα"},
     "en": {"noun": "noun", "verb": "verb", "adjective": "adjective", "adverb": "adverb"},
     "es": {"noun": "sustantivo", "verb": "verbo", "adjective": "adjetivo", "adverb": "adverbio"},
     "fi": {"noun": "substantiivi", "verb": "verbi", "adjective": "adjektiivi", "adverb": "adverbi"},
@@ -361,6 +367,7 @@ def _translate_definition_meaning(meaning: str, language: str) -> str:
         prefixes = {
             "cs": "definice slova",
             "de": "Definition für",
+            "el": "ορισμός για",
             "es": "definición de",
             "fi": "määritelmä sanalle",
             "fr": "définition de",

@@ -28,6 +28,7 @@ _STOPWORDS: dict[SupportedLanguage, set[str]] = {
     SupportedLanguage.EN: {"a", "an", "and", "in", "of", "the", "to"},
     SupportedLanguage.FR: {"au", "de", "des", "du", "et", "la", "le", "les", "un", "une"},
     SupportedLanguage.DE: {"das", "der", "die", "ein", "eine", "und"},
+    SupportedLanguage.EL: {"από", "για", "δεν", "είναι", "η", "και", "με", "να", "ο", "σε", "το", "του"},
     SupportedLanguage.IT: {"a", "di", "e", "il", "la", "le", "lo", "un", "una"},
     SupportedLanguage.PL: {"a", "i", "ma", "na", "o", "ten", "ta", "to", "w", "z"},
     SupportedLanguage.TR: {"bu", "bir", "ve"},

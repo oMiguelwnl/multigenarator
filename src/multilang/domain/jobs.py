@@ -15,6 +15,7 @@ class SupportedLanguage(str, Enum):
     EN = "en"
     FR = "fr"
     DE = "de"
+    EL = "el"
     IT = "it"
     PL = "pl"
     TR = "tr"

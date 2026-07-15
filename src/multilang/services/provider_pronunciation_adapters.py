@@ -25,6 +25,7 @@ _LANGUAGE_NAMES = {
     "en": "English",
     "fr": "French",
     "de": "German",
+    "el": "Greek",
     "it": "Italian",
     "pl": "Polish",
     "tr": "Turkish",

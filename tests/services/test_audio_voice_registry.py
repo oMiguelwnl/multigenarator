@@ -113,6 +113,14 @@ def test_voice_registry_selects_czech_voice() -> None:
     assert selection.registry_version == VOICE_REGISTRY_VERSION
 
 
+def test_voice_registry_selects_greek_voice() -> None:
+    selection = select_voice(SupportedLanguage.EL)
+
+    assert selection.voice_id == "el-GR-AthinaNeural"
+    assert selection.locale == "el-GR"
+    assert selection.registry_version == VOICE_REGISTRY_VERSION
+
+
 def test_settings_expose_azure_speech_configuration() -> None:
     settings = Settings(
         _env_file=None,

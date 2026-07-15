@@ -82,6 +82,7 @@ _LANGUAGE_NAMES = {
     SupportedLanguage.EN: "English",
     SupportedLanguage.FR: "French",
     SupportedLanguage.DE: "German",
+    SupportedLanguage.EL: "Greek",
     SupportedLanguage.IT: "Italian",
     SupportedLanguage.PL: "Polish",
     SupportedLanguage.TR: "Turkish",

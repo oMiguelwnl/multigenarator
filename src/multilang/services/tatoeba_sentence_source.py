@@ -47,6 +47,7 @@ _REFLEXIVE_SUFFIXES = ("se", "ся", "сь")
 _TATOEBA_API_CODES = {
     "cs": "ces",
     "de": "deu",
+    "el": "ell",
     "en": "eng",
     "es": "spa",
     "fi": "fin",
