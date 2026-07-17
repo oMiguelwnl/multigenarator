@@ -52,6 +52,10 @@ from multilang.services.japanese_frequency_deck import (
     JAPANESE_FREQUENCY_CARDS,
     export_japanese_frequency_deck,
 )
+from multilang.services.japanese_kana_deck import (
+    DEFAULT_KANA_DECK_NAME,
+    export_kana_deck,
+)
 from multilang.services.text_review import ReviewReport, TextReviewService
 from multilang.services.webdav_highlight_fetch import WebDAVHighlightFetchService
 from multilang.settings import Settings
@@ -1282,6 +1286,40 @@ def create_app(
         result = export_japanese_frequency_deck(output_path=output_path, deck_name=deck_name, cards=cards, settings=settings)
         typer.echo(f"artifact_path={result.output_path}")
         typer.echo(f"card_count={result.card_count}")
+
+    @cli.command("export-kana")
+    def export_kana(
+        source_apkg: Annotated[
+            Path,
+            typer.Option(
+                "--from",
+                exists=True,
+                dir_okay=False,
+                readable=True,
+                help="Source kana .apkg to import glyphs, mnemonics, stroke art, and audio from.",
+            ),
+        ],
+        output_path: Annotated[
+            Path,
+            typer.Option(
+                "--output-path",
+                dir_okay=False,
+                writable=True,
+                help="Path for the project-native kana .apkg deck.",
+            ),
+        ] = Settings().export_output_dir / "japanese-kana.apkg",
+        deck_name: Annotated[
+            str,
+            typer.Option("--deck-name", help="Top-level deck name for the kana package."),
+        ] = DEFAULT_KANA_DECK_NAME,
+    ) -> None:
+        result = export_kana_deck(
+            source_apkg=source_apkg, output_path=output_path, deck_name=deck_name
+        )
+        typer.echo(f"artifact_path={result.output_path}")
+        typer.echo(f"card_count={result.card_count}")
+        typer.echo(f"hiragana_count={result.hiragana_count}")
+        typer.echo(f"katakana_count={result.katakana_count}")
 
     return cli
 
