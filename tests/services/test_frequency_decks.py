@@ -301,6 +301,11 @@ def test_all_supported_frequency_assets_validate() -> None:
     from multilang.services import frequency_decks
 
     for language in SupportedLanguage:
+        # Japanese ships as an isolated, self-contained deck (see
+        # japanese_frequency_deck), not through the modern-language curated
+        # frequency path, so it has no curated-vN frequency asset.
+        if language is SupportedLanguage.JA:
+            continue
         entries = frequency_decks.load_curated_frequency_entries(language)
         if language is SupportedLanguage.LA:
             assert entries

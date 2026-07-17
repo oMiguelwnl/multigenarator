@@ -131,6 +131,13 @@ _VOICE_REGISTRY: dict[SupportedLanguage, VoicePlan] = {
         same_locale_alternates=(VoiceOption(voice_id="it-IT-DiegoNeural", locale="it-IT"),),
         alternate_locale_alternates=(),
     ),
+    SupportedLanguage.JA: VoicePlan(
+        preferred=VoiceOption(voice_id="ja-JP-NanamiNeural", locale="ja-JP"),
+        same_locale_alternates=(
+            VoiceOption(voice_id="ja-JP-KeitaNeural", locale="ja-JP"),
+            VoiceOption(voice_id="ja-JP-AoiNeural", locale="ja-JP"),
+        ),
+    ),
 }
 
 

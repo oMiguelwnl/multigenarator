@@ -47,6 +47,11 @@ from multilang.services.russian_phoneme_deck import (
     export_polish_phoneme_deck,
     export_russian_phoneme_deck,
 )
+from multilang.services.japanese_frequency_deck import (
+    DEFAULT_JAPANESE_DECK_NAME,
+    JAPANESE_FREQUENCY_CARDS,
+    export_japanese_frequency_deck,
+)
 from multilang.services.text_review import ReviewReport, TextReviewService
 from multilang.services.webdav_highlight_fetch import WebDAVHighlightFetchService
 from multilang.settings import Settings
@@ -1249,6 +1254,32 @@ def create_app(
         cards = GREEK_PHONEME_CARDS[:limit] if limit is not None else GREEK_PHONEME_CARDS
         settings = Settings()
         result = export_greek_phoneme_deck(output_path=output_path, deck_name=deck_name, cards=cards, settings=settings)
+        typer.echo(f"artifact_path={result.output_path}")
+        typer.echo(f"card_count={result.card_count}")
+
+    @cli.command("export-japanese")
+    def export_japanese(
+        output_path: Annotated[
+            Path,
+            typer.Option(
+                "--output-path",
+                dir_okay=False,
+                writable=True,
+                help="Path for the Japanese frequency .apkg deck.",
+            ),
+        ] = Settings().export_output_dir / "japanese-frequency.apkg",
+        deck_name: Annotated[
+            str,
+            typer.Option("--deck-name", help="Deck name for the Japanese frequency package."),
+        ] = DEFAULT_JAPANESE_DECK_NAME,
+        limit: Annotated[
+            int | None,
+            typer.Option("--limit", min=1, help="Export only the first N Japanese frequency cards."),
+        ] = None,
+    ) -> None:
+        cards = JAPANESE_FREQUENCY_CARDS[:limit] if limit is not None else JAPANESE_FREQUENCY_CARDS
+        settings = Settings()
+        result = export_japanese_frequency_deck(output_path=output_path, deck_name=deck_name, cards=cards, settings=settings)
         typer.echo(f"artifact_path={result.output_path}")
         typer.echo(f"card_count={result.card_count}")
 

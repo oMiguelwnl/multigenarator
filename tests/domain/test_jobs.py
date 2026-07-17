@@ -35,6 +35,7 @@ def test_supported_languages() -> None:
         "cs",
         "hr",
         "la",
+        "ja",
     }
 
     request = GenerationRequest(language="pt", source_type="frequency", level=1)
