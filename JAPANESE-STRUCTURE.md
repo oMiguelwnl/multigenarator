@@ -203,12 +203,22 @@ phonetics/latin/export existentes.
 - Múltiplos cards por lema (uma frase por sentido/leitura).
 - Mineração de frases de corpus real (o MVP pode usar geração aterrada + revisão).
 
-## Pontos abertos para discutir antes de executar
+## Decisões padrão adotadas (defaults recomendados)
 
-1. Tokenizador: `fugashi+unidic-lite` (recomendado) ou `SudachiPy`?
-2. Tamanho do MVP: 100 (recomendado), 300 ou 1000?
-3. Frases: geração LLM aterrada (recomendado para MVP) ou apenas curadas/reference?
-4. Ordenação i+1 entra no MVP ou fica para depois?
-5. Revisão humana obrigatória para furigana e tradução no MVP?
-6. `frequency` como `--source` para `ja`, ou um `--source japanese-frequency` dedicado?
-7. Pitch accent realmente fica deferido?
+Estas ficam como padrão de execução; podem ser revistas antes de cada fase.
+
+1. **Tokenizador:** `fugashi + unidic-lite` (leve, padrão, leitura contextual).
+2. **Tamanho do MVP:** **100 cards** revisados, para provar o pipeline antes de escalar.
+3. **Frases:** **geração LLM aterrada + validação** (palavra-alvo presente, tamanho,
+   furigana), com revisão humana no MVP.
+4. **Ordenação i+1:** **deferida** para depois do MVP (entra como heurística de
+   ordenação, não como bloqueio).
+5. **Revisão humana:** obrigatória para furigana e tradução no MVP (gates fail-closed).
+6. **Fonte no `generate`:** reutilizar `--source frequency` com roteamento por
+   `--language ja` (como o `la` faz), sem criar um `--source` novo.
+7. **Pitch accent:** deferido (precisa de dicionário de pitch; milestone futuro).
+
+## Pontos ainda abertos (não bloqueiam iniciar a Fase 30)
+
+- Escala pós-MVP (300 / 1000 / 3×1000) e política de múltiplos cards por lema.
+- Uso futuro de corpus real para mineração de frases além da geração aterrada.
