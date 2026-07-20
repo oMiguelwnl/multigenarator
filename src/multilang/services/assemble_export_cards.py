@@ -14,6 +14,7 @@ from multilang.domain.lexicon import LexicalCardCandidate
 from multilang.domain.source_profiles import get_source_profile
 from multilang.domain.text_quality import TextQualityRecord
 from multilang.services.audio_integrity import AudioIntegrityError, assert_word_audio_matches_word
+from multilang.services.japanese_furigana import JapaneseFuriganaError, format_japanese_furigana
 from multilang.services.text_field_remediation import validate_definition_html
 
 
@@ -77,6 +78,11 @@ class AssembleExportCardsService:
                 asset_kind=AudioAssetKind.SENTENCE,
                 audio_index=audio_index,
             )
+            japanese_readings = self._japanese_readings(
+                display_word=lexical_candidate.display_form,
+                sentence=text_record.example_sentence or "",
+                enabled=_uses_japanese_frequency_fields(deck_language=deck_language, source_type=source_type),
+            )
             row = ExportCardRow(
                 identity=ExportCardIdentity(
                     language=deck_language,
@@ -88,12 +94,18 @@ class AssembleExportCardsService:
                 ),
                 word=escape(lexical_candidate.lemma),
                 front_of_card=escape(lexical_candidate.display_form),
-                ipa=self._render_ipa(lexical_candidate.ipa, lexical_candidate.spoken_form),
+                ipa=(
+                    None
+                    if _uses_japanese_frequency_fields(deck_language=deck_language, source_type=source_type)
+                    else self._render_ipa(lexical_candidate.ipa, lexical_candidate.spoken_form)
+                ),
                 definitions=self._render_definitions(lexical_candidate),
                 example_sentence=escape(text_record.example_sentence or ""),
                 translation=escape(text_record.translation_text or "") if source_profile.exports_translation_field else "",
                 word_audio=self._to_sound_tag(word_audio) if word_audio is not None else "",
                 sentence_audio=self._to_sound_tag(sentence_audio),
+                word_reading=escape(japanese_readings[0]) if japanese_readings is not None else None,
+                sentence_furigana=escape(japanese_readings[1]) if japanese_readings is not None else None,
                 gramatica=self._render_gramatica(text_record),
             )
             cards.append(row)
@@ -172,6 +184,20 @@ class AssembleExportCardsService:
         if not cleaned:
             raise AssembleExportCardsError("missing IPA for export candidate")
         return escape(_strip_trailing_ipa_word_hint(cleaned))
+
+    def _japanese_readings(
+        self,
+        *,
+        display_word: str,
+        sentence: str,
+        enabled: bool,
+    ) -> tuple[str, str] | None:
+        if not enabled:
+            return None
+        try:
+            return format_japanese_furigana(display_word), format_japanese_furigana(sentence)
+        except JapaneseFuriganaError as exc:
+            raise AssembleExportCardsError(f"unable to generate Japanese furigana: {exc}") from exc
 
     def _to_sound_tag(self, asset: AudioAssetRecord) -> str:
         return f"[sound:{Path(asset.provenance.storage_path).name}]"
@@ -256,6 +282,10 @@ def _candidate_source_type(candidate: object) -> str:
     if getattr(candidate, "frequency_rank", None) is not None:
         return "frequency"
     return "word-list"
+
+
+def _uses_japanese_frequency_fields(*, deck_language: SupportedLanguage, source_type: str) -> bool:
+    return deck_language is SupportedLanguage.JA and source_type == "frequency"
 
 
 _DEFINITION_SENSE_SEPARATOR = "; "

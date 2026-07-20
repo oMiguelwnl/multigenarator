@@ -7,7 +7,11 @@ from importlib.resources import files
 from importlib.resources.abc import Traversable
 import re
 
-from multilang.domain.exporting import export_field_names_for_source_type, LATIN_EXPORT_CARD_FIELD_NAMES
+from multilang.domain.exporting import (
+    JAPANESE_EXPORT_CARD_FIELD_NAMES,
+    LATIN_EXPORT_CARD_FIELD_NAMES,
+    export_field_names_for_source_type,
+)
 from multilang.domain.jobs import SupportedLanguage
 from multilang.domain.source_profiles import get_source_profile
 
@@ -25,6 +29,7 @@ _TEMPLATE_FILES = {
     "normal_card": "normal_card.md",
     "highlight_card": "highlight_card.md",
     "latin_mvp_card": "latin_mvp_card.md",
+    "japanese_card": "japanese_card.md",
 }
 
 
@@ -43,6 +48,21 @@ def load_card_template(source_type: str, *, language: SupportedLanguage | None =
     # This works for both legacy latin-mvp and dynamic flows (word-list etc.),
     # allowing drop of frozen data dependency while preserving Latin card structure.
     is_la = language is not None and (language == "la" or getattr(language, "value", None) == "la")
+    is_ja = (
+        source_type == "frequency"
+        and language is not None
+        and (language == "ja" or getattr(language, "value", None) == "ja")
+    )
+    if is_ja:
+        template_path = TEMPLATE_ROOT.joinpath(_TEMPLATE_FILES["japanese_card"])
+        content = template_path.read_text(encoding="utf-8")
+        template = _parse_card_template(
+            content,
+            template_path=template_path,
+            source_template_name="japanese_card",
+        )
+        validate_template_references(template, field_names=JAPANESE_EXPORT_CARD_FIELD_NAMES)
+        return template
     if is_la:
         source_type = "latin-mvp"
     profile = get_source_profile(source_type)
@@ -115,10 +135,16 @@ def _iter_template_references(template: CardTemplate) -> list[str]:
     markup = "\n".join((template.front, template.back))
     references: list[str] = []
     for match in _ANKI_REFERENCE_RE.finditer(markup):
-        reference = match.group("name").strip()
+        reference = _normalize_anki_reference(match.group("name").strip())
         if reference:
             references.append(reference)
     return references
+
+
+def _normalize_anki_reference(reference: str) -> str:
+    if ":" not in reference:
+        return reference
+    return reference.rsplit(":", 1)[-1].strip()
 
 
 __all__ = [

@@ -166,7 +166,7 @@ def _wordfreq_language_code(language_code: str) -> str:
 
 def _write_csv(path: Path, columns: tuple[str, ...], rows: list[dict[str, object]]) -> None:
     with path.open("w", encoding="utf-8", newline="") as handle:
-        writer = csv.DictWriter(handle, fieldnames=columns)
+        writer = csv.DictWriter(handle, fieldnames=columns, lineterminator="\n")
         writer.writeheader()
         writer.writerows(rows)
 

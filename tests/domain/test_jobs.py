@@ -91,6 +91,12 @@ def test_generation_request_accepts_croatian() -> None:
     assert request.language is SupportedLanguage.HR
 
 
+def test_generation_request_accepts_japanese() -> None:
+    request = GenerationRequest(language="ja", source_type="frequency", level=1)
+
+    assert request.language is SupportedLanguage.JA
+
+
 def test_generation_request_accepts_latin_mvp_source_for_shared_infrastructure() -> None:
     request = GenerationRequest(language="en", source_type="latin-mvp")
 

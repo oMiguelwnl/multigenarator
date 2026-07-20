@@ -24,3 +24,8 @@
 | 019 | adicione a lingua Czech ao programa | 2026-07-14 | passed | [019-adicione-czech-ao-programa](./019-adicione-czech-ao-programa/) |
 | 020 | adicione a lingua Croatian ao projeto | 2026-07-14 | passed | [020-adicione-a-lingua-croatian](./020-adicione-a-lingua-croatian/) |
 | 021 | adicione ao projeto a lingua Greek atual e alem do deck de frequencia ele tambem tera um deck fonetico | 2026-07-14 | passed | [021-adicione-greek-com-deck-fonetico](./021-adicione-greek-com-deck-fonetico/) |
+| 022 | Register Japanese runtime basics | 2026-07-20 | passed | [022-add-japanese-pipeline](./022-add-japanese-pipeline/) |
+| 023 | Add Japanese frequency assets | 2026-07-20 | passed | [023-japanese-frequency-assets](./023-japanese-frequency-assets/) |
+| 024 | Japanese generation and validation support | 2026-07-20 | passed | [024-japanese-generation-validation](./024-japanese-generation-validation/) |
+| 025 | Japanese export routing | 2026-07-20 | passed | [025-japanese-export-routing](./025-japanese-export-routing/) |
+| 026 | Japanese furigana generation | 2026-07-20 | passed | [026-japanese-furigana-generation](./026-japanese-furigana-generation/) |

@@ -213,6 +213,34 @@ def test_validation_accepts_inflected_german_verb_forms() -> None:
     assert ValidationFlagCode.MISSING_TARGET_LEMMA not in {flag.code for flag in result.validation_flags}
 
 
+def test_validation_accepts_no_space_japanese_sentence() -> None:
+    result = build_service().validate(
+        sentence=build_sentence(text="学校に行く。", target_language="ja"),
+        translation=build_translation(text="I go to school.", target_language="en"),
+        display_form="学校",
+        lemma="学校",
+        definitions_html="noun: school",
+    )
+
+    assert result.validation_status is ValidationStatus.PASSED
+    codes = {flag.code for flag in result.validation_flags}
+    assert ValidationFlagCode.MISSING_TARGET_LEMMA not in codes
+    assert ValidationFlagCode.SENTENCE_TOO_SHORT not in codes
+
+
+def test_validation_rejects_non_japanese_sentence_for_japanese_target() -> None:
+    result = build_service().validate(
+        sentence=build_sentence(text="Friends discuss school during lunch.", target_language="ja"),
+        translation=build_translation(text="Amigos conversam sobre a escola no almoço."),
+        display_form="学校",
+        lemma="学校",
+        definitions_html="noun: school",
+    )
+
+    assert result.validation_status is ValidationStatus.FAILED
+    assert ValidationFlagCode.LANGUAGE_MISMATCH in {flag.code for flag in result.validation_flags}
+
+
 def test_validation_rejects_question_form_fallback_sentences() -> None:
     result = build_service().validate(
         sentence=build_sentence(text="Do you wash at home?"),

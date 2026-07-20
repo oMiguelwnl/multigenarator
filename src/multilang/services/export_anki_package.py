@@ -8,10 +8,16 @@ import re
 
 import genanki
 
-from multilang.domain.exporting import ExportCardRow, export_field_names_for_source_type, LATIN_EXPORT_CARD_FIELD_NAMES
+from multilang.domain.exporting import (
+    ExportCardRow,
+    JAPANESE_EXPORT_CARD_FIELD_NAMES,
+    LATIN_EXPORT_CARD_FIELD_NAMES,
+    export_field_names_for_source_type,
+)
 from multilang.domain.jobs import SupportedLanguage
 from multilang.domain.source_profiles import get_source_profile
 from multilang.services.card_template_loader import load_card_template
+from multilang.services.japanese_frequency_deck import JAPANESE_MODEL_ID, JAPANESE_NOTE_TYPE_NAME
 from multilang.services.latin_export import LATIN_MODEL_ID
 
 MODEL_ID = 1_602_300_501
@@ -60,10 +66,17 @@ def build_multilang_model(
     # For la use Latin fields (Definition + Grammar) even if source_type is not latin-mvp
     # Note: caller passes rows or we decide here; for simplicity if la force
     is_la = language is not None and (language == "la" or getattr(language, "value", None) == "la")
-    fields_for_model = LATIN_EXPORT_CARD_FIELD_NAMES if is_la else export_field_names_for_source_type(source_type)
+    is_ja = _is_japanese_frequency(language=language, source_type=source_type)
+    fields_for_model = (
+        JAPANESE_EXPORT_CARD_FIELD_NAMES
+        if is_ja
+        else LATIN_EXPORT_CARD_FIELD_NAMES
+        if is_la
+        else export_field_names_for_source_type(source_type)
+    )
     return genanki.Model(
-        LATIN_MODEL_ID if is_la else model_id,
-        "Multilang::Classical Latin MVP" if is_la else profile.note_type_name,
+        JAPANESE_MODEL_ID if is_ja else LATIN_MODEL_ID if is_la else model_id,
+        JAPANESE_NOTE_TYPE_NAME if is_ja else "Multilang::Classical Latin MVP" if is_la else profile.note_type_name,
         fields=[{"name": field_name} for field_name in fields_for_model],
         templates=[
             {
@@ -79,7 +92,14 @@ def build_multilang_model(
 def build_multilang_note(row: ExportCardRow, *, model: genanki.Model | None = None) -> genanki.Note:
     # For la force latin fields (even dynamic)
     is_la = row.identity.language == "la" or getattr(row.identity.language, "value", None) == "la"
-    field_names = LATIN_EXPORT_CARD_FIELD_NAMES if is_la else export_field_names_for_source_type(row.identity.source_type)
+    is_ja = _is_japanese_frequency(language=row.identity.language, source_type=row.identity.source_type)
+    field_names = (
+        JAPANESE_EXPORT_CARD_FIELD_NAMES
+        if is_ja
+        else LATIN_EXPORT_CARD_FIELD_NAMES
+        if is_la
+        else export_field_names_for_source_type(row.identity.source_type)
+    )
     note = MultilangNote(
         model=model or build_multilang_model(
             source_type=row.identity.source_type,
@@ -172,6 +192,11 @@ def _resolve_media_files(*, rows: list[ExportCardRow], media_index: dict[str, Pa
         _require_media_file(sound_tag, media_index=media_index)
         for sound_tag in dict.fromkeys(sound_tags)
     ]
+
+
+def _is_japanese_frequency(*, language: SupportedLanguage | str | None, source_type: str) -> bool:
+    value = language.value if hasattr(language, "value") else language
+    return source_type == "frequency" and value == "ja"
 
 
 def _require_media_file(sound_tag: str, *, media_index: dict[str, Path]) -> Path:

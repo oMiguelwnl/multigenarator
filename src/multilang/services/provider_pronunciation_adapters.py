@@ -38,6 +38,7 @@ _LANGUAGE_NAMES = {
     "hu": "Hungarian",
     "cs": "Czech",
     "hr": "Croatian",
+    "ja": "Japanese",
 }
 
 

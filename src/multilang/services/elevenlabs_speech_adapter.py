@@ -36,6 +36,7 @@ _LANGUAGE_LOCALES = {
     SupportedLanguage.HU: "hu-HU",
     SupportedLanguage.CS: "cs-CZ",
     SupportedLanguage.HR: "hr-HR",
+    SupportedLanguage.JA: "ja-JP",
 }
 _VOICE_REGISTRY_VERSION = "elevenlabs-premade-v1"
 _VOICE_BY_LANGUAGE = {
@@ -60,6 +61,7 @@ _VOICE_BY_LANGUAGE = {
     SupportedLanguage.HU: "TxGEqnHWrfWFTfGW9XjX",  # Josh
     SupportedLanguage.CS: "TxGEqnHWrfWFTfGW9XjX",  # Josh
     SupportedLanguage.HR: "TxGEqnHWrfWFTfGW9XjX",  # Josh
+    SupportedLanguage.JA: "EXAVITQu4vr4xnSDxMaL",  # Bella
 }
 
 

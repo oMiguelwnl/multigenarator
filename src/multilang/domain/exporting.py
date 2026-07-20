@@ -35,6 +35,18 @@ LATIN_EXPORT_CARD_FIELD_NAMES = (
     "sentence_audio",
     "Image",
 )
+JAPANESE_EXPORT_CARD_FIELD_NAMES = (
+    "SortIndex",
+    "Target Word",
+    "Word Reading",
+    "Definition",
+    "Sentence",
+    "Sentence Furigana",
+    "Sentence Translation",
+    "word_audio",
+    "sentence_audio",
+    "Image",
+)
 HIGHLIGHT_EXPORT_CARD_FIELD_NAMES = (
     "SortIndex",
     "Word",
@@ -103,6 +115,8 @@ class ExportCardRow(BaseModel):
     word_audio: str = Field(default="", alias="word_audio")
     sentence_audio: str = Field(default="", alias="sentence_audio")
     image: str = Field(default="", alias="Image")
+    word_reading: str | None = Field(default=None, alias="Word Reading")
+    sentence_furigana: str | None = Field(default=None, alias="Sentence Furigana")
     # Grammatical analysis for the dynamic Latin card path. When present it feeds
     # the exported "Grammar" field; absent, that field falls back to Definition.
     gramatica: str | None = Field(default=None, alias="gramatica")
@@ -138,10 +152,15 @@ class ExportCardRow(BaseModel):
             "Sentence": data.get("example_sentence") or "",
             "Translation": data.get("translation") or "",
             "Sentence Translation": data.get("translation") or "",
+            "Target Word": data.get("front_of_card") or data.get("word") or "",
+            "Word Reading": data.get("word_reading") or data.get("front_of_card") or data.get("word") or "",
+            "Sentence Furigana": data.get("example_sentence") or "",
             "word_audio": data.get("word_audio") or "",
             "sentence_audio": data.get("sentence_audio") or "",
             "Image": data.get("image") or "",
         }
+        if data.get("sentence_furigana"):
+            values["Sentence Furigana"] = data["sentence_furigana"]
         if "Grammar" in resolved_field_names:
             values["Grammar"] = data.get("gramatica") or values["Definition"]
         return {field_name: values.get(field_name, "") for field_name in resolved_field_names}
@@ -163,9 +182,13 @@ def export_field_names_for_rows(rows: list[ExportCardRow]) -> tuple[str, ...]:
     if len(source_types) > 1:
         raise ValueError("cannot resolve export field names for mixed source types")
     source_type = next(iter(source_types), "frequency")
-    # Dynamic Latin (any source_type with la) uses the Latin field set (includes Definition + Grammar)
-    # to support the dedicated template. This allows dropping frozen data while keeping Latin style.
+    # Dynamic Latin/Japanese frequency rows use dedicated field sets/templates.
     languages = {getattr(row.identity, "language", None) for row in rows}
+    has_ja = any(
+        (lang.value if hasattr(lang, "value") else lang) == "ja" for lang in languages if lang is not None
+    )
+    if has_ja and source_type == "frequency":
+        return JAPANESE_EXPORT_CARD_FIELD_NAMES
     has_la = any(
         (lang.value if hasattr(lang, "value") else lang) == "la" for lang in languages if lang is not None
     )
@@ -309,6 +332,7 @@ __all__ = [
     "EXPORT_CARD_FIELD_NAMES",
     "FREQUENCY_EXPORT_CARD_FIELD_NAMES",
     "HIGHLIGHT_EXPORT_CARD_FIELD_NAMES",
+    "JAPANESE_EXPORT_CARD_FIELD_NAMES",
     "LATIN_EXPORT_CARD_FIELD_NAMES",
     "MANUAL_EXPORT_CARD_FIELD_NAMES",
     "ExportArtifactFormat",

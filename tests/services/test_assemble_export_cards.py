@@ -11,7 +11,7 @@ from multilang.domain.audio import AudioAssetKind, AudioAssetRecord, AudioFormat
 from multilang.domain.jobs import SupportedLanguage
 from multilang.domain.lexicon import DefinitionRecord, GroundingStatus, LexicalCardCandidate, LexicalProvenance
 from multilang.domain.text_quality import ConfidenceLabel, ReviewStatus, TextGenerationStatus, TextProvenance, TextQualityRecord, ValidationStatus
-from multilang.domain.exporting import export_field_names_for_rows
+from multilang.domain.exporting import JAPANESE_EXPORT_CARD_FIELD_NAMES, export_field_names_for_rows
 from multilang.services.assemble_export_cards import AssembleExportCardsError, AssembleExportCardsService
 
 
@@ -311,6 +311,45 @@ def test_assemble_export_cards_builds_highlight_row_without_translation_field() 
     assert mapping["Image"] == ""
     assert row.word_audio == ""
     assert mapping["sentence_audio"] == "[sound:wash-sentence.mp3]"
+
+
+def test_assemble_export_cards_builds_japanese_row_without_ipa() -> None:
+    candidate = make_candidate(item_key="学校", definitions_html="noun: school", ipa=None, spoken_form=None).model_copy(
+        update={"display_form": "学校", "lemma_key": "ja:学校"}
+    )
+    service, _ = build_service(
+        accepted_records=[
+            make_text_record(
+                item_key="学校",
+                example_sentence="学校に行く。",
+                translation_text="I go to school.",
+            )
+        ],
+        candidates={"学校": candidate},
+        assets={
+            ("学校", AudioAssetKind.WORD.value): make_asset(item_key="学校", asset_kind=AudioAssetKind.WORD, storage_path="gakkou-word.mp3"),
+            ("学校", AudioAssetKind.SENTENCE.value): make_asset(item_key="学校", asset_kind=AudioAssetKind.SENTENCE, storage_path="gakkou-sentence.mp3"),
+        },
+    )
+
+    row = service.execute(job_id="job-1", deck_language=SupportedLanguage.JA).cards[0]
+    field_names = export_field_names_for_rows([row])
+    mapping = row.ordered_field_mapping(field_names=field_names)
+
+    assert field_names == JAPANESE_EXPORT_CARD_FIELD_NAMES
+    assert row.ipa is None
+    assert mapping == {
+        "SortIndex": 1,
+        "Target Word": "学校",
+        "Word Reading": "学校[がっこう]",
+        "Definition": "noun: school",
+        "Sentence": "学校に行く。",
+        "Sentence Furigana": "学校[がっこう]に行[い]く。",
+        "Sentence Translation": "I go to school.",
+        "word_audio": "[sound:gakkou-word.mp3]",
+        "sentence_audio": "[sound:gakkou-sentence.mp3]",
+        "Image": "",
+    }
 
 
 def test_assemble_export_cards_joins_definitions_on_one_line_and_preserves_image_blank() -> None:

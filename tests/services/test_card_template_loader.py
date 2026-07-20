@@ -4,7 +4,12 @@ from pathlib import Path
 
 import pytest
 
-from multilang.domain.exporting import HIGHLIGHT_EXPORT_CARD_FIELD_NAMES, LATIN_EXPORT_CARD_FIELD_NAMES
+from multilang.domain.exporting import (
+    HIGHLIGHT_EXPORT_CARD_FIELD_NAMES,
+    JAPANESE_EXPORT_CARD_FIELD_NAMES,
+    LATIN_EXPORT_CARD_FIELD_NAMES,
+)
+from multilang.domain.jobs import SupportedLanguage
 from multilang.services.card_template_loader import (
     CardTemplate,
     load_card_template,
@@ -174,6 +179,21 @@ def test_project_latin_mvp_template_uses_wordfreq_layout_with_latin_fields() -> 
     assert "{{Example Sentence}}" not in rendered
     assert "{{Translation}}" not in rendered
     validate_template_references(template, field_names=LATIN_EXPORT_CARD_FIELD_NAMES)
+
+
+def test_project_japanese_template_uses_japanese_fields_and_furigana_filter() -> None:
+    template = load_card_template(source_type="frequency", language=SupportedLanguage.JA)
+    rendered = template.front + template.back
+
+    assert template.source_template_name == "japanese_card"
+    assert "toggleFurigana" in rendered
+    assert "{{furigana:Word Reading}}" in rendered
+    assert "{{furigana:Sentence Furigana}}" in rendered
+    assert "{{Target Word}}" in rendered
+    assert "{{Sentence Translation}}" in rendered
+    assert "{{IPA}}" not in rendered
+    assert "{{Definitions}}" not in rendered
+    validate_template_references(template, field_names=JAPANESE_EXPORT_CARD_FIELD_NAMES)
 
 
 @pytest.mark.parametrize(

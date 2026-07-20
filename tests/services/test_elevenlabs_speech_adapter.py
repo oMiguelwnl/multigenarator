@@ -159,6 +159,15 @@ def test_elevenlabs_adapter_uses_default_voice_for_greek() -> None:
     assert selection.locale == "el-GR"
 
 
+def test_elevenlabs_adapter_uses_default_voice_for_japanese() -> None:
+    adapter = ElevenLabsSpeechAdapter(Settings(_env_file=None))
+
+    selection = adapter.select_voice(SupportedLanguage.JA)
+
+    assert selection.voice_id == "EXAVITQu4vr4xnSDxMaL"
+    assert selection.locale == "ja-JP"
+
+
 def test_elevenlabs_adapter_requires_credentials(tmp_path: Path) -> None:
     adapter = ElevenLabsSpeechAdapter(Settings(_env_file=None))
 

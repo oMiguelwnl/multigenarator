@@ -9,7 +9,7 @@ from pathlib import Path
 
 import pytest
 
-from multilang.domain.exporting import ExportCardIdentity, ExportCardRow
+from multilang.domain.exporting import ExportCardIdentity, ExportCardRow, JAPANESE_EXPORT_CARD_FIELD_NAMES
 from multilang.domain.jobs import SupportedLanguage
 from multilang.services import card_template_loader
 from multilang.services.export_anki_package import (
@@ -24,6 +24,7 @@ from multilang.services.export_anki_package import (
     build_multilang_note,
     export_anki_package,
 )
+from multilang.services.japanese_frequency_deck import JAPANESE_MODEL_ID, JAPANESE_NOTE_TYPE_NAME
 
 
 def write_media_file(path: Path, payload: bytes = b"ID3-audio") -> Path:
@@ -41,10 +42,13 @@ def make_row(
     word_audio: str = "[sound:run-word.mp3]",
     sentence_audio: str = "[sound:run-sentence.mp3]",
     source_type: str = "frequency",
+    language: SupportedLanguage = SupportedLanguage.EN,
+    word_reading: str | None = None,
+    sentence_furigana: str | None = None,
 ) -> ExportCardRow:
     return ExportCardRow(
         identity=ExportCardIdentity(
-            language=SupportedLanguage.EN,
+            language=language,
             source_type=source_type,
             job_id="job-1",
             item_key=item_key,
@@ -59,6 +63,8 @@ def make_row(
         translation=translation,
         word_audio=word_audio,
         sentence_audio=sentence_audio,
+        word_reading=word_reading,
+        sentence_furigana=sentence_furigana,
     )
 
 
@@ -121,6 +127,17 @@ def test_build_english_frequency_model_localizes_visual_labels_only() -> None:
     assert "{{Translation}}" in qfmt
     assert '<div class="header">Definition:</div>' in spanish_model.templates[0]["qfmt"]
     assert '<div class="header">example:</div>' in spanish_model.templates[0]["qfmt"]
+
+
+def test_build_japanese_frequency_model_uses_japanese_note_type_and_template() -> None:
+    model = build_multilang_model(source_type="frequency", language=SupportedLanguage.JA)
+
+    assert model.model_id == JAPANESE_MODEL_ID
+    assert model.name == JAPANESE_NOTE_TYPE_NAME
+    assert tuple(field["name"] for field in model.fields) == JAPANESE_EXPORT_CARD_FIELD_NAMES
+    assert "toggleFurigana" in model.templates[0]["qfmt"]
+    assert "{{furigana:Word Reading}}" in model.templates[0]["qfmt"]
+    assert "{{furigana:Sentence Furigana}}" in model.templates[0]["afmt"]
 
 
 def test_normal_deck_css_does_not_update_russian_phoneme_template() -> None:
@@ -238,6 +255,35 @@ def test_build_multilang_note_adds_traceability_tags() -> None:
     note = build_multilang_note(make_row(item_key="level-1-rank-0001", sort_index=1))
 
     assert {"multilang", "en", "frequency", "level_1", "rank_0001", "job_job_1"}.issubset(set(note.tags))
+
+
+def test_build_multilang_note_maps_japanese_frequency_fields() -> None:
+    row = make_row(
+        item_key="学校",
+        sort_index=1,
+        language=SupportedLanguage.JA,
+        example_sentence="学校に行く。",
+        translation="I go to school.",
+        word_audio="[sound:gakkou-word.mp3]",
+        sentence_audio="[sound:gakkou-sentence.mp3]",
+        word_reading="学校[がっこう]",
+        sentence_furigana="学校[がっこう]に行[い]く。",
+    )
+
+    note = build_multilang_note(row, model=build_multilang_model(source_type="frequency", language=SupportedLanguage.JA))
+
+    assert note.fields == [
+        "1",
+        "学校",
+        "学校[がっこう]",
+        "to move fast<br>to operate",
+        "学校に行く。",
+        "学校[がっこう]に行[い]く。",
+        "I go to school.",
+        "[sound:gakkou-word.mp3]",
+        "[sound:gakkou-sentence.mp3]",
+        "",
+    ]
 
 
 def test_export_anki_package_bundles_referenced_media_and_sound_basenames(tmp_path: Path) -> None:

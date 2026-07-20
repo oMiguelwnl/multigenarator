@@ -97,6 +97,7 @@ _LANGUAGE_NAMES = {
     SupportedLanguage.CS: "Czech",
     SupportedLanguage.HR: "Croatian",
     SupportedLanguage.LA: "Latin",
+    SupportedLanguage.JA: "Japanese",
 }
 
 
@@ -640,6 +641,9 @@ def _note_type_name_for_rows(rows: list[object]) -> str:
     # even in dynamic flows (non frozen). This keeps Latin card style.
     # If using legacy latin-mvp source, it already maps to it.
     deck_language = getattr(rows[0].identity, 'language', None) if rows else None
+    if deck_language == "ja" or (hasattr(deck_language, 'value') and deck_language.value == "ja"):
+        if source_type == "frequency":
+            return "Multilang::Japanese Card"
     if deck_language == "la" or (hasattr(deck_language, 'value') and deck_language.value == "la"):
         return "Multilang::Classical Latin MVP"
     return get_source_profile(source_type).note_type_name

@@ -140,6 +140,7 @@ _LANGUAGE_MARKERS = {
     "hu": {"a", "az", "egy", "én", "és", "ez", "hogy", "is", "mert", "nem", "ő", "van"},
     "cs": {"a", "ale", "do", "já", "je", "jsem", "na", "ne", "ona", "on", "pro", "se", "to", "v", "že"},
     "hr": {"da", "i", "je", "ja", "mi", "na", "ne", "on", "ona", "sam", "se", "to", "u", "za"},
+    "ja": {"の", "に", "は", "が", "を", "で", "と", "も", "から", "です", "ます", "する", "いる"},
     "tr": {"ve", "bir", "bu", "için", "ile", "de", "da", "ben", "o", "çok"},
     "ro": {"și", "de", "la", "în", "este", "pentru", "cu", "eu", "el", "ea"},
     "nl": {"de", "het", "een", "en", "is", "in", "voor", "met", "ik", "hij", "zij"},
@@ -267,6 +268,13 @@ class TextValidationService:
         display_form: str,
         lemma: str,
     ) -> None:
+        if context.target_language == "ja" and _japanese_contains_target(
+            context.sentence_text,
+            display_form=display_form,
+            lemma=lemma,
+        ):
+            return
+
         candidates = _match_keys(display_form) | _match_keys(lemma)
         sentence_terms = {
             key
@@ -309,6 +317,25 @@ class TextValidationService:
     ) -> None:
         min_tokens = self.min_sentence_tokens if min_sentence_tokens is None else min_sentence_tokens
         max_tokens = self.max_sentence_tokens if max_sentence_tokens is None else max_sentence_tokens
+        if context.target_language == "ja":
+            character_count = _japanese_signal_character_count(context.sentence_text)
+            if character_count < min_tokens:
+                flags.append(
+                    ValidationFlag(
+                        code=ValidationFlagCode.SENTENCE_TOO_SHORT,
+                        detail=f"Japanese sentence has {character_count} signal characters; expected at least {min_tokens}",
+                    )
+                )
+            max_characters = max(max_tokens * 6, 24)
+            if character_count > max_characters:
+                flags.append(
+                    ValidationFlag(
+                        code=ValidationFlagCode.SENTENCE_TOO_LONG,
+                        detail=f"Japanese sentence has {character_count} signal characters; expected at most {max_characters}",
+                    )
+                )
+            return
+
         token_count = len(context.sentence_tokens)
         if token_count < min_tokens:
             flags.append(
@@ -518,6 +545,10 @@ def detect_language_mismatch(
             f"({detection.provider} confidence={detection.confidence:.2f}; {detection.detail})"
         )
     script = _LANGUAGE_SCRIPTS.get(expected)
+    if expected == "ja":
+        if _japanese_script_ratio(value) < 0.55:
+            return f"text does not look like language {expected_language}"
+        return None
     if script is not None:
         letter_tokens = [token for token in tokens if any(character.isalpha() for character in token)]
         if letter_tokens and _script_token_ratio(letter_tokens, script) < 0.55:
@@ -553,6 +584,38 @@ def _script_token_ratio(tokens: list[str], script_name: str) -> float:
         if sum(1 for character in letters if script_name in unicodedata.name(character, "")) / len(letters) >= 0.5:
             matching += 1
     return matching / checked if checked else 1.0
+
+
+def _japanese_contains_target(value: str, *, display_form: str, lemma: str) -> bool:
+    normalized_sentence = _normalize_japanese_lookup(value)
+    return any(
+        target and target in normalized_sentence
+        for target in {_normalize_japanese_lookup(display_form), _normalize_japanese_lookup(lemma)}
+    )
+
+
+def _normalize_japanese_lookup(value: str) -> str:
+    return "".join(str(value or "").casefold().split())
+
+
+def _japanese_signal_character_count(value: str) -> int:
+    return sum(1 for character in value if _is_japanese_character(character) or character.isalpha())
+
+
+def _japanese_script_ratio(value: str) -> float:
+    letters = [character for character in value if character.isalpha()]
+    if not letters:
+        return 0.0
+    japanese = sum(1 for character in letters if _is_japanese_character(character))
+    return japanese / len(letters)
+
+
+def _is_japanese_character(character: str) -> bool:
+    try:
+        name = unicodedata.name(character)
+    except ValueError:
+        return False
+    return "HIRAGANA" in name or "KATAKANA" in name or "CJK UNIFIED IDEOGRAPH" in name
 
 
 def _normalize_text(value: str) -> str:

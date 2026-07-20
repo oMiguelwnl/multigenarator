@@ -296,6 +296,13 @@ _FUNCTION_WORD_LABELS = {
             "particle": ("ne",),
         }
     ),
+    "ja": _language_map(
+        {
+            "particle": ("の", "に", "は", "が", "を", "で", "と", "も", "へ", "から", "まで", "より", "ね", "よ"),
+            "conjunction": ("そして", "でも", "しかし", "また", "それから"),
+            "pronoun": ("私", "僕", "俺", "あなた", "彼", "彼女", "これ", "それ", "あれ", "誰", "何"),
+        }
+    ),
     "la": _language_map(
         {
             "preposition": ("in", "cum", "ad", "de", "ex", "per", "sine", "inter"),

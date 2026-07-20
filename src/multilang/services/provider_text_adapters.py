@@ -56,6 +56,7 @@ _LANGUAGE_NAMES = {
     "cs": "Czech",
     "hr": "Croatian",
     "la": "Latin",
+    "ja": "Japanese",
 }
 
 _DEEPL_TARGET_LANGUAGES = {
@@ -78,6 +79,7 @@ _DEEPL_TARGET_LANGUAGES = {
     "hu": "HU",
     "cs": "CS",
     "hr": "HR",
+    "ja": "JA",
 }
 
 _SYSTEM_PROMPT = """You create one natural learner example sentence for an Anki vocabulary card.

@@ -29,6 +29,7 @@ SupportedLanguageCode = Literal[
     "cs",
     "hr",
     "la",
+    "ja",
 ]
 TextGenerationProvider = Literal["litellm", "local"]
 TranslationProvider = Literal["deepl", "google", "local"]
@@ -57,6 +58,7 @@ DEFAULT_SUPPORTED_LANGUAGES: tuple[SupportedLanguageCode, ...] = (
     "cs",
     "hr",
     "la",
+    "ja",
 )
 
 

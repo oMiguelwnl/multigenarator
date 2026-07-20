@@ -301,11 +301,6 @@ def test_all_supported_frequency_assets_validate() -> None:
     from multilang.services import frequency_decks
 
     for language in SupportedLanguage:
-        # Japanese ships as an isolated, self-contained deck (see
-        # japanese_frequency_deck), not through the modern-language curated
-        # frequency path, so it has no curated-vN frequency asset.
-        if language is SupportedLanguage.JA:
-            continue
         entries = frequency_decks.load_curated_frequency_entries(language)
         if language is SupportedLanguage.LA:
             assert entries
@@ -386,6 +381,17 @@ def test_greek_frequency_assets_validate() -> None:
     assert len(entries) == 3000
     assert [sum(1 for entry in entries if entry.level == level) for level in (1, 2, 3)] == [1000, 1000, 1000]
     assert all(entry.source_provenance == "wordfreq:el" for entry in entries)
+
+
+def test_japanese_frequency_assets_validate() -> None:
+    from multilang.services import frequency_decks
+
+    entries = frequency_decks.load_curated_frequency_entries(SupportedLanguage.JA)
+
+    assert len(entries) == 3000
+    assert [sum(1 for entry in entries if entry.level == level) for level in (1, 2, 3)] == [1000, 1000, 1000]
+    assert entries[0].display_form == "の"
+    assert all(entry.source_provenance == "wordfreq:ja" for entry in entries)
 
 
 def test_danish_frequency_assets_validate() -> None:
