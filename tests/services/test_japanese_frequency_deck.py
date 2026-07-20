@@ -82,10 +82,14 @@ def test_build_japanese_model_uses_template_and_field_order() -> None:
     assert "{{Target Word}}" in front
     # Portuguese labels (FRPG+ idea) present on the back.
     assert "{{furigana:Sentence Furigana}}" in back
-    assert "Palavra:" in back
-    assert "Frase:" in back
-    assert "jisho.org" in back
-    assert ".jpCard" in model.css
+    assert "Definição:" in back
+    assert "Exemplo:" in back
+    assert "jisho.org" not in front + back
+    assert "weblio.jp" not in front + back
+    assert ".customCard" in model.css
+    assert ".targetWordContainer" in model.css
+    assert ".exampleSentenceLine" in model.css
+    assert ".jpLinks" not in model.css
 
 
 def test_build_japanese_note_maps_fields_in_order() -> None:

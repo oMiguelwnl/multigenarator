@@ -359,23 +359,32 @@ def test_project_japanese_template_uses_japanese_fields_and_furigana_filter() ->
 
     assert template.source_template_name == "japanese_card"
     assert "toggleFurigana" in rendered
+    assert 'class="customCard cardBack jpFront"' in template.front
+    assert 'class="customCard cardBack jpBack"' in template.back
+    assert "targetWordContainer" in rendered
+    assert "definitionsList" in rendered
+    assert "exampleSentenceLine" in rendered
+    assert "sentenceTranslation" in rendered
     assert "{{furigana:Word Reading}}" in rendered
     assert "{{furigana:Sentence Furigana}}" in rendered
     assert "{{Target Word}}" in rendered
     assert "{{Sentence Translation}}" in rendered
+    assert "jpLinks" not in rendered
+    assert "jisho.org" not in rendered
+    assert "weblio.jp" not in rendered
     assert "{{IPA}}" not in rendered
     assert "{{Definitions}}" not in rendered
     validate_template_references(template, field_names=JAPANESE_EXPORT_CARD_FIELD_NAMES)
 
 
-def test_generated_japanese_frequency_model_keeps_pedagogy_and_original_palette() -> None:
+def test_generated_japanese_frequency_model_keeps_pedagogy_and_current_palette() -> None:
     model = build_japanese_model()
     front = model.templates[0]["qfmt"]
     back = model.templates[0]["afmt"]
 
     assert tuple(field["name"] for field in model.fields) == JAPANESE_FIELD_NAMES
     for anchor in (
-        'class="jpCard jpCard--front"',
+        'class="customCard cardBack jpFront"',
         'onclick="toggleFurigana()"',
         '{{furigana:Word Reading}}',
         '{{furigana:Sentence Furigana}}',
@@ -387,25 +396,23 @@ def test_generated_japanese_frequency_model_keeps_pedagogy_and_original_palette(
     assert front.index("{{word_audio}}") < front.index("{{sentence_audio}}")
 
     for anchor in (
-        'class="jpCard jpCard--back"',
+        'class="customCard cardBack jpBack"',
         "{{#Image}}",
         "{{Definition}}",
         "{{Sentence Translation}}",
-        "https://jisho.org/",
-        "https://www.google.co.jp/",
-        "https://www.weblio.jp/",
     ):
         assert anchor in back
-    assert back.index("{{#Image}}") < back.index("{{furigana:Word Reading}}")
+    assert back.index("{{furigana:Word Reading}}") < back.index("{{#Image}}")
     assert back.index("{{Definition}}") < back.index("{{Sentence Translation}}")
-    assert back.index("jisho.org") < back.index("google.co.jp") < back.index("weblio.jp")
+    assert "jisho.org" not in back
+    assert "google.co.jp" not in back
+    assert "weblio.jp" not in back
 
-    assert _last_css_value(model.css, "--jp-color-page") == "#fdf6e3"
-    assert _last_css_value(model.css, "--jp-color-card") == "#ffffff"
-    assert _last_css_value(model.css, "--jp-color-text") == "#1f2430"
-    assert _last_css_value(model.css, "--jp-color-nightMode-page") == "#0b0716"
-    assert _last_css_value(model.css, "--jp-color-nightMode-card") == "#171226"
-    assert "border-top: 4px solid var(--jp-color-accent);" in model.css
+    assert _last_css_value(model.css, "--max-width-card") == "400px"
+    assert _last_css_value(model.css, "--color-card-background") == "#ffffff"
+    assert _last_css_value(model.css, "--color-text-primary") == "#0f1b2d"
+    assert _last_css_value(model.css, "--color-nightMode-card-background") == "#0a1628"
+    assert "border-top: 4px solid #2563eb;" in model.css
 
 
 def test_generated_kana_model_keeps_media_sequence_and_original_palette() -> None:

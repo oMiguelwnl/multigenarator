@@ -31,4 +31,9 @@
 | 026 | Japanese furigana generation | 2026-07-20 | passed | [026-japanese-furigana-generation](./026-japanese-furigana-generation/) |
 | 027 | Adicionar Mandarim ao fluxo moderno integrado | 2026-07-22 | human_needed | [027-adicionar-mandarim-integrado](./027-adicionar-mandarim-integrado/) |
 | 028 | Instalar seis skills recomendadas no escopo do projeto para OpenCode | 2026-07-20 | passed | [028-install-recommended-agent-skills](./028-install-recommended-agent-skills/) |
+| 027 | Mark Phase 29 complete | 2026-07-20 | passed | [027-mark-phase-29-complete](./027-mark-phase-29-complete/) |
+| 028 | Japanese deck smoke validation | 2026-07-20 | passed | [028-japanese-deck-smoke-validation](./028-japanese-deck-smoke-validation/) |
+| 029 | Japanese frequency preview template | 2026-07-20 | passed | [029-japanese-frequency-preview-template](./029-japanese-frequency-preview-template/) |
+| 030 | Remove Japanese template links | 2026-07-20 | passed | [030-remove-japanese-template-links](./030-remove-japanese-template-links/) |
+| 031 | Japanese definition English format | 2026-07-20 | passed | [031-japanese-definition-english-format](./031-japanese-definition-english-format/) |
 | 031 | Persistir o plano mestre lexical e adaptativo multilíngue v4 sem ativar o milestone | 2026-07-27 | passed | [031-persistir-plano-mestre-v4](./031-persistir-plano-mestre-v4/) |
