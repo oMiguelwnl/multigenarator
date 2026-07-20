@@ -29,3 +29,4 @@
 | 024 | Japanese generation and validation support | 2026-07-20 | passed | [024-japanese-generation-validation](./024-japanese-generation-validation/) |
 | 025 | Japanese export routing | 2026-07-20 | passed | [025-japanese-export-routing](./025-japanese-export-routing/) |
 | 026 | Japanese furigana generation | 2026-07-20 | passed | [026-japanese-furigana-generation](./026-japanese-furigana-generation/) |
+| 028 | Instalar seis skills recomendadas no escopo do projeto para OpenCode | 2026-07-20 | passed | [028-install-recommended-agent-skills](./028-install-recommended-agent-skills/) |
