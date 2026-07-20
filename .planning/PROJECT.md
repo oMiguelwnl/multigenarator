@@ -1,5 +1,7 @@
 # Multilang Anki Card Generator
 
+> Planning migration notice (2026-07-20): `.planning/SPEC.md` is now the canonical living specification and `.planning/ROADMAP.md` is the canonical active roadmap. This file remains historical project context.
+
 ## What This Is
 
 Multilang is a Python CLI/batch pipeline for generating high-quality multilingual Anki vocabulary cards from supported-language frequency decks, user-provided word lists, and reading-derived vocabulary sources. v1.x ships the first usable product slice for Portuguese, Spanish, English, French, German, Italian, Polish, Turkish, Romanian, Russian, and Dutch; v2.0 expands the product toward classical Latin.
@@ -37,17 +39,18 @@ v1.3 Phase 20 Word Audio Integrity Gate was completed on 2026-05-13. Word-audio 
 
 v1.3 was completed on 2026-05-16 after Phases 17-21. Generated-card quality defects can now be audited, IPA/Definition/Translation defects are remediated before export, normal generated-card exports use the revised field/template contract, word-audio mismatches are regenerated or blocked, and shared v1.3 validators plus scanner-readable evidence prove the known defects do not recur across normal, custom word-list, highlight, and phonetics deck paths.
 
-## Current Milestone: v2.0 Classical Latin MVP
+## Current Milestone: v3.0 Korean Learning System
 
-**Goal:** Add a first usable classical Latin Anki deck generation path that produces a 50-card MVP with frequency-by-lemma ordering, Portuguese learner-facing translations/explanations, short grammar notes, traceable sentence sources, audio for word and sentence, and `.apkg` export evidence.
+**Goal:** Add complete modern-standard Korean support with Hangul foundations, strict-i+1 pronunciation, three 1000-card frequency levels, strict-i+1 particles/endings, custom lists, highlights, Portuguese text, approved `ko-KR` audio, and APKG/CSV/TSV export.
 
 **Target features:**
 
-- Research and select Latin frequency, lemmatization, morphology, sentence-source, and TTS resources before implementation.
-- Add Latin-specific card data and export behavior with target form, lemma, Portuguese translation fields, `Gramatica`, source, review status, and word/sentence audio.
-- Build a small curated 50-card classical Latin MVP organized by lemma frequency and Rafael Falcon-style progression from simpler reading contexts toward complexity.
-- Generate or attach word and sentence audio through the best available Latin TTS option found during research, with provider/quality metadata and fallback behavior.
-- Export a test `.apkg` and evidence artifacts proving the Latin MVP pipeline works before scaling to 300, 1000, or 3000 cards.
+- Canonical `ko` integration with `ko-KR` provider locales and Kiwi-backed morphology.
+- Hangul and pronunciation foundation decks based on existing kana/phoneme templates.
+- Three real 1000-card frequency subdecks curated by lemma/POS/sense.
+- A strict-i+1 Particles & Endings curriculum plus adaptive custom/highlight modes.
+- Natural standard-Seoul examples, Portuguese translations, Azure audio, review gates, and stable export.
+- Full decisions, requirements, schemas, and phase coverage in `.planning/SPEC.md`, `.planning/ROADMAP.md`, and `KOREAN-STRUCTURE.md`.
 
 ## Next Milestone Goals
 
@@ -82,13 +85,13 @@ After v1.2, candidate directions from the archived v1 requirement seeds remain:
 
 ### Active
 
-- [ ] Define and implement v2.0 Classical Latin MVP requirements and roadmap.
+- [ ] Implement v3.0 Korean Learning System requirements `KMODE-01` through `KQA-02` across Phases 30-34.
 
 ### Out of Scope
 
 - Automatic image generation or image sourcing - the image field should stay blank because the user wants to add images manually.
 - Using Tatoeba as the default sentence source without quality validation - v1.0 locked Tatoeba to a secondary-only filtered fallback path.
-- Greek and other new languages outside the v1 language set plus classical Latin - this milestone is Latin-only and should not broaden into Greek.
+- New language work outside Korean - v3.0 is scoped to Korean and must not absorb unrelated language integrations.
 - Full spaced-repetition app or AI tutor - Anki remains the destination study tool.
 
 ## Context
@@ -120,7 +123,7 @@ v2.0 Phase 25 was verified on 2026-06-03. Latin MVP curation now has explicit so
 
 ## Constraints
 
-- **Languages**: v1 supports Portuguese, Spanish, English, French, German, Italian, Polish, Turkish, Romanian, Russian, and Dutch; v2.0 adds classical Latin as a separately scoped MVP.
+- **Languages**: v1 supports Portuguese, Spanish, English, French, German, Italian, Polish, Turkish, Romanian, Russian, and Dutch; later milestones add isolated or modern-language paths including Latin, Japanese, Mandarin, and planned Korean.
 - **Deck Structure**: Cards are separated into 3 levels with 1000 cards per level.
 - **Highlights Mode**: Kindle highlights are a new deck input mode and must not remove the existing frequency-deck mode.
 - **Output Quality**: Example sentences and translations must be high quality; Tatoeba is secondary-only behind validation.
@@ -130,6 +133,9 @@ v2.0 Phase 25 was verified on 2026-06-03. Latin MVP curation now has explicit so
 - **Latin MVP Scope**: v2.0 starts with 50 reviewed classical Latin cards, not a full 3000-card Latin deck.
 - **Latin Didactics**: Latin cards must keep the target word in sentence context and include a short Portuguese-facing grammar note aligned with Rafael Falcon-style reading progression.
 - **Latin Research**: Frequency, morphology, sentence-source licensing/quality, and TTS provider choices must be researched before final implementation requirements are locked.
+- **Korean Morphology**: Korean lexical identity and target matching must use a pinned morphology engine and fail closed when analysis is unavailable or ambiguous.
+- **Korean Curriculum**: Hangul, pronunciation, and grammar strict-i+1 claims require explicit concept prerequisites and exactly one target unknown.
+- **Korean Frequency License**: No frozen redistributed 3000-entry Korean asset may be committed before source and attribution/redistribution terms are approved.
 
 ## Key Decisions
 

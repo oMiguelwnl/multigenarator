@@ -1,17 +1,17 @@
 ---
 gsd_state_version: 1.0
-milestone: v1.0
-milestone_name: milestone
-status: complete
-stopped_at: Verified Phase 29
-last_updated: "2026-06-22T00:00:00Z"
-last_activity: 2026-06-22
+milestone: v3.0
+milestone_name: Korean Learning System
+status: planned
+stopped_at: Milestone v3.0 initialized; Phase 30 not planned
+last_updated: "2026-07-20T00:00:00Z"
+last_activity: 2026-07-20
 progress:
-  total_phases: 8
-  completed_phases: 8
-  total_plans: 28
-  completed_plans: 28
-  percent: 100
+  total_phases: 5
+  completed_phases: 0
+  total_plans: 0
+  completed_plans: 0
+  percent: 0
 ---
 
 # Project State
@@ -21,16 +21,16 @@ progress:
 See: .planning/PROJECT.md (updated 2026-06-01)
 
 **Core value:** Generate reliable, high-quality Anki cards for real vocabulary the learner needs to study, with accurate definitions, examples, translations where appropriate, and audio.  
-**Current focus:** v2.1 Classical Latin Google TTS finalization
+**Current focus:** v3.0 Korean Learning System planning and execution
 
 ## Current Position
 
-Phase: 29
-Plan: 29-01
-Status: Phase verified - v2.1 Google TTS finalization complete
-Last activity: 2026-06-22
+Phase: 30
+Plan: Not planned
+Status: Milestone initialized; execution waits for shared Mandarin worktree reconciliation
+Last activity: 2026-07-20
 
-Progress: [██████████] 100%
+Progress: 0 of 5 phases complete
 
 ## Performance Metrics
 
@@ -91,7 +91,17 @@ Progress: [██████████] 100%
 
 ### Decisions
 
-Full decision history is in `.planning/PROJECT.md`. Current v2.0 decisions affecting execution:
+Full current decision history is in `.planning/SPEC.md` and `KOREAN-STRUCTURE.md`. v3.0 decisions affecting execution:
+
+- `ko` is the canonical language identity; `ko-KR` is provider/locale-only.
+- Kiwi/`kiwipiepy` is the planned primary morphology engine and Korean morphology fails closed when unavailable.
+- Hangul reuses the kana layout, pronunciation reuses the phoneme layout, and frequency/grammar reuse the normal layout with Korean note identities.
+- Hangul, pronunciation, and grammar use explicit curriculum-i+1 concept graphs; frequency/custom/highlights use adaptive or contextual ordering.
+- Azure `ko-KR` is the only default TTS policy; jamo and phonological-rule audio require specialist review.
+- The 3000-entry frequency asset is blocked until source, attribution, and redistribution terms are approved.
+- Phase 30 must not execute over a partially completed Mandarin quick task because both touch shared registries, persistence, audio, and export routing.
+
+Historical v2.0/v2.1 decisions retained for reference:
 
 - v2.0 is Classical Latin only; Greek and other Latin variants are out of scope.
 - MVP scope is exactly 50 reviewed cards; 300/1000/3000-card Latin scale is deferred.
@@ -159,9 +169,13 @@ Full decision history is in `.planning/PROJECT.md`. Current v2.0 decisions affec
 ### Pending Todos
 
 - Repair broad-suite drift before treating full `python -m pytest -q` as authoritative again.
+- Complete or otherwise reconcile quick task 027 before planning/executing Korean Phase 30.
+- Approve the Korean frequency-source and redistribution policy before committing a 3000-entry asset.
 
 ### Blockers/Concerns
 
+- Korean execution currently overlaps the uncommitted Mandarin integration on shared files.
+- `wordfreq` supports `ko` as a candidate bootstrap, but its documentation warns against CSV extraction without preserved attribution/licensing information.
 - Latin TTS quality is approved only for the current 50-card Google Translate TTS MVP pack; future higher-quality Latin audio should use a new review artifact.
 - Source licensing for Phase 23 is license-gated in the frozen source pack; later phases must preserve those provenance fields.
 - Broad-suite drift remains known debt; focused regression evidence should stay authoritative until repaired.
@@ -181,5 +195,5 @@ Items acknowledged and carried forward:
 ## Session Continuity
 
 Last session: 2026-06-22T00:00:00Z
-Stopped at: Verified Phase 29
+Stopped at: v3.0 initialized; Phase 30 ready to plan after Mandarin reconciliation
 Resume file: None

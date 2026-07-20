@@ -1,4 +1,6 @@
-# Requirements: Multilang Anki Card Generator v2.0 Classical Latin MVP
+# Legacy Requirements Archive: Multilang v2.0-v2.1 Classical Latin
+
+> Canonical active requirements moved to `.planning/SPEC.md` on 2026-07-20. The v2.0/v2.1 requirements below are retained as historical source material.
 
 **Defined:** 2026-06-01  
 **Core Value:** Generate reliable, high-quality Anki cards for real vocabulary the learner needs to study, with accurate definitions, examples, translations where appropriate, and audio.
@@ -9,11 +11,11 @@ Requirements for finalizing the Classical Latin MVP's current Google Translate T
 
 ### Latin Google TTS Finalization
 
-- [ ] **AUDR-01**: User can inspect provider evidence that locks Google Translate TTS (`la`) as the final provider for the current 50-card Latin MVP and records ElevenLabs as deferred after configured keys returned `HTTP 402 Payment Required`.
-- [ ] **AUDR-02**: User receives a committed 50-card Latin MVP audio manifest and 100 playable media files whose approved provider metadata uses Google Translate TTS and no longer depends on eSpeak NG.
-- [ ] **AUDR-03**: FineVoice is captured only as a research candidate for future evaluation and is not wired as an active Latin audio provider in this phase.
-- [ ] **AUDR-04**: Latin audio readiness and export tests prove the Google TTS manifest blocks stale eSpeak NG dependence, unapproved audio, text mismatches, unsafe paths, missing media, and source-pack drift.
-- [ ] **AUDR-05**: Current project source, tests, and active docs do not require eSpeak NG or live ElevenLabs for the current Latin MVP export path; historical artifacts may still mention them, and eSpeak NG is not uninstalled from the user/system environment.
+- [x] **AUDR-01**: User can inspect provider evidence that locks Google Translate TTS (`la`) as the final provider for the current 50-card Latin MVP and records ElevenLabs as deferred after configured keys returned `HTTP 402 Payment Required`.
+- [x] **AUDR-02**: User receives a committed 50-card Latin MVP audio manifest and 100 playable media files whose approved provider metadata uses Google Translate TTS and no longer depends on eSpeak NG.
+- [x] **AUDR-03**: FineVoice is captured only as a research candidate for future evaluation and is not wired as an active Latin audio provider in this phase.
+- [x] **AUDR-04**: Latin audio readiness and export tests prove the Google TTS manifest blocks stale eSpeak NG dependence, unapproved audio, text mismatches, unsafe paths, missing media, and source-pack drift.
+- [x] **AUDR-05**: Current project source, tests, and active docs do not require eSpeak NG or live ElevenLabs for the current Latin MVP export path; historical artifacts may still mention them, and eSpeak NG is not uninstalled from the user/system environment.
 
 ## v2.0 Requirements
 
@@ -146,11 +148,11 @@ Which phases cover which requirements. Updated during roadmap creation.
 | EVID-01 | Phase 28 | Complete |
 | EVID-02 | Phase 28 | Complete |
 | EVID-03 | Phase 28 | Complete |
-| AUDR-01 | Phase 29 | Planned |
-| AUDR-02 | Phase 29 | Planned |
-| AUDR-03 | Phase 29 | Planned |
-| AUDR-04 | Phase 29 | Planned |
-| AUDR-05 | Phase 29 | Planned |
+| AUDR-01 | Phase 29 | Complete |
+| AUDR-02 | Phase 29 | Complete |
+| AUDR-03 | Phase 29 | Complete |
+| AUDR-04 | Phase 29 | Complete |
+| AUDR-05 | Phase 29 | Complete |
 
 **Coverage:**
 
@@ -165,4 +167,4 @@ Which phases cover which requirements. Updated during roadmap creation.
 
 ---
 *Requirements defined: 2026-06-01*  
-*Last updated: 2026-06-01 after v2.0 roadmap creation*
+*Last updated: 2026-07-20 during v3.0 planning migration*

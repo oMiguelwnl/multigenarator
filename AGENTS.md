@@ -3,7 +3,7 @@
 
 **Multilang Anki Card Generator**
 
-Multilang is a multilingual Anki card generator focused on the most frequent words in a target language. It is meant to create high-quality study decks for learners of Portuguese, Spanish, English, French, German, Italian, Polish, Turkish, Romanian, Russian, and Dutch, with a separate mode for generating cards from a user-provided word list collected from reading.
+Multilang is a multilingual Anki card generator focused on the most frequent words in a target language. It creates high-quality study decks for modern-language frequency, user-provided word lists, and reading highlights, with language-specific foundation paths where needed. v3.0 plans complete Korean support alongside the existing language and Classical Latin paths.
 
 The product generates structured Anki-ready cards with word data, phonetics, definitions, example sentences, translations, audio, and an empty image field that the user can fill manually later. AI-assisted generation is part of the intended approach, but the exact provider and supporting services still need research and validation.
 
@@ -11,8 +11,11 @@ The product generates structured Anki-ready cards with word data, phonetics, def
 
 ### Constraints
 
-- **Languages**: v1 must support Portuguese, Spanish, English, French, German, Italian, Polish, Turkish, Romanian, Russian, and Dutch.
+- **Languages**: v1 supports Portuguese, Spanish, English, French, German, Italian, Polish, Turkish, Romanian, Russian, and Dutch; v3.0 adds modern standard Korean with canonical code `ko` and provider locale `ko-KR`.
 - **Deck Structure**: Cards must be separated into 3 levels with 1000 cards per level — this defines the core content structure.
+- **Korean Decks**: Korean includes Hangul foundations, strict-i+1 pronunciation, three frequency levels, strict-i+1 Particles & Endings, custom lists, and privacy-safe highlights.
+- **Korean Linguistics**: Korean content must use NFC normalization, morphology-aware lemma/POS/sense identity, and fail-closed target matching rather than whitespace or suffix heuristics.
+- **Korean Licensing**: A redistributed 3000-entry Korean frequency asset requires an approved source, attribution, and redistribution decision before it is committed.
 - **Output Quality**: Example sentences and translations must be high quality — prior low-quality outputs from Tatoeba are a known concern.
 - **Audio Provider**: Audio should use Azure TTS if the required voices are available — this is the user's preferred TTS direction.
 - **Card Schema**: The generated deck must preserve the requested field set and formatting — Anki export usefulness depends on consistent structure.
