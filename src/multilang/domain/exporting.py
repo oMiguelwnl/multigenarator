@@ -7,6 +7,7 @@ from dataclasses import dataclass, field
 from enum import Enum
 from hashlib import sha256
 import re
+import unicodedata
 
 from pydantic import BaseModel, ConfigDict, Field, model_validator
 
@@ -43,6 +44,20 @@ JAPANESE_EXPORT_CARD_FIELD_NAMES = (
     "Sentence",
     "Sentence Furigana",
     "Sentence Translation",
+    "word_audio",
+    "sentence_audio",
+    "Image",
+)
+MANDARIN_EXPORT_CARD_FIELD_NAMES = (
+    "SortIndex",
+    "word",
+    "Pinyin",
+    "Traditional",
+    "Definitions",
+    "Example Sentence",
+    "Sentence Pinyin",
+    "Traditional Sentence",
+    "Translation",
     "word_audio",
     "sentence_audio",
     "Image",
@@ -117,6 +132,10 @@ class ExportCardRow(BaseModel):
     image: str = Field(default="", alias="Image")
     word_reading: str | None = Field(default=None, alias="Word Reading")
     sentence_furigana: str | None = Field(default=None, alias="Sentence Furigana")
+    mandarin_word_pinyin: str | None = Field(default=None, alias="Pinyin")
+    mandarin_word_traditional: str | None = Field(default=None, alias="Traditional")
+    mandarin_sentence_pinyin: str | None = Field(default=None, alias="Sentence Pinyin")
+    mandarin_sentence_traditional: str | None = Field(default=None, alias="Traditional Sentence")
     # Grammatical analysis for the dynamic Latin card path. When present it feeds
     # the exported "Grammar" field; absent, that field falls back to Definition.
     gramatica: str | None = Field(default=None, alias="gramatica")
@@ -131,14 +150,48 @@ class ExportCardRow(BaseModel):
             object.__setattr__(self, "note_guid", build_export_note_guid(self.identity))
         if self.image != "":
             raise ValueError("Image must default to an empty string for export rows")
+        if _uses_mandarin_fields(language=self.identity.language, source_type=self.identity.source_type):
+            required_values = {
+                "Pinyin": self.mandarin_word_pinyin,
+                "Traditional": self.mandarin_word_traditional,
+                "Sentence Pinyin": self.mandarin_sentence_pinyin,
+                "Traditional Sentence": self.mandarin_sentence_traditional,
+                "Translation": self.translation,
+            }
+            missing = [name for name, value in required_values.items() if not str(value or "").strip()]
+            if missing:
+                raise ValueError(f"Mandarin export rows require non-empty fields: {', '.join(missing)}")
+            invalid_pinyin = [
+                name
+                for name, value in {
+                    "Pinyin": self.mandarin_word_pinyin,
+                    "Sentence Pinyin": self.mandarin_sentence_pinyin,
+                }.items()
+                if _contains_non_pinyin_letter(str(value or ""))
+            ]
+            if invalid_pinyin:
+                raise ValueError(
+                    "Mandarin export rows require pinyin fields to contain only pinyin text: "
+                    f"{', '.join(invalid_pinyin)}"
+                )
         return self
 
     @classmethod
-    def field_names(cls, *, source_type: str = "frequency") -> tuple[str, ...]:
-        return export_field_names_for_source_type(source_type)
+    def field_names(
+        cls,
+        *,
+        source_type: str = "frequency",
+        language: SupportedLanguage | str | None = None,
+    ) -> tuple[str, ...]:
+        if language is None:
+            return export_field_names_for_source_type(source_type)
+        return export_field_names_for_language_and_source(language=language, source_type=source_type)
 
     def ordered_field_mapping(self, *, field_names: tuple[str, ...] | None = None) -> dict[str, object]:
-        resolved_field_names = field_names or export_field_names_for_source_type(self.identity.source_type)
+        resolved_field_names = field_names or export_field_names_for_language_and_source(
+            language=self.identity.language,
+            source_type=self.identity.source_type,
+        )
         data = self.model_dump(exclude={"identity", "note_guid"})
         sort_index = data.get("sort_index") if data.get("sort_index") is not None else self.identity.sort_index
         values: dict[str, object] = {
@@ -155,6 +208,10 @@ class ExportCardRow(BaseModel):
             "Target Word": data.get("front_of_card") or data.get("word") or "",
             "Word Reading": data.get("word_reading") or data.get("front_of_card") or data.get("word") or "",
             "Sentence Furigana": data.get("example_sentence") or "",
+            "Pinyin": data.get("mandarin_word_pinyin") or "",
+            "Traditional": data.get("mandarin_word_traditional") or "",
+            "Sentence Pinyin": data.get("mandarin_sentence_pinyin") or "",
+            "Traditional Sentence": data.get("mandarin_sentence_traditional") or "",
             "word_audio": data.get("word_audio") or "",
             "sentence_audio": data.get("sentence_audio") or "",
             "Image": data.get("image") or "",
@@ -177,24 +234,64 @@ def export_field_names_for_source_type(source_type: str) -> tuple[str, ...]:
     return FREQUENCY_EXPORT_CARD_FIELD_NAMES
 
 
+def export_field_names_for_language_and_source(
+    *,
+    language: SupportedLanguage | str,
+    source_type: str,
+) -> tuple[str, ...]:
+    """Resolve one export schema from both dimensions that determine card shape."""
+
+    language_value = language.value if isinstance(language, SupportedLanguage) else str(language)
+    normalized_source_type = get_source_profile(source_type).source_type
+    if language_value == SupportedLanguage.LA.value:
+        return LATIN_EXPORT_CARD_FIELD_NAMES
+    if language_value == SupportedLanguage.ZH.value and normalized_source_type in {"frequency", "word-list"}:
+        return MANDARIN_EXPORT_CARD_FIELD_NAMES
+    if language_value == SupportedLanguage.JA.value and normalized_source_type == "frequency":
+        return JAPANESE_EXPORT_CARD_FIELD_NAMES
+    return export_field_names_for_source_type(normalized_source_type)
+
+
 def export_field_names_for_rows(rows: list[ExportCardRow]) -> tuple[str, ...]:
     source_types = {row.identity.source_type for row in rows}
     if len(source_types) > 1:
         raise ValueError("cannot resolve export field names for mixed source types")
-    source_type = next(iter(source_types), "frequency")
-    # Dynamic Latin/Japanese frequency rows use dedicated field sets/templates.
     languages = {getattr(row.identity, "language", None) for row in rows}
-    has_ja = any(
-        (lang.value if hasattr(lang, "value") else lang) == "ja" for lang in languages if lang is not None
+    if len(languages) > 1:
+        raise ValueError("cannot resolve export field names for mixed languages")
+    source_type = next(iter(source_types), "frequency")
+    language = next(iter(languages), SupportedLanguage.EN)
+    return export_field_names_for_language_and_source(language=language, source_type=source_type)
+
+
+def _uses_mandarin_fields(*, language: SupportedLanguage | str, source_type: str) -> bool:
+    return (
+        export_field_names_for_language_and_source(language=language, source_type=source_type)
+        == MANDARIN_EXPORT_CARD_FIELD_NAMES
     )
-    if has_ja and source_type == "frequency":
-        return JAPANESE_EXPORT_CARD_FIELD_NAMES
-    has_la = any(
-        (lang.value if hasattr(lang, "value") else lang) == "la" for lang in languages if lang is not None
+
+
+def _contains_non_pinyin_letter(value: str) -> bool:
+    return any(
+        _is_han(character)
+        or _is_kana(character)
+        or (unicodedata.category(character).startswith("L") and not _is_latin(character))
+        for character in value
     )
-    if has_la:
-        return LATIN_EXPORT_CARD_FIELD_NAMES
-    return export_field_names_for_source_type(source_type)
+
+
+def _is_han(character: str) -> bool:
+    name = unicodedata.name(character, "")
+    return character == "〇" or "CJK UNIFIED IDEOGRAPH" in name or "CJK COMPATIBILITY IDEOGRAPH" in name
+
+
+def _is_kana(character: str) -> bool:
+    name = unicodedata.name(character, "")
+    return "HIRAGANA" in name or "KATAKANA" in name
+
+
+def _is_latin(character: str) -> bool:
+    return "LATIN" in unicodedata.name(character, "") and unicodedata.category(character).startswith("L")
 
 
 class ExportDeckArtifact(BaseModel):
@@ -334,6 +431,7 @@ __all__ = [
     "HIGHLIGHT_EXPORT_CARD_FIELD_NAMES",
     "JAPANESE_EXPORT_CARD_FIELD_NAMES",
     "LATIN_EXPORT_CARD_FIELD_NAMES",
+    "MANDARIN_EXPORT_CARD_FIELD_NAMES",
     "MANUAL_EXPORT_CARD_FIELD_NAMES",
     "ExportArtifactFormat",
     "ExportArtifactStatus",
@@ -345,5 +443,6 @@ __all__ = [
     "build_export_note_guid",
     "evaluate_export_quality_gate",
     "export_field_names_for_rows",
+    "export_field_names_for_language_and_source",
     "export_field_names_for_source_type",
 ]

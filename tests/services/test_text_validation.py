@@ -241,6 +241,62 @@ def test_validation_rejects_non_japanese_sentence_for_japanese_target() -> None:
     assert ValidationFlagCode.LANGUAGE_MISMATCH in {flag.code for flag in result.validation_flags}
 
 
+def test_validation_accepts_unspaced_simplified_mandarin_with_target() -> None:
+    result = build_service().validate(
+        sentence=build_sentence(text="我每天去中国银行。", target_language="zh"),
+        translation=build_translation(text="I go to the Bank of China every day.", target_language="en"),
+        display_form="中国",
+        lemma="中国",
+        definitions_html="proper noun: China",
+    )
+
+    assert result.validation_status is ValidationStatus.PASSED
+    codes = {flag.code for flag in result.validation_flags}
+    assert ValidationFlagCode.MISSING_TARGET_LEMMA not in codes
+    assert ValidationFlagCode.SENTENCE_TOO_SHORT not in codes
+    assert ValidationFlagCode.LANGUAGE_MISMATCH not in codes
+
+
+def test_validation_rejects_mandarin_sentence_without_target_substring() -> None:
+    result = build_service().validate(
+        sentence=build_sentence(text="我每天阅读中文报纸。", target_language="zh"),
+        translation=build_translation(text="I read a Chinese newspaper every day.", target_language="en"),
+        display_form="银行",
+        lemma="银行",
+        definitions_html="noun: bank",
+    )
+
+    assert result.validation_status is ValidationStatus.FAILED
+    assert ValidationFlagCode.MISSING_TARGET_LEMMA in {flag.code for flag in result.validation_flags}
+
+
+def test_validation_rejects_traditional_primary_mandarin_sentence() -> None:
+    result = build_service().validate(
+        sentence=build_sentence(text="我每天去中國銀行。", target_language="zh"),
+        translation=build_translation(text="I go to the Bank of China every day.", target_language="en"),
+        display_form="中國",
+        lemma="中國",
+        definitions_html="proper noun: China",
+    )
+
+    assert result.validation_status is ValidationStatus.FAILED
+    assert ValidationFlagCode.LANGUAGE_MISMATCH in {flag.code for flag in result.validation_flags}
+
+
+def test_validation_rejects_japanese_or_latin_for_mandarin_target() -> None:
+    for text in ("私は銀行へ行きます。", "I visit 中国 every day."):
+        result = build_service().validate(
+            sentence=build_sentence(text=text, target_language="zh"),
+            translation=build_translation(text="I visit the bank every day.", target_language="en"),
+            display_form="银行",
+            lemma="银行",
+            definitions_html="noun: bank",
+        )
+
+        assert result.validation_status is ValidationStatus.FAILED
+        assert ValidationFlagCode.LANGUAGE_MISMATCH in {flag.code for flag in result.validation_flags}
+
+
 def test_validation_rejects_question_form_fallback_sentences() -> None:
     result = build_service().validate(
         sentence=build_sentence(text="Do you wash at home?"),

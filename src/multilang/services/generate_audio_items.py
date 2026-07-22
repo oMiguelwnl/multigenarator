@@ -6,7 +6,7 @@ from dataclasses import dataclass
 from typing import Any
 
 from multilang.domain.audio import AudioAssetKind, AudioAssetRecord, AudioSynthesisStatus
-from multilang.domain.exporting import export_field_names_for_source_type
+from multilang.domain.exporting import export_field_names_for_language_and_source
 from multilang.domain.jobs import JobStage, SupportedLanguage
 from multilang.services.audio_integrity import word_audio_matches_word
 
@@ -64,7 +64,10 @@ class GenerateAudioItemsService:
                 display_word=getattr(lexical_candidate, "display_form"),
                 text_record=text_record,
             )
-            field_names = export_field_names_for_source_type(_candidate_source_type(lexical_candidate))
+            field_names = export_field_names_for_language_and_source(
+                language=deck_language,
+                source_type=_candidate_source_type(lexical_candidate),
+            )
             assets = []
             if "word_audio" in field_names:
                 assets.append(prepared_bundle.word_asset)

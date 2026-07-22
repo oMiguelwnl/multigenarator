@@ -74,18 +74,28 @@ class LexicalGroundingService:
         record = self._lookup_record(language=language, term=item.item_key)
         if record is None:
             return self._pending_candidate(language=language, item=item)
+        policy = policy_for_language(language)
+        word_list_output_language = (
+            policy.definition_language
+            if language is SupportedLanguage.ZH
+            else language.value
+        )
         candidate = self._grounded_candidate(
             language=language,
             submitted_form=item.submitted_form,
             display_form=item.display_form,
             record=record,
-            definition_language=language.value,
+            definition_language=word_list_output_language,
             rate_limiter=rate_limiter,
         )
         return candidate.model_copy(
             update={
-                "definition_language": language.value,
-                "translation_target_language": language.value,
+                "definition_language": word_list_output_language,
+                "translation_target_language": (
+                    policy.translation_target_language
+                    if language is SupportedLanguage.ZH
+                    else language.value
+                ),
             }
         )
 
@@ -339,13 +349,23 @@ class LexicalGroundingService:
         language: SupportedLanguage,
         item: ParsedWordListItem,
     ) -> LexicalCardCandidate:
+        policy = policy_for_language(language)
+        output_language = (
+            policy.definition_language
+            if language is SupportedLanguage.ZH
+            else language.value
+        )
         return LexicalCardCandidate(
             submitted_form=item.submitted_form,
             display_form=item.display_form,
             lemma=item.display_form,
             lemma_key=item.item_key,
-            definition_language=language.value,
-            translation_target_language=language.value,
+            definition_language=output_language,
+            translation_target_language=(
+                policy.translation_target_language
+                if language is SupportedLanguage.ZH
+                else language.value
+            ),
             grounding_status=GroundingStatus.PENDING,
             warning_code="lexical_lookup_missing",
             warning_detail=(

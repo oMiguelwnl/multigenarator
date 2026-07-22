@@ -11,8 +11,9 @@ from multilang.domain.audio import AudioAssetKind, AudioAssetRecord, AudioFormat
 from multilang.domain.jobs import SupportedLanguage
 from multilang.domain.lexicon import DefinitionRecord, GroundingStatus, LexicalCardCandidate, LexicalProvenance
 from multilang.domain.text_quality import ConfidenceLabel, ReviewStatus, TextGenerationStatus, TextProvenance, TextQualityRecord, ValidationStatus
-from multilang.domain.exporting import JAPANESE_EXPORT_CARD_FIELD_NAMES, export_field_names_for_rows
+from multilang.domain.exporting import JAPANESE_EXPORT_CARD_FIELD_NAMES, MANDARIN_EXPORT_CARD_FIELD_NAMES, export_field_names_for_rows
 from multilang.services.assemble_export_cards import AssembleExportCardsError, AssembleExportCardsService
+from multilang.services.mandarin_orthography import MandarinOrthography, MandarinOrthographyError
 
 
 def make_text_record(
@@ -152,12 +153,46 @@ class BulkExportRepository(FakeExportRepository):
         return list(records)
 
 
+@dataclass
+class FakeMandarinOrthographyService:
+    value: MandarinOrthography | None = None
+    error: MandarinOrthographyError | None = None
+    calls: list[tuple[str, str]] = field(default_factory=list)
+
+    def derive(self, *, word: str, sentence: str) -> MandarinOrthography:
+        self.calls.append((word, sentence))
+        if self.error is not None:
+            raise self.error
+        assert self.value is not None
+        return self.value
+
+
+def make_mandarin_candidate(*, item_key: str, source_type: str) -> object:
+    payload = make_candidate(item_key=item_key, ipa=None).model_dump()
+    payload.update(
+        {
+            "submitted_form": item_key,
+            "display_form": item_key,
+            "lemma": item_key,
+            "lemma_key": f"zh:{item_key}",
+            "ipa": None,
+            "spoken_form": item_key,
+            "frequency_rank": 1 if source_type == "frequency" else None,
+            "frequency_level": 1 if source_type == "frequency" else None,
+        }
+    )
+    if source_type == "frequency":
+        return LexicalCardCandidate(**payload)
+    return SimpleNamespace(**payload, source_type=source_type)
+
+
 def build_service(
     *,
     accepted_records: list[TextQualityRecord],
     candidates: dict[str, LexicalCardCandidate],
     assets: dict[tuple[str, str], AudioAssetRecord],
     export_repository: FakeExportRepository | None = None,
+    mandarin_orthography_service: FakeMandarinOrthographyService | None = None,
 ) -> tuple[AssembleExportCardsService, FakeExportRepository]:
     repository = export_repository or FakeExportRepository()
     service = AssembleExportCardsService(
@@ -165,8 +200,87 @@ def build_service(
         lexical_repository=FakeLexicalRepository(candidates=candidates),
         audio_repository=FakeAudioRepository(assets=assets),
         export_repository=repository,
+        mandarin_orthography_service=mandarin_orthography_service,
     )
     return service, repository
+
+
+@pytest.mark.parametrize("source_type", ["frequency", "word-list"])
+def test_assemble_mandarin_derives_once_and_requires_both_audio_assets(source_type: str) -> None:
+    orthography = FakeMandarinOrthographyService(
+        value=MandarinOrthography(
+            word_pinyin="zhōng <guó>",
+            word_traditional="中國",
+            sentence_pinyin="wǒ qù yín háng。",
+            sentence_traditional="我去銀行。",
+        )
+    )
+    service, repository = build_service(
+        accepted_records=[make_text_record(item_key="中国", example_sentence="我去银行。", translation_text="I go to the bank.")],
+        candidates={"中国": make_mandarin_candidate(item_key="中国", source_type=source_type)},
+        assets={
+            ("中国", AudioAssetKind.WORD.value): make_asset(
+                item_key="中国", asset_kind=AudioAssetKind.WORD, storage_path="audio/word/zh-word.mp3"
+            ),
+            ("中国", AudioAssetKind.SENTENCE.value): make_asset(
+                item_key="中国", asset_kind=AudioAssetKind.SENTENCE, storage_path="audio/sentence/zh-sentence.mp3"
+            ),
+        },
+        mandarin_orthography_service=orthography,
+    )
+
+    result = service.execute(job_id="job-1", deck_language=SupportedLanguage.ZH)
+    row = result.cards[0]
+
+    assert orthography.calls == [("中国", "我去银行。")]
+    assert tuple(row.ordered_field_mapping()) == MANDARIN_EXPORT_CARD_FIELD_NAMES
+    assert row.mandarin_word_pinyin == "zhōng &lt;guó&gt;"
+    assert row.mandarin_word_traditional == "中國"
+    assert row.mandarin_sentence_pinyin == "wǒ qù yín háng。"
+    assert row.mandarin_sentence_traditional == "我去銀行。"
+    assert row.ipa is None
+    assert row.word_audio == "[sound:zh-word.mp3]"
+    assert row.sentence_audio == "[sound:zh-sentence.mp3]"
+    assert repository.saved_rows == [row]
+
+
+def test_assemble_mandarin_wraps_orthography_errors_with_item_context() -> None:
+    orthography = FakeMandarinOrthographyService(error=MandarinOrthographyError("Traditional primary text"))
+    service, _ = build_service(
+        accepted_records=[make_text_record(item_key="中國", example_sentence="我去銀行。")],
+        candidates={"中國": make_mandarin_candidate(item_key="中國", source_type="frequency")},
+        assets={
+            ("中國", AudioAssetKind.WORD.value): make_asset(
+                item_key="中國", asset_kind=AudioAssetKind.WORD, storage_path="audio/word/zh-word.mp3"
+            ),
+            ("中國", AudioAssetKind.SENTENCE.value): make_asset(
+                item_key="中國", asset_kind=AudioAssetKind.SENTENCE, storage_path="audio/sentence/zh-sentence.mp3"
+            ),
+        },
+        mandarin_orthography_service=orthography,
+    )
+
+    with pytest.raises(AssembleExportCardsError, match="中國.*Traditional primary text"):
+        service.execute(job_id="job-1", deck_language=SupportedLanguage.ZH)
+
+
+def test_assemble_mandarin_rejects_invalid_pinyin_before_persisting_snapshot() -> None:
+    service, repository = build_service(
+        accepted_records=[make_text_record(item_key="㐂", example_sentence="我用㐂。", translation_text="I use the target.")],
+        candidates={"㐂": make_mandarin_candidate(item_key="㐂", source_type="frequency")},
+        assets={
+            ("㐂", AudioAssetKind.WORD.value): make_asset(
+                item_key="㐂", asset_kind=AudioAssetKind.WORD, storage_path="audio/word/zh-word.mp3"
+            ),
+            ("㐂", AudioAssetKind.SENTENCE.value): make_asset(
+                item_key="㐂", asset_kind=AudioAssetKind.SENTENCE, storage_path="audio/sentence/zh-sentence.mp3"
+            ),
+        },
+    )
+
+    with pytest.raises(AssembleExportCardsError, match="㐂.*pinyin"):
+        service.execute(job_id="job-1", deck_language=SupportedLanguage.ZH)
+    assert repository.saved_rows == []
 
 
 def test_assemble_export_cards_preloads_audio_and_persists_snapshots_in_batch() -> None:

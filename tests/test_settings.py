@@ -28,6 +28,7 @@ def test_default_supported_languages_include_japanese(settings: Settings) -> Non
         "hr",
         "la",
         "ja",
+        "zh",
     ]
 
 

@@ -36,6 +36,7 @@ def test_supported_languages() -> None:
         "hr",
         "la",
         "ja",
+        "zh",
     }
 
     request = GenerationRequest(language="pt", source_type="frequency", level=1)
@@ -95,6 +96,18 @@ def test_generation_request_accepts_japanese() -> None:
     request = GenerationRequest(language="ja", source_type="frequency", level=1)
 
     assert request.language is SupportedLanguage.JA
+
+
+@pytest.mark.parametrize("source_type", ["frequency", "word-list"])
+def test_generation_request_accepts_canonical_mandarin_code(source_type: str) -> None:
+    request = GenerationRequest(language="zh", source_type=source_type)
+
+    assert request.language is SupportedLanguage.ZH
+
+
+def test_generation_request_rejects_mandarin_locale_as_language_identity() -> None:
+    with pytest.raises(ValidationError):
+        GenerationRequest(language="zh-CN", source_type="frequency")
 
 
 def test_generation_request_accepts_latin_mvp_source_for_shared_infrastructure() -> None:

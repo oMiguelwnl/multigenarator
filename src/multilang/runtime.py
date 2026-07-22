@@ -25,7 +25,7 @@ from multilang.domain.exporting import (
     ExportArtifactStatus,
     ExportDeckArtifact,
     evaluate_export_quality_gate,
-    export_field_names_for_source_type,
+    export_field_names_for_language_and_source,
 )
 from multilang.domain.jobs import JobStage, JobStatus
 from multilang.services.azure_speech_adapter import AzureSpeechAdapter
@@ -38,7 +38,7 @@ from multilang.services.audio_synthesis import (
 )
 from multilang.services.assemble_export_cards import AssembleExportCardsService
 from multilang.services.audio_integrity import assert_word_audio_matches_word
-from multilang.services.export_anki_package import MANUAL_NOTE_TYPE_NAME, NOTE_TYPE_NAME, export_anki_package
+from multilang.services.export_anki_package import MANDARIN_NOTE_TYPE_NAME, export_anki_package
 from multilang.services.export_tabular_bundle import ExportTabularBundleResult, write_export_tabular_bundle
 from multilang.services.generate_job import GenerateJobService
 from multilang.services.generate_audio_items import GenerateAudioItemsService
@@ -98,6 +98,7 @@ _LANGUAGE_NAMES = {
     SupportedLanguage.HR: "Croatian",
     SupportedLanguage.LA: "Latin",
     SupportedLanguage.JA: "Japanese",
+    SupportedLanguage.ZH: "Mandarin Chinese",
 }
 
 
@@ -362,7 +363,10 @@ class RuntimeGenerateService(IngestLexicalItemsService):
         media_index: dict[str, Path] = {}
         asset_index = self._preload_audio_assets(rows)
         for row in rows:
-            field_names = export_field_names_for_source_type(row.identity.source_type)
+            field_names = export_field_names_for_language_and_source(
+                language=row.identity.language,
+                source_type=row.identity.source_type,
+            )
             if "word_audio" in field_names:
                 word_asset = self._get_audio_asset(
                     asset_index=asset_index,
@@ -439,7 +443,10 @@ def _audio_gate_counts(rows: list[object], audio_assets: list[object]) -> tuple[
     fallback = 0
     for row in rows:
         required = [AudioAssetKind.SENTENCE]
-        if "word_audio" in export_field_names_for_source_type(row.identity.source_type):
+        if "word_audio" in export_field_names_for_language_and_source(
+            language=row.identity.language,
+            source_type=row.identity.source_type,
+        ):
             required.append(AudioAssetKind.WORD)
         for kind in required:
             asset = asset_index.get((row.identity.item_key, kind.value))
@@ -637,10 +644,16 @@ def _note_type_name_for_rows(rows: list[object]) -> str:
     if len(source_types) > 1:
         raise ValueError("cannot export mixed source types in one note model")
     source_type = next(iter(source_types), "frequency")
+    languages = {row.identity.language for row in rows}
+    if len(languages) > 1:
+        raise ValueError("cannot export mixed languages in one note model")
     # For Latin (la), prefer the dedicated template that includes Definition + Grammar
     # even in dynamic flows (non frozen). This keeps Latin card style.
     # If using legacy latin-mvp source, it already maps to it.
     deck_language = getattr(rows[0].identity, 'language', None) if rows else None
+    if deck_language == "zh" or (hasattr(deck_language, 'value') and deck_language.value == "zh"):
+        if source_type in {"frequency", "word-list"}:
+            return MANDARIN_NOTE_TYPE_NAME
     if deck_language == "ja" or (hasattr(deck_language, 'value') and deck_language.value == "ja"):
         if source_type == "frequency":
             return "Multilang::Japanese Card"

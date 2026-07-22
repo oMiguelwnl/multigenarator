@@ -12,6 +12,7 @@ from multilang.domain.exporting import (
     ExportCardIdentity,
     ExportCardRow,
     HIGHLIGHT_EXPORT_CARD_FIELD_NAMES,
+    MANDARIN_EXPORT_CARD_FIELD_NAMES,
 )
 from multilang.domain.jobs import SupportedLanguage
 from multilang.services.export_tabular_bundle import write_export_tabular_bundle
@@ -43,6 +44,73 @@ def make_row(
         word_audio=f"[sound:{item_key}.mp3]",
         sentence_audio=f"[sound:{item_key}-sentence.mp3]",
     )
+
+
+def make_mandarin_row(*, source_type: str) -> ExportCardRow:
+    return ExportCardRow(
+        identity=ExportCardIdentity(
+            language=SupportedLanguage.ZH,
+            source_type=source_type,
+            job_id="job-zh",
+            item_key="中国",
+            lemma_key="zh:中国",
+            sort_index=1,
+        ),
+        word="中国",
+        front_of_card="中国",
+        definitions="proper noun: China",
+        example_sentence="我去银行。",
+        translation="I go to the bank.",
+        word_audio="[sound:zh-word.mp3]",
+        sentence_audio="[sound:zh-sentence.mp3]",
+        mandarin_word_pinyin="zhōng guó",
+        mandarin_word_traditional="中國",
+        mandarin_sentence_pinyin="wǒ qù yín háng。",
+        mandarin_sentence_traditional="我去銀行。",
+    )
+
+
+@pytest.mark.parametrize("source_type", ["frequency", "word-list"])
+@pytest.mark.parametrize("export_format", [ExportArtifactFormat.CSV, ExportArtifactFormat.TSV])
+def test_mandarin_tabular_exports_exact_utf8_contract(
+    tmp_path: Path,
+    source_type: str,
+    export_format: ExportArtifactFormat,
+) -> None:
+    row = make_mandarin_row(source_type=source_type)
+    result = write_export_tabular_bundle(
+        rows=[row],
+        export_format=export_format,
+        output_dir=tmp_path,
+        deck_name="Multilang Mandarin Chinese",
+        note_type_name="Multilang::Mandarin Card",
+    )
+    content = result.output_path.read_text(encoding="utf-8")
+    lines = content.splitlines()
+    delimiter = "," if export_format is ExportArtifactFormat.CSV else "\t"
+    parsed = list(csv.reader(lines[5:], delimiter=delimiter))[0]
+
+    assert lines[:4] == [
+        f"#separator:{'Comma' if delimiter == ',' else 'Tab'}",
+        "#html:true",
+        "#notetype:Multilang::Mandarin Card",
+        "#deck:Multilang Mandarin Chinese",
+    ]
+    assert lines[4] == f"#columns:{delimiter.join(MANDARIN_EXPORT_CARD_FIELD_NAMES)}"
+    assert parsed == [
+        "1",
+        "中国",
+        "zhōng guó",
+        "中國",
+        "proper noun: China",
+        "我去银行。",
+        "wǒ qù yín háng。",
+        "我去銀行。",
+        "I go to the bank.",
+        "[sound:zh-word.mp3]",
+        "[sound:zh-sentence.mp3]",
+        "",
+    ]
 
 
 def test_write_export_tabular_bundle_writes_tsv_with_anki_headers(tmp_path: Path) -> None:

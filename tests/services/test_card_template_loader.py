@@ -325,3 +325,28 @@ def test_project_highlight_template_css_is_centered_responsive_and_scroll_safe()
     assert "margin: 0 auto" in css
     assert "overflow-y: auto" in css
     assert "overflow-x: hidden" in css
+def test_mandarin_template_preserves_base_css_and_pedagogical_field_order() -> None:
+    from multilang.domain.jobs import SupportedLanguage
+    from multilang.services.card_template_loader import load_card_template
+
+    base = load_card_template(source_type="frequency")
+    frequency = load_card_template(source_type="frequency", language=SupportedLanguage.ZH)
+    word_list = load_card_template(source_type="word-list", language=SupportedLanguage.ZH)
+
+    assert frequency == word_list
+    assert frequency.source_template_name == "mandarin_card"
+    assert base.css in frequency.css
+    assert frequency.front.index("{{word}}") < frequency.front.index("{{Pinyin}}")
+    assert frequency.front.index("{{Pinyin}}") < frequency.front.index("{{Traditional}}")
+    assert frequency.front.index("{{Example Sentence}}") < frequency.front.index("{{Sentence Pinyin}}")
+    assert frequency.front.index("{{Sentence Pinyin}}") < frequency.front.index("{{Traditional Sentence}}")
+    assert '{{#Image}}' in frequency.front and '{{/Image}}' in frequency.front
+    assert 'id="translation"' in frequency.front
+    assert 'style="display:none;"' in frequency.front
+    assert 'document.getElementById("translation").style.display = "block";' in frequency.back
+    for selector in (".traditional", ".sentencePinyin", ".traditionalSentence"):
+        assert selector in frequency.css
+        assert f".nightMode {selector}" in frequency.css
+    markup = "\n".join((frequency.front, frequency.back, frequency.css)).casefold()
+    assert "tone" not in markup
+    assert "migaku" not in markup

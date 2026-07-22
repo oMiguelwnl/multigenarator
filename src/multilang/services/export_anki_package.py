@@ -10,9 +10,7 @@ import genanki
 
 from multilang.domain.exporting import (
     ExportCardRow,
-    JAPANESE_EXPORT_CARD_FIELD_NAMES,
-    LATIN_EXPORT_CARD_FIELD_NAMES,
-    export_field_names_for_source_type,
+    export_field_names_for_language_and_source,
 )
 from multilang.domain.jobs import SupportedLanguage
 from multilang.domain.source_profiles import get_source_profile
@@ -27,6 +25,8 @@ MANUAL_MODEL_ID = 1_602_300_503
 MANUAL_NOTE_TYPE_NAME = "Multilang::Manual Card"
 HIGHLIGHT_MODEL_ID = 1_602_300_504
 HIGHLIGHT_NOTE_TYPE_NAME = "Multilang::Highlight Card"
+MANDARIN_MODEL_ID = 1_762_800_901
+MANDARIN_NOTE_TYPE_NAME = "Multilang::Mandarin Card"
 
 _SOUND_TAG_RE = re.compile(r"^\[sound:(?P<name>[^\]]+)\]$")
 
@@ -67,16 +67,20 @@ def build_multilang_model(
     # Note: caller passes rows or we decide here; for simplicity if la force
     is_la = language is not None and (language == "la" or getattr(language, "value", None) == "la")
     is_ja = _is_japanese_frequency(language=language, source_type=source_type)
-    fields_for_model = (
-        JAPANESE_EXPORT_CARD_FIELD_NAMES
-        if is_ja
-        else LATIN_EXPORT_CARD_FIELD_NAMES
-        if is_la
-        else export_field_names_for_source_type(source_type)
+    is_zh = _is_mandarin(language=language, source_type=source_type)
+    fields_for_model = export_field_names_for_language_and_source(
+        language=language or SupportedLanguage.EN,
+        source_type=source_type,
     )
     return genanki.Model(
-        JAPANESE_MODEL_ID if is_ja else LATIN_MODEL_ID if is_la else model_id,
-        JAPANESE_NOTE_TYPE_NAME if is_ja else "Multilang::Classical Latin MVP" if is_la else profile.note_type_name,
+        MANDARIN_MODEL_ID if is_zh else JAPANESE_MODEL_ID if is_ja else LATIN_MODEL_ID if is_la else model_id,
+        MANDARIN_NOTE_TYPE_NAME
+        if is_zh
+        else JAPANESE_NOTE_TYPE_NAME
+        if is_ja
+        else "Multilang::Classical Latin MVP"
+        if is_la
+        else profile.note_type_name,
         fields=[{"name": field_name} for field_name in fields_for_model],
         templates=[
             {
@@ -91,14 +95,9 @@ def build_multilang_model(
 
 def build_multilang_note(row: ExportCardRow, *, model: genanki.Model | None = None) -> genanki.Note:
     # For la force latin fields (even dynamic)
-    is_la = row.identity.language == "la" or getattr(row.identity.language, "value", None) == "la"
-    is_ja = _is_japanese_frequency(language=row.identity.language, source_type=row.identity.source_type)
-    field_names = (
-        JAPANESE_EXPORT_CARD_FIELD_NAMES
-        if is_ja
-        else LATIN_EXPORT_CARD_FIELD_NAMES
-        if is_la
-        else export_field_names_for_source_type(row.identity.source_type)
+    field_names = export_field_names_for_language_and_source(
+        language=row.identity.language,
+        source_type=row.identity.source_type,
     )
     note = MultilangNote(
         model=model or build_multilang_model(
@@ -124,6 +123,8 @@ def export_anki_package(
         raise ExportAnkiPackageError("cannot export mixed source types in one note model")
     source_type = next(iter(source_types), "frequency")
     languages = {row.identity.language for row in rows}
+    if len(languages) > 1:
+        raise ExportAnkiPackageError("cannot export mixed languages in one note model")
     language = next(iter(languages), None)
     model = build_multilang_model(source_type=source_type, language=language)
     deck = genanki.Deck(DECK_ID, deck_name)
@@ -182,7 +183,10 @@ def _tag_slug(value: str) -> str:
 def _resolve_media_files(*, rows: list[ExportCardRow], media_index: dict[str, Path]) -> list[Path]:
     sound_tags: list[str] = []
     for row in rows:
-        field_names = export_field_names_for_source_type(row.identity.source_type)
+        field_names = export_field_names_for_language_and_source(
+            language=row.identity.language,
+            source_type=row.identity.source_type,
+        )
         if "word_audio" in field_names:
             sound_tags.append(row.word_audio)
         if "sentence_audio" in field_names:
@@ -197,6 +201,11 @@ def _resolve_media_files(*, rows: list[ExportCardRow], media_index: dict[str, Pa
 def _is_japanese_frequency(*, language: SupportedLanguage | str | None, source_type: str) -> bool:
     value = language.value if hasattr(language, "value") else language
     return source_type == "frequency" and value == "ja"
+
+
+def _is_mandarin(*, language: SupportedLanguage | str | None, source_type: str) -> bool:
+    value = language.value if hasattr(language, "value") else language
+    return source_type in {"frequency", "word-list"} and value == "zh"
 
 
 def _require_media_file(sound_tag: str, *, media_index: dict[str, Path]) -> Path:
@@ -218,6 +227,8 @@ __all__ = [
     "MODEL_ID",
     "MANUAL_MODEL_ID",
     "MANUAL_NOTE_TYPE_NAME",
+    "MANDARIN_MODEL_ID",
+    "MANDARIN_NOTE_TYPE_NAME",
     "NOTE_TYPE_NAME",
     "ExportAnkiPackageError",
     "ExportAnkiPackageResult",

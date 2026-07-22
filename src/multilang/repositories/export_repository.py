@@ -133,6 +133,10 @@ class ExportRepository:
             "sentence_audio": record.sentence_audio,
             "image": record.image,
             "gramatica": record.gramatica,
+            "mandarin_word_pinyin": record.mandarin_word_pinyin,
+            "mandarin_word_traditional": record.mandarin_word_traditional,
+            "mandarin_sentence_pinyin": record.mandarin_sentence_pinyin,
+            "mandarin_sentence_traditional": record.mandarin_sentence_traditional,
         }
 
     def _to_card_domain(self, row: CardExportModel) -> ExportCardRow:
@@ -157,6 +161,10 @@ class ExportRepository:
             sentence_audio=row.sentence_audio,
             image=row.image,
             gramatica=row.gramatica,
+            mandarin_word_pinyin=row.mandarin_word_pinyin,
+            mandarin_word_traditional=row.mandarin_word_traditional,
+            mandarin_sentence_pinyin=row.mandarin_sentence_pinyin,
+            mandarin_sentence_traditional=row.mandarin_sentence_traditional,
         )
 
     def _to_artifact_domain(self, row: DeckExportModel) -> ExportDeckArtifact:

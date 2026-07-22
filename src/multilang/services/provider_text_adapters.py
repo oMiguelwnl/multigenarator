@@ -57,6 +57,7 @@ _LANGUAGE_NAMES = {
     "hr": "Croatian",
     "la": "Latin",
     "ja": "Japanese",
+    "zh": "Mandarin Chinese",
 }
 
 _DEEPL_TARGET_LANGUAGES = {
@@ -80,6 +81,7 @@ _DEEPL_TARGET_LANGUAGES = {
     "cs": "CS",
     "hr": "HR",
     "ja": "JA",
+    "zh": "ZH-HANS",
 }
 
 _SYSTEM_PROMPT = """You create one natural learner example sentence for an Anki vocabulary card.
@@ -421,8 +423,7 @@ def _sentence_prompt(request: SentenceGenerationRequest) -> str:
             ]
         )
         return "\n".join(lines)
-    return "\n".join(
-        [
+    lines = [
             f"Target language: {target_name} ({request.target_language})",
             f"Card word/lemma: {request.lemma}",
             f"Study form: {request.display_form}",
@@ -438,7 +439,15 @@ def _sentence_prompt(request: SentenceGenerationRequest) -> str:
             "- Do not use generic discussion templates, placeholder text, or phrases like 'the word'.",
             "- Set uncertainty_notes to an empty array unless there is a real ambiguity.",
         ]
-    )
+    if request.target_language == "zh":
+        lines.extend(
+            [
+                "- Write the main sentence only in Simplified Chinese.",
+                "- Do not use Traditional Chinese characters in the main sentence.",
+                "- Do not include pinyin; it is derived deterministically after validation.",
+            ]
+        )
+    return "\n".join(lines)
 
 
 def _definition_prompt(request: DefinitionGenerationRequest) -> str:

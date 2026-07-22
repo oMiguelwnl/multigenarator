@@ -36,6 +36,7 @@ _LANGUAGE_CODES = {
     SupportedLanguage.CS: "cs",
     SupportedLanguage.HR: "hr",
     SupportedLanguage.JA: "ja",
+    SupportedLanguage.ZH: "zh-CN",
 }
 _VOICE_REGISTRY_VERSION = "google-translate-tts-v1"
 
@@ -125,9 +126,12 @@ class GoogleTranslateSpeechAdapter:
 
 
 def _language_code(*, voice_id: str, locale: str) -> str:
-    candidate = (voice_id or locale).strip().split("-", maxsplit=1)[0]
+    candidate = (voice_id or locale).strip()
     if not candidate:
         raise GoogleTranslateSpeechAdapterError("Google Translate TTS requires a language code")
+    if candidate.casefold() == "zh-cn":
+        return "zh-CN"
+    candidate = candidate.split("-", maxsplit=1)[0]
     return candidate
 
 

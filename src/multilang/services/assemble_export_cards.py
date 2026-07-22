@@ -8,13 +8,22 @@ from pathlib import Path
 import re
 
 from multilang.domain.audio import AudioAssetKind, AudioAssetRecord, AudioSynthesisStatus
-from multilang.domain.exporting import ExportCardIdentity, ExportCardRow, export_field_names_for_source_type
+from multilang.domain.exporting import (
+    MANDARIN_EXPORT_CARD_FIELD_NAMES,
+    ExportCardIdentity,
+    ExportCardRow,
+    export_field_names_for_language_and_source,
+)
 from multilang.domain.jobs import SupportedLanguage
 from multilang.domain.lexicon import LexicalCardCandidate
-from multilang.domain.source_profiles import get_source_profile
 from multilang.domain.text_quality import TextQualityRecord
 from multilang.services.audio_integrity import AudioIntegrityError, assert_word_audio_matches_word
 from multilang.services.japanese_furigana import JapaneseFuriganaError, format_japanese_furigana
+from multilang.services.mandarin_orthography import (
+    MandarinOrthography,
+    MandarinOrthographyError,
+    MandarinOrthographyService,
+)
 from multilang.services.text_field_remediation import validate_definition_html
 
 
@@ -30,11 +39,20 @@ class AssembleExportCardsResult:
 class AssembleExportCardsService:
     """Deterministically freeze accepted cards into export rows."""
 
-    def __init__(self, *, text_repository: object, lexical_repository: object, audio_repository: object, export_repository: object) -> None:
+    def __init__(
+        self,
+        *,
+        text_repository: object,
+        lexical_repository: object,
+        audio_repository: object,
+        export_repository: object,
+        mandarin_orthography_service: object | None = None,
+    ) -> None:
         self.text_repository = text_repository
         self.lexical_repository = lexical_repository
         self.audio_repository = audio_repository
         self.export_repository = export_repository
+        self.mandarin_orthography_service = mandarin_orthography_service or MandarinOrthographyService()
 
     def execute(self, *, job_id: str, deck_language: SupportedLanguage) -> AssembleExportCardsResult:
         accepted_records = list(self.text_repository.list_accepted_records(job_id))
@@ -51,8 +69,10 @@ class AssembleExportCardsService:
                 )
 
             source_type = _candidate_source_type(lexical_candidate)
-            source_profile = get_source_profile(source_type)
-            field_names = export_field_names_for_source_type(source_type)
+            field_names = export_field_names_for_language_and_source(
+                language=deck_language,
+                source_type=source_type,
+            )
             word_audio = (
                 self._require_audio(
                     job_id=job_id,
@@ -83,6 +103,12 @@ class AssembleExportCardsService:
                 sentence=text_record.example_sentence or "",
                 enabled=_uses_japanese_frequency_fields(deck_language=deck_language, source_type=source_type),
             )
+            mandarin_orthography = self._mandarin_orthography(
+                item_key=text_record.item_key,
+                display_word=lexical_candidate.display_form,
+                sentence=text_record.example_sentence or "",
+                enabled=field_names == MANDARIN_EXPORT_CARD_FIELD_NAMES,
+            )
             row = ExportCardRow(
                 identity=ExportCardIdentity(
                     language=deck_language,
@@ -94,19 +120,25 @@ class AssembleExportCardsService:
                 ),
                 word=escape(lexical_candidate.lemma),
                 front_of_card=escape(lexical_candidate.display_form),
-                ipa=(
-                    None
-                    if _uses_japanese_frequency_fields(deck_language=deck_language, source_type=source_type)
-                    else self._render_ipa(lexical_candidate.ipa, lexical_candidate.spoken_form)
-                ),
+                ipa=self._render_ipa(lexical_candidate.ipa, lexical_candidate.spoken_form) if "IPA" in field_names else None,
                 definitions=self._render_definitions(lexical_candidate),
                 example_sentence=escape(text_record.example_sentence or ""),
-                translation=escape(text_record.translation_text or "") if source_profile.exports_translation_field else "",
+                translation=(
+                    escape(text_record.translation_text or "")
+                    if "Translation" in field_names or "Sentence Translation" in field_names
+                    else ""
+                ),
                 word_audio=self._to_sound_tag(word_audio) if word_audio is not None else "",
                 sentence_audio=self._to_sound_tag(sentence_audio),
                 word_reading=escape(japanese_readings[0]) if japanese_readings is not None else None,
                 sentence_furigana=escape(japanese_readings[1]) if japanese_readings is not None else None,
                 gramatica=self._render_gramatica(text_record),
+                mandarin_word_pinyin=(escape(mandarin_orthography.word_pinyin) if mandarin_orthography else None),
+                mandarin_word_traditional=(escape(mandarin_orthography.word_traditional) if mandarin_orthography else None),
+                mandarin_sentence_pinyin=(escape(mandarin_orthography.sentence_pinyin) if mandarin_orthography else None),
+                mandarin_sentence_traditional=(
+                    escape(mandarin_orthography.sentence_traditional) if mandarin_orthography else None
+                ),
             )
             cards.append(row)
 
@@ -198,6 +230,21 @@ class AssembleExportCardsService:
             return format_japanese_furigana(display_word), format_japanese_furigana(sentence)
         except JapaneseFuriganaError as exc:
             raise AssembleExportCardsError(f"unable to generate Japanese furigana: {exc}") from exc
+
+    def _mandarin_orthography(
+        self,
+        *,
+        item_key: str,
+        display_word: str,
+        sentence: str,
+        enabled: bool,
+    ) -> MandarinOrthography | None:
+        if not enabled:
+            return None
+        try:
+            return self.mandarin_orthography_service.derive(word=display_word, sentence=sentence)
+        except MandarinOrthographyError as exc:
+            raise AssembleExportCardsError(f"unable to derive Mandarin orthography for item {item_key}: {exc}") from exc
 
     def _to_sound_tag(self, asset: AudioAssetRecord) -> str:
         return f"[sound:{Path(asset.provenance.storage_path).name}]"

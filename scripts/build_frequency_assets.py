@@ -12,15 +12,18 @@ from multilang.services.frequency_decks import (
     REJECTION_COLUMNS,
     VALID_REJECTION_REASON_CODES,
     _is_curated_token,
+    is_curated_token_for_language,
     load_curated_frequency_entries,
+    normalize_frequency_token_for_language,
 )
+from multilang.services.mandarin_orthography import script_counts
 from multilang.settings import DEFAULT_SUPPORTED_LANGUAGES
 from wordfreq import iter_wordlist
 
 _WORDFREQ_LANGUAGE_ALIASES = {"hr": "sh"}
 
 
-def _rejection_reason(token: str) -> str | None:
+def _rejection_reason(token: str, *, language: SupportedLanguage | None = None) -> str | None:
     if not token:
         return "empty"
     if any(ch.isdigit() for ch in token):
@@ -32,7 +35,15 @@ def _rejection_reason(token: str) -> str | None:
         return "contains_dot"
     if token != lower:
         return "uppercase"
-    if not _is_curated_token(token):
+    if language is SupportedLanguage.ZH:
+        counts = script_counts(token)
+        if counts.han == 0:
+            return "non_han"
+        if counts.kana or counts.latin:
+            return "invalid_script"
+        if not is_curated_token_for_language(language, token):
+            return "invalid_script"
+    elif not _is_curated_token(token):
         return "punctuation"
     return None
 
@@ -77,7 +88,7 @@ def _build_language_asset(*, code: str, assets_dir: Path, version: str, scan_lim
             source_rank += 1
             if source_rank > scan_limit or len(curated_rows) >= 3000:
                 break
-            reason = _rejection_reason(token)
+            reason = _rejection_reason(token, language=language)
             lemma_key = token.casefold()
             display_key = token.casefold()
             if reason is None and lemma_key in seen_lemmas:
@@ -106,10 +117,11 @@ def _build_language_asset(*, code: str, assets_dir: Path, version: str, scan_lim
             })
     else:
         wordfreq_code = _wordfreq_language_code(code)
-        for source_rank, token in enumerate(iter_wordlist(wordfreq_code), start=1):
+        for source_rank, raw_token in enumerate(iter_wordlist(wordfreq_code), start=1):
             if source_rank > scan_limit or len(curated_rows) >= 3000:
                 break
-            reason = _rejection_reason(token)
+            token, normalized_to_simplified = normalize_frequency_token_for_language(language, raw_token)
+            reason = _rejection_reason(token, language=language)
             lemma_key = token.casefold()
             display_key = token.casefold()
             if reason is None and lemma_key in seen_lemmas:
@@ -117,7 +129,7 @@ def _build_language_asset(*, code: str, assets_dir: Path, version: str, scan_lim
             if reason is None and display_key in seen_displays:
                 reason = "duplicate_display_form"
             if reason is not None:
-                rejection_rows.append(_rejection_row(language, version, source_rank, token, reason))
+                rejection_rows.append(_rejection_row(language, version, source_rank, raw_token, reason))
                 continue
             rank = len(curated_rows) + 1
             seen_lemmas.add(lemma_key)
@@ -135,7 +147,20 @@ def _build_language_asset(*, code: str, assets_dir: Path, version: str, scan_lim
                     "part_of_speech": "unknown",
                     "definition_seed": token,
                     "source_provenance": f"wordfreq:{wordfreq_code}",
-                    "curation_flags": "wordfreq_seeded;deterministically_filtered;structurally_curated",
+                    "curation_flags": ";".join(
+                        [
+                            "wordfreq_seeded",
+                            "deterministically_filtered",
+                            "structurally_curated",
+                            *(
+                                ["simplified_normalized", "traditional_to_simplified"]
+                                if code == "zh" and normalized_to_simplified
+                                else ["simplified_normalized"]
+                                if code == "zh"
+                                else []
+                            ),
+                        ]
+                    ),
                 }
             )
     if code != "la" and len(curated_rows) != 3000:
@@ -181,12 +206,18 @@ def main() -> None:
     parser.add_argument("--assets-dir", type=Path, default=Path("assets/frequency"))
     parser.add_argument("--version", default="v1")
     parser.add_argument("--language", choices=DEFAULT_SUPPORTED_LANGUAGES, help="Build or check one language code only.")
+    parser.add_argument("--scan-limit", type=int, default=25000)
     parser.add_argument("--check", action="store_true")
     args = parser.parse_args()
     if args.check:
         check_assets(assets_dir=args.assets_dir, version=args.version, language_code=args.language)
     else:
-        build_assets(assets_dir=args.assets_dir, version=args.version, language_code=args.language)
+        build_assets(
+            assets_dir=args.assets_dir,
+            version=args.version,
+            scan_limit=args.scan_limit,
+            language_code=args.language,
+        )
 
 
 if __name__ == "__main__":

@@ -169,6 +169,47 @@ def test_card_snapshot_round_trip_keeps_gramatica_null_when_absent() -> None:
     assert repository.list_card_snapshots(job.id)[0].gramatica is None
 
 
+def test_mandarin_snapshot_round_trip_survives_expire_and_reload() -> None:
+    repository, job_repository, session = build_repositories()
+    job = job_repository.create_job(
+        request=GenerationRequest(language=SupportedLanguage.ZH, source_type="word-list"),
+        run_key="run-export-mandarin",
+        source_fingerprint="list-zh",
+        total_items=1,
+    )
+    row = ExportCardRow(
+        identity=ExportCardIdentity(
+            language=SupportedLanguage.ZH,
+            source_type="word-list",
+            job_id=job.id,
+            item_key="中国",
+            lemma_key="zh:中国",
+            sort_index=1,
+        ),
+        word="中国",
+        front_of_card="中国",
+        definitions="proper noun: China",
+        example_sentence="我去银行。",
+        translation="I go to the bank.",
+        word_audio="[sound:zh-word.mp3]",
+        sentence_audio="[sound:zh-sentence.mp3]",
+        mandarin_word_pinyin="zhōng guó",
+        mandarin_word_traditional="中國",
+        mandarin_sentence_pinyin="wǒ qù yín háng。",
+        mandarin_sentence_traditional="我去銀行。",
+    )
+
+    repository.upsert_card_snapshot(row)
+    session.expire_all()
+    reloaded = repository.list_card_snapshots(job.id)[0]
+
+    assert reloaded.mandarin_word_pinyin == "zhōng guó"
+    assert reloaded.mandarin_word_traditional == "中國"
+    assert reloaded.mandarin_sentence_pinyin == "wǒ qù yín háng。"
+    assert reloaded.mandarin_sentence_traditional == "我去銀行。"
+    assert reloaded.ordered_field_mapping()["Image"] == ""
+
+
 def test_artifacts_and_card_queries_are_job_scoped_and_sorted() -> None:
     repository, job_repository, _ = build_repositories()
     job = job_repository.create_job(

@@ -39,6 +39,7 @@ _LANGUAGE_NAMES = {
     "cs": "Czech",
     "hr": "Croatian",
     "ja": "Japanese",
+    "zh": "Mandarin Chinese",
 }
 
 

@@ -14,6 +14,12 @@ from wordfreq import iter_wordlist
 
 from multilang.domain.lexicon import GroundingStatus, LexicalCardCandidate, LexicalProvenance, policy_for_language
 from multilang.domain.jobs import SupportedLanguage
+from multilang.services.mandarin_orthography import (
+    MandarinOrthographyError,
+    script_counts,
+    validate_simplified_mandarin,
+)
+from opencc import OpenCC
 
 WEB_NOISE_TOKENS = {"http", "https", "www", "nbsp"}
 _WORDFREQ_LANGUAGE_ALIASES = {"hr": "sh"}
@@ -63,7 +69,11 @@ VALID_REJECTION_REASON_CODES = {
     "hashtag_or_handle",
     "emoji_or_symbol",
     "sensitive_name_or_brand",
+    "non_han",
+    "invalid_script",
 }
+
+_T2S = OpenCC("t2s")
 
 
 @dataclass(frozen=True, slots=True)
@@ -135,6 +145,32 @@ def _normalize_frequency_token(token: str) -> str:
     return normalized
 
 
+def normalize_frequency_token_for_language(
+    language: SupportedLanguage,
+    token: str,
+) -> tuple[str, bool]:
+    """Normalize one frequency token and report a Traditional-to-Simplified change."""
+
+    normalized = _normalize_frequency_token(token)
+    if language is not SupportedLanguage.ZH:
+        return normalized, False
+    normalized = unicodedata.normalize("NFKC", normalized)
+    simplified = _T2S.convert(normalized)
+    return simplified, simplified != normalized
+
+
+def is_curated_token_for_language(language: SupportedLanguage, token: str) -> bool:
+    if not _is_curated_token(token):
+        return False
+    if language is not SupportedLanguage.ZH:
+        return True
+    try:
+        validate_simplified_mandarin(token)
+    except MandarinOrthographyError:
+        return False
+    return True
+
+
 def iter_curated_frequency_candidates(
     language: SupportedLanguage,
     scan_limit: int = 6000,
@@ -144,8 +180,8 @@ def iter_curated_frequency_candidates(
     for rank, token in enumerate(iter_wordlist(_wordfreq_language_code(language.value)), start=1):
         if rank > scan_limit:
             break
-        normalized = _normalize_frequency_token(token)
-        if _is_curated_token(normalized):
+        normalized, _ = normalize_frequency_token_for_language(language, token)
+        if is_curated_token_for_language(language, normalized):
             yield rank, normalized
 
 
@@ -241,6 +277,18 @@ def validate_curated_frequency_entries(
             raise ValueError("curated asset contains empty or invalid lexical fields")
         if not row.source_provenance:
             raise ValueError("curated asset contains missing source_provenance")
+        if language is SupportedLanguage.ZH:
+            try:
+                display_form = validate_simplified_mandarin(row.display_form)
+                lemma = validate_simplified_mandarin(row.lemma)
+            except MandarinOrthographyError as exc:
+                raise ValueError(f"Mandarin curated asset contains invalid script: {exc}") from exc
+            if display_form != row.display_form or lemma != row.lemma:
+                raise ValueError("Mandarin curated asset contains non-canonical normalization")
+            if script_counts(row.lemma_key).han == 0:
+                raise ValueError("Mandarin curated asset contains a non-Han lemma_key")
+            if row.source_provenance != "wordfreq:zh":
+                raise ValueError("Mandarin curated asset must use wordfreq:zh provenance")
 
 
 def validate_frequency_rejection_rows(

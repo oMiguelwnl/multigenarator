@@ -188,6 +188,34 @@ def test_generate_audio_items_service_reuses_existing_assets() -> None:
     assert synthesis.synthesized[0].asset_kind is AudioAssetKind.SENTENCE
 
 
+def test_word_list_audio_contract_is_language_aware_for_mandarin() -> None:
+    observed: dict[SupportedLanguage, set[AudioAssetKind]] = {}
+    for language in (SupportedLanguage.ZH, SupportedLanguage.EN):
+        item_key = f"item-{language.value}"
+        prepared_word = make_asset(item_key=item_key, asset_kind=AudioAssetKind.WORD, status=AudioSynthesisStatus.PENDING)
+        prepared_sentence = make_asset(item_key=item_key, asset_kind=AudioAssetKind.SENTENCE, status=AudioSynthesisStatus.PENDING)
+        audio_repository = FakeAudioRepository()
+        service = GenerateAudioItemsService(
+            job_repository=FakeJobRepository(),
+            lexical_repository=FakeLexicalRepository(
+                candidates={item_key: make_candidate(item_key=item_key, source_type="word-list")}
+            ),
+            text_repository=FakeTextRepository(
+                accepted_records=[make_text_record(item_key=item_key, review_status=ReviewStatus.ACCEPTED)]
+            ),
+            audio_repository=audio_repository,
+            audio_synthesis_service=FakeAudioSynthesisService(
+                prepared={item_key: AudioSynthesisBundle(word_asset=prepared_word, sentence_asset=prepared_sentence)}
+            ),
+        )
+
+        service.execute(job_id="job-1", deck_language=language)
+        observed[language] = {asset.asset_kind for asset in audio_repository.saved_assets}
+
+    assert observed[SupportedLanguage.ZH] == {AudioAssetKind.WORD, AudioAssetKind.SENTENCE}
+    assert observed[SupportedLanguage.EN] == {AudioAssetKind.SENTENCE}
+
+
 def test_generate_audio_items_service_regenerates_mismatched_reusable_word_audio() -> None:
     prepared_word = make_asset(item_key="run", asset_kind=AudioAssetKind.WORD, status=AudioSynthesisStatus.PENDING)
     prepared_sentence = make_asset(item_key="run", asset_kind=AudioAssetKind.SENTENCE, status=AudioSynthesisStatus.PENDING)

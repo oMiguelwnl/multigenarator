@@ -31,6 +31,7 @@ class SupportedLanguage(str, Enum):
     HR = "hr"
     LA = "la"
     JA = "ja"
+    ZH = "zh"
 
 
 class JobStage(str, Enum):

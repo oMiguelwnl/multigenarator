@@ -86,6 +86,21 @@ def test_card_exports_gramatica_column_is_migrated(tmp_path: Path) -> None:
     assert "gramatica" in columns
 
 
+def test_card_exports_mandarin_columns_are_migrated(tmp_path: Path) -> None:
+    engine = create_engine(_migrate(tmp_path, "mandarin_parity.db"))
+    try:
+        columns = {column["name"] for column in inspect(engine).get_columns("card_exports")}
+    finally:
+        engine.dispose()
+
+    assert {
+        "mandarin_word_pinyin",
+        "mandarin_word_traditional",
+        "mandarin_sentence_pinyin",
+        "mandarin_sentence_traditional",
+    } <= columns
+
+
 def test_ensure_database_schema_creates_sqlite_tables_in_place() -> None:
     engine = create_engine("sqlite+pysqlite:///:memory:")
     try:

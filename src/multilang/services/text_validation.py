@@ -15,6 +15,11 @@ from multilang.domain.text_quality import (
     ValidationStatus,
 )
 from multilang.services.language_identifier import CorpusLanguageIdentifier, LanguageIdentifier
+from multilang.services.mandarin_orthography import (
+    MandarinOrthographyError,
+    script_counts,
+    validate_simplified_mandarin,
+)
 from multilang.services.morphology import MorphologicalAnalyzer, OptionalStanzaMorphologicalAnalyzer
 from multilang.services.text_generation import GeneratedSentence, GeneratedTranslation
 
@@ -274,6 +279,12 @@ class TextValidationService:
             lemma=lemma,
         ):
             return
+        if context.target_language == "zh" and _mandarin_contains_target(
+            context.sentence_text,
+            display_form=display_form,
+            lemma=lemma,
+        ):
+            return
 
         candidates = _match_keys(display_form) | _match_keys(lemma)
         sentence_terms = {
@@ -332,6 +343,25 @@ class TextValidationService:
                     ValidationFlag(
                         code=ValidationFlagCode.SENTENCE_TOO_LONG,
                         detail=f"Japanese sentence has {character_count} signal characters; expected at most {max_characters}",
+                    )
+                )
+            return
+
+        if context.target_language == "zh":
+            character_count = script_counts(context.sentence_text).han
+            if character_count < min_tokens:
+                flags.append(
+                    ValidationFlag(
+                        code=ValidationFlagCode.SENTENCE_TOO_SHORT,
+                        detail=f"Mandarin sentence has {character_count} Han characters; expected at least {min_tokens}",
+                    )
+                )
+            max_characters = max(max_tokens * 6, 24)
+            if character_count > max_characters:
+                flags.append(
+                    ValidationFlag(
+                        code=ValidationFlagCode.SENTENCE_TOO_LONG,
+                        detail=f"Mandarin sentence has {character_count} Han characters; expected at most {max_characters}",
                     )
                 )
             return
@@ -534,10 +564,16 @@ def detect_language_mismatch(
     strict_foreign_tokens: bool = False,
     language_identifier: LanguageIdentifier | None = None,
 ) -> str | None:
+    expected = expected_language.casefold()
+    if expected == "zh":
+        try:
+            validate_simplified_mandarin(value)
+        except MandarinOrthographyError as exc:
+            return f"text does not look like language {expected_language}: {exc}"
+        return None
     tokens = _tokenize(value)
     if not tokens:
         return None
-    expected = expected_language.casefold()
     detection = (language_identifier or _DEFAULT_LANGUAGE_IDENTIFIER).detect(value, expected_language=expected)
     if detection.reliable and detection.detected_language is not None and detection.detected_language != expected:
         return (
@@ -592,6 +628,18 @@ def _japanese_contains_target(value: str, *, display_form: str, lemma: str) -> b
         target and target in normalized_sentence
         for target in {_normalize_japanese_lookup(display_form), _normalize_japanese_lookup(lemma)}
     )
+
+
+def _mandarin_contains_target(value: str, *, display_form: str, lemma: str) -> bool:
+    normalized_sentence = _normalize_mandarin_lookup(value)
+    return any(
+        target and target in normalized_sentence
+        for target in {_normalize_mandarin_lookup(display_form), _normalize_mandarin_lookup(lemma)}
+    )
+
+
+def _normalize_mandarin_lookup(value: str) -> str:
+    return "".join(unicodedata.normalize("NFKC", str(value or "")).casefold().split())
 
 
 def _normalize_japanese_lookup(value: str) -> str:

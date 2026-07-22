@@ -12,9 +12,11 @@ from multilang.domain.exporting import (
     FREQUENCY_EXPORT_CARD_FIELD_NAMES,
     HIGHLIGHT_EXPORT_CARD_FIELD_NAMES,
     LATIN_EXPORT_CARD_FIELD_NAMES,
+    MANDARIN_EXPORT_CARD_FIELD_NAMES,
     MANUAL_EXPORT_CARD_FIELD_NAMES,
     evaluate_export_quality_gate,
     export_field_names_for_rows,
+    export_field_names_for_language_and_source,
     export_field_names_for_source_type,
 )
 from multilang.domain.jobs import SupportedLanguage
@@ -126,6 +128,115 @@ def test_export_field_names_for_rows_rejects_mixed_sources() -> None:
 
     with pytest.raises(ValueError, match="mixed source types"):
         export_field_names_for_rows(rows)
+
+
+def make_mandarin_identity(
+    *,
+    source_type: str = "frequency",
+    item_key: str = "zh-1",
+) -> ExportCardIdentity:
+    return ExportCardIdentity(
+        language=SupportedLanguage.ZH,
+        source_type=source_type,
+        job_id="job-zh",
+        item_key=item_key,
+        lemma_key=f"zh:{item_key}",
+        sort_index=1,
+    )
+
+
+def make_mandarin_row(**overrides: object) -> ExportCardRow:
+    payload: dict[str, object] = {
+        "identity": make_mandarin_identity(),
+        "word": "中国",
+        "front_of_card": "中国",
+        "ipa": None,
+        "definitions": "proper noun: China",
+        "example_sentence": "我去银行。",
+        "translation": "I go to the bank.",
+        "word_audio": "[sound:zh-word.mp3]",
+        "sentence_audio": "[sound:zh-sentence.mp3]",
+        "mandarin_word_pinyin": "zhōng guó",
+        "mandarin_word_traditional": "中國",
+        "mandarin_sentence_pinyin": "wǒ qù yín háng。",
+        "mandarin_sentence_traditional": "我去銀行。",
+    }
+    payload.update(overrides)
+    return ExportCardRow(**payload)
+
+
+def test_mandarin_field_contract_is_exact_for_frequency_and_word_list() -> None:
+    assert MANDARIN_EXPORT_CARD_FIELD_NAMES == (
+        "SortIndex",
+        "word",
+        "Pinyin",
+        "Traditional",
+        "Definitions",
+        "Example Sentence",
+        "Sentence Pinyin",
+        "Traditional Sentence",
+        "Translation",
+        "word_audio",
+        "sentence_audio",
+        "Image",
+    )
+    for source_type in ("frequency", "word-list"):
+        assert (
+            export_field_names_for_language_and_source(
+                language=SupportedLanguage.ZH,
+                source_type=source_type,
+            )
+            == MANDARIN_EXPORT_CARD_FIELD_NAMES
+        )
+
+    mapping = make_mandarin_row().ordered_field_mapping()
+    assert tuple(mapping) == MANDARIN_EXPORT_CARD_FIELD_NAMES
+    assert mapping["Pinyin"] == "zhōng guó"
+    assert mapping["Traditional Sentence"] == "我去銀行。"
+    assert mapping["Image"] == ""
+
+
+@pytest.mark.parametrize(
+    "missing_field",
+    [
+        "mandarin_word_pinyin",
+        "mandarin_word_traditional",
+        "mandarin_sentence_pinyin",
+        "mandarin_sentence_traditional",
+        "translation",
+    ],
+)
+def test_mandarin_rows_require_orthography_and_translation(missing_field: str) -> None:
+    with pytest.raises(ValueError, match="Mandarin"):
+        make_mandarin_row(**{missing_field: ""})
+
+
+@pytest.mark.parametrize(
+    ("field", "value"),
+    [
+        ("mandarin_word_pinyin", "㐂"),
+        ("mandarin_sentence_pinyin", "wǒ yòng 㐂。"),
+        ("mandarin_sentence_pinyin", "zhōng guó Ж"),
+    ],
+)
+def test_mandarin_rows_reject_non_pinyin_letters(field: str, value: str) -> None:
+    with pytest.raises(ValueError, match="pinyin"):
+        make_mandarin_row(**{field: value})
+
+
+def test_mandarin_rows_reject_nonblank_image() -> None:
+    with pytest.raises(ValueError, match="Image"):
+        make_mandarin_row(image="not-allowed.png")
+
+
+def test_export_field_names_for_rows_rejects_mixed_languages() -> None:
+    with pytest.raises(ValueError, match="mixed languages"):
+        export_field_names_for_rows(
+            [
+                make_mandarin_row(),
+                make_row(identity=make_identity(item_key="en-1")),
+            ]
+        )
 
 
 def test_note_guid_ignores_mutable_card_content() -> None:

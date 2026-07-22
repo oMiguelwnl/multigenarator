@@ -9,7 +9,12 @@ from pathlib import Path
 
 import pytest
 
-from multilang.domain.exporting import ExportCardIdentity, ExportCardRow, JAPANESE_EXPORT_CARD_FIELD_NAMES
+from multilang.domain.exporting import (
+    JAPANESE_EXPORT_CARD_FIELD_NAMES,
+    MANDARIN_EXPORT_CARD_FIELD_NAMES,
+    ExportCardIdentity,
+    ExportCardRow,
+)
 from multilang.domain.jobs import SupportedLanguage
 from multilang.services import card_template_loader
 from multilang.services.export_anki_package import (
@@ -18,6 +23,8 @@ from multilang.services.export_anki_package import (
     HIGHLIGHT_NOTE_TYPE_NAME,
     MANUAL_MODEL_ID,
     MANUAL_NOTE_TYPE_NAME,
+    MANDARIN_MODEL_ID,
+    MANDARIN_NOTE_TYPE_NAME,
     MODEL_ID,
     ExportAnkiPackageError,
     build_multilang_model,
@@ -66,6 +73,78 @@ def make_row(
         word_reading=word_reading,
         sentence_furigana=sentence_furigana,
     )
+
+
+def make_mandarin_row(*, source_type: str = "frequency") -> ExportCardRow:
+    return ExportCardRow(
+        identity=ExportCardIdentity(
+            language=SupportedLanguage.ZH,
+            source_type=source_type,
+            job_id="job-zh",
+            item_key="中国",
+            lemma_key="zh:中国",
+            sort_index=1,
+        ),
+        word="中国",
+        front_of_card="中国",
+        definitions="proper noun: China",
+        example_sentence="我去银行。",
+        translation="I go to the bank.",
+        word_audio="[sound:zh-word.mp3]",
+        sentence_audio="[sound:zh-sentence.mp3]",
+        mandarin_word_pinyin="zhōng guó",
+        mandarin_word_traditional="中國",
+        mandarin_sentence_pinyin="wǒ qù yín háng。",
+        mandarin_sentence_traditional="我去銀行。",
+    )
+
+
+@pytest.mark.parametrize("source_type", ["frequency", "word-list"])
+def test_build_mandarin_model_uses_dedicated_identity_fields_and_template(source_type: str) -> None:
+    model = build_multilang_model(source_type=source_type, language=SupportedLanguage.ZH)
+
+    assert model.model_id == MANDARIN_MODEL_ID == 1_762_800_901
+    assert model.name == MANDARIN_NOTE_TYPE_NAME == "Multilang::Mandarin Card"
+    assert tuple(field["name"] for field in model.fields) == MANDARIN_EXPORT_CARD_FIELD_NAMES
+    qfmt = model.templates[0]["qfmt"]
+    afmt = model.templates[0]["afmt"]
+    assert qfmt.index("{{word}}") < qfmt.index("{{Pinyin}}") < qfmt.index("{{Traditional}}")
+    assert qfmt.index("{{Example Sentence}}") < qfmt.index("{{Sentence Pinyin}}")
+    assert qfmt.index("{{Sentence Pinyin}}") < qfmt.index("{{Traditional Sentence}}")
+    assert 'id="translation"' in qfmt and 'style="display:none;"' in qfmt
+    assert 'document.getElementById("translation").style.display = "block";' in afmt
+
+
+@pytest.mark.parametrize("source_type", ["frequency", "word-list"])
+def test_export_mandarin_package_bundles_both_audio_files(source_type: str, tmp_path: Path) -> None:
+    row = make_mandarin_row(source_type=source_type)
+    word_media = write_media_file(tmp_path / "audio" / "zh-word.mp3", b"ID3-word")
+    sentence_media = write_media_file(tmp_path / "audio" / "zh-sentence.mp3", b"ID3-sentence")
+    output_path = tmp_path / f"mandarin-{source_type}.apkg"
+
+    result = export_anki_package(
+        rows=[row],
+        media_index={row.word_audio: word_media, row.sentence_audio: sentence_media},
+        output_path=output_path,
+        deck_name="Multilang Mandarin Chinese",
+    )
+
+    assert result.media_files == [word_media, sentence_media]
+    with zipfile.ZipFile(output_path) as archive:
+        media_manifest = json.loads(archive.read("media").decode("utf-8"))
+        assert set(media_manifest.values()) == {"zh-word.mp3", "zh-sentence.mp3"}
+        for archived_name in media_manifest:
+            assert archive.read(archived_name).startswith(b"ID3")
+        collection_path = tmp_path / f"collection-{source_type}.anki2"
+        collection_path.write_bytes(archive.read("collection.anki2"))
+    with sqlite3.connect(collection_path) as connection:
+        models = json.loads(connection.execute("select models from col").fetchone()[0])
+        fields = connection.execute("select flds from notes").fetchone()[0].split("\x1f")
+    model = models[str(MANDARIN_MODEL_ID)]
+    assert model["name"] == MANDARIN_NOTE_TYPE_NAME
+    assert tuple(field["name"] for field in model["flds"]) == MANDARIN_EXPORT_CARD_FIELD_NAMES
+    assert fields[-1] == ""
+    assert "zhōng guó" in fields and "中國" in fields and "我去銀行。" in fields
 
 
 def test_build_multilang_model_uses_exact_fields_and_hides_translation_on_front() -> None:

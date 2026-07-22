@@ -124,6 +124,69 @@ def test_iterator_order_is_deterministic(monkeypatch) -> None:
     assert first == second == [(1, "uno"), (2, "dos"), (3, "tres"), (4, "cuatro")]
 
 
+def test_mandarin_iterator_normalizes_traditional_and_rejects_non_han(monkeypatch) -> None:
+    from multilang.services import frequency_decks
+
+    def fake_iter_wordlist(language: str):
+        assert language == "zh"
+        return iter(["中國", "银行", "hello", "銀行へ", "我"])
+
+    monkeypatch.setattr(frequency_decks, "iter_wordlist", fake_iter_wordlist)
+
+    assert list(
+        frequency_decks.iter_curated_frequency_candidates(
+            SupportedLanguage.ZH,
+            scan_limit=5,
+        )
+    ) == [(1, "中国"), (2, "银行"), (5, "我")]
+
+
+def test_mandarin_asset_validation_rejects_non_simplified_or_non_han_rows() -> None:
+    from multilang.services import frequency_decks
+
+    rows = [
+        frequency_decks.CuratedFrequencyEntry(
+            language=SupportedLanguage.ZH,
+            frequency_list_version="v1",
+            level=level,
+            rank=rank,
+            source_rank=index,
+            display_form="中国" if index == 1 else "银行" if index == 2 else "朋友",
+            lemma="中国" if index == 1 else "银行" if index == 2 else "朋友",
+            lemma_key="中国" if index == 1 else "银行" if index == 2 else "朋友",
+            part_of_speech="unknown",
+            definition_seed="seed",
+            source_provenance="wordfreq:zh",
+            curation_flags="wordfreq_seeded;deterministically_filtered;structurally_curated",
+        )
+        for index, (level, rank) in enumerate(((1, 1), (2, 1001), (3, 2001)), start=1)
+    ]
+    frequency_decks.validate_curated_frequency_entries(
+        rows,
+        language=SupportedLanguage.ZH,
+        required_count_per_level=1,
+    )
+
+    for bad_value in ("中國", "hello", "銀行へ"):
+        broken = list(rows)
+        broken[0] = replace(
+            broken[0],
+            display_form=bad_value,
+            lemma=bad_value,
+            lemma_key=bad_value,
+        )
+        try:
+            frequency_decks.validate_curated_frequency_entries(
+                broken,
+                language=SupportedLanguage.ZH,
+                required_count_per_level=1,
+            )
+        except ValueError as exc:
+            assert "Mandarin" in str(exc)
+        else:  # pragma: no cover - assertion clarity
+            raise AssertionError("expected Mandarin script validation failure")
+
+
 def test_build_frequency_deck_returns_three_full_levels(monkeypatch) -> None:
     from multilang.services import frequency_decks
 
@@ -392,6 +455,17 @@ def test_japanese_frequency_assets_validate() -> None:
     assert [sum(1 for entry in entries if entry.level == level) for level in (1, 2, 3)] == [1000, 1000, 1000]
     assert entries[0].display_form == "の"
     assert all(entry.source_provenance == "wordfreq:ja" for entry in entries)
+
+
+def test_mandarin_frequency_assets_validate() -> None:
+    from multilang.services import frequency_decks
+
+    entries = frequency_decks.load_curated_frequency_entries(SupportedLanguage.ZH)
+
+    assert len(entries) == 3000
+    assert [sum(1 for entry in entries if entry.level == level) for level in (1, 2, 3)] == [1000, 1000, 1000]
+    assert all(entry.source_provenance == "wordfreq:zh" for entry in entries)
+    assert all("structurally_curated" in entry.curation_flags for entry in entries)
 
 
 def test_danish_frequency_assets_validate() -> None:

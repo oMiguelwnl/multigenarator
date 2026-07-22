@@ -37,6 +37,7 @@ _LANGUAGE_LOCALES = {
     SupportedLanguage.CS: "cs-CZ",
     SupportedLanguage.HR: "hr-HR",
     SupportedLanguage.JA: "ja-JP",
+    SupportedLanguage.ZH: "zh-CN",
 }
 _VOICE_REGISTRY_VERSION = "elevenlabs-premade-v1"
 _VOICE_BY_LANGUAGE = {
@@ -62,6 +63,13 @@ _VOICE_BY_LANGUAGE = {
     SupportedLanguage.CS: "TxGEqnHWrfWFTfGW9XjX",  # Josh
     SupportedLanguage.HR: "TxGEqnHWrfWFTfGW9XjX",  # Josh
     SupportedLanguage.JA: "EXAVITQu4vr4xnSDxMaL",  # Bella
+    SupportedLanguage.ZH: "EXAVITQu4vr4xnSDxMaL",  # Bella
+}
+
+_LANGUAGE_CODE_MODELS = {
+    "eleven_flash_v2_5",
+    "eleven_turbo_v2_5",
+    "eleven_v3",
 }
 
 
@@ -116,6 +124,7 @@ class ElevenLabsSpeechAdapter:
                     voice_id=resolved_voice_id,
                     text=plain_text,
                     api_key=api_key,
+                    locale=locale,
                 )
                 with self._urlopen(request, timeout=30) as response:
                     audio_bytes = response.read()
@@ -145,15 +154,20 @@ class ElevenLabsSpeechAdapter:
                 "ElevenLabs API key is required: set MULTILANG_ELEVENLABS_API_KEY"
             )
 
-    def _build_request(self, *, voice_id: str, text: str, api_key: str) -> Request:
+    def _build_request(self, *, voice_id: str, text: str, api_key: str, locale: str) -> Request:
+        payload = {
+            "text": text,
+            "model_id": self.settings.elevenlabs_model_id,
+        }
+        language_code = _payload_language_code(
+            model_id=self.settings.elevenlabs_model_id,
+            locale=locale,
+        )
+        if language_code is not None:
+            payload["language_code"] = language_code
         return Request(
             self._synthesis_url(voice_id),
-            data=json.dumps(
-                {
-                    "text": text,
-                    "model_id": self.settings.elevenlabs_model_id,
-                }
-            ).encode("utf-8"),
+            data=json.dumps(payload).encode("utf-8"),
             headers={
                 "Accept": "audio/mpeg",
                 "Content-Type": "application/json",
@@ -201,6 +215,14 @@ def _extract_plain_text(text: str) -> str:
     except ElementTree.ParseError:
         return stripped
     return " ".join(part.strip() for part in root.itertext() if part.strip())
+
+
+def _payload_language_code(*, model_id: str, locale: str) -> str | None:
+    if model_id not in _LANGUAGE_CODE_MODELS:
+        return None
+    if locale.casefold() == "zh-cn":
+        return SupportedLanguage.ZH.value
+    return None
 
 
 __all__ = ["ElevenLabsSpeechAdapter", "ElevenLabsSpeechAdapterError"]

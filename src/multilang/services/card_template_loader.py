@@ -9,8 +9,8 @@ import re
 
 from multilang.domain.exporting import (
     JAPANESE_EXPORT_CARD_FIELD_NAMES,
-    LATIN_EXPORT_CARD_FIELD_NAMES,
-    export_field_names_for_source_type,
+    MANDARIN_EXPORT_CARD_FIELD_NAMES,
+    export_field_names_for_language_and_source,
 )
 from multilang.domain.jobs import SupportedLanguage
 from multilang.domain.source_profiles import get_source_profile
@@ -30,6 +30,7 @@ _TEMPLATE_FILES = {
     "highlight_card": "highlight_card.md",
     "latin_mvp_card": "latin_mvp_card.md",
     "japanese_card": "japanese_card.md",
+    "mandarin_card": "mandarin_card.md",
 }
 
 
@@ -53,6 +54,32 @@ def load_card_template(source_type: str, *, language: SupportedLanguage | None =
         and language is not None
         and (language == "ja" or getattr(language, "value", None) == "ja")
     )
+    is_zh = (
+        source_type in {"frequency", "word-list"}
+        and language is not None
+        and (language == "zh" or getattr(language, "value", None) == "zh")
+    )
+    if is_zh:
+        template_path = TEMPLATE_ROOT.joinpath(_TEMPLATE_FILES["mandarin_card"])
+        mandarin_template = _parse_card_template(
+            template_path.read_text(encoding="utf-8"),
+            template_path=template_path,
+            source_template_name="mandarin_card",
+        )
+        base_path = TEMPLATE_ROOT.joinpath(_TEMPLATE_FILES["normal_card"])
+        base_template = _parse_card_template(
+            base_path.read_text(encoding="utf-8"),
+            template_path=base_path,
+            source_template_name="normal_card",
+        )
+        template = CardTemplate(
+            front=mandarin_template.front,
+            back=mandarin_template.back,
+            css=f"{base_template.css}\n\n{mandarin_template.css}",
+            source_template_name="mandarin_card",
+        )
+        validate_template_references(template, field_names=MANDARIN_EXPORT_CARD_FIELD_NAMES)
+        return template
     if is_ja:
         template_path = TEMPLATE_ROOT.joinpath(_TEMPLATE_FILES["japanese_card"])
         content = template_path.read_text(encoding="utf-8")
@@ -75,7 +102,10 @@ def load_card_template(source_type: str, *, language: SupportedLanguage | None =
     )
     if profile.source_type == "frequency" and language is SupportedLanguage.EN:
         template = _localize_english_frequency_labels(template)
-    field_names = LATIN_EXPORT_CARD_FIELD_NAMES if is_la else export_field_names_for_source_type(profile.source_type)
+    field_names = export_field_names_for_language_and_source(
+        language=SupportedLanguage.LA if is_la else language or SupportedLanguage.EN,
+        source_type=profile.source_type,
+    )
     validate_template_references(
         template,
         field_names=field_names,

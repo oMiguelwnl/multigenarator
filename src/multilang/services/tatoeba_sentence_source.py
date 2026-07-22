@@ -6,6 +6,7 @@ import json
 import re
 import urllib.parse
 import urllib.request
+import unicodedata
 from typing import Protocol
 
 from pydantic import BaseModel, Field
@@ -64,6 +65,7 @@ _TATOEBA_API_CODES = {
     "ru": "rus",
     "sv": "swe",
     "tr": "tur",
+    "zh": "cmn",
 }
 
 
@@ -212,14 +214,25 @@ class TatoebaSentenceSource:
                 continue
             if not [text.strip() for text in candidate.linked_translations if text.strip()]:
                 continue
-            if self._fails_hard_filters(candidate.sentence_text):
+            if self._fails_hard_filters(candidate.sentence_text, target_language=target_language):
                 continue
-            if not self._matches_target(candidate.sentence_text, display_form=display_form, lemma=lemma):
+            if not self._matches_target(
+                candidate.sentence_text,
+                display_form=display_form,
+                lemma=lemma,
+                target_language=target_language,
+            ):
                 continue
 
             eligible.append(
                 (
-                    self._score_candidate(candidate.sentence_text, display_form=display_form, lemma=lemma, candidate=candidate),
+                    self._score_candidate(
+                        candidate.sentence_text,
+                        display_form=display_form,
+                        lemma=lemma,
+                        target_language=target_language,
+                        candidate=candidate,
+                    ),
                     candidate,
                 )
             )
@@ -243,9 +256,9 @@ class TatoebaSentenceSource:
             },
         )
 
-    def _fails_hard_filters(self, sentence: str) -> bool:
+    def _fails_hard_filters(self, sentence: str, *, target_language: str) -> bool:
         stripped = sentence.strip()
-        token_count = len(_tokenize(stripped))
+        token_count = _han_count(stripped) if target_language == "zh" else len(_tokenize(stripped))
         lowered = f" {_normalize(stripped)} "
         return (
             token_count < self.min_sentence_tokens
@@ -254,7 +267,20 @@ class TatoebaSentenceSource:
             or any(lowered.strip().startswith(prefix) for prefix in _META_PREFIXES)
         )
 
-    def _matches_target(self, sentence: str, *, display_form: str, lemma: str) -> bool:
+    def _matches_target(
+        self,
+        sentence: str,
+        *,
+        display_form: str,
+        lemma: str,
+        target_language: str,
+    ) -> bool:
+        if target_language == "zh":
+            normalized_sentence = _normalize_cjk(sentence)
+            return any(
+                target and target in normalized_sentence
+                for target in {_normalize_cjk(display_form), _normalize_cjk(lemma)}
+            )
         keys = _match_keys(display_form) | _match_keys(lemma)
         sentence_terms = {key for token in _tokenize(sentence) for key in _match_keys(token)}
         return not keys.isdisjoint(sentence_terms)
@@ -265,17 +291,29 @@ class TatoebaSentenceSource:
         *,
         display_form: str,
         lemma: str,
+        target_language: str,
         candidate: TatoebaCandidateRow,
     ) -> tuple[int, ...]:
         normalized = _normalize(sentence)
-        token_count = len(_tokenize(sentence))
-        target_first = _target_is_first_token(sentence, display_form=display_form, lemma=lemma)
+        token_count = _han_count(sentence) if target_language == "zh" else len(_tokenize(sentence))
+        target_first = (
+            _target_is_first_cjk(sentence, display_form=display_form, lemma=lemma)
+            if target_language == "zh"
+            else _target_is_first_token(sentence, display_form=display_form, lemma=lemma)
+        )
         reflexive_display = _is_reflexive_form(display_form)
         reflexive_sentence = _contains_reflexive_marker(normalized)
 
         return (
             1 if candidate.base == 0 else 0,
-            1 if self._matches_target(sentence, display_form=display_form, lemma=display_form) else 0,
+            1
+            if self._matches_target(
+                sentence,
+                display_form=display_form,
+                lemma=display_form,
+                target_language=target_language,
+            )
+            else 0,
             1 if candidate.is_direct_translation else 0,
             1 if reflexive_display and reflexive_sentence else 0,
             1 if 5 <= token_count <= 9 else 0,
@@ -292,6 +330,27 @@ def _tokenize(value: str) -> list[str]:
 
 def _normalize(value: str) -> str:
     return " ".join(_tokenize(value))
+
+
+def _normalize_cjk(value: str) -> str:
+    return unicodedata.normalize("NFKC", value).casefold().strip()
+
+
+def _han_count(value: str) -> int:
+    return sum(
+        character == "〇"
+        or "CJK UNIFIED IDEOGRAPH" in unicodedata.name(character, "")
+        or "CJK COMPATIBILITY IDEOGRAPH" in unicodedata.name(character, "")
+        for character in unicodedata.normalize("NFKC", value)
+    )
+
+
+def _target_is_first_cjk(sentence: str, *, display_form: str, lemma: str) -> bool:
+    normalized = _normalize_cjk(sentence)
+    return any(
+        target and normalized.startswith(target)
+        for target in {_normalize_cjk(display_form), _normalize_cjk(lemma)}
+    )
 
 
 def _match_keys(value: str) -> set[str]:
