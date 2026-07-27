@@ -31,3 +31,4 @@
 | 026 | Japanese furigana generation | 2026-07-20 | passed | [026-japanese-furigana-generation](./026-japanese-furigana-generation/) |
 | 027 | Adicionar Mandarim ao fluxo moderno integrado | 2026-07-22 | human_needed | [027-adicionar-mandarim-integrado](./027-adicionar-mandarim-integrado/) |
 | 028 | Instalar seis skills recomendadas no escopo do projeto para OpenCode | 2026-07-20 | passed | [028-install-recommended-agent-skills](./028-install-recommended-agent-skills/) |
+| 031 | Persistir o plano mestre lexical e adaptativo multilíngue v4 sem ativar o milestone | 2026-07-27 | passed | [031-persistir-plano-mestre-v4](./031-persistir-plano-mestre-v4/) |
