@@ -1,0 +1,75 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Preview dos templates atuais</title>
+  <style>
+    :root { color-scheme: dark; --page:#0a1220; --card:#0f1b2d; --panel:#12213a; --border:#24405f; --accent:#3b82f6; --soft:#93c5fd; --word:#bfdbfe; --text:#e8f0fe; --muted:#7f9bc4; }
+    * { box-sizing:border-box; }
+    body { margin:0; padding:28px 18px 48px; overflow-wrap:break-word; background:var(--page); color:var(--text); font-family:"Segoe UI","Noto Sans",Arial,sans-serif; }
+    header,.family { width:min(100%,980px); margin:0 auto 32px; }
+    h1 { margin:0 0 8px; font-size:24px; } .intro { margin:0; color:var(--muted); line-height:1.5; }
+    h2 { margin:0 0 12px; color:var(--soft); font-size:17px; }
+    .pair { display:grid; grid-template-columns:repeat(2,minmax(0,460px)); gap:22px; }
+    .state { min-width:0; } .label { display:block; margin-bottom:7px; color:var(--muted); font-size:11px; font-weight:800; letter-spacing:.1em; text-transform:uppercase; }
+    .card { width:100%; min-height:180px; overflow:hidden; background:var(--card); border-top:4px solid var(--accent); border-radius:16px; box-shadow:0 8px 30px rgba(0,0,0,.45); }
+    .pad { padding:20px 18px; } .hero { padding:24px 18px 0; text-align:center; } .word { color:var(--word); font-size:40px; font-weight:800; line-height:1.15; }
+    .muted { color:var(--muted); } .soft { color:var(--soft); } .divider { border-top:1px solid var(--border); margin:18px 0; }
+    .heading { margin-bottom:8px; color:var(--soft); font-size:11px; font-weight:800; letter-spacing:.1em; text-transform:uppercase; }
+    .audio { display:inline-flex; width:24px; height:24px; align-items:center; justify-content:center; background:var(--panel); border:1px solid var(--border); border-radius:50%; color:var(--soft); font-size:10px; vertical-align:middle; }
+    .examplePanel,.panel { padding:12px 14px; background:var(--panel); border-radius:8px; }
+    .examplePanel { border-left:3px solid var(--accent); } .line { display:flex; align-items:center; gap:9px; font-size:17px; line-height:1.5; } .line span:first-child { flex:1; }
+    .translation { margin-top:9px; color:var(--soft); font-size:15px; font-style:italic; } .state:first-child .answer-only { display:none; }
+    .phoneme .targetBox { margin:20px 18px 0; padding:15px; text-align:center; background:var(--panel); border:1px solid var(--border); border-radius:10px; }
+    .phoneme .sound { display:flex; align-items:center; gap:10px; margin:14px 18px 0; } .phoneme .symbol { color:#eaf1ff; font:700 32px "Charis SIL",serif; }
+    .mandarin .subline { padding-top:4px; font-size:14px; line-height:1.45; }
+    .jpFont { font-family:"Yu Mincho","Noto Serif JP","Noto Sans JP",serif; } .jpSentence { margin-top:15px; font-size:25px; text-align:center; }
+    .jpControls { display:flex; justify-content:center; align-items:center; gap:12px; margin-top:16px; } .toggle { padding:6px 12px; border:1px solid var(--accent); border-radius:999px; color:var(--soft); }
+    .jpImage,.media { display:flex; min-height:74px; align-items:center; justify-content:center; margin-top:12px; background:var(--panel); border:1px solid var(--border); border-radius:8px; color:var(--muted); }
+    .meaning { margin-top:10px; text-align:left; } .footer { padding:12px; text-align:center; color:var(--soft); font-size:13px; }
+    .kana { padding:22px 18px; text-align:center; } .kanaScript { color:var(--soft); font-size:12px; font-weight:800; letter-spacing:.12em; text-transform:uppercase; }
+    .kanaGlyph { color:var(--word); font-size:76px; font-weight:700; line-height:1.15; } .kanaRomaji { color:var(--soft); font-size:30px; font-weight:700; } .mnemonic { text-align:left; }
+    .jp-original,.kana-original { background:#fff; color:#1f2430; border-top-color:#524c9e; border-radius:12px; box-shadow:0 4px 18px rgba(0,0,0,.12); }
+    .jp-original .word,.kana-original .kanaGlyph { color:#1f2430; }
+    .jp-original .jpSentence { margin-top:16px; padding:0; background:transparent; border:0; border-radius:0; }
+    .jp-original .toggle { border-color:#524c9e; color:#524c9e; }
+    .jp-original .audio,.kana-original .audio { width:auto; height:auto; background:transparent; border:0; color:#524c9e; font-size:18px; }
+    .jp-original .muted,.kana-original .muted { color:#6b7280; }
+    .jp-original .jpImage { margin:0; background:#000; border:0; border-radius:0; color:#9ca3af; }
+    .jp-original .meaning { padding:0; background:transparent; border:0; }
+    .jp-original .soft,.jp-original .footer { color:#524c9e; }
+    .kana-original .kanaScript,.kana-original .kanaRomaji { color:#524c9e; }
+    .kana-original .media { min-height:0; padding:0; background:transparent; border:0; color:#1f2430; }
+    @media (max-width:760px) { body{padding:20px 10px 36px}.pair{grid-template-columns:minmax(0,460px)}.word{font-size:34px} }
+  </style>
+</head>
+<body>
+  <header><h1>Templates atuais</h1><p class="intro">Normal, fonético e mandarim usam o novo tema escuro. Japonês e Kana mantêm os templates originais. Os controles e áudios são apenas representações visuais.</p></header>
+
+  <section class="family"><h2>Normal</h2><div class="pair">
+    <div class="state"><span class="label">Frente</span><article class="card" data-template="normal" data-side="front"><div class="hero"><div class="word">run</div><div class="muted">/rʌn/</div><div class="audio">▶</div></div><div class="divider"></div><div class="pad"><div class="heading">Definition</div><div>• verb: to move quickly on foot</div><div class="divider"></div><div class="heading">Example</div><div class="examplePanel"><div class="line"><span>They run every morning.</span><i class="audio">▶</i></div><div class="translation answer-only">Eles correm toda manhã.</div></div></div></article></div>
+    <div class="state"><span class="label">Verso</span><article class="card" data-template="normal" data-side="back"><div class="hero"><div class="word">run</div><div class="muted">/rʌn/</div><div class="audio">▶</div></div><div class="divider"></div><div class="pad"><div class="heading">Definition</div><div>• verb: to move quickly on foot</div><div class="divider"></div><div class="heading">Example</div><div class="examplePanel"><div class="line"><span>They run every morning.</span><i class="audio">▶</i></div><div class="translation answer-only">Eles correm toda manhã.</div></div></div></article></div>
+  </div></section>
+
+  <section class="family"><h2>Fonema compartilhado</h2><div class="pair">
+    <div class="state"><span class="label">Frente</span><article class="card phoneme" data-template="phoneme" data-side="front"><div class="targetBox"><div class="muted">The letter(s) is:</div><div class="symbol">б</div></div><div class="sound"><span class="muted">Sounds like:</span><span class="symbol">/b/</span><i class="audio">▶</i></div><div class="divider"></div><div class="pad"><div class="heading">Example word</div><div>брат <i class="audio">▶</i> <span class="soft">brother</span></div><div class="divider"></div><div class="heading">Example sentence</div><div class="examplePanel"><div class="line"><span>Брат берёт билет.</span><i class="audio">▶</i></div><div class="translation answer-only">The brother takes a ticket.</div></div></div></article></div>
+    <div class="state"><span class="label">Verso</span><article class="card phoneme" data-template="phoneme" data-side="back"><div class="targetBox"><div class="muted">The letter(s) is:</div><div class="symbol">б</div></div><div class="sound"><span class="muted">Sounds like:</span><span class="symbol">/b/</span><i class="audio">▶</i></div><div class="divider"></div><div class="pad"><div class="heading">Example word</div><div>брат <i class="audio">▶</i> <span class="soft">brother</span></div><div class="divider"></div><div class="heading">Example sentence</div><div class="examplePanel"><div class="line"><span>Брат берёт билет.</span><i class="audio">▶</i></div><div class="translation answer-only">The brother takes a ticket.</div></div></div></article></div>
+  </div></section>
+
+  <section class="family"><h2>Mandarim</h2><div class="pair">
+    <div class="state"><span class="label">Frente</span><article class="card mandarin" data-template="mandarin" data-side="front"><div class="hero"><div class="word">学生</div><div class="muted">xuéshēng</div><div class="soft">學生</div><div class="audio">▶</div></div><div class="divider"></div><div class="pad"><div class="heading">Definition</div><div>• noun: student</div><div class="divider"></div><div class="heading">Example</div><div class="examplePanel"><div class="line"><span>他是学生。</span><i class="audio">▶</i></div><div class="subline muted">tā shì xuéshēng.</div><div class="subline soft">他是學生。</div><div class="translation answer-only">Ele é estudante.</div></div></div></article></div>
+    <div class="state"><span class="label">Verso</span><article class="card mandarin" data-template="mandarin" data-side="back"><div class="hero"><div class="word">学生</div><div class="muted">xuéshēng</div><div class="soft">學生</div><div class="audio">▶</div></div><div class="divider"></div><div class="pad"><div class="heading">Definition</div><div>• noun: student</div><div class="divider"></div><div class="heading">Example</div><div class="examplePanel"><div class="line"><span>他是学生。</span><i class="audio">▶</i></div><div class="subline muted">tā shì xuéshēng.</div><div class="subline soft">他是學生。</div><div class="translation answer-only">Ele é estudante.</div></div></div></article></div>
+  </div></section>
+
+  <section class="family"><h2>Frequência japonesa</h2><div class="pair">
+    <div class="state"><span class="label">Frente</span><article class="card jp-original" data-template="japanese-frequency" data-side="front"><div class="pad"><div class="word jpFont" style="text-align:center">父親</div><div class="jpSentence jpFont">父親は今年50歳になる。</div><div class="jpControls"><span class="toggle">👁 leitura</span><i class="audio">▶</i><i class="audio">▶</i></div><p class="muted" style="text-align:center">Lembre a leitura e o significado. Depois vire o card.</p></div></article></div>
+    <div class="state"><span class="label">Verso</span><article class="card jp-original" data-template="japanese-frequency" data-side="back"><div class="jpImage">Imagem opcional</div><div class="pad"><div class="word jpFont" style="text-align:center"><ruby>父親<rt>ちちおや</rt></ruby></div><div class="audio">▶</div><div class="jpSentence jpFont"><ruby>父親<rt>ちちおや</rt></ruby>は今年50歳になる。</div><div class="audio">▶</div><div class="divider"></div><div class="meaning"><b class="soft">Palavra:</b> pai</div><div class="meaning"><b class="soft">Frase:</b> Meu pai faz 50 anos este ano.</div></div><div class="footer">Jisho · Imagens · Weblio</div></article></div>
+  </div></section>
+
+  <section class="family"><h2>Kana</h2><div class="pair">
+    <div class="state"><span class="label">Frente</span><article class="card kana kana-original" data-template="kana" data-side="front"><div class="kanaScript">Hiragana</div><div class="kanaGlyph jpFont">あ</div><p class="muted">Lembre a leitura (romaji). Depois vire o card.</p></article></div>
+    <div class="state"><span class="label">Verso</span><article class="card kana kana-original" data-template="kana" data-side="back"><div class="kanaScript">Hiragana</div><div class="kanaGlyph jpFont">あ</div><div class="media">Gif de ordem dos traços</div><div class="divider"></div><div class="kanaRomaji">a</div><div class="audio">▶</div><div class="media">Picture</div><div class="media">Strokes</div><div class="media mnemonic">Mnemonic: “a” abre a palavra.</div></article></div>
+  </div></section>
+</body>
+</html>

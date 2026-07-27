@@ -219,7 +219,32 @@ def test_build_russian_phoneme_model_uses_intro_template() -> None:
     assert 'document.getElementById("sentenceTranslation").style.display = "block"' in back
     assert _template_references(front).isdisjoint(forbidden_references)
     assert _template_references(back).isdisjoint(forbidden_references)
-    assert "--color-audio-button: #8b6cff" in model.css
+    assert [match.group(1) or match.group(2) for match in _FIELD_REFERENCE_RE.finditer(front + back)] == [
+        "Spellings",
+        "Sound",
+        "letter_audio",
+        "Example Word",
+        "word_audio",
+        "Word Translation",
+        "Example Sentence",
+        "sentence_audio",
+        "Sentence Translation",
+        "FrontSide",
+        "Sentence Translation",
+    ]
+    for signature in (
+        "--color-page-background: #0a1220;",
+        "--color-card-background: #0f1b2d;",
+        "--color-accent: #3b82f6;",
+        "--color-box-background: #12213a;",
+        "--color-box-border: #24405f;",
+        "border-radius: 16px;",
+        "border-top: 4px solid var(--color-accent);",
+        "box-shadow: 0 8px 30px rgba(0, 0, 0, 0.45);",
+        "border-radius: 50%;",
+        "overflow-x: hidden;",
+    ):
+        assert signature in model.css
     assert ".replay-button::before" not in model.css
     assert ".replay-button svg { display: none; }" not in model.css
     assert ".replay-button svg path" in model.css

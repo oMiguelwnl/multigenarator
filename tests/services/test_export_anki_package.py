@@ -176,23 +176,25 @@ def test_build_multilang_model_uses_project_card_template_sections() -> None:
     model = build_multilang_model()
 
     assert '<div class="customCard cardBack">' in model.templates[0]["qfmt"]
-    assert '<div id="translation" class="sentenceTranslation indent" style="display:none;">' in model.templates[0]["qfmt"]
+    assert '<div id="translation" class="sentenceTranslation" style="display:none;">' in model.templates[0]["qfmt"]
     assert '<div class="header">Definition:</div>' in model.templates[0]["qfmt"]
     assert 'definitionsList' in model.templates[0]["qfmt"]
     assert model.templates[0]["qfmt"].index('definitionsList') < model.templates[0]["qfmt"].index('{{Image}}')
     assert model.templates[0]["qfmt"].index('{{Image}}') < model.templates[0]["qfmt"].index('<div class="header">example:</div>')
     assert 'document.getElementById("translation").style.display = "block";' in model.templates[0]["afmt"]
-    assert "--max-width-card: 400px;" in model.css
-    assert "--color-nightMode-card-background: #0a1628;" in model.css
-    assert ".targetWordContainer" in model.css
-    assert "justify-content: space-between;" in model.css
-    assert ".wordAudioButtonBack" in model.css
-    assert "margin-left: 8px;" in model.css
-    assert ".exampleSentenceLine" in model.css
-    assert ".exampleSentenceText" in model.css
-    assert ".sentenceAudioButton" in model.css
-    assert "min-width: 0;" in model.css
-    assert ".customCard" in model.css
+    assert "--max-width-card: 460px;" in model.css
+    assert "--color-page-background: #121212;" in model.css
+    assert "--color-card-background: #1E1E1E;" in model.css
+    assert "--color-text-primary: #EAEAEA;" in model.css
+    assert "--color-text-muted: #A0A0A0;" in model.css
+    assert "--color-divider: #333333;" in model.css
+    assert "border-radius: 8px;" in model.css
+    assert "border: 1px solid var(--color-divider);" in model.css
+    assert "box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5);" in model.css
+    assert "--font-size-targetWord: 38px;" in model.css
+    assert "background: transparent;" in model.css
+    assert "overflow-x: hidden;" in model.css
+    assert "overflow-wrap: anywhere;" in model.css
 
 
 def test_build_english_frequency_model_localizes_visual_labels_only() -> None:

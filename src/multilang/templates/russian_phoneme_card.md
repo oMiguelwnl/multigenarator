@@ -45,7 +45,7 @@ Template used by introductory phoneme decks.
 
   <div class="horizontalPadding">
     <div class="header">example sentence:</div>
-    <div class="indent">
+    <div class="examplePanel">
       <div class="exampleSentenceLine">
         <span class="exampleWord">{{Example Sentence}}</span>
         <span class="wordAudioButton"> {{sentence_audio}} </span>
@@ -303,4 +303,150 @@ body {
 }
 
 .backRevealFallback { margin-top: 12px; }
+
+/* Approved dark-blue skin; field placement remains defined by the markup. */
+:root {
+  --color-page-background: #0a1220;
+  --color-card-background: #0f1b2d;
+  --color-text-primary: #e8f0fe;
+  --color-accent: #3b82f6;
+  --color-audio-button: #93c5fd;
+  --color-hint: #7f9bc4;
+  --color-sentence-translation: #93c5fd;
+  --color-header: #93c5fd;
+  --color-divider: #24405f;
+  --color-box-background: #12213a;
+  --color-box-border: #24405f;
+  --color-panel-background: #12213a;
+}
+
+body,
+body.nightMode,
+.card {
+  background: var(--color-page-background);
+  color: var(--color-text-primary);
+  overflow-x: hidden;
+}
+
+.card {
+  padding: 28px 16px;
+}
+
+.customCard,
+.nightMode .customCard {
+  width: 100%;
+  overflow: hidden;
+  background-color: var(--color-card-background);
+  color: var(--color-text-primary);
+  border-radius: 16px;
+  border-top: 4px solid var(--color-accent);
+  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.45);
+}
+
+.cardBack {
+  padding: 22px 0 18px;
+}
+
+.targetWordContainer {
+  margin: 0 18px;
+  gap: 0;
+}
+
+.targetWordBox,
+.nightMode .targetWordBox {
+  gap: 14px;
+  padding: 16px;
+  min-height: 0;
+  background-color: var(--color-box-background);
+  border: 1px solid var(--color-box-border);
+  border-radius: 10px;
+}
+
+.targetIPA,
+.nightMode .targetIPA {
+  color: #eaf1ff;
+  font-size: 34px;
+}
+
+.soundRow {
+  gap: 10px;
+  margin-top: 14px;
+}
+
+.soundRow .targetIPA {
+  font-size: 26px;
+}
+
+.hint,
+.nightMode .hint {
+  color: var(--color-hint);
+  font-size: 14px;
+}
+
+.dividerLine,
+.nightMode .dividerLine {
+  border-color: var(--color-divider);
+  margin: 16px 0;
+}
+
+.header,
+.nightMode .header {
+  color: var(--color-header);
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  margin: 0 0 8px;
+}
+
+.exampleWord,
+.nightMode .exampleWord {
+  color: #eaf1ff;
+}
+
+.exampleWordLine {
+  gap: 10px;
+}
+
+.exampleSentenceLine {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.examplePanel {
+  padding: 12px 14px;
+  background: var(--color-panel-background);
+  border-left: 3px solid var(--color-accent);
+  border-radius: 8px;
+}
+
+.exampleSentenceLine .exampleWord {
+  font-size: 18px;
+  font-weight: 400;
+}
+
+.sentenceTranslation,
+.nightMode .sentenceTranslation {
+  color: var(--color-sentence-translation);
+  font-size: 15px;
+}
+
+.replay-button {
+  width: 24px;
+  height: 24px;
+  background: var(--color-box-background);
+  border: 1px solid var(--color-box-border);
+  border-radius: 50%;
+}
+
+.replay-button svg {
+  width: 16px;
+  height: 16px;
+}
+
+@media (max-width: 420px) {
+  .card { padding: 12px 8px; }
+  .horizontalPadding { padding-left: 16px; padding-right: 16px; }
+}
 ```

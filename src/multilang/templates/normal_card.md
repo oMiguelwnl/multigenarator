@@ -36,12 +36,14 @@ Import these into your Anki note type under **Card Template → Front / Back / S
 
   <div class="horizontalPadding">
     <div class="header">example:</div>
-    <div class="indent exampleSentenceLine">
-      <span class="exampleSentenceText">{{Example Sentence}}</span>
-      <span class="sentenceAudioButton">{{sentence_audio}}</span>
-    </div>
-    <div id="translation" class="sentenceTranslation indent" style="display:none;">
-      {{Translation}}
+    <div class="examplePanel">
+      <div class="exampleSentenceLine">
+        <span class="exampleSentenceText">{{Example Sentence}}</span>
+        <span class="sentenceAudioButton">{{sentence_audio}}</span>
+      </div>
+      <div id="translation" class="sentenceTranslation" style="display:none;">
+        {{Translation}}
+      </div>
     </div>
   </div>
 
@@ -66,32 +68,35 @@ Import these into your Anki note type under **Card Template → Front / Back / S
 
 ```css
 :root {
-  --max-width-card: 400px;
+  --max-width-card: 460px;
   --font-size-card: 18px;
-  --font-size-targetWord: 26px;
-  --font-size-header: 14px;
+  --font-size-targetWord: 38px;
+  --font-size-header: 12px;
   --font-size-irregular-form: 15px;
 
-  --color-text-primary: #0f1b2d;
-  --color-nightMode-text-primary: #e8f0fe;
-  --color-card-background: #ffffff;
-  --color-nightMode-card-background: #0a1628;
-  --color-box-shadow: rgba(29, 78, 216, 0.12);
-  --color-audio-button: #2563eb;
-  --color-list-bullets: #3b82f6;
+  --color-page-background: #121212;
+  --color-text-primary: #EAEAEA;
+  --color-nightMode-text-primary: #EAEAEA;
+  --color-card-background: #1E1E1E;
+  --color-nightMode-card-background: #1E1E1E;
+  --color-panel-background: transparent;
+  --color-box-shadow: rgba(0, 0, 0, 0.5);
+  --color-audio-button: #A0A0A0;
+  --color-list-bullets: #A0A0A0;
   --color-irregular-form-background: #eff6ff;
   --color-nightMode-irregular-form-background: #1e3a5f;
   --color-irregular-form-border: #bfdbfe;
   --color-nightMode-irregular-form-border: #2563eb;
   --color-nightMode-irregular-form-text: rgba(219, 234, 254, 0.85);
-  --color-hint: #60a5fa;
-  --color-nightMode-hint: #93c5fd;
-  --color-sentence-translation: #3b82f6;
-  --color-nightMode-sentence-translation: #93c5fd;
-  --color-header: #1d4ed8;
-  --color-nightMode-header: rgba(147, 197, 253, 0.7);
-  --color-divider: #dbeafe;
-  --color-nightMode-divider: #1e3a5f;
+  --color-hint: #A0A0A0;
+  --color-nightMode-hint: #A0A0A0;
+  --color-sentence-translation: #A0A0A0;
+  --color-nightMode-sentence-translation: #A0A0A0;
+  --color-header: #A0A0A0;
+  --color-nightMode-header: #A0A0A0;
+  --color-text-muted: #A0A0A0;
+  --color-divider: #333333;
+  --color-nightMode-divider: #333333;
 }
 
 /* Chrome Base Styles */
@@ -157,12 +162,12 @@ table {
 /* ========== NIGHT MODE SCROLLBAR ========== */
 
 body.nightMode::-webkit-scrollbar {
-  background: #0a1628;
+  background: var(--color-page-background);
 }
 body.nightMode::-webkit-scrollbar:horizontal { height: 12px; }
 body.nightMode::-webkit-scrollbar:vertical { width: 12px; }
 body.nightMode::-webkit-scrollbar-thumb {
-  background: #2563eb;
+  background: var(--color-text-muted);
   border-radius: 8px;
 }
 body.nightMode::-webkit-scrollbar-thumb:horizontal { min-width: 50px; }
@@ -226,8 +231,8 @@ body {
   box-shadow:
     0 4px 24px var(--color-box-shadow),
     0 1px 4px rgba(37, 99, 235, 0.08);
-  border-radius: 16px;
-  border-top: 4px solid #2563eb;
+  border-radius: 8px;
+  border: 1px solid var(--color-divider);
   min-height: 200px;
   max-width: var(--max-width-card);
 
@@ -261,7 +266,7 @@ body {
 .targetWord {
   font-size: var(--font-size-targetWord);
   font-weight: 700;
-  color: #1e3a8a;
+  color: var(--color-text-primary);
   letter-spacing: -0.5px;
 }
 
@@ -281,7 +286,7 @@ body {
 }
 
 .nightMode .targetWord {
-  color: #93c5fd;
+  color: var(--color-text-primary);
 }
 
 .definitionsList {
@@ -446,6 +451,238 @@ body {
 .centerVertically {
   display: flex;
   align-items: center;
+}
+
+/* Gemini ergonomic dark layout. These canonical declarations stay last so
+   generated Anki cards keep the same hierarchy in day and night modes. */
+body,
+body.nightMode,
+.card {
+  background: var(--color-page-background);
+  color: var(--color-text-primary);
+  font-family: Georgia, Cambria, "Times New Roman", Times, serif;
+  margin: 0;
+  padding: 40px 16px;
+  min-height: 100vh;
+  box-sizing: border-box;
+  overflow-x: hidden;
+  overflow-wrap: break-word;
+  text-align: left;
+}
+
+.card {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 40px 16px;
+  min-height: 100vh;
+  overflow-x: hidden;
+}
+
+.customCard,
+.nightMode .customCard {
+  display: block;
+  margin: 0 auto;
+  max-width: 460px;
+  width: 100%;
+  min-height: 0;
+  padding: 28px 24px;
+  overflow: hidden;
+  overflow-wrap: anywhere;
+  background-color: var(--color-card-background);
+  color: var(--color-text-primary);
+  border: 1px solid var(--color-divider);
+  border-radius: 8px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5);
+  font-family: Georgia, Cambria, "Times New Roman", Times, serif;
+  font-size: 16px;
+  font-weight: 400;
+}
+
+.cardBack {
+  padding: 28px 24px;
+}
+
+.horizontalPadding {
+  width: 100%;
+  padding-left: 0;
+  padding-right: 0;
+}
+
+.indent {
+  padding-left: 0;
+}
+
+.targetWordContainer {
+  display: flex;
+  justify-content: flex-start;
+  align-items: baseline;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin: 0 0 20px;
+  width: 100%;
+  text-align: left;
+}
+
+.wordBlock {
+  display: flex;
+  flex-direction: row;
+  align-items: baseline;
+  flex-wrap: wrap;
+  gap: 10px;
+  min-width: 0;
+}
+
+.targetWord,
+.nightMode .targetWord {
+  color: var(--color-text-primary);
+  font-size: 38px;
+  font-weight: 600;
+  line-height: 1.1;
+  letter-spacing: -0.5px;
+  overflow-wrap: anywhere;
+}
+
+.ipa {
+  color: var(--color-text-muted);
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  font-size: 16px;
+  font-weight: 400;
+  line-height: 1.3;
+  letter-spacing: normal;
+  margin: 0;
+  opacity: 1;
+}
+
+.wordAudioButtonBack {
+  flex: 0 0 auto;
+  margin: 0 0 0 4px;
+  opacity: 0.8;
+}
+
+.dividerLine,
+.nightMode .dividerLine {
+  width: 100%;
+  height: 1px;
+  background: var(--color-divider);
+  border: 0;
+  margin: 20px 0;
+}
+
+.header,
+.nightMode .header {
+  color: var(--color-text-muted);
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  font-size: 12px;
+  font-weight: 600;
+  line-height: 1.3;
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+  margin: 0 0 8px;
+}
+
+.definitionsList {
+  list-style: none;
+  color: var(--color-text-primary);
+  font-size: 16px;
+  line-height: 1.6;
+  margin: 0;
+  padding-left: 0;
+}
+
+.definitionsList li {
+  color: var(--color-text-primary);
+  font-size: 16px;
+  line-height: 1.6;
+  margin-bottom: 6px;
+}
+
+.definitionsList li::before {
+  content: none;
+}
+
+.examplePanel {
+  padding: 0;
+  margin-top: 6px;
+  background: transparent;
+  border: 0;
+  border-radius: 0;
+}
+
+.exampleSentenceLine {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  font-size: 16px;
+  line-height: 1.5;
+}
+
+.exampleSentenceText {
+  flex: 1 1 auto;
+  min-width: 0;
+  color: var(--color-text-primary);
+  overflow-wrap: anywhere;
+}
+
+.sentenceAudioButton {
+  flex: 0 0 auto;
+  margin-left: 0;
+  opacity: 0.8;
+}
+
+.sentenceTranslation,
+.nightMode .sentenceTranslation {
+  color: var(--color-text-muted);
+  font-family: Georgia, Cambria, "Times New Roman", Times, serif;
+  font-size: 16px;
+  font-weight: 400;
+  font-style: normal;
+  line-height: 1.5;
+  margin-top: 8px;
+  padding: 0;
+  overflow-wrap: anywhere;
+}
+
+.image {
+  width: 100%;
+  max-width: 100%;
+  height: 210px;
+  margin-top: 16px;
+  overflow: hidden;
+  border-top: 1px solid var(--color-divider);
+  border-bottom: 1px solid var(--color-divider);
+}
+
+.image img {
+  display: block;
+  object-fit: contain;
+  width: 100% !important;
+  height: 100% !important;
+  max-width: 100% !important;
+  max-height: 100% !important;
+}
+
+.replay-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: auto;
+  height: auto;
+  padding: 0;
+  background: transparent;
+  border: 0;
+  border-radius: 0;
+  line-height: 0;
+}
+
+.replay-button svg {
+  width: 20px;
+  height: 20px;
+}
+
+.replay-button svg path {
+  fill: var(--color-audio-button);
 }
 ```
 

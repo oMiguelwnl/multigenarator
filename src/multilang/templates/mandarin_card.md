@@ -36,14 +36,16 @@ This template extends the Multilang normal card without reference-deck code or a
 
   <div class="horizontalPadding">
     <div class="header">example:</div>
-    <div class="indent exampleSentenceLine">
-      <span class="exampleSentenceText">{{Example Sentence}}</span>
-      <span class="sentenceAudioButton">{{sentence_audio}}</span>
-    </div>
-    {{#Sentence Pinyin}}<div class="sentencePinyin indent">{{Sentence Pinyin}}</div>{{/Sentence Pinyin}}
-    {{#Traditional Sentence}}<div class="traditionalSentence indent">{{Traditional Sentence}}</div>{{/Traditional Sentence}}
-    <div id="translation" class="sentenceTranslation indent" style="display:none;">
-      {{Translation}}
+    <div class="examplePanel">
+      <div class="exampleSentenceLine">
+        <span class="exampleSentenceText">{{Example Sentence}}</span>
+        <span class="sentenceAudioButton">{{sentence_audio}}</span>
+      </div>
+      {{#Sentence Pinyin}}<div class="sentencePinyin">{{Sentence Pinyin}}</div>{{/Sentence Pinyin}}
+      {{#Traditional Sentence}}<div class="traditionalSentence">{{Traditional Sentence}}</div>{{/Traditional Sentence}}
+      <div id="translation" class="sentenceTranslation" style="display:none;">
+        {{Translation}}
+      </div>
     </div>
   </div>
 </div>
@@ -66,14 +68,25 @@ This template extends the Multilang normal card without reference-deck code or a
 ## Styling (CSS)
 
 ```css
-.traditional,
-.sentencePinyin,
-.traditionalSentence {
-  color: var(--color-divider);
+.traditional {
+  color: #93c5fd;
+  font-size: 15px;
+  font-weight: 400;
+  line-height: 1.45;
+}
+
+.sentencePinyin {
+  color: #7f9bc4;
   font-size: 14px;
   font-weight: 400;
   line-height: 1.45;
-  opacity: 0.78;
+}
+
+.traditionalSentence {
+  color: #93c5fd;
+  font-size: 14px;
+  font-weight: 400;
+  line-height: 1.45;
 }
 
 .sentencePinyin,
@@ -82,8 +95,11 @@ This template extends the Multilang normal card without reference-deck code or a
 }
 
 .nightMode .traditional,
-.nightMode .sentencePinyin,
 .nightMode .traditionalSentence {
-  color: var(--color-nightMode-header);
+  color: #93c5fd;
+}
+
+.nightMode .sentencePinyin {
+  color: #7f9bc4;
 }
 ```
