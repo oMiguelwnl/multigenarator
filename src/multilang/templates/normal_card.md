@@ -485,8 +485,8 @@ body.nightMode,
   margin: 0 auto;
   max-width: 460px;
   width: 100%;
-  min-height: 0;
-  padding: 28px 24px;
+  min-height: min(760px, calc(100vh - 80px));
+  padding: clamp(24px, 4vh, 40px) 24px;
   overflow: hidden;
   overflow-wrap: anywhere;
   background-color: var(--color-card-background);
@@ -497,10 +497,6 @@ body.nightMode,
   font-family: Georgia, Cambria, "Times New Roman", Times, serif;
   font-size: 16px;
   font-weight: 400;
-}
-
-.cardBack {
-  padding: 28px 24px;
 }
 
 .horizontalPadding {

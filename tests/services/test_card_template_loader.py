@@ -237,7 +237,7 @@ def test_project_normal_template_preserves_contract_and_uses_gemini_dark_layout(
         ".customCard": {
             "max-width": "460px",
             "width": "100%",
-            "padding": "28px 24px",
+            "padding": "clamp(24px, 4vh, 40px) 24px",
             "border": "1px solid var(--color-divider)",
             "border-radius": "8px",
             "box-shadow": "0 4px 20px rgba(0, 0, 0, 0.5)",
@@ -322,6 +322,76 @@ def test_project_normal_template_preserves_contract_and_uses_gemini_dark_layout(
     assert _last_css_value(css, "object-fit", selector=".image img") == "contain"
     assert _last_css_value(css, "max-width", selector=".image img") == "100% !important"
     assert _last_css_value(css, "overflow-wrap", selector=".customCard") == "anywhere"
+
+
+def test_normal_and_mandarin_panels_use_responsive_viewport_height() -> None:
+    normal = load_card_template(source_type="frequency")
+    mandarin_frequency = load_card_template(
+        source_type="frequency", language=SupportedLanguage.ZH
+    )
+    mandarin_word_list = load_card_template(
+        source_type="word-list", language=SupportedLanguage.ZH
+    )
+
+    assert mandarin_frequency == mandarin_word_list
+    assert mandarin_frequency.css.startswith(normal.css)
+
+    css_blocks = list(re.finditer(r"([^{}]+)\{([^{}]*)\}", normal.css))
+    universal_blocks = [
+        match
+        for match in css_blocks
+        if {item.strip() for item in match.group(1).split(",")} == {"*"}
+    ]
+    assert universal_blocks
+    assert _last_css_value(universal_blocks[-1].group(2), "box-sizing") == "border-box"
+
+    card_padding = _last_css_value(normal.css, "padding", selector=".card")
+    assert card_padding == "40px 16px"
+    vertical_padding = int(card_padding.split()[0].removesuffix("px")) * 2
+    assert vertical_padding == 80
+
+    expected_min_height = f"min(760px, calc(100vh - {vertical_padding}px))"
+    for template in (normal, mandarin_frequency, mandarin_word_list):
+        css = template.css
+        assert _last_css_value(css, "display", selector=".card") == "flex"
+        assert _last_css_value(css, "justify-content", selector=".card") == "center"
+        assert _last_css_value(css, "align-items", selector=".card") == "center"
+        assert _last_css_value(css, "padding", selector=".card") == card_padding
+        assert _last_css_value(css, "min-height", selector=".card") == "100vh"
+
+        custom_card_block = _last_css_block(css, selector=".customCard")
+        assert _last_css_value(custom_card_block, "display") == "block"
+        for property_name in ("flex-direction", "justify-content", "align-items"):
+            assert (
+                re.search(
+                    rf"(?:^|[;\s]){re.escape(property_name)}\s*:",
+                    custom_card_block,
+                )
+                is None
+            )
+        assert _last_css_value(custom_card_block, "min-height") == expected_min_height
+        assert _last_css_value(custom_card_block, "padding") == (
+            "clamp(24px, 4vh, 40px) 24px"
+        )
+        assert re.search(r"(?:^|[;\s])height\s*:", custom_card_block) is None
+
+    assert min(760, 800 - vertical_padding) == 720
+    assert min(760, 667 - vertical_padding) == 587
+    assert min(760, 1000 - vertical_padding) == 760
+
+    final_custom_card_block = next(
+        match
+        for match in reversed(css_blocks)
+        if ".customCard" in {item.strip() for item in match.group(1).split(",")}
+    )
+    later_card_back_padding_blocks = [
+        match
+        for match in css_blocks
+        if match.start() > final_custom_card_block.start()
+        and ".cardBack" in {item.strip() for item in match.group(1).split(",")}
+        and re.search(r"(?:^|[;\s])padding\s*:", match.group(2))
+    ]
+    assert later_card_back_padding_blocks == []
 
 
 def test_project_latin_mvp_template_uses_wordfreq_layout_with_latin_fields() -> None:
