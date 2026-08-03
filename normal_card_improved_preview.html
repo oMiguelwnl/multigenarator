@@ -1,0 +1,466 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Preview do card Anki melhorado</title>
+  <style>
+    /* BEGIN IMPROVED ANKI CSS */
+    :root {
+      color-scheme: dark;
+      --page-background: #121212;
+      --card-background: #1e1e1e;
+      --panel-background: #182333;
+      --text-primary: #f5f7fa;
+      --text-secondary: #bac7d6;
+      --text-muted: #9aaabd;
+      --accent: #6aa9f4;
+      --border: #34465c;
+      --shadow: rgba(0, 0, 0, 0.38);
+    }
+
+    *, *::before, *::after {
+      box-sizing: border-box;
+    }
+
+    html,
+    body {
+      margin: 0;
+      background: var(--page-background);
+      color: var(--text-primary);
+    }
+
+    body {
+      overflow-x: hidden;
+      overflow-wrap: anywhere;
+      font-family: Georgia, Cambria, "Times New Roman", Times, serif;
+      text-align: left;
+    }
+
+    .card {
+      display: block;
+      width: 100%;
+      min-width: 0;
+      min-height: 0;
+      margin: 0;
+      padding: 0;
+      background: var(--page-background);
+    }
+
+    #qa {
+      width: 100%;
+      min-width: 0;
+    }
+
+    .customCard {
+      display: block;
+      box-sizing: border-box;
+      width: 100%;
+      max-width: none;
+      min-height: 0;
+      margin: 0;
+      overflow: hidden;
+      overflow-wrap: anywhere;
+      background: var(--card-background);
+      color: var(--text-primary);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      box-shadow: 0 12px 32px var(--shadow);
+    }
+
+    .cardContent {
+      box-sizing: border-box;
+      width: 100%;
+      max-width: 900px;
+      margin: 0 auto;
+      padding: clamp(1.5rem, 4vw, 3.5rem) clamp(1rem, 4.5vw, 3rem);
+    }
+
+    .wordHero {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: clamp(0.55rem, 1.5vw, 0.9rem);
+      width: 100%;
+      text-align: center;
+    }
+
+    .wordIdentity {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: baseline;
+      justify-content: center;
+      gap: 0.6rem 0.9rem;
+      min-width: 0;
+    }
+
+    .targetWord {
+      color: var(--text-primary);
+      font-size: clamp(2.35rem, 8vw, 4.7rem);
+      font-weight: 680;
+      line-height: 1.02;
+      letter-spacing: -0.035em;
+      overflow-wrap: anywhere;
+    }
+
+    .ipa {
+      color: var(--text-secondary);
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      font-size: clamp(0.95rem, 2vw, 1.18rem);
+      font-weight: 450;
+      line-height: 1.35;
+    }
+
+    .wordAudioSlot,
+    .sentenceAudioSlot {
+      display: inline-flex;
+      flex: 0 0 auto;
+      align-items: center;
+      justify-content: center;
+      min-width: 0;
+    }
+
+    .cardSections {
+      display: grid;
+      gap: clamp(1.45rem, 3.5vw, 2.5rem);
+      width: 100%;
+      margin-top: clamp(1.7rem, 4vw, 3rem);
+    }
+
+    .cardSection {
+      min-width: 0;
+    }
+
+    .sectionHeading {
+      margin: 0 0 0.65rem;
+      color: var(--accent);
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      font-size: clamp(0.72rem, 1.5vw, 0.86rem);
+      font-weight: 750;
+      line-height: 1.25;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+    }
+
+    .definitionText {
+      margin: 0;
+      color: var(--text-primary);
+      font-size: clamp(1.08rem, 2.6vw, 1.42rem);
+      font-weight: 400;
+      line-height: 1.62;
+      overflow-wrap: anywhere;
+    }
+
+    .image {
+      width: 100%;
+      max-width: 100%;
+      margin-top: 1rem;
+      overflow: hidden;
+      border: 1px solid var(--border);
+      border-radius: 9px;
+    }
+
+    .image img {
+      display: block;
+      width: 100%;
+      max-width: 100%;
+      object-fit: contain;
+    }
+
+    .examplePanel {
+      background: var(--panel-background);
+      border: 1px solid var(--border);
+      border-left: 4px solid var(--accent);
+      border-radius: 10px;
+      padding: clamp(1rem, 2.8vw, 1.55rem);
+    }
+
+    .exampleSentenceLine {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 0.9rem;
+      min-width: 0;
+    }
+
+    .exampleSentenceText {
+      flex: 1 1 auto;
+      min-width: 0;
+      color: var(--text-primary);
+      font-size: clamp(1.05rem, 2.5vw, 1.36rem);
+      font-weight: 500;
+      line-height: 1.55;
+      overflow-wrap: anywhere;
+    }
+
+    .sentenceTranslation {
+      margin-top: 0.85rem;
+      padding-top: 0.8rem;
+      color: var(--text-secondary);
+      border-top: 1px solid var(--border);
+      font-size: clamp(0.98rem, 2.2vw, 1.2rem);
+      font-weight: 400;
+      line-height: 1.55;
+      overflow-wrap: anywhere;
+    }
+
+    .replay-button {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-width: 34px;
+      min-height: 34px;
+      padding: 6px;
+      background: #233a57;
+      color: #f5f9ff;
+      border: 1px solid #6aa9f4;
+      border-radius: 50%;
+      line-height: 0;
+      vertical-align: middle;
+    }
+
+    .replay-button svg {
+      width: 18px;
+      height: 18px;
+    }
+
+    .replay-button svg path {
+      fill: currentColor;
+    }
+
+    .replay-button svg circle {
+      fill: none;
+      stroke: none;
+    }
+
+    .replay-button:focus-visible {
+      outline: 3px solid #93c5fd;
+      outline-offset: 3px;
+    }
+
+    @media (max-width: 420px) {
+      .cardContent {
+        padding: clamp(1.15rem, 5vw, 1.5rem) clamp(0.8rem, 4vw, 1rem);
+      }
+
+      .wordHero {
+        gap: clamp(0.45rem, 2vw, 0.65rem);
+      }
+
+      .cardSections {
+        gap: clamp(1.15rem, 5vw, 1.55rem);
+      }
+
+      .examplePanel {
+        padding: clamp(0.85rem, 4vw, 1.05rem);
+      }
+
+      .exampleSentenceLine {
+        align-items: flex-start;
+      }
+    }
+    /* END IMPROVED ANKI CSS */
+
+    .previewShell {
+      width: min(100%, 1540px);
+      margin: 0 auto;
+      padding: clamp(1rem, 3vw, 2.4rem);
+    }
+
+    .previewHeading {
+      margin: 0 0 1.4rem;
+      color: var(--text-primary);
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      font-size: clamp(1.25rem, 3vw, 1.85rem);
+      font-weight: 700;
+      line-height: 1.25;
+      text-align: center;
+    }
+
+    .previewGrid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      align-items: start;
+      gap: clamp(1rem, 2.5vw, 1.6rem);
+      width: 100%;
+      min-width: 0;
+    }
+
+    .anki-window {
+      min-width: 0;
+      overflow: hidden;
+      background: #0b0b0b;
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      box-shadow: 0 14px 38px rgba(0, 0, 0, 0.42);
+    }
+
+    .windowChrome {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 0.75rem;
+      padding: 0.7rem 0.85rem;
+      background: #181818;
+      color: var(--text-muted);
+      border-bottom: 1px solid var(--border);
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    }
+
+    .windowTitle {
+      margin: 0;
+      color: var(--text-primary);
+      font-size: 0.82rem;
+      font-weight: 650;
+      line-height: 1.3;
+    }
+
+    .stateLabel {
+      font-size: 0.7rem;
+      font-weight: 750;
+      line-height: 1.3;
+      letter-spacing: 0.09em;
+      text-transform: uppercase;
+    }
+
+    .previewCardHost {
+      padding: clamp(0.55rem, 2vw, 0.85rem);
+    }
+
+    .previewQa {
+      width: 100%;
+      min-width: 0;
+    }
+
+    .previewAudioButton {
+      flex: 0 0 auto;
+      cursor: default;
+      pointer-events: none;
+    }
+
+    .is-hidden {
+      display: none;
+    }
+
+    .is-visible {
+      display: block;
+    }
+
+    @media (max-width: 980px) {
+      .previewGrid {
+        grid-template-columns: 1fr;
+      }
+    }
+  </style>
+</head>
+<body>
+  <main class="previewShell">
+    <h1 class="previewHeading">Card normal melhorado · frente e verso</h1>
+    <div class="previewGrid">
+      <section class="anki-window" data-window-state="front">
+        <div class="windowChrome">
+          <h2 class="windowTitle">Janela Anki simulada</h2>
+          <span class="stateLabel">Frente</span>
+        </div>
+        <div class="previewCardHost card">
+          <div class="previewQa">
+            <article class="customCard cardBack" data-card-state="front">
+              <div class="cardContent">
+                <header class="wordHero">
+                  <div class="wordIdentity">
+                    <span class="targetWord" lang="de">Buch</span>
+                    <span class="ipa">/buːx/</span>
+                  </div>
+                  <span class="wordAudioSlot">
+                    <button type="button" class="replay-button previewAudioButton" aria-label="Controle visual de áudio da palavra">
+                      <svg viewBox="0 0 24 24" focusable="false">
+                        <path d="M8 5v14l11-7z"></path>
+                      </svg>
+                    </button>
+                  </span>
+                </header>
+
+                <div class="cardSections">
+                  <section class="cardSection">
+                    <h3 class="sectionHeading">Definition</h3>
+                    <p class="definitionText">noun: book; a written or printed work bound as pages</p>
+                  </section>
+
+                  <section class="cardSection">
+                    <h3 class="sectionHeading">Example</h3>
+                    <div class="examplePanel">
+                      <div class="exampleSentenceLine">
+                        <span class="exampleSentenceText" lang="de">Das Buch liegt auf dem Tisch.</span>
+                        <span class="sentenceAudioSlot">
+                          <button type="button" class="replay-button previewAudioButton" aria-label="Controle visual de áudio da frase">
+                            <svg viewBox="0 0 24 24" focusable="false">
+                              <path d="M8 5v14l11-7z"></path>
+                            </svg>
+                          </button>
+                        </span>
+                      </div>
+                      <div class="sentenceTranslation is-hidden" data-translation-state="hidden" aria-hidden="true">O livro está sobre a mesa.</div>
+                    </div>
+                  </section>
+                </div>
+              </div>
+            </article>
+          </div>
+        </div>
+      </section>
+
+      <section class="anki-window" data-window-state="back">
+        <div class="windowChrome">
+          <h2 class="windowTitle">Janela Anki simulada</h2>
+          <span class="stateLabel">Verso</span>
+        </div>
+        <div class="previewCardHost card">
+          <div class="previewQa">
+            <article class="customCard cardBack" data-card-state="back">
+              <div class="cardContent">
+                <header class="wordHero">
+                  <div class="wordIdentity">
+                    <span class="targetWord" lang="de">Buch</span>
+                    <span class="ipa">/buːx/</span>
+                  </div>
+                  <span class="wordAudioSlot">
+                    <button type="button" class="replay-button previewAudioButton" aria-label="Controle visual de áudio da palavra">
+                      <svg viewBox="0 0 24 24" focusable="false">
+                        <path d="M8 5v14l11-7z"></path>
+                      </svg>
+                    </button>
+                  </span>
+                </header>
+
+                <div class="cardSections">
+                  <section class="cardSection">
+                    <h3 class="sectionHeading">Definition</h3>
+                    <p class="definitionText">noun: book; a written or printed work bound as pages</p>
+                  </section>
+
+                  <section class="cardSection">
+                    <h3 class="sectionHeading">Example</h3>
+                    <div class="examplePanel">
+                      <div class="exampleSentenceLine">
+                        <span class="exampleSentenceText" lang="de">Das Buch liegt auf dem Tisch.</span>
+                        <span class="sentenceAudioSlot">
+                          <button type="button" class="replay-button previewAudioButton" aria-label="Controle visual de áudio da frase">
+                            <svg viewBox="0 0 24 24" focusable="false">
+                              <path d="M8 5v14l11-7z"></path>
+                            </svg>
+                          </button>
+                        </span>
+                      </div>
+                      <div class="sentenceTranslation is-visible" data-translation-state="visible" aria-hidden="false">O livro está sobre a mesa.</div>
+                    </div>
+                  </section>
+                </div>
+              </div>
+            </article>
+          </div>
+        </div>
+      </section>
+    </div>
+  </main>
+</body>
+</html>

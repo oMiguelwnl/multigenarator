@@ -1,0 +1,109 @@
+<meta charset="utf-8" />
+<title>normal_card — estilo freq_definition_inline (claro/escuro)</title>
+<style>
+  body{margin:0;padding:26px;background:#e9edf4;font-family:"Segoe UI",Arial,sans-serif;color:#1f2937}
+  h1{font-size:20px;margin:0 0 4px}
+  .sub{color:#6b7280;font-size:14px;margin:0 0 18px}
+  .grid{display:flex;gap:24px;flex-wrap:wrap}
+  .col{display:flex;flex-direction:column;gap:8px}
+  .cap{font-size:11px;font-weight:700;letter-spacing:.06em;color:#6b7280}
+
+  /* ===== shared card (freq_definition_inline layout), theme via .theme-* ===== */
+  .fc{width:340px;border-radius:16px;padding:26px 20px 20px;box-shadow:0 8px 26px rgba(15,27,45,.14)}
+  .fc .hero{text-align:center}
+  .fc .w{font-size:42px;font-weight:800;letter-spacing:-.5px;line-height:1.1}
+  .fc .ipa{font-size:15px;margin-top:4px}
+  .fc .heroaud{margin-top:10px}
+  .fc .aud{display:inline-flex;width:24px;height:24px;align-items:center;justify-content:center;border-radius:50%;font-size:10px;vertical-align:middle}
+  .fc .rule{border-top:1px solid;margin:18px 0}
+  .fc .hd{font-size:11px;font-weight:800;letter-spacing:.1em;text-transform:uppercase;margin:0 0 8px}
+  .fc .def{line-height:1.55;font-size:16px}
+  .fc .posin{font-weight:700}
+  .fc .exbox{border-left:3px solid;border-radius:8px;padding:12px 14px}
+  .fc .ex{font-size:17px;line-height:1.5}
+  .fc .ex mark{border-radius:4px;padding:0 3px;font-weight:600}
+  .fc .tr{font-style:italic;margin-top:10px;font-size:15px}
+
+  /* light */
+  .light .fc{background:#ffffff;color:#0f1b2d;border-top:4px solid #2563eb}
+  .light .fc .ipa{color:#94a3b8}
+  .light .fc .aud{background:#eff6ff;border:1px solid #cfe0fb;color:#2563eb}
+  .light .fc .w{color:#1e3a8a}
+  .light .fc .rule{border-color:#e5edfb}
+  .light .fc .hd{color:#1d4ed8}
+  .light .fc .posin{color:#2563eb}
+  .light .fc .exbox{background:#f6f9ff;border-left-color:#2563eb}
+  .light .fc .ex mark{background:#dbeafe;color:#1e3a8a}
+  .light .fc .tr{color:#3b82f6}
+
+  /* dark */
+  .dark{}
+  .dark .fc{background:#0f1b2d;color:#e8f0fe;border-top:4px solid #3b82f6;box-shadow:0 8px 30px rgba(0,0,0,.45)}
+  .dark .fc .ipa{color:#7f9bc4}
+  .dark .fc .aud{background:#12213a;border:1px solid #24405f;color:#93c5fd}
+  .dark .fc .w{color:#bfdbfe}
+  .dark .fc .rule{border-color:#24405f}
+  .dark .fc .hd{color:#93c5fd}
+  .dark .fc .posin{color:#93c5fd}
+  .dark .fc .exbox{background:#12213a;border-left-color:#3b82f6}
+  .dark .fc .ex mark{background:#1e3a5f;color:#dbeafe}
+  .dark .fc .tr{color:#93c5fd}
+  .darkwrap{background:#0a1220;border-radius:14px;padding:16px}
+</style>
+
+<h1>normal_card no estilo freq_definition_inline — claro e escuro</h1>
+<p class="sub">Herói centralizado · <b>verbo:</b> + sentidos por “;” · frase em painel com palavra-alvo realçada · áudio só ícone. Exemplo <b>run</b>.</p>
+
+<div class="grid">
+  <div class="col light">
+    <span class="cap">CLARO — FRENTE</span>
+    <div class="fc">
+      <div class="hero"><div class="w">run</div><div class="ipa">/rʌn/</div><div class="heroaud"><span class="aud">▶</span></div></div>
+      <div class="rule"></div>
+      <div class="hd">Definition</div>
+      <div class="def"><span class="posin">verbo:</span> to move quickly on foot; to operate or manage</div>
+      <div class="rule"></div>
+      <div class="hd">Example</div>
+      <div class="exbox"><span class="ex">They <mark>run</mark> every morning. <span class="aud">▶</span></span></div>
+    </div>
+  </div>
+
+  <div class="col light">
+    <span class="cap">CLARO — VERSO</span>
+    <div class="fc">
+      <div class="hero"><div class="w">run</div><div class="ipa">/rʌn/</div><div class="heroaud"><span class="aud">▶</span></div></div>
+      <div class="rule"></div>
+      <div class="hd">Definition</div>
+      <div class="def"><span class="posin">verbo:</span> to move quickly on foot; to operate or manage</div>
+      <div class="rule"></div>
+      <div class="hd">Example</div>
+      <div class="exbox"><span class="ex">They <mark>run</mark> every morning. <span class="aud">▶</span></span><div class="tr">Eles correm toda manhã.</div></div>
+    </div>
+  </div>
+
+  <div class="col dark">
+    <span class="cap">NOTURNO — FRENTE</span>
+    <div class="darkwrap"><div class="fc">
+      <div class="hero"><div class="w">run</div><div class="ipa">/rʌn/</div><div class="heroaud"><span class="aud">▶</span></div></div>
+      <div class="rule"></div>
+      <div class="hd">Definition</div>
+      <div class="def"><span class="posin">verbo:</span> to move quickly on foot; to operate or manage</div>
+      <div class="rule"></div>
+      <div class="hd">Example</div>
+      <div class="exbox"><span class="ex">They <mark>run</mark> every morning. <span class="aud">▶</span></span></div>
+    </div></div>
+  </div>
+
+  <div class="col dark">
+    <span class="cap">NOTURNO — VERSO</span>
+    <div class="darkwrap"><div class="fc">
+      <div class="hero"><div class="w">run</div><div class="ipa">/rʌn/</div><div class="heroaud"><span class="aud">▶</span></div></div>
+      <div class="rule"></div>
+      <div class="hd">Definition</div>
+      <div class="def"><span class="posin">verbo:</span> to move quickly on foot; to operate or manage</div>
+      <div class="rule"></div>
+      <div class="hd">Example</div>
+      <div class="exbox"><span class="ex">They <mark>run</mark> every morning. <span class="aud">▶</span></span><div class="tr">Eles correm toda manhã.</div></div>
+    </div></div>
+  </div>
+</div>

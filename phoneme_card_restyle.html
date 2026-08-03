@@ -1,0 +1,109 @@
+<meta charset="utf-8" />
+<title>Fonemas — mesmo layout, só o estilo novo</title>
+<style>
+  body { margin:0; padding:28px; background:#0a1220; font-family:"Segoe UI","Noto Sans",Arial,sans-serif; color:#e8f0fe; }
+  h1 { font-size:20px; margin:0 0 4px; }
+  .sub { color:#7f9bc4; margin:0 0 20px; font-size:14px; }
+  .lane { display:flex; gap:26px; flex-wrap:wrap; align-items:flex-start; }
+  .col { display:flex; flex-direction:column; gap:8px; }
+  .tag { font-size:12px; color:#7f9bc4; font-weight:600; }
+
+  /* ==== estilo novo (azul/escuro), estrutura ORIGINAL do fonema ==== */
+  .card { width:340px; border-radius:16px; overflow:hidden; background:#0f1b2d; border-top:4px solid #3b82f6;
+          box-shadow:0 8px 30px rgba(0,0,0,.45); padding:22px 18px 18px; }
+
+  .aud { display:inline-flex; width:24px; height:24px; align-items:center; justify-content:center; border-radius:50%;
+         background:#12213a; border:1px solid #24405f; color:#93c5fd; font-size:10px; vertical-align:middle; }
+
+  .hint { color:#7f9bc4; font-size:14px; }
+
+  /* targetWordBox — a caixa da letra (posição original: topo) */
+  .targetWordBox { display:flex; flex-direction:column; align-items:center; gap:14px; padding:16px;
+                   background:#12213a; border:1px solid #24405f; border-radius:10px; }
+  .targetIPA { font-family:"Charis SIL",Georgia,"Times New Roman",serif; font-size:34px; font-weight:700; color:#eaf1ff; line-height:1; }
+
+  /* soundRow — logo abaixo da caixa (posição original) */
+  .soundRow { display:flex; align-items:center; gap:10px; margin-top:14px; }
+  .soundRow .targetIPA { font-size:26px; }
+
+  .dividerLine { border-top:1px solid #24405f; margin:16px 0; }
+  .header { color:#93c5fd; font-size:11px; font-weight:800; letter-spacing:.1em; text-transform:uppercase; margin:0 0 8px; }
+
+  .exampleWordLine { display:flex; align-items:center; flex-wrap:wrap; gap:10px; }
+  .exampleWord { font-size:22px; font-weight:700; color:#eaf1ff; }
+  .sentenceTranslation { color:#93c5fd; font-style:italic; font-size:15px; }
+
+  .exampleSentenceLine { display:flex; align-items:center; gap:10px; }
+  .exampleSentenceLine .exampleWord { font-size:18px; font-weight:400; }
+</style>
+
+<h1>Deck de fonemas — mesma posição dos campos, só o estilo novo</h1>
+<p class="sub">Estrutura e rótulos idênticos ao template atual; muda apenas a aparência (escuro/azul). Exemplo grego <b>α</b> → PT.</p>
+
+<div class="lane">
+  <div class="col"><span class="tag">FRENTE</span>
+    <div class="card">
+      <!-- targetWordContainer -->
+      <div class="targetWordBox">
+        <div class="hint">The letter(s) is:</div>
+        <span class="targetIPA">α</span>
+      </div>
+      <div class="soundRow">
+        <div class="hint">Sounds like:</div>
+        <span class="targetIPA">/a/</span>
+        <span class="aud">▶</span>
+      </div>
+
+      <div class="dividerLine"></div>
+
+      <div class="header">example word:</div>
+      <div class="exampleWordLine">
+        <span class="exampleWord">αγάπη</span>
+        <span class="aud">▶</span>
+        <div class="sentenceTranslation">amor</div>
+      </div>
+
+      <div class="dividerLine"></div>
+
+      <div class="header">example sentence:</div>
+      <div class="exampleSentenceLine">
+        <span class="exampleWord">Η αγάπη είναι δυνατή.</span>
+        <span class="aud">▶</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="col"><span class="tag">VERSO (revela a tradução da frase)</span>
+    <div class="card">
+      <div class="targetWordBox">
+        <div class="hint">The letter(s) is:</div>
+        <span class="targetIPA">α</span>
+      </div>
+      <div class="soundRow">
+        <div class="hint">Sounds like:</div>
+        <span class="targetIPA">/a/</span>
+        <span class="aud">▶</span>
+      </div>
+
+      <div class="dividerLine"></div>
+
+      <div class="header">example word:</div>
+      <div class="exampleWordLine">
+        <span class="exampleWord">αγάπη</span>
+        <span class="aud">▶</span>
+        <div class="sentenceTranslation">amor</div>
+      </div>
+
+      <div class="dividerLine"></div>
+
+      <div class="header">example sentence:</div>
+      <div class="exampleSentenceLine">
+        <span class="exampleWord">Η αγάπη είναι δυνατή.</span>
+        <span class="aud">▶</span>
+      </div>
+      <div class="sentenceTranslation" style="margin-top:8px">O amor é forte.</div>
+    </div>
+  </div>
+</div>
+
+<p class="sub" style="margin-top:26px">Só preview — nada no código. Mesmos campos, mesma ordem, mesmos rótulos: só a cor/estilo mudou.</p>
