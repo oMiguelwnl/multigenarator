@@ -107,6 +107,23 @@ def _last_css_value(css: str, property_name: str, *, selector: str | None = None
     return values[-1].strip()
 
 
+def _media_query_block(css: str, *, condition: str) -> str:
+    opening = re.search(
+        rf"@media\s*\(\s*{re.escape(condition)}\s*\)\s*\{{",
+        css,
+    )
+    assert opening is not None, f"missing media query {condition!r}"
+    depth = 1
+    for offset, character in enumerate(css[opening.end() :], start=opening.end()):
+        if character == "{":
+            depth += 1
+        elif character == "}":
+            depth -= 1
+            if depth == 0:
+                return css[opening.end() : offset]
+    raise AssertionError(f"unclosed media query {condition!r}")
+
+
 def _write_templates(root: Path) -> Path:
     template_dir = root / "src" / "multilang" / "templates"
     template_dir.mkdir(parents=True)
@@ -228,16 +245,25 @@ def test_project_normal_template_preserves_contract_and_uses_gemini_dark_layout(
     assert _last_css_value(css, "--color-text-muted") == "#A0A0A0"
     assert _last_css_value(css, "--color-divider") == "#333333"
 
+    desktop_css = css.split("@media", maxsplit=1)[0]
     expected_declarations = {
         ".card": {
-            "padding": "40px 16px",
+            "display": "block",
+            "padding": "12px",
             "min-height": "100vh",
             "overflow-x": "hidden",
         },
-        ".customCard": {
-            "max-width": "460px",
+        "#qa": {
             "width": "100%",
+            "min-width": "0",
+        },
+        ".customCard": {
+            "margin": "0",
+            "max-width": "none",
+            "width": "100%",
+            "min-height": "0",
             "padding": "28px 24px",
+            "overflow": "hidden",
             "border": "1px solid var(--color-divider)",
             "border-radius": "8px",
             "box-shadow": "0 4px 20px rgba(0, 0, 0, 0.5)",
@@ -309,7 +335,11 @@ def test_project_normal_template_preserves_contract_and_uses_gemini_dark_layout(
     }
     for selector, declarations in expected_declarations.items():
         for property_name, expected_value in declarations.items():
-            assert _last_css_value(css, property_name, selector=selector) == expected_value
+            assert _last_css_value(desktop_css, property_name, selector=selector) == expected_value
+
+    card_declarations = _last_css_block(desktop_css, selector=".card")
+    assert "justify-content" not in card_declarations
+    assert "align-items" not in card_declarations
 
     assert "border-top: 4px" not in css
     assert "border-left: 3px" not in css
@@ -321,7 +351,13 @@ def test_project_normal_template_preserves_contract_and_uses_gemini_dark_layout(
     assert "{{Translation}}" in example_panel
     assert _last_css_value(css, "object-fit", selector=".image img") == "contain"
     assert _last_css_value(css, "max-width", selector=".image img") == "100% !important"
-    assert _last_css_value(css, "overflow-wrap", selector=".customCard") == "anywhere"
+    assert _last_css_value(desktop_css, "overflow-wrap", selector=".customCard") == "anywhere"
+    assert _last_css_value(css, "box-sizing", selector="*") == "border-box"
+
+    mobile_css = _media_query_block(css, condition="max-width: 420px")
+    assert _last_css_value(mobile_css, "padding", selector=".card") == "8px"
+    assert "min-height" not in _last_css_block(mobile_css, selector=".customCard")
+    assert _last_css_value(mobile_css, "padding", selector=".customCard") == "22px 18px"
 
 
 def test_project_latin_mvp_template_uses_wordfreq_layout_with_latin_fields() -> None:

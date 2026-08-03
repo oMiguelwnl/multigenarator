@@ -182,7 +182,7 @@ def test_build_multilang_model_uses_project_card_template_sections() -> None:
     assert model.templates[0]["qfmt"].index('definitionsList') < model.templates[0]["qfmt"].index('{{Image}}')
     assert model.templates[0]["qfmt"].index('{{Image}}') < model.templates[0]["qfmt"].index('<div class="header">example:</div>')
     assert 'document.getElementById("translation").style.display = "block";' in model.templates[0]["afmt"]
-    assert "--max-width-card: 460px;" in model.css
+    assert "--max-width-card: none;" in model.css
     assert "--color-page-background: #121212;" in model.css
     assert "--color-card-background: #1E1E1E;" in model.css
     assert "--color-text-primary: #EAEAEA;" in model.css
@@ -193,6 +193,17 @@ def test_build_multilang_model_uses_project_card_template_sections() -> None:
     assert "box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5);" in model.css
     assert "--font-size-targetWord: 38px;" in model.css
     assert "background: transparent;" in model.css
+    assert ".card {\n  display: block;\n  padding: 12px;" in model.css
+    assert "#qa {\n  width: 100%;\n  min-width: 0;\n}" in model.css
+    assert "margin: 0;\n  max-width: none;\n  width: 100%;\n  min-height: 0;" in model.css
+    assert "padding: 12px;" in model.css
+    assert "max-width: none;" in model.css
+    assert "min-height: 100vh;" in model.css
+    assert "min-height: 0;" in model.css
+    assert "@media (max-width: 420px)" in model.css
+    assert "min-height: calc(100vh - 24px);" not in model.css
+    assert "min-height: calc(100vh - 16px);" not in model.css
+    assert "padding: 22px 18px;" in model.css
     assert "overflow-x: hidden;" in model.css
     assert "overflow-wrap: anywhere;" in model.css
 

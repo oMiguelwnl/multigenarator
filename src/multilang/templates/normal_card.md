@@ -68,7 +68,7 @@ Import these into your Anki note type under **Card Template → Front / Back / S
 
 ```css
 :root {
-  --max-width-card: 460px;
+  --max-width-card: none;
   --font-size-card: 18px;
   --font-size-targetWord: 38px;
   --font-size-header: 12px;
@@ -462,7 +462,7 @@ body.nightMode,
   color: var(--color-text-primary);
   font-family: Georgia, Cambria, "Times New Roman", Times, serif;
   margin: 0;
-  padding: 40px 16px;
+  padding: 12px;
   min-height: 100vh;
   box-sizing: border-box;
   overflow-x: hidden;
@@ -471,19 +471,22 @@ body.nightMode,
 }
 
 .card {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  padding: 40px 16px;
+  display: block;
+  padding: 12px;
   min-height: 100vh;
   overflow-x: hidden;
+}
+
+#qa {
+  width: 100%;
+  min-width: 0;
 }
 
 .customCard,
 .nightMode .customCard {
   display: block;
-  margin: 0 auto;
-  max-width: 460px;
+  margin: 0;
+  max-width: none;
   width: 100%;
   min-height: 0;
   padding: 28px 24px;
@@ -683,6 +686,19 @@ body.nightMode,
 
 .replay-button svg path {
   fill: var(--color-audio-button);
+}
+
+@media (max-width: 420px) {
+  body,
+  body.nightMode,
+  .card {
+    padding: 8px;
+  }
+
+  .customCard,
+  .nightMode .customCard {
+    padding: 22px 18px;
+  }
 }
 ```
 
