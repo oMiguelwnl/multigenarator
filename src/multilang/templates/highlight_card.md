@@ -141,9 +141,10 @@ body {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  background: #f8f8f2;
-  border: 2px solid rgba(76, 175, 80, 0.28);
-  color: #263128;
+  background: #1f2a24 !important;
+  background-color: #1f2a24 !important;
+  border: 2px solid rgba(76, 175, 80, 0.42);
+  color: #4CAF50 !important;
   font-size: 0;
   line-height: 0;
   width: 40px;
@@ -153,6 +154,8 @@ body {
   border-radius: 50%;
   cursor: pointer;
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.35);
+  -webkit-appearance: none;
+  appearance: none;
 }
 
 .audio-controls .replay-button svg {
@@ -166,7 +169,7 @@ body {
   height: 0;
   border-top: 10px solid transparent;
   border-bottom: 10px solid transparent;
-  border-left: 15px solid #263128;
+  border-left: 15px solid #4CAF50 !important;
   margin-left: 4px;
 }
 

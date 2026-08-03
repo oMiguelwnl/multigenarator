@@ -1,12 +1,12 @@
 # Japanese Card Template
 
-Template used by the Japanese frequency deck. It adapts the sentence-mining
-"FRPG+" model (Portuguese content, sentence-first) and adds the JP1K-style
-furigana reveal toggle so the learner can recall the reading before seeing it.
+Template used by the Japanese frequency deck. It follows the visual structure of
+`ja_freq_v3_preview.html`: the blue frequency-card shell, front-side furigana
+toggle, and Portuguese definition/translation labels.
 
 Furigana is rendered with Anki's built-in `{{furigana:...}}` filter, so the
 `Word Reading` and `Sentence Furigana` fields hold bracketed readings such as
-`父親[ちちおや]` / `父親[ちちおや]は 今年[ことし]50 歳[さい]になる。`.
+`父親[ちちおや]` / `父親[ちちおや]は今年[ことし]50歳[さい]になる。`.
 
 ## Fields
 
@@ -24,44 +24,61 @@ Furigana is rendered with Anki's built-in `{{furigana:...}}` filter, so the
 ## Front Template
 
 ```html
-<div class="jpCard jpCard--front">
-  <div class="jpCardContent">
-    <div class="jpTargetWord jpFont">
-      <span class="jpPlain">{{Target Word}}</span>
-      <span class="jpReading" style="display:none;">{{furigana:Word Reading}}</span>
+<div class="customCard cardBack jpFront">
+  <div class="horizontalPadding centerVertically targetWordContainer">
+    <div class="wordBlock">
+      <span class="targetWord jpFont">
+        <span class="jPlain">{{Target Word}}</span>
+        <span class="jReading" style="display:none;">{{furigana:Word Reading}}</span>
+      </span>
     </div>
-
-    <div class="jpSentence jpFont">
-      <span class="jpPlain">{{Sentence}}</span>
-      <span class="jpReading" style="display:none;">{{furigana:Sentence Furigana}}</span>
+    <div class="wordControls">
+      <button type="button" class="furiganaToggle" onclick="toggleFurigana()">furigana</button>
+      <span class="wordAudioButtonBack">{{word_audio}}</span>
     </div>
+  </div>
 
-    <div class="jpControls">
-      <button type="button" class="jpEyeButton" onclick="toggleFurigana()">
-        <span class="jpEyeGlyph">👁</span>
-        <span class="jpEyeLabel">leitura</span>
-      </button>
-      <span class="jpAudio jpWordAudio">{{word_audio}}</span>
-      <span class="jpAudio jpSentenceAudio">{{sentence_audio}}</span>
+  <div class="dividerLine"></div>
+
+  <div class="horizontalPadding">
+    <div class="header">Definição:</div>
+    <div class="indent">
+      <ul class="definitionsList">
+        <li>{{Definition}}</li>
+      </ul>
     </div>
+  </div>
 
-    <div class="jpInstruction">
-      Lembre a leitura e o significado. Depois vire o card.
+  {{#Image}}
+  <div class="horizontalPadding">
+    <div class="image">{{Image}}</div>
+  </div>
+  {{/Image}}
+
+  <div class="dividerLine"></div>
+
+  <div class="horizontalPadding">
+    <div class="header">Exemplo:</div>
+    <div class="indent exampleSentenceLine">
+      <span class="exampleSentenceText jpFont">
+        <span class="jPlain">{{Sentence}}</span>
+        <span class="jReading" style="display:none;">{{furigana:Sentence Furigana}}</span>
+      </span>
+      <span class="sentenceAudioButton">{{sentence_audio}}</span>
+    </div>
+    <div id="translation" class="sentenceTranslation indent" style="display:none;">
+      {{Sentence Translation}}
     </div>
   </div>
 </div>
 
 <script>
   function toggleFurigana() {
-    var readings = document.querySelectorAll(".jpCard--front .jpReading");
-    var plains = document.querySelectorAll(".jpCard--front .jpPlain");
-    var revealed = readings.length > 0 && readings[0].style.display !== "none";
-    for (var i = 0; i < readings.length; i++) {
-      readings[i].style.display = revealed ? "none" : "";
-    }
-    for (var j = 0; j < plains.length; j++) {
-      plains[j].style.display = revealed ? "" : "none";
-    }
+    var readings = document.querySelectorAll(".jReading");
+    var plains = document.querySelectorAll(".jPlain");
+    var showing = readings.length && readings[0].style.display !== "none";
+    for (var i = 0; i < readings.length; i++) readings[i].style.display = showing ? "none" : "";
+    for (var j = 0; j < plains.length; j++) plains[j].style.display = showing ? "" : "none";
   }
 </script>
 ```
@@ -69,215 +86,286 @@ Furigana is rendered with Anki's built-in `{{furigana:...}}` filter, so the
 ## Back Template
 
 ```html
-<div class="jpCard jpCard--back">
-  {{#Image}}<div class="jpImage">{{Image}}</div>{{/Image}}
-
-  <div class="jpCardContent">
-    <div class="jpTargetWord jpFont">{{furigana:Word Reading}}</div>
-    <div class="jpAudioRow">{{word_audio}}</div>
-
-    <div class="jpSentence jpFont">{{furigana:Sentence Furigana}}</div>
-    <div class="jpAudioRow">{{sentence_audio}}</div>
-
-    <div class="jpDividerLine"></div>
-
-    <div class="jpMeaningRow">
-      <span class="jpMeaningLabel">Palavra:</span>
-      <span class="jpMeaningText">{{Definition}}</span>
+<div class="customCard cardBack jpBack">
+  <div class="horizontalPadding centerVertically targetWordContainer">
+    <div class="wordBlock">
+      <span class="targetWord jpFont">
+        <span class="jPlain" style="display:none;">{{Target Word}}</span>
+        <span class="jReading">{{furigana:Word Reading}}</span>
+      </span>
     </div>
-    <div class="jpMeaningRow">
-      <span class="jpMeaningLabel">Frase:</span>
-      <span class="jpMeaningText">{{Sentence Translation}}</span>
+    <div class="wordControls">
+      <button type="button" class="furiganaToggle" onclick="toggleFurigana()">furigana</button>
+      <span class="wordAudioButtonBack">{{word_audio}}</span>
     </div>
   </div>
 
-  <footer class="jpFooter">
-    <a href="https://jisho.org/search?keyword={{Target Word}}" title="Ver no Jisho">Jisho</a>
-    <span class="jpFooterDot">•</span>
-    <a href="https://www.google.co.jp/search?q={{Target Word}}&amp;tbm=isch" title="Buscar imagens">Imagens</a>
-    <span class="jpFooterDot">•</span>
-    <a href="https://www.weblio.jp/content/{{Target Word}}" title="Ver no Weblio">Weblio</a>
-  </footer>
+  <div class="dividerLine"></div>
+
+  <div class="horizontalPadding">
+    <div class="header">Definição:</div>
+    <div class="indent">
+      <ul class="definitionsList">
+        <li>{{Definition}}</li>
+      </ul>
+    </div>
+  </div>
+
+  {{#Image}}
+  <div class="horizontalPadding">
+    <div class="image">{{Image}}</div>
+  </div>
+  {{/Image}}
+
+  <div class="dividerLine"></div>
+
+  <div class="horizontalPadding">
+    <div class="header">Exemplo:</div>
+    <div class="indent exampleSentenceLine">
+      <span class="exampleSentenceText jpFont">
+        <span class="jPlain" style="display:none;">{{Sentence}}</span>
+        <span class="jReading">{{furigana:Sentence Furigana}}</span>
+      </span>
+      <span class="sentenceAudioButton">{{sentence_audio}}</span>
+    </div>
+    <div id="translation" class="sentenceTranslation indent">
+      {{Sentence Translation}}
+    </div>
+  </div>
 </div>
+
+<script>
+  function toggleFurigana() {
+    var readings = document.querySelectorAll(".jReading");
+    var plains = document.querySelectorAll(".jPlain");
+    var showing = readings.length && readings[0].style.display !== "none";
+    for (var i = 0; i < readings.length; i++) readings[i].style.display = showing ? "none" : "";
+    for (var j = 0; j < plains.length; j++) plains[j].style.display = showing ? "" : "none";
+  }
+</script>
 ```
 
 ## Styling (CSS)
 
 ```css
 :root {
-  --jp-max-width-card: 460px;
-  --jp-font-size-word: 40px;
-  --jp-font-size-sentence: 30px;
-  --jp-font-size-meaning: 20px;
-  --jp-font-size-label: 15px;
+  --max-width-card: 400px;
+  --font-size-card: 18px;
+  --font-size-targetWord: 26px;
+  --font-size-header: 14px;
 
-  --jp-color-page: #fdf6e3;
-  --jp-color-card: #ffffff;
-  --jp-color-text: #1f2430;
-  --jp-color-accent: #524c9e;
-  --jp-color-audio-button: #524c9e;
-  --jp-color-label: #6b7280;
-  --jp-color-divider: #e5e7eb;
-
-  --jp-color-nightMode-page: #0b0716;
-  --jp-color-nightMode-card: #171226;
-  --jp-color-nightMode-text: #f3f1fb;
-  --jp-color-nightMode-accent: #b8aef6;
-  --jp-color-nightMode-label: #9ca3af;
-  --jp-color-nightMode-divider: #2c2a46;
+  --color-page-background: #0a1628;
+  --color-text-primary: #e8f0fe;
+  --color-nightMode-text-primary: #e8f0fe;
+  --color-card-background: #0a1628;
+  --color-nightMode-card-background: #0a1628;
+  --color-box-shadow: rgba(0, 0, 0, 0.45);
+  --color-audio-button: #93c5fd;
+  --color-list-bullets: #93c5fd;
+  --color-hint: #93c5fd;
+  --color-nightMode-hint: #93c5fd;
+  --color-sentence-translation: #93c5fd;
+  --color-nightMode-sentence-translation: #93c5fd;
+  --color-header: rgba(147, 197, 253, 0.7);
+  --color-nightMode-header: rgba(147, 197, 253, 0.7);
+  --color-divider: #1e3a5f;
+  --color-nightMode-divider: #1e3a5f;
 }
 
 * { box-sizing: border-box; }
 
+p { margin-block-start: 1em; margin-block-end: 1em; }
+ol, ul { list-style: none; }
+
 body {
-  margin: 0 !important;
-  line-height: 1.35;
-  overflow-wrap: break-word;
+  line-height: 1.187;
   overscroll-behavior: none;
-  background: var(--jp-color-page);
+  margin: 0 !important;
+  overflow-wrap: break-word;
 }
 
-.nightMode body,
-body.nightMode { background: var(--jp-color-nightMode-page); }
+body.nightMode::-webkit-scrollbar { background: #0a1628; }
+body.nightMode::-webkit-scrollbar-thumb { background: #2563eb; border-radius: 8px; }
 
+.card { padding: 16px; }
+
+body,
+body.card,
+body.nightMode,
 .card {
-  padding: 12px;
-  background: var(--jp-color-page);
+  background: var(--color-page-background);
+  color: var(--color-text-primary);
 }
 
-.nightMode .card { background: var(--jp-color-nightMode-page); }
-
-.jpFont {
-  font-family: "Yu Mincho", "YuMincho", "Hiragino Mincho ProN", "Noto Serif JP",
-    "Noto Sans JP", "Segoe UI", serif;
-}
-
-.jpCard {
+.customCard {
   margin: 0 auto;
-  max-width: var(--jp-max-width-card);
-  width: 100%;
-  background: var(--jp-color-card);
-  color: var(--jp-color-text);
-  border-radius: 12px;
-  border-top: 4px solid var(--jp-color-accent);
-  box-shadow: 0 4px 18px rgba(0, 0, 0, 0.12);
-  overflow: hidden;
-  font-family: "Segoe UI", "Noto Sans JP", Arial, sans-serif;
-}
-
-.nightMode .jpCard {
-  background: var(--jp-color-nightMode-card);
-  color: var(--jp-color-nightMode-text);
-  border-top-color: var(--jp-color-nightMode-accent);
-}
-
-.jpCardContent { padding: 22px 20px; text-align: center; }
-
-.jpTargetWord {
-  font-size: var(--jp-font-size-word);
-  font-weight: 700;
-  line-height: 1.2;
-}
-
-.jpSentence {
-  font-size: var(--jp-font-size-sentence);
-  margin-top: 16px;
-  line-height: 1.5;
-}
-
-.jpControls {
+  position: relative;
   display: flex;
   justify-content: center;
   align-items: center;
-  flex-wrap: wrap;
-  gap: 14px;
-  margin-top: 20px;
+  background-color: var(--color-card-background);
+  box-shadow:
+    0 4px 24px var(--color-box-shadow),
+    0 1px 4px rgba(37, 99, 235, 0.08);
+  border-radius: 16px;
+  border-top: 4px solid #2563eb;
+  min-height: 200px;
+  max-width: var(--max-width-card);
+  font-weight: 500;
+  font-size: var(--font-size-card);
+  font-family: "Segoe UI", "Noto Sans", Arial, sans-serif;
+  color: var(--color-text-primary);
 }
 
-.jpEyeButton {
-  display: inline-flex;
+.nightMode .customCard {
+  color: var(--color-nightMode-text-primary);
+  background-color: var(--color-nightMode-card-background);
+}
+
+.cardBack {
+  flex-direction: column;
+  justify-content: flex-start;
+  align-items: flex-start;
+  padding-top: 24px;
+  padding-bottom: 8px;
+}
+
+.targetWordContainer {
+  margin-top: 8px;
+  margin-bottom: 24px;
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+}
+
+.targetWord {
+  font-size: var(--font-size-targetWord);
+  font-weight: 700;
+  color: #93c5fd;
+  letter-spacing: -0.5px;
+}
+
+.targetWord.jpFont { font-size: 32px; }
+.nightMode .targetWord { color: #93c5fd; }
+
+.wordBlock { display: flex; flex-direction: column; gap: 4px; }
+
+.jpFont {
+  font-family: "Yu Mincho", "YuMincho", "Hiragino Mincho ProN",
+    "Noto Serif JP", "Noto Sans JP", "Segoe UI", serif;
+}
+
+.wordControls {
+  display: flex;
   align-items: center;
-  gap: 6px;
-  padding: 6px 14px;
-  border: 1px solid var(--jp-color-accent);
-  border-radius: 999px;
+  gap: 10px;
+  flex: 0 0 auto;
+}
+
+.furiganaToggle {
+  border: 1px solid var(--color-audio-button);
+  color: var(--color-audio-button);
   background: transparent;
-  color: var(--jp-color-accent);
-  font-size: 14px;
+  border-radius: 999px;
+  padding: 4px 12px;
+  font-size: 13px;
   font-weight: 600;
   cursor: pointer;
 }
 
-.nightMode .jpEyeButton {
-  border-color: var(--jp-color-nightMode-accent);
-  color: var(--jp-color-nightMode-accent);
+.nightMode .furiganaToggle {
+  color: var(--color-nightMode-hint);
+  border-color: var(--color-nightMode-hint);
 }
 
-.jpEyeGlyph { font-size: 16px; line-height: 1; }
-
-.jpInstruction {
-  margin-top: 18px;
-  font-size: 13px;
-  font-style: italic;
-  color: var(--jp-color-label);
+.definitionsList { list-style: none; margin: 0; padding: 0; padding-left: 16px; }
+.definitionsList li { margin-bottom: 6px; line-height: 1.5; }
+.definitionsList li::before {
+  content: "\2022";
+  color: var(--color-list-bullets);
+  display: inline-block;
+  width: 8px;
+  margin-right: 5px;
+  margin-left: -16px;
+  font-size: 22px;
 }
 
-.nightMode .jpInstruction { color: var(--jp-color-nightMode-label); }
+.wordAudioButtonBack { margin-left: 8px; }
 
-.jpImage {
-  width: 100%;
-  max-height: 320px;
-  overflow: hidden;
-  display: flex;
-  justify-content: center;
+.exampleSentenceLine { display: flex; align-items: center; gap: 8px; }
+.exampleSentenceText { flex: 1 1 auto; min-width: 0; font-size: 22px; }
+.sentenceAudioButton { flex: 0 0 auto; margin-left: 8px; }
+
+.replay-button {
+  display: inline-flex;
   align-items: center;
-  background: #000;
-}
-
-.jpImage img {
-  width: 100%;
+  justify-content: center;
+  width: auto;
   height: auto;
-  max-height: 320px;
+  padding: 0;
+  background: transparent !important;
+  background-color: transparent !important;
+  border: 0 !important;
+  border-radius: 0;
+  box-shadow: none !important;
+  line-height: 0;
+  -webkit-appearance: none;
+  appearance: none;
+}
+
+.replay-button svg { width: 20px; height: 20px; }
+.replay-button svg path { fill: var(--color-audio-button) !important; }
+.replay-button svg circle { fill: transparent !important; stroke: none !important; }
+
+.image {
+  border-top: 1px solid var(--color-divider);
+  border-bottom: 1px solid var(--color-divider);
+  margin-top: 16px;
+  width: 100%;
+  height: 210px;
+}
+
+.image img {
   object-fit: contain;
+  width: 100% !important;
+  height: 100% !important;
+  max-width: 100% !important;
+  max-height: 100% !important;
 }
 
-.jpAudioRow { margin-top: 8px; }
-
-.jpDividerLine {
-  border-bottom: 1px solid var(--jp-color-divider);
-  margin: 18px 0;
+.sentenceTranslation {
+  color: var(--color-sentence-translation);
+  font-weight: 400;
+  font-style: italic;
+  padding-right: 15px;
+  padding-top: 8px;
 }
 
-.nightMode .jpDividerLine { border-color: var(--jp-color-nightMode-divider); }
+.nightMode .sentenceTranslation { color: var(--color-nightMode-sentence-translation); }
 
-.jpMeaningRow {
-  text-align: left;
-  font-size: var(--jp-font-size-meaning);
-  margin: 10px 0;
-}
-
-.jpMeaningLabel {
+.header {
+  color: var(--color-header);
+  font-size: var(--font-size-header);
   font-weight: 700;
-  font-size: var(--jp-font-size-label);
-  color: var(--jp-color-accent);
-  margin-right: 8px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  margin-top: 8px;
+  margin-bottom: 8px;
 }
 
-.nightMode .jpMeaningLabel { color: var(--jp-color-nightMode-accent); }
+.nightMode .header { color: var(--color-nightMode-header); }
 
-.jpFooter {
-  padding: 12px 20px 18px;
-  text-align: center;
-  font-size: 14px;
-  color: var(--jp-color-label);
+.dividerLine {
+  width: 100%;
+  border-bottom: 1px solid var(--color-divider);
+  margin-top: 8px;
+  margin-bottom: 8px;
 }
 
-.jpFooter a { color: var(--jp-color-accent); text-decoration: none; }
-.nightMode .jpFooter a { color: var(--jp-color-nightMode-accent); }
-.jpFooterDot { margin: 0 8px; opacity: 0.6; }
+.nightMode .dividerLine { border-color: var(--color-nightMode-divider); }
 
-.replay-button svg { width: 22px; height: 22px; }
-.replay-button svg path { fill: var(--jp-color-audio-button); }
-.nightMode .replay-button svg path { fill: var(--jp-color-nightMode-accent); }
-.replay-button svg circle { fill: none; stroke: none; }
+.horizontalPadding { width: 100%; padding-left: 16px; padding-right: 16px; }
+.indent { padding-left: 12px; }
+.centerVertically { display: flex; align-items: center; }
+
 ```

@@ -24,6 +24,7 @@ from multilang.services.mandarin_orthography import (
     MandarinOrthographyError,
     MandarinOrthographyService,
 )
+from multilang.services.part_of_speech import CANONICAL_PART_OF_SPEECH_LABELS
 from multilang.services.text_field_remediation import validate_definition_html
 
 
@@ -121,7 +122,7 @@ class AssembleExportCardsService:
                 word=escape(lexical_candidate.lemma),
                 front_of_card=escape(lexical_candidate.display_form),
                 ipa=self._render_ipa(lexical_candidate.ipa, lexical_candidate.spoken_form) if "IPA" in field_names else None,
-                definitions=self._render_definitions(lexical_candidate),
+                definitions=self._render_definitions(lexical_candidate, deck_language=deck_language),
                 example_sentence=escape(text_record.example_sentence or ""),
                 translation=(
                     escape(text_record.translation_text or "")
@@ -181,7 +182,7 @@ class AssembleExportCardsService:
             return list(bulk_upsert(cards))
         return [self.export_repository.upsert_card_snapshot(row) for row in cards]
 
-    def _render_definitions(self, candidate: LexicalCardCandidate) -> str:
+    def _render_definitions(self, candidate: LexicalCardCandidate, *, deck_language: SupportedLanguage) -> str:
         raw = candidate.definitions_html or ""
         cleaned = raw.replace("</ul>", "").replace("<ul>", "\n").replace("</li>", "\n").replace("<li>", "")
         raw_parts = [part.strip() for part in re.split(r"(?:<br\s*/?>|\n)+", cleaned) if part.strip()]
@@ -191,7 +192,7 @@ class AssembleExportCardsService:
                 validate_definition_html(lemma_key=candidate.lemma_key, definitions_html=part)
             except ValueError as exc:
                 raise AssembleExportCardsError(str(exc)) from exc
-            parts.append(escape(_require_definition_template(candidate, part)))
+            parts.append(escape(_require_definition_template(candidate, part, deck_language=deck_language)))
         if not parts:
             raise AssembleExportCardsError(f"missing definitions for item {candidate.lemma_key}")
         # Multiple senses stay on a single line (no <br> line breaks), joined with
@@ -336,7 +337,12 @@ def _uses_japanese_frequency_fields(*, deck_language: SupportedLanguage, source_
 
 
 _DEFINITION_SENSE_SEPARATOR = "; "
-_DEFINITION_TEMPLATE_RE = re.compile(r"^[^\W\d_](?:[^\W\d_]|[ -]){1,40}:\s+\S")
+_LEGACY_DEFINITION_TEMPLATE_RE = re.compile(r"^[^\W\d_](?:[^\W\d_]|[ -]){1,40}:\s+\S")
+_ENGLISH_DEFINITION_LABELS = (*CANONICAL_PART_OF_SPEECH_LABELS, "term")
+_ENGLISH_DEFINITION_TEMPLATE_RE = re.compile(
+    rf"^(?:{'|'.join(re.escape(label) for label in _ENGLISH_DEFINITION_LABELS)}):\s+\S",
+    re.IGNORECASE,
+)
 
 
 def _join_definition_senses(parts: list[str]) -> str:
@@ -366,8 +372,9 @@ def _join_definition_senses(parts: list[str]) -> str:
     return _DEFINITION_SENSE_SEPARATOR.join(rendered)
 
 
-def _require_definition_template(candidate: LexicalCardCandidate, definition: str) -> str:
-    if _DEFINITION_TEMPLATE_RE.match(definition):
+def _require_definition_template(candidate: LexicalCardCandidate, definition: str, *, deck_language: SupportedLanguage) -> str:
+    pattern = _ENGLISH_DEFINITION_TEMPLATE_RE if deck_language is SupportedLanguage.JA else _LEGACY_DEFINITION_TEMPLATE_RE
+    if pattern.match(definition):
         return definition
     raise AssembleExportCardsError(
         f"definition for item {candidate.lemma_key} must use '[part of speech]: [meaning]'"

@@ -466,6 +466,29 @@ def test_assemble_export_cards_builds_japanese_row_without_ipa() -> None:
     }
 
 
+def test_assemble_export_cards_rejects_non_english_definition_label() -> None:
+    candidate = make_candidate(item_key="父親", definitions_html="名詞: father", ipa=None, spoken_form=None).model_copy(
+        update={"display_form": "父親", "lemma_key": "ja:父親"}
+    )
+    service, _ = build_service(
+        accepted_records=[
+            make_text_record(
+                item_key="父親",
+                example_sentence="父親は今年50歳になる。",
+                translation_text="My father turns 50 this year.",
+            )
+        ],
+        candidates={"父親": candidate},
+        assets={
+            ("父親", AudioAssetKind.WORD.value): make_asset(item_key="父親", asset_kind=AudioAssetKind.WORD, storage_path="chichioya-word.mp3"),
+            ("父親", AudioAssetKind.SENTENCE.value): make_asset(item_key="父親", asset_kind=AudioAssetKind.SENTENCE, storage_path="chichioya-sentence.mp3"),
+        },
+    )
+
+    with pytest.raises(AssembleExportCardsError, match=r"must use '\[part of speech\]: \[meaning\]'"):
+        service.execute(job_id="job-1", deck_language=SupportedLanguage.JA)
+
+
 def test_assemble_export_cards_joins_definitions_on_one_line_and_preserves_image_blank() -> None:
     service, _ = build_service(
         accepted_records=[make_text_record(item_key="jump")],

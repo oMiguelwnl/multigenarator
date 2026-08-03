@@ -31,4 +31,16 @@
 | 026 | Japanese furigana generation | 2026-07-20 | passed | [026-japanese-furigana-generation](./026-japanese-furigana-generation/) |
 | 027 | Adicionar Mandarim ao fluxo moderno integrado | 2026-07-22 | human_needed | [027-adicionar-mandarim-integrado](./027-adicionar-mandarim-integrado/) |
 | 028 | Instalar seis skills recomendadas no escopo do projeto para OpenCode | 2026-07-20 | passed | [028-install-recommended-agent-skills](./028-install-recommended-agent-skills/) |
+| 027 | Mark Phase 29 complete | 2026-07-20 | passed | [027-mark-phase-29-complete](./027-mark-phase-29-complete/) |
+| 028 | Japanese deck smoke validation | 2026-07-20 | passed | [028-japanese-deck-smoke-validation](./028-japanese-deck-smoke-validation/) |
+| 029 | Japanese frequency preview template | 2026-07-20 | passed | [029-japanese-frequency-preview-template](./029-japanese-frequency-preview-template/) |
+| 030 | Remove Japanese template links | 2026-07-20 | passed | [030-remove-japanese-template-links](./030-remove-japanese-template-links/) |
+| 031 | Japanese definition English format | 2026-07-20 | passed | [031-japanese-definition-english-format](./031-japanese-definition-english-format/) |
 | 031 | Persistir o plano mestre lexical e adaptativo multilíngue v4 sem ativar o milestone | 2026-07-27 | passed | [031-persistir-plano-mestre-v4](./031-persistir-plano-mestre-v4/) |
+| 035 | Melhorar a altura e o espaçamento do template dos decks de frequência normal e Mandarin | 2026-08-02 | human_needed | [035-aumentar-altura-template-frequencia](./035-aumentar-altura-template-frequencia/) |
+| 036 | Gerar deck dummy de frequência em alemão para visualizar o template | 2026-08-02 | done | [036-gerar-deck-dummy-alemao](./036-gerar-deck-dummy-alemao/) |
+| 037 | Compactar o espaçamento entre fields no template de frequência | 2026-08-02 | human_needed | [037-compactar-espacamento-fields](./037-compactar-espacamento-fields/) |
+| 039 | Gerar preview HTML de todos os templates Anki do projeto | 2026-08-03 | passed | [039-preview-todos-templates](./039-preview-todos-templates/) |
+| 040 | Escurecer templates de Japonês, Kana e Latim por padrão | 2026-08-03 | passed | [040-escurecer-templates-japones-latim](./040-escurecer-templates-japones-latim/) |
+| 041 | Escurecer background do botão de áudio nos templates | 2026-08-03 | passed | [041-escurecer-botao-audio](./041-escurecer-botao-audio/) |
+| 042 | Corrigir fundo branco do card e do botão de áudio | 2026-08-03 | passed | [042-corrigir-fundo-card-audio](./042-corrigir-fundo-card-audio/) |

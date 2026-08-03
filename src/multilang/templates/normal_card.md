@@ -502,10 +502,6 @@ body.nightMode,
   font-weight: 400;
 }
 
-.cardBack {
-  padding: 28px 24px;
-}
-
 .horizontalPadding {
   width: 100%;
   padding-left: 0;

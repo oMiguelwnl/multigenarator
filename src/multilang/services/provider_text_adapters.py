@@ -468,12 +468,24 @@ def _definition_prompt(request: DefinitionGenerationRequest) -> str:
             "- Generate the definition from your language knowledge, not from a supplied cache definition.",
             "- Return one concise learner-friendly definition.",
             "- Format definitions_html exactly as '[part of speech]: [meaning]'.",
+            *_definition_format_rules(request),
             "- For short function words such as one-letter prepositions or conjunctions, define their normal source-language meaning.",
             "- Do not return placeholder text such as 'learner definition for ...'.",
             "- Use plain text only; do not include lists, examples, translations, or extra HTML except <br> between multiple senses if necessary.",
         ]
     )
     return "\n".join(lines)
+
+
+def _definition_format_rules(request: DefinitionGenerationRequest) -> list[str]:
+    if request.source_language != "ja":
+        return []
+    return [
+        "- For Japanese cards, keep the part-of-speech label in English, not Japanese.",
+        "- Do not use Japanese labels such as 名詞, 動詞, 形容詞, or 副詞.",
+        "- Use examples like 'noun: father', 'verb: to eat', 'adjective: cold', or 'particle: topic marker'.",
+        "- The meaning after the colon must also be in English.",
+    ]
 
 
 def _clean_definition(value: str | None) -> str:

@@ -44,10 +44,9 @@ def katakana_to_hiragana(value: str) -> str:
 
 @lru_cache(maxsize=1)
 def _tagger():
-    import unidic_lite
     from fugashi import Tagger
 
-    return Tagger(f"-d {unidic_lite.DICDIR}")
+    return Tagger()
 
 
 def _token_reading(token: object) -> str:

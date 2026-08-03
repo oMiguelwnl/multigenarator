@@ -228,6 +228,8 @@ def test_build_japanese_frequency_model_uses_japanese_note_type_and_template() -
     assert model.name == JAPANESE_NOTE_TYPE_NAME
     assert tuple(field["name"] for field in model.fields) == JAPANESE_EXPORT_CARD_FIELD_NAMES
     assert "toggleFurigana" in model.templates[0]["qfmt"]
+    assert "customCard cardBack jpFront" in model.templates[0]["qfmt"]
+    assert "customCard cardBack jpBack" in model.templates[0]["afmt"]
     assert "{{furigana:Word Reading}}" in model.templates[0]["qfmt"]
     assert "{{furigana:Sentence Furigana}}" in model.templates[0]["afmt"]
 

@@ -61,12 +61,12 @@ so this template only lays out the fields.
   --kana-font-size-romaji: 34px;
   --kana-font-size-mnemonic: 17px;
 
-  --kana-color-page: #fdf6e3;
-  --kana-color-card: #ffffff;
-  --kana-color-text: #1f2430;
-  --kana-color-accent: #524c9e;
-  --kana-color-muted: #6b7280;
-  --kana-color-divider: #e5e7eb;
+  --kana-color-page: #0b0716;
+  --kana-color-card: #171226;
+  --kana-color-text: #f3f1fb;
+  --kana-color-accent: #b8aef6;
+  --kana-color-muted: #9ca3af;
+  --kana-color-divider: #2c2a46;
 
   --kana-color-nightMode-page: #0b0716;
   --kana-color-nightMode-card: #171226;
@@ -96,6 +96,14 @@ body.nightMode { background: var(--kana-color-nightMode-page); }
 
 .nightMode .card { background: var(--kana-color-nightMode-page); }
 
+body,
+body.card,
+body.nightMode,
+.card {
+  background: var(--kana-color-page);
+  color: var(--kana-color-text);
+}
+
 .jpFont {
   font-family: "Yu Mincho", "YuMincho", "Hiragino Mincho ProN", "Noto Serif JP",
     "Noto Sans JP", "Segoe UI", serif;
@@ -109,7 +117,7 @@ body.nightMode { background: var(--kana-color-nightMode-page); }
   color: var(--kana-color-text);
   border-radius: 12px;
   border-top: 4px solid var(--kana-color-accent);
-  box-shadow: 0 4px 18px rgba(0, 0, 0, 0.12);
+  box-shadow: 0 4px 18px rgba(0, 0, 0, 0.42);
   padding: 24px 20px 28px;
   text-align: center;
   font-family: "Segoe UI", "Noto Sans JP", Arial, sans-serif;
@@ -191,8 +199,25 @@ body.nightMode { background: var(--kana-color-nightMode-page); }
 
 .nightMode .kanaMnemonic code { color: var(--kana-color-nightMode-accent); }
 
+.replay-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: auto;
+  height: auto;
+  padding: 0;
+  background: transparent !important;
+  background-color: transparent !important;
+  border: 0 !important;
+  border-radius: 0;
+  box-shadow: none !important;
+  line-height: 0;
+  -webkit-appearance: none;
+  appearance: none;
+}
+
 .replay-button svg { width: 24px; height: 24px; }
-.replay-button svg path { fill: var(--kana-color-accent); }
-.nightMode .replay-button svg path { fill: var(--kana-color-nightMode-accent); }
-.replay-button svg circle { fill: none; stroke: none; }
+.replay-button svg path { fill: var(--kana-color-accent) !important; }
+.nightMode .replay-button svg path { fill: var(--kana-color-nightMode-accent) !important; }
+.replay-button svg circle { fill: transparent !important; stroke: none !important; }
 ```

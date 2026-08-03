@@ -146,6 +146,49 @@ def test_litellm_definition_prompt_disambiguates_short_foreign_function_words() 
     assert "one-letter prepositions" in prompt
 
 
+def test_litellm_definition_prompt_for_japanese_requires_english_format() -> None:
+    calls: list[dict[str, object]] = []
+
+    def fake_completion(**kwargs: object) -> dict[str, object]:
+        calls.append(kwargs)
+        return {
+            "choices": [
+                {
+                    "message": {
+                        "content": json.dumps(
+                            {
+                                "definitions_html": "noun: father",
+                            }
+                        )
+                    }
+                }
+            ]
+        }
+
+    settings = Settings(
+        _env_file=None,
+        text_generation_model="openai/gpt-4o-mini",
+        openrouter_api_key="router-key",
+    )
+    result = LiteLLMSentenceAdapter(settings, completion_func=fake_completion).generate_definition(
+        DefinitionGenerationRequest(
+            display_form="父親",
+            lemma="父親",
+            source_language="ja",
+            target_language="en",
+            part_of_speech="noun",
+        )
+    )
+
+    prompt = calls[0]["messages"][1]["content"]
+    assert result.definitions_html == "noun: father"
+    assert "Source word language: Japanese (ja)" in prompt
+    assert "Definition output language: English (en)" in prompt
+    assert "keep the part-of-speech label in English" in prompt
+    assert "Do not use Japanese labels such as 名詞" in prompt
+    assert "noun: father" in prompt
+
+
 def test_litellm_highlight_prompt_uses_redacted_context_and_rules() -> None:
     calls: list[dict[str, object]] = []
 
