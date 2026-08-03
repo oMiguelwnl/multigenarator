@@ -1,0 +1,6074 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Preview de Todos os Templates Anki</title>
+  <style>
+    :root { color-scheme: dark; --page: #08111f; --panel: #101d33; --panel-soft: #14243d; --border: #274365; --text: #e8f0fe; --muted: #9db2d2; --accent: #69a7ff; }
+    * { box-sizing: border-box; }
+    html { scroll-behavior: smooth; }
+    body { margin: 0; padding: 32px 18px 56px; background: radial-gradient(circle at top left, rgba(59, 130, 246, 0.18), transparent 34rem), var(--page); color: var(--text); font-family: Inter, "Segoe UI", Arial, sans-serif; line-height: 1.5; }
+    header, nav, .template-section { width: min(100%, 1120px); margin-left: auto; margin-right: auto; }
+    header { margin-bottom: 18px; }
+    h1 { margin: 0 0 8px; font-size: clamp(28px, 4vw, 44px); line-height: 1.1; letter-spacing: -0.04em; }
+    header p, .section-header p { margin: 0; color: var(--muted); }
+    nav { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 28px; }
+    nav a { color: var(--accent); text-decoration: none; padding: 7px 10px; background: rgba(105, 167, 255, 0.09); border: 1px solid rgba(105, 167, 255, 0.22); border-radius: 999px; font-size: 13px; font-weight: 650; }
+    .template-section { padding: 22px; margin-bottom: 28px; background: linear-gradient(180deg, rgba(16, 29, 51, 0.92), rgba(12, 22, 39, 0.92)); border: 1px solid var(--border); border-radius: 22px; box-shadow: 0 16px 48px rgba(0, 0, 0, 0.34); }
+    .section-header { display: flex; justify-content: space-between; gap: 16px; margin-bottom: 16px; }
+    .eyebrow { margin: 0 0 4px !important; color: var(--accent) !important; font-size: 12px; font-weight: 800; letter-spacing: 0.12em; text-transform: uppercase; }
+    h2 { margin: 0 0 4px; font-size: 22px; }
+    h3 { margin: 0 0 10px; color: var(--muted); font-size: 13px; letter-spacing: 0.08em; text-transform: uppercase; }
+    .preview-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; }
+    .preview-panel { min-width: 0; padding: 12px; background: var(--panel-soft); border: 1px solid rgba(157, 178, 210, 0.18); border-radius: 16px; }
+    iframe { display: block; width: 100%; height: 560px; background: #0b1220; border: 1px solid rgba(157, 178, 210, 0.18); border-radius: 12px; }
+    .note { margin-top: 10px; color: var(--muted); font-size: 13px; }
+    @media (max-width: 840px) { body { padding: 22px 10px 40px; } .template-section { padding: 14px; border-radius: 16px; } .preview-grid { grid-template-columns: 1fr; } iframe { height: 520px; } }
+  </style>
+</head>
+<body>
+  <header><h1>Preview de todos os templates Anki</h1><p>Arquivo gerado a partir de <code>src/multilang/templates/</code>. Os campos Anki foram preenchidos com exemplos ficticios; campos opcionais usam placeholders visuais quando isso ajuda a revisar layout.</p></header>
+  <nav aria-label="Templates"><a href="#normal-card">Normal Card</a>
+<a href="#highlight-card">Highlight Card</a>
+<a href="#latin-mvp-card">Latin MVP Card</a>
+<a href="#russian-phoneme-card">Phoneme Card</a>
+<a href="#mandarin-card">Mandarin Card</a>
+<a href="#japanese-card">Japanese Frequency Card</a>
+<a href="#japanese-kana-card">Japanese Kana Card</a></nav>
+
+<section class="template-section" id="normal-card">
+  <div class="section-header"><div><p class="eyebrow">normal_card.md</p><h2>Normal Card</h2><p>Frequencia e listas modernas.</p></div></div>
+  <div class="preview-grid">
+    <article class="preview-panel"><h3>Frente</h3><iframe title="Normal Card frente" loading="lazy" sandbox="allow-scripts" srcdoc="&lt;!doctype html&gt;
+&lt;html lang=&quot;pt-BR&quot;&gt;
+&lt;head&gt;
+  &lt;meta charset=&quot;utf-8&quot;&gt;
+  &lt;meta name=&quot;viewport&quot; content=&quot;width=device-width, initial-scale=1&quot;&gt;
+  &lt;title&gt;Normal Card - frente&lt;/title&gt;
+  &lt;style&gt;
+:root {
+  --max-width-card: 460px;
+  --font-size-card: 18px;
+  --font-size-targetWord: 38px;
+  --font-size-header: 12px;
+  --font-size-irregular-form: 15px;
+
+  --color-page-background: #121212;
+  --color-text-primary: #EAEAEA;
+  --color-nightMode-text-primary: #EAEAEA;
+  --color-card-background: #1E1E1E;
+  --color-nightMode-card-background: #1E1E1E;
+  --color-panel-background: transparent;
+  --color-box-shadow: rgba(0, 0, 0, 0.5);
+  --color-audio-button: #A0A0A0;
+  --color-list-bullets: #A0A0A0;
+  --color-irregular-form-background: #eff6ff;
+  --color-nightMode-irregular-form-background: #1e3a5f;
+  --color-irregular-form-border: #bfdbfe;
+  --color-nightMode-irregular-form-border: #2563eb;
+  --color-nightMode-irregular-form-text: rgba(219, 234, 254, 0.85);
+  --color-hint: #A0A0A0;
+  --color-nightMode-hint: #A0A0A0;
+  --color-sentence-translation: #A0A0A0;
+  --color-nightMode-sentence-translation: #A0A0A0;
+  --color-header: #A0A0A0;
+  --color-nightMode-header: #A0A0A0;
+  --color-text-muted: #A0A0A0;
+  --color-divider: #333333;
+  --color-nightMode-divider: #333333;
+}
+
+/* Chrome Base Styles */
+p {
+  display: block;
+  margin-block-start: 1em;
+  margin-block-end: 1em;
+  margin-inline-start: 0px;
+  margin-inline-end: 0px;
+}
+
+div { display: block; }
+
+body {
+  display: block;
+  line-height: 1.187;
+}
+
+html { display: block; }
+
+span, applet, object, iframe,
+h1, h2, h3, h4, h5, h6,
+blockquote, pre, a, abbr, acronym, address, big, cite, code,
+del, dfn, em, img, ins, kbd, q, s, samp, small, strike, strong,
+sub, sup, tt, var, b, u, i, center,
+dl, dt, dd, ol, ul, li,
+fieldset, form, label, legend,
+table, caption, tbody, tfoot, thead, tr, th, td,
+article, aside, canvas, details, embed,
+figure, figcaption, footer, header, hgroup,
+menu, nav, output, ruby, section, summary,
+time, mark, audio, video {
+  margin: 0;
+  padding: 0;
+  border: 0;
+  font-size: 100%;
+  font: inherit;
+  vertical-align: baseline;
+}
+
+article, aside, details, figcaption, figure,
+footer, header, hgroup, menu, nav, section {
+  display: block;
+}
+
+ol, ul { list-style: none; }
+
+blockquote, q { quotes: none; }
+
+blockquote:before, blockquote:after,
+q:before, q:after {
+  content: &quot;&quot;;
+  content: none;
+}
+
+table {
+  border-collapse: collapse;
+  border-spacing: 0;
+}
+
+* { box-sizing: border-box; }
+
+/* ========== NIGHT MODE SCROLLBAR ========== */
+
+body.nightMode::-webkit-scrollbar {
+  background: var(--color-page-background);
+}
+body.nightMode::-webkit-scrollbar:horizontal { height: 12px; }
+body.nightMode::-webkit-scrollbar:vertical { width: 12px; }
+body.nightMode::-webkit-scrollbar-thumb {
+  background: var(--color-text-muted);
+  border-radius: 8px;
+}
+body.nightMode::-webkit-scrollbar-thumb:horizontal { min-width: 50px; }
+body.nightMode::-webkit-scrollbar-thumb:vertical { min-height: 50px; }
+
+/* ========== BASE ========== */
+
+body {
+  overscroll-behavior: none;
+  margin: 0 !important;
+  overflow-wrap: break-word;
+}
+
+#_flag {
+  position: fixed;
+  right: 10px;
+  top: 0;
+  font-size: 30px;
+  display: none;
+  -webkit-text-stroke-width: 1px;
+  -webkit-text-stroke-color: black;
+}
+
+#_mark {
+  position: fixed;
+  left: 10px;
+  top: 0;
+  font-size: 30px;
+  color: yellow;
+  display: none;
+  -webkit-text-stroke-width: 1px;
+  -webkit-text-stroke-color: black;
+}
+
+#typeans {
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.typeGood { background: #0f0; }
+.typeBad { background: #f00; }
+.typeMissed { background: #ccc; }
+.nightMode .latex { filter: invert(100%); }
+.drawing { zoom: 50%; }
+.nightMode img.drawing { filter: invert(1) hue-rotate(180deg); }
+
+/* ========== CARD STYLES ========== */
+
+.card {
+  padding: 16px;
+}
+
+.customCard {
+  margin: 0 auto;
+  position: relative;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+
+  background-color: var(--color-card-background);
+  box-shadow:
+    0 4px 24px var(--color-box-shadow),
+    0 1px 4px rgba(37, 99, 235, 0.08);
+  border-radius: 8px;
+  border: 1px solid var(--color-divider);
+  min-height: 200px;
+  max-width: var(--max-width-card);
+
+  font-weight: 500;
+  font-size: var(--font-size-card);
+  font-family: &quot;Segoe UI&quot;, &quot;Noto Sans&quot;, Arial, sans-serif;
+  color: var(--color-text-primary);
+}
+
+.nightMode .customCard {
+  color: var(--color-nightMode-text-primary);
+  background-color: var(--color-nightMode-card-background);
+}
+
+.cardBack {
+  flex-direction: column;
+  justify-content: flex-start;
+  align-items: flex-start;
+  padding-top: 24px;
+  padding-bottom: 8px;
+}
+
+.targetWordContainer {
+  margin-top: 8px;
+  margin-bottom: 24px;
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+}
+
+.targetWord {
+  font-size: var(--font-size-targetWord);
+  font-weight: 700;
+  color: var(--color-text-primary);
+  letter-spacing: -0.5px;
+}
+
+.wordBlock {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.ipa {
+  font-size: 14px;
+  color: var(--color-divader);
+  margin-left: 2px;
+  font-weight: 400;
+  letter-spacing: 0.03em;
+  opacity: 0.7;
+}
+
+.nightMode .targetWord {
+  color: var(--color-text-primary);
+}
+
+.definitionsList {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  padding-left: 16px;
+}
+
+.definitionsList li {
+  margin-bottom: 6px;
+  line-height: 1.5;
+}
+
+.definitionsList li::before {
+  content: &quot;\2022&quot;;
+  color: var(--color-list-bullets);
+  display: inline-block;
+  width: 8px;
+  margin-right: 5px;
+  margin-left: -16px;
+  font-size: 22px;
+}
+
+.wordAudioButtonFront {
+  position: absolute;
+  top: 21px;
+  right: 22px;
+}
+
+.wordAudioButtonBack {
+  margin-left: 8px;
+}
+
+.exampleSentenceLine {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.exampleSentenceText {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.sentenceAudioButton {
+  flex: 0 0 auto;
+  margin-left: 8px;
+}
+
+.replay-button svg {
+  width: 20px;
+  height: 20px;
+}
+
+.replay-button svg path {
+  fill: var(--color-audio-button);
+}
+
+.replay-button svg circle {
+  fill: none;
+  stroke: none;
+}
+
+.irregularFormsContainer {
+  display: flex;
+  flex-wrap: wrap;
+  margin-top: 12px;
+}
+
+.irregularForm {
+  background-color: var(--color-irregular-form-background);
+  border: 1px solid var(--color-irregular-form-border);
+  border-radius: 40px;
+  font-size: var(--font-size-irregular-form);
+  color: #1d4ed8;
+  font-weight: 600;
+  padding: 3px 12px 5px;
+  margin-right: 10px;
+  margin-bottom: 8px;
+}
+
+.nightMode .irregularForm {
+  color: var(--color-nightMode-irregular-form-text);
+  background-color: var(--color-nightMode-irregular-form-background);
+  border-color: var(--color-nightMode-irregular-form-border);
+}
+
+.image {
+  border-top: 1px solid var(--color-divider);
+  border-bottom: 1px solid var(--color-divider);
+  margin-top: 16px;
+  width: 100%;
+  height: 210px;
+}
+
+.image img {
+  object-fit: contain;
+  width: 100% !important;
+  height: 100% !important;
+  max-width: 100% !important;
+  max-height: 100% !important;
+}
+
+.hint { color: var(--color-hint); }
+.nightMode .hint { color: var(--color-nightMode-hint); }
+
+.sentenceTranslation {
+  color: var(--color-sentence-translation);
+  font-weight: 400;
+  font-style: italic;
+  padding-right: 15px;
+  padding-top: 8px;
+}
+
+.nightMode .sentenceTranslation {
+  color: var(--color-nightMode-sentence-translation);
+}
+
+.reportIconContainer {
+  width: 100%;
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+}
+
+.header {
+  color: var(--color-header);
+  font-size: var(--font-size-header);
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  margin-top: 8px;
+  margin-bottom: 8px;
+}
+
+.nightMode .header {
+  color: var(--color-nightMode-header);
+}
+
+.dividerLine {
+  width: 100%;
+  border-bottom: 1px solid var(--color-divider);
+  margin-top: 8px;
+  margin-bottom: 8px;
+}
+
+.nightMode .dividerLine {
+  border-color: var(--color-nightMode-divider);
+}
+
+.horizontalPadding {
+  width: 100%;
+  padding-left: 16px;
+  padding-right: 16px;
+}
+
+.indent {
+  padding-left: 12px;
+}
+
+.centerVertically {
+  display: flex;
+  align-items: center;
+}
+
+/* Gemini ergonomic dark layout. These canonical declarations stay last so
+   generated Anki cards keep the same hierarchy in day and night modes. */
+body,
+body.nightMode,
+.card {
+  background: var(--color-page-background);
+  color: var(--color-text-primary);
+  font-family: Georgia, Cambria, &quot;Times New Roman&quot;, Times, serif;
+  margin: 0;
+  padding: 40px 16px;
+  min-height: 100vh;
+  box-sizing: border-box;
+  overflow-x: hidden;
+  overflow-wrap: break-word;
+  text-align: left;
+}
+
+.card {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 40px 16px;
+  min-height: 100vh;
+  overflow-x: hidden;
+}
+
+.customCard,
+.nightMode .customCard {
+  display: block;
+  margin: 0 auto;
+  max-width: 460px;
+  width: 100%;
+  min-height: min(760px, calc(100vh - 80px));
+  padding: clamp(24px, 4vh, 40px) 24px;
+  overflow: hidden;
+  overflow-wrap: anywhere;
+  background-color: var(--color-card-background);
+  color: var(--color-text-primary);
+  border: 1px solid var(--color-divider);
+  border-radius: 8px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5);
+  font-family: Georgia, Cambria, &quot;Times New Roman&quot;, Times, serif;
+  font-size: 16px;
+  font-weight: 400;
+}
+
+.horizontalPadding {
+  width: 100%;
+  padding-left: 0;
+  padding-right: 0;
+}
+
+.indent {
+  padding-left: 0;
+}
+
+.targetWordContainer {
+  display: flex;
+  justify-content: flex-start;
+  align-items: baseline;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin: 0 0 20px;
+  width: 100%;
+  text-align: left;
+}
+
+.wordBlock {
+  display: flex;
+  flex-direction: row;
+  align-items: baseline;
+  flex-wrap: wrap;
+  gap: 10px;
+  min-width: 0;
+}
+
+.targetWord,
+.nightMode .targetWord {
+  color: var(--color-text-primary);
+  font-size: 38px;
+  font-weight: 600;
+  line-height: 1.1;
+  letter-spacing: -0.5px;
+  overflow-wrap: anywhere;
+}
+
+.ipa {
+  color: var(--color-text-muted);
+  font-family: -apple-system, BlinkMacSystemFont, &quot;Segoe UI&quot;, Roboto, sans-serif;
+  font-size: 16px;
+  font-weight: 400;
+  line-height: 1.3;
+  letter-spacing: normal;
+  margin: 0;
+  opacity: 1;
+}
+
+.wordAudioButtonBack {
+  flex: 0 0 auto;
+  margin: 0 0 0 4px;
+  opacity: 0.8;
+}
+
+.dividerLine,
+.nightMode .dividerLine {
+  width: 100%;
+  height: 1px;
+  background: var(--color-divider);
+  border: 0;
+  margin: 20px 0;
+}
+
+.header,
+.nightMode .header {
+  color: var(--color-text-muted);
+  font-family: -apple-system, BlinkMacSystemFont, &quot;Segoe UI&quot;, Roboto, sans-serif;
+  font-size: 12px;
+  font-weight: 600;
+  line-height: 1.3;
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+  margin: 0 0 8px;
+}
+
+.definitionsList {
+  list-style: none;
+  color: var(--color-text-primary);
+  font-size: 16px;
+  line-height: 1.6;
+  margin: 0;
+  padding-left: 0;
+}
+
+.definitionsList li {
+  color: var(--color-text-primary);
+  font-size: 16px;
+  line-height: 1.6;
+  margin-bottom: 6px;
+}
+
+.definitionsList li::before {
+  content: none;
+}
+
+.examplePanel {
+  padding: 0;
+  margin-top: 6px;
+  background: transparent;
+  border: 0;
+  border-radius: 0;
+}
+
+.exampleSentenceLine {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  font-size: 16px;
+  line-height: 1.5;
+}
+
+.exampleSentenceText {
+  flex: 1 1 auto;
+  min-width: 0;
+  color: var(--color-text-primary);
+  overflow-wrap: anywhere;
+}
+
+.sentenceAudioButton {
+  flex: 0 0 auto;
+  margin-left: 0;
+  opacity: 0.8;
+}
+
+.sentenceTranslation,
+.nightMode .sentenceTranslation {
+  color: var(--color-text-muted);
+  font-family: Georgia, Cambria, &quot;Times New Roman&quot;, Times, serif;
+  font-size: 16px;
+  font-weight: 400;
+  font-style: normal;
+  line-height: 1.5;
+  margin-top: 8px;
+  padding: 0;
+  overflow-wrap: anywhere;
+}
+
+.image {
+  width: 100%;
+  max-width: 100%;
+  height: 210px;
+  margin-top: 16px;
+  overflow: hidden;
+  border-top: 1px solid var(--color-divider);
+  border-bottom: 1px solid var(--color-divider);
+}
+
+.image img {
+  display: block;
+  object-fit: contain;
+  width: 100% !important;
+  height: 100% !important;
+  max-width: 100% !important;
+  max-height: 100% !important;
+}
+
+.replay-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: auto;
+  height: auto;
+  padding: 0;
+  background: transparent;
+  border: 0;
+  border-radius: 0;
+  line-height: 0;
+}
+
+.replay-button svg {
+  width: 20px;
+  height: 20px;
+}
+
+.replay-button svg path {
+  fill: var(--color-audio-button);
+}
+.preview-media { display: flex; align-items: center; justify-content: center; width: 100%; min-height: 100%; padding: 16px; color: #7f9bc4; background: rgba(59, 130, 246, 0.08); border: 1px dashed rgba(147, 197, 253, 0.45); border-radius: 8px; font-family: &quot;Segoe UI&quot;, Arial, sans-serif; font-size: 13px; }
+.preview-media--small { min-height: 72px; }
+  &lt;/style&gt;
+&lt;/head&gt;
+&lt;body class=&quot;card&quot;&gt;
+&lt;div class=&quot;customCard cardBack&quot;&gt;
+  &lt;div class=&quot;horizontalPadding centerVertically targetWordContainer&quot;&gt;
+    &lt;div class=&quot;wordBlock&quot;&gt;
+      &lt;span class=&quot;targetWord&quot;&gt;laufen&lt;/span&gt;
+      &lt;span class=&quot;ipa&quot;&gt;/ˈlaʊfən/&lt;/span&gt;
+    &lt;/div&gt;
+    &lt;span class=&quot;wordAudioButtonBack&quot;&gt;&lt;button class=&quot;replay-button&quot; type=&quot;button&quot; aria-label=&quot;play audio&quot;&gt;
+  &lt;svg viewBox=&quot;0 0 24 24&quot; aria-hidden=&quot;true&quot;&gt;
+    &lt;circle cx=&quot;12&quot; cy=&quot;12&quot; r=&quot;11&quot;&gt;&lt;/circle&gt;
+    &lt;path d=&quot;M9 7v10l8-5z&quot;&gt;&lt;/path&gt;
+  &lt;/svg&gt;
+&lt;/button&gt;&lt;/span&gt;
+  &lt;/div&gt;
+
+  &lt;div class=&quot;dividerLine&quot;&gt;&lt;/div&gt;
+
+  &lt;div class=&quot;horizontalPadding&quot;&gt;
+    &lt;div class=&quot;header&quot;&gt;Definition:&lt;/div&gt;
+    &lt;div class=&quot;indent&quot;&gt;
+      &lt;ul class=&quot;definitionsList&quot;&gt;
+        &lt;li&gt;verb: to run or walk at a steady pace&lt;/li&gt;
+      &lt;/ul&gt;
+    &lt;/div&gt;
+  &lt;/div&gt;
+
+
+  &lt;div class=&quot;image&quot;&gt;&lt;div class=&quot;preview-media&quot;&gt;Imagem opcional&lt;/div&gt;&lt;/div&gt;
+
+
+  &lt;div class=&quot;dividerLine&quot;&gt;&lt;/div&gt;
+
+  &lt;div class=&quot;horizontalPadding&quot;&gt;
+    &lt;div class=&quot;header&quot;&gt;example:&lt;/div&gt;
+    &lt;div class=&quot;examplePanel&quot;&gt;
+      &lt;div class=&quot;exampleSentenceLine&quot;&gt;
+        &lt;span class=&quot;exampleSentenceText&quot;&gt;Wir laufen jeden Morgen im Park.&lt;/span&gt;
+        &lt;span class=&quot;sentenceAudioButton&quot;&gt;&lt;button class=&quot;replay-button&quot; type=&quot;button&quot; aria-label=&quot;play audio&quot;&gt;
+  &lt;svg viewBox=&quot;0 0 24 24&quot; aria-hidden=&quot;true&quot;&gt;
+    &lt;circle cx=&quot;12&quot; cy=&quot;12&quot; r=&quot;11&quot;&gt;&lt;/circle&gt;
+    &lt;path d=&quot;M9 7v10l8-5z&quot;&gt;&lt;/path&gt;
+  &lt;/svg&gt;
+&lt;/button&gt;&lt;/span&gt;
+      &lt;/div&gt;
+      &lt;div id=&quot;translation&quot; class=&quot;sentenceTranslation&quot; style=&quot;display:none;&quot;&gt;
+        Nos corremos todas as manhas no parque.
+      &lt;/div&gt;
+    &lt;/div&gt;
+  &lt;/div&gt;
+
+&lt;/div&gt;
+&lt;/body&gt;
+&lt;/html&gt;"></iframe></article>
+    <article class="preview-panel"><h3>Verso</h3><iframe title="Normal Card verso" loading="lazy" sandbox="allow-scripts" srcdoc="&lt;!doctype html&gt;
+&lt;html lang=&quot;pt-BR&quot;&gt;
+&lt;head&gt;
+  &lt;meta charset=&quot;utf-8&quot;&gt;
+  &lt;meta name=&quot;viewport&quot; content=&quot;width=device-width, initial-scale=1&quot;&gt;
+  &lt;title&gt;Normal Card - verso&lt;/title&gt;
+  &lt;style&gt;
+:root {
+  --max-width-card: 460px;
+  --font-size-card: 18px;
+  --font-size-targetWord: 38px;
+  --font-size-header: 12px;
+  --font-size-irregular-form: 15px;
+
+  --color-page-background: #121212;
+  --color-text-primary: #EAEAEA;
+  --color-nightMode-text-primary: #EAEAEA;
+  --color-card-background: #1E1E1E;
+  --color-nightMode-card-background: #1E1E1E;
+  --color-panel-background: transparent;
+  --color-box-shadow: rgba(0, 0, 0, 0.5);
+  --color-audio-button: #A0A0A0;
+  --color-list-bullets: #A0A0A0;
+  --color-irregular-form-background: #eff6ff;
+  --color-nightMode-irregular-form-background: #1e3a5f;
+  --color-irregular-form-border: #bfdbfe;
+  --color-nightMode-irregular-form-border: #2563eb;
+  --color-nightMode-irregular-form-text: rgba(219, 234, 254, 0.85);
+  --color-hint: #A0A0A0;
+  --color-nightMode-hint: #A0A0A0;
+  --color-sentence-translation: #A0A0A0;
+  --color-nightMode-sentence-translation: #A0A0A0;
+  --color-header: #A0A0A0;
+  --color-nightMode-header: #A0A0A0;
+  --color-text-muted: #A0A0A0;
+  --color-divider: #333333;
+  --color-nightMode-divider: #333333;
+}
+
+/* Chrome Base Styles */
+p {
+  display: block;
+  margin-block-start: 1em;
+  margin-block-end: 1em;
+  margin-inline-start: 0px;
+  margin-inline-end: 0px;
+}
+
+div { display: block; }
+
+body {
+  display: block;
+  line-height: 1.187;
+}
+
+html { display: block; }
+
+span, applet, object, iframe,
+h1, h2, h3, h4, h5, h6,
+blockquote, pre, a, abbr, acronym, address, big, cite, code,
+del, dfn, em, img, ins, kbd, q, s, samp, small, strike, strong,
+sub, sup, tt, var, b, u, i, center,
+dl, dt, dd, ol, ul, li,
+fieldset, form, label, legend,
+table, caption, tbody, tfoot, thead, tr, th, td,
+article, aside, canvas, details, embed,
+figure, figcaption, footer, header, hgroup,
+menu, nav, output, ruby, section, summary,
+time, mark, audio, video {
+  margin: 0;
+  padding: 0;
+  border: 0;
+  font-size: 100%;
+  font: inherit;
+  vertical-align: baseline;
+}
+
+article, aside, details, figcaption, figure,
+footer, header, hgroup, menu, nav, section {
+  display: block;
+}
+
+ol, ul { list-style: none; }
+
+blockquote, q { quotes: none; }
+
+blockquote:before, blockquote:after,
+q:before, q:after {
+  content: &quot;&quot;;
+  content: none;
+}
+
+table {
+  border-collapse: collapse;
+  border-spacing: 0;
+}
+
+* { box-sizing: border-box; }
+
+/* ========== NIGHT MODE SCROLLBAR ========== */
+
+body.nightMode::-webkit-scrollbar {
+  background: var(--color-page-background);
+}
+body.nightMode::-webkit-scrollbar:horizontal { height: 12px; }
+body.nightMode::-webkit-scrollbar:vertical { width: 12px; }
+body.nightMode::-webkit-scrollbar-thumb {
+  background: var(--color-text-muted);
+  border-radius: 8px;
+}
+body.nightMode::-webkit-scrollbar-thumb:horizontal { min-width: 50px; }
+body.nightMode::-webkit-scrollbar-thumb:vertical { min-height: 50px; }
+
+/* ========== BASE ========== */
+
+body {
+  overscroll-behavior: none;
+  margin: 0 !important;
+  overflow-wrap: break-word;
+}
+
+#_flag {
+  position: fixed;
+  right: 10px;
+  top: 0;
+  font-size: 30px;
+  display: none;
+  -webkit-text-stroke-width: 1px;
+  -webkit-text-stroke-color: black;
+}
+
+#_mark {
+  position: fixed;
+  left: 10px;
+  top: 0;
+  font-size: 30px;
+  color: yellow;
+  display: none;
+  -webkit-text-stroke-width: 1px;
+  -webkit-text-stroke-color: black;
+}
+
+#typeans {
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.typeGood { background: #0f0; }
+.typeBad { background: #f00; }
+.typeMissed { background: #ccc; }
+.nightMode .latex { filter: invert(100%); }
+.drawing { zoom: 50%; }
+.nightMode img.drawing { filter: invert(1) hue-rotate(180deg); }
+
+/* ========== CARD STYLES ========== */
+
+.card {
+  padding: 16px;
+}
+
+.customCard {
+  margin: 0 auto;
+  position: relative;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+
+  background-color: var(--color-card-background);
+  box-shadow:
+    0 4px 24px var(--color-box-shadow),
+    0 1px 4px rgba(37, 99, 235, 0.08);
+  border-radius: 8px;
+  border: 1px solid var(--color-divider);
+  min-height: 200px;
+  max-width: var(--max-width-card);
+
+  font-weight: 500;
+  font-size: var(--font-size-card);
+  font-family: &quot;Segoe UI&quot;, &quot;Noto Sans&quot;, Arial, sans-serif;
+  color: var(--color-text-primary);
+}
+
+.nightMode .customCard {
+  color: var(--color-nightMode-text-primary);
+  background-color: var(--color-nightMode-card-background);
+}
+
+.cardBack {
+  flex-direction: column;
+  justify-content: flex-start;
+  align-items: flex-start;
+  padding-top: 24px;
+  padding-bottom: 8px;
+}
+
+.targetWordContainer {
+  margin-top: 8px;
+  margin-bottom: 24px;
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+}
+
+.targetWord {
+  font-size: var(--font-size-targetWord);
+  font-weight: 700;
+  color: var(--color-text-primary);
+  letter-spacing: -0.5px;
+}
+
+.wordBlock {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.ipa {
+  font-size: 14px;
+  color: var(--color-divader);
+  margin-left: 2px;
+  font-weight: 400;
+  letter-spacing: 0.03em;
+  opacity: 0.7;
+}
+
+.nightMode .targetWord {
+  color: var(--color-text-primary);
+}
+
+.definitionsList {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  padding-left: 16px;
+}
+
+.definitionsList li {
+  margin-bottom: 6px;
+  line-height: 1.5;
+}
+
+.definitionsList li::before {
+  content: &quot;\2022&quot;;
+  color: var(--color-list-bullets);
+  display: inline-block;
+  width: 8px;
+  margin-right: 5px;
+  margin-left: -16px;
+  font-size: 22px;
+}
+
+.wordAudioButtonFront {
+  position: absolute;
+  top: 21px;
+  right: 22px;
+}
+
+.wordAudioButtonBack {
+  margin-left: 8px;
+}
+
+.exampleSentenceLine {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.exampleSentenceText {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.sentenceAudioButton {
+  flex: 0 0 auto;
+  margin-left: 8px;
+}
+
+.replay-button svg {
+  width: 20px;
+  height: 20px;
+}
+
+.replay-button svg path {
+  fill: var(--color-audio-button);
+}
+
+.replay-button svg circle {
+  fill: none;
+  stroke: none;
+}
+
+.irregularFormsContainer {
+  display: flex;
+  flex-wrap: wrap;
+  margin-top: 12px;
+}
+
+.irregularForm {
+  background-color: var(--color-irregular-form-background);
+  border: 1px solid var(--color-irregular-form-border);
+  border-radius: 40px;
+  font-size: var(--font-size-irregular-form);
+  color: #1d4ed8;
+  font-weight: 600;
+  padding: 3px 12px 5px;
+  margin-right: 10px;
+  margin-bottom: 8px;
+}
+
+.nightMode .irregularForm {
+  color: var(--color-nightMode-irregular-form-text);
+  background-color: var(--color-nightMode-irregular-form-background);
+  border-color: var(--color-nightMode-irregular-form-border);
+}
+
+.image {
+  border-top: 1px solid var(--color-divider);
+  border-bottom: 1px solid var(--color-divider);
+  margin-top: 16px;
+  width: 100%;
+  height: 210px;
+}
+
+.image img {
+  object-fit: contain;
+  width: 100% !important;
+  height: 100% !important;
+  max-width: 100% !important;
+  max-height: 100% !important;
+}
+
+.hint { color: var(--color-hint); }
+.nightMode .hint { color: var(--color-nightMode-hint); }
+
+.sentenceTranslation {
+  color: var(--color-sentence-translation);
+  font-weight: 400;
+  font-style: italic;
+  padding-right: 15px;
+  padding-top: 8px;
+}
+
+.nightMode .sentenceTranslation {
+  color: var(--color-nightMode-sentence-translation);
+}
+
+.reportIconContainer {
+  width: 100%;
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+}
+
+.header {
+  color: var(--color-header);
+  font-size: var(--font-size-header);
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  margin-top: 8px;
+  margin-bottom: 8px;
+}
+
+.nightMode .header {
+  color: var(--color-nightMode-header);
+}
+
+.dividerLine {
+  width: 100%;
+  border-bottom: 1px solid var(--color-divider);
+  margin-top: 8px;
+  margin-bottom: 8px;
+}
+
+.nightMode .dividerLine {
+  border-color: var(--color-nightMode-divider);
+}
+
+.horizontalPadding {
+  width: 100%;
+  padding-left: 16px;
+  padding-right: 16px;
+}
+
+.indent {
+  padding-left: 12px;
+}
+
+.centerVertically {
+  display: flex;
+  align-items: center;
+}
+
+/* Gemini ergonomic dark layout. These canonical declarations stay last so
+   generated Anki cards keep the same hierarchy in day and night modes. */
+body,
+body.nightMode,
+.card {
+  background: var(--color-page-background);
+  color: var(--color-text-primary);
+  font-family: Georgia, Cambria, &quot;Times New Roman&quot;, Times, serif;
+  margin: 0;
+  padding: 40px 16px;
+  min-height: 100vh;
+  box-sizing: border-box;
+  overflow-x: hidden;
+  overflow-wrap: break-word;
+  text-align: left;
+}
+
+.card {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 40px 16px;
+  min-height: 100vh;
+  overflow-x: hidden;
+}
+
+.customCard,
+.nightMode .customCard {
+  display: block;
+  margin: 0 auto;
+  max-width: 460px;
+  width: 100%;
+  min-height: min(760px, calc(100vh - 80px));
+  padding: clamp(24px, 4vh, 40px) 24px;
+  overflow: hidden;
+  overflow-wrap: anywhere;
+  background-color: var(--color-card-background);
+  color: var(--color-text-primary);
+  border: 1px solid var(--color-divider);
+  border-radius: 8px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5);
+  font-family: Georgia, Cambria, &quot;Times New Roman&quot;, Times, serif;
+  font-size: 16px;
+  font-weight: 400;
+}
+
+.horizontalPadding {
+  width: 100%;
+  padding-left: 0;
+  padding-right: 0;
+}
+
+.indent {
+  padding-left: 0;
+}
+
+.targetWordContainer {
+  display: flex;
+  justify-content: flex-start;
+  align-items: baseline;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin: 0 0 20px;
+  width: 100%;
+  text-align: left;
+}
+
+.wordBlock {
+  display: flex;
+  flex-direction: row;
+  align-items: baseline;
+  flex-wrap: wrap;
+  gap: 10px;
+  min-width: 0;
+}
+
+.targetWord,
+.nightMode .targetWord {
+  color: var(--color-text-primary);
+  font-size: 38px;
+  font-weight: 600;
+  line-height: 1.1;
+  letter-spacing: -0.5px;
+  overflow-wrap: anywhere;
+}
+
+.ipa {
+  color: var(--color-text-muted);
+  font-family: -apple-system, BlinkMacSystemFont, &quot;Segoe UI&quot;, Roboto, sans-serif;
+  font-size: 16px;
+  font-weight: 400;
+  line-height: 1.3;
+  letter-spacing: normal;
+  margin: 0;
+  opacity: 1;
+}
+
+.wordAudioButtonBack {
+  flex: 0 0 auto;
+  margin: 0 0 0 4px;
+  opacity: 0.8;
+}
+
+.dividerLine,
+.nightMode .dividerLine {
+  width: 100%;
+  height: 1px;
+  background: var(--color-divider);
+  border: 0;
+  margin: 20px 0;
+}
+
+.header,
+.nightMode .header {
+  color: var(--color-text-muted);
+  font-family: -apple-system, BlinkMacSystemFont, &quot;Segoe UI&quot;, Roboto, sans-serif;
+  font-size: 12px;
+  font-weight: 600;
+  line-height: 1.3;
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+  margin: 0 0 8px;
+}
+
+.definitionsList {
+  list-style: none;
+  color: var(--color-text-primary);
+  font-size: 16px;
+  line-height: 1.6;
+  margin: 0;
+  padding-left: 0;
+}
+
+.definitionsList li {
+  color: var(--color-text-primary);
+  font-size: 16px;
+  line-height: 1.6;
+  margin-bottom: 6px;
+}
+
+.definitionsList li::before {
+  content: none;
+}
+
+.examplePanel {
+  padding: 0;
+  margin-top: 6px;
+  background: transparent;
+  border: 0;
+  border-radius: 0;
+}
+
+.exampleSentenceLine {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  font-size: 16px;
+  line-height: 1.5;
+}
+
+.exampleSentenceText {
+  flex: 1 1 auto;
+  min-width: 0;
+  color: var(--color-text-primary);
+  overflow-wrap: anywhere;
+}
+
+.sentenceAudioButton {
+  flex: 0 0 auto;
+  margin-left: 0;
+  opacity: 0.8;
+}
+
+.sentenceTranslation,
+.nightMode .sentenceTranslation {
+  color: var(--color-text-muted);
+  font-family: Georgia, Cambria, &quot;Times New Roman&quot;, Times, serif;
+  font-size: 16px;
+  font-weight: 400;
+  font-style: normal;
+  line-height: 1.5;
+  margin-top: 8px;
+  padding: 0;
+  overflow-wrap: anywhere;
+}
+
+.image {
+  width: 100%;
+  max-width: 100%;
+  height: 210px;
+  margin-top: 16px;
+  overflow: hidden;
+  border-top: 1px solid var(--color-divider);
+  border-bottom: 1px solid var(--color-divider);
+}
+
+.image img {
+  display: block;
+  object-fit: contain;
+  width: 100% !important;
+  height: 100% !important;
+  max-width: 100% !important;
+  max-height: 100% !important;
+}
+
+.replay-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: auto;
+  height: auto;
+  padding: 0;
+  background: transparent;
+  border: 0;
+  border-radius: 0;
+  line-height: 0;
+}
+
+.replay-button svg {
+  width: 20px;
+  height: 20px;
+}
+
+.replay-button svg path {
+  fill: var(--color-audio-button);
+}
+.preview-media { display: flex; align-items: center; justify-content: center; width: 100%; min-height: 100%; padding: 16px; color: #7f9bc4; background: rgba(59, 130, 246, 0.08); border: 1px dashed rgba(147, 197, 253, 0.45); border-radius: 8px; font-family: &quot;Segoe UI&quot;, Arial, sans-serif; font-size: 13px; }
+.preview-media--small { min-height: 72px; }
+  &lt;/style&gt;
+&lt;/head&gt;
+&lt;body class=&quot;card&quot;&gt;
+&lt;div class=&quot;customCard cardBack&quot;&gt;
+  &lt;div class=&quot;horizontalPadding centerVertically targetWordContainer&quot;&gt;
+    &lt;div class=&quot;wordBlock&quot;&gt;
+      &lt;span class=&quot;targetWord&quot;&gt;laufen&lt;/span&gt;
+      &lt;span class=&quot;ipa&quot;&gt;/ˈlaʊfən/&lt;/span&gt;
+    &lt;/div&gt;
+    &lt;span class=&quot;wordAudioButtonBack&quot;&gt;&lt;button class=&quot;replay-button&quot; type=&quot;button&quot; aria-label=&quot;play audio&quot;&gt;
+  &lt;svg viewBox=&quot;0 0 24 24&quot; aria-hidden=&quot;true&quot;&gt;
+    &lt;circle cx=&quot;12&quot; cy=&quot;12&quot; r=&quot;11&quot;&gt;&lt;/circle&gt;
+    &lt;path d=&quot;M9 7v10l8-5z&quot;&gt;&lt;/path&gt;
+  &lt;/svg&gt;
+&lt;/button&gt;&lt;/span&gt;
+  &lt;/div&gt;
+
+  &lt;div class=&quot;dividerLine&quot;&gt;&lt;/div&gt;
+
+  &lt;div class=&quot;horizontalPadding&quot;&gt;
+    &lt;div class=&quot;header&quot;&gt;Definition:&lt;/div&gt;
+    &lt;div class=&quot;indent&quot;&gt;
+      &lt;ul class=&quot;definitionsList&quot;&gt;
+        &lt;li&gt;verb: to run or walk at a steady pace&lt;/li&gt;
+      &lt;/ul&gt;
+    &lt;/div&gt;
+  &lt;/div&gt;
+
+
+  &lt;div class=&quot;image&quot;&gt;&lt;div class=&quot;preview-media&quot;&gt;Imagem opcional&lt;/div&gt;&lt;/div&gt;
+
+
+  &lt;div class=&quot;dividerLine&quot;&gt;&lt;/div&gt;
+
+  &lt;div class=&quot;horizontalPadding&quot;&gt;
+    &lt;div class=&quot;header&quot;&gt;example:&lt;/div&gt;
+    &lt;div class=&quot;examplePanel&quot;&gt;
+      &lt;div class=&quot;exampleSentenceLine&quot;&gt;
+        &lt;span class=&quot;exampleSentenceText&quot;&gt;Wir laufen jeden Morgen im Park.&lt;/span&gt;
+        &lt;span class=&quot;sentenceAudioButton&quot;&gt;&lt;button class=&quot;replay-button&quot; type=&quot;button&quot; aria-label=&quot;play audio&quot;&gt;
+  &lt;svg viewBox=&quot;0 0 24 24&quot; aria-hidden=&quot;true&quot;&gt;
+    &lt;circle cx=&quot;12&quot; cy=&quot;12&quot; r=&quot;11&quot;&gt;&lt;/circle&gt;
+    &lt;path d=&quot;M9 7v10l8-5z&quot;&gt;&lt;/path&gt;
+  &lt;/svg&gt;
+&lt;/button&gt;&lt;/span&gt;
+      &lt;/div&gt;
+      &lt;div id=&quot;translation&quot; class=&quot;sentenceTranslation&quot; style=&quot;display:none;&quot;&gt;
+        Nos corremos todas as manhas no parque.
+      &lt;/div&gt;
+    &lt;/div&gt;
+  &lt;/div&gt;
+
+&lt;/div&gt;
+
+&lt;script&gt;
+  document.getElementById(&quot;translation&quot;).style.display = &quot;block&quot;;
+&lt;/script&gt;
+&lt;/body&gt;
+&lt;/html&gt;"></iframe></article>
+  </div>
+</section>
+<section class="template-section" id="highlight-card">
+  <div class="section-header"><div><p class="eyebrow">highlight_card.md</p><h2>Highlight Card</h2><p>Cards a partir de highlights Kindle, sem traducao.</p></div></div>
+  <div class="preview-grid">
+    <article class="preview-panel"><h3>Frente</h3><iframe title="Highlight Card frente" loading="lazy" sandbox="allow-scripts" srcdoc="&lt;!doctype html&gt;
+&lt;html lang=&quot;pt-BR&quot;&gt;
+&lt;head&gt;
+  &lt;meta charset=&quot;utf-8&quot;&gt;
+  &lt;meta name=&quot;viewport&quot; content=&quot;width=device-width, initial-scale=1&quot;&gt;
+  &lt;title&gt;Highlight Card - frente&lt;/title&gt;
+  &lt;style&gt;
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  overflow-x: hidden;
+  overflow-y: auto;
+  overflow-wrap: anywhere;
+  background: transparent;
+}
+
+.card,
+.back-card {
+  text-align: center;
+  color: #e0e0e0;
+  background: #121212;
+  padding: 18px 12px 20px;
+  border-radius: 15px;
+  border: 1px solid #242424;
+  width: min(100%, 480px);
+  font-family: Georgia, &quot;Times New Roman&quot;, serif;
+  margin: 0 auto;
+  box-sizing: border-box;
+  overflow-x: hidden;
+  overflow-y: auto;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.32);
+}
+
+.back-card &gt; .card {
+  background: transparent;
+  border: 0;
+  border-radius: 0;
+  padding: 0;
+  width: 100%;
+  box-shadow: none;
+}
+
+.word {
+  font-size: 35px;
+  font-weight: bold;
+  color: #4CAF50;
+  margin: 10px 0;
+  text-shadow: 0 0 8px rgba(76, 175, 80, 0.3);
+  line-height: 1.2;
+}
+
+.ipa {
+  font-size: 20px;
+  color: #aaa;
+  font-family: Georgia, &quot;Times New Roman&quot;, serif;
+  margin-bottom: 8px;
+}
+
+.example {
+  font-size: 20px;
+  color: #00BCD4;
+  font-style: italic;
+  line-height: 1.5;
+  margin: 15px 0;
+  padding: 0 15px;
+}
+
+.meaning {
+  font-size: 20px;
+  color: #FF5252;
+  line-height: 1.6;
+  margin: 20px 0;
+  text-align: center;
+  padding: 0 15px;
+}
+
+.audio-controls {
+  margin: 20px 0 18px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 12px;
+}
+
+.audio-controls span {
+  display: inline-flex;
+  line-height: 0;
+}
+
+.audio-controls .replay-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: #1f2a24 !important;
+  background-color: #1f2a24 !important;
+  border: 2px solid rgba(76, 175, 80, 0.42);
+  color: #4CAF50 !important;
+  font-size: 0;
+  line-height: 0;
+  width: 40px;
+  height: 40px;
+  padding: 0;
+  margin: 0;
+  border-radius: 50%;
+  cursor: pointer;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.35);
+  -webkit-appearance: none;
+  appearance: none;
+}
+
+.audio-controls .replay-button svg {
+  display: none;
+}
+
+.audio-controls .replay-button::before {
+  content: &quot;&quot;;
+  display: block;
+  width: 0;
+  height: 0;
+  border-top: 10px solid transparent;
+  border-bottom: 10px solid transparent;
+  border-left: 15px solid #4CAF50 !important;
+  margin-left: 4px;
+}
+
+.image-container img {
+  max-width: 100%;
+  max-height: 280px;
+  border-radius: 12px;
+  border: 1px solid #333;
+  box-shadow: 0 3px 10px rgba(0,0,0,0.2);
+  margin: 15px 0;
+}
+
+.divider {
+  border: none;
+  height: 1px;
+  background: linear-gradient(to right, transparent, #333, transparent);
+  margin: 20px 10% 22px;
+}
+
+.answer-divider {
+  border: none;
+  height: 2px;
+  background: linear-gradient(to right, transparent, #4CAF50, transparent);
+  margin: 25px 10%;
+}
+.preview-media { display: flex; align-items: center; justify-content: center; width: 100%; min-height: 100%; padding: 16px; color: #7f9bc4; background: rgba(59, 130, 246, 0.08); border: 1px dashed rgba(147, 197, 253, 0.45); border-radius: 8px; font-family: &quot;Segoe UI&quot;, Arial, sans-serif; font-size: 13px; }
+.preview-media--small { min-height: 72px; }
+  &lt;/style&gt;
+&lt;/head&gt;
+&lt;body class=&quot;card&quot;&gt;
+&lt;div class=&quot;card&quot;&gt;
+  &lt;div class=&quot;word&quot;&gt;serendipity&lt;/div&gt;
+
+
+  &lt;div class=&quot;ipa&quot;&gt;/ˌser.ənˈdɪp.ə.ti/&lt;/div&gt;
+
+
+  &lt;hr class=&quot;divider&quot;&gt;
+
+  &lt;div class=&quot;audio-controls&quot; aria-label=&quot;Audio controls&quot;&gt;
+    &lt;span&gt;&lt;button class=&quot;replay-button&quot; type=&quot;button&quot; aria-label=&quot;play audio&quot;&gt;
+  &lt;svg viewBox=&quot;0 0 24 24&quot; aria-hidden=&quot;true&quot;&gt;
+    &lt;circle cx=&quot;12&quot; cy=&quot;12&quot; r=&quot;11&quot;&gt;&lt;/circle&gt;
+    &lt;path d=&quot;M9 7v10l8-5z&quot;&gt;&lt;/path&gt;
+  &lt;/svg&gt;
+&lt;/button&gt;&lt;/span&gt;
+  &lt;/div&gt;
+
+  &lt;div class=&quot;example&quot;&gt;The note described a moment of quiet serendipity.&lt;/div&gt;
+&lt;/div&gt;
+&lt;/body&gt;
+&lt;/html&gt;"></iframe></article>
+    <article class="preview-panel"><h3>Verso</h3><iframe title="Highlight Card verso" loading="lazy" sandbox="allow-scripts" srcdoc="&lt;!doctype html&gt;
+&lt;html lang=&quot;pt-BR&quot;&gt;
+&lt;head&gt;
+  &lt;meta charset=&quot;utf-8&quot;&gt;
+  &lt;meta name=&quot;viewport&quot; content=&quot;width=device-width, initial-scale=1&quot;&gt;
+  &lt;title&gt;Highlight Card - verso&lt;/title&gt;
+  &lt;style&gt;
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  overflow-x: hidden;
+  overflow-y: auto;
+  overflow-wrap: anywhere;
+  background: transparent;
+}
+
+.card,
+.back-card {
+  text-align: center;
+  color: #e0e0e0;
+  background: #121212;
+  padding: 18px 12px 20px;
+  border-radius: 15px;
+  border: 1px solid #242424;
+  width: min(100%, 480px);
+  font-family: Georgia, &quot;Times New Roman&quot;, serif;
+  margin: 0 auto;
+  box-sizing: border-box;
+  overflow-x: hidden;
+  overflow-y: auto;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.32);
+}
+
+.back-card &gt; .card {
+  background: transparent;
+  border: 0;
+  border-radius: 0;
+  padding: 0;
+  width: 100%;
+  box-shadow: none;
+}
+
+.word {
+  font-size: 35px;
+  font-weight: bold;
+  color: #4CAF50;
+  margin: 10px 0;
+  text-shadow: 0 0 8px rgba(76, 175, 80, 0.3);
+  line-height: 1.2;
+}
+
+.ipa {
+  font-size: 20px;
+  color: #aaa;
+  font-family: Georgia, &quot;Times New Roman&quot;, serif;
+  margin-bottom: 8px;
+}
+
+.example {
+  font-size: 20px;
+  color: #00BCD4;
+  font-style: italic;
+  line-height: 1.5;
+  margin: 15px 0;
+  padding: 0 15px;
+}
+
+.meaning {
+  font-size: 20px;
+  color: #FF5252;
+  line-height: 1.6;
+  margin: 20px 0;
+  text-align: center;
+  padding: 0 15px;
+}
+
+.audio-controls {
+  margin: 20px 0 18px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 12px;
+}
+
+.audio-controls span {
+  display: inline-flex;
+  line-height: 0;
+}
+
+.audio-controls .replay-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: #1f2a24 !important;
+  background-color: #1f2a24 !important;
+  border: 2px solid rgba(76, 175, 80, 0.42);
+  color: #4CAF50 !important;
+  font-size: 0;
+  line-height: 0;
+  width: 40px;
+  height: 40px;
+  padding: 0;
+  margin: 0;
+  border-radius: 50%;
+  cursor: pointer;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.35);
+  -webkit-appearance: none;
+  appearance: none;
+}
+
+.audio-controls .replay-button svg {
+  display: none;
+}
+
+.audio-controls .replay-button::before {
+  content: &quot;&quot;;
+  display: block;
+  width: 0;
+  height: 0;
+  border-top: 10px solid transparent;
+  border-bottom: 10px solid transparent;
+  border-left: 15px solid #4CAF50 !important;
+  margin-left: 4px;
+}
+
+.image-container img {
+  max-width: 100%;
+  max-height: 280px;
+  border-radius: 12px;
+  border: 1px solid #333;
+  box-shadow: 0 3px 10px rgba(0,0,0,0.2);
+  margin: 15px 0;
+}
+
+.divider {
+  border: none;
+  height: 1px;
+  background: linear-gradient(to right, transparent, #333, transparent);
+  margin: 20px 10% 22px;
+}
+
+.answer-divider {
+  border: none;
+  height: 2px;
+  background: linear-gradient(to right, transparent, #4CAF50, transparent);
+  margin: 25px 10%;
+}
+.preview-media { display: flex; align-items: center; justify-content: center; width: 100%; min-height: 100%; padding: 16px; color: #7f9bc4; background: rgba(59, 130, 246, 0.08); border: 1px dashed rgba(147, 197, 253, 0.45); border-radius: 8px; font-family: &quot;Segoe UI&quot;, Arial, sans-serif; font-size: 13px; }
+.preview-media--small { min-height: 72px; }
+  &lt;/style&gt;
+&lt;/head&gt;
+&lt;body class=&quot;card&quot;&gt;
+&lt;div class=&quot;back-card&quot;&gt;
+  &lt;div class=&quot;card&quot;&gt;
+  &lt;div class=&quot;word&quot;&gt;serendipity&lt;/div&gt;
+
+
+  &lt;div class=&quot;ipa&quot;&gt;/ˌser.ənˈdɪp.ə.ti/&lt;/div&gt;
+
+
+  &lt;hr class=&quot;divider&quot;&gt;
+
+  &lt;div class=&quot;audio-controls&quot; aria-label=&quot;Audio controls&quot;&gt;
+    &lt;span&gt;&lt;button class=&quot;replay-button&quot; type=&quot;button&quot; aria-label=&quot;play audio&quot;&gt;
+  &lt;svg viewBox=&quot;0 0 24 24&quot; aria-hidden=&quot;true&quot;&gt;
+    &lt;circle cx=&quot;12&quot; cy=&quot;12&quot; r=&quot;11&quot;&gt;&lt;/circle&gt;
+    &lt;path d=&quot;M9 7v10l8-5z&quot;&gt;&lt;/path&gt;
+  &lt;/svg&gt;
+&lt;/button&gt;&lt;/span&gt;
+  &lt;/div&gt;
+
+  &lt;div class=&quot;example&quot;&gt;The note described a moment of quiet serendipity.&lt;/div&gt;
+&lt;/div&gt;
+
+  &lt;hr id=&quot;answer&quot; class=&quot;answer-divider&quot;&gt;
+
+  &lt;div class=&quot;meaning&quot;&gt;A happy discovery made by chance.&lt;/div&gt;
+
+
+  &lt;div class=&quot;image-container&quot;&gt;&lt;div class=&quot;preview-media&quot;&gt;Imagem opcional&lt;/div&gt;&lt;/div&gt;
+
+&lt;/div&gt;
+&lt;/body&gt;
+&lt;/html&gt;"></iframe></article>
+  </div>
+</section>
+<section class="template-section" id="latin-mvp-card">
+  <div class="section-header"><div><p class="eyebrow">latin_mvp_card.md</p><h2>Latin MVP Card</h2><p>Template dedicado ao MVP de Latim Classico.</p></div></div>
+  <div class="preview-grid">
+    <article class="preview-panel"><h3>Frente</h3><iframe title="Latin MVP Card frente" loading="lazy" sandbox="allow-scripts" srcdoc="&lt;!doctype html&gt;
+&lt;html lang=&quot;pt-BR&quot;&gt;
+&lt;head&gt;
+  &lt;meta charset=&quot;utf-8&quot;&gt;
+  &lt;meta name=&quot;viewport&quot; content=&quot;width=device-width, initial-scale=1&quot;&gt;
+  &lt;title&gt;Latin MVP Card - frente&lt;/title&gt;
+  &lt;style&gt;
+:root {
+  --max-width-card: 400px;
+  --font-size-card: 18px;
+  --font-size-targetWord: 26px;
+  --font-size-header: 14px;
+  --font-size-irregular-form: 15px;
+
+  --color-page-background: #0a1628;
+  --color-text-primary: #e8f0fe;
+  --color-nightMode-text-primary: #e8f0fe;
+  --color-card-background: #0a1628;
+  --color-nightMode-card-background: #0a1628;
+  --color-box-shadow: rgba(0, 0, 0, 0.45);
+  --color-audio-button: #93c5fd;
+  --color-list-bullets: #93c5fd;
+  --color-irregular-form-background: #1e3a5f;
+  --color-nightMode-irregular-form-background: #1e3a5f;
+  --color-irregular-form-border: #2563eb;
+  --color-nightMode-irregular-form-border: #2563eb;
+  --color-nightMode-irregular-form-text: rgba(219, 234, 254, 0.85);
+  --color-hint: #93c5fd;
+  --color-nightMode-hint: #93c5fd;
+  --color-sentence-translation: #93c5fd;
+  --color-nightMode-sentence-translation: #93c5fd;
+  --color-header: rgba(147, 197, 253, 0.7);
+  --color-nightMode-header: rgba(147, 197, 253, 0.7);
+  --color-divider: #1e3a5f;
+  --color-nightMode-divider: #1e3a5f;
+}
+
+/* Chrome Base Styles */
+p {
+  display: block;
+  margin-block-start: 1em;
+  margin-block-end: 1em;
+  margin-inline-start: 0px;
+  margin-inline-end: 0px;
+}
+
+div { display: block; }
+
+body {
+  display: block;
+  line-height: 1.187;
+}
+
+html { display: block; }
+
+span, applet, object, iframe,
+h1, h2, h3, h4, h5, h6,
+blockquote, pre, a, abbr, acronym, address, big, cite, code,
+del, dfn, em, img, ins, kbd, q, s, samp, small, strike, strong,
+sub, sup, tt, var, b, u, i, center,
+dl, dt, dd, ol, ul, li,
+fieldset, form, label, legend,
+table, caption, tbody, tfoot, thead, tr, th, td,
+article, aside, canvas, details, embed,
+figure, figcaption, footer, header, hgroup,
+menu, nav, output, ruby, section, summary,
+time, mark, audio, video {
+  margin: 0;
+  padding: 0;
+  border: 0;
+  font-size: 100%;
+  font: inherit;
+  vertical-align: baseline;
+}
+
+article, aside, details, figcaption, figure,
+footer, header, hgroup, menu, nav, section {
+  display: block;
+}
+
+ol, ul { list-style: none; }
+
+blockquote, q { quotes: none; }
+
+blockquote:before, blockquote:after,
+q:before, q:after {
+  content: &quot;&quot;;
+  content: none;
+}
+
+table {
+  border-collapse: collapse;
+  border-spacing: 0;
+}
+
+* { box-sizing: border-box; }
+
+/* ========== NIGHT MODE SCROLLBAR ========== */
+
+body.nightMode::-webkit-scrollbar {
+  background: #0a1628;
+}
+body.nightMode::-webkit-scrollbar:horizontal { height: 12px; }
+body.nightMode::-webkit-scrollbar:vertical { width: 12px; }
+body.nightMode::-webkit-scrollbar-thumb {
+  background: #2563eb;
+  border-radius: 8px;
+}
+body.nightMode::-webkit-scrollbar-thumb:horizontal { min-width: 50px; }
+body.nightMode::-webkit-scrollbar-thumb:vertical { min-height: 50px; }
+
+/* ========== BASE ========== */
+
+body {
+  overscroll-behavior: none;
+  margin: 0 !important;
+  overflow-wrap: break-word;
+}
+
+#_flag {
+  position: fixed;
+  right: 10px;
+  top: 0;
+  font-size: 30px;
+  display: none;
+  -webkit-text-stroke-width: 1px;
+  -webkit-text-stroke-color: black;
+}
+
+#_mark {
+  position: fixed;
+  left: 10px;
+  top: 0;
+  font-size: 30px;
+  color: yellow;
+  display: none;
+  -webkit-text-stroke-width: 1px;
+  -webkit-text-stroke-color: black;
+}
+
+#typeans {
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.typeGood { background: #0f0; }
+.typeBad { background: #f00; }
+.typeMissed { background: #ccc; }
+.nightMode .latex { filter: invert(100%); }
+.drawing { zoom: 50%; }
+.nightMode img.drawing { filter: invert(1) hue-rotate(180deg); }
+
+/* ========== CARD STYLES ========== */
+
+.card {
+  padding: 16px;
+}
+
+body,
+body.card,
+body.nightMode,
+.card {
+  background: var(--color-page-background);
+  color: var(--color-text-primary);
+}
+
+.customCard {
+  margin: 0 auto;
+  position: relative;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+
+  background-color: var(--color-card-background);
+  box-shadow:
+    0 4px 24px var(--color-box-shadow),
+    0 1px 4px rgba(37, 99, 235, 0.08);
+  border-radius: 16px;
+  border-top: 4px solid #2563eb;
+  min-height: 200px;
+  max-width: var(--max-width-card);
+
+  font-weight: 500;
+  font-size: var(--font-size-card);
+  font-family: &quot;Segoe UI&quot;, &quot;Noto Sans&quot;, Arial, sans-serif;
+  color: var(--color-text-primary);
+}
+
+.nightMode .customCard {
+  color: var(--color-nightMode-text-primary);
+  background-color: var(--color-nightMode-card-background);
+}
+
+.cardBack {
+  flex-direction: column;
+  justify-content: flex-start;
+  align-items: flex-start;
+  padding-top: 24px;
+  padding-bottom: 8px;
+}
+
+.sortIndex {
+  display: none;
+}
+
+.targetWordContainer {
+  margin-top: 8px;
+  margin-bottom: 24px;
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+}
+
+.targetWord {
+  font-size: var(--font-size-targetWord);
+  font-weight: 700;
+  color: #93c5fd;
+  letter-spacing: -0.5px;
+}
+
+.wordBlock {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.ipa {
+  font-size: 14px;
+  color: var(--color-divader);
+  margin-left: 2px;
+  font-weight: 400;
+  letter-spacing: 0.03em;
+  opacity: 0.7;
+}
+
+.nightMode .targetWord {
+  color: #93c5fd;
+}
+
+.definitionsList {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  padding-left: 16px;
+}
+
+.definitionsList li {
+  margin-bottom: 6px;
+  line-height: 1.5;
+}
+
+.definitionsList li::before {
+  content: &quot;\2022&quot;;
+  color: var(--color-list-bullets);
+  display: inline-block;
+  width: 8px;
+  margin-right: 5px;
+  margin-left: -16px;
+  font-size: 22px;
+}
+
+.wordAudioButtonFront {
+  position: absolute;
+  top: 21px;
+  right: 22px;
+}
+
+.wordAudioButtonBack {
+  margin-left: 8px;
+}
+
+.exampleSentenceLine {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.exampleSentenceText {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.sentenceAudioButton {
+  flex: 0 0 auto;
+  margin-left: 8px;
+}
+
+.replay-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: auto;
+  height: auto;
+  padding: 0;
+  background: transparent !important;
+  background-color: transparent !important;
+  border: 0 !important;
+  border-radius: 0;
+  box-shadow: none !important;
+  line-height: 0;
+  -webkit-appearance: none;
+  appearance: none;
+}
+
+.replay-button svg {
+  width: 20px;
+  height: 20px;
+}
+
+.replay-button svg path {
+  fill: var(--color-audio-button) !important;
+}
+
+.replay-button svg circle {
+  fill: transparent !important;
+  stroke: none !important;
+}
+
+.irregularFormsContainer {
+  display: flex;
+  flex-wrap: wrap;
+  margin-top: 12px;
+}
+
+.irregularForm {
+  background-color: var(--color-irregular-form-background);
+  border: 1px solid var(--color-irregular-form-border);
+  border-radius: 40px;
+  font-size: var(--font-size-irregular-form);
+  color: #1d4ed8;
+  font-weight: 600;
+  padding: 3px 12px 5px;
+  margin-right: 10px;
+  margin-bottom: 8px;
+}
+
+.nightMode .irregularForm {
+  color: var(--color-nightMode-irregular-form-text);
+  background-color: var(--color-nightMode-irregular-form-background);
+  border-color: var(--color-nightMode-irregular-form-border);
+}
+
+.image {
+  border-top: 1px solid var(--color-divider);
+  border-bottom: 1px solid var(--color-divider);
+  margin-top: 16px;
+  width: 100%;
+  height: 210px;
+}
+
+.image img {
+  object-fit: contain;
+  width: 100% !important;
+  height: 100% !important;
+  max-width: 100% !important;
+  max-height: 100% !important;
+}
+
+.hint { color: var(--color-hint); }
+.nightMode .hint { color: var(--color-nightMode-hint); }
+
+.sentenceTranslation {
+  color: var(--color-sentence-translation);
+  font-weight: 400;
+  font-style: italic;
+  padding-right: 15px;
+  padding-top: 8px;
+}
+
+.nightMode .sentenceTranslation {
+  color: var(--color-nightMode-sentence-translation);
+}
+
+.reportIconContainer {
+  width: 100%;
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+}
+
+.header {
+  color: var(--color-header);
+  font-size: var(--font-size-header);
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  margin-top: 8px;
+  margin-bottom: 8px;
+}
+
+.nightMode .header {
+  color: var(--color-nightMode-header);
+}
+
+.dividerLine {
+  width: 100%;
+  border-bottom: 1px solid var(--color-divider);
+  margin-top: 8px;
+  margin-bottom: 8px;
+}
+
+.nightMode .dividerLine {
+  border-color: var(--color-nightMode-divider);
+}
+
+.horizontalPadding {
+  width: 100%;
+  padding-left: 16px;
+  padding-right: 16px;
+}
+
+.indent {
+  padding-left: 12px;
+}
+
+.centerVertically {
+  display: flex;
+  align-items: center;
+}
+.preview-media { display: flex; align-items: center; justify-content: center; width: 100%; min-height: 100%; padding: 16px; color: #7f9bc4; background: rgba(59, 130, 246, 0.08); border: 1px dashed rgba(147, 197, 253, 0.45); border-radius: 8px; font-family: &quot;Segoe UI&quot;, Arial, sans-serif; font-size: 13px; }
+.preview-media--small { min-height: 72px; }
+  &lt;/style&gt;
+&lt;/head&gt;
+&lt;body class=&quot;card&quot;&gt;
+&lt;div class=&quot;customCard cardBack&quot;&gt;
+  &lt;div class=&quot;sortIndex&quot; style=&quot;display:none;&quot;&gt;001&lt;/div&gt;
+
+  &lt;div class=&quot;horizontalPadding centerVertically targetWordContainer&quot;&gt;
+    &lt;div class=&quot;wordBlock&quot;&gt;
+      &lt;span class=&quot;targetWord&quot;&gt;amicus&lt;/span&gt;
+    &lt;/div&gt;
+    &lt;span class=&quot;wordAudioButtonBack&quot;&gt;&lt;button class=&quot;replay-button&quot; type=&quot;button&quot; aria-label=&quot;play audio&quot;&gt;
+  &lt;svg viewBox=&quot;0 0 24 24&quot; aria-hidden=&quot;true&quot;&gt;
+    &lt;circle cx=&quot;12&quot; cy=&quot;12&quot; r=&quot;11&quot;&gt;&lt;/circle&gt;
+    &lt;path d=&quot;M9 7v10l8-5z&quot;&gt;&lt;/path&gt;
+  &lt;/svg&gt;
+&lt;/button&gt;&lt;/span&gt;
+  &lt;/div&gt;
+
+  &lt;div class=&quot;dividerLine&quot;&gt;&lt;/div&gt;
+
+  &lt;div class=&quot;horizontalPadding&quot;&gt;
+    &lt;div class=&quot;header&quot;&gt;Definition:&lt;/div&gt;
+    &lt;div class=&quot;indent&quot;&gt;
+      &lt;ul class=&quot;definitionsList&quot;&gt;
+        &lt;li&gt;friend; ally&lt;/li&gt;
+      &lt;/ul&gt;
+    &lt;/div&gt;
+  &lt;/div&gt;
+
+  &lt;div class=&quot;horizontalPadding&quot;&gt;
+    &lt;div class=&quot;header&quot;&gt;Grammar:&lt;/div&gt;
+    &lt;div class=&quot;indent&quot;&gt;
+      &lt;ul class=&quot;definitionsList&quot;&gt;
+        &lt;li&gt;noun, masculine, 2nd declension, nominative singular&lt;/li&gt;
+      &lt;/ul&gt;
+    &lt;/div&gt;
+  &lt;/div&gt;
+
+
+  &lt;div class=&quot;image&quot;&gt;&lt;div class=&quot;preview-media&quot;&gt;Imagem opcional&lt;/div&gt;&lt;/div&gt;
+
+
+  &lt;div class=&quot;dividerLine&quot;&gt;&lt;/div&gt;
+
+  &lt;div class=&quot;horizontalPadding&quot;&gt;
+    &lt;div class=&quot;header&quot;&gt;example:&lt;/div&gt;
+    &lt;div class=&quot;indent exampleSentenceLine&quot;&gt;
+      &lt;span class=&quot;exampleSentenceText&quot;&gt;Amicus librum legit.&lt;/span&gt;
+      &lt;span class=&quot;sentenceAudioButton&quot;&gt;&lt;button class=&quot;replay-button&quot; type=&quot;button&quot; aria-label=&quot;play audio&quot;&gt;
+  &lt;svg viewBox=&quot;0 0 24 24&quot; aria-hidden=&quot;true&quot;&gt;
+    &lt;circle cx=&quot;12&quot; cy=&quot;12&quot; r=&quot;11&quot;&gt;&lt;/circle&gt;
+    &lt;path d=&quot;M9 7v10l8-5z&quot;&gt;&lt;/path&gt;
+  &lt;/svg&gt;
+&lt;/button&gt;&lt;/span&gt;
+    &lt;/div&gt;
+    &lt;div id=&quot;translation&quot; class=&quot;sentenceTranslation indent&quot; style=&quot;display:none;&quot;&gt;
+      O amigo le o livro.
+    &lt;/div&gt;
+  &lt;/div&gt;
+
+&lt;/div&gt;
+&lt;/body&gt;
+&lt;/html&gt;"></iframe></article>
+    <article class="preview-panel"><h3>Verso</h3><iframe title="Latin MVP Card verso" loading="lazy" sandbox="allow-scripts" srcdoc="&lt;!doctype html&gt;
+&lt;html lang=&quot;pt-BR&quot;&gt;
+&lt;head&gt;
+  &lt;meta charset=&quot;utf-8&quot;&gt;
+  &lt;meta name=&quot;viewport&quot; content=&quot;width=device-width, initial-scale=1&quot;&gt;
+  &lt;title&gt;Latin MVP Card - verso&lt;/title&gt;
+  &lt;style&gt;
+:root {
+  --max-width-card: 400px;
+  --font-size-card: 18px;
+  --font-size-targetWord: 26px;
+  --font-size-header: 14px;
+  --font-size-irregular-form: 15px;
+
+  --color-page-background: #0a1628;
+  --color-text-primary: #e8f0fe;
+  --color-nightMode-text-primary: #e8f0fe;
+  --color-card-background: #0a1628;
+  --color-nightMode-card-background: #0a1628;
+  --color-box-shadow: rgba(0, 0, 0, 0.45);
+  --color-audio-button: #93c5fd;
+  --color-list-bullets: #93c5fd;
+  --color-irregular-form-background: #1e3a5f;
+  --color-nightMode-irregular-form-background: #1e3a5f;
+  --color-irregular-form-border: #2563eb;
+  --color-nightMode-irregular-form-border: #2563eb;
+  --color-nightMode-irregular-form-text: rgba(219, 234, 254, 0.85);
+  --color-hint: #93c5fd;
+  --color-nightMode-hint: #93c5fd;
+  --color-sentence-translation: #93c5fd;
+  --color-nightMode-sentence-translation: #93c5fd;
+  --color-header: rgba(147, 197, 253, 0.7);
+  --color-nightMode-header: rgba(147, 197, 253, 0.7);
+  --color-divider: #1e3a5f;
+  --color-nightMode-divider: #1e3a5f;
+}
+
+/* Chrome Base Styles */
+p {
+  display: block;
+  margin-block-start: 1em;
+  margin-block-end: 1em;
+  margin-inline-start: 0px;
+  margin-inline-end: 0px;
+}
+
+div { display: block; }
+
+body {
+  display: block;
+  line-height: 1.187;
+}
+
+html { display: block; }
+
+span, applet, object, iframe,
+h1, h2, h3, h4, h5, h6,
+blockquote, pre, a, abbr, acronym, address, big, cite, code,
+del, dfn, em, img, ins, kbd, q, s, samp, small, strike, strong,
+sub, sup, tt, var, b, u, i, center,
+dl, dt, dd, ol, ul, li,
+fieldset, form, label, legend,
+table, caption, tbody, tfoot, thead, tr, th, td,
+article, aside, canvas, details, embed,
+figure, figcaption, footer, header, hgroup,
+menu, nav, output, ruby, section, summary,
+time, mark, audio, video {
+  margin: 0;
+  padding: 0;
+  border: 0;
+  font-size: 100%;
+  font: inherit;
+  vertical-align: baseline;
+}
+
+article, aside, details, figcaption, figure,
+footer, header, hgroup, menu, nav, section {
+  display: block;
+}
+
+ol, ul { list-style: none; }
+
+blockquote, q { quotes: none; }
+
+blockquote:before, blockquote:after,
+q:before, q:after {
+  content: &quot;&quot;;
+  content: none;
+}
+
+table {
+  border-collapse: collapse;
+  border-spacing: 0;
+}
+
+* { box-sizing: border-box; }
+
+/* ========== NIGHT MODE SCROLLBAR ========== */
+
+body.nightMode::-webkit-scrollbar {
+  background: #0a1628;
+}
+body.nightMode::-webkit-scrollbar:horizontal { height: 12px; }
+body.nightMode::-webkit-scrollbar:vertical { width: 12px; }
+body.nightMode::-webkit-scrollbar-thumb {
+  background: #2563eb;
+  border-radius: 8px;
+}
+body.nightMode::-webkit-scrollbar-thumb:horizontal { min-width: 50px; }
+body.nightMode::-webkit-scrollbar-thumb:vertical { min-height: 50px; }
+
+/* ========== BASE ========== */
+
+body {
+  overscroll-behavior: none;
+  margin: 0 !important;
+  overflow-wrap: break-word;
+}
+
+#_flag {
+  position: fixed;
+  right: 10px;
+  top: 0;
+  font-size: 30px;
+  display: none;
+  -webkit-text-stroke-width: 1px;
+  -webkit-text-stroke-color: black;
+}
+
+#_mark {
+  position: fixed;
+  left: 10px;
+  top: 0;
+  font-size: 30px;
+  color: yellow;
+  display: none;
+  -webkit-text-stroke-width: 1px;
+  -webkit-text-stroke-color: black;
+}
+
+#typeans {
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.typeGood { background: #0f0; }
+.typeBad { background: #f00; }
+.typeMissed { background: #ccc; }
+.nightMode .latex { filter: invert(100%); }
+.drawing { zoom: 50%; }
+.nightMode img.drawing { filter: invert(1) hue-rotate(180deg); }
+
+/* ========== CARD STYLES ========== */
+
+.card {
+  padding: 16px;
+}
+
+body,
+body.card,
+body.nightMode,
+.card {
+  background: var(--color-page-background);
+  color: var(--color-text-primary);
+}
+
+.customCard {
+  margin: 0 auto;
+  position: relative;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+
+  background-color: var(--color-card-background);
+  box-shadow:
+    0 4px 24px var(--color-box-shadow),
+    0 1px 4px rgba(37, 99, 235, 0.08);
+  border-radius: 16px;
+  border-top: 4px solid #2563eb;
+  min-height: 200px;
+  max-width: var(--max-width-card);
+
+  font-weight: 500;
+  font-size: var(--font-size-card);
+  font-family: &quot;Segoe UI&quot;, &quot;Noto Sans&quot;, Arial, sans-serif;
+  color: var(--color-text-primary);
+}
+
+.nightMode .customCard {
+  color: var(--color-nightMode-text-primary);
+  background-color: var(--color-nightMode-card-background);
+}
+
+.cardBack {
+  flex-direction: column;
+  justify-content: flex-start;
+  align-items: flex-start;
+  padding-top: 24px;
+  padding-bottom: 8px;
+}
+
+.sortIndex {
+  display: none;
+}
+
+.targetWordContainer {
+  margin-top: 8px;
+  margin-bottom: 24px;
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+}
+
+.targetWord {
+  font-size: var(--font-size-targetWord);
+  font-weight: 700;
+  color: #93c5fd;
+  letter-spacing: -0.5px;
+}
+
+.wordBlock {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.ipa {
+  font-size: 14px;
+  color: var(--color-divader);
+  margin-left: 2px;
+  font-weight: 400;
+  letter-spacing: 0.03em;
+  opacity: 0.7;
+}
+
+.nightMode .targetWord {
+  color: #93c5fd;
+}
+
+.definitionsList {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  padding-left: 16px;
+}
+
+.definitionsList li {
+  margin-bottom: 6px;
+  line-height: 1.5;
+}
+
+.definitionsList li::before {
+  content: &quot;\2022&quot;;
+  color: var(--color-list-bullets);
+  display: inline-block;
+  width: 8px;
+  margin-right: 5px;
+  margin-left: -16px;
+  font-size: 22px;
+}
+
+.wordAudioButtonFront {
+  position: absolute;
+  top: 21px;
+  right: 22px;
+}
+
+.wordAudioButtonBack {
+  margin-left: 8px;
+}
+
+.exampleSentenceLine {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.exampleSentenceText {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.sentenceAudioButton {
+  flex: 0 0 auto;
+  margin-left: 8px;
+}
+
+.replay-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: auto;
+  height: auto;
+  padding: 0;
+  background: transparent !important;
+  background-color: transparent !important;
+  border: 0 !important;
+  border-radius: 0;
+  box-shadow: none !important;
+  line-height: 0;
+  -webkit-appearance: none;
+  appearance: none;
+}
+
+.replay-button svg {
+  width: 20px;
+  height: 20px;
+}
+
+.replay-button svg path {
+  fill: var(--color-audio-button) !important;
+}
+
+.replay-button svg circle {
+  fill: transparent !important;
+  stroke: none !important;
+}
+
+.irregularFormsContainer {
+  display: flex;
+  flex-wrap: wrap;
+  margin-top: 12px;
+}
+
+.irregularForm {
+  background-color: var(--color-irregular-form-background);
+  border: 1px solid var(--color-irregular-form-border);
+  border-radius: 40px;
+  font-size: var(--font-size-irregular-form);
+  color: #1d4ed8;
+  font-weight: 600;
+  padding: 3px 12px 5px;
+  margin-right: 10px;
+  margin-bottom: 8px;
+}
+
+.nightMode .irregularForm {
+  color: var(--color-nightMode-irregular-form-text);
+  background-color: var(--color-nightMode-irregular-form-background);
+  border-color: var(--color-nightMode-irregular-form-border);
+}
+
+.image {
+  border-top: 1px solid var(--color-divider);
+  border-bottom: 1px solid var(--color-divider);
+  margin-top: 16px;
+  width: 100%;
+  height: 210px;
+}
+
+.image img {
+  object-fit: contain;
+  width: 100% !important;
+  height: 100% !important;
+  max-width: 100% !important;
+  max-height: 100% !important;
+}
+
+.hint { color: var(--color-hint); }
+.nightMode .hint { color: var(--color-nightMode-hint); }
+
+.sentenceTranslation {
+  color: var(--color-sentence-translation);
+  font-weight: 400;
+  font-style: italic;
+  padding-right: 15px;
+  padding-top: 8px;
+}
+
+.nightMode .sentenceTranslation {
+  color: var(--color-nightMode-sentence-translation);
+}
+
+.reportIconContainer {
+  width: 100%;
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+}
+
+.header {
+  color: var(--color-header);
+  font-size: var(--font-size-header);
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  margin-top: 8px;
+  margin-bottom: 8px;
+}
+
+.nightMode .header {
+  color: var(--color-nightMode-header);
+}
+
+.dividerLine {
+  width: 100%;
+  border-bottom: 1px solid var(--color-divider);
+  margin-top: 8px;
+  margin-bottom: 8px;
+}
+
+.nightMode .dividerLine {
+  border-color: var(--color-nightMode-divider);
+}
+
+.horizontalPadding {
+  width: 100%;
+  padding-left: 16px;
+  padding-right: 16px;
+}
+
+.indent {
+  padding-left: 12px;
+}
+
+.centerVertically {
+  display: flex;
+  align-items: center;
+}
+.preview-media { display: flex; align-items: center; justify-content: center; width: 100%; min-height: 100%; padding: 16px; color: #7f9bc4; background: rgba(59, 130, 246, 0.08); border: 1px dashed rgba(147, 197, 253, 0.45); border-radius: 8px; font-family: &quot;Segoe UI&quot;, Arial, sans-serif; font-size: 13px; }
+.preview-media--small { min-height: 72px; }
+  &lt;/style&gt;
+&lt;/head&gt;
+&lt;body class=&quot;card&quot;&gt;
+&lt;div class=&quot;customCard cardBack&quot;&gt;
+  &lt;div class=&quot;sortIndex&quot; style=&quot;display:none;&quot;&gt;001&lt;/div&gt;
+
+  &lt;div class=&quot;horizontalPadding centerVertically targetWordContainer&quot;&gt;
+    &lt;div class=&quot;wordBlock&quot;&gt;
+      &lt;span class=&quot;targetWord&quot;&gt;amicus&lt;/span&gt;
+    &lt;/div&gt;
+    &lt;span class=&quot;wordAudioButtonBack&quot;&gt;&lt;button class=&quot;replay-button&quot; type=&quot;button&quot; aria-label=&quot;play audio&quot;&gt;
+  &lt;svg viewBox=&quot;0 0 24 24&quot; aria-hidden=&quot;true&quot;&gt;
+    &lt;circle cx=&quot;12&quot; cy=&quot;12&quot; r=&quot;11&quot;&gt;&lt;/circle&gt;
+    &lt;path d=&quot;M9 7v10l8-5z&quot;&gt;&lt;/path&gt;
+  &lt;/svg&gt;
+&lt;/button&gt;&lt;/span&gt;
+  &lt;/div&gt;
+
+  &lt;div class=&quot;dividerLine&quot;&gt;&lt;/div&gt;
+
+  &lt;div class=&quot;horizontalPadding&quot;&gt;
+    &lt;div class=&quot;header&quot;&gt;Definition:&lt;/div&gt;
+    &lt;div class=&quot;indent&quot;&gt;
+      &lt;ul class=&quot;definitionsList&quot;&gt;
+        &lt;li&gt;friend; ally&lt;/li&gt;
+      &lt;/ul&gt;
+    &lt;/div&gt;
+  &lt;/div&gt;
+
+  &lt;div class=&quot;horizontalPadding&quot;&gt;
+    &lt;div class=&quot;header&quot;&gt;Grammar:&lt;/div&gt;
+    &lt;div class=&quot;indent&quot;&gt;
+      &lt;ul class=&quot;definitionsList&quot;&gt;
+        &lt;li&gt;noun, masculine, 2nd declension, nominative singular&lt;/li&gt;
+      &lt;/ul&gt;
+    &lt;/div&gt;
+  &lt;/div&gt;
+
+
+  &lt;div class=&quot;image&quot;&gt;&lt;div class=&quot;preview-media&quot;&gt;Imagem opcional&lt;/div&gt;&lt;/div&gt;
+
+
+  &lt;div class=&quot;dividerLine&quot;&gt;&lt;/div&gt;
+
+  &lt;div class=&quot;horizontalPadding&quot;&gt;
+    &lt;div class=&quot;header&quot;&gt;example:&lt;/div&gt;
+    &lt;div class=&quot;indent exampleSentenceLine&quot;&gt;
+      &lt;span class=&quot;exampleSentenceText&quot;&gt;Amicus librum legit.&lt;/span&gt;
+      &lt;span class=&quot;sentenceAudioButton&quot;&gt;&lt;button class=&quot;replay-button&quot; type=&quot;button&quot; aria-label=&quot;play audio&quot;&gt;
+  &lt;svg viewBox=&quot;0 0 24 24&quot; aria-hidden=&quot;true&quot;&gt;
+    &lt;circle cx=&quot;12&quot; cy=&quot;12&quot; r=&quot;11&quot;&gt;&lt;/circle&gt;
+    &lt;path d=&quot;M9 7v10l8-5z&quot;&gt;&lt;/path&gt;
+  &lt;/svg&gt;
+&lt;/button&gt;&lt;/span&gt;
+    &lt;/div&gt;
+    &lt;div id=&quot;translation&quot; class=&quot;sentenceTranslation indent&quot; style=&quot;display:none;&quot;&gt;
+      O amigo le o livro.
+    &lt;/div&gt;
+  &lt;/div&gt;
+
+&lt;/div&gt;
+
+&lt;script&gt;
+  document.getElementById(&quot;translation&quot;).style.display = &quot;block&quot;;
+&lt;/script&gt;
+&lt;/body&gt;
+&lt;/html&gt;"></iframe></article>
+  </div>
+</section>
+<section class="template-section" id="russian-phoneme-card">
+  <div class="section-header"><div><p class="eyebrow">russian_phoneme_card.md</p><h2>Phoneme Card</h2><p>Template compartilhado por decks foneticos introdutorios.</p></div></div>
+  <div class="preview-grid">
+    <article class="preview-panel"><h3>Frente</h3><iframe title="Phoneme Card frente" loading="lazy" sandbox="allow-scripts" srcdoc="&lt;!doctype html&gt;
+&lt;html lang=&quot;pt-BR&quot;&gt;
+&lt;head&gt;
+  &lt;meta charset=&quot;utf-8&quot;&gt;
+  &lt;meta name=&quot;viewport&quot; content=&quot;width=device-width, initial-scale=1&quot;&gt;
+  &lt;title&gt;Phoneme Card - frente&lt;/title&gt;
+  &lt;style&gt;
+:root {
+  --max-width-card: 400px;
+  --font-size-card: 18px;
+  --font-size-targetWord: 30px;
+  --font-size-exampleWord: 22px;
+  --font-size-targetIPA: 32px;
+  --font-size-header: 16px;
+  --color-text-primary: #fbfafe;
+  --color-card-background: #0b0716;
+  --color-page-background: #07040d;
+  --color-box-shadow: rgba(0, 0, 0, 0.35);
+  --color-audio-button: #8b6cff;
+  --color-hint: #aebbd1;
+  --color-sentence-translation: #a9a4bb;
+  --color-header: #8f93a8;
+  --color-divider: #272236;
+  --color-box-background: #10091e;
+  --color-box-border: #2c2a46;
+}
+
+* { box-sizing: border-box; }
+
+body {
+  line-height: 1.2;
+  margin: 0 !important;
+  overflow-wrap: break-word;
+  overscroll-behavior: none;
+  background: var(--color-page-background);
+}
+
+.card {
+  padding: 6px 0 0;
+  background: var(--color-page-background);
+}
+
+.customCard {
+  margin: 0 auto;
+  position: relative;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  background-color: var(--color-card-background);
+  box-shadow: none;
+  border-radius: 6px;
+  min-height: 200px;
+  max-width: var(--max-width-card);
+  width: 100%;
+  font-weight: 500;
+  font-size: var(--font-size-card);
+  font-family: &quot;Inter&quot;, &quot;Segoe UI&quot;, Arial, sans-serif;
+  color: var(--color-text-primary);
+  overflow: hidden;
+}
+
+.nightMode .customCard {
+  color: var(--color-text-primary);
+  background-color: var(--color-card-background);
+}
+
+.cardBack {
+  flex-direction: column;
+  justify-content: flex-start;
+  align-items: flex-start;
+  padding-bottom: 14px;
+}
+
+.targetWordContainer {
+  margin: 16px 20px 6px;
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+  align-self: stretch;
+}
+
+.targetWordBox {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  align-self: stretch;
+  gap: 20px;
+  padding: 16px;
+  min-height: 112px;
+  background-color: var(--color-box-background);
+  border: 1px solid var(--color-box-border);
+  border-radius: 6px;
+}
+
+.nightMode .targetWordBox {
+  background-color: var(--color-box-background);
+  border-color: var(--color-box-border);
+}
+
+.targetIPA {
+  font-family: &quot;Charis SIL&quot;, Georgia, &quot;Times New Roman&quot;, serif;
+  font-size: var(--font-size-targetIPA);
+  font-weight: 700;
+  line-height: 1;
+  color: #ffffff;
+}
+
+.exampleWord {
+  font-size: var(--font-size-exampleWord);
+  font-weight: 700;
+  line-height: 1.25;
+  color: #ffffff;
+}
+
+.header {
+  color: var(--color-header);
+  font-size: var(--font-size-header);
+  font-weight: 400;
+  margin-top: 8px;
+  margin-bottom: 10px;
+}
+
+.hint {
+  color: var(--color-hint);
+  font-size: 18px;
+  font-weight: 400;
+}
+
+.sentenceTranslation {
+  color: var(--color-sentence-translation);
+  font-size: 18px;
+  font-weight: 400;
+  font-style: italic;
+  padding-right: 15px;
+  padding-top: 6px;
+  line-height: 1.25;
+}
+
+.nightMode .header,
+.nightMode .sentenceTranslation { color: var(--color-sentence-translation); }
+.nightMode .hint { color: var(--color-hint); }
+
+.dividerLine {
+  width: 100%;
+  border-bottom: 1px solid var(--color-divider);
+  margin-top: 12px;
+  margin-bottom: 12px;
+}
+
+.nightMode .dividerLine { border-color: var(--color-divider); }
+
+.horizontalPadding {
+  width: 100%;
+  padding-left: 20px;
+  padding-right: 20px;
+}
+
+.row { display: flex; }
+.indent { padding-left: 12px; }
+.soundRow { margin-bottom: 0; }
+.exampleWordLine { margin-top: -2px; }
+.exampleWordLine .sentenceTranslation {
+  margin-left: 6px;
+  padding-top: 0;
+}
+
+.exampleSentenceLine {
+  line-height: 1.25;
+}
+
+.exampleSentenceLine .exampleWord {
+  display: inline;
+}
+
+.exampleSentenceLine .wordAudioButton {
+  vertical-align: middle;
+}
+
+.centerVertically {
+  display: flex;
+  align-items: center;
+}
+
+.wrap {
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.wordAudioButton,
+.wordAudioButtonBack,
+.sentenceAudioButton {
+  display: inline-flex;
+  align-items: center;
+  margin-left: 8px;
+  line-height: 0;
+}
+
+.replay-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 22px;
+  height: 22px;
+  padding: 0;
+  margin: 0;
+  background: transparent;
+  border: 0;
+  border-radius: 0;
+  box-shadow: none;
+  font-size: 0;
+  line-height: 0;
+}
+
+.replay-button svg {
+  width: 22px;
+  height: 22px;
+}
+
+.replay-button svg path {
+  fill: var(--color-audio-button);
+}
+
+.replay-button svg circle {
+  fill: none;
+  stroke: none;
+}
+
+.backRevealFallback { margin-top: 12px; }
+
+/* Approved dark-blue skin; field placement remains defined by the markup. */
+:root {
+  --color-page-background: #0a1220;
+  --color-card-background: #0f1b2d;
+  --color-text-primary: #e8f0fe;
+  --color-accent: #3b82f6;
+  --color-audio-button: #93c5fd;
+  --color-hint: #7f9bc4;
+  --color-sentence-translation: #93c5fd;
+  --color-header: #93c5fd;
+  --color-divider: #24405f;
+  --color-box-background: #12213a;
+  --color-box-border: #24405f;
+  --color-panel-background: #12213a;
+}
+
+body,
+body.nightMode,
+.card {
+  background: var(--color-page-background);
+  color: var(--color-text-primary);
+  overflow-x: hidden;
+}
+
+.card {
+  padding: 28px 16px;
+}
+
+.customCard,
+.nightMode .customCard {
+  width: 100%;
+  overflow: hidden;
+  background-color: var(--color-card-background);
+  color: var(--color-text-primary);
+  border-radius: 16px;
+  border-top: 4px solid var(--color-accent);
+  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.45);
+}
+
+.cardBack {
+  padding: 22px 0 18px;
+}
+
+.targetWordContainer {
+  margin: 0 18px;
+  gap: 0;
+}
+
+.targetWordBox,
+.nightMode .targetWordBox {
+  gap: 14px;
+  padding: 16px;
+  min-height: 0;
+  background-color: var(--color-box-background);
+  border: 1px solid var(--color-box-border);
+  border-radius: 10px;
+}
+
+.targetIPA,
+.nightMode .targetIPA {
+  color: #eaf1ff;
+  font-size: 34px;
+}
+
+.soundRow {
+  gap: 10px;
+  margin-top: 14px;
+}
+
+.soundRow .targetIPA {
+  font-size: 26px;
+}
+
+.hint,
+.nightMode .hint {
+  color: var(--color-hint);
+  font-size: 14px;
+}
+
+.dividerLine,
+.nightMode .dividerLine {
+  border-color: var(--color-divider);
+  margin: 16px 0;
+}
+
+.header,
+.nightMode .header {
+  color: var(--color-header);
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  margin: 0 0 8px;
+}
+
+.exampleWord,
+.nightMode .exampleWord {
+  color: #eaf1ff;
+}
+
+.exampleWordLine {
+  gap: 10px;
+}
+
+.exampleSentenceLine {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.examplePanel {
+  padding: 12px 14px;
+  background: var(--color-panel-background);
+  border-left: 3px solid var(--color-accent);
+  border-radius: 8px;
+}
+
+.exampleSentenceLine .exampleWord {
+  font-size: 18px;
+  font-weight: 400;
+}
+
+.sentenceTranslation,
+.nightMode .sentenceTranslation {
+  color: var(--color-sentence-translation);
+  font-size: 15px;
+}
+
+.replay-button {
+  width: 24px;
+  height: 24px;
+  background: var(--color-box-background);
+  border: 1px solid var(--color-box-border);
+  border-radius: 50%;
+}
+
+.replay-button svg {
+  width: 16px;
+  height: 16px;
+}
+
+@media (max-width: 420px) {
+  .card { padding: 12px 8px; }
+  .horizontalPadding { padding-left: 16px; padding-right: 16px; }
+}
+.preview-media { display: flex; align-items: center; justify-content: center; width: 100%; min-height: 100%; padding: 16px; color: #7f9bc4; background: rgba(59, 130, 246, 0.08); border: 1px dashed rgba(147, 197, 253, 0.45); border-radius: 8px; font-family: &quot;Segoe UI&quot;, Arial, sans-serif; font-size: 13px; }
+.preview-media--small { min-height: 72px; }
+  &lt;/style&gt;
+&lt;/head&gt;
+&lt;body class=&quot;card&quot;&gt;
+&lt;div class=&quot;customCard cardBack phonemeCard&quot;&gt;
+  &lt;div class=&quot;targetWordContainer&quot;&gt;
+    &lt;div class=&quot;targetWordBox&quot;&gt;
+      &lt;div class=&quot;hint&quot;&gt;The letter(s) is:&lt;/div&gt;
+      &lt;span class=&quot;targetIPA&quot;&gt; б &lt;/span&gt;
+    &lt;/div&gt;
+    &lt;div class=&quot;row centerVertically soundRow&quot;&gt;
+      &lt;div class=&quot;hint&quot;&gt;Sounds like:&lt;/div&gt;
+      &lt;span class=&quot;targetIPA indent&quot;&gt; /b/ &lt;/span&gt;
+      &lt;span class=&quot;wordAudioButton&quot;&gt; &lt;button class=&quot;replay-button&quot; type=&quot;button&quot; aria-label=&quot;play audio&quot;&gt;
+  &lt;svg viewBox=&quot;0 0 24 24&quot; aria-hidden=&quot;true&quot;&gt;
+    &lt;circle cx=&quot;12&quot; cy=&quot;12&quot; r=&quot;11&quot;&gt;&lt;/circle&gt;
+    &lt;path d=&quot;M9 7v10l8-5z&quot;&gt;&lt;/path&gt;
+  &lt;/svg&gt;
+&lt;/button&gt; &lt;/span&gt;
+    &lt;/div&gt;
+  &lt;/div&gt;
+
+  &lt;div class=&quot;dividerLine&quot;&gt;&lt;/div&gt;
+
+  &lt;div class=&quot;horizontalPadding&quot;&gt;
+    &lt;div class=&quot;header&quot;&gt;example word:&lt;/div&gt;
+    &lt;div class=&quot;centerVertically wrap exampleWordLine&quot;&gt;
+      &lt;span class=&quot;exampleWord indent&quot;&gt; брат &lt;/span&gt;
+      &lt;span class=&quot;wordAudioButton&quot;&gt; &lt;button class=&quot;replay-button&quot; type=&quot;button&quot; aria-label=&quot;play audio&quot;&gt;
+  &lt;svg viewBox=&quot;0 0 24 24&quot; aria-hidden=&quot;true&quot;&gt;
+    &lt;circle cx=&quot;12&quot; cy=&quot;12&quot; r=&quot;11&quot;&gt;&lt;/circle&gt;
+    &lt;path d=&quot;M9 7v10l8-5z&quot;&gt;&lt;/path&gt;
+  &lt;/svg&gt;
+&lt;/button&gt; &lt;/span&gt;
+      &lt;div class=&quot;sentenceTranslation&quot;&gt;brother&lt;/div&gt;
+    &lt;/div&gt;
+  &lt;/div&gt;
+
+  &lt;div class=&quot;dividerLine&quot;&gt;&lt;/div&gt;
+
+  &lt;div class=&quot;horizontalPadding&quot;&gt;
+    &lt;div class=&quot;header&quot;&gt;example sentence:&lt;/div&gt;
+    &lt;div class=&quot;examplePanel&quot;&gt;
+      &lt;div class=&quot;exampleSentenceLine&quot;&gt;
+        &lt;span class=&quot;exampleWord&quot;&gt;Брат берёт билет.&lt;/span&gt;
+        &lt;span class=&quot;wordAudioButton&quot;&gt; &lt;button class=&quot;replay-button&quot; type=&quot;button&quot; aria-label=&quot;play audio&quot;&gt;
+  &lt;svg viewBox=&quot;0 0 24 24&quot; aria-hidden=&quot;true&quot;&gt;
+    &lt;circle cx=&quot;12&quot; cy=&quot;12&quot; r=&quot;11&quot;&gt;&lt;/circle&gt;
+    &lt;path d=&quot;M9 7v10l8-5z&quot;&gt;&lt;/path&gt;
+  &lt;/svg&gt;
+&lt;/button&gt; &lt;/span&gt;
+      &lt;/div&gt;
+      &lt;div id=&quot;sentenceTranslation&quot; class=&quot;sentenceTranslation&quot; style=&quot;display:none;&quot;&gt;
+        The brother takes a ticket.
+      &lt;/div&gt;
+    &lt;/div&gt;
+  &lt;/div&gt;
+&lt;/div&gt;
+&lt;/body&gt;
+&lt;/html&gt;"></iframe></article>
+    <article class="preview-panel"><h3>Verso</h3><iframe title="Phoneme Card verso" loading="lazy" sandbox="allow-scripts" srcdoc="&lt;!doctype html&gt;
+&lt;html lang=&quot;pt-BR&quot;&gt;
+&lt;head&gt;
+  &lt;meta charset=&quot;utf-8&quot;&gt;
+  &lt;meta name=&quot;viewport&quot; content=&quot;width=device-width, initial-scale=1&quot;&gt;
+  &lt;title&gt;Phoneme Card - verso&lt;/title&gt;
+  &lt;style&gt;
+:root {
+  --max-width-card: 400px;
+  --font-size-card: 18px;
+  --font-size-targetWord: 30px;
+  --font-size-exampleWord: 22px;
+  --font-size-targetIPA: 32px;
+  --font-size-header: 16px;
+  --color-text-primary: #fbfafe;
+  --color-card-background: #0b0716;
+  --color-page-background: #07040d;
+  --color-box-shadow: rgba(0, 0, 0, 0.35);
+  --color-audio-button: #8b6cff;
+  --color-hint: #aebbd1;
+  --color-sentence-translation: #a9a4bb;
+  --color-header: #8f93a8;
+  --color-divider: #272236;
+  --color-box-background: #10091e;
+  --color-box-border: #2c2a46;
+}
+
+* { box-sizing: border-box; }
+
+body {
+  line-height: 1.2;
+  margin: 0 !important;
+  overflow-wrap: break-word;
+  overscroll-behavior: none;
+  background: var(--color-page-background);
+}
+
+.card {
+  padding: 6px 0 0;
+  background: var(--color-page-background);
+}
+
+.customCard {
+  margin: 0 auto;
+  position: relative;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  background-color: var(--color-card-background);
+  box-shadow: none;
+  border-radius: 6px;
+  min-height: 200px;
+  max-width: var(--max-width-card);
+  width: 100%;
+  font-weight: 500;
+  font-size: var(--font-size-card);
+  font-family: &quot;Inter&quot;, &quot;Segoe UI&quot;, Arial, sans-serif;
+  color: var(--color-text-primary);
+  overflow: hidden;
+}
+
+.nightMode .customCard {
+  color: var(--color-text-primary);
+  background-color: var(--color-card-background);
+}
+
+.cardBack {
+  flex-direction: column;
+  justify-content: flex-start;
+  align-items: flex-start;
+  padding-bottom: 14px;
+}
+
+.targetWordContainer {
+  margin: 16px 20px 6px;
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+  align-self: stretch;
+}
+
+.targetWordBox {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  align-self: stretch;
+  gap: 20px;
+  padding: 16px;
+  min-height: 112px;
+  background-color: var(--color-box-background);
+  border: 1px solid var(--color-box-border);
+  border-radius: 6px;
+}
+
+.nightMode .targetWordBox {
+  background-color: var(--color-box-background);
+  border-color: var(--color-box-border);
+}
+
+.targetIPA {
+  font-family: &quot;Charis SIL&quot;, Georgia, &quot;Times New Roman&quot;, serif;
+  font-size: var(--font-size-targetIPA);
+  font-weight: 700;
+  line-height: 1;
+  color: #ffffff;
+}
+
+.exampleWord {
+  font-size: var(--font-size-exampleWord);
+  font-weight: 700;
+  line-height: 1.25;
+  color: #ffffff;
+}
+
+.header {
+  color: var(--color-header);
+  font-size: var(--font-size-header);
+  font-weight: 400;
+  margin-top: 8px;
+  margin-bottom: 10px;
+}
+
+.hint {
+  color: var(--color-hint);
+  font-size: 18px;
+  font-weight: 400;
+}
+
+.sentenceTranslation {
+  color: var(--color-sentence-translation);
+  font-size: 18px;
+  font-weight: 400;
+  font-style: italic;
+  padding-right: 15px;
+  padding-top: 6px;
+  line-height: 1.25;
+}
+
+.nightMode .header,
+.nightMode .sentenceTranslation { color: var(--color-sentence-translation); }
+.nightMode .hint { color: var(--color-hint); }
+
+.dividerLine {
+  width: 100%;
+  border-bottom: 1px solid var(--color-divider);
+  margin-top: 12px;
+  margin-bottom: 12px;
+}
+
+.nightMode .dividerLine { border-color: var(--color-divider); }
+
+.horizontalPadding {
+  width: 100%;
+  padding-left: 20px;
+  padding-right: 20px;
+}
+
+.row { display: flex; }
+.indent { padding-left: 12px; }
+.soundRow { margin-bottom: 0; }
+.exampleWordLine { margin-top: -2px; }
+.exampleWordLine .sentenceTranslation {
+  margin-left: 6px;
+  padding-top: 0;
+}
+
+.exampleSentenceLine {
+  line-height: 1.25;
+}
+
+.exampleSentenceLine .exampleWord {
+  display: inline;
+}
+
+.exampleSentenceLine .wordAudioButton {
+  vertical-align: middle;
+}
+
+.centerVertically {
+  display: flex;
+  align-items: center;
+}
+
+.wrap {
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.wordAudioButton,
+.wordAudioButtonBack,
+.sentenceAudioButton {
+  display: inline-flex;
+  align-items: center;
+  margin-left: 8px;
+  line-height: 0;
+}
+
+.replay-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 22px;
+  height: 22px;
+  padding: 0;
+  margin: 0;
+  background: transparent;
+  border: 0;
+  border-radius: 0;
+  box-shadow: none;
+  font-size: 0;
+  line-height: 0;
+}
+
+.replay-button svg {
+  width: 22px;
+  height: 22px;
+}
+
+.replay-button svg path {
+  fill: var(--color-audio-button);
+}
+
+.replay-button svg circle {
+  fill: none;
+  stroke: none;
+}
+
+.backRevealFallback { margin-top: 12px; }
+
+/* Approved dark-blue skin; field placement remains defined by the markup. */
+:root {
+  --color-page-background: #0a1220;
+  --color-card-background: #0f1b2d;
+  --color-text-primary: #e8f0fe;
+  --color-accent: #3b82f6;
+  --color-audio-button: #93c5fd;
+  --color-hint: #7f9bc4;
+  --color-sentence-translation: #93c5fd;
+  --color-header: #93c5fd;
+  --color-divider: #24405f;
+  --color-box-background: #12213a;
+  --color-box-border: #24405f;
+  --color-panel-background: #12213a;
+}
+
+body,
+body.nightMode,
+.card {
+  background: var(--color-page-background);
+  color: var(--color-text-primary);
+  overflow-x: hidden;
+}
+
+.card {
+  padding: 28px 16px;
+}
+
+.customCard,
+.nightMode .customCard {
+  width: 100%;
+  overflow: hidden;
+  background-color: var(--color-card-background);
+  color: var(--color-text-primary);
+  border-radius: 16px;
+  border-top: 4px solid var(--color-accent);
+  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.45);
+}
+
+.cardBack {
+  padding: 22px 0 18px;
+}
+
+.targetWordContainer {
+  margin: 0 18px;
+  gap: 0;
+}
+
+.targetWordBox,
+.nightMode .targetWordBox {
+  gap: 14px;
+  padding: 16px;
+  min-height: 0;
+  background-color: var(--color-box-background);
+  border: 1px solid var(--color-box-border);
+  border-radius: 10px;
+}
+
+.targetIPA,
+.nightMode .targetIPA {
+  color: #eaf1ff;
+  font-size: 34px;
+}
+
+.soundRow {
+  gap: 10px;
+  margin-top: 14px;
+}
+
+.soundRow .targetIPA {
+  font-size: 26px;
+}
+
+.hint,
+.nightMode .hint {
+  color: var(--color-hint);
+  font-size: 14px;
+}
+
+.dividerLine,
+.nightMode .dividerLine {
+  border-color: var(--color-divider);
+  margin: 16px 0;
+}
+
+.header,
+.nightMode .header {
+  color: var(--color-header);
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  margin: 0 0 8px;
+}
+
+.exampleWord,
+.nightMode .exampleWord {
+  color: #eaf1ff;
+}
+
+.exampleWordLine {
+  gap: 10px;
+}
+
+.exampleSentenceLine {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.examplePanel {
+  padding: 12px 14px;
+  background: var(--color-panel-background);
+  border-left: 3px solid var(--color-accent);
+  border-radius: 8px;
+}
+
+.exampleSentenceLine .exampleWord {
+  font-size: 18px;
+  font-weight: 400;
+}
+
+.sentenceTranslation,
+.nightMode .sentenceTranslation {
+  color: var(--color-sentence-translation);
+  font-size: 15px;
+}
+
+.replay-button {
+  width: 24px;
+  height: 24px;
+  background: var(--color-box-background);
+  border: 1px solid var(--color-box-border);
+  border-radius: 50%;
+}
+
+.replay-button svg {
+  width: 16px;
+  height: 16px;
+}
+
+@media (max-width: 420px) {
+  .card { padding: 12px 8px; }
+  .horizontalPadding { padding-left: 16px; padding-right: 16px; }
+}
+.preview-media { display: flex; align-items: center; justify-content: center; width: 100%; min-height: 100%; padding: 16px; color: #7f9bc4; background: rgba(59, 130, 246, 0.08); border: 1px dashed rgba(147, 197, 253, 0.45); border-radius: 8px; font-family: &quot;Segoe UI&quot;, Arial, sans-serif; font-size: 13px; }
+.preview-media--small { min-height: 72px; }
+  &lt;/style&gt;
+&lt;/head&gt;
+&lt;body class=&quot;card&quot;&gt;
+&lt;div class=&quot;customCard cardBack phonemeCard&quot;&gt;
+  &lt;div class=&quot;targetWordContainer&quot;&gt;
+    &lt;div class=&quot;targetWordBox&quot;&gt;
+      &lt;div class=&quot;hint&quot;&gt;The letter(s) is:&lt;/div&gt;
+      &lt;span class=&quot;targetIPA&quot;&gt; б &lt;/span&gt;
+    &lt;/div&gt;
+    &lt;div class=&quot;row centerVertically soundRow&quot;&gt;
+      &lt;div class=&quot;hint&quot;&gt;Sounds like:&lt;/div&gt;
+      &lt;span class=&quot;targetIPA indent&quot;&gt; /b/ &lt;/span&gt;
+      &lt;span class=&quot;wordAudioButton&quot;&gt; &lt;button class=&quot;replay-button&quot; type=&quot;button&quot; aria-label=&quot;play audio&quot;&gt;
+  &lt;svg viewBox=&quot;0 0 24 24&quot; aria-hidden=&quot;true&quot;&gt;
+    &lt;circle cx=&quot;12&quot; cy=&quot;12&quot; r=&quot;11&quot;&gt;&lt;/circle&gt;
+    &lt;path d=&quot;M9 7v10l8-5z&quot;&gt;&lt;/path&gt;
+  &lt;/svg&gt;
+&lt;/button&gt; &lt;/span&gt;
+    &lt;/div&gt;
+  &lt;/div&gt;
+
+  &lt;div class=&quot;dividerLine&quot;&gt;&lt;/div&gt;
+
+  &lt;div class=&quot;horizontalPadding&quot;&gt;
+    &lt;div class=&quot;header&quot;&gt;example word:&lt;/div&gt;
+    &lt;div class=&quot;centerVertically wrap exampleWordLine&quot;&gt;
+      &lt;span class=&quot;exampleWord indent&quot;&gt; брат &lt;/span&gt;
+      &lt;span class=&quot;wordAudioButton&quot;&gt; &lt;button class=&quot;replay-button&quot; type=&quot;button&quot; aria-label=&quot;play audio&quot;&gt;
+  &lt;svg viewBox=&quot;0 0 24 24&quot; aria-hidden=&quot;true&quot;&gt;
+    &lt;circle cx=&quot;12&quot; cy=&quot;12&quot; r=&quot;11&quot;&gt;&lt;/circle&gt;
+    &lt;path d=&quot;M9 7v10l8-5z&quot;&gt;&lt;/path&gt;
+  &lt;/svg&gt;
+&lt;/button&gt; &lt;/span&gt;
+      &lt;div class=&quot;sentenceTranslation&quot;&gt;brother&lt;/div&gt;
+    &lt;/div&gt;
+  &lt;/div&gt;
+
+  &lt;div class=&quot;dividerLine&quot;&gt;&lt;/div&gt;
+
+  &lt;div class=&quot;horizontalPadding&quot;&gt;
+    &lt;div class=&quot;header&quot;&gt;example sentence:&lt;/div&gt;
+    &lt;div class=&quot;examplePanel&quot;&gt;
+      &lt;div class=&quot;exampleSentenceLine&quot;&gt;
+        &lt;span class=&quot;exampleWord&quot;&gt;Брат берёт билет.&lt;/span&gt;
+        &lt;span class=&quot;wordAudioButton&quot;&gt; &lt;button class=&quot;replay-button&quot; type=&quot;button&quot; aria-label=&quot;play audio&quot;&gt;
+  &lt;svg viewBox=&quot;0 0 24 24&quot; aria-hidden=&quot;true&quot;&gt;
+    &lt;circle cx=&quot;12&quot; cy=&quot;12&quot; r=&quot;11&quot;&gt;&lt;/circle&gt;
+    &lt;path d=&quot;M9 7v10l8-5z&quot;&gt;&lt;/path&gt;
+  &lt;/svg&gt;
+&lt;/button&gt; &lt;/span&gt;
+      &lt;/div&gt;
+      &lt;div id=&quot;sentenceTranslation&quot; class=&quot;sentenceTranslation&quot; style=&quot;display:none;&quot;&gt;
+        The brother takes a ticket.
+      &lt;/div&gt;
+    &lt;/div&gt;
+  &lt;/div&gt;
+&lt;/div&gt;
+
+&lt;script&gt;
+  (function () {
+    document.getElementById(&quot;sentenceTranslation&quot;).style.display = &quot;block&quot;;
+  })();
+&lt;/script&gt;
+&lt;noscript&gt;
+  &lt;div class=&quot;customCard cardBack phonemeCard backRevealFallback&quot;&gt;
+    &lt;div class=&quot;horizontalPadding&quot;&gt;
+      &lt;div class=&quot;header&quot;&gt;sentence translation:&lt;/div&gt;
+      &lt;div class=&quot;sentenceTranslation&quot;&gt;The brother takes a ticket.&lt;/div&gt;
+    &lt;/div&gt;
+  &lt;/div&gt;
+&lt;/noscript&gt;
+&lt;/body&gt;
+&lt;/html&gt;"></iframe></article>
+  </div>
+</section>
+<section class="template-section" id="mandarin-card">
+  <div class="section-header"><div><p class="eyebrow">mandarin_card.md</p><h2>Mandarin Card</h2><p>Template de mandarim, renderizado com o CSS base normal + extensoes.</p></div></div>
+  <div class="preview-grid">
+    <article class="preview-panel"><h3>Frente</h3><iframe title="Mandarin Card frente" loading="lazy" sandbox="allow-scripts" srcdoc="&lt;!doctype html&gt;
+&lt;html lang=&quot;pt-BR&quot;&gt;
+&lt;head&gt;
+  &lt;meta charset=&quot;utf-8&quot;&gt;
+  &lt;meta name=&quot;viewport&quot; content=&quot;width=device-width, initial-scale=1&quot;&gt;
+  &lt;title&gt;Mandarin Card - frente&lt;/title&gt;
+  &lt;style&gt;
+:root {
+  --max-width-card: 460px;
+  --font-size-card: 18px;
+  --font-size-targetWord: 38px;
+  --font-size-header: 12px;
+  --font-size-irregular-form: 15px;
+
+  --color-page-background: #121212;
+  --color-text-primary: #EAEAEA;
+  --color-nightMode-text-primary: #EAEAEA;
+  --color-card-background: #1E1E1E;
+  --color-nightMode-card-background: #1E1E1E;
+  --color-panel-background: transparent;
+  --color-box-shadow: rgba(0, 0, 0, 0.5);
+  --color-audio-button: #A0A0A0;
+  --color-list-bullets: #A0A0A0;
+  --color-irregular-form-background: #eff6ff;
+  --color-nightMode-irregular-form-background: #1e3a5f;
+  --color-irregular-form-border: #bfdbfe;
+  --color-nightMode-irregular-form-border: #2563eb;
+  --color-nightMode-irregular-form-text: rgba(219, 234, 254, 0.85);
+  --color-hint: #A0A0A0;
+  --color-nightMode-hint: #A0A0A0;
+  --color-sentence-translation: #A0A0A0;
+  --color-nightMode-sentence-translation: #A0A0A0;
+  --color-header: #A0A0A0;
+  --color-nightMode-header: #A0A0A0;
+  --color-text-muted: #A0A0A0;
+  --color-divider: #333333;
+  --color-nightMode-divider: #333333;
+}
+
+/* Chrome Base Styles */
+p {
+  display: block;
+  margin-block-start: 1em;
+  margin-block-end: 1em;
+  margin-inline-start: 0px;
+  margin-inline-end: 0px;
+}
+
+div { display: block; }
+
+body {
+  display: block;
+  line-height: 1.187;
+}
+
+html { display: block; }
+
+span, applet, object, iframe,
+h1, h2, h3, h4, h5, h6,
+blockquote, pre, a, abbr, acronym, address, big, cite, code,
+del, dfn, em, img, ins, kbd, q, s, samp, small, strike, strong,
+sub, sup, tt, var, b, u, i, center,
+dl, dt, dd, ol, ul, li,
+fieldset, form, label, legend,
+table, caption, tbody, tfoot, thead, tr, th, td,
+article, aside, canvas, details, embed,
+figure, figcaption, footer, header, hgroup,
+menu, nav, output, ruby, section, summary,
+time, mark, audio, video {
+  margin: 0;
+  padding: 0;
+  border: 0;
+  font-size: 100%;
+  font: inherit;
+  vertical-align: baseline;
+}
+
+article, aside, details, figcaption, figure,
+footer, header, hgroup, menu, nav, section {
+  display: block;
+}
+
+ol, ul { list-style: none; }
+
+blockquote, q { quotes: none; }
+
+blockquote:before, blockquote:after,
+q:before, q:after {
+  content: &quot;&quot;;
+  content: none;
+}
+
+table {
+  border-collapse: collapse;
+  border-spacing: 0;
+}
+
+* { box-sizing: border-box; }
+
+/* ========== NIGHT MODE SCROLLBAR ========== */
+
+body.nightMode::-webkit-scrollbar {
+  background: var(--color-page-background);
+}
+body.nightMode::-webkit-scrollbar:horizontal { height: 12px; }
+body.nightMode::-webkit-scrollbar:vertical { width: 12px; }
+body.nightMode::-webkit-scrollbar-thumb {
+  background: var(--color-text-muted);
+  border-radius: 8px;
+}
+body.nightMode::-webkit-scrollbar-thumb:horizontal { min-width: 50px; }
+body.nightMode::-webkit-scrollbar-thumb:vertical { min-height: 50px; }
+
+/* ========== BASE ========== */
+
+body {
+  overscroll-behavior: none;
+  margin: 0 !important;
+  overflow-wrap: break-word;
+}
+
+#_flag {
+  position: fixed;
+  right: 10px;
+  top: 0;
+  font-size: 30px;
+  display: none;
+  -webkit-text-stroke-width: 1px;
+  -webkit-text-stroke-color: black;
+}
+
+#_mark {
+  position: fixed;
+  left: 10px;
+  top: 0;
+  font-size: 30px;
+  color: yellow;
+  display: none;
+  -webkit-text-stroke-width: 1px;
+  -webkit-text-stroke-color: black;
+}
+
+#typeans {
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.typeGood { background: #0f0; }
+.typeBad { background: #f00; }
+.typeMissed { background: #ccc; }
+.nightMode .latex { filter: invert(100%); }
+.drawing { zoom: 50%; }
+.nightMode img.drawing { filter: invert(1) hue-rotate(180deg); }
+
+/* ========== CARD STYLES ========== */
+
+.card {
+  padding: 16px;
+}
+
+.customCard {
+  margin: 0 auto;
+  position: relative;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+
+  background-color: var(--color-card-background);
+  box-shadow:
+    0 4px 24px var(--color-box-shadow),
+    0 1px 4px rgba(37, 99, 235, 0.08);
+  border-radius: 8px;
+  border: 1px solid var(--color-divider);
+  min-height: 200px;
+  max-width: var(--max-width-card);
+
+  font-weight: 500;
+  font-size: var(--font-size-card);
+  font-family: &quot;Segoe UI&quot;, &quot;Noto Sans&quot;, Arial, sans-serif;
+  color: var(--color-text-primary);
+}
+
+.nightMode .customCard {
+  color: var(--color-nightMode-text-primary);
+  background-color: var(--color-nightMode-card-background);
+}
+
+.cardBack {
+  flex-direction: column;
+  justify-content: flex-start;
+  align-items: flex-start;
+  padding-top: 24px;
+  padding-bottom: 8px;
+}
+
+.targetWordContainer {
+  margin-top: 8px;
+  margin-bottom: 24px;
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+}
+
+.targetWord {
+  font-size: var(--font-size-targetWord);
+  font-weight: 700;
+  color: var(--color-text-primary);
+  letter-spacing: -0.5px;
+}
+
+.wordBlock {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.ipa {
+  font-size: 14px;
+  color: var(--color-divader);
+  margin-left: 2px;
+  font-weight: 400;
+  letter-spacing: 0.03em;
+  opacity: 0.7;
+}
+
+.nightMode .targetWord {
+  color: var(--color-text-primary);
+}
+
+.definitionsList {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  padding-left: 16px;
+}
+
+.definitionsList li {
+  margin-bottom: 6px;
+  line-height: 1.5;
+}
+
+.definitionsList li::before {
+  content: &quot;\2022&quot;;
+  color: var(--color-list-bullets);
+  display: inline-block;
+  width: 8px;
+  margin-right: 5px;
+  margin-left: -16px;
+  font-size: 22px;
+}
+
+.wordAudioButtonFront {
+  position: absolute;
+  top: 21px;
+  right: 22px;
+}
+
+.wordAudioButtonBack {
+  margin-left: 8px;
+}
+
+.exampleSentenceLine {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.exampleSentenceText {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.sentenceAudioButton {
+  flex: 0 0 auto;
+  margin-left: 8px;
+}
+
+.replay-button svg {
+  width: 20px;
+  height: 20px;
+}
+
+.replay-button svg path {
+  fill: var(--color-audio-button);
+}
+
+.replay-button svg circle {
+  fill: none;
+  stroke: none;
+}
+
+.irregularFormsContainer {
+  display: flex;
+  flex-wrap: wrap;
+  margin-top: 12px;
+}
+
+.irregularForm {
+  background-color: var(--color-irregular-form-background);
+  border: 1px solid var(--color-irregular-form-border);
+  border-radius: 40px;
+  font-size: var(--font-size-irregular-form);
+  color: #1d4ed8;
+  font-weight: 600;
+  padding: 3px 12px 5px;
+  margin-right: 10px;
+  margin-bottom: 8px;
+}
+
+.nightMode .irregularForm {
+  color: var(--color-nightMode-irregular-form-text);
+  background-color: var(--color-nightMode-irregular-form-background);
+  border-color: var(--color-nightMode-irregular-form-border);
+}
+
+.image {
+  border-top: 1px solid var(--color-divider);
+  border-bottom: 1px solid var(--color-divider);
+  margin-top: 16px;
+  width: 100%;
+  height: 210px;
+}
+
+.image img {
+  object-fit: contain;
+  width: 100% !important;
+  height: 100% !important;
+  max-width: 100% !important;
+  max-height: 100% !important;
+}
+
+.hint { color: var(--color-hint); }
+.nightMode .hint { color: var(--color-nightMode-hint); }
+
+.sentenceTranslation {
+  color: var(--color-sentence-translation);
+  font-weight: 400;
+  font-style: italic;
+  padding-right: 15px;
+  padding-top: 8px;
+}
+
+.nightMode .sentenceTranslation {
+  color: var(--color-nightMode-sentence-translation);
+}
+
+.reportIconContainer {
+  width: 100%;
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+}
+
+.header {
+  color: var(--color-header);
+  font-size: var(--font-size-header);
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  margin-top: 8px;
+  margin-bottom: 8px;
+}
+
+.nightMode .header {
+  color: var(--color-nightMode-header);
+}
+
+.dividerLine {
+  width: 100%;
+  border-bottom: 1px solid var(--color-divider);
+  margin-top: 8px;
+  margin-bottom: 8px;
+}
+
+.nightMode .dividerLine {
+  border-color: var(--color-nightMode-divider);
+}
+
+.horizontalPadding {
+  width: 100%;
+  padding-left: 16px;
+  padding-right: 16px;
+}
+
+.indent {
+  padding-left: 12px;
+}
+
+.centerVertically {
+  display: flex;
+  align-items: center;
+}
+
+/* Gemini ergonomic dark layout. These canonical declarations stay last so
+   generated Anki cards keep the same hierarchy in day and night modes. */
+body,
+body.nightMode,
+.card {
+  background: var(--color-page-background);
+  color: var(--color-text-primary);
+  font-family: Georgia, Cambria, &quot;Times New Roman&quot;, Times, serif;
+  margin: 0;
+  padding: 40px 16px;
+  min-height: 100vh;
+  box-sizing: border-box;
+  overflow-x: hidden;
+  overflow-wrap: break-word;
+  text-align: left;
+}
+
+.card {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 40px 16px;
+  min-height: 100vh;
+  overflow-x: hidden;
+}
+
+.customCard,
+.nightMode .customCard {
+  display: block;
+  margin: 0 auto;
+  max-width: 460px;
+  width: 100%;
+  min-height: min(760px, calc(100vh - 80px));
+  padding: clamp(24px, 4vh, 40px) 24px;
+  overflow: hidden;
+  overflow-wrap: anywhere;
+  background-color: var(--color-card-background);
+  color: var(--color-text-primary);
+  border: 1px solid var(--color-divider);
+  border-radius: 8px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5);
+  font-family: Georgia, Cambria, &quot;Times New Roman&quot;, Times, serif;
+  font-size: 16px;
+  font-weight: 400;
+}
+
+.horizontalPadding {
+  width: 100%;
+  padding-left: 0;
+  padding-right: 0;
+}
+
+.indent {
+  padding-left: 0;
+}
+
+.targetWordContainer {
+  display: flex;
+  justify-content: flex-start;
+  align-items: baseline;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin: 0 0 20px;
+  width: 100%;
+  text-align: left;
+}
+
+.wordBlock {
+  display: flex;
+  flex-direction: row;
+  align-items: baseline;
+  flex-wrap: wrap;
+  gap: 10px;
+  min-width: 0;
+}
+
+.targetWord,
+.nightMode .targetWord {
+  color: var(--color-text-primary);
+  font-size: 38px;
+  font-weight: 600;
+  line-height: 1.1;
+  letter-spacing: -0.5px;
+  overflow-wrap: anywhere;
+}
+
+.ipa {
+  color: var(--color-text-muted);
+  font-family: -apple-system, BlinkMacSystemFont, &quot;Segoe UI&quot;, Roboto, sans-serif;
+  font-size: 16px;
+  font-weight: 400;
+  line-height: 1.3;
+  letter-spacing: normal;
+  margin: 0;
+  opacity: 1;
+}
+
+.wordAudioButtonBack {
+  flex: 0 0 auto;
+  margin: 0 0 0 4px;
+  opacity: 0.8;
+}
+
+.dividerLine,
+.nightMode .dividerLine {
+  width: 100%;
+  height: 1px;
+  background: var(--color-divider);
+  border: 0;
+  margin: 20px 0;
+}
+
+.header,
+.nightMode .header {
+  color: var(--color-text-muted);
+  font-family: -apple-system, BlinkMacSystemFont, &quot;Segoe UI&quot;, Roboto, sans-serif;
+  font-size: 12px;
+  font-weight: 600;
+  line-height: 1.3;
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+  margin: 0 0 8px;
+}
+
+.definitionsList {
+  list-style: none;
+  color: var(--color-text-primary);
+  font-size: 16px;
+  line-height: 1.6;
+  margin: 0;
+  padding-left: 0;
+}
+
+.definitionsList li {
+  color: var(--color-text-primary);
+  font-size: 16px;
+  line-height: 1.6;
+  margin-bottom: 6px;
+}
+
+.definitionsList li::before {
+  content: none;
+}
+
+.examplePanel {
+  padding: 0;
+  margin-top: 6px;
+  background: transparent;
+  border: 0;
+  border-radius: 0;
+}
+
+.exampleSentenceLine {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  font-size: 16px;
+  line-height: 1.5;
+}
+
+.exampleSentenceText {
+  flex: 1 1 auto;
+  min-width: 0;
+  color: var(--color-text-primary);
+  overflow-wrap: anywhere;
+}
+
+.sentenceAudioButton {
+  flex: 0 0 auto;
+  margin-left: 0;
+  opacity: 0.8;
+}
+
+.sentenceTranslation,
+.nightMode .sentenceTranslation {
+  color: var(--color-text-muted);
+  font-family: Georgia, Cambria, &quot;Times New Roman&quot;, Times, serif;
+  font-size: 16px;
+  font-weight: 400;
+  font-style: normal;
+  line-height: 1.5;
+  margin-top: 8px;
+  padding: 0;
+  overflow-wrap: anywhere;
+}
+
+.image {
+  width: 100%;
+  max-width: 100%;
+  height: 210px;
+  margin-top: 16px;
+  overflow: hidden;
+  border-top: 1px solid var(--color-divider);
+  border-bottom: 1px solid var(--color-divider);
+}
+
+.image img {
+  display: block;
+  object-fit: contain;
+  width: 100% !important;
+  height: 100% !important;
+  max-width: 100% !important;
+  max-height: 100% !important;
+}
+
+.replay-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: auto;
+  height: auto;
+  padding: 0;
+  background: transparent;
+  border: 0;
+  border-radius: 0;
+  line-height: 0;
+}
+
+.replay-button svg {
+  width: 20px;
+  height: 20px;
+}
+
+.replay-button svg path {
+  fill: var(--color-audio-button);
+}
+
+.traditional {
+  color: #93c5fd;
+  font-size: 15px;
+  font-weight: 400;
+  line-height: 1.45;
+}
+
+.sentencePinyin {
+  color: #7f9bc4;
+  font-size: 14px;
+  font-weight: 400;
+  line-height: 1.45;
+}
+
+.traditionalSentence {
+  color: #93c5fd;
+  font-size: 14px;
+  font-weight: 400;
+  line-height: 1.45;
+}
+
+.sentencePinyin,
+.traditionalSentence {
+  padding-top: 4px;
+}
+
+.nightMode .traditional,
+.nightMode .traditionalSentence {
+  color: #93c5fd;
+}
+
+.nightMode .sentencePinyin {
+  color: #7f9bc4;
+}
+.preview-media { display: flex; align-items: center; justify-content: center; width: 100%; min-height: 100%; padding: 16px; color: #7f9bc4; background: rgba(59, 130, 246, 0.08); border: 1px dashed rgba(147, 197, 253, 0.45); border-radius: 8px; font-family: &quot;Segoe UI&quot;, Arial, sans-serif; font-size: 13px; }
+.preview-media--small { min-height: 72px; }
+  &lt;/style&gt;
+&lt;/head&gt;
+&lt;body class=&quot;card&quot;&gt;
+&lt;div class=&quot;customCard cardBack&quot;&gt;
+  &lt;div class=&quot;horizontalPadding centerVertically targetWordContainer&quot;&gt;
+    &lt;div class=&quot;wordBlock&quot;&gt;
+      &lt;span class=&quot;targetWord&quot;&gt;学生&lt;/span&gt;
+      &lt;span class=&quot;ipa&quot;&gt;xuesheng&lt;/span&gt;
+      &lt;span class=&quot;traditional&quot;&gt;學生&lt;/span&gt;
+    &lt;/div&gt;
+    &lt;span class=&quot;wordAudioButtonBack&quot;&gt;&lt;button class=&quot;replay-button&quot; type=&quot;button&quot; aria-label=&quot;play audio&quot;&gt;
+  &lt;svg viewBox=&quot;0 0 24 24&quot; aria-hidden=&quot;true&quot;&gt;
+    &lt;circle cx=&quot;12&quot; cy=&quot;12&quot; r=&quot;11&quot;&gt;&lt;/circle&gt;
+    &lt;path d=&quot;M9 7v10l8-5z&quot;&gt;&lt;/path&gt;
+  &lt;/svg&gt;
+&lt;/button&gt;&lt;/span&gt;
+  &lt;/div&gt;
+
+  &lt;div class=&quot;dividerLine&quot;&gt;&lt;/div&gt;
+
+  &lt;div class=&quot;horizontalPadding&quot;&gt;
+    &lt;div class=&quot;header&quot;&gt;Definition:&lt;/div&gt;
+    &lt;div class=&quot;indent&quot;&gt;
+      &lt;ul class=&quot;definitionsList&quot;&gt;
+        &lt;li&gt;noun: student&lt;/li&gt;
+      &lt;/ul&gt;
+    &lt;/div&gt;
+  &lt;/div&gt;
+
+
+  &lt;div class=&quot;image&quot;&gt;&lt;div class=&quot;preview-media&quot;&gt;Imagem opcional&lt;/div&gt;&lt;/div&gt;
+
+
+  &lt;div class=&quot;dividerLine&quot;&gt;&lt;/div&gt;
+
+  &lt;div class=&quot;horizontalPadding&quot;&gt;
+    &lt;div class=&quot;header&quot;&gt;example:&lt;/div&gt;
+    &lt;div class=&quot;examplePanel&quot;&gt;
+      &lt;div class=&quot;exampleSentenceLine&quot;&gt;
+        &lt;span class=&quot;exampleSentenceText&quot;&gt;他是学生。&lt;/span&gt;
+        &lt;span class=&quot;sentenceAudioButton&quot;&gt;&lt;button class=&quot;replay-button&quot; type=&quot;button&quot; aria-label=&quot;play audio&quot;&gt;
+  &lt;svg viewBox=&quot;0 0 24 24&quot; aria-hidden=&quot;true&quot;&gt;
+    &lt;circle cx=&quot;12&quot; cy=&quot;12&quot; r=&quot;11&quot;&gt;&lt;/circle&gt;
+    &lt;path d=&quot;M9 7v10l8-5z&quot;&gt;&lt;/path&gt;
+  &lt;/svg&gt;
+&lt;/button&gt;&lt;/span&gt;
+      &lt;/div&gt;
+      &lt;div class=&quot;sentencePinyin&quot;&gt;ta shi xuesheng.&lt;/div&gt;
+      &lt;div class=&quot;traditionalSentence&quot;&gt;他是學生。&lt;/div&gt;
+      &lt;div id=&quot;translation&quot; class=&quot;sentenceTranslation&quot; style=&quot;display:none;&quot;&gt;
+        Ele e estudante.
+      &lt;/div&gt;
+    &lt;/div&gt;
+  &lt;/div&gt;
+&lt;/div&gt;
+&lt;/body&gt;
+&lt;/html&gt;"></iframe></article>
+    <article class="preview-panel"><h3>Verso</h3><iframe title="Mandarin Card verso" loading="lazy" sandbox="allow-scripts" srcdoc="&lt;!doctype html&gt;
+&lt;html lang=&quot;pt-BR&quot;&gt;
+&lt;head&gt;
+  &lt;meta charset=&quot;utf-8&quot;&gt;
+  &lt;meta name=&quot;viewport&quot; content=&quot;width=device-width, initial-scale=1&quot;&gt;
+  &lt;title&gt;Mandarin Card - verso&lt;/title&gt;
+  &lt;style&gt;
+:root {
+  --max-width-card: 460px;
+  --font-size-card: 18px;
+  --font-size-targetWord: 38px;
+  --font-size-header: 12px;
+  --font-size-irregular-form: 15px;
+
+  --color-page-background: #121212;
+  --color-text-primary: #EAEAEA;
+  --color-nightMode-text-primary: #EAEAEA;
+  --color-card-background: #1E1E1E;
+  --color-nightMode-card-background: #1E1E1E;
+  --color-panel-background: transparent;
+  --color-box-shadow: rgba(0, 0, 0, 0.5);
+  --color-audio-button: #A0A0A0;
+  --color-list-bullets: #A0A0A0;
+  --color-irregular-form-background: #eff6ff;
+  --color-nightMode-irregular-form-background: #1e3a5f;
+  --color-irregular-form-border: #bfdbfe;
+  --color-nightMode-irregular-form-border: #2563eb;
+  --color-nightMode-irregular-form-text: rgba(219, 234, 254, 0.85);
+  --color-hint: #A0A0A0;
+  --color-nightMode-hint: #A0A0A0;
+  --color-sentence-translation: #A0A0A0;
+  --color-nightMode-sentence-translation: #A0A0A0;
+  --color-header: #A0A0A0;
+  --color-nightMode-header: #A0A0A0;
+  --color-text-muted: #A0A0A0;
+  --color-divider: #333333;
+  --color-nightMode-divider: #333333;
+}
+
+/* Chrome Base Styles */
+p {
+  display: block;
+  margin-block-start: 1em;
+  margin-block-end: 1em;
+  margin-inline-start: 0px;
+  margin-inline-end: 0px;
+}
+
+div { display: block; }
+
+body {
+  display: block;
+  line-height: 1.187;
+}
+
+html { display: block; }
+
+span, applet, object, iframe,
+h1, h2, h3, h4, h5, h6,
+blockquote, pre, a, abbr, acronym, address, big, cite, code,
+del, dfn, em, img, ins, kbd, q, s, samp, small, strike, strong,
+sub, sup, tt, var, b, u, i, center,
+dl, dt, dd, ol, ul, li,
+fieldset, form, label, legend,
+table, caption, tbody, tfoot, thead, tr, th, td,
+article, aside, canvas, details, embed,
+figure, figcaption, footer, header, hgroup,
+menu, nav, output, ruby, section, summary,
+time, mark, audio, video {
+  margin: 0;
+  padding: 0;
+  border: 0;
+  font-size: 100%;
+  font: inherit;
+  vertical-align: baseline;
+}
+
+article, aside, details, figcaption, figure,
+footer, header, hgroup, menu, nav, section {
+  display: block;
+}
+
+ol, ul { list-style: none; }
+
+blockquote, q { quotes: none; }
+
+blockquote:before, blockquote:after,
+q:before, q:after {
+  content: &quot;&quot;;
+  content: none;
+}
+
+table {
+  border-collapse: collapse;
+  border-spacing: 0;
+}
+
+* { box-sizing: border-box; }
+
+/* ========== NIGHT MODE SCROLLBAR ========== */
+
+body.nightMode::-webkit-scrollbar {
+  background: var(--color-page-background);
+}
+body.nightMode::-webkit-scrollbar:horizontal { height: 12px; }
+body.nightMode::-webkit-scrollbar:vertical { width: 12px; }
+body.nightMode::-webkit-scrollbar-thumb {
+  background: var(--color-text-muted);
+  border-radius: 8px;
+}
+body.nightMode::-webkit-scrollbar-thumb:horizontal { min-width: 50px; }
+body.nightMode::-webkit-scrollbar-thumb:vertical { min-height: 50px; }
+
+/* ========== BASE ========== */
+
+body {
+  overscroll-behavior: none;
+  margin: 0 !important;
+  overflow-wrap: break-word;
+}
+
+#_flag {
+  position: fixed;
+  right: 10px;
+  top: 0;
+  font-size: 30px;
+  display: none;
+  -webkit-text-stroke-width: 1px;
+  -webkit-text-stroke-color: black;
+}
+
+#_mark {
+  position: fixed;
+  left: 10px;
+  top: 0;
+  font-size: 30px;
+  color: yellow;
+  display: none;
+  -webkit-text-stroke-width: 1px;
+  -webkit-text-stroke-color: black;
+}
+
+#typeans {
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.typeGood { background: #0f0; }
+.typeBad { background: #f00; }
+.typeMissed { background: #ccc; }
+.nightMode .latex { filter: invert(100%); }
+.drawing { zoom: 50%; }
+.nightMode img.drawing { filter: invert(1) hue-rotate(180deg); }
+
+/* ========== CARD STYLES ========== */
+
+.card {
+  padding: 16px;
+}
+
+.customCard {
+  margin: 0 auto;
+  position: relative;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+
+  background-color: var(--color-card-background);
+  box-shadow:
+    0 4px 24px var(--color-box-shadow),
+    0 1px 4px rgba(37, 99, 235, 0.08);
+  border-radius: 8px;
+  border: 1px solid var(--color-divider);
+  min-height: 200px;
+  max-width: var(--max-width-card);
+
+  font-weight: 500;
+  font-size: var(--font-size-card);
+  font-family: &quot;Segoe UI&quot;, &quot;Noto Sans&quot;, Arial, sans-serif;
+  color: var(--color-text-primary);
+}
+
+.nightMode .customCard {
+  color: var(--color-nightMode-text-primary);
+  background-color: var(--color-nightMode-card-background);
+}
+
+.cardBack {
+  flex-direction: column;
+  justify-content: flex-start;
+  align-items: flex-start;
+  padding-top: 24px;
+  padding-bottom: 8px;
+}
+
+.targetWordContainer {
+  margin-top: 8px;
+  margin-bottom: 24px;
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+}
+
+.targetWord {
+  font-size: var(--font-size-targetWord);
+  font-weight: 700;
+  color: var(--color-text-primary);
+  letter-spacing: -0.5px;
+}
+
+.wordBlock {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.ipa {
+  font-size: 14px;
+  color: var(--color-divader);
+  margin-left: 2px;
+  font-weight: 400;
+  letter-spacing: 0.03em;
+  opacity: 0.7;
+}
+
+.nightMode .targetWord {
+  color: var(--color-text-primary);
+}
+
+.definitionsList {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  padding-left: 16px;
+}
+
+.definitionsList li {
+  margin-bottom: 6px;
+  line-height: 1.5;
+}
+
+.definitionsList li::before {
+  content: &quot;\2022&quot;;
+  color: var(--color-list-bullets);
+  display: inline-block;
+  width: 8px;
+  margin-right: 5px;
+  margin-left: -16px;
+  font-size: 22px;
+}
+
+.wordAudioButtonFront {
+  position: absolute;
+  top: 21px;
+  right: 22px;
+}
+
+.wordAudioButtonBack {
+  margin-left: 8px;
+}
+
+.exampleSentenceLine {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.exampleSentenceText {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.sentenceAudioButton {
+  flex: 0 0 auto;
+  margin-left: 8px;
+}
+
+.replay-button svg {
+  width: 20px;
+  height: 20px;
+}
+
+.replay-button svg path {
+  fill: var(--color-audio-button);
+}
+
+.replay-button svg circle {
+  fill: none;
+  stroke: none;
+}
+
+.irregularFormsContainer {
+  display: flex;
+  flex-wrap: wrap;
+  margin-top: 12px;
+}
+
+.irregularForm {
+  background-color: var(--color-irregular-form-background);
+  border: 1px solid var(--color-irregular-form-border);
+  border-radius: 40px;
+  font-size: var(--font-size-irregular-form);
+  color: #1d4ed8;
+  font-weight: 600;
+  padding: 3px 12px 5px;
+  margin-right: 10px;
+  margin-bottom: 8px;
+}
+
+.nightMode .irregularForm {
+  color: var(--color-nightMode-irregular-form-text);
+  background-color: var(--color-nightMode-irregular-form-background);
+  border-color: var(--color-nightMode-irregular-form-border);
+}
+
+.image {
+  border-top: 1px solid var(--color-divider);
+  border-bottom: 1px solid var(--color-divider);
+  margin-top: 16px;
+  width: 100%;
+  height: 210px;
+}
+
+.image img {
+  object-fit: contain;
+  width: 100% !important;
+  height: 100% !important;
+  max-width: 100% !important;
+  max-height: 100% !important;
+}
+
+.hint { color: var(--color-hint); }
+.nightMode .hint { color: var(--color-nightMode-hint); }
+
+.sentenceTranslation {
+  color: var(--color-sentence-translation);
+  font-weight: 400;
+  font-style: italic;
+  padding-right: 15px;
+  padding-top: 8px;
+}
+
+.nightMode .sentenceTranslation {
+  color: var(--color-nightMode-sentence-translation);
+}
+
+.reportIconContainer {
+  width: 100%;
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+}
+
+.header {
+  color: var(--color-header);
+  font-size: var(--font-size-header);
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  margin-top: 8px;
+  margin-bottom: 8px;
+}
+
+.nightMode .header {
+  color: var(--color-nightMode-header);
+}
+
+.dividerLine {
+  width: 100%;
+  border-bottom: 1px solid var(--color-divider);
+  margin-top: 8px;
+  margin-bottom: 8px;
+}
+
+.nightMode .dividerLine {
+  border-color: var(--color-nightMode-divider);
+}
+
+.horizontalPadding {
+  width: 100%;
+  padding-left: 16px;
+  padding-right: 16px;
+}
+
+.indent {
+  padding-left: 12px;
+}
+
+.centerVertically {
+  display: flex;
+  align-items: center;
+}
+
+/* Gemini ergonomic dark layout. These canonical declarations stay last so
+   generated Anki cards keep the same hierarchy in day and night modes. */
+body,
+body.nightMode,
+.card {
+  background: var(--color-page-background);
+  color: var(--color-text-primary);
+  font-family: Georgia, Cambria, &quot;Times New Roman&quot;, Times, serif;
+  margin: 0;
+  padding: 40px 16px;
+  min-height: 100vh;
+  box-sizing: border-box;
+  overflow-x: hidden;
+  overflow-wrap: break-word;
+  text-align: left;
+}
+
+.card {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 40px 16px;
+  min-height: 100vh;
+  overflow-x: hidden;
+}
+
+.customCard,
+.nightMode .customCard {
+  display: block;
+  margin: 0 auto;
+  max-width: 460px;
+  width: 100%;
+  min-height: min(760px, calc(100vh - 80px));
+  padding: clamp(24px, 4vh, 40px) 24px;
+  overflow: hidden;
+  overflow-wrap: anywhere;
+  background-color: var(--color-card-background);
+  color: var(--color-text-primary);
+  border: 1px solid var(--color-divider);
+  border-radius: 8px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5);
+  font-family: Georgia, Cambria, &quot;Times New Roman&quot;, Times, serif;
+  font-size: 16px;
+  font-weight: 400;
+}
+
+.horizontalPadding {
+  width: 100%;
+  padding-left: 0;
+  padding-right: 0;
+}
+
+.indent {
+  padding-left: 0;
+}
+
+.targetWordContainer {
+  display: flex;
+  justify-content: flex-start;
+  align-items: baseline;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin: 0 0 20px;
+  width: 100%;
+  text-align: left;
+}
+
+.wordBlock {
+  display: flex;
+  flex-direction: row;
+  align-items: baseline;
+  flex-wrap: wrap;
+  gap: 10px;
+  min-width: 0;
+}
+
+.targetWord,
+.nightMode .targetWord {
+  color: var(--color-text-primary);
+  font-size: 38px;
+  font-weight: 600;
+  line-height: 1.1;
+  letter-spacing: -0.5px;
+  overflow-wrap: anywhere;
+}
+
+.ipa {
+  color: var(--color-text-muted);
+  font-family: -apple-system, BlinkMacSystemFont, &quot;Segoe UI&quot;, Roboto, sans-serif;
+  font-size: 16px;
+  font-weight: 400;
+  line-height: 1.3;
+  letter-spacing: normal;
+  margin: 0;
+  opacity: 1;
+}
+
+.wordAudioButtonBack {
+  flex: 0 0 auto;
+  margin: 0 0 0 4px;
+  opacity: 0.8;
+}
+
+.dividerLine,
+.nightMode .dividerLine {
+  width: 100%;
+  height: 1px;
+  background: var(--color-divider);
+  border: 0;
+  margin: 20px 0;
+}
+
+.header,
+.nightMode .header {
+  color: var(--color-text-muted);
+  font-family: -apple-system, BlinkMacSystemFont, &quot;Segoe UI&quot;, Roboto, sans-serif;
+  font-size: 12px;
+  font-weight: 600;
+  line-height: 1.3;
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+  margin: 0 0 8px;
+}
+
+.definitionsList {
+  list-style: none;
+  color: var(--color-text-primary);
+  font-size: 16px;
+  line-height: 1.6;
+  margin: 0;
+  padding-left: 0;
+}
+
+.definitionsList li {
+  color: var(--color-text-primary);
+  font-size: 16px;
+  line-height: 1.6;
+  margin-bottom: 6px;
+}
+
+.definitionsList li::before {
+  content: none;
+}
+
+.examplePanel {
+  padding: 0;
+  margin-top: 6px;
+  background: transparent;
+  border: 0;
+  border-radius: 0;
+}
+
+.exampleSentenceLine {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  font-size: 16px;
+  line-height: 1.5;
+}
+
+.exampleSentenceText {
+  flex: 1 1 auto;
+  min-width: 0;
+  color: var(--color-text-primary);
+  overflow-wrap: anywhere;
+}
+
+.sentenceAudioButton {
+  flex: 0 0 auto;
+  margin-left: 0;
+  opacity: 0.8;
+}
+
+.sentenceTranslation,
+.nightMode .sentenceTranslation {
+  color: var(--color-text-muted);
+  font-family: Georgia, Cambria, &quot;Times New Roman&quot;, Times, serif;
+  font-size: 16px;
+  font-weight: 400;
+  font-style: normal;
+  line-height: 1.5;
+  margin-top: 8px;
+  padding: 0;
+  overflow-wrap: anywhere;
+}
+
+.image {
+  width: 100%;
+  max-width: 100%;
+  height: 210px;
+  margin-top: 16px;
+  overflow: hidden;
+  border-top: 1px solid var(--color-divider);
+  border-bottom: 1px solid var(--color-divider);
+}
+
+.image img {
+  display: block;
+  object-fit: contain;
+  width: 100% !important;
+  height: 100% !important;
+  max-width: 100% !important;
+  max-height: 100% !important;
+}
+
+.replay-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: auto;
+  height: auto;
+  padding: 0;
+  background: transparent;
+  border: 0;
+  border-radius: 0;
+  line-height: 0;
+}
+
+.replay-button svg {
+  width: 20px;
+  height: 20px;
+}
+
+.replay-button svg path {
+  fill: var(--color-audio-button);
+}
+
+.traditional {
+  color: #93c5fd;
+  font-size: 15px;
+  font-weight: 400;
+  line-height: 1.45;
+}
+
+.sentencePinyin {
+  color: #7f9bc4;
+  font-size: 14px;
+  font-weight: 400;
+  line-height: 1.45;
+}
+
+.traditionalSentence {
+  color: #93c5fd;
+  font-size: 14px;
+  font-weight: 400;
+  line-height: 1.45;
+}
+
+.sentencePinyin,
+.traditionalSentence {
+  padding-top: 4px;
+}
+
+.nightMode .traditional,
+.nightMode .traditionalSentence {
+  color: #93c5fd;
+}
+
+.nightMode .sentencePinyin {
+  color: #7f9bc4;
+}
+.preview-media { display: flex; align-items: center; justify-content: center; width: 100%; min-height: 100%; padding: 16px; color: #7f9bc4; background: rgba(59, 130, 246, 0.08); border: 1px dashed rgba(147, 197, 253, 0.45); border-radius: 8px; font-family: &quot;Segoe UI&quot;, Arial, sans-serif; font-size: 13px; }
+.preview-media--small { min-height: 72px; }
+  &lt;/style&gt;
+&lt;/head&gt;
+&lt;body class=&quot;card&quot;&gt;
+&lt;div class=&quot;customCard cardBack&quot;&gt;
+  &lt;div class=&quot;horizontalPadding centerVertically targetWordContainer&quot;&gt;
+    &lt;div class=&quot;wordBlock&quot;&gt;
+      &lt;span class=&quot;targetWord&quot;&gt;学生&lt;/span&gt;
+      &lt;span class=&quot;ipa&quot;&gt;xuesheng&lt;/span&gt;
+      &lt;span class=&quot;traditional&quot;&gt;學生&lt;/span&gt;
+    &lt;/div&gt;
+    &lt;span class=&quot;wordAudioButtonBack&quot;&gt;&lt;button class=&quot;replay-button&quot; type=&quot;button&quot; aria-label=&quot;play audio&quot;&gt;
+  &lt;svg viewBox=&quot;0 0 24 24&quot; aria-hidden=&quot;true&quot;&gt;
+    &lt;circle cx=&quot;12&quot; cy=&quot;12&quot; r=&quot;11&quot;&gt;&lt;/circle&gt;
+    &lt;path d=&quot;M9 7v10l8-5z&quot;&gt;&lt;/path&gt;
+  &lt;/svg&gt;
+&lt;/button&gt;&lt;/span&gt;
+  &lt;/div&gt;
+
+  &lt;div class=&quot;dividerLine&quot;&gt;&lt;/div&gt;
+
+  &lt;div class=&quot;horizontalPadding&quot;&gt;
+    &lt;div class=&quot;header&quot;&gt;Definition:&lt;/div&gt;
+    &lt;div class=&quot;indent&quot;&gt;
+      &lt;ul class=&quot;definitionsList&quot;&gt;
+        &lt;li&gt;noun: student&lt;/li&gt;
+      &lt;/ul&gt;
+    &lt;/div&gt;
+  &lt;/div&gt;
+
+
+  &lt;div class=&quot;image&quot;&gt;&lt;div class=&quot;preview-media&quot;&gt;Imagem opcional&lt;/div&gt;&lt;/div&gt;
+
+
+  &lt;div class=&quot;dividerLine&quot;&gt;&lt;/div&gt;
+
+  &lt;div class=&quot;horizontalPadding&quot;&gt;
+    &lt;div class=&quot;header&quot;&gt;example:&lt;/div&gt;
+    &lt;div class=&quot;examplePanel&quot;&gt;
+      &lt;div class=&quot;exampleSentenceLine&quot;&gt;
+        &lt;span class=&quot;exampleSentenceText&quot;&gt;他是学生。&lt;/span&gt;
+        &lt;span class=&quot;sentenceAudioButton&quot;&gt;&lt;button class=&quot;replay-button&quot; type=&quot;button&quot; aria-label=&quot;play audio&quot;&gt;
+  &lt;svg viewBox=&quot;0 0 24 24&quot; aria-hidden=&quot;true&quot;&gt;
+    &lt;circle cx=&quot;12&quot; cy=&quot;12&quot; r=&quot;11&quot;&gt;&lt;/circle&gt;
+    &lt;path d=&quot;M9 7v10l8-5z&quot;&gt;&lt;/path&gt;
+  &lt;/svg&gt;
+&lt;/button&gt;&lt;/span&gt;
+      &lt;/div&gt;
+      &lt;div class=&quot;sentencePinyin&quot;&gt;ta shi xuesheng.&lt;/div&gt;
+      &lt;div class=&quot;traditionalSentence&quot;&gt;他是學生。&lt;/div&gt;
+      &lt;div id=&quot;translation&quot; class=&quot;sentenceTranslation&quot; style=&quot;display:none;&quot;&gt;
+        Ele e estudante.
+      &lt;/div&gt;
+    &lt;/div&gt;
+  &lt;/div&gt;
+&lt;/div&gt;
+
+&lt;script&gt;
+  document.getElementById(&quot;translation&quot;).style.display = &quot;block&quot;;
+&lt;/script&gt;
+&lt;/body&gt;
+&lt;/html&gt;"></iframe></article>
+  </div>
+</section>
+<section class="template-section" id="japanese-card">
+  <div class="section-header"><div><p class="eyebrow">japanese_card.md</p><h2>Japanese Frequency Card</h2><p>Template de frequencia japonesa com furigana.</p></div></div>
+  <div class="preview-grid">
+    <article class="preview-panel"><h3>Frente</h3><iframe title="Japanese Frequency Card frente" loading="lazy" sandbox="allow-scripts" srcdoc="&lt;!doctype html&gt;
+&lt;html lang=&quot;pt-BR&quot;&gt;
+&lt;head&gt;
+  &lt;meta charset=&quot;utf-8&quot;&gt;
+  &lt;meta name=&quot;viewport&quot; content=&quot;width=device-width, initial-scale=1&quot;&gt;
+  &lt;title&gt;Japanese Frequency Card - frente&lt;/title&gt;
+  &lt;style&gt;
+:root {
+  --max-width-card: 400px;
+  --font-size-card: 18px;
+  --font-size-targetWord: 26px;
+  --font-size-header: 14px;
+
+  --color-page-background: #0a1628;
+  --color-text-primary: #e8f0fe;
+  --color-nightMode-text-primary: #e8f0fe;
+  --color-card-background: #0a1628;
+  --color-nightMode-card-background: #0a1628;
+  --color-box-shadow: rgba(0, 0, 0, 0.45);
+  --color-audio-button: #93c5fd;
+  --color-list-bullets: #93c5fd;
+  --color-hint: #93c5fd;
+  --color-nightMode-hint: #93c5fd;
+  --color-sentence-translation: #93c5fd;
+  --color-nightMode-sentence-translation: #93c5fd;
+  --color-header: rgba(147, 197, 253, 0.7);
+  --color-nightMode-header: rgba(147, 197, 253, 0.7);
+  --color-divider: #1e3a5f;
+  --color-nightMode-divider: #1e3a5f;
+}
+
+* { box-sizing: border-box; }
+
+p { margin-block-start: 1em; margin-block-end: 1em; }
+ol, ul { list-style: none; }
+
+body {
+  line-height: 1.187;
+  overscroll-behavior: none;
+  margin: 0 !important;
+  overflow-wrap: break-word;
+}
+
+body.nightMode::-webkit-scrollbar { background: #0a1628; }
+body.nightMode::-webkit-scrollbar-thumb { background: #2563eb; border-radius: 8px; }
+
+.card { padding: 16px; }
+
+body,
+body.card,
+body.nightMode,
+.card {
+  background: var(--color-page-background);
+  color: var(--color-text-primary);
+}
+
+.customCard {
+  margin: 0 auto;
+  position: relative;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  background-color: var(--color-card-background);
+  box-shadow:
+    0 4px 24px var(--color-box-shadow),
+    0 1px 4px rgba(37, 99, 235, 0.08);
+  border-radius: 16px;
+  border-top: 4px solid #2563eb;
+  min-height: 200px;
+  max-width: var(--max-width-card);
+  font-weight: 500;
+  font-size: var(--font-size-card);
+  font-family: &quot;Segoe UI&quot;, &quot;Noto Sans&quot;, Arial, sans-serif;
+  color: var(--color-text-primary);
+}
+
+.nightMode .customCard {
+  color: var(--color-nightMode-text-primary);
+  background-color: var(--color-nightMode-card-background);
+}
+
+.cardBack {
+  flex-direction: column;
+  justify-content: flex-start;
+  align-items: flex-start;
+  padding-top: 24px;
+  padding-bottom: 8px;
+}
+
+.targetWordContainer {
+  margin-top: 8px;
+  margin-bottom: 24px;
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+}
+
+.targetWord {
+  font-size: var(--font-size-targetWord);
+  font-weight: 700;
+  color: #93c5fd;
+  letter-spacing: -0.5px;
+}
+
+.targetWord.jpFont { font-size: 32px; }
+.nightMode .targetWord { color: #93c5fd; }
+
+.wordBlock { display: flex; flex-direction: column; gap: 4px; }
+
+.jpFont {
+  font-family: &quot;Yu Mincho&quot;, &quot;YuMincho&quot;, &quot;Hiragino Mincho ProN&quot;,
+    &quot;Noto Serif JP&quot;, &quot;Noto Sans JP&quot;, &quot;Segoe UI&quot;, serif;
+}
+
+.wordControls {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex: 0 0 auto;
+}
+
+.furiganaToggle {
+  border: 1px solid var(--color-audio-button);
+  color: var(--color-audio-button);
+  background: transparent;
+  border-radius: 999px;
+  padding: 4px 12px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.nightMode .furiganaToggle {
+  color: var(--color-nightMode-hint);
+  border-color: var(--color-nightMode-hint);
+}
+
+.definitionsList { list-style: none; margin: 0; padding: 0; padding-left: 16px; }
+.definitionsList li { margin-bottom: 6px; line-height: 1.5; }
+.definitionsList li::before {
+  content: &quot;\2022&quot;;
+  color: var(--color-list-bullets);
+  display: inline-block;
+  width: 8px;
+  margin-right: 5px;
+  margin-left: -16px;
+  font-size: 22px;
+}
+
+.wordAudioButtonBack { margin-left: 8px; }
+
+.exampleSentenceLine { display: flex; align-items: center; gap: 8px; }
+.exampleSentenceText { flex: 1 1 auto; min-width: 0; font-size: 22px; }
+.sentenceAudioButton { flex: 0 0 auto; margin-left: 8px; }
+
+.replay-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: auto;
+  height: auto;
+  padding: 0;
+  background: transparent !important;
+  background-color: transparent !important;
+  border: 0 !important;
+  border-radius: 0;
+  box-shadow: none !important;
+  line-height: 0;
+  -webkit-appearance: none;
+  appearance: none;
+}
+
+.replay-button svg { width: 20px; height: 20px; }
+.replay-button svg path { fill: var(--color-audio-button) !important; }
+.replay-button svg circle { fill: transparent !important; stroke: none !important; }
+
+.image {
+  border-top: 1px solid var(--color-divider);
+  border-bottom: 1px solid var(--color-divider);
+  margin-top: 16px;
+  width: 100%;
+  height: 210px;
+}
+
+.image img {
+  object-fit: contain;
+  width: 100% !important;
+  height: 100% !important;
+  max-width: 100% !important;
+  max-height: 100% !important;
+}
+
+.sentenceTranslation {
+  color: var(--color-sentence-translation);
+  font-weight: 400;
+  font-style: italic;
+  padding-right: 15px;
+  padding-top: 8px;
+}
+
+.nightMode .sentenceTranslation { color: var(--color-nightMode-sentence-translation); }
+
+.header {
+  color: var(--color-header);
+  font-size: var(--font-size-header);
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  margin-top: 8px;
+  margin-bottom: 8px;
+}
+
+.nightMode .header { color: var(--color-nightMode-header); }
+
+.dividerLine {
+  width: 100%;
+  border-bottom: 1px solid var(--color-divider);
+  margin-top: 8px;
+  margin-bottom: 8px;
+}
+
+.nightMode .dividerLine { border-color: var(--color-nightMode-divider); }
+
+.horizontalPadding { width: 100%; padding-left: 16px; padding-right: 16px; }
+.indent { padding-left: 12px; }
+.centerVertically { display: flex; align-items: center; }
+.preview-media { display: flex; align-items: center; justify-content: center; width: 100%; min-height: 100%; padding: 16px; color: #7f9bc4; background: rgba(59, 130, 246, 0.08); border: 1px dashed rgba(147, 197, 253, 0.45); border-radius: 8px; font-family: &quot;Segoe UI&quot;, Arial, sans-serif; font-size: 13px; }
+.preview-media--small { min-height: 72px; }
+  &lt;/style&gt;
+&lt;/head&gt;
+&lt;body class=&quot;card&quot;&gt;
+&lt;div class=&quot;customCard cardBack jpFront&quot;&gt;
+  &lt;div class=&quot;horizontalPadding centerVertically targetWordContainer&quot;&gt;
+    &lt;div class=&quot;wordBlock&quot;&gt;
+      &lt;span class=&quot;targetWord jpFont&quot;&gt;
+        &lt;span class=&quot;jPlain&quot;&gt;父親&lt;/span&gt;
+        &lt;span class=&quot;jReading&quot; style=&quot;display:none;&quot;&gt;&lt;ruby&gt;父親&lt;rt&gt;ちちおや&lt;/rt&gt;&lt;/ruby&gt;&lt;/span&gt;
+      &lt;/span&gt;
+    &lt;/div&gt;
+    &lt;div class=&quot;wordControls&quot;&gt;
+      &lt;button type=&quot;button&quot; class=&quot;furiganaToggle&quot; onclick=&quot;toggleFurigana()&quot;&gt;furigana&lt;/button&gt;
+      &lt;span class=&quot;wordAudioButtonBack&quot;&gt;&lt;button class=&quot;replay-button&quot; type=&quot;button&quot; aria-label=&quot;play audio&quot;&gt;
+  &lt;svg viewBox=&quot;0 0 24 24&quot; aria-hidden=&quot;true&quot;&gt;
+    &lt;circle cx=&quot;12&quot; cy=&quot;12&quot; r=&quot;11&quot;&gt;&lt;/circle&gt;
+    &lt;path d=&quot;M9 7v10l8-5z&quot;&gt;&lt;/path&gt;
+  &lt;/svg&gt;
+&lt;/button&gt;&lt;/span&gt;
+    &lt;/div&gt;
+  &lt;/div&gt;
+
+  &lt;div class=&quot;dividerLine&quot;&gt;&lt;/div&gt;
+
+  &lt;div class=&quot;horizontalPadding&quot;&gt;
+    &lt;div class=&quot;header&quot;&gt;Definição:&lt;/div&gt;
+    &lt;div class=&quot;indent&quot;&gt;
+      &lt;ul class=&quot;definitionsList&quot;&gt;
+        &lt;li&gt;father; one&#x27;s father&lt;/li&gt;
+      &lt;/ul&gt;
+    &lt;/div&gt;
+  &lt;/div&gt;
+
+
+  &lt;div class=&quot;horizontalPadding&quot;&gt;
+    &lt;div class=&quot;image&quot;&gt;&lt;div class=&quot;preview-media&quot;&gt;Imagem opcional&lt;/div&gt;&lt;/div&gt;
+  &lt;/div&gt;
+
+
+  &lt;div class=&quot;dividerLine&quot;&gt;&lt;/div&gt;
+
+  &lt;div class=&quot;horizontalPadding&quot;&gt;
+    &lt;div class=&quot;header&quot;&gt;Exemplo:&lt;/div&gt;
+    &lt;div class=&quot;indent exampleSentenceLine&quot;&gt;
+      &lt;span class=&quot;exampleSentenceText jpFont&quot;&gt;
+        &lt;span class=&quot;jPlain&quot;&gt;父親は今年50歳になる。&lt;/span&gt;
+        &lt;span class=&quot;jReading&quot; style=&quot;display:none;&quot;&gt;&lt;ruby&gt;父親&lt;rt&gt;ちちおや&lt;/rt&gt;&lt;/ruby&gt;は&lt;ruby&gt;今年&lt;rt&gt;ことし&lt;/rt&gt;&lt;/ruby&gt;50&lt;ruby&gt;歳&lt;rt&gt;さい&lt;/rt&gt;&lt;/ruby&gt;になる。&lt;/span&gt;
+      &lt;/span&gt;
+      &lt;span class=&quot;sentenceAudioButton&quot;&gt;&lt;button class=&quot;replay-button&quot; type=&quot;button&quot; aria-label=&quot;play audio&quot;&gt;
+  &lt;svg viewBox=&quot;0 0 24 24&quot; aria-hidden=&quot;true&quot;&gt;
+    &lt;circle cx=&quot;12&quot; cy=&quot;12&quot; r=&quot;11&quot;&gt;&lt;/circle&gt;
+    &lt;path d=&quot;M9 7v10l8-5z&quot;&gt;&lt;/path&gt;
+  &lt;/svg&gt;
+&lt;/button&gt;&lt;/span&gt;
+    &lt;/div&gt;
+    &lt;div id=&quot;translation&quot; class=&quot;sentenceTranslation indent&quot; style=&quot;display:none;&quot;&gt;
+      Meu pai faz 50 anos este ano.
+    &lt;/div&gt;
+  &lt;/div&gt;
+&lt;/div&gt;
+
+&lt;script&gt;
+  function toggleFurigana() {
+    var readings = document.querySelectorAll(&quot;.jReading&quot;);
+    var plains = document.querySelectorAll(&quot;.jPlain&quot;);
+    var showing = readings.length &amp;&amp; readings[0].style.display !== &quot;none&quot;;
+    for (var i = 0; i &lt; readings.length; i++) readings[i].style.display = showing ? &quot;none&quot; : &quot;&quot;;
+    for (var j = 0; j &lt; plains.length; j++) plains[j].style.display = showing ? &quot;&quot; : &quot;none&quot;;
+  }
+&lt;/script&gt;
+&lt;/body&gt;
+&lt;/html&gt;"></iframe></article>
+    <article class="preview-panel"><h3>Verso</h3><iframe title="Japanese Frequency Card verso" loading="lazy" sandbox="allow-scripts" srcdoc="&lt;!doctype html&gt;
+&lt;html lang=&quot;pt-BR&quot;&gt;
+&lt;head&gt;
+  &lt;meta charset=&quot;utf-8&quot;&gt;
+  &lt;meta name=&quot;viewport&quot; content=&quot;width=device-width, initial-scale=1&quot;&gt;
+  &lt;title&gt;Japanese Frequency Card - verso&lt;/title&gt;
+  &lt;style&gt;
+:root {
+  --max-width-card: 400px;
+  --font-size-card: 18px;
+  --font-size-targetWord: 26px;
+  --font-size-header: 14px;
+
+  --color-page-background: #0a1628;
+  --color-text-primary: #e8f0fe;
+  --color-nightMode-text-primary: #e8f0fe;
+  --color-card-background: #0a1628;
+  --color-nightMode-card-background: #0a1628;
+  --color-box-shadow: rgba(0, 0, 0, 0.45);
+  --color-audio-button: #93c5fd;
+  --color-list-bullets: #93c5fd;
+  --color-hint: #93c5fd;
+  --color-nightMode-hint: #93c5fd;
+  --color-sentence-translation: #93c5fd;
+  --color-nightMode-sentence-translation: #93c5fd;
+  --color-header: rgba(147, 197, 253, 0.7);
+  --color-nightMode-header: rgba(147, 197, 253, 0.7);
+  --color-divider: #1e3a5f;
+  --color-nightMode-divider: #1e3a5f;
+}
+
+* { box-sizing: border-box; }
+
+p { margin-block-start: 1em; margin-block-end: 1em; }
+ol, ul { list-style: none; }
+
+body {
+  line-height: 1.187;
+  overscroll-behavior: none;
+  margin: 0 !important;
+  overflow-wrap: break-word;
+}
+
+body.nightMode::-webkit-scrollbar { background: #0a1628; }
+body.nightMode::-webkit-scrollbar-thumb { background: #2563eb; border-radius: 8px; }
+
+.card { padding: 16px; }
+
+body,
+body.card,
+body.nightMode,
+.card {
+  background: var(--color-page-background);
+  color: var(--color-text-primary);
+}
+
+.customCard {
+  margin: 0 auto;
+  position: relative;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  background-color: var(--color-card-background);
+  box-shadow:
+    0 4px 24px var(--color-box-shadow),
+    0 1px 4px rgba(37, 99, 235, 0.08);
+  border-radius: 16px;
+  border-top: 4px solid #2563eb;
+  min-height: 200px;
+  max-width: var(--max-width-card);
+  font-weight: 500;
+  font-size: var(--font-size-card);
+  font-family: &quot;Segoe UI&quot;, &quot;Noto Sans&quot;, Arial, sans-serif;
+  color: var(--color-text-primary);
+}
+
+.nightMode .customCard {
+  color: var(--color-nightMode-text-primary);
+  background-color: var(--color-nightMode-card-background);
+}
+
+.cardBack {
+  flex-direction: column;
+  justify-content: flex-start;
+  align-items: flex-start;
+  padding-top: 24px;
+  padding-bottom: 8px;
+}
+
+.targetWordContainer {
+  margin-top: 8px;
+  margin-bottom: 24px;
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+}
+
+.targetWord {
+  font-size: var(--font-size-targetWord);
+  font-weight: 700;
+  color: #93c5fd;
+  letter-spacing: -0.5px;
+}
+
+.targetWord.jpFont { font-size: 32px; }
+.nightMode .targetWord { color: #93c5fd; }
+
+.wordBlock { display: flex; flex-direction: column; gap: 4px; }
+
+.jpFont {
+  font-family: &quot;Yu Mincho&quot;, &quot;YuMincho&quot;, &quot;Hiragino Mincho ProN&quot;,
+    &quot;Noto Serif JP&quot;, &quot;Noto Sans JP&quot;, &quot;Segoe UI&quot;, serif;
+}
+
+.wordControls {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex: 0 0 auto;
+}
+
+.furiganaToggle {
+  border: 1px solid var(--color-audio-button);
+  color: var(--color-audio-button);
+  background: transparent;
+  border-radius: 999px;
+  padding: 4px 12px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.nightMode .furiganaToggle {
+  color: var(--color-nightMode-hint);
+  border-color: var(--color-nightMode-hint);
+}
+
+.definitionsList { list-style: none; margin: 0; padding: 0; padding-left: 16px; }
+.definitionsList li { margin-bottom: 6px; line-height: 1.5; }
+.definitionsList li::before {
+  content: &quot;\2022&quot;;
+  color: var(--color-list-bullets);
+  display: inline-block;
+  width: 8px;
+  margin-right: 5px;
+  margin-left: -16px;
+  font-size: 22px;
+}
+
+.wordAudioButtonBack { margin-left: 8px; }
+
+.exampleSentenceLine { display: flex; align-items: center; gap: 8px; }
+.exampleSentenceText { flex: 1 1 auto; min-width: 0; font-size: 22px; }
+.sentenceAudioButton { flex: 0 0 auto; margin-left: 8px; }
+
+.replay-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: auto;
+  height: auto;
+  padding: 0;
+  background: transparent !important;
+  background-color: transparent !important;
+  border: 0 !important;
+  border-radius: 0;
+  box-shadow: none !important;
+  line-height: 0;
+  -webkit-appearance: none;
+  appearance: none;
+}
+
+.replay-button svg { width: 20px; height: 20px; }
+.replay-button svg path { fill: var(--color-audio-button) !important; }
+.replay-button svg circle { fill: transparent !important; stroke: none !important; }
+
+.image {
+  border-top: 1px solid var(--color-divider);
+  border-bottom: 1px solid var(--color-divider);
+  margin-top: 16px;
+  width: 100%;
+  height: 210px;
+}
+
+.image img {
+  object-fit: contain;
+  width: 100% !important;
+  height: 100% !important;
+  max-width: 100% !important;
+  max-height: 100% !important;
+}
+
+.sentenceTranslation {
+  color: var(--color-sentence-translation);
+  font-weight: 400;
+  font-style: italic;
+  padding-right: 15px;
+  padding-top: 8px;
+}
+
+.nightMode .sentenceTranslation { color: var(--color-nightMode-sentence-translation); }
+
+.header {
+  color: var(--color-header);
+  font-size: var(--font-size-header);
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  margin-top: 8px;
+  margin-bottom: 8px;
+}
+
+.nightMode .header { color: var(--color-nightMode-header); }
+
+.dividerLine {
+  width: 100%;
+  border-bottom: 1px solid var(--color-divider);
+  margin-top: 8px;
+  margin-bottom: 8px;
+}
+
+.nightMode .dividerLine { border-color: var(--color-nightMode-divider); }
+
+.horizontalPadding { width: 100%; padding-left: 16px; padding-right: 16px; }
+.indent { padding-left: 12px; }
+.centerVertically { display: flex; align-items: center; }
+.preview-media { display: flex; align-items: center; justify-content: center; width: 100%; min-height: 100%; padding: 16px; color: #7f9bc4; background: rgba(59, 130, 246, 0.08); border: 1px dashed rgba(147, 197, 253, 0.45); border-radius: 8px; font-family: &quot;Segoe UI&quot;, Arial, sans-serif; font-size: 13px; }
+.preview-media--small { min-height: 72px; }
+  &lt;/style&gt;
+&lt;/head&gt;
+&lt;body class=&quot;card&quot;&gt;
+&lt;div class=&quot;customCard cardBack jpBack&quot;&gt;
+  &lt;div class=&quot;horizontalPadding centerVertically targetWordContainer&quot;&gt;
+    &lt;div class=&quot;wordBlock&quot;&gt;
+      &lt;span class=&quot;targetWord jpFont&quot;&gt;
+        &lt;span class=&quot;jPlain&quot; style=&quot;display:none;&quot;&gt;父親&lt;/span&gt;
+        &lt;span class=&quot;jReading&quot;&gt;&lt;ruby&gt;父親&lt;rt&gt;ちちおや&lt;/rt&gt;&lt;/ruby&gt;&lt;/span&gt;
+      &lt;/span&gt;
+    &lt;/div&gt;
+    &lt;div class=&quot;wordControls&quot;&gt;
+      &lt;button type=&quot;button&quot; class=&quot;furiganaToggle&quot; onclick=&quot;toggleFurigana()&quot;&gt;furigana&lt;/button&gt;
+      &lt;span class=&quot;wordAudioButtonBack&quot;&gt;&lt;button class=&quot;replay-button&quot; type=&quot;button&quot; aria-label=&quot;play audio&quot;&gt;
+  &lt;svg viewBox=&quot;0 0 24 24&quot; aria-hidden=&quot;true&quot;&gt;
+    &lt;circle cx=&quot;12&quot; cy=&quot;12&quot; r=&quot;11&quot;&gt;&lt;/circle&gt;
+    &lt;path d=&quot;M9 7v10l8-5z&quot;&gt;&lt;/path&gt;
+  &lt;/svg&gt;
+&lt;/button&gt;&lt;/span&gt;
+    &lt;/div&gt;
+  &lt;/div&gt;
+
+  &lt;div class=&quot;dividerLine&quot;&gt;&lt;/div&gt;
+
+  &lt;div class=&quot;horizontalPadding&quot;&gt;
+    &lt;div class=&quot;header&quot;&gt;Definição:&lt;/div&gt;
+    &lt;div class=&quot;indent&quot;&gt;
+      &lt;ul class=&quot;definitionsList&quot;&gt;
+        &lt;li&gt;father; one&#x27;s father&lt;/li&gt;
+      &lt;/ul&gt;
+    &lt;/div&gt;
+  &lt;/div&gt;
+
+
+  &lt;div class=&quot;horizontalPadding&quot;&gt;
+    &lt;div class=&quot;image&quot;&gt;&lt;div class=&quot;preview-media&quot;&gt;Imagem opcional&lt;/div&gt;&lt;/div&gt;
+  &lt;/div&gt;
+
+
+  &lt;div class=&quot;dividerLine&quot;&gt;&lt;/div&gt;
+
+  &lt;div class=&quot;horizontalPadding&quot;&gt;
+    &lt;div class=&quot;header&quot;&gt;Exemplo:&lt;/div&gt;
+    &lt;div class=&quot;indent exampleSentenceLine&quot;&gt;
+      &lt;span class=&quot;exampleSentenceText jpFont&quot;&gt;
+        &lt;span class=&quot;jPlain&quot; style=&quot;display:none;&quot;&gt;父親は今年50歳になる。&lt;/span&gt;
+        &lt;span class=&quot;jReading&quot;&gt;&lt;ruby&gt;父親&lt;rt&gt;ちちおや&lt;/rt&gt;&lt;/ruby&gt;は&lt;ruby&gt;今年&lt;rt&gt;ことし&lt;/rt&gt;&lt;/ruby&gt;50&lt;ruby&gt;歳&lt;rt&gt;さい&lt;/rt&gt;&lt;/ruby&gt;になる。&lt;/span&gt;
+      &lt;/span&gt;
+      &lt;span class=&quot;sentenceAudioButton&quot;&gt;&lt;button class=&quot;replay-button&quot; type=&quot;button&quot; aria-label=&quot;play audio&quot;&gt;
+  &lt;svg viewBox=&quot;0 0 24 24&quot; aria-hidden=&quot;true&quot;&gt;
+    &lt;circle cx=&quot;12&quot; cy=&quot;12&quot; r=&quot;11&quot;&gt;&lt;/circle&gt;
+    &lt;path d=&quot;M9 7v10l8-5z&quot;&gt;&lt;/path&gt;
+  &lt;/svg&gt;
+&lt;/button&gt;&lt;/span&gt;
+    &lt;/div&gt;
+    &lt;div id=&quot;translation&quot; class=&quot;sentenceTranslation indent&quot;&gt;
+      Meu pai faz 50 anos este ano.
+    &lt;/div&gt;
+  &lt;/div&gt;
+&lt;/div&gt;
+
+&lt;script&gt;
+  function toggleFurigana() {
+    var readings = document.querySelectorAll(&quot;.jReading&quot;);
+    var plains = document.querySelectorAll(&quot;.jPlain&quot;);
+    var showing = readings.length &amp;&amp; readings[0].style.display !== &quot;none&quot;;
+    for (var i = 0; i &lt; readings.length; i++) readings[i].style.display = showing ? &quot;none&quot; : &quot;&quot;;
+    for (var j = 0; j &lt; plains.length; j++) plains[j].style.display = showing ? &quot;&quot; : &quot;none&quot;;
+  }
+&lt;/script&gt;
+&lt;/body&gt;
+&lt;/html&gt;"></iframe></article>
+  </div>
+</section>
+<section class="template-section" id="japanese-kana-card">
+  <div class="section-header"><div><p class="eyebrow">japanese_kana_card.md</p><h2>Japanese Kana Card</h2><p>Template de kana com romaji, midia e mnemonico.</p></div></div>
+  <div class="preview-grid">
+    <article class="preview-panel"><h3>Frente</h3><iframe title="Japanese Kana Card frente" loading="lazy" sandbox="allow-scripts" srcdoc="&lt;!doctype html&gt;
+&lt;html lang=&quot;pt-BR&quot;&gt;
+&lt;head&gt;
+  &lt;meta charset=&quot;utf-8&quot;&gt;
+  &lt;meta name=&quot;viewport&quot; content=&quot;width=device-width, initial-scale=1&quot;&gt;
+  &lt;title&gt;Japanese Kana Card - frente&lt;/title&gt;
+  &lt;style&gt;
+:root {
+  --kana-max-width-card: 460px;
+  --kana-font-size-glyph: 88px;
+  --kana-font-size-romaji: 34px;
+  --kana-font-size-mnemonic: 17px;
+
+  --kana-color-page: #0b0716;
+  --kana-color-card: #171226;
+  --kana-color-text: #f3f1fb;
+  --kana-color-accent: #b8aef6;
+  --kana-color-muted: #9ca3af;
+  --kana-color-divider: #2c2a46;
+
+  --kana-color-nightMode-page: #0b0716;
+  --kana-color-nightMode-card: #171226;
+  --kana-color-nightMode-text: #f3f1fb;
+  --kana-color-nightMode-accent: #b8aef6;
+  --kana-color-nightMode-muted: #9ca3af;
+  --kana-color-nightMode-divider: #2c2a46;
+}
+
+* { box-sizing: border-box; }
+
+body {
+  margin: 0 !important;
+  line-height: 1.4;
+  overflow-wrap: break-word;
+  overscroll-behavior: none;
+  background: var(--kana-color-page);
+}
+
+.nightMode body,
+body.nightMode { background: var(--kana-color-nightMode-page); }
+
+.card {
+  padding: 12px;
+  background: var(--kana-color-page);
+}
+
+.nightMode .card { background: var(--kana-color-nightMode-page); }
+
+body,
+body.card,
+body.nightMode,
+.card {
+  background: var(--kana-color-page);
+  color: var(--kana-color-text);
+}
+
+.jpFont {
+  font-family: &quot;Yu Mincho&quot;, &quot;YuMincho&quot;, &quot;Hiragino Mincho ProN&quot;, &quot;Noto Serif JP&quot;,
+    &quot;Noto Sans JP&quot;, &quot;Segoe UI&quot;, serif;
+}
+
+.kanaCard {
+  margin: 0 auto;
+  max-width: var(--kana-max-width-card);
+  width: 100%;
+  background: var(--kana-color-card);
+  color: var(--kana-color-text);
+  border-radius: 12px;
+  border-top: 4px solid var(--kana-color-accent);
+  box-shadow: 0 4px 18px rgba(0, 0, 0, 0.42);
+  padding: 24px 20px 28px;
+  text-align: center;
+  font-family: &quot;Segoe UI&quot;, &quot;Noto Sans JP&quot;, Arial, sans-serif;
+}
+
+.nightMode .kanaCard {
+  background: var(--kana-color-nightMode-card);
+  color: var(--kana-color-nightMode-text);
+  border-top-color: var(--kana-color-nightMode-accent);
+}
+
+.kanaScript {
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--kana-color-accent);
+  margin-bottom: 6px;
+}
+
+.nightMode .kanaScript { color: var(--kana-color-nightMode-accent); }
+
+.kanaGlyph {
+  font-size: var(--kana-font-size-glyph);
+  font-weight: 700;
+  line-height: 1.1;
+}
+
+.kanaHint {
+  margin-top: 16px;
+  font-size: 13px;
+  font-style: italic;
+  color: var(--kana-color-muted);
+}
+
+.nightMode .kanaHint { color: var(--kana-color-nightMode-muted); }
+
+.kanaDivider {
+  border: 0;
+  border-top: 1px solid var(--kana-color-divider);
+  margin: 18px 0;
+}
+
+.nightMode .kanaDivider { border-top-color: var(--kana-color-nightMode-divider); }
+
+.kanaRomaji {
+  font-size: var(--kana-font-size-romaji);
+  font-weight: 700;
+  color: var(--kana-color-accent);
+}
+
+.nightMode .kanaRomaji { color: var(--kana-color-nightMode-accent); }
+
+.kanaAudio { margin-top: 8px; }
+
+.kanaStrokeAnim img,
+.kanaPicture img,
+.kanaStrokes img {
+  max-width: 100%;
+  height: auto;
+  border-radius: 8px;
+}
+
+.kanaStrokeAnim { margin-top: 12px; }
+.kanaPicture { margin-top: 16px; }
+.kanaStrokes { margin-top: 12px; }
+
+.kanaMnemonic {
+  margin-top: 16px;
+  font-size: var(--kana-font-size-mnemonic);
+  text-align: left;
+  line-height: 1.5;
+}
+
+.kanaMnemonic code {
+  font-weight: 600;
+  color: var(--kana-color-accent);
+}
+
+.nightMode .kanaMnemonic code { color: var(--kana-color-nightMode-accent); }
+
+.replay-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: auto;
+  height: auto;
+  padding: 0;
+  background: transparent !important;
+  background-color: transparent !important;
+  border: 0 !important;
+  border-radius: 0;
+  box-shadow: none !important;
+  line-height: 0;
+  -webkit-appearance: none;
+  appearance: none;
+}
+
+.replay-button svg { width: 24px; height: 24px; }
+.replay-button svg path { fill: var(--kana-color-accent) !important; }
+.nightMode .replay-button svg path { fill: var(--kana-color-nightMode-accent) !important; }
+.replay-button svg circle { fill: transparent !important; stroke: none !important; }
+.preview-media { display: flex; align-items: center; justify-content: center; width: 100%; min-height: 100%; padding: 16px; color: #7f9bc4; background: rgba(59, 130, 246, 0.08); border: 1px dashed rgba(147, 197, 253, 0.45); border-radius: 8px; font-family: &quot;Segoe UI&quot;, Arial, sans-serif; font-size: 13px; }
+.preview-media--small { min-height: 72px; }
+  &lt;/style&gt;
+&lt;/head&gt;
+&lt;body class=&quot;card&quot;&gt;
+&lt;div class=&quot;kanaCard kanaCard--front&quot;&gt;
+  &lt;div class=&quot;kanaScript&quot;&gt;Hiragana&lt;/div&gt;
+  &lt;div class=&quot;kanaGlyph jpFont&quot;&gt;あ&lt;/div&gt;
+  &lt;div class=&quot;kanaHint&quot;&gt;Lembre a leitura (romaji). Depois vire o card.&lt;/div&gt;
+&lt;/div&gt;
+&lt;/body&gt;
+&lt;/html&gt;"></iframe></article>
+    <article class="preview-panel"><h3>Verso</h3><iframe title="Japanese Kana Card verso" loading="lazy" sandbox="allow-scripts" srcdoc="&lt;!doctype html&gt;
+&lt;html lang=&quot;pt-BR&quot;&gt;
+&lt;head&gt;
+  &lt;meta charset=&quot;utf-8&quot;&gt;
+  &lt;meta name=&quot;viewport&quot; content=&quot;width=device-width, initial-scale=1&quot;&gt;
+  &lt;title&gt;Japanese Kana Card - verso&lt;/title&gt;
+  &lt;style&gt;
+:root {
+  --kana-max-width-card: 460px;
+  --kana-font-size-glyph: 88px;
+  --kana-font-size-romaji: 34px;
+  --kana-font-size-mnemonic: 17px;
+
+  --kana-color-page: #0b0716;
+  --kana-color-card: #171226;
+  --kana-color-text: #f3f1fb;
+  --kana-color-accent: #b8aef6;
+  --kana-color-muted: #9ca3af;
+  --kana-color-divider: #2c2a46;
+
+  --kana-color-nightMode-page: #0b0716;
+  --kana-color-nightMode-card: #171226;
+  --kana-color-nightMode-text: #f3f1fb;
+  --kana-color-nightMode-accent: #b8aef6;
+  --kana-color-nightMode-muted: #9ca3af;
+  --kana-color-nightMode-divider: #2c2a46;
+}
+
+* { box-sizing: border-box; }
+
+body {
+  margin: 0 !important;
+  line-height: 1.4;
+  overflow-wrap: break-word;
+  overscroll-behavior: none;
+  background: var(--kana-color-page);
+}
+
+.nightMode body,
+body.nightMode { background: var(--kana-color-nightMode-page); }
+
+.card {
+  padding: 12px;
+  background: var(--kana-color-page);
+}
+
+.nightMode .card { background: var(--kana-color-nightMode-page); }
+
+body,
+body.card,
+body.nightMode,
+.card {
+  background: var(--kana-color-page);
+  color: var(--kana-color-text);
+}
+
+.jpFont {
+  font-family: &quot;Yu Mincho&quot;, &quot;YuMincho&quot;, &quot;Hiragino Mincho ProN&quot;, &quot;Noto Serif JP&quot;,
+    &quot;Noto Sans JP&quot;, &quot;Segoe UI&quot;, serif;
+}
+
+.kanaCard {
+  margin: 0 auto;
+  max-width: var(--kana-max-width-card);
+  width: 100%;
+  background: var(--kana-color-card);
+  color: var(--kana-color-text);
+  border-radius: 12px;
+  border-top: 4px solid var(--kana-color-accent);
+  box-shadow: 0 4px 18px rgba(0, 0, 0, 0.42);
+  padding: 24px 20px 28px;
+  text-align: center;
+  font-family: &quot;Segoe UI&quot;, &quot;Noto Sans JP&quot;, Arial, sans-serif;
+}
+
+.nightMode .kanaCard {
+  background: var(--kana-color-nightMode-card);
+  color: var(--kana-color-nightMode-text);
+  border-top-color: var(--kana-color-nightMode-accent);
+}
+
+.kanaScript {
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--kana-color-accent);
+  margin-bottom: 6px;
+}
+
+.nightMode .kanaScript { color: var(--kana-color-nightMode-accent); }
+
+.kanaGlyph {
+  font-size: var(--kana-font-size-glyph);
+  font-weight: 700;
+  line-height: 1.1;
+}
+
+.kanaHint {
+  margin-top: 16px;
+  font-size: 13px;
+  font-style: italic;
+  color: var(--kana-color-muted);
+}
+
+.nightMode .kanaHint { color: var(--kana-color-nightMode-muted); }
+
+.kanaDivider {
+  border: 0;
+  border-top: 1px solid var(--kana-color-divider);
+  margin: 18px 0;
+}
+
+.nightMode .kanaDivider { border-top-color: var(--kana-color-nightMode-divider); }
+
+.kanaRomaji {
+  font-size: var(--kana-font-size-romaji);
+  font-weight: 700;
+  color: var(--kana-color-accent);
+}
+
+.nightMode .kanaRomaji { color: var(--kana-color-nightMode-accent); }
+
+.kanaAudio { margin-top: 8px; }
+
+.kanaStrokeAnim img,
+.kanaPicture img,
+.kanaStrokes img {
+  max-width: 100%;
+  height: auto;
+  border-radius: 8px;
+}
+
+.kanaStrokeAnim { margin-top: 12px; }
+.kanaPicture { margin-top: 16px; }
+.kanaStrokes { margin-top: 12px; }
+
+.kanaMnemonic {
+  margin-top: 16px;
+  font-size: var(--kana-font-size-mnemonic);
+  text-align: left;
+  line-height: 1.5;
+}
+
+.kanaMnemonic code {
+  font-weight: 600;
+  color: var(--kana-color-accent);
+}
+
+.nightMode .kanaMnemonic code { color: var(--kana-color-nightMode-accent); }
+
+.replay-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: auto;
+  height: auto;
+  padding: 0;
+  background: transparent !important;
+  background-color: transparent !important;
+  border: 0 !important;
+  border-radius: 0;
+  box-shadow: none !important;
+  line-height: 0;
+  -webkit-appearance: none;
+  appearance: none;
+}
+
+.replay-button svg { width: 24px; height: 24px; }
+.replay-button svg path { fill: var(--kana-color-accent) !important; }
+.nightMode .replay-button svg path { fill: var(--kana-color-nightMode-accent) !important; }
+.replay-button svg circle { fill: transparent !important; stroke: none !important; }
+.preview-media { display: flex; align-items: center; justify-content: center; width: 100%; min-height: 100%; padding: 16px; color: #7f9bc4; background: rgba(59, 130, 246, 0.08); border: 1px dashed rgba(147, 197, 253, 0.45); border-radius: 8px; font-family: &quot;Segoe UI&quot;, Arial, sans-serif; font-size: 13px; }
+.preview-media--small { min-height: 72px; }
+  &lt;/style&gt;
+&lt;/head&gt;
+&lt;body class=&quot;card&quot;&gt;
+&lt;div class=&quot;kanaCard kanaCard--back&quot;&gt;
+  &lt;div class=&quot;kanaScript&quot;&gt;Hiragana&lt;/div&gt;
+  &lt;div class=&quot;kanaGlyph jpFont&quot;&gt;あ&lt;/div&gt;
+
+  &lt;div class=&quot;kanaStrokeAnim&quot;&gt;&lt;div class=&quot;preview-media preview-media--small&quot;&gt;GIF de ordem dos tracos&lt;/div&gt;&lt;/div&gt;
+
+  &lt;hr class=&quot;kanaDivider&quot; /&gt;
+
+  &lt;div class=&quot;kanaRomaji&quot;&gt;a&lt;/div&gt;
+  &lt;div class=&quot;kanaAudio&quot;&gt;&lt;button class=&quot;replay-button&quot; type=&quot;button&quot; aria-label=&quot;play audio&quot;&gt;
+  &lt;svg viewBox=&quot;0 0 24 24&quot; aria-hidden=&quot;true&quot;&gt;
+    &lt;circle cx=&quot;12&quot; cy=&quot;12&quot; r=&quot;11&quot;&gt;&lt;/circle&gt;
+    &lt;path d=&quot;M9 7v10l8-5z&quot;&gt;&lt;/path&gt;
+  &lt;/svg&gt;
+&lt;/button&gt;&lt;/div&gt;
+
+  &lt;div class=&quot;kanaPicture&quot;&gt;&lt;div class=&quot;preview-media preview-media--small&quot;&gt;Imagem mnemonica&lt;/div&gt;&lt;/div&gt;
+
+  &lt;div class=&quot;kanaStrokes&quot;&gt;&lt;div class=&quot;preview-media preview-media--small&quot;&gt;Tabela de tracos&lt;/div&gt;&lt;/div&gt;
+
+  &lt;div class=&quot;kanaMnemonic&quot;&gt;Pense em alguem dizendo &lt;code&gt;a&lt;/code&gt; ao abrir a boca.&lt;/div&gt;
+&lt;/div&gt;
+&lt;/body&gt;
+&lt;/html&gt;"></iframe></article>
+  </div>
+</section>
+  <p class="note">Observacao: cada frente/verso roda dentro de um iframe isolado para preservar o CSS real de cada template.</p>
+</body>
+</html>

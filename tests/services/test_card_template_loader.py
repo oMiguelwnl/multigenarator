@@ -420,6 +420,8 @@ def test_project_latin_mvp_template_uses_wordfreq_layout_with_latin_fields() -> 
     assert "{{Definitions}}" not in rendered
     assert "{{Example Sentence}}" not in rendered
     assert "{{Translation}}" not in rendered
+    assert _last_css_value(template.css, "--color-card-background") == "#0a1628"
+    assert _last_css_value(template.css, "--color-text-primary") == "#e8f0fe"
     validate_template_references(template, field_names=LATIN_EXPORT_CARD_FIELD_NAMES)
 
 
@@ -447,7 +449,7 @@ def test_project_japanese_template_uses_japanese_fields_and_furigana_filter() ->
     validate_template_references(template, field_names=JAPANESE_EXPORT_CARD_FIELD_NAMES)
 
 
-def test_generated_japanese_frequency_model_keeps_pedagogy_and_current_palette() -> None:
+def test_generated_japanese_frequency_model_keeps_pedagogy_and_dark_palette() -> None:
     model = build_japanese_model()
     front = model.templates[0]["qfmt"]
     back = model.templates[0]["afmt"]
@@ -479,13 +481,13 @@ def test_generated_japanese_frequency_model_keeps_pedagogy_and_current_palette()
     assert "weblio.jp" not in back
 
     assert _last_css_value(model.css, "--max-width-card") == "400px"
-    assert _last_css_value(model.css, "--color-card-background") == "#ffffff"
-    assert _last_css_value(model.css, "--color-text-primary") == "#0f1b2d"
+    assert _last_css_value(model.css, "--color-card-background") == "#0a1628"
+    assert _last_css_value(model.css, "--color-text-primary") == "#e8f0fe"
     assert _last_css_value(model.css, "--color-nightMode-card-background") == "#0a1628"
     assert "border-top: 4px solid #2563eb;" in model.css
 
 
-def test_generated_kana_model_keeps_media_sequence_and_original_palette() -> None:
+def test_generated_kana_model_keeps_media_sequence_and_dark_palette() -> None:
     model = build_kana_model()
     front = model.templates[0]["qfmt"]
     back = model.templates[0]["afmt"]
@@ -508,12 +510,52 @@ def test_generated_kana_model_keeps_media_sequence_and_original_palette() -> Non
         assert f"{{{{#{field}}}}}" in back
         assert f"{{{{/{field}}}}}" in back
 
-    assert _last_css_value(model.css, "--kana-color-page") == "#fdf6e3"
-    assert _last_css_value(model.css, "--kana-color-card") == "#ffffff"
-    assert _last_css_value(model.css, "--kana-color-text") == "#1f2430"
+    assert _last_css_value(model.css, "--kana-color-page") == "#0b0716"
+    assert _last_css_value(model.css, "--kana-color-card") == "#171226"
+    assert _last_css_value(model.css, "--kana-color-text") == "#f3f1fb"
     assert _last_css_value(model.css, "--kana-color-nightMode-page") == "#0b0716"
     assert _last_css_value(model.css, "--kana-color-nightMode-card") == "#171226"
     assert "border-top: 4px solid var(--kana-color-accent);" in model.css
+
+
+def test_dark_templates_set_dark_anki_canvas_background() -> None:
+    latin_css = load_card_template(source_type="latin-mvp").css
+    japanese_css = build_japanese_model().css
+    kana_css = build_kana_model().css
+
+    for template_name, css in {
+        "latin_mvp_card": latin_css,
+        "japanese_card": japanese_css,
+    }.items():
+        assert _last_css_value(css, "--color-page-background") == "#0a1628", template_name
+        for selector in ("body", "body.card", "body.nightMode", ".card"):
+            assert _last_css_value(css, "background", selector=selector) == "var(--color-page-background)", (
+                template_name,
+                selector,
+            )
+
+    for selector in ("body", "body.card", "body.nightMode", ".card"):
+        assert _last_css_value(kana_css, "background", selector=selector) == "var(--kana-color-page)", selector
+
+
+def test_dark_templates_reset_audio_button_background() -> None:
+    template_css = {
+        "latin_mvp_card": (load_card_template(source_type="latin-mvp").css, ".replay-button", "transparent !important"),
+        "japanese_card": (build_japanese_model().css, ".replay-button", "transparent !important"),
+        "japanese_kana_card": (build_kana_model().css, ".replay-button", "transparent !important"),
+        "highlight_card": (
+            load_card_template(source_type="kindle-highlights").css,
+            ".audio-controls .replay-button",
+            "#1f2a24 !important",
+        ),
+    }
+
+    for template_name, (css, selector, expected_background) in template_css.items():
+        assert _last_css_value(css, "background", selector=selector) == expected_background, template_name
+        assert _last_css_value(css, "background-color", selector=selector) == expected_background, template_name
+        if expected_background == "transparent !important":
+            assert _last_css_value(css, "border", selector=selector) == "0 !important", template_name
+            assert _last_css_value(css, "box-shadow", selector=selector) == "none !important", template_name
 
 
 @pytest.mark.parametrize(

@@ -82,25 +82,26 @@ It intentionally mirrors the wordfreq `normal_card.md` structure and styling whi
   --font-size-header: 14px;
   --font-size-irregular-form: 15px;
 
-  --color-text-primary: #0f1b2d;
+  --color-page-background: #0a1628;
+  --color-text-primary: #e8f0fe;
   --color-nightMode-text-primary: #e8f0fe;
-  --color-card-background: #ffffff;
+  --color-card-background: #0a1628;
   --color-nightMode-card-background: #0a1628;
-  --color-box-shadow: rgba(29, 78, 216, 0.12);
-  --color-audio-button: #2563eb;
-  --color-list-bullets: #3b82f6;
-  --color-irregular-form-background: #eff6ff;
+  --color-box-shadow: rgba(0, 0, 0, 0.45);
+  --color-audio-button: #93c5fd;
+  --color-list-bullets: #93c5fd;
+  --color-irregular-form-background: #1e3a5f;
   --color-nightMode-irregular-form-background: #1e3a5f;
-  --color-irregular-form-border: #bfdbfe;
+  --color-irregular-form-border: #2563eb;
   --color-nightMode-irregular-form-border: #2563eb;
   --color-nightMode-irregular-form-text: rgba(219, 234, 254, 0.85);
-  --color-hint: #60a5fa;
+  --color-hint: #93c5fd;
   --color-nightMode-hint: #93c5fd;
-  --color-sentence-translation: #3b82f6;
+  --color-sentence-translation: #93c5fd;
   --color-nightMode-sentence-translation: #93c5fd;
-  --color-header: #1d4ed8;
+  --color-header: rgba(147, 197, 253, 0.7);
   --color-nightMode-header: rgba(147, 197, 253, 0.7);
-  --color-divider: #dbeafe;
+  --color-divider: #1e3a5f;
   --color-nightMode-divider: #1e3a5f;
 }
 
@@ -225,6 +226,14 @@ body {
   padding: 16px;
 }
 
+body,
+body.card,
+body.nightMode,
+.card {
+  background: var(--color-page-background);
+  color: var(--color-text-primary);
+}
+
 .customCard {
   margin: 0 auto;
   position: relative;
@@ -275,7 +284,7 @@ body {
 .targetWord {
   font-size: var(--font-size-targetWord);
   font-weight: 700;
-  color: #1e3a8a;
+  color: #93c5fd;
   letter-spacing: -0.5px;
 }
 
@@ -346,18 +355,35 @@ body {
   margin-left: 8px;
 }
 
+.replay-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: auto;
+  height: auto;
+  padding: 0;
+  background: transparent !important;
+  background-color: transparent !important;
+  border: 0 !important;
+  border-radius: 0;
+  box-shadow: none !important;
+  line-height: 0;
+  -webkit-appearance: none;
+  appearance: none;
+}
+
 .replay-button svg {
   width: 20px;
   height: 20px;
 }
 
 .replay-button svg path {
-  fill: var(--color-audio-button);
+  fill: var(--color-audio-button) !important;
 }
 
 .replay-button svg circle {
-  fill: none;
-  stroke: none;
+  fill: transparent !important;
+  stroke: none !important;
 }
 
 .irregularFormsContainer {

@@ -40,3 +40,7 @@
 | 035 | Melhorar a altura e o espaçamento do template dos decks de frequência normal e Mandarin | 2026-08-02 | human_needed | [035-aumentar-altura-template-frequencia](./035-aumentar-altura-template-frequencia/) |
 | 036 | Gerar deck dummy de frequência em alemão para visualizar o template | 2026-08-02 | done | [036-gerar-deck-dummy-alemao](./036-gerar-deck-dummy-alemao/) |
 | 037 | Compactar o espaçamento entre fields no template de frequência | 2026-08-02 | human_needed | [037-compactar-espacamento-fields](./037-compactar-espacamento-fields/) |
+| 039 | Gerar preview HTML de todos os templates Anki do projeto | 2026-08-03 | passed | [039-preview-todos-templates](./039-preview-todos-templates/) |
+| 040 | Escurecer templates de Japonês, Kana e Latim por padrão | 2026-08-03 | passed | [040-escurecer-templates-japones-latim](./040-escurecer-templates-japones-latim/) |
+| 041 | Escurecer background do botão de áudio nos templates | 2026-08-03 | passed | [041-escurecer-botao-audio](./041-escurecer-botao-audio/) |
+| 042 | Corrigir fundo branco do card e do botão de áudio | 2026-08-03 | passed | [042-corrigir-fundo-card-audio](./042-corrigir-fundo-card-audio/) |
