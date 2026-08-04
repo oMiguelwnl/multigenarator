@@ -11,6 +11,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass, replace
 from datetime import datetime
+from functools import cached_property
 from hashlib import sha256
 from importlib.resources import files
 from pathlib import Path
@@ -19,6 +20,7 @@ import re
 import genanki
 
 from multilang.services.azure_speech_adapter import AzureSpeechAdapter
+from multilang.services.japanese_romaji import romanize_japanese
 from multilang.settings import Settings
 
 JAPANESE_MODEL_ID = 1_762_800_701
@@ -31,9 +33,11 @@ JAPANESE_FIELD_NAMES = (
     "SortIndex",
     "Target Word",
     "Word Reading",
+    "Word Romaji",
     "Definition",
     "Sentence",
     "Sentence Furigana",
+    "Sentence Romaji",
     "Sentence Translation",
     "word_audio",
     "sentence_audio",
@@ -59,6 +63,14 @@ class JapaneseCard:
     word_audio: str = ""
     sentence_audio: str = ""
     language_code: str = "ja"
+
+    @cached_property
+    def word_romaji(self) -> str:
+        return romanize_japanese(self.target_word)
+
+    @cached_property
+    def sentence_romaji(self) -> str:
+        return romanize_japanese(self.sentence)
 
     @property
     def guid(self) -> str:
@@ -230,9 +242,11 @@ def _japanese_card_fields(card: JapaneseCard) -> list[str]:
         "SortIndex": str(card.sort_index),
         "Target Word": card.target_word,
         "Word Reading": card.word_reading,
+        "Word Romaji": card.word_romaji,
         "Definition": card.definition,
         "Sentence": card.sentence,
         "Sentence Furigana": card.sentence_furigana,
+        "Sentence Romaji": card.sentence_romaji,
         "Sentence Translation": card.sentence_translation,
         "word_audio": card.word_audio,
         "sentence_audio": card.sentence_audio,

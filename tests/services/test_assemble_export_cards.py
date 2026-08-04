@@ -3,6 +3,8 @@
 from __future__ import annotations
 
 from dataclasses import dataclass, field
+from importlib import import_module
+from importlib.util import find_spec
 from types import SimpleNamespace
 
 import pytest
@@ -11,7 +13,17 @@ from multilang.domain.audio import AudioAssetKind, AudioAssetRecord, AudioFormat
 from multilang.domain.jobs import SupportedLanguage
 from multilang.domain.lexicon import DefinitionRecord, GroundingStatus, LexicalCardCandidate, LexicalProvenance
 from multilang.domain.text_quality import ConfidenceLabel, ReviewStatus, TextGenerationStatus, TextProvenance, TextQualityRecord, ValidationStatus
-from multilang.domain.exporting import JAPANESE_EXPORT_CARD_FIELD_NAMES, MANDARIN_EXPORT_CARD_FIELD_NAMES, export_field_names_for_rows
+from multilang.domain.exporting import (
+    FREQUENCY_EXPORT_CARD_FIELD_NAMES,
+    HIGHLIGHT_EXPORT_CARD_FIELD_NAMES,
+    JAPANESE_EXPORT_CARD_FIELD_NAMES,
+    LATIN_EXPORT_CARD_FIELD_NAMES,
+    MANDARIN_EXPORT_CARD_FIELD_NAMES,
+    MANUAL_EXPORT_CARD_FIELD_NAMES,
+    ExportCardIdentity,
+    ExportCardRow,
+    export_field_names_for_rows,
+)
 from multilang.services.assemble_export_cards import AssembleExportCardsError, AssembleExportCardsService
 from multilang.services.mandarin_orthography import MandarinOrthography, MandarinOrthographyError
 
@@ -427,7 +439,102 @@ def test_assemble_export_cards_builds_highlight_row_without_translation_field() 
     assert mapping["sentence_audio"] == "[sound:wash-sentence.mp3]"
 
 
-def test_assemble_export_cards_builds_japanese_row_without_ipa() -> None:
+def test_japanese_export_row_requires_valid_romaji_and_preserves_non_japanese_contracts() -> None:
+    assert JAPANESE_EXPORT_CARD_FIELD_NAMES == (
+        "SortIndex",
+        "Target Word",
+        "Word Reading",
+        "Word Romaji",
+        "Definition",
+        "Sentence",
+        "Sentence Furigana",
+        "Sentence Romaji",
+        "Sentence Translation",
+        "word_audio",
+        "sentence_audio",
+        "Image",
+    )
+    assert FREQUENCY_EXPORT_CARD_FIELD_NAMES == (
+        "SortIndex", "word", "IPA", "Definitions", "Example Sentence", "Translation",
+        "word_audio", "sentence_audio", "Image",
+    )
+    assert HIGHLIGHT_EXPORT_CARD_FIELD_NAMES == (
+        "SortIndex", "Word", "IPA", "Example Sentence", "sentence_audio", "Definition", "Image",
+    )
+    assert MANUAL_EXPORT_CARD_FIELD_NAMES == HIGHLIGHT_EXPORT_CARD_FIELD_NAMES
+    assert LATIN_EXPORT_CARD_FIELD_NAMES == (
+        "SortIndex", "Word", "Definition", "Sentence", "Sentence Translation", "Grammar",
+        "word_audio", "sentence_audio", "Image",
+    )
+    assert MANDARIN_EXPORT_CARD_FIELD_NAMES == (
+        "SortIndex", "word", "Pinyin", "Traditional", "Definitions", "Example Sentence",
+        "Sentence Pinyin", "Traditional Sentence", "Translation", "word_audio", "sentence_audio", "Image",
+    )
+
+    identity = ExportCardIdentity(
+        language=SupportedLanguage.JA,
+        source_type="frequency",
+        job_id="job-ja",
+        item_key="何",
+        lemma_key="ja:何",
+        sort_index=1,
+    )
+    payload = {
+        "identity": identity,
+        "word": "何",
+        "front_of_card": "何",
+        "ipa": None,
+        "definitions": "pronoun: what",
+        "example_sentence": "何しているの？",
+        "translation": "What are you doing?",
+        "word_audio": "[sound:nani.mp3]",
+        "sentence_audio": "[sound:nani-sentence.mp3]",
+        "word_reading": "何[なに]",
+        "word_romaji": "Nani",
+        "sentence_furigana": "何[なに]しているの？",
+        "sentence_romaji": "Nan shite iru no?",
+    }
+    row = ExportCardRow(**payload)
+    assert tuple(row.ordered_field_mapping()) == JAPANESE_EXPORT_CARD_FIELD_NAMES
+    assert row.ordered_field_mapping()["Image"] == ""
+
+    changed = ExportCardRow(**{**payload, "word_romaji": "Nani (changed)", "sentence_romaji": "Changed?"})
+    assert changed.note_guid == row.note_guid
+
+    for field_name in ("word_reading", "word_romaji", "sentence_furigana", "sentence_romaji"):
+        with pytest.raises(ValueError, match="Japanese export rows require non-empty fields"):
+            ExportCardRow(**{**payload, field_name: "   "})
+
+    for invalid_values in (
+        {"word_romaji": "?"},
+        {"word_romaji": "学校"},
+        {"sentence_romaji": "Nan shite iru no??"},
+        {"sentence_romaji": "何 shite iru no?"},
+    ):
+        with pytest.raises(ValueError, match="romaji"):
+            ExportCardRow(**{**payload, **invalid_values})
+
+
+def test_assemble_export_cards_builds_japanese_row_without_ipa(monkeypatch: pytest.MonkeyPatch) -> None:
+    romaji_calls: list[str] = []
+    furigana_calls: list[str] = []
+
+    def fake_romanize(source: str) -> str:
+        romaji_calls.append(source)
+        return {
+            "学校": "Gakkou <word>",
+            "学校に行く。": "Gakkou ni iku. & sentence",
+        }[source]
+
+    def fake_furigana(source: str) -> str:
+        furigana_calls.append(source)
+        return {
+            "学校": "学校[がっこう]",
+            "学校に行く。": "学校[がっこう]に行[い]く。",
+        }[source]
+
+    monkeypatch.setattr("multilang.services.assemble_export_cards.romanize_japanese", fake_romanize, raising=False)
+    monkeypatch.setattr("multilang.services.assemble_export_cards.format_japanese_furigana", fake_furigana)
     candidate = make_candidate(item_key="学校", definitions_html="noun: school", ipa=None, spoken_form=None).model_copy(
         update={"display_form": "学校", "lemma_key": "ja:学校"}
     )
@@ -450,20 +557,66 @@ def test_assemble_export_cards_builds_japanese_row_without_ipa() -> None:
     field_names = export_field_names_for_rows([row])
     mapping = row.ordered_field_mapping(field_names=field_names)
 
+    assert romaji_calls == ["学校", "学校に行く。"]
+    assert furigana_calls == ["学校", "学校に行く。"]
     assert field_names == JAPANESE_EXPORT_CARD_FIELD_NAMES
     assert row.ipa is None
     assert mapping == {
         "SortIndex": 1,
         "Target Word": "学校",
         "Word Reading": "学校[がっこう]",
+        "Word Romaji": "Gakkou &lt;word&gt;",
         "Definition": "noun: school",
         "Sentence": "学校に行く。",
         "Sentence Furigana": "学校[がっこう]に行[い]く。",
+        "Sentence Romaji": "Gakkou ni iku. &amp; sentence",
         "Sentence Translation": "I go to school.",
         "word_audio": "[sound:gakkou-word.mp3]",
         "sentence_audio": "[sound:gakkou-sentence.mp3]",
         "Image": "",
     }
+
+
+def test_assemble_japanese_romaji_fails_before_persisting(monkeypatch: pytest.MonkeyPatch) -> None:
+    module_name = "multilang.services.japanese_romaji"
+    assert find_spec(module_name) is not None, "Japanese romaji service is not implemented"
+    error_type = import_module(module_name).JapaneseRomajiError
+    calls: list[str] = []
+
+    def failing_romanize(source: str) -> str:
+        calls.append(source)
+        if source == "学校に行く。":
+            raise error_type("unresolved romaji placeholder")
+        return "Gakkou"
+
+    monkeypatch.setattr("multilang.services.assemble_export_cards.romanize_japanese", failing_romanize, raising=False)
+    candidate = make_candidate(item_key="学校", definitions_html="noun: school", ipa=None, spoken_form=None).model_copy(
+        update={"display_form": "学校", "lemma_key": "ja:学校"}
+    )
+    service, repository = build_service(
+        accepted_records=[
+            make_text_record(
+                item_key="学校",
+                example_sentence="学校に行く。",
+                translation_text="I go to school.",
+            )
+        ],
+        candidates={"学校": candidate},
+        assets={
+            ("学校", AudioAssetKind.WORD.value): make_asset(
+                item_key="学校", asset_kind=AudioAssetKind.WORD, storage_path="gakkou-word.mp3"
+            ),
+            ("学校", AudioAssetKind.SENTENCE.value): make_asset(
+                item_key="学校", asset_kind=AudioAssetKind.SENTENCE, storage_path="gakkou-sentence.mp3"
+            ),
+        },
+    )
+
+    with pytest.raises(AssembleExportCardsError, match="学校.*romaji"):
+        service.execute(job_id="job-1", deck_language=SupportedLanguage.JA)
+
+    assert calls == ["学校", "学校に行く。"]
+    assert repository.saved_rows == []
 
 
 def test_assemble_export_cards_rejects_non_english_definition_label() -> None:

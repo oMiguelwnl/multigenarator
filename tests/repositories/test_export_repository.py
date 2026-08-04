@@ -2,7 +2,12 @@
 
 from __future__ import annotations
 
-from sqlalchemy import create_engine, text
+from pathlib import Path
+
+from alembic import command
+from alembic.config import Config
+from alembic.script import ScriptDirectory
+from sqlalchemy import Text, create_engine, inspect, text
 from sqlalchemy.orm import Session
 
 from multilang.db.base import Base
@@ -59,6 +64,14 @@ def make_artifact(*, job_id: str, export_format: ExportArtifactFormat) -> Export
         card_count=2,
         status=ExportArtifactStatus.COMPLETED,
     )
+
+
+def _alembic_config(database_url: str) -> Config:
+    project_root = Path(__file__).resolve().parents[2]
+    config = Config(str(project_root / "alembic.ini"))
+    config.set_main_option("script_location", str(project_root / "alembic"))
+    config.set_main_option("sqlalchemy.url", database_url)
+    return config
 
 
 def test_upsert_card_snapshot_updates_existing_job_item_row() -> None:
@@ -208,6 +221,90 @@ def test_mandarin_snapshot_round_trip_survives_expire_and_reload() -> None:
     assert reloaded.mandarin_sentence_pinyin == "wǒ qù yín háng。"
     assert reloaded.mandarin_sentence_traditional == "我去銀行。"
     assert reloaded.ordered_field_mapping()["Image"] == ""
+
+
+def test_japanese_snapshot_round_trip_survives_expiration() -> None:
+    repository, job_repository, session = build_repositories()
+    job = job_repository.create_job(
+        request=GenerationRequest(language=SupportedLanguage.JA, source_type="frequency"),
+        run_key="run-export-japanese",
+        source_fingerprint="frequency-ja",
+        total_items=1,
+    )
+    row = ExportCardRow(
+        identity=ExportCardIdentity(
+            language=SupportedLanguage.JA,
+            source_type="frequency",
+            job_id=job.id,
+            item_key="学校",
+            lemma_key="ja:学校",
+            sort_index=1,
+        ),
+        word="学校",
+        front_of_card="学校",
+        definitions="noun: school",
+        example_sentence="学校に行く。",
+        translation="I go to school.",
+        word_audio="[sound:gakkou-word.mp3]",
+        sentence_audio="[sound:gakkou-sentence.mp3]",
+        word_reading="学校[がっこう]",
+        word_romaji="Gakkou",
+        sentence_furigana="学校[がっこう]に行[い]く。",
+        sentence_romaji="Gakkou ni iku.",
+    )
+
+    stored = repository.upsert_card_snapshot(row)
+    expected_guid = stored.note_guid
+    session.expire_all()
+    reloaded = repository.list_card_snapshots(job.id)[0]
+
+    assert reloaded.word_reading == "学校[がっこう]"
+    assert reloaded.word_romaji == "Gakkou"
+    assert reloaded.sentence_furigana == "学校[がっこう]に行[い]く。"
+    assert reloaded.sentence_romaji == "Gakkou ni iku."
+    assert reloaded.note_guid == expected_guid == row.note_guid
+    assert reloaded.ordered_field_mapping()["Image"] == ""
+
+
+def test_japanese_export_columns_upgrade_downgrade_upgrade(tmp_path: Path) -> None:
+    database_url = f"sqlite:///{tmp_path / 'japanese-migration.db'}"
+    config = _alembic_config(database_url)
+    revisions = {revision.revision for revision in ScriptDirectory.from_config(config).walk_revisions()}
+    assert "20260804_16" in revisions, "Japanese reading migration is not implemented"
+
+    def card_export_columns() -> list[dict[str, object]]:
+        engine = create_engine(database_url)
+        try:
+            return list(inspect(engine).get_columns("card_exports"))
+        finally:
+            engine.dispose()
+
+    additions = (
+        "word_reading",
+        "word_romaji",
+        "sentence_furigana",
+        "sentence_romaji",
+    )
+    command.upgrade(config, "20260720_15")
+    baseline_columns = card_export_columns()
+    baseline_names = tuple(column["name"] for column in baseline_columns)
+    assert not set(additions) & set(baseline_names)
+    assert {"id", "job_id", "word", "mandarin_word_pinyin"} <= set(baseline_names)
+
+    command.upgrade(config, "20260804_16")
+    upgraded_columns = card_export_columns()
+    upgraded_names = tuple(column["name"] for column in upgraded_columns)
+    assert upgraded_names[-4:] == additions
+    added_columns = {column["name"]: column for column in upgraded_columns if column["name"] in additions}
+    assert set(added_columns) == set(additions)
+    assert all(column["nullable"] is True for column in added_columns.values())
+    assert all(isinstance(column["type"], Text) for column in added_columns.values())
+
+    command.downgrade(config, "20260720_15")
+    assert tuple(column["name"] for column in card_export_columns()) == baseline_names
+
+    command.upgrade(config, "20260804_16")
+    assert tuple(column["name"] for column in card_export_columns()) == upgraded_names
 
 
 def test_artifacts_and_card_queries_are_job_scoped_and_sorted() -> None:

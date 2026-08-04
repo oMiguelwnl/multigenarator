@@ -44,3 +44,4 @@
 | 040 | Escurecer templates de Japonês, Kana e Latim por padrão | 2026-08-03 | passed | [040-escurecer-templates-japones-latim](./040-escurecer-templates-japones-latim/) |
 | 041 | Escurecer background do botão de áudio nos templates | 2026-08-03 | passed | [041-escurecer-botao-audio](./041-escurecer-botao-audio/) |
 | 042 | Corrigir fundo branco do card e do botão de áudio | 2026-08-03 | passed | [042-corrigir-fundo-card-audio](./042-corrigir-fundo-card-audio/) |
+| 044 | Adicionar romaji ao modo japonês de frequência | 2026-08-04 | passed | [044-romaji-frequencia-japones](./044-romaji-frequencia-japones/) |

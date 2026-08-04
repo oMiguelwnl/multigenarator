@@ -2,12 +2,19 @@
 
 from __future__ import annotations
 
+from copy import copy
+from importlib import import_module
+from importlib.util import find_spec
 import zipfile
 from pathlib import Path
 
+import pytest
+
 from multilang.services.japanese_frequency_deck import (
+    JAPANESE_DECK_ID,
     JAPANESE_FIELD_NAMES,
     JAPANESE_FREQUENCY_CARDS,
+    JAPANESE_MODEL_ID,
     JAPANESE_NOTE_TYPE_NAME,
     JapaneseCard,
     build_japanese_model,
@@ -22,6 +29,44 @@ class NoOpAzureSpeechAdapter:
 
     def synthesize(self, **_kwargs):
         raise RuntimeError("audio disabled in Japanese deck tests")
+
+
+@pytest.mark.parametrize(
+    ("source", "forced_output"),
+    [
+        ("", None),
+        ("   ", None),
+        ("学校", ""),
+        ("学校", "学校"),
+        ("㐂", None),
+        ("㐂？", None),
+    ],
+)
+def test_japanese_romaji_uses_modified_hepburn_and_rejects_unresolved_output(
+    source: str,
+    forced_output: str | None,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    module_name = "multilang.services.japanese_romaji"
+    assert find_spec(module_name) is not None, "Japanese romaji service is not implemented"
+    romaji_module = import_module(module_name)
+    romanize_japanese = romaji_module.romanize_japanese
+    error_type = romaji_module.JapaneseRomajiError
+
+    assert romanize_japanese("学校") == "Gakkou"
+    assert romanize_japanese("学校に行く。") == "Gakkou ni iku."
+    assert romanize_japanese("カツカレーは美味しい") == "Katsu karee wa oishii"
+    assert romanize_japanese("何しているの？") == "Nan shite iru no?"
+
+    if forced_output is not None:
+        class FakeConverter:
+            def romaji(self, _source: str) -> str:
+                return forced_output
+
+        monkeypatch.setattr(romaji_module, "_get_converter", lambda: FakeConverter())
+
+    with pytest.raises(error_type):
+        romanize_japanese(source)
 
 
 def test_japanese_cards_are_ordered_and_start_with_donated_examples() -> None:
@@ -66,13 +111,36 @@ def test_japanese_card_guids_are_stable_and_unique() -> None:
         sentence_translation=JAPANESE_FREQUENCY_CARDS[0].sentence_translation,
     )
     assert clone.guid == JAPANESE_FREQUENCY_CARDS[0].guid
+    assert clone.word_romaji == JAPANESE_FREQUENCY_CARDS[0].word_romaji
+    assert clone.sentence_romaji == JAPANESE_FREQUENCY_CARDS[0].sentence_romaji
+
+    changed_romaji = copy(JAPANESE_FREQUENCY_CARDS[0])
+    object.__setattr__(changed_romaji, "word_romaji", "Changed word reading")
+    object.__setattr__(changed_romaji, "sentence_romaji", "Changed sentence reading")
+    assert changed_romaji.guid == JAPANESE_FREQUENCY_CARDS[0].guid
 
 
 def test_build_japanese_model_uses_template_and_field_order() -> None:
     model = build_japanese_model()
 
-    assert model.name == JAPANESE_NOTE_TYPE_NAME
+    assert model.model_id == JAPANESE_MODEL_ID == 1_762_800_701
+    assert JAPANESE_DECK_ID == 1_762_800_702
+    assert model.name == JAPANESE_NOTE_TYPE_NAME == "Multilang::Japanese Card"
     assert tuple(field["name"] for field in model.fields) == JAPANESE_FIELD_NAMES
+    assert JAPANESE_FIELD_NAMES == (
+        "SortIndex",
+        "Target Word",
+        "Word Reading",
+        "Word Romaji",
+        "Definition",
+        "Sentence",
+        "Sentence Furigana",
+        "Sentence Romaji",
+        "Sentence Translation",
+        "word_audio",
+        "sentence_audio",
+        "Image",
+    )
 
     front = model.templates[0]["qfmt"]
     back = model.templates[0]["afmt"]
@@ -80,15 +148,27 @@ def test_build_japanese_model_uses_template_and_field_order() -> None:
     assert "toggleFurigana" in front
     assert "{{furigana:Word Reading}}" in front
     assert "{{Target Word}}" in front
+    assert "{{Word Romaji}}" not in front
+    assert "{{Sentence Romaji}}" not in front
     # Portuguese labels (FRPG+ idea) present on the back.
     assert "{{furigana:Sentence Furigana}}" in back
+    assert '<div class="wordRomaji">{{Word Romaji}}</div>' in back
+    assert '<div class="sentenceRomaji">{{Sentence Romaji}}</div>' in back
+    assert back.index("{{furigana:Word Reading}}") < back.index("{{Word Romaji}}")
+    assert back.index("{{furigana:Sentence Furigana}}") < back.index("{{Sentence Romaji}}")
+    assert back.index("{{Sentence Romaji}}") < back.index("{{Sentence Translation}}")
     assert "Definição:" in back
     assert "Exemplo:" in back
+    assert "{{word_audio}}" in back
+    assert "{{sentence_audio}}" in back
+    assert "{{#Image}}" in back and "{{Image}}" in back and "{{/Image}}" in back
     assert "jisho.org" not in front + back
     assert "weblio.jp" not in front + back
     assert ".customCard" in model.css
     assert ".targetWordContainer" in model.css
     assert ".exampleSentenceLine" in model.css
+    assert ".wordRomaji" in model.css
+    assert ".sentenceRomaji" in model.css
     assert ".jpLinks" not in model.css
 
 
@@ -110,9 +190,11 @@ def test_build_japanese_note_maps_fields_in_order() -> None:
         "99",
         "犬",
         "犬[いぬ]",
+        "Inu",
         "cachorro",
         "犬が好きです。",
         "犬[いぬ]が 好[す]きです。",
+        "Inu ga suki desu.",
         "Eu gosto de cachorros.",
         "[sound:word.mp3]",
         "[sound:sentence.mp3]",

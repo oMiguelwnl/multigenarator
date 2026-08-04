@@ -2,9 +2,13 @@
 
 from __future__ import annotations
 
-import zipfile
+import csv
 import json
 import sqlite3
+import subprocess
+import sys
+import textwrap
+import zipfile
 from pathlib import Path
 
 import pytest
@@ -12,6 +16,7 @@ import pytest
 from multilang.domain.exporting import (
     JAPANESE_EXPORT_CARD_FIELD_NAMES,
     MANDARIN_EXPORT_CARD_FIELD_NAMES,
+    ExportArtifactFormat,
     ExportCardIdentity,
     ExportCardRow,
 )
@@ -32,6 +37,7 @@ from multilang.services.export_anki_package import (
     export_anki_package,
 )
 from multilang.services.japanese_frequency_deck import JAPANESE_MODEL_ID, JAPANESE_NOTE_TYPE_NAME
+from multilang.services.export_tabular_bundle import write_export_tabular_bundle
 
 
 def write_media_file(path: Path, payload: bytes = b"ID3-audio") -> Path:
@@ -51,7 +57,9 @@ def make_row(
     source_type: str = "frequency",
     language: SupportedLanguage = SupportedLanguage.EN,
     word_reading: str | None = None,
+    word_romaji: str | None = None,
     sentence_furigana: str | None = None,
+    sentence_romaji: str | None = None,
 ) -> ExportCardRow:
     return ExportCardRow(
         identity=ExportCardIdentity(
@@ -71,7 +79,9 @@ def make_row(
         word_audio=word_audio,
         sentence_audio=sentence_audio,
         word_reading=word_reading,
+        word_romaji=word_romaji,
         sentence_furigana=sentence_furigana,
+        sentence_romaji=sentence_romaji,
     )
 
 
@@ -361,7 +371,9 @@ def test_build_multilang_note_maps_japanese_frequency_fields() -> None:
         word_audio="[sound:gakkou-word.mp3]",
         sentence_audio="[sound:gakkou-sentence.mp3]",
         word_reading="学校[がっこう]",
+        word_romaji="Gakkou",
         sentence_furigana="学校[がっこう]に行[い]く。",
+        sentence_romaji="Gakkou ni iku.",
     )
 
     note = build_multilang_note(row, model=build_multilang_model(source_type="frequency", language=SupportedLanguage.JA))
@@ -370,9 +382,219 @@ def test_build_multilang_note_maps_japanese_frequency_fields() -> None:
         "1",
         "学校",
         "学校[がっこう]",
+        "Gakkou",
         "to move fast<br>to operate",
         "学校に行く。",
         "学校[がっこう]に行[い]く。",
+        "Gakkou ni iku.",
+        "I go to school.",
+        "[sound:gakkou-word.mp3]",
+        "[sound:gakkou-sentence.mp3]",
+        "",
+    ]
+
+
+def test_japanese_frequency_template_and_apkg_are_back_only_with_romaji(tmp_path: Path) -> None:
+    row = make_row(
+        item_key="学校",
+        sort_index=1,
+        language=SupportedLanguage.JA,
+        example_sentence="学校に行く。",
+        translation="I go to school.",
+        word_audio="[sound:gakkou-word.mp3]",
+        sentence_audio="[sound:gakkou-sentence.mp3]",
+        word_reading="学校[がっこう]",
+        word_romaji="Gakkou",
+        sentence_furigana="学校[がっこう]に行[い]く。",
+        sentence_romaji="Gakkou ni iku.",
+    )
+    model = build_multilang_model(source_type="frequency", language=SupportedLanguage.JA)
+    front = model.templates[0]["qfmt"]
+    back = model.templates[0]["afmt"]
+
+    assert model.model_id == JAPANESE_MODEL_ID == 1_762_800_701
+    assert model.name == JAPANESE_NOTE_TYPE_NAME == "Multilang::Japanese Card"
+    assert tuple(field["name"] for field in model.fields) == JAPANESE_EXPORT_CARD_FIELD_NAMES
+    assert "{{Word Romaji}}" not in front
+    assert "{{Sentence Romaji}}" not in front
+    assert '<div class="wordRomaji">{{Word Romaji}}</div>' in back
+    assert '<div class="sentenceRomaji">{{Sentence Romaji}}</div>' in back
+    assert back.index("{{furigana:Word Reading}}") < back.index("{{Word Romaji}}")
+    assert back.index("{{furigana:Sentence Furigana}}") < back.index("{{Sentence Romaji}}")
+    assert back.index("{{Sentence Romaji}}") < back.index("{{Sentence Translation}}")
+    for reference in (
+        "{{Target Word}}",
+        "{{furigana:Word Reading}}",
+        "{{Sentence}}",
+        "{{furigana:Sentence Furigana}}",
+        "{{word_audio}}",
+        "{{sentence_audio}}",
+        "{{#Image}}",
+        "{{Image}}",
+        "{{/Image}}",
+    ):
+        assert reference in front + back
+
+    word_media = write_media_file(tmp_path / "audio" / "gakkou-word.mp3", b"ID3-word")
+    sentence_media = write_media_file(tmp_path / "audio" / "gakkou-sentence.mp3", b"ID3-sentence")
+    output_path = tmp_path / "japanese-frequency.apkg"
+    export_anki_package(
+        rows=[row],
+        media_index={row.word_audio: word_media, row.sentence_audio: sentence_media},
+        output_path=output_path,
+        deck_name="Multilang Japanese::Frequency",
+    )
+
+    with zipfile.ZipFile(output_path) as archive:
+        assert "collection.anki2" in archive.namelist()
+        collection_path = tmp_path / "japanese-collection.anki2"
+        collection_path.write_bytes(archive.read("collection.anki2"))
+    with sqlite3.connect(collection_path) as connection:
+        models = json.loads(connection.execute("select models from col").fetchone()[0])
+        note_fields = connection.execute("select flds from notes").fetchone()[0].split("\x1f")
+
+    archived_model = models[str(JAPANESE_MODEL_ID)]
+    assert archived_model["name"] == JAPANESE_NOTE_TYPE_NAME
+    assert tuple(field["name"] for field in archived_model["flds"]) == JAPANESE_EXPORT_CARD_FIELD_NAMES
+    assert note_fields == [
+        "1",
+        "学校",
+        "学校[がっこう]",
+        "Gakkou",
+        "to move fast<br>to operate",
+        "学校に行く。",
+        "学校[がっこう]に行[い]く。",
+        "Gakkou ni iku.",
+        "I go to school.",
+        "[sound:gakkou-word.mp3]",
+        "[sound:gakkou-sentence.mp3]",
+        "",
+    ]
+
+
+def test_frozen_japanese_apkg_export_does_not_invoke_romaji_converter() -> None:
+    script = textwrap.dedent(
+        """
+        from pathlib import Path
+        from tempfile import TemporaryDirectory
+
+        import multilang.services.japanese_romaji as romaji_module
+
+        def unavailable(_value: str) -> str:
+            raise AssertionError("frozen APKG export invoked the romaji converter")
+
+        romaji_module.romanize_japanese = unavailable
+
+        from multilang.domain.exporting import ExportCardIdentity, ExportCardRow
+        from multilang.domain.jobs import SupportedLanguage
+        from multilang.services.export_anki_package import export_anki_package
+
+        row = ExportCardRow(
+            identity=ExportCardIdentity(
+                language=SupportedLanguage.JA,
+                source_type="frequency",
+                job_id="frozen-ja",
+                item_key="学校",
+                lemma_key="ja:学校",
+                sort_index=1,
+            ),
+            word="学校",
+            front_of_card="学校",
+            definitions="noun: school",
+            example_sentence="学校に行く。",
+            translation="I go to school.",
+            word_audio="[sound:gakkou-word.mp3]",
+            sentence_audio="[sound:gakkou-sentence.mp3]",
+            word_reading="学校[がっこう]",
+            word_romaji="Gakkou",
+            sentence_furigana="学校[がっこう]に行[い]く。",
+            sentence_romaji="Gakkou ni iku.",
+        )
+
+        with TemporaryDirectory() as directory:
+            root = Path(directory)
+            word_audio = root / "gakkou-word.mp3"
+            sentence_audio = root / "gakkou-sentence.mp3"
+            word_audio.write_bytes(b"ID3-word")
+            sentence_audio.write_bytes(b"ID3-sentence")
+            output_path = root / "japanese-frequency.apkg"
+            result = export_anki_package(
+                rows=[row],
+                media_index={
+                    row.word_audio: word_audio,
+                    row.sentence_audio: sentence_audio,
+                },
+                output_path=output_path,
+                deck_name="Multilang Japanese::Frequency",
+            )
+            assert result.card_count == 1
+            assert output_path.is_file()
+        """
+    )
+
+    result = subprocess.run(
+        [sys.executable, "-c", script],
+        capture_output=True,
+        text=True,
+        check=False,
+    )
+
+    assert result.returncode == 0, result.stderr
+
+
+@pytest.mark.parametrize(
+    ("export_format", "delimiter", "suffix"),
+    [
+        (ExportArtifactFormat.CSV, ",", ".csv"),
+        (ExportArtifactFormat.TSV, "\t", ".tsv"),
+    ],
+)
+def test_japanese_tabular_exports_use_romaji_field_order(
+    tmp_path: Path,
+    export_format: ExportArtifactFormat,
+    delimiter: str,
+    suffix: str,
+) -> None:
+    row = make_row(
+        item_key="学校",
+        sort_index=1,
+        language=SupportedLanguage.JA,
+        example_sentence="学校に行く。",
+        translation="I go to school.",
+        word_audio="[sound:gakkou-word.mp3]",
+        sentence_audio="[sound:gakkou-sentence.mp3]",
+        word_reading="学校[がっこう]",
+        word_romaji="Gakkou",
+        sentence_furigana="学校[がっこう]に行[い]く。",
+        sentence_romaji="Gakkou ni iku.",
+    )
+
+    result = write_export_tabular_bundle(
+        rows=[row],
+        export_format=export_format,
+        output_dir=tmp_path / export_format.value,
+        deck_name="Multilang Japanese::Frequency",
+        note_type_name=JAPANESE_NOTE_TYPE_NAME,
+    )
+
+    assert result.output_path.suffix == suffix
+    lines = result.output_path.read_text(encoding="utf-8").splitlines()
+    assert lines[:5] == [
+        f"#separator:{'Tab' if delimiter == chr(9) else 'Comma'}",
+        "#html:true",
+        f"#notetype:{JAPANESE_NOTE_TYPE_NAME}",
+        "#deck:Multilang Japanese::Frequency",
+        f"#columns:{delimiter.join(JAPANESE_EXPORT_CARD_FIELD_NAMES)}",
+    ]
+    assert next(csv.reader([lines[5]], delimiter=delimiter)) == [
+        "1",
+        "学校",
+        "学校[がっこう]",
+        "Gakkou",
+        "to move fast<br>to operate",
+        "学校に行く。",
+        "学校[がっこう]に行[い]く。",
+        "Gakkou ni iku.",
         "I go to school.",
         "[sound:gakkou-word.mp3]",
         "[sound:gakkou-sentence.mp3]",

@@ -13,9 +13,11 @@ Furigana is rendered with Anki's built-in `{{furigana:...}}` filter, so the
 - SortIndex
 - Target Word
 - Word Reading
+- Word Romaji
 - Definition
 - Sentence
 - Sentence Furigana
+- Sentence Romaji
 - Sentence Translation
 - word_audio
 - sentence_audio
@@ -93,6 +95,7 @@ Furigana is rendered with Anki's built-in `{{furigana:...}}` filter, so the
         <span class="jPlain" style="display:none;">{{Target Word}}</span>
         <span class="jReading">{{furigana:Word Reading}}</span>
       </span>
+      <div class="wordRomaji">{{Word Romaji}}</div>
     </div>
     <div class="wordControls">
       <button type="button" class="furiganaToggle" onclick="toggleFurigana()">furigana</button>
@@ -128,6 +131,7 @@ Furigana is rendered with Anki's built-in `{{furigana:...}}` filter, so the
       </span>
       <span class="sentenceAudioButton">{{sentence_audio}}</span>
     </div>
+    <div class="sentenceRomaji">{{Sentence Romaji}}</div>
     <div id="translation" class="sentenceTranslation indent">
       {{Sentence Translation}}
     </div>
@@ -249,6 +253,16 @@ body.nightMode,
 .nightMode .targetWord { color: #93c5fd; }
 
 .wordBlock { display: flex; flex-direction: column; gap: 4px; }
+
+.wordRomaji,
+.sentenceRomaji {
+  color: rgba(232, 240, 254, 0.62);
+  font-size: 14px;
+  font-weight: 400;
+  line-height: 1.4;
+}
+
+.sentenceRomaji { padding-left: 12px; padding-top: 4px; }
 
 .jpFont {
   font-family: "Yu Mincho", "YuMincho", "Hiragino Mincho ProN",

@@ -40,9 +40,11 @@ JAPANESE_EXPORT_CARD_FIELD_NAMES = (
     "SortIndex",
     "Target Word",
     "Word Reading",
+    "Word Romaji",
     "Definition",
     "Sentence",
     "Sentence Furigana",
+    "Sentence Romaji",
     "Sentence Translation",
     "word_audio",
     "sentence_audio",
@@ -131,7 +133,9 @@ class ExportCardRow(BaseModel):
     sentence_audio: str = Field(default="", alias="sentence_audio")
     image: str = Field(default="", alias="Image")
     word_reading: str | None = Field(default=None, alias="Word Reading")
+    word_romaji: str | None = Field(default=None, alias="Word Romaji")
     sentence_furigana: str | None = Field(default=None, alias="Sentence Furigana")
+    sentence_romaji: str | None = Field(default=None, alias="Sentence Romaji")
     mandarin_word_pinyin: str | None = Field(default=None, alias="Pinyin")
     mandarin_word_traditional: str | None = Field(default=None, alias="Traditional")
     mandarin_sentence_pinyin: str | None = Field(default=None, alias="Sentence Pinyin")
@@ -174,6 +178,26 @@ class ExportCardRow(BaseModel):
                     "Mandarin export rows require pinyin fields to contain only pinyin text: "
                     f"{', '.join(invalid_pinyin)}"
                 )
+        if _uses_japanese_fields(language=self.identity.language, source_type=self.identity.source_type):
+            required_values = {
+                "Word Reading": self.word_reading,
+                "Word Romaji": self.word_romaji,
+                "Sentence Furigana": self.sentence_furigana,
+                "Sentence Romaji": self.sentence_romaji,
+            }
+            missing = [name for name, value in required_values.items() if not str(value or "").strip()]
+            if missing:
+                raise ValueError(f"Japanese export rows require non-empty fields: {', '.join(missing)}")
+            _validate_japanese_romaji(
+                field_name="Word Romaji",
+                value=str(self.word_romaji),
+                source=self.front_of_card,
+            )
+            _validate_japanese_romaji(
+                field_name="Sentence Romaji",
+                value=str(self.sentence_romaji),
+                source=self.example_sentence,
+            )
         return self
 
     @classmethod
@@ -206,8 +230,10 @@ class ExportCardRow(BaseModel):
             "Translation": data.get("translation") or "",
             "Sentence Translation": data.get("translation") or "",
             "Target Word": data.get("front_of_card") or data.get("word") or "",
-            "Word Reading": data.get("word_reading") or data.get("front_of_card") or data.get("word") or "",
-            "Sentence Furigana": data.get("example_sentence") or "",
+            "Word Reading": data.get("word_reading") or "",
+            "Word Romaji": data.get("word_romaji") or "",
+            "Sentence Furigana": data.get("sentence_furigana") or "",
+            "Sentence Romaji": data.get("sentence_romaji") or "",
             "Pinyin": data.get("mandarin_word_pinyin") or "",
             "Traditional": data.get("mandarin_word_traditional") or "",
             "Sentence Pinyin": data.get("mandarin_sentence_pinyin") or "",
@@ -269,6 +295,21 @@ def _uses_mandarin_fields(*, language: SupportedLanguage | str, source_type: str
         export_field_names_for_language_and_source(language=language, source_type=source_type)
         == MANDARIN_EXPORT_CARD_FIELD_NAMES
     )
+
+
+def _uses_japanese_fields(*, language: SupportedLanguage | str, source_type: str) -> bool:
+    return (
+        export_field_names_for_language_and_source(language=language, source_type=source_type)
+        == JAPANESE_EXPORT_CARD_FIELD_NAMES
+    )
+
+
+def _validate_japanese_romaji(*, field_name: str, value: str, source: str) -> None:
+    if not value.isascii():
+        raise ValueError(f"Japanese export rows require {field_name} romaji to contain only ASCII text")
+    source_question_marks = source.count("?") + source.count("？")
+    if value.count("?") > source_question_marks:
+        raise ValueError(f"Japanese export rows require {field_name} romaji without unresolved placeholders")
 
 
 def _contains_non_pinyin_letter(value: str) -> bool:

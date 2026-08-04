@@ -19,6 +19,7 @@ from multilang.domain.lexicon import LexicalCardCandidate
 from multilang.domain.text_quality import TextQualityRecord
 from multilang.services.audio_integrity import AudioIntegrityError, assert_word_audio_matches_word
 from multilang.services.japanese_furigana import JapaneseFuriganaError, format_japanese_furigana
+from multilang.services.japanese_romaji import JapaneseRomajiError, romanize_japanese
 from multilang.services.mandarin_orthography import (
     MandarinOrthography,
     MandarinOrthographyError,
@@ -100,6 +101,7 @@ class AssembleExportCardsService:
                 audio_index=audio_index,
             )
             japanese_readings = self._japanese_readings(
+                item_key=text_record.item_key,
                 display_word=lexical_candidate.display_form,
                 sentence=text_record.example_sentence or "",
                 enabled=_uses_japanese_frequency_fields(deck_language=deck_language, source_type=source_type),
@@ -132,7 +134,9 @@ class AssembleExportCardsService:
                 word_audio=self._to_sound_tag(word_audio) if word_audio is not None else "",
                 sentence_audio=self._to_sound_tag(sentence_audio),
                 word_reading=escape(japanese_readings[0]) if japanese_readings is not None else None,
-                sentence_furigana=escape(japanese_readings[1]) if japanese_readings is not None else None,
+                word_romaji=escape(japanese_readings[1]) if japanese_readings is not None else None,
+                sentence_furigana=escape(japanese_readings[2]) if japanese_readings is not None else None,
+                sentence_romaji=escape(japanese_readings[3]) if japanese_readings is not None else None,
                 gramatica=self._render_gramatica(text_record),
                 mandarin_word_pinyin=(escape(mandarin_orthography.word_pinyin) if mandarin_orthography else None),
                 mandarin_word_traditional=(escape(mandarin_orthography.word_traditional) if mandarin_orthography else None),
@@ -221,16 +225,24 @@ class AssembleExportCardsService:
     def _japanese_readings(
         self,
         *,
+        item_key: str,
         display_word: str,
         sentence: str,
         enabled: bool,
-    ) -> tuple[str, str] | None:
+    ) -> tuple[str, str, str, str] | None:
         if not enabled:
             return None
         try:
-            return format_japanese_furigana(display_word), format_japanese_furigana(sentence)
-        except JapaneseFuriganaError as exc:
-            raise AssembleExportCardsError(f"unable to generate Japanese furigana: {exc}") from exc
+            return (
+                format_japanese_furigana(display_word),
+                romanize_japanese(display_word),
+                format_japanese_furigana(sentence),
+                romanize_japanese(sentence),
+            )
+        except (JapaneseFuriganaError, JapaneseRomajiError) as exc:
+            raise AssembleExportCardsError(
+                f"unable to generate Japanese readings for item {item_key}: {exc}"
+            ) from exc
 
     def _mandarin_orthography(
         self,
