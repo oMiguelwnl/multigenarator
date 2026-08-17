@@ -6,6 +6,7 @@ import csv
 from dataclasses import replace
 
 from multilang.domain.jobs import SupportedLanguage
+from multilang.settings import APPROVED_FREQUENCY_ASSET_LANGUAGES
 
 
 def test_iterator_rejects_noise_tokens(monkeypatch) -> None:
@@ -363,7 +364,8 @@ def test_build_frequency_deck_supports_custom_cards_per_level(monkeypatch) -> No
 def test_all_supported_frequency_assets_validate() -> None:
     from multilang.services import frequency_decks
 
-    for language in SupportedLanguage:
+    for language_code in APPROVED_FREQUENCY_ASSET_LANGUAGES:
+        language = SupportedLanguage(language_code)
         entries = frequency_decks.load_curated_frequency_entries(language)
         if language is SupportedLanguage.LA:
             assert entries

@@ -10,6 +10,7 @@ from multilang.services.tatoeba_sentence_source import TatoebaCandidateRow, Tato
 @dataclass
 class FakeCandidateProvider:
     rows: list[TatoebaCandidateRow]
+    calls: int = 0
 
     def search_candidates(
         self,
@@ -19,6 +20,7 @@ class FakeCandidateProvider:
         target_language: str,
         translation_target_language: str,
     ) -> list[TatoebaCandidateRow]:
+        self.calls += 1
         return list(self.rows)
 
 
@@ -82,3 +84,18 @@ def test_returns_no_sentence_when_no_candidate_survives_filters() -> None:
     )
 
     assert result is None
+
+
+def test_korean_returns_no_fallback_before_candidate_provider_access() -> None:
+    provider = FakeCandidateProvider(rows=[])
+    source = TatoebaSentenceSource(candidate_provider=provider)
+
+    result = source.select_sentence(
+        display_form="먹었어요",
+        lemma="먹다",
+        target_language="ko",
+        translation_target_language="pt",
+    )
+
+    assert result is None
+    assert provider.calls == 0

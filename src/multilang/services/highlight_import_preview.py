@@ -6,7 +6,10 @@ from pathlib import Path
 
 from multilang.domain.highlights import HighlightImportPreview
 from multilang.domain.jobs import SupportedLanguage
-from multilang.services.highlight_candidate_extraction import extract_highlight_candidates
+from multilang.services.highlight_candidate_extraction import (
+    KoreanHighlightResolver,
+    extract_highlight_candidates,
+)
 from multilang.services.kindle_highlight_parser import parse_kindle_highlight_export
 
 
@@ -15,6 +18,7 @@ def build_highlight_import_preview(
     *,
     language: SupportedLanguage,
     planned_card_limit: int | None = None,
+    korean_resolver: KoreanHighlightResolver | None = None,
 ) -> HighlightImportPreview:
     """Return count-only import/extraction metrics for a local Kindle export."""
 
@@ -26,7 +30,11 @@ def build_highlight_import_preview(
         reason_codes = ",".join(rejected.reason_code for rejected in parse_result.rejected)
         raise ValueError(f"kindle highlight preview failed: {reason_codes}")
 
-    extraction_result = extract_highlight_candidates(parse_result.highlights, language=language)
+    extraction_result = extract_highlight_candidates(
+        parse_result.highlights,
+        language=language,
+        korean_resolver=korean_resolver,
+    )
     extracted_count = len(extraction_result.candidates)
     planned_cards = extracted_count if planned_card_limit is None else min(planned_card_limit, extracted_count)
 

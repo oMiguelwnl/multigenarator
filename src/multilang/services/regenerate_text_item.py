@@ -105,6 +105,7 @@ class RegenerateTextItemService:
             definitions_html=getattr(candidate, "definitions_html"),
             disallowed_sentence_texts=set(seen_sentences or set()),
             require_translation=source_type != "word-list",
+            korean_identity=getattr(candidate, "korean_identity"),
         )
 
     def _build_record(

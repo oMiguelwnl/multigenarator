@@ -31,6 +31,7 @@ SupportedLanguageCode = Literal[
     "la",
     "ja",
     "zh",
+    "ko",
 ]
 TextGenerationProvider = Literal["litellm", "local"]
 TranslationProvider = Literal["deepl", "google", "local"]
@@ -38,7 +39,7 @@ AudioProviderName = Literal["azure", "elevenlabs", "google_translate"]
 AudioOutputFormat = Literal["audio-24khz-48kbitrate-mono-mp3"]
 ElevenLabsOutputFormat = Literal["mp3_44100_128"]
 
-DEFAULT_SUPPORTED_LANGUAGES: tuple[SupportedLanguageCode, ...] = (
+APPROVED_FREQUENCY_ASSET_LANGUAGES: tuple[SupportedLanguageCode, ...] = (
     "pt",
     "es",
     "en",
@@ -61,6 +62,11 @@ DEFAULT_SUPPORTED_LANGUAGES: tuple[SupportedLanguageCode, ...] = (
     "la",
     "ja",
     "zh",
+)
+
+DEFAULT_SUPPORTED_LANGUAGES: tuple[SupportedLanguageCode, ...] = (
+    *APPROVED_FREQUENCY_ASSET_LANGUAGES,
+    "ko",
 )
 
 

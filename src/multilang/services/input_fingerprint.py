@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from collections.abc import Iterable
 from hashlib import sha256
+import unicodedata
 
 from multilang.domain.jobs import GenerationRequest
 
@@ -11,7 +12,11 @@ from multilang.domain.jobs import GenerationRequest
 def normalize_requested_item_keys(requested_item_keys: Iterable[str]) -> list[str]:
     """Normalize item keys so rerun decisions are deterministic."""
 
-    normalized = {item.strip().lower() for item in requested_item_keys if item and item.strip()}
+    normalized = {
+        unicodedata.normalize("NFC", item).strip().lower()
+        for item in requested_item_keys
+        if item and item.strip()
+    }
     return sorted(normalized)
 
 

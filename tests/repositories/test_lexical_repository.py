@@ -6,6 +6,11 @@ from sqlalchemy import create_engine, text
 from sqlalchemy.orm import Session
 
 from multilang.db.base import Base
+from multilang.domain.korean import (
+    KoreanAnalyzerFingerprint,
+    KoreanLexicalIdentity,
+    KoreanSignatureItem,
+)
 from multilang.domain.jobs import GenerationRequest, SupportedLanguage
 from multilang.domain.lexicon import (
     DefinitionRecord,
@@ -25,8 +30,12 @@ def build_repositories() -> tuple[LexicalRepository, JobRepository, Session]:
     return LexicalRepository(session), JobRepository(session), session
 
 
-def make_request(source_type: str = "word-list") -> GenerationRequest:
-    return GenerationRequest(language=SupportedLanguage.EN, source_type=source_type, input_file=None)
+def make_request(
+    source_type: str = "word-list",
+    *,
+    language: SupportedLanguage = SupportedLanguage.EN,
+) -> GenerationRequest:
+    return GenerationRequest(language=language, source_type=source_type, input_file=None)
 
 
 def make_candidate(
@@ -60,6 +69,48 @@ def make_candidate(
                 authoritative=ipa is not None,
             ),
         ),
+    )
+
+
+def make_korean_candidate() -> LexicalCardCandidate:
+    identity = KoreanLexicalIdentity(
+        submitted_form="학교",
+        canonical_nfc="학교",
+        lemma="학교",
+        part_of_speech="NNG",
+        sense_id="fixture-school-1",
+        register="neutral",
+        morpheme_signature=(KoreanSignatureItem(form="학교", pos="NNG"),),
+        analyzer_fingerprint=KoreanAnalyzerFingerprint(
+            analyzer_name="kiwi",
+            analyzer_package_version="0.23.2",
+            model_package_version="0.23.0",
+            model_type="cong",
+            enabled_dialects="standard",
+            num_workers=1,
+            integrate_allomorph=True,
+            top_n=2,
+            split_complex=False,
+            compatible_jamo=False,
+            normalize_coda=False,
+            z_coda=False,
+            typos=None,
+            oov_handling="chr",
+            policy_version="kiwi-top2-consensus-v1",
+        ),
+        status="resolved",
+    )
+    return LexicalCardCandidate(
+        submitted_form="학교",
+        display_form="학교",
+        lemma=identity.lemma,
+        lemma_key=identity.lexical_key,
+        definitions_html="escola",
+        definition_language="pt",
+        translation_target_language="pt",
+        grounding_status=GroundingStatus.GROUNDED,
+        provenance=LexicalProvenance(source="reviewed-fixture"),
+        korean_identity=identity,
     )
 
 
@@ -234,3 +285,67 @@ def test_frequency_upsert_candidate_rejects_existing_duplicate_across_levels() -
         assert "duplicate frequency lexical candidate" in str(exc)
     else:  # pragma: no cover - assertion clarity
         raise AssertionError("expected duplicate frequency candidate validation failure")
+
+
+def test_korean_identity_survives_commit_expire_reload_and_typed_restoration() -> None:
+    repository, job_repository, session = build_repositories()
+    job = job_repository.create_job(
+        request=make_request(language=SupportedLanguage.KO),
+        run_key="run-ko-word-list-fixture",
+        source_fingerprint="fixture-korean-list",
+        total_items=1,
+    )
+    candidate = make_korean_candidate()
+
+    repository.upsert_candidate(
+        job_id=job.id,
+        run_key=job.run_key,
+        item_key="학교",
+        source_type="word-list",
+        normalized_source="학교",
+        candidate=candidate,
+    )
+    session.commit()
+    session.expire_all()
+
+    row = repository.get_candidate_for_item(job.id, "학교")
+    assert row is not None
+    assert row.korean_identity == candidate.korean_identity.model_dump(mode="json")
+
+    restored = repository.list_candidates(job.id)[0]
+    assert restored.korean_identity == candidate.korean_identity
+    assert restored.korean_identity is not None
+    assert restored.korean_identity.morpheme_signature == candidate.korean_identity.morpheme_signature
+    assert restored.korean_identity.analyzer_fingerprint == (
+        candidate.korean_identity.analyzer_fingerprint
+    )
+
+
+def test_non_korean_candidate_expire_reload_preserves_null_korean_identity() -> None:
+    repository, job_repository, session = build_repositories()
+    job = job_repository.create_job(
+        request=make_request(),
+        run_key="run-en-null-korean-identity",
+        source_fingerprint="fixture-legacy-list",
+        total_items=1,
+    )
+
+    repository.upsert_candidate(
+        job_id=job.id,
+        run_key=job.run_key,
+        item_key="line-1",
+        source_type="word-list",
+        normalized_source="running",
+        candidate=make_candidate(
+            status=GroundingStatus.GROUNDED,
+            ipa="/ɹʌn/",
+            warning_code=None,
+        ),
+    )
+    session.commit()
+    session.expire_all()
+
+    row = repository.get_candidate_for_item(job.id, "line-1")
+    assert row is not None
+    assert row.korean_identity is None
+    assert repository.list_candidates(job.id)[0].korean_identity is None

@@ -3,15 +3,22 @@
 from __future__ import annotations
 
 from dataclasses import dataclass, replace
-from importlib.resources import files
 from pathlib import Path
 from hashlib import sha256
-import re
 from datetime import datetime
 
 import genanki
 
 from multilang.services.azure_speech_adapter import AzureSpeechAdapter
+import multilang.services.phoneme_deck as _phoneme_deck
+from multilang.services.phoneme_deck import (
+    PHONEME_FIELD_NAMES,
+    PhonemeCard,
+    PhonemeNote,
+    build_phoneme_model,
+    build_phoneme_note,
+    phoneme_card_fields,
+)
 from multilang.settings import Settings
 
 PHONEME_MODEL_ID = 1_602_300_601
@@ -32,37 +39,12 @@ POLISH_PHONEME_VOICE_ID = "pl-PL-AgnieszkaNeural"
 POLISH_PHONEME_LOCALE = "pl-PL"
 RUSSIAN_PHONEME_VOICE_ID = "ru-RU-DmitryNeural"
 RUSSIAN_PHONEME_LOCALE = "ru-RU"
-PHONEME_FIELD_NAMES = (
-    "Spellings",
-    "Sound",
-    "letter_audio",
-    "Example Word",
-    "word_audio",
-    "Word Translation",
-    "Example Sentence",
-    "sentence_audio",
-    "Sentence Translation",
-)
-_TEMPLATE_SECTION_RE = re.compile(
-    r"## Front Template\s+```html\n(?P<front>.*?)```.*?"
-    r"## Back Template\s+```html\n(?P<back>.*?)```.*?"
-    r"## Styling \(CSS\)\s+```css\n(?P<css>.*?)```",
-    re.DOTALL,
-)
 
 
 @dataclass(frozen=True)
-class RussianPhonemeCard:
-    sort_index: int
-    letters: str
-    ipa: str
-    example_word: str
-    example_word_translation: str
-    example_sentence: str
-    example_sentence_translation: str
-    letter_audio: str = ""
-    word_audio: str = ""
-    sentence_audio: str = ""
+class RussianPhonemeCard(PhonemeCard):
+    """Compatibility name for the shared phoneme card shape."""
+
     language_code: str = "ru"
 
     @property
@@ -175,10 +157,7 @@ GREEK_PHONEME_CARDS: tuple[RussianPhonemeCard, ...] = (
 )
 
 
-class RussianPhonemeNote(genanki.Note):
-    @property
-    def guid(self) -> str:
-        return self._multilang_guid  # type: ignore[attr-defined]
+RussianPhonemeNote = PhonemeNote
 
 
 @dataclass(frozen=True)
@@ -200,20 +179,7 @@ def build_greek_phoneme_model() -> genanki.Model:
 
 
 def _build_phoneme_model(*, model_id: int, note_type_name: str) -> genanki.Model:
-    template = _load_phoneme_template()
-    return genanki.Model(
-        model_id,
-        note_type_name,
-        fields=[{"name": field_name} for field_name in PHONEME_FIELD_NAMES],
-        templates=[
-            {
-                "name": "Phoneme Card",
-                "qfmt": template["front"],
-                "afmt": template["back"],
-            }
-        ],
-        css=template["css"],
-    )
+    return build_phoneme_model(model_id=model_id, note_type_name=note_type_name)
 
 
 def build_russian_phoneme_note(
@@ -241,12 +207,7 @@ def build_greek_phoneme_note(
 
 
 def _build_phoneme_note(card: RussianPhonemeCard, *, model: genanki.Model) -> genanki.Note:
-    note = RussianPhonemeNote(
-        model=model,
-        fields=_phoneme_card_fields(card),
-    )
-    note._multilang_guid = card.guid  # type: ignore[attr-defined]
-    return note
+    return build_phoneme_note(card, model=model)
 
 
 def export_russian_phoneme_deck(
@@ -463,27 +424,11 @@ def _synthesize_text(
 
 
 def _phoneme_card_fields(card: RussianPhonemeCard) -> list[str]:
-    values = {
-        "Spellings": card.letters,
-        "Sound": card.ipa,
-        "letter_audio": card.letter_audio,
-        "Example Word": card.example_word,
-        "word_audio": card.word_audio,
-        "Word Translation": card.example_word_translation,
-        "Example Sentence": card.example_sentence,
-        "sentence_audio": card.sentence_audio,
-        "Sentence Translation": card.example_sentence_translation,
-    }
-    return [values[field_name] for field_name in PHONEME_FIELD_NAMES]
+    return phoneme_card_fields(card)
 
 
 def _load_phoneme_template() -> dict[str, str]:
-    template_path = files("multilang").joinpath("templates", "russian_phoneme_card.md")
-    content = template_path.read_text(encoding="utf-8")
-    match = _TEMPLATE_SECTION_RE.search(content)
-    if match is None:
-        raise ValueError(f"unable to parse phoneme template from {template_path}")
-    return {name: match.group(name).strip() for name in ("front", "back", "css")}
+    return _phoneme_deck._load_phoneme_template()
 
 
 __all__ = [

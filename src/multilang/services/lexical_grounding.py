@@ -2,13 +2,26 @@
 
 from __future__ import annotations
 
+from dataclasses import dataclass
 import re
 from html import escape
 from pathlib import Path
-from typing import Protocol
+from typing import Literal, Protocol, Self
+
+from pydantic import BaseModel, ConfigDict, Field, model_validator
 
 from multilang.domain.highlights import HighlightCandidate
 from multilang.domain.jobs import SupportedLanguage
+from multilang.domain.korean import (
+    KoreanAnalyzerFingerprint,
+    KoreanLexicalIdentity,
+    KoreanMorphologyResult,
+    KoreanMorphologyStatus,
+    KoreanSignatureItem,
+    KoreanTextError,
+    KoreanWordAnalysis,
+    canonicalize_korean,
+)
 from multilang.domain.lexicon import (
     DefinitionRecord,
     GroundingStatus,
@@ -49,6 +62,131 @@ class DefinitionGenerator(Protocol):
     def generate_definition(self, request: DefinitionGenerationRequest) -> DefinitionGenerationResult: ...
 
 
+class KoreanSourceMorphology(Protocol):
+    @property
+    def fingerprint(self) -> KoreanAnalyzerFingerprint: ...
+
+    def analyze(self, text: str) -> KoreanMorphologyResult: ...
+
+
+class KoreanSourceBindingResult(BaseModel):
+    """Content-free outcome of intersecting morphology with source records."""
+
+    model_config = ConfigDict(
+        extra="forbid",
+        frozen=True,
+        hide_input_in_errors=True,
+    )
+
+    status: Literal["resolved", "insufficient", "ambiguous", "unavailable"]
+    identity: KoreanLexicalIdentity | None = None
+    reason_code: str = Field(min_length=1, max_length=64, pattern=r"^[a-z0-9_]+$")
+
+    @model_validator(mode="after")
+    def identity_must_match_status(self) -> Self:
+        if self.status == "resolved" and self.identity is None:
+            raise ValueError("resolved source binding requires identity")
+        if self.status != "resolved" and self.identity is not None:
+            raise ValueError("non-passing source binding cannot carry identity")
+        return self
+
+
+class KoreanResolvedLexeme(BaseModel):
+    """One source-resolved Korean eojeol without surrounding highlight text."""
+
+    model_config = ConfigDict(
+        extra="forbid",
+        frozen=True,
+        hide_input_in_errors=True,
+    )
+
+    surface_form: str = Field(min_length=1)
+    identity: KoreanLexicalIdentity
+    word_position: int = Field(ge=0)
+
+    @model_validator(mode="after")
+    def surface_must_be_canonical_and_match_identity(self) -> Self:
+        try:
+            canonical = canonicalize_korean(self.surface_form)
+        except KoreanTextError as exc:
+            raise ValueError("resolved surface must be canonical Korean") from exc
+        if canonical != self.surface_form:
+            raise ValueError("resolved surface must already be NFC")
+        if self.identity.canonical_nfc != self.surface_form:
+            raise ValueError("resolved surface must match identity canonical form")
+        return self
+
+
+@dataclass(frozen=True, slots=True)
+class _KoreanSourceSignatureProjection:
+    signature: tuple[KoreanSignatureItem, ...] | None
+    identity_pos: str | None
+    reason_code: str | None
+    observed_signatures: tuple[tuple[KoreanSignatureItem, ...], ...]
+
+
+@dataclass(frozen=True, slots=True)
+class _KoreanSourceCatalogEntry:
+    record_index: int
+    lemma: str
+    source_pos: str
+    sense_id: str
+    register: str
+    signature: tuple[KoreanSignatureItem, ...]
+    identity_pos: str
+
+
+@dataclass(frozen=True, slots=True)
+class _KoreanSourceCatalogIssue:
+    reason_code: str
+    observed_signatures: tuple[tuple[KoreanSignatureItem, ...], ...]
+
+
+@dataclass(frozen=True, slots=True)
+class _KoreanCatalogSelection:
+    status: Literal["resolved", "insufficient", "ambiguous", "unavailable"]
+    reason_code: str
+    entry: _KoreanSourceCatalogEntry | None = None
+
+
+_SOURCE_POS_BY_TAG = {
+    "NNG": "noun",
+    "NNP": "proper_noun",
+    "NNB": "noun",
+    "NR": "numeral",
+    "NP": "pronoun",
+    "VV": "verb",
+    "VA": "adjective",
+    "VX": "auxiliary_verb",
+    "VCP": "verb",
+    "VCN": "verb",
+    "MM": "determiner",
+    "MAG": "adverb",
+    "MAJ": "conjunction",
+    "IC": "interjection",
+    "XSV": "verb",
+    "XSA": "adjective",
+}
+
+_SOURCE_POS_ALIASES = {
+    "adj": "adjective",
+    "adjective": "adjective",
+    "adverb": "adverb",
+    "aux": "auxiliary_verb",
+    "auxiliary": "auxiliary_verb",
+    "auxiliary verb": "auxiliary_verb",
+    "conjunction": "conjunction",
+    "determiner": "determiner",
+    "interjection": "interjection",
+    "noun": "noun",
+    "numeral": "numeral",
+    "pronoun": "pronoun",
+    "proper": "proper_noun",
+    "proper noun": "proper_noun",
+    "verb": "verb",
+}
+
+
 class LexicalGroundingService:
     """Ground parsed lexical inputs against authoritative cached lookups."""
 
@@ -58,11 +196,464 @@ class LexicalGroundingService:
         pronunciation_generator: PronunciationGenerator | None = None,
         definition_generator: DefinitionGenerator | None = None,
         allow_frequency_seed_fallback: bool = False,
+        korean_morphology: KoreanSourceMorphology | None = None,
     ) -> None:
         self._lookup = lookup
         self._pronunciation_generator = pronunciation_generator
         self._definition_generator = definition_generator
         self._allow_frequency_seed_fallback = allow_frequency_seed_fallback
+        self._korean_morphology = korean_morphology
+        self._korean_source_signature_cache: dict[
+            tuple[KoreanAnalyzerFingerprint, str, str, str],
+            _KoreanSourceSignatureProjection,
+        ] = {}
+
+    def resolve_korean_source_identity(
+        self,
+        *,
+        surface_form: str,
+        submitted_form: str | None = None,
+    ) -> KoreanSourceBindingResult:
+        """Bind one Korean surface only through exact source-signature consensus."""
+
+        morphology = self._korean_morphology
+        if morphology is None:
+            return _korean_binding_result(
+                status="unavailable",
+                reason_code="korean_morphology_unavailable",
+            )
+        try:
+            canonical_surface = canonicalize_korean(surface_form)
+            canonical_submitted = (
+                canonicalize_korean(submitted_form)
+                if submitted_form is not None
+                else canonical_surface
+            )
+        except KoreanTextError:
+            return _korean_binding_result(
+                status="insufficient",
+                reason_code="surface_text_invalid",
+            )
+
+        catalog, catalog_issues, inventory_reason = self._korean_source_catalog()
+        if inventory_reason is not None:
+            return _korean_binding_result(
+                status="unavailable",
+                reason_code=inventory_reason,
+            )
+
+        analysis = self._analyze_korean_safely(canonical_surface)
+        if analysis is None:
+            return _korean_binding_result(
+                status="unavailable",
+                reason_code="surface_analysis_unavailable",
+            )
+        if analysis.analyzer_fingerprint != morphology.fingerprint:
+            return _korean_binding_result(
+                status="unavailable",
+                reason_code="surface_fingerprint_mismatch",
+            )
+        if analysis.status is KoreanMorphologyStatus.OOV:
+            return _korean_binding_result(
+                status="insufficient",
+                reason_code="surface_analysis_oov",
+            )
+        if analysis.status is KoreanMorphologyStatus.UNAVAILABLE:
+            return _korean_binding_result(
+                status="unavailable",
+                reason_code="surface_analysis_unavailable",
+            )
+        if analysis.status is KoreanMorphologyStatus.AMBIGUOUS:
+            return _korean_binding_result(
+                status="ambiguous",
+                reason_code="surface_analysis_ambiguous",
+            )
+        if analysis.status is not KoreanMorphologyStatus.RESOLVED:
+            return _korean_binding_result(
+                status="insufficient",
+                reason_code="surface_analysis_invalid",
+            )
+        if any(len(alternative.words) != 1 for alternative in analysis.alternatives):
+            return _korean_binding_result(
+                status="insufficient",
+                reason_code="surface_analysis_invalid",
+            )
+
+        selection = self._select_korean_source_entry(
+            words_by_alternative=tuple(
+                tuple(alternative.words) for alternative in analysis.alternatives
+            ),
+            catalog=catalog,
+            catalog_issues=catalog_issues,
+        )
+        if selection.entry is None:
+            return _korean_binding_result(
+                status=selection.status,
+                reason_code=selection.reason_code,
+            )
+
+        identity = self._identity_from_korean_source_entry(
+            entry=selection.entry,
+            canonical_nfc=canonical_submitted,
+            submitted_form=submitted_form,
+        )
+        if identity is None:
+            return _korean_binding_result(
+                status="insufficient",
+                reason_code="source_record_invalid",
+            )
+        return _korean_binding_result(
+            status="resolved",
+            reason_code="source_consensus_resolved",
+            identity=identity,
+        )
+
+    def resolve_korean_highlight_text(
+        self,
+        text: str,
+    ) -> tuple[KoreanResolvedLexeme, ...]:
+        """Analyze one local highlight once and return only consensus identities."""
+
+        morphology = self._korean_morphology
+        if morphology is None:
+            return ()
+        try:
+            canonical_text = canonicalize_korean(text)
+        except KoreanTextError:
+            return ()
+        catalog, catalog_issues, inventory_reason = self._korean_source_catalog()
+        if inventory_reason is not None:
+            return ()
+        analysis = self._analyze_korean_safely(canonical_text)
+        if (
+            analysis is None
+            or analysis.status is not KoreanMorphologyStatus.RESOLVED
+            or analysis.analyzer_fingerprint != morphology.fingerprint
+            or len(analysis.alternatives) != morphology.fingerprint.top_n
+        ):
+            return ()
+
+        words_by_alternative = tuple(
+            {word.word_position: word for word in alternative.words}
+            for alternative in analysis.alternatives
+        )
+        positions = sorted(
+            {
+                word_position
+                for words in words_by_alternative
+                for word_position in words
+            }
+        )
+        resolved: list[KoreanResolvedLexeme] = []
+        for word_position in positions:
+            words = tuple(
+                (word,)
+                if (word := alternative_words.get(word_position)) is not None
+                else ()
+                for alternative_words in words_by_alternative
+            )
+            selection = self._select_korean_source_entry(
+                words_by_alternative=words,
+                catalog=catalog,
+                catalog_issues=catalog_issues,
+            )
+            if selection.entry is None or any(not alternative for alternative in words):
+                continue
+            surfaces = {
+                alternative[0].surface_form
+                for alternative in words
+            }
+            if len(surfaces) != 1:
+                continue
+            surface_form = surfaces.pop()
+            identity = self._identity_from_korean_source_entry(
+                entry=selection.entry,
+                canonical_nfc=surface_form,
+                submitted_form=None,
+            )
+            if identity is None:
+                continue
+            resolved.append(
+                KoreanResolvedLexeme(
+                    surface_form=surface_form,
+                    identity=identity,
+                    word_position=word_position,
+                )
+            )
+        return tuple(resolved)
+
+    def _select_korean_source_entry(
+        self,
+        *,
+        words_by_alternative: tuple[tuple[KoreanWordAnalysis, ...], ...],
+        catalog: tuple[_KoreanSourceCatalogEntry, ...],
+        catalog_issues: tuple[_KoreanSourceCatalogIssue, ...],
+    ) -> _KoreanCatalogSelection:
+        morphology = self._korean_morphology
+        assert morphology is not None
+        if len(words_by_alternative) != morphology.fingerprint.top_n:
+            return _KoreanCatalogSelection(
+                status="unavailable",
+                reason_code="surface_analysis_unavailable",
+            )
+
+        selections: list[tuple[_KoreanSourceCatalogEntry, ...]] = []
+        for words in words_by_alternative:
+            matching_indexes: set[int] = set()
+            for word in words:
+                signature = tuple(word.lexical_signature)
+                source_pos = _source_pos_for_signature(signature)
+                if source_pos is None:
+                    continue
+                matching_indexes.update(
+                    entry.record_index
+                    for entry in catalog
+                    if entry.source_pos == source_pos
+                    and entry.signature == signature
+                )
+            selections.append(
+                tuple(
+                    entry
+                    for entry in catalog
+                    if entry.record_index in matching_indexes
+                )
+            )
+
+        if any(len(selection) > 1 for selection in selections):
+            return _KoreanCatalogSelection(
+                status="ambiguous",
+                reason_code="source_record_ambiguous",
+            )
+        if any(len(selection) == 1 for selection in selections) and any(
+            not selection for selection in selections
+        ):
+            return _KoreanCatalogSelection(
+                status="ambiguous",
+                reason_code="surface_source_disagreement",
+            )
+        if all(not selection for selection in selections):
+            catalog_issue = _catalog_issue_for_words(
+                words_by_alternative=words_by_alternative,
+                issues=catalog_issues,
+            )
+            return _KoreanCatalogSelection(
+                status=(
+                    "unavailable"
+                    if catalog_issue
+                    in {
+                        "source_analysis_unavailable",
+                        "source_fingerprint_mismatch",
+                    }
+                    else "insufficient"
+                ),
+                reason_code=catalog_issue or "source_record_missing",
+            )
+
+        selected = tuple(selection[0] for selection in selections)
+        selected_keys = {
+            (entry.lemma, entry.source_pos, entry.sense_id)
+            for entry in selected
+        }
+        if len(selected_keys) != 1:
+            return _KoreanCatalogSelection(
+                status="ambiguous",
+                reason_code="surface_source_disagreement",
+            )
+        return _KoreanCatalogSelection(
+            status="resolved",
+            reason_code="source_consensus_resolved",
+            entry=selected[0],
+        )
+
+    def _identity_from_korean_source_entry(
+        self,
+        *,
+        entry: _KoreanSourceCatalogEntry,
+        canonical_nfc: str,
+        submitted_form: str | None,
+    ) -> KoreanLexicalIdentity | None:
+        morphology = self._korean_morphology
+        assert morphology is not None
+        try:
+            return KoreanLexicalIdentity(
+                submitted_form=submitted_form,
+                canonical_nfc=canonical_nfc,
+                lemma=entry.lemma,
+                part_of_speech=entry.identity_pos,
+                sense_id=entry.sense_id,
+                register=entry.register,
+                morpheme_signature=entry.signature,
+                analyzer_fingerprint=morphology.fingerprint,
+                status="resolved",
+            )
+        except ValueError:
+            return None
+
+    def _korean_source_catalog(
+        self,
+    ) -> tuple[
+        tuple[_KoreanSourceCatalogEntry, ...],
+        tuple[_KoreanSourceCatalogIssue, ...],
+        str | None,
+    ]:
+        morphology = self._korean_morphology
+        assert morphology is not None
+        iter_candidates = getattr(self._lookup, "iter_candidates", None)
+        if not callable(iter_candidates):
+            return (), (), "source_inventory_unavailable"
+        try:
+            records = tuple(iter_candidates(language_code="ko"))
+        except Exception:
+            return (), (), "source_inventory_unavailable"
+
+        def sort_key(record: LexicalRecord) -> tuple[str, str, str, str, str]:
+            try:
+                lemma = canonicalize_korean(record.lemma)
+            except KoreanTextError:
+                lemma = ""
+            return (
+                lemma,
+                str(record.part_of_speech or "").strip().casefold(),
+                str(record.sense_id or "").strip(),
+                str(record.register or "").strip(),
+                record.source,
+            )
+
+        entries: list[_KoreanSourceCatalogEntry] = []
+        issues: list[_KoreanSourceCatalogIssue] = []
+        for record_index, record in enumerate(sorted(records, key=sort_key)):
+            source_pos = _normalize_source_pos(record.part_of_speech)
+            sense_id = str(record.sense_id or "").strip()
+            if source_pos is None or not sense_id:
+                continue
+            try:
+                lemma = canonicalize_korean(record.lemma)
+            except KoreanTextError:
+                continue
+            if lemma != lemma.strip():
+                continue
+            cache_key = (
+                morphology.fingerprint,
+                lemma,
+                source_pos,
+                sense_id,
+            )
+            projection = self._korean_source_signature_cache.get(cache_key)
+            if projection is None:
+                projection = self._project_korean_source_signature(
+                    lemma=lemma,
+                    source_pos=source_pos,
+                )
+                self._korean_source_signature_cache[cache_key] = projection
+            if projection.signature is None or projection.identity_pos is None:
+                if projection.reason_code is not None:
+                    issues.append(
+                        _KoreanSourceCatalogIssue(
+                            reason_code=projection.reason_code,
+                            observed_signatures=projection.observed_signatures,
+                        )
+                    )
+                continue
+            entries.append(
+                _KoreanSourceCatalogEntry(
+                    record_index=record_index,
+                    lemma=lemma,
+                    source_pos=source_pos,
+                    sense_id=sense_id,
+                    register=str(record.register or "standard").strip(),
+                    signature=projection.signature,
+                    identity_pos=projection.identity_pos,
+                )
+            )
+        return tuple(entries), tuple(issues), None
+
+    def _project_korean_source_signature(
+        self,
+        *,
+        lemma: str,
+        source_pos: str,
+    ) -> _KoreanSourceSignatureProjection:
+        morphology = self._korean_morphology
+        assert morphology is not None
+        analysis = self._analyze_korean_safely(lemma)
+        if analysis is None or analysis.status is KoreanMorphologyStatus.UNAVAILABLE:
+            return _source_projection_failure("source_analysis_unavailable")
+        observed_signatures = tuple(
+            sorted(
+                {
+                    tuple(word.lexical_signature)
+                    for alternative in analysis.alternatives
+                    for word in alternative.words
+                },
+                key=_signature_sort_key,
+            )
+        )
+        if any(len(alternative.words) != 1 for alternative in analysis.alternatives):
+            return _source_projection_failure(
+                "source_analysis_invalid",
+                observed_signatures=observed_signatures,
+            )
+        if analysis.analyzer_fingerprint != morphology.fingerprint:
+            return _source_projection_failure(
+                "source_fingerprint_mismatch",
+                observed_signatures=observed_signatures,
+            )
+        if analysis.status is KoreanMorphologyStatus.OOV:
+            return _source_projection_failure(
+                "source_analysis_oov",
+                observed_signatures=observed_signatures,
+            )
+        if analysis.status is not KoreanMorphologyStatus.RESOLVED:
+            return _source_projection_failure(
+                "source_analysis_invalid",
+                observed_signatures=observed_signatures,
+            )
+
+        compatible = tuple(
+            sorted(
+                {
+                    signature
+                    for signature in observed_signatures
+                    if _source_pos_for_signature(signature) == source_pos
+                },
+                key=_signature_sort_key,
+            )
+        )
+        if not compatible:
+            return _source_projection_failure(
+                "source_pos_conflict",
+                observed_signatures=observed_signatures,
+            )
+        if len(compatible) != 1:
+            return _source_projection_failure(
+                "source_signature_ambiguous",
+                observed_signatures=observed_signatures,
+            )
+        signature = compatible[0]
+        identity_pos = _identity_pos_for_signature(
+            signature=signature,
+            source_pos=source_pos,
+        )
+        if identity_pos is None:
+            return _source_projection_failure(
+                "source_pos_conflict",
+                observed_signatures=observed_signatures,
+            )
+        return _KoreanSourceSignatureProjection(
+            signature=signature,
+            identity_pos=identity_pos,
+            reason_code=None,
+            observed_signatures=observed_signatures,
+        )
+
+    def _analyze_korean_safely(self, text: str) -> KoreanMorphologyResult | None:
+        morphology = self._korean_morphology
+        assert morphology is not None
+        try:
+            result = morphology.analyze(text)
+        except Exception:
+            return None
+        return result if isinstance(result, KoreanMorphologyResult) else None
 
     def ground_word_list_item(
         self,
@@ -71,6 +662,21 @@ class LexicalGroundingService:
         item: ParsedWordListItem,
         rate_limiter: RateLimiter | None = None,
     ) -> LexicalCardCandidate:
+        if language is SupportedLanguage.KO:
+            binding = self.resolve_korean_source_identity(
+                surface_form=item.display_form,
+                submitted_form=item.submitted_form,
+            )
+            if binding.identity is None:
+                return self._pending_korean_word_list_candidate(
+                    item=item,
+                    binding=binding,
+                )
+            return self._grounded_korean_identity_candidate(
+                identity=binding.identity,
+                submitted_form=item.submitted_form,
+                rate_limiter=rate_limiter,
+            )
         record = self._lookup_record(language=language, term=item.item_key)
         if record is None:
             return self._pending_candidate(language=language, item=item)
@@ -106,6 +712,34 @@ class LexicalGroundingService:
         candidate: LexicalCardCandidate,
         rate_limiter: RateLimiter | None = None,
     ) -> LexicalCardCandidate:
+        if language is SupportedLanguage.KO:
+            binding = self.resolve_korean_source_identity(
+                surface_form=candidate.display_form,
+                submitted_form=candidate.submitted_form,
+            )
+            if binding.identity is None:
+                policy = policy_for_language(language)
+                return candidate.model_copy(
+                    update={
+                        "definition_language": policy.definition_language,
+                        "translation_target_language": policy.translation_target_language,
+                        "grounding_status": GroundingStatus.BACKFILL_REQUIRED,
+                        "warning_code": f"korean_source_binding_{binding.status}",
+                        "warning_detail": binding.reason_code,
+                        "korean_identity": None,
+                        "provenance": LexicalProvenance(
+                            source=candidate.provenance.source,
+                            notes=["Korean source identity requires review"],
+                        ),
+                    }
+                )
+            return self._grounded_korean_identity_candidate(
+                identity=binding.identity,
+                submitted_form=candidate.submitted_form,
+                frequency_rank=candidate.frequency_rank,
+                frequency_level=candidate.frequency_level,
+                rate_limiter=rate_limiter,
+            )
         record = self._lookup_record(language=language, term=candidate.lemma_key)
         if record is None:
             if self._should_use_frequency_seed_fallback(language):
@@ -145,6 +779,39 @@ class LexicalGroundingService:
         candidate: HighlightCandidate,
         rate_limiter: RateLimiter | None = None,
     ) -> LexicalCardCandidate:
+        if language is SupportedLanguage.KO:
+            existing_identity = getattr(candidate, "korean_identity", None)
+            if isinstance(existing_identity, KoreanLexicalIdentity):
+                binding = self._bind_existing_korean_source_identity(
+                    existing_identity
+                )
+            else:
+                binding = self.resolve_korean_source_identity(
+                    surface_form=candidate.display_form,
+                )
+            if binding.identity is None:
+                policy = policy_for_language(language)
+                safe_key = candidate.item_key
+                return LexicalCardCandidate(
+                    submitted_form=safe_key,
+                    display_form=safe_key,
+                    lemma=safe_key,
+                    lemma_key=safe_key,
+                    definition_language=policy.definition_language,
+                    translation_target_language=policy.translation_target_language,
+                    grounding_status=GroundingStatus.INSUFFICIENT,
+                    warning_code=f"korean_source_binding_{binding.status}",
+                    warning_detail=binding.reason_code,
+                    provenance=LexicalProvenance(
+                        source="kindle_highlight",
+                        notes=["Korean source identity requires review"],
+                    ),
+                )
+            return self._grounded_korean_identity_candidate(
+                identity=binding.identity,
+                submitted_form=binding.identity.canonical_nfc,
+                rate_limiter=rate_limiter,
+            )
         record = self._lookup_record(language=language, term=candidate.lemma_key)
         if record is None:
             policy = policy_for_language(language)
@@ -167,6 +834,130 @@ class LexicalGroundingService:
             record=record,
             definition_language=language.value,
             rate_limiter=rate_limiter,
+        )
+
+    def _bind_existing_korean_source_identity(
+        self,
+        identity: KoreanLexicalIdentity,
+    ) -> KoreanSourceBindingResult:
+        morphology = self._korean_morphology
+        if morphology is None:
+            return _korean_binding_result(
+                status="unavailable",
+                reason_code="korean_morphology_unavailable",
+            )
+        if identity.analyzer_fingerprint != morphology.fingerprint:
+            return _korean_binding_result(
+                status="unavailable",
+                reason_code="surface_fingerprint_mismatch",
+            )
+        catalog, _issues, inventory_reason = self._korean_source_catalog()
+        if inventory_reason is not None:
+            return _korean_binding_result(
+                status="unavailable",
+                reason_code=inventory_reason,
+            )
+        matches = tuple(
+            entry
+            for entry in catalog
+            if entry.lemma == identity.lemma
+            and entry.identity_pos == identity.part_of_speech
+            and entry.sense_id == identity.sense_id
+            and entry.register == identity.register
+            and entry.signature == identity.morpheme_signature
+        )
+        if not matches:
+            return _korean_binding_result(
+                status="insufficient",
+                reason_code="source_identity_mismatch",
+            )
+        if len(matches) != 1:
+            return _korean_binding_result(
+                status="ambiguous",
+                reason_code="source_record_ambiguous",
+            )
+        return _korean_binding_result(
+            status="resolved",
+            reason_code="source_consensus_resolved",
+            identity=identity,
+        )
+
+    def _grounded_korean_identity_candidate(
+        self,
+        *,
+        identity: KoreanLexicalIdentity,
+        submitted_form: str,
+        frequency_rank: int | None = None,
+        frequency_level: int | None = None,
+        rate_limiter: RateLimiter | None = None,
+    ) -> LexicalCardCandidate:
+        policy = policy_for_language(SupportedLanguage.KO)
+        definition_result = self._generate_definition(
+            display_form=identity.lemma,
+            lemma=identity.lemma,
+            source_language=SupportedLanguage.KO.value,
+            target_language=policy.definition_language,
+            part_of_speech=identity.part_of_speech,
+            korean_identity=identity,
+            rate_limiter=rate_limiter,
+        )
+        definitions_html = (
+            canonicalize_korean(definition_result.definitions_html)
+            if definition_result is not None
+            else None
+        )
+        return LexicalCardCandidate(
+            submitted_form=submitted_form,
+            display_form=identity.lemma,
+            lemma=identity.lemma,
+            lemma_key=identity.lexical_key,
+            frequency_rank=frequency_rank,
+            frequency_level=frequency_level,
+            definitions_html=definitions_html,
+            definition_language=policy.definition_language,
+            translation_target_language=policy.translation_target_language,
+            grounding_status=GroundingStatus.GROUNDED,
+            provenance=LexicalProvenance(
+                source="source_backed_korean_lexicon",
+                definition=(
+                    DefinitionRecord(
+                        source=str(
+                            definition_result.provenance.get(
+                                "source", "definition-generator"
+                            )
+                        ),
+                        value=definitions_html,
+                        fallback_used=False,
+                    )
+                    if definition_result is not None
+                    else None
+                ),
+                notes=["Korean identity resolved by exact source signature consensus"],
+            ),
+            korean_identity=identity,
+        )
+
+    @staticmethod
+    def _pending_korean_word_list_candidate(
+        *,
+        item: ParsedWordListItem,
+        binding: KoreanSourceBindingResult,
+    ) -> LexicalCardCandidate:
+        policy = policy_for_language(SupportedLanguage.KO)
+        return LexicalCardCandidate(
+            submitted_form=item.submitted_form,
+            display_form=item.display_form,
+            lemma=item.display_form,
+            lemma_key=item.item_key,
+            definition_language=policy.definition_language,
+            translation_target_language=policy.translation_target_language,
+            grounding_status=GroundingStatus.PENDING,
+            warning_code=f"korean_source_binding_{binding.status}",
+            warning_detail=binding.reason_code,
+            provenance=LexicalProvenance(
+                source="word_list",
+                notes=["Korean source identity requires review"],
+            ),
         )
 
     def _lookup_record(self, *, language: SupportedLanguage, term: str) -> LexicalRecord | None:
@@ -327,6 +1118,7 @@ class LexicalGroundingService:
         source_language: str,
         target_language: str,
         part_of_speech: str | None,
+        korean_identity: KoreanLexicalIdentity | None = None,
         rate_limiter: RateLimiter | None = None,
     ) -> DefinitionGenerationResult | None:
         if self._definition_generator is None:
@@ -340,6 +1132,7 @@ class LexicalGroundingService:
                 source_language=source_language,
                 target_language=target_language,
                 part_of_speech=part_of_speech,
+                korean_identity=korean_identity,
             )
         )
 
@@ -414,6 +1207,141 @@ class LexicalGroundingService:
             part_of_speech=part_of_speech,
         )
         return escape(formatted)
+
+
+def _korean_binding_result(
+    *,
+    status: Literal["resolved", "insufficient", "ambiguous", "unavailable"],
+    reason_code: str,
+    identity: KoreanLexicalIdentity | None = None,
+) -> KoreanSourceBindingResult:
+    return KoreanSourceBindingResult(
+        status=status,
+        identity=identity,
+        reason_code=reason_code,
+    )
+
+
+def _source_projection_failure(
+    reason_code: str,
+    *,
+    observed_signatures: tuple[tuple[KoreanSignatureItem, ...], ...] = (),
+) -> _KoreanSourceSignatureProjection:
+    return _KoreanSourceSignatureProjection(
+        signature=None,
+        identity_pos=None,
+        reason_code=reason_code,
+        observed_signatures=observed_signatures,
+    )
+
+
+def _normalize_source_pos(value: str | None) -> str | None:
+    if value is None:
+        return None
+    stripped = value.strip()
+    if not stripped:
+        return None
+    base_tag = stripped.upper().partition("-")[0]
+    tagged = _SOURCE_POS_BY_TAG.get(base_tag)
+    if tagged is not None:
+        return tagged
+    normalized = " ".join(
+        stripped.replace("-", " ").replace("_", " ").casefold().split()
+    )
+    return _SOURCE_POS_ALIASES.get(normalized)
+
+
+def _source_pos_for_signature(
+    signature: tuple[KoreanSignatureItem, ...],
+) -> str | None:
+    if not signature:
+        return None
+    tags = tuple(item.pos for item in signature)
+    has_xsv = "XSV" in tags
+    has_xsa = "XSA" in tags
+    if has_xsv and has_xsa:
+        return None
+    if has_xsv:
+        return "verb"
+    if has_xsa:
+        return "adjective"
+    categories = {
+        category
+        for tag in tags
+        if (category := _SOURCE_POS_BY_TAG.get(tag)) is not None
+    }
+    return next(iter(categories)) if len(categories) == 1 else None
+
+
+def _identity_pos_for_signature(
+    *,
+    signature: tuple[KoreanSignatureItem, ...],
+    source_pos: str,
+) -> str | None:
+    tags = tuple(item.pos for item in signature)
+    if source_pos == "verb":
+        if "XSV" in tags:
+            return "VV"
+        return next((tag for tag in tags if tag in {"VV", "VCP", "VCN"}), None)
+    if source_pos == "adjective":
+        if "XSA" in tags:
+            return "VA"
+        return "VA" if "VA" in tags else None
+    if source_pos == "auxiliary_verb":
+        return "VX" if "VX" in tags else None
+    identity_tags = {
+        "noun": {"NNG", "NNB"},
+        "proper_noun": {"NNP"},
+        "numeral": {"NR"},
+        "pronoun": {"NP"},
+        "determiner": {"MM"},
+        "adverb": {"MAG"},
+        "conjunction": {"MAJ"},
+        "interjection": {"IC"},
+    }.get(source_pos)
+    if identity_tags is None:
+        return None
+    return next((tag for tag in tags if tag in identity_tags), None)
+
+
+def _signature_sort_key(
+    signature: tuple[KoreanSignatureItem, ...],
+) -> tuple[tuple[str, str], ...]:
+    return tuple((item.form, item.pos) for item in signature)
+
+
+def _catalog_issue_for_words(
+    *,
+    words_by_alternative: tuple[tuple[KoreanWordAnalysis, ...], ...],
+    issues: tuple[_KoreanSourceCatalogIssue, ...],
+) -> str | None:
+    surface_signatures = {
+        tuple(word.lexical_signature)
+        for words in words_by_alternative
+        for word in words
+    }
+    matching_reasons = {
+        issue.reason_code
+        for issue in issues
+        if (
+            surface_signatures.intersection(issue.observed_signatures)
+            or (
+                not issue.observed_signatures
+                and issue.reason_code == "source_analysis_unavailable"
+            )
+        )
+    }
+    for reason_code in (
+        "source_fingerprint_mismatch",
+        "source_analysis_unavailable",
+        "source_signature_ambiguous",
+        "source_pos_conflict",
+        "source_analysis_oov",
+        "source_analysis_invalid",
+    ):
+        if reason_code in matching_reasons:
+            return reason_code
+    return None
 
 
 _RELATION_PREFIX_RE = re.compile(
@@ -548,4 +1476,10 @@ def _apply_language_lexical_overrides(*, language: SupportedLanguage, record: Le
     return record.model_copy(update=override)
 
 
-__all__ = ["LexicalGroundingService", "build_lexical_grounding_service"]
+__all__ = [
+    "KoreanResolvedLexeme",
+    "KoreanSourceBindingResult",
+    "KoreanSourceMorphology",
+    "LexicalGroundingService",
+    "build_lexical_grounding_service",
+]

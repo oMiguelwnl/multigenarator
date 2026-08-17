@@ -10,6 +10,7 @@ from sqlalchemy import func, or_, select
 from sqlalchemy.orm import Session
 
 from multilang.db.models import LexicalCandidate
+from multilang.domain.korean import KoreanLexicalIdentity
 from multilang.domain.lexicon import GroundingStatus, LexicalCardCandidate, LexicalProvenance
 
 
@@ -213,6 +214,11 @@ class LexicalRepository:
             "warning_code": candidate.warning_code,
             "warning_detail": candidate.warning_detail,
             "provenance": candidate.provenance.model_dump(mode="json"),
+            "korean_identity": (
+                candidate.korean_identity.model_dump(mode="json")
+                if candidate.korean_identity is not None
+                else None
+            ),
         }
 
     def _to_domain(self, row: LexicalCandidate) -> LexicalCardCandidate:
@@ -232,4 +238,9 @@ class LexicalRepository:
             warning_code=row.warning_code,
             warning_detail=row.warning_detail,
             provenance=LexicalProvenance.model_validate(row.provenance),
+            korean_identity=(
+                KoreanLexicalIdentity.model_validate(row.korean_identity)
+                if row.korean_identity is not None
+                else None
+            ),
         )

@@ -3,8 +3,19 @@
 from __future__ import annotations
 
 from dataclasses import dataclass, field
+from types import SimpleNamespace
+
+import pytest
 
 from multilang.domain.jobs import JobStage, SupportedLanguage
+from multilang.domain.korean import (
+    KoreanAnalyzerFingerprint,
+    KoreanLexicalIdentity,
+    KoreanMatchResult,
+    KoreanMatchStatus,
+    KoreanReasonCode,
+    KoreanSignatureItem,
+)
 from multilang.domain.lexicon import DefinitionRecord, GroundingStatus, LexicalCardCandidate, LexicalProvenance
 from multilang.domain.text_quality import (
     ConfidenceLabel,
@@ -16,6 +27,7 @@ from multilang.domain.text_quality import (
     ValidationStatus,
 )
 from multilang.services.generate_text_items import GenerateTextItemsService
+from multilang.services.language_identifier import LanguageDetectionResult
 from multilang.services.text_generation import (
     GeneratedSentence,
     GeneratedTextBundle,
@@ -226,6 +238,115 @@ class FakeValidationService:
     def validate(self, **kwargs: object) -> TextValidationResult:
         self.calls.append(kwargs)
         return self.results.pop(0)
+
+
+@dataclass
+class RecordingValidationService:
+    delegate: TextValidationService
+    calls: list[dict[str, object]] = field(default_factory=list)
+
+    def validate(self, **kwargs: object) -> TextValidationResult:
+        self.calls.append(kwargs)
+        return self.delegate.validate(**kwargs)
+
+
+class ExpectedLanguageIdentifier:
+    def detect(self, value: str, *, expected_language: str | None = None) -> LanguageDetectionResult:
+        return LanguageDetectionResult(
+            detected_language=expected_language,
+            confidence=1.0,
+            reliable=True,
+            provider="deterministic-test-identifier",
+            detail="expected language",
+        )
+
+
+@dataclass
+class FakeKoreanMatcher:
+    fingerprint: KoreanAnalyzerFingerprint
+    status: KoreanMatchStatus
+    calls: list[tuple[str, KoreanLexicalIdentity]] = field(default_factory=list)
+
+    def match_target(
+        self,
+        sentence_text: str,
+        target: KoreanLexicalIdentity,
+    ) -> KoreanMatchResult:
+        self.calls.append((sentence_text, target))
+        reason_code = (
+            KoreanReasonCode.ANALYSIS_DISAGREEMENT
+            if self.status is KoreanMatchStatus.AMBIGUOUS
+            else KoreanReasonCode.ANALYZER_RUNTIME_ERROR
+        )
+        return KoreanMatchResult(
+            status=self.status,
+            reason_code=reason_code,
+            analyzer_fingerprint=self.fingerprint,
+            alternative_matches=(True, False)
+            if self.status is KoreanMatchStatus.AMBIGUOUS
+            else (),
+        )
+
+
+def make_korean_fingerprint() -> KoreanAnalyzerFingerprint:
+    return KoreanAnalyzerFingerprint(
+        analyzer_name="kiwi",
+        analyzer_package_version="0.23.2",
+        model_package_version="0.23.0",
+        model_type="cong",
+        enabled_dialects="standard",
+        num_workers=1,
+        integrate_allomorph=True,
+        top_n=2,
+        split_complex=False,
+        compatible_jamo=False,
+        normalize_coda=False,
+        z_coda=False,
+        typos=None,
+        oov_handling="chr",
+        policy_version="kiwi-top2-consensus-v1",
+    )
+
+
+def make_korean_identity(
+    *, fingerprint: KoreanAnalyzerFingerprint,
+) -> KoreanLexicalIdentity:
+    return KoreanLexicalIdentity(
+        submitted_form="먹다",
+        canonical_nfc="먹다",
+        lemma="먹다",
+        part_of_speech="VV",
+        sense_id="reviewed:eat:1",
+        register="standard",
+        morpheme_signature=(KoreanSignatureItem(form="먹", pos="VV"),),
+        analyzer_fingerprint=fingerprint,
+        status="resolved",
+    )
+
+
+def make_persisted_korean_candidate(
+    identity: KoreanLexicalIdentity,
+) -> SimpleNamespace:
+    return SimpleNamespace(
+        id="lex-ko-1",
+        item_key="ko:eat:1",
+        source_type="word-list",
+        submitted_form="먹다",
+        display_form="먹다",
+        lemma=identity.lemma,
+        lemma_key=identity.lexical_key,
+        frequency_rank=None,
+        frequency_level=None,
+        definitions_html="comer",
+        definition_language="pt",
+        ipa=None,
+        translation_target_language="pt",
+        grounding_status=GroundingStatus.GROUNDED.value,
+        warning_code=None,
+        warning_detail=None,
+        provenance={"source": "reviewed_test_fixture", "notes": []},
+        korean_identity=identity.model_dump(mode="json"),
+    )
 
 
 @dataclass
@@ -1171,3 +1292,85 @@ def test_dynamic_latin_override_regenerates_translation_for_new_sentence() -> No
     assert saved.translation_text != "Traducao da frase original."
     # And the structured grammar rode along in provenance for export.
     assert saved.sentence_provenance.metadata.get("gramatica") == "vir: subst masc, Nom sing, Suj."
+
+
+@pytest.mark.parametrize(
+    "match_status",
+    [KoreanMatchStatus.UNAVAILABLE, KoreanMatchStatus.AMBIGUOUS],
+)
+def test_korean_generation_restores_one_identity_for_retry_and_never_calls_tatoeba(
+    match_status: KoreanMatchStatus,
+) -> None:
+    fingerprint = make_korean_fingerprint()
+    persisted_identity = make_korean_identity(fingerprint=fingerprint)
+    persisted_candidate = make_persisted_korean_candidate(persisted_identity)
+    repository = FakeTextRepository(candidates=[persisted_candidate])
+    generation = FakeGenerationService(
+        bundles=[
+            make_bundle(
+                sentence="저는 오늘 집에서 맛있는 밥을 먹었어요.",
+                translation="Eu comi uma refeição deliciosa em casa hoje.",
+                sentence_language="ko",
+            ),
+            make_bundle(
+                sentence="오늘 저는 집에서 따뜻한 밥을 먹었어요.",
+                translation="Hoje eu comi uma refeição quente em casa.",
+                sentence_language="ko",
+            ),
+        ]
+    )
+    matcher = FakeKoreanMatcher(fingerprint=fingerprint, status=match_status)
+    validation = RecordingValidationService(
+        TextValidationService(
+            language_identifier=ExpectedLanguageIdentifier(),
+            korean_matcher=matcher,
+        )
+    )
+    tatoeba = FakeTatoebaSentenceSource(fallback=None)
+    service = GenerateTextItemsService(
+        job_repository=FakeJobRepository(),
+        lexical_repository=None,
+        text_repository=repository,
+        text_generation_service=generation,
+        text_validation_service=validation,
+        tatoeba_sentence_source=tatoeba,
+    )
+
+    result = service.execute(job_id="job-ko", deck_language=SupportedLanguage.KO)
+
+    assert result.accepted_items == 0
+    assert result.review_required_items == 1
+    assert len(generation.calls) == 2
+    restored_candidate = generation.calls[0][0]
+    restored_identity = restored_candidate.korean_identity
+    assert isinstance(restored_identity, KoreanLexicalIdentity)
+    assert restored_identity == persisted_identity
+    assert restored_identity.model_dump(mode="json") == persisted_candidate.korean_identity
+    assert all(call[0] is restored_candidate for call in generation.calls)
+    assert [call[0].korean_identity for call in generation.calls] == [
+        restored_identity,
+        restored_identity,
+    ]
+    assert len(validation.calls) == 2
+    assert all(call["korean_identity"] is restored_identity for call in validation.calls)
+    assert [target for _sentence, target in matcher.calls] == [
+        restored_identity,
+        restored_identity,
+    ]
+    assert tatoeba.calls == []
+
+    saved = repository.saved_records[0]
+    assert saved.review_status is ReviewStatus.REVIEW_REQUIRED
+    assert saved.validation_status is ValidationStatus.FAILED
+    assert saved.review_reason == ValidationFlagCode.MORPHOLOGY_MISMATCH.value
+    assert saved.repair_attempt_count == 1
+    morphology_flags = [
+        flag
+        for flag in saved.validation_flags
+        if flag.code is ValidationFlagCode.MORPHOLOGY_MISMATCH
+    ]
+    assert len(morphology_flags) == 1
+    assert match_status.value in morphology_flags[0].detail
+    assert persisted_identity.lemma not in morphology_flags[0].detail
+    assert persisted_identity.sense_id not in morphology_flags[0].detail
+    assert saved.example_sentence not in morphology_flags[0].detail

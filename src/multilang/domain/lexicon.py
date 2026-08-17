@@ -3,10 +3,12 @@
 from __future__ import annotations
 
 from enum import Enum
+from typing import Self
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, model_validator
 
 from multilang.domain.jobs import SupportedLanguage
+from multilang.domain.korean import KoreanLexicalIdentity
 
 DEFAULT_DEFINITION_LANGUAGE = "en"
 
@@ -67,10 +69,26 @@ class LexicalCardCandidate(BaseModel):
     warning_code: str | None = None
     warning_detail: str | None = None
     provenance: LexicalProvenance
+    korean_identity: KoreanLexicalIdentity | None = None
+
+    @model_validator(mode="after")
+    def korean_identity_must_match_candidate(self) -> Self:
+        identity = self.korean_identity
+        if identity is None:
+            return self
+        if self.lemma != identity.lemma:
+            raise ValueError("Korean identity lemma must match candidate lemma")
+        if self.lemma_key != identity.lexical_key:
+            raise ValueError("Korean identity key must match candidate lemma_key")
+        return self
 
 
 def policy_for_language(language: SupportedLanguage) -> DeckLanguagePolicy:
-    output_language = "pt" if language is SupportedLanguage.EN else DEFAULT_DEFINITION_LANGUAGE
+    output_language = (
+        "pt"
+        if language in {SupportedLanguage.EN, SupportedLanguage.KO}
+        else DEFAULT_DEFINITION_LANGUAGE
+    )
     return DeckLanguagePolicy(
         deck_language=language,
         definition_language=output_language,

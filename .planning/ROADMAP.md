@@ -40,14 +40,14 @@ Archives:
 
 ### Phase Overview
 
-- [ ] **Phase 30: Korean Contracts and Morphology** — [KMODE-01, KMODE-02, KNLP-01, KNLP-02]
-- [ ] **Phase 31: Hangul and Pronunciation i+1** — [KHAN-01, KHAN-02, KPRO-01, KPRO-02]
+- [x] **Phase 30: Korean Contracts and Morphology** — [KMODE-01, KMODE-02, KNLP-01, KNLP-02]
+- [-] **Phase 31: Hangul and Pronunciation i+1** — [KHAN-01, KHAN-02, KPRO-01, KPRO-02]
 - [ ] **Phase 32: Frequency, Portuguese Text, and Audio** — [KFREQ-01, KFREQ-02, KFREQ-03, KTXT-01, KAUD-01]
 - [ ] **Phase 33: Grammar and Personal Sources** — [KGRAM-01, KGRAM-02, KPERS-01, KPERS-02]
 - [ ] **Phase 34: Export, Review, and Evidence** — [KEXP-01, KEXP-02, KQA-01, KQA-02]
 
 ### Phase 30: Korean Contracts and Morphology
-**Status**: [ ] Not started
+**Status**: [x] Not started
 **Goal**: Users can select Korean throughout the modern pipeline and receive deterministic NFC-normalized, morphology-aware processing without regressing existing modes.
 **Depends on**: Active Mandarin quick task 027 completed or shared worktree reconciled.
 **Requirements**: KMODE-01, KMODE-02, KNLP-01, KNLP-02
@@ -59,7 +59,7 @@ Archives:
 5. Existing language, source, template, audio, persistence, and export regressions remain green.
 
 ### Phase 31: Hangul and Pronunciation i+1
-**Status**: [ ] Not started
+**Status**: [-] Not started
 **Goal**: Users receive reviewed Hangul and Korean pronunciation foundation decks with explicit curriculum-i+1 sequencing.
 **Depends on**: Phase 30
 **Requirements**: KHAN-01, KHAN-02, KPRO-01, KPRO-02

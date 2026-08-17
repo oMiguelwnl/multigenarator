@@ -17,7 +17,10 @@ from multilang.services.frequency_decks import (
     normalize_frequency_token_for_language,
 )
 from multilang.services.mandarin_orthography import script_counts
-from multilang.settings import DEFAULT_SUPPORTED_LANGUAGES
+from multilang.settings import (
+    APPROVED_FREQUENCY_ASSET_LANGUAGES,
+    DEFAULT_SUPPORTED_LANGUAGES,
+)
 from wordfreq import iter_wordlist
 
 _WORDFREQ_LANGUAGE_ALIASES = {"hr": "sh"}
@@ -61,7 +64,12 @@ def build_assets(
 
 def _language_codes(language_code: str | None) -> tuple[str, ...]:
     if language_code is None:
-        return DEFAULT_SUPPORTED_LANGUAGES
+        return APPROVED_FREQUENCY_ASSET_LANGUAGES
+    if language_code == SupportedLanguage.KO.value:
+        raise RuntimeError(
+            "Korean frequency assets require approved source, attribution, and "
+            "redistribution terms before build or check operations"
+        )
     return (language_code,)
 
 

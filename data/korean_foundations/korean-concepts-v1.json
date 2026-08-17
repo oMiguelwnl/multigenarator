@@ -1,0 +1,2616 @@
+{
+  "language_code": "ko",
+  "registry_version": "korean-concepts-v1",
+  "provenance": [
+    {
+      "source_id": "unicode.hangul-17.0",
+      "source_version": "unicode-17.0.0",
+      "citation": "Unicode 17.0.0 Core Specification Chapter 3 Hangul algorithms",
+      "source_reference": "unicode:17.0.0:chapter-3:hangul",
+      "source_hash": "6006005d2a1fd7e63e5cab103aeb22487b8f3980f01efc37b76e569859429c7b"
+    },
+    {
+      "source_id": "unicode.uax15-r57",
+      "source_version": "uax15-r57",
+      "citation": "Unicode Standard Annex 15 revision 57 normalization forms",
+      "source_reference": "unicode:uax-15:revision-57:nfc",
+      "source_hash": "ba490809ca63d80e4d5eb9877f3065aa9235bf129511efedf8951cd4189ce85a"
+    },
+    {
+      "source_id": "nikl.orthography-0001",
+      "source_version": "nikl-orthography-0001",
+      "citation": "National Institute of Korean Language Hangul Orthography regulation 0001",
+      "source_reference": "nikl:orthography:regulation-0001",
+      "source_hash": "13712afb60ada5cac9cd164c223344c3e9e6eb1e567ace3dd57997d566ac91e4"
+    },
+    {
+      "source_id": "nikl.pronunciation-0002",
+      "source_version": "nikl-pronunciation-0002",
+      "citation": "National Institute of Korean Language Standard Pronunciation regulation 0002",
+      "source_reference": "nikl:pronunciation:regulation-0002",
+      "source_hash": "a7f939a7dd4454df1c6cf8acab61b04436ede8902c23ae6282315066eeeb4408"
+    }
+  ],
+  "concepts": [
+    {
+      "id": "orthography.jamo.unit",
+      "domain": "orthography",
+      "prerequisite_ids": [],
+      "sequence": 1
+    },
+    {
+      "id": "orthography.block.unit",
+      "domain": "orthography",
+      "prerequisite_ids": [
+        "orthography.jamo.unit"
+      ],
+      "sequence": 2
+    },
+    {
+      "id": "orthography.block.slot.onset",
+      "domain": "orthography",
+      "prerequisite_ids": [
+        "orthography.jamo.unit",
+        "orthography.block.unit"
+      ],
+      "sequence": 3
+    },
+    {
+      "id": "orthography.block.slot.nucleus",
+      "domain": "orthography",
+      "prerequisite_ids": [
+        "orthography.jamo.unit",
+        "orthography.block.unit"
+      ],
+      "sequence": 4
+    },
+    {
+      "id": "orthography.block.slot.coda-optional",
+      "domain": "orthography",
+      "prerequisite_ids": [
+        "orthography.jamo.unit",
+        "orthography.block.unit"
+      ],
+      "sequence": 5
+    },
+    {
+      "id": "orthography.block.layout.vertical",
+      "domain": "orthography",
+      "prerequisite_ids": [
+        "orthography.jamo.unit",
+        "orthography.block.unit",
+        "orthography.block.slot.onset",
+        "orthography.block.slot.nucleus"
+      ],
+      "sequence": 6
+    },
+    {
+      "id": "orthography.block.layout.horizontal",
+      "domain": "orthography",
+      "prerequisite_ids": [
+        "orthography.jamo.unit",
+        "orthography.block.unit",
+        "orthography.block.slot.onset",
+        "orthography.block.slot.nucleus"
+      ],
+      "sequence": 7
+    },
+    {
+      "id": "orthography.h1.vowel.a",
+      "domain": "orthography",
+      "prerequisite_ids": [
+        "orthography.jamo.unit"
+      ],
+      "sequence": 8
+    },
+    {
+      "id": "orthography.h1.vowel.eo",
+      "domain": "orthography",
+      "prerequisite_ids": [
+        "orthography.jamo.unit"
+      ],
+      "sequence": 9
+    },
+    {
+      "id": "orthography.h1.vowel.o",
+      "domain": "orthography",
+      "prerequisite_ids": [
+        "orthography.jamo.unit"
+      ],
+      "sequence": 10
+    },
+    {
+      "id": "orthography.h1.vowel.u",
+      "domain": "orthography",
+      "prerequisite_ids": [
+        "orthography.jamo.unit"
+      ],
+      "sequence": 11
+    },
+    {
+      "id": "orthography.h1.vowel.eu",
+      "domain": "orthography",
+      "prerequisite_ids": [
+        "orthography.jamo.unit"
+      ],
+      "sequence": 12
+    },
+    {
+      "id": "orthography.h1.vowel.i",
+      "domain": "orthography",
+      "prerequisite_ids": [
+        "orthography.jamo.unit"
+      ],
+      "sequence": 13
+    },
+    {
+      "id": "orthography.h2.null.onset.ieung",
+      "domain": "orthography",
+      "prerequisite_ids": [
+        "orthography.jamo.unit",
+        "orthography.block.unit",
+        "orthography.block.slot.onset"
+      ],
+      "sequence": 14
+    },
+    {
+      "id": "orthography.h2.vertical.block.composition",
+      "domain": "orthography",
+      "prerequisite_ids": [
+        "orthography.jamo.unit",
+        "orthography.block.unit",
+        "orthography.block.slot.onset",
+        "orthography.block.slot.nucleus",
+        "orthography.block.layout.vertical",
+        "orthography.h1.vowel.a",
+        "orthography.h1.vowel.eo",
+        "orthography.h1.vowel.i",
+        "orthography.h2.null.onset.ieung"
+      ],
+      "sequence": 15
+    },
+    {
+      "id": "orthography.h2.horizontal.block.composition",
+      "domain": "orthography",
+      "prerequisite_ids": [
+        "orthography.jamo.unit",
+        "orthography.block.unit",
+        "orthography.block.slot.onset",
+        "orthography.block.slot.nucleus",
+        "orthography.block.layout.horizontal",
+        "orthography.h1.vowel.o",
+        "orthography.h1.vowel.u",
+        "orthography.h1.vowel.eu",
+        "orthography.h2.null.onset.ieung"
+      ],
+      "sequence": 16
+    },
+    {
+      "id": "orthography.h3.basic.onset.nieun",
+      "domain": "orthography",
+      "prerequisite_ids": [
+        "orthography.jamo.unit",
+        "orthography.block.unit",
+        "orthography.block.slot.onset"
+      ],
+      "sequence": 17
+    },
+    {
+      "id": "orthography.h3.basic.onset.mieum",
+      "domain": "orthography",
+      "prerequisite_ids": [
+        "orthography.jamo.unit",
+        "orthography.block.unit",
+        "orthography.block.slot.onset"
+      ],
+      "sequence": 18
+    },
+    {
+      "id": "orthography.h3.basic.onset.rieul",
+      "domain": "orthography",
+      "prerequisite_ids": [
+        "orthography.jamo.unit",
+        "orthography.block.unit",
+        "orthography.block.slot.onset"
+      ],
+      "sequence": 19
+    },
+    {
+      "id": "orthography.h3.basic.onset.kiyeok",
+      "domain": "orthography",
+      "prerequisite_ids": [
+        "orthography.jamo.unit",
+        "orthography.block.unit",
+        "orthography.block.slot.onset"
+      ],
+      "sequence": 20
+    },
+    {
+      "id": "orthography.h3.basic.onset.tikeut",
+      "domain": "orthography",
+      "prerequisite_ids": [
+        "orthography.jamo.unit",
+        "orthography.block.unit",
+        "orthography.block.slot.onset"
+      ],
+      "sequence": 21
+    },
+    {
+      "id": "orthography.h3.basic.onset.pieup",
+      "domain": "orthography",
+      "prerequisite_ids": [
+        "orthography.jamo.unit",
+        "orthography.block.unit",
+        "orthography.block.slot.onset"
+      ],
+      "sequence": 22
+    },
+    {
+      "id": "orthography.h3.basic.onset.cieuc",
+      "domain": "orthography",
+      "prerequisite_ids": [
+        "orthography.jamo.unit",
+        "orthography.block.unit",
+        "orthography.block.slot.onset"
+      ],
+      "sequence": 23
+    },
+    {
+      "id": "orthography.h3.basic.onset.sios",
+      "domain": "orthography",
+      "prerequisite_ids": [
+        "orthography.jamo.unit",
+        "orthography.block.unit",
+        "orthography.block.slot.onset"
+      ],
+      "sequence": 24
+    },
+    {
+      "id": "orthography.h3.basic.onset.hieuh",
+      "domain": "orthography",
+      "prerequisite_ids": [
+        "orthography.jamo.unit",
+        "orthography.block.unit",
+        "orthography.block.slot.onset"
+      ],
+      "sequence": 25
+    },
+    {
+      "id": "orthography.h4.vowel.ya",
+      "domain": "orthography",
+      "prerequisite_ids": [
+        "orthography.jamo.unit",
+        "orthography.block.unit",
+        "orthography.block.slot.nucleus"
+      ],
+      "sequence": 26
+    },
+    {
+      "id": "orthography.h4.vowel.yeo",
+      "domain": "orthography",
+      "prerequisite_ids": [
+        "orthography.jamo.unit",
+        "orthography.block.unit",
+        "orthography.block.slot.nucleus"
+      ],
+      "sequence": 27
+    },
+    {
+      "id": "orthography.h4.vowel.yo",
+      "domain": "orthography",
+      "prerequisite_ids": [
+        "orthography.jamo.unit",
+        "orthography.block.unit",
+        "orthography.block.slot.nucleus"
+      ],
+      "sequence": 28
+    },
+    {
+      "id": "orthography.h4.vowel.yu",
+      "domain": "orthography",
+      "prerequisite_ids": [
+        "orthography.jamo.unit",
+        "orthography.block.unit",
+        "orthography.block.slot.nucleus"
+      ],
+      "sequence": 29
+    },
+    {
+      "id": "orthography.h4.vowel.ae",
+      "domain": "orthography",
+      "prerequisite_ids": [
+        "orthography.jamo.unit",
+        "orthography.block.unit",
+        "orthography.block.slot.nucleus"
+      ],
+      "sequence": 30
+    },
+    {
+      "id": "orthography.h4.vowel.e",
+      "domain": "orthography",
+      "prerequisite_ids": [
+        "orthography.jamo.unit",
+        "orthography.block.unit",
+        "orthography.block.slot.nucleus"
+      ],
+      "sequence": 31
+    },
+    {
+      "id": "orthography.h4.vowel.yae",
+      "domain": "orthography",
+      "prerequisite_ids": [
+        "orthography.jamo.unit",
+        "orthography.block.unit",
+        "orthography.block.slot.nucleus"
+      ],
+      "sequence": 32
+    },
+    {
+      "id": "orthography.h4.vowel.ye",
+      "domain": "orthography",
+      "prerequisite_ids": [
+        "orthography.jamo.unit",
+        "orthography.block.unit",
+        "orthography.block.slot.nucleus"
+      ],
+      "sequence": 33
+    },
+    {
+      "id": "orthography.h5.aspirated.onset.khieukh",
+      "domain": "orthography",
+      "prerequisite_ids": [
+        "orthography.jamo.unit",
+        "orthography.block.unit",
+        "orthography.block.slot.onset"
+      ],
+      "sequence": 34
+    },
+    {
+      "id": "orthography.h5.aspirated.onset.thieuth",
+      "domain": "orthography",
+      "prerequisite_ids": [
+        "orthography.jamo.unit",
+        "orthography.block.unit",
+        "orthography.block.slot.onset"
+      ],
+      "sequence": 35
+    },
+    {
+      "id": "orthography.h5.aspirated.onset.phieuph",
+      "domain": "orthography",
+      "prerequisite_ids": [
+        "orthography.jamo.unit",
+        "orthography.block.unit",
+        "orthography.block.slot.onset"
+      ],
+      "sequence": 36
+    },
+    {
+      "id": "orthography.h5.aspirated.onset.chieuch",
+      "domain": "orthography",
+      "prerequisite_ids": [
+        "orthography.jamo.unit",
+        "orthography.block.unit",
+        "orthography.block.slot.onset"
+      ],
+      "sequence": 37
+    },
+    {
+      "id": "orthography.h5.tense.onset.ssangkiyeok",
+      "domain": "orthography",
+      "prerequisite_ids": [
+        "orthography.jamo.unit",
+        "orthography.block.unit",
+        "orthography.block.slot.onset"
+      ],
+      "sequence": 38
+    },
+    {
+      "id": "orthography.h5.tense.onset.ssangtikeut",
+      "domain": "orthography",
+      "prerequisite_ids": [
+        "orthography.jamo.unit",
+        "orthography.block.unit",
+        "orthography.block.slot.onset"
+      ],
+      "sequence": 39
+    },
+    {
+      "id": "orthography.h5.tense.onset.ssangpieup",
+      "domain": "orthography",
+      "prerequisite_ids": [
+        "orthography.jamo.unit",
+        "orthography.block.unit",
+        "orthography.block.slot.onset"
+      ],
+      "sequence": 40
+    },
+    {
+      "id": "orthography.h5.tense.onset.ssangsios",
+      "domain": "orthography",
+      "prerequisite_ids": [
+        "orthography.jamo.unit",
+        "orthography.block.unit",
+        "orthography.block.slot.onset"
+      ],
+      "sequence": 41
+    },
+    {
+      "id": "orthography.h5.tense.onset.ssangcieuc",
+      "domain": "orthography",
+      "prerequisite_ids": [
+        "orthography.jamo.unit",
+        "orthography.block.unit",
+        "orthography.block.slot.onset"
+      ],
+      "sequence": 42
+    },
+    {
+      "id": "orthography.h6.vowel.wa",
+      "domain": "orthography",
+      "prerequisite_ids": [
+        "orthography.jamo.unit",
+        "orthography.block.unit",
+        "orthography.block.slot.nucleus"
+      ],
+      "sequence": 43
+    },
+    {
+      "id": "orthography.h6.vowel.wo",
+      "domain": "orthography",
+      "prerequisite_ids": [
+        "orthography.jamo.unit",
+        "orthography.block.unit",
+        "orthography.block.slot.nucleus"
+      ],
+      "sequence": 44
+    },
+    {
+      "id": "orthography.h6.vowel.wae",
+      "domain": "orthography",
+      "prerequisite_ids": [
+        "orthography.jamo.unit",
+        "orthography.block.unit",
+        "orthography.block.slot.nucleus"
+      ],
+      "sequence": 45
+    },
+    {
+      "id": "orthography.h6.vowel.we",
+      "domain": "orthography",
+      "prerequisite_ids": [
+        "orthography.jamo.unit",
+        "orthography.block.unit",
+        "orthography.block.slot.nucleus"
+      ],
+      "sequence": 46
+    },
+    {
+      "id": "orthography.h6.vowel.oe",
+      "domain": "orthography",
+      "prerequisite_ids": [
+        "orthography.jamo.unit",
+        "orthography.block.unit",
+        "orthography.block.slot.nucleus"
+      ],
+      "sequence": 47
+    },
+    {
+      "id": "orthography.h6.vowel.wi",
+      "domain": "orthography",
+      "prerequisite_ids": [
+        "orthography.jamo.unit",
+        "orthography.block.unit",
+        "orthography.block.slot.nucleus"
+      ],
+      "sequence": 48
+    },
+    {
+      "id": "orthography.h6.vowel.ui",
+      "domain": "orthography",
+      "prerequisite_ids": [
+        "orthography.jamo.unit",
+        "orthography.block.unit",
+        "orthography.block.slot.nucleus"
+      ],
+      "sequence": 49
+    },
+    {
+      "id": "orthography.h7.batchim.position",
+      "domain": "orthography",
+      "prerequisite_ids": [
+        "orthography.jamo.unit",
+        "orthography.block.unit",
+        "orthography.block.slot.coda-optional"
+      ],
+      "sequence": 50
+    },
+    {
+      "id": "orthography.h7.coda.output.kiyeok",
+      "domain": "orthography",
+      "prerequisite_ids": [
+        "orthography.jamo.unit",
+        "orthography.block.unit",
+        "orthography.block.slot.coda-optional",
+        "orthography.h7.batchim.position"
+      ],
+      "sequence": 51
+    },
+    {
+      "id": "orthography.h7.coda.output.nieun",
+      "domain": "orthography",
+      "prerequisite_ids": [
+        "orthography.jamo.unit",
+        "orthography.block.unit",
+        "orthography.block.slot.coda-optional",
+        "orthography.h7.batchim.position"
+      ],
+      "sequence": 52
+    },
+    {
+      "id": "orthography.h7.coda.output.tikeut",
+      "domain": "orthography",
+      "prerequisite_ids": [
+        "orthography.jamo.unit",
+        "orthography.block.unit",
+        "orthography.block.slot.coda-optional",
+        "orthography.h7.batchim.position"
+      ],
+      "sequence": 53
+    },
+    {
+      "id": "orthography.h7.coda.output.rieul",
+      "domain": "orthography",
+      "prerequisite_ids": [
+        "orthography.jamo.unit",
+        "orthography.block.unit",
+        "orthography.block.slot.coda-optional",
+        "orthography.h7.batchim.position"
+      ],
+      "sequence": 54
+    },
+    {
+      "id": "orthography.h7.coda.output.mieum",
+      "domain": "orthography",
+      "prerequisite_ids": [
+        "orthography.jamo.unit",
+        "orthography.block.unit",
+        "orthography.block.slot.coda-optional",
+        "orthography.h7.batchim.position"
+      ],
+      "sequence": 55
+    },
+    {
+      "id": "orthography.h7.coda.output.pieup",
+      "domain": "orthography",
+      "prerequisite_ids": [
+        "orthography.jamo.unit",
+        "orthography.block.unit",
+        "orthography.block.slot.coda-optional",
+        "orthography.h7.batchim.position"
+      ],
+      "sequence": 56
+    },
+    {
+      "id": "orthography.h7.coda.output.ieung",
+      "domain": "orthography",
+      "prerequisite_ids": [
+        "orthography.jamo.unit",
+        "orthography.block.unit",
+        "orthography.block.slot.coda-optional",
+        "orthography.h7.batchim.position"
+      ],
+      "sequence": 57
+    },
+    {
+      "id": "orthography.h8.final.kiyeok",
+      "domain": "orthography",
+      "prerequisite_ids": [
+        "orthography.jamo.unit",
+        "orthography.block.unit",
+        "orthography.block.slot.coda-optional",
+        "orthography.h7.batchim.position",
+        "orthography.h7.coda.output.kiyeok"
+      ],
+      "sequence": 58
+    },
+    {
+      "id": "orthography.h8.final.ssangkiyeok",
+      "domain": "orthography",
+      "prerequisite_ids": [
+        "orthography.jamo.unit",
+        "orthography.block.unit",
+        "orthography.block.slot.coda-optional",
+        "orthography.h7.batchim.position",
+        "orthography.h7.coda.output.kiyeok"
+      ],
+      "sequence": 59
+    },
+    {
+      "id": "orthography.h8.final.kiyeok.sios",
+      "domain": "orthography",
+      "prerequisite_ids": [
+        "orthography.jamo.unit",
+        "orthography.block.unit",
+        "orthography.block.slot.coda-optional",
+        "orthography.h7.batchim.position",
+        "orthography.h7.coda.output.kiyeok"
+      ],
+      "sequence": 60
+    },
+    {
+      "id": "orthography.h8.final.nieun",
+      "domain": "orthography",
+      "prerequisite_ids": [
+        "orthography.jamo.unit",
+        "orthography.block.unit",
+        "orthography.block.slot.coda-optional",
+        "orthography.h7.batchim.position",
+        "orthography.h7.coda.output.nieun"
+      ],
+      "sequence": 61
+    },
+    {
+      "id": "orthography.h8.final.nieun.cieuc",
+      "domain": "orthography",
+      "prerequisite_ids": [
+        "orthography.jamo.unit",
+        "orthography.block.unit",
+        "orthography.block.slot.coda-optional",
+        "orthography.h7.batchim.position",
+        "orthography.h7.coda.output.nieun"
+      ],
+      "sequence": 62
+    },
+    {
+      "id": "orthography.h8.final.nieun.hieuh",
+      "domain": "orthography",
+      "prerequisite_ids": [
+        "orthography.jamo.unit",
+        "orthography.block.unit",
+        "orthography.block.slot.coda-optional",
+        "orthography.h7.batchim.position",
+        "orthography.h7.coda.output.nieun"
+      ],
+      "sequence": 63
+    },
+    {
+      "id": "orthography.h8.final.tikeut",
+      "domain": "orthography",
+      "prerequisite_ids": [
+        "orthography.jamo.unit",
+        "orthography.block.unit",
+        "orthography.block.slot.coda-optional",
+        "orthography.h7.batchim.position",
+        "orthography.h7.coda.output.tikeut"
+      ],
+      "sequence": 64
+    },
+    {
+      "id": "orthography.h8.final.rieul",
+      "domain": "orthography",
+      "prerequisite_ids": [
+        "orthography.jamo.unit",
+        "orthography.block.unit",
+        "orthography.block.slot.coda-optional",
+        "orthography.h7.batchim.position",
+        "orthography.h7.coda.output.rieul"
+      ],
+      "sequence": 65
+    },
+    {
+      "id": "orthography.h8.final.rieul.kiyeok",
+      "domain": "orthography",
+      "prerequisite_ids": [
+        "orthography.jamo.unit",
+        "orthography.block.unit",
+        "orthography.block.slot.coda-optional",
+        "orthography.h7.batchim.position",
+        "orthography.h7.coda.output.rieul"
+      ],
+      "sequence": 66
+    },
+    {
+      "id": "orthography.h8.final.rieul.mieum",
+      "domain": "orthography",
+      "prerequisite_ids": [
+        "orthography.jamo.unit",
+        "orthography.block.unit",
+        "orthography.block.slot.coda-optional",
+        "orthography.h7.batchim.position",
+        "orthography.h7.coda.output.rieul"
+      ],
+      "sequence": 67
+    },
+    {
+      "id": "orthography.h8.final.rieul.pieup",
+      "domain": "orthography",
+      "prerequisite_ids": [
+        "orthography.jamo.unit",
+        "orthography.block.unit",
+        "orthography.block.slot.coda-optional",
+        "orthography.h7.batchim.position",
+        "orthography.h7.coda.output.rieul"
+      ],
+      "sequence": 68
+    },
+    {
+      "id": "orthography.h8.final.rieul.sios",
+      "domain": "orthography",
+      "prerequisite_ids": [
+        "orthography.jamo.unit",
+        "orthography.block.unit",
+        "orthography.block.slot.coda-optional",
+        "orthography.h7.batchim.position",
+        "orthography.h7.coda.output.rieul"
+      ],
+      "sequence": 69
+    },
+    {
+      "id": "orthography.h8.final.rieul.thieuth",
+      "domain": "orthography",
+      "prerequisite_ids": [
+        "orthography.jamo.unit",
+        "orthography.block.unit",
+        "orthography.block.slot.coda-optional",
+        "orthography.h7.batchim.position",
+        "orthography.h7.coda.output.rieul"
+      ],
+      "sequence": 70
+    },
+    {
+      "id": "orthography.h8.final.rieul.phieuph",
+      "domain": "orthography",
+      "prerequisite_ids": [
+        "orthography.jamo.unit",
+        "orthography.block.unit",
+        "orthography.block.slot.coda-optional",
+        "orthography.h7.batchim.position",
+        "orthography.h7.coda.output.rieul"
+      ],
+      "sequence": 71
+    },
+    {
+      "id": "orthography.h8.final.rieul.hieuh",
+      "domain": "orthography",
+      "prerequisite_ids": [
+        "orthography.jamo.unit",
+        "orthography.block.unit",
+        "orthography.block.slot.coda-optional",
+        "orthography.h7.batchim.position",
+        "orthography.h7.coda.output.rieul"
+      ],
+      "sequence": 72
+    },
+    {
+      "id": "orthography.h8.final.mieum",
+      "domain": "orthography",
+      "prerequisite_ids": [
+        "orthography.jamo.unit",
+        "orthography.block.unit",
+        "orthography.block.slot.coda-optional",
+        "orthography.h7.batchim.position",
+        "orthography.h7.coda.output.mieum"
+      ],
+      "sequence": 73
+    },
+    {
+      "id": "orthography.h8.final.pieup",
+      "domain": "orthography",
+      "prerequisite_ids": [
+        "orthography.jamo.unit",
+        "orthography.block.unit",
+        "orthography.block.slot.coda-optional",
+        "orthography.h7.batchim.position",
+        "orthography.h7.coda.output.pieup"
+      ],
+      "sequence": 74
+    },
+    {
+      "id": "orthography.h8.final.pieup.sios",
+      "domain": "orthography",
+      "prerequisite_ids": [
+        "orthography.jamo.unit",
+        "orthography.block.unit",
+        "orthography.block.slot.coda-optional",
+        "orthography.h7.batchim.position",
+        "orthography.h7.coda.output.pieup"
+      ],
+      "sequence": 75
+    },
+    {
+      "id": "orthography.h8.final.sios",
+      "domain": "orthography",
+      "prerequisite_ids": [
+        "orthography.jamo.unit",
+        "orthography.block.unit",
+        "orthography.block.slot.coda-optional",
+        "orthography.h7.batchim.position",
+        "orthography.h7.coda.output.tikeut"
+      ],
+      "sequence": 76
+    },
+    {
+      "id": "orthography.h8.final.ssangsios",
+      "domain": "orthography",
+      "prerequisite_ids": [
+        "orthography.jamo.unit",
+        "orthography.block.unit",
+        "orthography.block.slot.coda-optional",
+        "orthography.h7.batchim.position",
+        "orthography.h7.coda.output.tikeut"
+      ],
+      "sequence": 77
+    },
+    {
+      "id": "orthography.h8.final.ieung",
+      "domain": "orthography",
+      "prerequisite_ids": [
+        "orthography.jamo.unit",
+        "orthography.block.unit",
+        "orthography.block.slot.coda-optional",
+        "orthography.h7.batchim.position",
+        "orthography.h7.coda.output.ieung"
+      ],
+      "sequence": 78
+    },
+    {
+      "id": "orthography.h8.final.cieuc",
+      "domain": "orthography",
+      "prerequisite_ids": [
+        "orthography.jamo.unit",
+        "orthography.block.unit",
+        "orthography.block.slot.coda-optional",
+        "orthography.h7.batchim.position",
+        "orthography.h7.coda.output.tikeut"
+      ],
+      "sequence": 79
+    },
+    {
+      "id": "orthography.h8.final.chieuch",
+      "domain": "orthography",
+      "prerequisite_ids": [
+        "orthography.jamo.unit",
+        "orthography.block.unit",
+        "orthography.block.slot.coda-optional",
+        "orthography.h7.batchim.position",
+        "orthography.h7.coda.output.tikeut"
+      ],
+      "sequence": 80
+    },
+    {
+      "id": "orthography.h8.final.khieukh",
+      "domain": "orthography",
+      "prerequisite_ids": [
+        "orthography.jamo.unit",
+        "orthography.block.unit",
+        "orthography.block.slot.coda-optional",
+        "orthography.h7.batchim.position",
+        "orthography.h7.coda.output.kiyeok"
+      ],
+      "sequence": 81
+    },
+    {
+      "id": "orthography.h8.final.thieuth",
+      "domain": "orthography",
+      "prerequisite_ids": [
+        "orthography.jamo.unit",
+        "orthography.block.unit",
+        "orthography.block.slot.coda-optional",
+        "orthography.h7.batchim.position",
+        "orthography.h7.coda.output.tikeut"
+      ],
+      "sequence": 82
+    },
+    {
+      "id": "orthography.h8.final.phieuph",
+      "domain": "orthography",
+      "prerequisite_ids": [
+        "orthography.jamo.unit",
+        "orthography.block.unit",
+        "orthography.block.slot.coda-optional",
+        "orthography.h7.batchim.position",
+        "orthography.h7.coda.output.pieup"
+      ],
+      "sequence": 83
+    },
+    {
+      "id": "orthography.h8.final.hieuh",
+      "domain": "orthography",
+      "prerequisite_ids": [
+        "orthography.jamo.unit",
+        "orthography.block.unit",
+        "orthography.block.slot.coda-optional",
+        "orthography.h7.batchim.position",
+        "orthography.h7.coda.output.tikeut"
+      ],
+      "sequence": 84
+    },
+    {
+      "id": "orthography.h9.morpheme.preserving.spelling",
+      "domain": "orthography",
+      "prerequisite_ids": [
+        "orthography.jamo.unit",
+        "orthography.block.unit"
+      ],
+      "sequence": 85
+    },
+    {
+      "id": "orthography.h9.basic.word.spacing",
+      "domain": "orthography",
+      "prerequisite_ids": [
+        "orthography.jamo.unit",
+        "orthography.block.unit"
+      ],
+      "sequence": 86
+    },
+    {
+      "id": "orthography.h9.attached.particle.spacing",
+      "domain": "orthography",
+      "prerequisite_ids": [
+        "orthography.jamo.unit",
+        "orthography.block.unit",
+        "orthography.h9.basic.word.spacing"
+      ],
+      "sequence": 87
+    },
+    {
+      "id": "orthography.h10.nfc.nfd.equivalence",
+      "domain": "orthography",
+      "prerequisite_ids": [
+        "orthography.jamo.unit",
+        "orthography.block.unit"
+      ],
+      "sequence": 88
+    },
+    {
+      "id": "orthography.h10.keyboard.orientation",
+      "domain": "orthography",
+      "prerequisite_ids": [
+        "orthography.jamo.unit"
+      ],
+      "sequence": 89
+    },
+    {
+      "id": "orthography.h10.punctuation",
+      "domain": "orthography",
+      "prerequisite_ids": [
+        "orthography.jamo.unit",
+        "orthography.block.unit"
+      ],
+      "sequence": 90
+    },
+    {
+      "id": "orthography.h10.numerals",
+      "domain": "orthography",
+      "prerequisite_ids": [
+        "orthography.jamo.unit",
+        "orthography.block.unit"
+      ],
+      "sequence": 91
+    },
+    {
+      "id": "orthography.h10.bounded.mixed.script",
+      "domain": "orthography",
+      "prerequisite_ids": [
+        "orthography.jamo.unit",
+        "orthography.block.unit",
+        "orthography.h10.punctuation",
+        "orthography.h10.numerals"
+      ],
+      "sequence": 92
+    },
+    {
+      "id": "phonology.syllable.timing",
+      "domain": "phonology",
+      "prerequisite_ids": [
+        "orthography.jamo.unit",
+        "orthography.block.unit"
+      ],
+      "sequence": 93
+    },
+    {
+      "id": "phonology.p0.vowel.quality",
+      "domain": "phonology",
+      "prerequisite_ids": [
+        "orthography.jamo.unit",
+        "orthography.block.unit",
+        "orthography.block.slot.nucleus",
+        "orthography.h1.vowel.a",
+        "orthography.h1.vowel.eo",
+        "orthography.h1.vowel.o",
+        "orthography.h1.vowel.u",
+        "orthography.h1.vowel.eu",
+        "orthography.h1.vowel.i",
+        "orthography.h4.vowel.ya",
+        "orthography.h4.vowel.yeo",
+        "orthography.h4.vowel.yo",
+        "orthography.h4.vowel.yu",
+        "orthography.h4.vowel.ae",
+        "orthography.h4.vowel.e",
+        "orthography.h4.vowel.yae",
+        "orthography.h4.vowel.ye",
+        "orthography.h6.vowel.wa",
+        "orthography.h6.vowel.wo",
+        "orthography.h6.vowel.wae",
+        "orthography.h6.vowel.we",
+        "orthography.h6.vowel.oe",
+        "orthography.h6.vowel.wi",
+        "orthography.h6.vowel.ui",
+        "phonology.syllable.timing"
+      ],
+      "sequence": 94
+    },
+    {
+      "id": "phonology.p0.null.onset",
+      "domain": "phonology",
+      "prerequisite_ids": [
+        "orthography.jamo.unit",
+        "orthography.block.unit",
+        "orthography.block.slot.onset",
+        "orthography.h2.null.onset.ieung",
+        "phonology.syllable.timing"
+      ],
+      "sequence": 95
+    },
+    {
+      "id": "phonology.p0.sonorant.nieun",
+      "domain": "phonology",
+      "prerequisite_ids": [
+        "orthography.jamo.unit",
+        "orthography.block.unit",
+        "orthography.block.slot.onset",
+        "orthography.h3.basic.onset.nieun",
+        "phonology.syllable.timing"
+      ],
+      "sequence": 96
+    },
+    {
+      "id": "phonology.p0.sonorant.mieum",
+      "domain": "phonology",
+      "prerequisite_ids": [
+        "orthography.jamo.unit",
+        "orthography.block.unit",
+        "orthography.block.slot.onset",
+        "orthography.h3.basic.onset.mieum",
+        "phonology.syllable.timing"
+      ],
+      "sequence": 97
+    },
+    {
+      "id": "phonology.p0.sonorant.ieung",
+      "domain": "phonology",
+      "prerequisite_ids": [
+        "orthography.jamo.unit",
+        "orthography.block.unit",
+        "orthography.block.slot.onset",
+        "orthography.block.slot.coda-optional",
+        "orthography.h2.null.onset.ieung",
+        "orthography.h7.batchim.position",
+        "orthography.h7.coda.output.ieung",
+        "orthography.h8.final.ieung",
+        "phonology.syllable.timing"
+      ],
+      "sequence": 98
+    },
+    {
+      "id": "phonology.p0.rieul.intervocalic",
+      "domain": "phonology",
+      "prerequisite_ids": [
+        "orthography.jamo.unit",
+        "orthography.block.unit",
+        "orthography.block.slot.onset",
+        "orthography.h3.basic.onset.rieul",
+        "phonology.syllable.timing"
+      ],
+      "sequence": 99
+    },
+    {
+      "id": "phonology.p0.rieul.coda",
+      "domain": "phonology",
+      "prerequisite_ids": [
+        "orthography.jamo.unit",
+        "orthography.block.unit",
+        "orthography.block.slot.coda-optional",
+        "orthography.h7.batchim.position",
+        "orthography.h7.coda.output.rieul",
+        "orthography.h8.final.rieul",
+        "phonology.syllable.timing"
+      ],
+      "sequence": 100
+    },
+    {
+      "id": "phonology.p1.onset.contrast.pieup",
+      "domain": "phonology",
+      "prerequisite_ids": [
+        "orthography.jamo.unit",
+        "orthography.block.unit",
+        "orthography.block.slot.onset",
+        "orthography.h3.basic.onset.pieup",
+        "orthography.h5.aspirated.onset.phieuph",
+        "orthography.h5.tense.onset.ssangpieup",
+        "phonology.syllable.timing"
+      ],
+      "sequence": 101
+    },
+    {
+      "id": "phonology.p1.onset.contrast.tikeut",
+      "domain": "phonology",
+      "prerequisite_ids": [
+        "orthography.jamo.unit",
+        "orthography.block.unit",
+        "orthography.block.slot.onset",
+        "orthography.h3.basic.onset.tikeut",
+        "orthography.h5.aspirated.onset.thieuth",
+        "orthography.h5.tense.onset.ssangtikeut",
+        "phonology.syllable.timing"
+      ],
+      "sequence": 102
+    },
+    {
+      "id": "phonology.p1.onset.contrast.kiyeok",
+      "domain": "phonology",
+      "prerequisite_ids": [
+        "orthography.jamo.unit",
+        "orthography.block.unit",
+        "orthography.block.slot.onset",
+        "orthography.h3.basic.onset.kiyeok",
+        "orthography.h5.aspirated.onset.khieukh",
+        "orthography.h5.tense.onset.ssangkiyeok",
+        "phonology.syllable.timing"
+      ],
+      "sequence": 103
+    },
+    {
+      "id": "phonology.p1.onset.contrast.cieuc",
+      "domain": "phonology",
+      "prerequisite_ids": [
+        "orthography.jamo.unit",
+        "orthography.block.unit",
+        "orthography.block.slot.onset",
+        "orthography.h3.basic.onset.cieuc",
+        "orthography.h5.aspirated.onset.chieuch",
+        "orthography.h5.tense.onset.ssangcieuc",
+        "phonology.syllable.timing"
+      ],
+      "sequence": 104
+    },
+    {
+      "id": "phonology.p1.onset.contrast.sios",
+      "domain": "phonology",
+      "prerequisite_ids": [
+        "orthography.jamo.unit",
+        "orthography.block.unit",
+        "orthography.block.slot.onset",
+        "orthography.h3.basic.onset.sios",
+        "orthography.h5.tense.onset.ssangsios",
+        "phonology.syllable.timing"
+      ],
+      "sequence": 105
+    },
+    {
+      "id": "phonology.p1.onset.hieuh",
+      "domain": "phonology",
+      "prerequisite_ids": [
+        "orthography.jamo.unit",
+        "orthography.block.unit",
+        "orthography.block.slot.onset",
+        "orthography.h3.basic.onset.hieuh",
+        "phonology.syllable.timing"
+      ],
+      "sequence": 106
+    },
+    {
+      "id": "phonology.p2.unreleased.coda",
+      "domain": "phonology",
+      "prerequisite_ids": [
+        "orthography.jamo.unit",
+        "orthography.block.unit",
+        "orthography.block.slot.coda-optional",
+        "orthography.h7.batchim.position",
+        "orthography.h7.coda.output.kiyeok",
+        "orthography.h7.coda.output.nieun",
+        "orthography.h7.coda.output.tikeut",
+        "orthography.h7.coda.output.rieul",
+        "orthography.h7.coda.output.mieum",
+        "orthography.h7.coda.output.pieup",
+        "orthography.h7.coda.output.ieung",
+        "orthography.h8.final.kiyeok",
+        "orthography.h8.final.ssangkiyeok",
+        "orthography.h8.final.kiyeok.sios",
+        "orthography.h8.final.nieun",
+        "orthography.h8.final.nieun.cieuc",
+        "orthography.h8.final.nieun.hieuh",
+        "orthography.h8.final.tikeut",
+        "orthography.h8.final.rieul",
+        "orthography.h8.final.rieul.kiyeok",
+        "orthography.h8.final.rieul.mieum",
+        "orthography.h8.final.rieul.pieup",
+        "orthography.h8.final.rieul.sios",
+        "orthography.h8.final.rieul.thieuth",
+        "orthography.h8.final.rieul.phieuph",
+        "orthography.h8.final.rieul.hieuh",
+        "orthography.h8.final.mieum",
+        "orthography.h8.final.pieup",
+        "orthography.h8.final.pieup.sios",
+        "orthography.h8.final.sios",
+        "orthography.h8.final.ssangsios",
+        "orthography.h8.final.ieung",
+        "orthography.h8.final.cieuc",
+        "orthography.h8.final.chieuch",
+        "orthography.h8.final.khieukh",
+        "orthography.h8.final.thieuth",
+        "orthography.h8.final.phieuph",
+        "orthography.h8.final.hieuh",
+        "phonology.syllable.timing"
+      ],
+      "sequence": 107
+    },
+    {
+      "id": "phonology.p2.coda.neutralization.kiyeok",
+      "domain": "phonology",
+      "prerequisite_ids": [
+        "orthography.jamo.unit",
+        "orthography.block.unit",
+        "orthography.block.slot.coda-optional",
+        "orthography.h7.batchim.position",
+        "orthography.h7.coda.output.kiyeok",
+        "orthography.h7.coda.output.nieun",
+        "orthography.h7.coda.output.tikeut",
+        "orthography.h7.coda.output.rieul",
+        "orthography.h7.coda.output.mieum",
+        "orthography.h7.coda.output.pieup",
+        "orthography.h7.coda.output.ieung",
+        "orthography.h8.final.kiyeok",
+        "orthography.h8.final.ssangkiyeok",
+        "orthography.h8.final.kiyeok.sios",
+        "orthography.h8.final.nieun",
+        "orthography.h8.final.nieun.cieuc",
+        "orthography.h8.final.nieun.hieuh",
+        "orthography.h8.final.tikeut",
+        "orthography.h8.final.rieul",
+        "orthography.h8.final.rieul.kiyeok",
+        "orthography.h8.final.rieul.mieum",
+        "orthography.h8.final.rieul.pieup",
+        "orthography.h8.final.rieul.sios",
+        "orthography.h8.final.rieul.thieuth",
+        "orthography.h8.final.rieul.phieuph",
+        "orthography.h8.final.rieul.hieuh",
+        "orthography.h8.final.mieum",
+        "orthography.h8.final.pieup",
+        "orthography.h8.final.pieup.sios",
+        "orthography.h8.final.sios",
+        "orthography.h8.final.ssangsios",
+        "orthography.h8.final.ieung",
+        "orthography.h8.final.cieuc",
+        "orthography.h8.final.chieuch",
+        "orthography.h8.final.khieukh",
+        "orthography.h8.final.thieuth",
+        "orthography.h8.final.phieuph",
+        "orthography.h8.final.hieuh",
+        "phonology.syllable.timing",
+        "phonology.p2.unreleased.coda"
+      ],
+      "sequence": 108
+    },
+    {
+      "id": "phonology.p2.coda.neutralization.nieun",
+      "domain": "phonology",
+      "prerequisite_ids": [
+        "orthography.jamo.unit",
+        "orthography.block.unit",
+        "orthography.block.slot.coda-optional",
+        "orthography.h7.batchim.position",
+        "orthography.h7.coda.output.kiyeok",
+        "orthography.h7.coda.output.nieun",
+        "orthography.h7.coda.output.tikeut",
+        "orthography.h7.coda.output.rieul",
+        "orthography.h7.coda.output.mieum",
+        "orthography.h7.coda.output.pieup",
+        "orthography.h7.coda.output.ieung",
+        "orthography.h8.final.kiyeok",
+        "orthography.h8.final.ssangkiyeok",
+        "orthography.h8.final.kiyeok.sios",
+        "orthography.h8.final.nieun",
+        "orthography.h8.final.nieun.cieuc",
+        "orthography.h8.final.nieun.hieuh",
+        "orthography.h8.final.tikeut",
+        "orthography.h8.final.rieul",
+        "orthography.h8.final.rieul.kiyeok",
+        "orthography.h8.final.rieul.mieum",
+        "orthography.h8.final.rieul.pieup",
+        "orthography.h8.final.rieul.sios",
+        "orthography.h8.final.rieul.thieuth",
+        "orthography.h8.final.rieul.phieuph",
+        "orthography.h8.final.rieul.hieuh",
+        "orthography.h8.final.mieum",
+        "orthography.h8.final.pieup",
+        "orthography.h8.final.pieup.sios",
+        "orthography.h8.final.sios",
+        "orthography.h8.final.ssangsios",
+        "orthography.h8.final.ieung",
+        "orthography.h8.final.cieuc",
+        "orthography.h8.final.chieuch",
+        "orthography.h8.final.khieukh",
+        "orthography.h8.final.thieuth",
+        "orthography.h8.final.phieuph",
+        "orthography.h8.final.hieuh",
+        "phonology.syllable.timing",
+        "phonology.p2.unreleased.coda"
+      ],
+      "sequence": 109
+    },
+    {
+      "id": "phonology.p2.coda.neutralization.tikeut",
+      "domain": "phonology",
+      "prerequisite_ids": [
+        "orthography.jamo.unit",
+        "orthography.block.unit",
+        "orthography.block.slot.coda-optional",
+        "orthography.h7.batchim.position",
+        "orthography.h7.coda.output.kiyeok",
+        "orthography.h7.coda.output.nieun",
+        "orthography.h7.coda.output.tikeut",
+        "orthography.h7.coda.output.rieul",
+        "orthography.h7.coda.output.mieum",
+        "orthography.h7.coda.output.pieup",
+        "orthography.h7.coda.output.ieung",
+        "orthography.h8.final.kiyeok",
+        "orthography.h8.final.ssangkiyeok",
+        "orthography.h8.final.kiyeok.sios",
+        "orthography.h8.final.nieun",
+        "orthography.h8.final.nieun.cieuc",
+        "orthography.h8.final.nieun.hieuh",
+        "orthography.h8.final.tikeut",
+        "orthography.h8.final.rieul",
+        "orthography.h8.final.rieul.kiyeok",
+        "orthography.h8.final.rieul.mieum",
+        "orthography.h8.final.rieul.pieup",
+        "orthography.h8.final.rieul.sios",
+        "orthography.h8.final.rieul.thieuth",
+        "orthography.h8.final.rieul.phieuph",
+        "orthography.h8.final.rieul.hieuh",
+        "orthography.h8.final.mieum",
+        "orthography.h8.final.pieup",
+        "orthography.h8.final.pieup.sios",
+        "orthography.h8.final.sios",
+        "orthography.h8.final.ssangsios",
+        "orthography.h8.final.ieung",
+        "orthography.h8.final.cieuc",
+        "orthography.h8.final.chieuch",
+        "orthography.h8.final.khieukh",
+        "orthography.h8.final.thieuth",
+        "orthography.h8.final.phieuph",
+        "orthography.h8.final.hieuh",
+        "phonology.syllable.timing",
+        "phonology.p2.unreleased.coda"
+      ],
+      "sequence": 110
+    },
+    {
+      "id": "phonology.p2.coda.neutralization.rieul",
+      "domain": "phonology",
+      "prerequisite_ids": [
+        "orthography.jamo.unit",
+        "orthography.block.unit",
+        "orthography.block.slot.coda-optional",
+        "orthography.h7.batchim.position",
+        "orthography.h7.coda.output.kiyeok",
+        "orthography.h7.coda.output.nieun",
+        "orthography.h7.coda.output.tikeut",
+        "orthography.h7.coda.output.rieul",
+        "orthography.h7.coda.output.mieum",
+        "orthography.h7.coda.output.pieup",
+        "orthography.h7.coda.output.ieung",
+        "orthography.h8.final.kiyeok",
+        "orthography.h8.final.ssangkiyeok",
+        "orthography.h8.final.kiyeok.sios",
+        "orthography.h8.final.nieun",
+        "orthography.h8.final.nieun.cieuc",
+        "orthography.h8.final.nieun.hieuh",
+        "orthography.h8.final.tikeut",
+        "orthography.h8.final.rieul",
+        "orthography.h8.final.rieul.kiyeok",
+        "orthography.h8.final.rieul.mieum",
+        "orthography.h8.final.rieul.pieup",
+        "orthography.h8.final.rieul.sios",
+        "orthography.h8.final.rieul.thieuth",
+        "orthography.h8.final.rieul.phieuph",
+        "orthography.h8.final.rieul.hieuh",
+        "orthography.h8.final.mieum",
+        "orthography.h8.final.pieup",
+        "orthography.h8.final.pieup.sios",
+        "orthography.h8.final.sios",
+        "orthography.h8.final.ssangsios",
+        "orthography.h8.final.ieung",
+        "orthography.h8.final.cieuc",
+        "orthography.h8.final.chieuch",
+        "orthography.h8.final.khieukh",
+        "orthography.h8.final.thieuth",
+        "orthography.h8.final.phieuph",
+        "orthography.h8.final.hieuh",
+        "phonology.syllable.timing",
+        "phonology.p2.unreleased.coda"
+      ],
+      "sequence": 111
+    },
+    {
+      "id": "phonology.p2.coda.neutralization.mieum",
+      "domain": "phonology",
+      "prerequisite_ids": [
+        "orthography.jamo.unit",
+        "orthography.block.unit",
+        "orthography.block.slot.coda-optional",
+        "orthography.h7.batchim.position",
+        "orthography.h7.coda.output.kiyeok",
+        "orthography.h7.coda.output.nieun",
+        "orthography.h7.coda.output.tikeut",
+        "orthography.h7.coda.output.rieul",
+        "orthography.h7.coda.output.mieum",
+        "orthography.h7.coda.output.pieup",
+        "orthography.h7.coda.output.ieung",
+        "orthography.h8.final.kiyeok",
+        "orthography.h8.final.ssangkiyeok",
+        "orthography.h8.final.kiyeok.sios",
+        "orthography.h8.final.nieun",
+        "orthography.h8.final.nieun.cieuc",
+        "orthography.h8.final.nieun.hieuh",
+        "orthography.h8.final.tikeut",
+        "orthography.h8.final.rieul",
+        "orthography.h8.final.rieul.kiyeok",
+        "orthography.h8.final.rieul.mieum",
+        "orthography.h8.final.rieul.pieup",
+        "orthography.h8.final.rieul.sios",
+        "orthography.h8.final.rieul.thieuth",
+        "orthography.h8.final.rieul.phieuph",
+        "orthography.h8.final.rieul.hieuh",
+        "orthography.h8.final.mieum",
+        "orthography.h8.final.pieup",
+        "orthography.h8.final.pieup.sios",
+        "orthography.h8.final.sios",
+        "orthography.h8.final.ssangsios",
+        "orthography.h8.final.ieung",
+        "orthography.h8.final.cieuc",
+        "orthography.h8.final.chieuch",
+        "orthography.h8.final.khieukh",
+        "orthography.h8.final.thieuth",
+        "orthography.h8.final.phieuph",
+        "orthography.h8.final.hieuh",
+        "phonology.syllable.timing",
+        "phonology.p2.unreleased.coda"
+      ],
+      "sequence": 112
+    },
+    {
+      "id": "phonology.p2.coda.neutralization.pieup",
+      "domain": "phonology",
+      "prerequisite_ids": [
+        "orthography.jamo.unit",
+        "orthography.block.unit",
+        "orthography.block.slot.coda-optional",
+        "orthography.h7.batchim.position",
+        "orthography.h7.coda.output.kiyeok",
+        "orthography.h7.coda.output.nieun",
+        "orthography.h7.coda.output.tikeut",
+        "orthography.h7.coda.output.rieul",
+        "orthography.h7.coda.output.mieum",
+        "orthography.h7.coda.output.pieup",
+        "orthography.h7.coda.output.ieung",
+        "orthography.h8.final.kiyeok",
+        "orthography.h8.final.ssangkiyeok",
+        "orthography.h8.final.kiyeok.sios",
+        "orthography.h8.final.nieun",
+        "orthography.h8.final.nieun.cieuc",
+        "orthography.h8.final.nieun.hieuh",
+        "orthography.h8.final.tikeut",
+        "orthography.h8.final.rieul",
+        "orthography.h8.final.rieul.kiyeok",
+        "orthography.h8.final.rieul.mieum",
+        "orthography.h8.final.rieul.pieup",
+        "orthography.h8.final.rieul.sios",
+        "orthography.h8.final.rieul.thieuth",
+        "orthography.h8.final.rieul.phieuph",
+        "orthography.h8.final.rieul.hieuh",
+        "orthography.h8.final.mieum",
+        "orthography.h8.final.pieup",
+        "orthography.h8.final.pieup.sios",
+        "orthography.h8.final.sios",
+        "orthography.h8.final.ssangsios",
+        "orthography.h8.final.ieung",
+        "orthography.h8.final.cieuc",
+        "orthography.h8.final.chieuch",
+        "orthography.h8.final.khieukh",
+        "orthography.h8.final.thieuth",
+        "orthography.h8.final.phieuph",
+        "orthography.h8.final.hieuh",
+        "phonology.syllable.timing",
+        "phonology.p2.unreleased.coda"
+      ],
+      "sequence": 113
+    },
+    {
+      "id": "phonology.p2.coda.neutralization.ieung",
+      "domain": "phonology",
+      "prerequisite_ids": [
+        "orthography.jamo.unit",
+        "orthography.block.unit",
+        "orthography.block.slot.coda-optional",
+        "orthography.h7.batchim.position",
+        "orthography.h7.coda.output.kiyeok",
+        "orthography.h7.coda.output.nieun",
+        "orthography.h7.coda.output.tikeut",
+        "orthography.h7.coda.output.rieul",
+        "orthography.h7.coda.output.mieum",
+        "orthography.h7.coda.output.pieup",
+        "orthography.h7.coda.output.ieung",
+        "orthography.h8.final.kiyeok",
+        "orthography.h8.final.ssangkiyeok",
+        "orthography.h8.final.kiyeok.sios",
+        "orthography.h8.final.nieun",
+        "orthography.h8.final.nieun.cieuc",
+        "orthography.h8.final.nieun.hieuh",
+        "orthography.h8.final.tikeut",
+        "orthography.h8.final.rieul",
+        "orthography.h8.final.rieul.kiyeok",
+        "orthography.h8.final.rieul.mieum",
+        "orthography.h8.final.rieul.pieup",
+        "orthography.h8.final.rieul.sios",
+        "orthography.h8.final.rieul.thieuth",
+        "orthography.h8.final.rieul.phieuph",
+        "orthography.h8.final.rieul.hieuh",
+        "orthography.h8.final.mieum",
+        "orthography.h8.final.pieup",
+        "orthography.h8.final.pieup.sios",
+        "orthography.h8.final.sios",
+        "orthography.h8.final.ssangsios",
+        "orthography.h8.final.ieung",
+        "orthography.h8.final.cieuc",
+        "orthography.h8.final.chieuch",
+        "orthography.h8.final.khieukh",
+        "orthography.h8.final.thieuth",
+        "orthography.h8.final.phieuph",
+        "orthography.h8.final.hieuh",
+        "phonology.syllable.timing",
+        "phonology.p2.unreleased.coda"
+      ],
+      "sequence": 114
+    },
+    {
+      "id": "phonology.p3.liaison.vowel.initial.morpheme",
+      "domain": "phonology",
+      "prerequisite_ids": [
+        "orthography.jamo.unit",
+        "orthography.block.unit",
+        "orthography.block.slot.onset",
+        "orthography.block.slot.coda-optional",
+        "orthography.h2.null.onset.ieung",
+        "orthography.h7.batchim.position",
+        "orthography.h7.coda.output.kiyeok",
+        "orthography.h7.coda.output.nieun",
+        "orthography.h7.coda.output.tikeut",
+        "orthography.h7.coda.output.rieul",
+        "orthography.h7.coda.output.mieum",
+        "orthography.h7.coda.output.pieup",
+        "orthography.h7.coda.output.ieung",
+        "orthography.h8.final.kiyeok",
+        "orthography.h8.final.ssangkiyeok",
+        "orthography.h8.final.kiyeok.sios",
+        "orthography.h8.final.nieun",
+        "orthography.h8.final.nieun.cieuc",
+        "orthography.h8.final.nieun.hieuh",
+        "orthography.h8.final.tikeut",
+        "orthography.h8.final.rieul",
+        "orthography.h8.final.rieul.kiyeok",
+        "orthography.h8.final.rieul.mieum",
+        "orthography.h8.final.rieul.pieup",
+        "orthography.h8.final.rieul.sios",
+        "orthography.h8.final.rieul.thieuth",
+        "orthography.h8.final.rieul.phieuph",
+        "orthography.h8.final.rieul.hieuh",
+        "orthography.h8.final.mieum",
+        "orthography.h8.final.pieup",
+        "orthography.h8.final.pieup.sios",
+        "orthography.h8.final.sios",
+        "orthography.h8.final.ssangsios",
+        "orthography.h8.final.ieung",
+        "orthography.h8.final.cieuc",
+        "orthography.h8.final.chieuch",
+        "orthography.h8.final.khieukh",
+        "orthography.h8.final.thieuth",
+        "orthography.h8.final.phieuph",
+        "orthography.h8.final.hieuh",
+        "phonology.syllable.timing",
+        "phonology.p2.unreleased.coda"
+      ],
+      "sequence": 115
+    },
+    {
+      "id": "phonology.p4.post.obstruent.tensification",
+      "domain": "phonology",
+      "prerequisite_ids": [
+        "orthography.jamo.unit",
+        "orthography.block.unit",
+        "orthography.block.slot.onset",
+        "orthography.block.slot.coda-optional",
+        "orthography.h3.basic.onset.kiyeok",
+        "orthography.h3.basic.onset.tikeut",
+        "orthography.h3.basic.onset.pieup",
+        "orthography.h3.basic.onset.cieuc",
+        "orthography.h3.basic.onset.sios",
+        "orthography.h5.aspirated.onset.khieukh",
+        "orthography.h5.aspirated.onset.thieuth",
+        "orthography.h5.aspirated.onset.phieuph",
+        "orthography.h5.aspirated.onset.chieuch",
+        "orthography.h5.tense.onset.ssangkiyeok",
+        "orthography.h5.tense.onset.ssangtikeut",
+        "orthography.h5.tense.onset.ssangpieup",
+        "orthography.h5.tense.onset.ssangsios",
+        "orthography.h5.tense.onset.ssangcieuc",
+        "orthography.h7.batchim.position",
+        "orthography.h7.coda.output.kiyeok",
+        "orthography.h7.coda.output.nieun",
+        "orthography.h7.coda.output.tikeut",
+        "orthography.h7.coda.output.rieul",
+        "orthography.h7.coda.output.mieum",
+        "orthography.h7.coda.output.pieup",
+        "orthography.h7.coda.output.ieung",
+        "orthography.h8.final.kiyeok",
+        "orthography.h8.final.ssangkiyeok",
+        "orthography.h8.final.kiyeok.sios",
+        "orthography.h8.final.nieun",
+        "orthography.h8.final.nieun.cieuc",
+        "orthography.h8.final.nieun.hieuh",
+        "orthography.h8.final.tikeut",
+        "orthography.h8.final.rieul",
+        "orthography.h8.final.rieul.kiyeok",
+        "orthography.h8.final.rieul.mieum",
+        "orthography.h8.final.rieul.pieup",
+        "orthography.h8.final.rieul.sios",
+        "orthography.h8.final.rieul.thieuth",
+        "orthography.h8.final.rieul.phieuph",
+        "orthography.h8.final.rieul.hieuh",
+        "orthography.h8.final.mieum",
+        "orthography.h8.final.pieup",
+        "orthography.h8.final.pieup.sios",
+        "orthography.h8.final.sios",
+        "orthography.h8.final.ssangsios",
+        "orthography.h8.final.ieung",
+        "orthography.h8.final.cieuc",
+        "orthography.h8.final.chieuch",
+        "orthography.h8.final.khieukh",
+        "orthography.h8.final.thieuth",
+        "orthography.h8.final.phieuph",
+        "orthography.h8.final.hieuh",
+        "phonology.syllable.timing",
+        "phonology.p1.onset.contrast.pieup",
+        "phonology.p1.onset.contrast.tikeut",
+        "phonology.p1.onset.contrast.kiyeok",
+        "phonology.p1.onset.contrast.cieuc",
+        "phonology.p1.onset.contrast.sios",
+        "phonology.p2.unreleased.coda"
+      ],
+      "sequence": 116
+    },
+    {
+      "id": "phonology.p5.nasalization.velar",
+      "domain": "phonology",
+      "prerequisite_ids": [
+        "orthography.jamo.unit",
+        "orthography.block.unit",
+        "orthography.block.slot.onset",
+        "orthography.block.slot.coda-optional",
+        "orthography.h2.null.onset.ieung",
+        "orthography.h7.batchim.position",
+        "orthography.h7.coda.output.kiyeok",
+        "orthography.h7.coda.output.nieun",
+        "orthography.h7.coda.output.tikeut",
+        "orthography.h7.coda.output.rieul",
+        "orthography.h7.coda.output.mieum",
+        "orthography.h7.coda.output.pieup",
+        "orthography.h7.coda.output.ieung",
+        "orthography.h8.final.kiyeok",
+        "orthography.h8.final.ssangkiyeok",
+        "orthography.h8.final.kiyeok.sios",
+        "orthography.h8.final.nieun",
+        "orthography.h8.final.nieun.cieuc",
+        "orthography.h8.final.nieun.hieuh",
+        "orthography.h8.final.tikeut",
+        "orthography.h8.final.rieul",
+        "orthography.h8.final.rieul.kiyeok",
+        "orthography.h8.final.rieul.mieum",
+        "orthography.h8.final.rieul.pieup",
+        "orthography.h8.final.rieul.sios",
+        "orthography.h8.final.rieul.thieuth",
+        "orthography.h8.final.rieul.phieuph",
+        "orthography.h8.final.rieul.hieuh",
+        "orthography.h8.final.mieum",
+        "orthography.h8.final.pieup",
+        "orthography.h8.final.pieup.sios",
+        "orthography.h8.final.sios",
+        "orthography.h8.final.ssangsios",
+        "orthography.h8.final.ieung",
+        "orthography.h8.final.cieuc",
+        "orthography.h8.final.chieuch",
+        "orthography.h8.final.khieukh",
+        "orthography.h8.final.thieuth",
+        "orthography.h8.final.phieuph",
+        "orthography.h8.final.hieuh",
+        "phonology.syllable.timing",
+        "phonology.p0.sonorant.ieung",
+        "phonology.p2.unreleased.coda"
+      ],
+      "sequence": 117
+    },
+    {
+      "id": "phonology.p5.nasalization.coronal",
+      "domain": "phonology",
+      "prerequisite_ids": [
+        "orthography.jamo.unit",
+        "orthography.block.unit",
+        "orthography.block.slot.onset",
+        "orthography.block.slot.coda-optional",
+        "orthography.h3.basic.onset.nieun",
+        "orthography.h7.batchim.position",
+        "orthography.h7.coda.output.kiyeok",
+        "orthography.h7.coda.output.nieun",
+        "orthography.h7.coda.output.tikeut",
+        "orthography.h7.coda.output.rieul",
+        "orthography.h7.coda.output.mieum",
+        "orthography.h7.coda.output.pieup",
+        "orthography.h7.coda.output.ieung",
+        "orthography.h8.final.kiyeok",
+        "orthography.h8.final.ssangkiyeok",
+        "orthography.h8.final.kiyeok.sios",
+        "orthography.h8.final.nieun",
+        "orthography.h8.final.nieun.cieuc",
+        "orthography.h8.final.nieun.hieuh",
+        "orthography.h8.final.tikeut",
+        "orthography.h8.final.rieul",
+        "orthography.h8.final.rieul.kiyeok",
+        "orthography.h8.final.rieul.mieum",
+        "orthography.h8.final.rieul.pieup",
+        "orthography.h8.final.rieul.sios",
+        "orthography.h8.final.rieul.thieuth",
+        "orthography.h8.final.rieul.phieuph",
+        "orthography.h8.final.rieul.hieuh",
+        "orthography.h8.final.mieum",
+        "orthography.h8.final.pieup",
+        "orthography.h8.final.pieup.sios",
+        "orthography.h8.final.sios",
+        "orthography.h8.final.ssangsios",
+        "orthography.h8.final.ieung",
+        "orthography.h8.final.cieuc",
+        "orthography.h8.final.chieuch",
+        "orthography.h8.final.khieukh",
+        "orthography.h8.final.thieuth",
+        "orthography.h8.final.phieuph",
+        "orthography.h8.final.hieuh",
+        "phonology.syllable.timing",
+        "phonology.p0.sonorant.nieun",
+        "phonology.p2.unreleased.coda"
+      ],
+      "sequence": 118
+    },
+    {
+      "id": "phonology.p5.nasalization.labial",
+      "domain": "phonology",
+      "prerequisite_ids": [
+        "orthography.jamo.unit",
+        "orthography.block.unit",
+        "orthography.block.slot.onset",
+        "orthography.block.slot.coda-optional",
+        "orthography.h3.basic.onset.mieum",
+        "orthography.h7.batchim.position",
+        "orthography.h7.coda.output.kiyeok",
+        "orthography.h7.coda.output.nieun",
+        "orthography.h7.coda.output.tikeut",
+        "orthography.h7.coda.output.rieul",
+        "orthography.h7.coda.output.mieum",
+        "orthography.h7.coda.output.pieup",
+        "orthography.h7.coda.output.ieung",
+        "orthography.h8.final.kiyeok",
+        "orthography.h8.final.ssangkiyeok",
+        "orthography.h8.final.kiyeok.sios",
+        "orthography.h8.final.nieun",
+        "orthography.h8.final.nieun.cieuc",
+        "orthography.h8.final.nieun.hieuh",
+        "orthography.h8.final.tikeut",
+        "orthography.h8.final.rieul",
+        "orthography.h8.final.rieul.kiyeok",
+        "orthography.h8.final.rieul.mieum",
+        "orthography.h8.final.rieul.pieup",
+        "orthography.h8.final.rieul.sios",
+        "orthography.h8.final.rieul.thieuth",
+        "orthography.h8.final.rieul.phieuph",
+        "orthography.h8.final.rieul.hieuh",
+        "orthography.h8.final.mieum",
+        "orthography.h8.final.pieup",
+        "orthography.h8.final.pieup.sios",
+        "orthography.h8.final.sios",
+        "orthography.h8.final.ssangsios",
+        "orthography.h8.final.ieung",
+        "orthography.h8.final.cieuc",
+        "orthography.h8.final.chieuch",
+        "orthography.h8.final.khieukh",
+        "orthography.h8.final.thieuth",
+        "orthography.h8.final.phieuph",
+        "orthography.h8.final.hieuh",
+        "phonology.syllable.timing",
+        "phonology.p0.sonorant.mieum",
+        "phonology.p2.unreleased.coda"
+      ],
+      "sequence": 119
+    },
+    {
+      "id": "phonology.p6.h.aspiration.coda.to.onset",
+      "domain": "phonology",
+      "prerequisite_ids": [
+        "orthography.jamo.unit",
+        "orthography.block.unit",
+        "orthography.block.slot.onset",
+        "orthography.block.slot.coda-optional",
+        "orthography.h3.basic.onset.hieuh",
+        "orthography.h7.batchim.position",
+        "orthography.h7.coda.output.kiyeok",
+        "orthography.h7.coda.output.nieun",
+        "orthography.h7.coda.output.tikeut",
+        "orthography.h7.coda.output.rieul",
+        "orthography.h7.coda.output.mieum",
+        "orthography.h7.coda.output.pieup",
+        "orthography.h7.coda.output.ieung",
+        "orthography.h8.final.kiyeok",
+        "orthography.h8.final.ssangkiyeok",
+        "orthography.h8.final.kiyeok.sios",
+        "orthography.h8.final.nieun",
+        "orthography.h8.final.nieun.cieuc",
+        "orthography.h8.final.nieun.hieuh",
+        "orthography.h8.final.tikeut",
+        "orthography.h8.final.rieul",
+        "orthography.h8.final.rieul.kiyeok",
+        "orthography.h8.final.rieul.mieum",
+        "orthography.h8.final.rieul.pieup",
+        "orthography.h8.final.rieul.sios",
+        "orthography.h8.final.rieul.thieuth",
+        "orthography.h8.final.rieul.phieuph",
+        "orthography.h8.final.rieul.hieuh",
+        "orthography.h8.final.mieum",
+        "orthography.h8.final.pieup",
+        "orthography.h8.final.pieup.sios",
+        "orthography.h8.final.sios",
+        "orthography.h8.final.ssangsios",
+        "orthography.h8.final.ieung",
+        "orthography.h8.final.cieuc",
+        "orthography.h8.final.chieuch",
+        "orthography.h8.final.khieukh",
+        "orthography.h8.final.thieuth",
+        "orthography.h8.final.phieuph",
+        "orthography.h8.final.hieuh",
+        "phonology.syllable.timing",
+        "phonology.p1.onset.hieuh",
+        "phonology.p2.unreleased.coda"
+      ],
+      "sequence": 120
+    },
+    {
+      "id": "phonology.p6.h.aspiration.onset.from.coda",
+      "domain": "phonology",
+      "prerequisite_ids": [
+        "orthography.jamo.unit",
+        "orthography.block.unit",
+        "orthography.block.slot.onset",
+        "orthography.block.slot.coda-optional",
+        "orthography.h3.basic.onset.hieuh",
+        "orthography.h7.batchim.position",
+        "orthography.h7.coda.output.kiyeok",
+        "orthography.h7.coda.output.nieun",
+        "orthography.h7.coda.output.tikeut",
+        "orthography.h7.coda.output.rieul",
+        "orthography.h7.coda.output.mieum",
+        "orthography.h7.coda.output.pieup",
+        "orthography.h7.coda.output.ieung",
+        "orthography.h8.final.kiyeok",
+        "orthography.h8.final.ssangkiyeok",
+        "orthography.h8.final.kiyeok.sios",
+        "orthography.h8.final.nieun",
+        "orthography.h8.final.nieun.cieuc",
+        "orthography.h8.final.nieun.hieuh",
+        "orthography.h8.final.tikeut",
+        "orthography.h8.final.rieul",
+        "orthography.h8.final.rieul.kiyeok",
+        "orthography.h8.final.rieul.mieum",
+        "orthography.h8.final.rieul.pieup",
+        "orthography.h8.final.rieul.sios",
+        "orthography.h8.final.rieul.thieuth",
+        "orthography.h8.final.rieul.phieuph",
+        "orthography.h8.final.rieul.hieuh",
+        "orthography.h8.final.mieum",
+        "orthography.h8.final.pieup",
+        "orthography.h8.final.pieup.sios",
+        "orthography.h8.final.sios",
+        "orthography.h8.final.ssangsios",
+        "orthography.h8.final.ieung",
+        "orthography.h8.final.cieuc",
+        "orthography.h8.final.chieuch",
+        "orthography.h8.final.khieukh",
+        "orthography.h8.final.thieuth",
+        "orthography.h8.final.phieuph",
+        "orthography.h8.final.hieuh",
+        "phonology.syllable.timing",
+        "phonology.p1.onset.hieuh",
+        "phonology.p2.unreleased.coda"
+      ],
+      "sequence": 121
+    },
+    {
+      "id": "phonology.p7.palatalization.tikeut",
+      "domain": "phonology",
+      "prerequisite_ids": [
+        "orthography.jamo.unit",
+        "orthography.block.unit",
+        "orthography.block.slot.onset",
+        "orthography.block.slot.coda-optional",
+        "orthography.h1.vowel.i",
+        "orthography.h2.null.onset.ieung",
+        "orthography.h7.batchim.position",
+        "orthography.h7.coda.output.kiyeok",
+        "orthography.h7.coda.output.nieun",
+        "orthography.h7.coda.output.tikeut",
+        "orthography.h7.coda.output.rieul",
+        "orthography.h7.coda.output.mieum",
+        "orthography.h7.coda.output.pieup",
+        "orthography.h7.coda.output.ieung",
+        "orthography.h8.final.kiyeok",
+        "orthography.h8.final.ssangkiyeok",
+        "orthography.h8.final.kiyeok.sios",
+        "orthography.h8.final.nieun",
+        "orthography.h8.final.nieun.cieuc",
+        "orthography.h8.final.nieun.hieuh",
+        "orthography.h8.final.tikeut",
+        "orthography.h8.final.rieul",
+        "orthography.h8.final.rieul.kiyeok",
+        "orthography.h8.final.rieul.mieum",
+        "orthography.h8.final.rieul.pieup",
+        "orthography.h8.final.rieul.sios",
+        "orthography.h8.final.rieul.thieuth",
+        "orthography.h8.final.rieul.phieuph",
+        "orthography.h8.final.rieul.hieuh",
+        "orthography.h8.final.mieum",
+        "orthography.h8.final.pieup",
+        "orthography.h8.final.pieup.sios",
+        "orthography.h8.final.sios",
+        "orthography.h8.final.ssangsios",
+        "orthography.h8.final.ieung",
+        "orthography.h8.final.cieuc",
+        "orthography.h8.final.chieuch",
+        "orthography.h8.final.khieukh",
+        "orthography.h8.final.thieuth",
+        "orthography.h8.final.phieuph",
+        "orthography.h8.final.hieuh",
+        "phonology.syllable.timing",
+        "phonology.p2.unreleased.coda",
+        "phonology.p3.liaison.vowel.initial.morpheme"
+      ],
+      "sequence": 122
+    },
+    {
+      "id": "phonology.p7.palatalization.thieuth",
+      "domain": "phonology",
+      "prerequisite_ids": [
+        "orthography.jamo.unit",
+        "orthography.block.unit",
+        "orthography.block.slot.onset",
+        "orthography.block.slot.coda-optional",
+        "orthography.h1.vowel.i",
+        "orthography.h2.null.onset.ieung",
+        "orthography.h7.batchim.position",
+        "orthography.h7.coda.output.kiyeok",
+        "orthography.h7.coda.output.nieun",
+        "orthography.h7.coda.output.tikeut",
+        "orthography.h7.coda.output.rieul",
+        "orthography.h7.coda.output.mieum",
+        "orthography.h7.coda.output.pieup",
+        "orthography.h7.coda.output.ieung",
+        "orthography.h8.final.kiyeok",
+        "orthography.h8.final.ssangkiyeok",
+        "orthography.h8.final.kiyeok.sios",
+        "orthography.h8.final.nieun",
+        "orthography.h8.final.nieun.cieuc",
+        "orthography.h8.final.nieun.hieuh",
+        "orthography.h8.final.tikeut",
+        "orthography.h8.final.rieul",
+        "orthography.h8.final.rieul.kiyeok",
+        "orthography.h8.final.rieul.mieum",
+        "orthography.h8.final.rieul.pieup",
+        "orthography.h8.final.rieul.sios",
+        "orthography.h8.final.rieul.thieuth",
+        "orthography.h8.final.rieul.phieuph",
+        "orthography.h8.final.rieul.hieuh",
+        "orthography.h8.final.mieum",
+        "orthography.h8.final.pieup",
+        "orthography.h8.final.pieup.sios",
+        "orthography.h8.final.sios",
+        "orthography.h8.final.ssangsios",
+        "orthography.h8.final.ieung",
+        "orthography.h8.final.cieuc",
+        "orthography.h8.final.chieuch",
+        "orthography.h8.final.khieukh",
+        "orthography.h8.final.thieuth",
+        "orthography.h8.final.phieuph",
+        "orthography.h8.final.hieuh",
+        "phonology.syllable.timing",
+        "phonology.p2.unreleased.coda",
+        "phonology.p3.liaison.vowel.initial.morpheme"
+      ],
+      "sequence": 123
+    },
+    {
+      "id": "phonology.p8.liquid.assimilation",
+      "domain": "phonology",
+      "prerequisite_ids": [
+        "orthography.jamo.unit",
+        "orthography.block.unit",
+        "orthography.block.slot.onset",
+        "orthography.block.slot.coda-optional",
+        "orthography.h3.basic.onset.nieun",
+        "orthography.h7.batchim.position",
+        "orthography.h7.coda.output.rieul",
+        "orthography.h8.final.rieul",
+        "phonology.syllable.timing",
+        "phonology.p0.sonorant.nieun",
+        "phonology.p0.rieul.coda"
+      ],
+      "sequence": 124
+    },
+    {
+      "id": "phonology.p8.rieul.related.process",
+      "domain": "phonology",
+      "prerequisite_ids": [
+        "orthography.jamo.unit",
+        "orthography.block.unit",
+        "orthography.block.slot.onset",
+        "orthography.block.slot.coda-optional",
+        "orthography.h3.basic.onset.nieun",
+        "orthography.h3.basic.onset.rieul",
+        "orthography.h7.batchim.position",
+        "orthography.h7.coda.output.rieul",
+        "orthography.h8.final.rieul",
+        "phonology.syllable.timing",
+        "phonology.p0.sonorant.nieun",
+        "phonology.p0.rieul.intervocalic",
+        "phonology.p0.rieul.coda",
+        "phonology.p8.liquid.assimilation"
+      ],
+      "sequence": 125
+    },
+    {
+      "id": "phonology.p8.n.insertion",
+      "domain": "phonology",
+      "prerequisite_ids": [
+        "orthography.jamo.unit",
+        "orthography.block.unit",
+        "orthography.block.slot.onset",
+        "orthography.block.slot.coda-optional",
+        "orthography.h2.null.onset.ieung",
+        "orthography.h3.basic.onset.nieun",
+        "orthography.h7.batchim.position",
+        "orthography.h7.coda.output.kiyeok",
+        "orthography.h7.coda.output.nieun",
+        "orthography.h7.coda.output.tikeut",
+        "orthography.h7.coda.output.rieul",
+        "orthography.h7.coda.output.mieum",
+        "orthography.h7.coda.output.pieup",
+        "orthography.h7.coda.output.ieung",
+        "orthography.h8.final.kiyeok",
+        "orthography.h8.final.ssangkiyeok",
+        "orthography.h8.final.kiyeok.sios",
+        "orthography.h8.final.nieun",
+        "orthography.h8.final.nieun.cieuc",
+        "orthography.h8.final.nieun.hieuh",
+        "orthography.h8.final.tikeut",
+        "orthography.h8.final.rieul",
+        "orthography.h8.final.rieul.kiyeok",
+        "orthography.h8.final.rieul.mieum",
+        "orthography.h8.final.rieul.pieup",
+        "orthography.h8.final.rieul.sios",
+        "orthography.h8.final.rieul.thieuth",
+        "orthography.h8.final.rieul.phieuph",
+        "orthography.h8.final.rieul.hieuh",
+        "orthography.h8.final.mieum",
+        "orthography.h8.final.pieup",
+        "orthography.h8.final.pieup.sios",
+        "orthography.h8.final.sios",
+        "orthography.h8.final.ssangsios",
+        "orthography.h8.final.ieung",
+        "orthography.h8.final.cieuc",
+        "orthography.h8.final.chieuch",
+        "orthography.h8.final.khieukh",
+        "orthography.h8.final.thieuth",
+        "orthography.h8.final.phieuph",
+        "orthography.h8.final.hieuh",
+        "phonology.syllable.timing",
+        "phonology.p0.sonorant.nieun",
+        "phonology.p2.unreleased.coda",
+        "phonology.p3.liaison.vowel.initial.morpheme"
+      ],
+      "sequence": 126
+    },
+    {
+      "id": "phonology.p9.complex.coda.before.consonant",
+      "domain": "phonology",
+      "prerequisite_ids": [
+        "orthography.jamo.unit",
+        "orthography.block.unit",
+        "orthography.block.slot.coda-optional",
+        "orthography.h7.batchim.position",
+        "orthography.h7.coda.output.kiyeok",
+        "orthography.h7.coda.output.nieun",
+        "orthography.h7.coda.output.tikeut",
+        "orthography.h7.coda.output.rieul",
+        "orthography.h7.coda.output.mieum",
+        "orthography.h7.coda.output.pieup",
+        "orthography.h7.coda.output.ieung",
+        "orthography.h8.final.kiyeok",
+        "orthography.h8.final.ssangkiyeok",
+        "orthography.h8.final.kiyeok.sios",
+        "orthography.h8.final.nieun",
+        "orthography.h8.final.nieun.cieuc",
+        "orthography.h8.final.nieun.hieuh",
+        "orthography.h8.final.tikeut",
+        "orthography.h8.final.rieul",
+        "orthography.h8.final.rieul.kiyeok",
+        "orthography.h8.final.rieul.mieum",
+        "orthography.h8.final.rieul.pieup",
+        "orthography.h8.final.rieul.sios",
+        "orthography.h8.final.rieul.thieuth",
+        "orthography.h8.final.rieul.phieuph",
+        "orthography.h8.final.rieul.hieuh",
+        "orthography.h8.final.mieum",
+        "orthography.h8.final.pieup",
+        "orthography.h8.final.pieup.sios",
+        "orthography.h8.final.sios",
+        "orthography.h8.final.ssangsios",
+        "orthography.h8.final.ieung",
+        "orthography.h8.final.cieuc",
+        "orthography.h8.final.chieuch",
+        "orthography.h8.final.khieukh",
+        "orthography.h8.final.thieuth",
+        "orthography.h8.final.phieuph",
+        "orthography.h8.final.hieuh",
+        "phonology.syllable.timing",
+        "phonology.p2.unreleased.coda"
+      ],
+      "sequence": 127
+    },
+    {
+      "id": "phonology.p9.complex.coda.before.vowel",
+      "domain": "phonology",
+      "prerequisite_ids": [
+        "orthography.jamo.unit",
+        "orthography.block.unit",
+        "orthography.block.slot.onset",
+        "orthography.block.slot.coda-optional",
+        "orthography.h2.null.onset.ieung",
+        "orthography.h7.batchim.position",
+        "orthography.h7.coda.output.kiyeok",
+        "orthography.h7.coda.output.nieun",
+        "orthography.h7.coda.output.tikeut",
+        "orthography.h7.coda.output.rieul",
+        "orthography.h7.coda.output.mieum",
+        "orthography.h7.coda.output.pieup",
+        "orthography.h7.coda.output.ieung",
+        "orthography.h8.final.kiyeok",
+        "orthography.h8.final.ssangkiyeok",
+        "orthography.h8.final.kiyeok.sios",
+        "orthography.h8.final.nieun",
+        "orthography.h8.final.nieun.cieuc",
+        "orthography.h8.final.nieun.hieuh",
+        "orthography.h8.final.tikeut",
+        "orthography.h8.final.rieul",
+        "orthography.h8.final.rieul.kiyeok",
+        "orthography.h8.final.rieul.mieum",
+        "orthography.h8.final.rieul.pieup",
+        "orthography.h8.final.rieul.sios",
+        "orthography.h8.final.rieul.thieuth",
+        "orthography.h8.final.rieul.phieuph",
+        "orthography.h8.final.rieul.hieuh",
+        "orthography.h8.final.mieum",
+        "orthography.h8.final.pieup",
+        "orthography.h8.final.pieup.sios",
+        "orthography.h8.final.sios",
+        "orthography.h8.final.ssangsios",
+        "orthography.h8.final.ieung",
+        "orthography.h8.final.cieuc",
+        "orthography.h8.final.chieuch",
+        "orthography.h8.final.khieukh",
+        "orthography.h8.final.thieuth",
+        "orthography.h8.final.phieuph",
+        "orthography.h8.final.hieuh",
+        "phonology.syllable.timing",
+        "phonology.p2.unreleased.coda",
+        "phonology.p3.liaison.vowel.initial.morpheme"
+      ],
+      "sequence": 128
+    },
+    {
+      "id": "phonology.p9.complex.coda.rule.interaction",
+      "domain": "phonology",
+      "prerequisite_ids": [
+        "orthography.jamo.unit",
+        "orthography.block.unit",
+        "orthography.block.slot.onset",
+        "orthography.block.slot.coda-optional",
+        "orthography.h2.null.onset.ieung",
+        "orthography.h3.basic.onset.kiyeok",
+        "orthography.h3.basic.onset.tikeut",
+        "orthography.h3.basic.onset.pieup",
+        "orthography.h3.basic.onset.cieuc",
+        "orthography.h3.basic.onset.sios",
+        "orthography.h5.aspirated.onset.khieukh",
+        "orthography.h5.aspirated.onset.thieuth",
+        "orthography.h5.aspirated.onset.phieuph",
+        "orthography.h5.aspirated.onset.chieuch",
+        "orthography.h5.tense.onset.ssangkiyeok",
+        "orthography.h5.tense.onset.ssangtikeut",
+        "orthography.h5.tense.onset.ssangpieup",
+        "orthography.h5.tense.onset.ssangsios",
+        "orthography.h5.tense.onset.ssangcieuc",
+        "orthography.h7.batchim.position",
+        "orthography.h7.coda.output.kiyeok",
+        "orthography.h7.coda.output.nieun",
+        "orthography.h7.coda.output.tikeut",
+        "orthography.h7.coda.output.rieul",
+        "orthography.h7.coda.output.mieum",
+        "orthography.h7.coda.output.pieup",
+        "orthography.h7.coda.output.ieung",
+        "orthography.h8.final.kiyeok",
+        "orthography.h8.final.ssangkiyeok",
+        "orthography.h8.final.kiyeok.sios",
+        "orthography.h8.final.nieun",
+        "orthography.h8.final.nieun.cieuc",
+        "orthography.h8.final.nieun.hieuh",
+        "orthography.h8.final.tikeut",
+        "orthography.h8.final.rieul",
+        "orthography.h8.final.rieul.kiyeok",
+        "orthography.h8.final.rieul.mieum",
+        "orthography.h8.final.rieul.pieup",
+        "orthography.h8.final.rieul.sios",
+        "orthography.h8.final.rieul.thieuth",
+        "orthography.h8.final.rieul.phieuph",
+        "orthography.h8.final.rieul.hieuh",
+        "orthography.h8.final.mieum",
+        "orthography.h8.final.pieup",
+        "orthography.h8.final.pieup.sios",
+        "orthography.h8.final.sios",
+        "orthography.h8.final.ssangsios",
+        "orthography.h8.final.ieung",
+        "orthography.h8.final.cieuc",
+        "orthography.h8.final.chieuch",
+        "orthography.h8.final.khieukh",
+        "orthography.h8.final.thieuth",
+        "orthography.h8.final.phieuph",
+        "orthography.h8.final.hieuh",
+        "phonology.syllable.timing",
+        "phonology.p1.onset.contrast.pieup",
+        "phonology.p1.onset.contrast.tikeut",
+        "phonology.p1.onset.contrast.kiyeok",
+        "phonology.p1.onset.contrast.cieuc",
+        "phonology.p1.onset.contrast.sios",
+        "phonology.p2.unreleased.coda",
+        "phonology.p3.liaison.vowel.initial.morpheme",
+        "phonology.p4.post.obstruent.tensification",
+        "phonology.p9.complex.coda.before.consonant",
+        "phonology.p9.complex.coda.before.vowel"
+      ],
+      "sequence": 129
+    },
+    {
+      "id": "phonology.p10.contraction.boa.bwa",
+      "domain": "phonology",
+      "prerequisite_ids": [
+        "orthography.jamo.unit",
+        "orthography.block.unit",
+        "orthography.block.slot.nucleus",
+        "orthography.h1.vowel.a",
+        "orthography.h1.vowel.eo",
+        "orthography.h1.vowel.o",
+        "orthography.h1.vowel.u",
+        "orthography.h1.vowel.eu",
+        "orthography.h1.vowel.i",
+        "orthography.h4.vowel.ya",
+        "orthography.h4.vowel.yeo",
+        "orthography.h4.vowel.yo",
+        "orthography.h4.vowel.yu",
+        "orthography.h4.vowel.ae",
+        "orthography.h4.vowel.e",
+        "orthography.h4.vowel.yae",
+        "orthography.h4.vowel.ye",
+        "orthography.h6.vowel.wa",
+        "orthography.h6.vowel.wo",
+        "orthography.h6.vowel.wae",
+        "orthography.h6.vowel.we",
+        "orthography.h6.vowel.oe",
+        "orthography.h6.vowel.wi",
+        "orthography.h6.vowel.ui",
+        "phonology.syllable.timing",
+        "phonology.p0.vowel.quality"
+      ],
+      "sequence": 130
+    },
+    {
+      "id": "phonology.p10.contraction.jueo.jwo",
+      "domain": "phonology",
+      "prerequisite_ids": [
+        "orthography.jamo.unit",
+        "orthography.block.unit",
+        "orthography.block.slot.nucleus",
+        "orthography.h1.vowel.a",
+        "orthography.h1.vowel.eo",
+        "orthography.h1.vowel.o",
+        "orthography.h1.vowel.u",
+        "orthography.h1.vowel.eu",
+        "orthography.h1.vowel.i",
+        "orthography.h4.vowel.ya",
+        "orthography.h4.vowel.yeo",
+        "orthography.h4.vowel.yo",
+        "orthography.h4.vowel.yu",
+        "orthography.h4.vowel.ae",
+        "orthography.h4.vowel.e",
+        "orthography.h4.vowel.yae",
+        "orthography.h4.vowel.ye",
+        "orthography.h6.vowel.wa",
+        "orthography.h6.vowel.wo",
+        "orthography.h6.vowel.wae",
+        "orthography.h6.vowel.we",
+        "orthography.h6.vowel.oe",
+        "orthography.h6.vowel.wi",
+        "orthography.h6.vowel.ui",
+        "phonology.syllable.timing",
+        "phonology.p0.vowel.quality"
+      ],
+      "sequence": 131
+    },
+    {
+      "id": "phonology.p10.contraction.doeeo.dwae",
+      "domain": "phonology",
+      "prerequisite_ids": [
+        "orthography.jamo.unit",
+        "orthography.block.unit",
+        "orthography.block.slot.nucleus",
+        "orthography.h1.vowel.a",
+        "orthography.h1.vowel.eo",
+        "orthography.h1.vowel.o",
+        "orthography.h1.vowel.u",
+        "orthography.h1.vowel.eu",
+        "orthography.h1.vowel.i",
+        "orthography.h4.vowel.ya",
+        "orthography.h4.vowel.yeo",
+        "orthography.h4.vowel.yo",
+        "orthography.h4.vowel.yu",
+        "orthography.h4.vowel.ae",
+        "orthography.h4.vowel.e",
+        "orthography.h4.vowel.yae",
+        "orthography.h4.vowel.ye",
+        "orthography.h6.vowel.wa",
+        "orthography.h6.vowel.wo",
+        "orthography.h6.vowel.wae",
+        "orthography.h6.vowel.we",
+        "orthography.h6.vowel.oe",
+        "orthography.h6.vowel.wi",
+        "orthography.h6.vowel.ui",
+        "phonology.syllable.timing",
+        "phonology.p0.vowel.quality"
+      ],
+      "sequence": 132
+    },
+    {
+      "id": "phonology.p10.contraction.hayeo.hae",
+      "domain": "phonology",
+      "prerequisite_ids": [
+        "orthography.jamo.unit",
+        "orthography.block.unit",
+        "orthography.block.slot.nucleus",
+        "orthography.h1.vowel.a",
+        "orthography.h1.vowel.eo",
+        "orthography.h1.vowel.o",
+        "orthography.h1.vowel.u",
+        "orthography.h1.vowel.eu",
+        "orthography.h1.vowel.i",
+        "orthography.h4.vowel.ya",
+        "orthography.h4.vowel.yeo",
+        "orthography.h4.vowel.yo",
+        "orthography.h4.vowel.yu",
+        "orthography.h4.vowel.ae",
+        "orthography.h4.vowel.e",
+        "orthography.h4.vowel.yae",
+        "orthography.h4.vowel.ye",
+        "orthography.h6.vowel.wa",
+        "orthography.h6.vowel.wo",
+        "orthography.h6.vowel.wae",
+        "orthography.h6.vowel.we",
+        "orthography.h6.vowel.oe",
+        "orthography.h6.vowel.wi",
+        "orthography.h6.vowel.ui",
+        "phonology.syllable.timing",
+        "phonology.p0.vowel.quality"
+      ],
+      "sequence": 133
+    },
+    {
+      "id": "phonology.p11.optional.reduction.register.context",
+      "domain": "phonology",
+      "prerequisite_ids": [
+        "orthography.jamo.unit",
+        "orthography.block.unit",
+        "orthography.block.slot.nucleus",
+        "orthography.h1.vowel.a",
+        "orthography.h1.vowel.eo",
+        "orthography.h1.vowel.o",
+        "orthography.h1.vowel.u",
+        "orthography.h1.vowel.eu",
+        "orthography.h1.vowel.i",
+        "orthography.h4.vowel.ya",
+        "orthography.h4.vowel.yeo",
+        "orthography.h4.vowel.yo",
+        "orthography.h4.vowel.yu",
+        "orthography.h4.vowel.ae",
+        "orthography.h4.vowel.e",
+        "orthography.h4.vowel.yae",
+        "orthography.h4.vowel.ye",
+        "orthography.h6.vowel.wa",
+        "orthography.h6.vowel.wo",
+        "orthography.h6.vowel.wae",
+        "orthography.h6.vowel.we",
+        "orthography.h6.vowel.oe",
+        "orthography.h6.vowel.wi",
+        "orthography.h6.vowel.ui",
+        "phonology.syllable.timing",
+        "phonology.p0.vowel.quality",
+        "phonology.p10.contraction.boa.bwa",
+        "phonology.p10.contraction.jueo.jwo",
+        "phonology.p10.contraction.doeeo.dwae",
+        "phonology.p10.contraction.hayeo.hae"
+      ],
+      "sequence": 134
+    },
+    {
+      "id": "phonology.p12.phrase.accent",
+      "domain": "phonology",
+      "prerequisite_ids": [
+        "orthography.jamo.unit",
+        "orthography.block.unit",
+        "phonology.syllable.timing"
+      ],
+      "sequence": 135
+    },
+    {
+      "id": "phonology.p12.focus",
+      "domain": "phonology",
+      "prerequisite_ids": [
+        "orthography.jamo.unit",
+        "orthography.block.unit",
+        "phonology.syllable.timing",
+        "phonology.p12.phrase.accent"
+      ],
+      "sequence": 136
+    },
+    {
+      "id": "phonology.p12.boundary.intonation",
+      "domain": "phonology",
+      "prerequisite_ids": [
+        "orthography.jamo.unit",
+        "orthography.block.unit",
+        "phonology.syllable.timing",
+        "phonology.p12.phrase.accent"
+      ],
+      "sequence": 137
+    },
+    {
+      "id": "phonology.p12.rate.conditioned.effects",
+      "domain": "phonology",
+      "prerequisite_ids": [
+        "orthography.jamo.unit",
+        "orthography.block.unit",
+        "phonology.syllable.timing",
+        "phonology.p12.phrase.accent"
+      ],
+      "sequence": 138
+    },
+    {
+      "id": "phonology.p13.rule.ordering.relation",
+      "domain": "phonology",
+      "prerequisite_ids": [
+        "orthography.jamo.unit",
+        "orthography.block.unit",
+        "orthography.block.slot.onset",
+        "orthography.block.slot.coda-optional",
+        "orthography.h1.vowel.i",
+        "orthography.h2.null.onset.ieung",
+        "orthography.h3.basic.onset.nieun",
+        "orthography.h3.basic.onset.mieum",
+        "orthography.h3.basic.onset.rieul",
+        "orthography.h3.basic.onset.kiyeok",
+        "orthography.h3.basic.onset.tikeut",
+        "orthography.h3.basic.onset.pieup",
+        "orthography.h3.basic.onset.cieuc",
+        "orthography.h3.basic.onset.sios",
+        "orthography.h3.basic.onset.hieuh",
+        "orthography.h5.aspirated.onset.khieukh",
+        "orthography.h5.aspirated.onset.thieuth",
+        "orthography.h5.aspirated.onset.phieuph",
+        "orthography.h5.aspirated.onset.chieuch",
+        "orthography.h5.tense.onset.ssangkiyeok",
+        "orthography.h5.tense.onset.ssangtikeut",
+        "orthography.h5.tense.onset.ssangpieup",
+        "orthography.h5.tense.onset.ssangsios",
+        "orthography.h5.tense.onset.ssangcieuc",
+        "orthography.h7.batchim.position",
+        "orthography.h7.coda.output.kiyeok",
+        "orthography.h7.coda.output.nieun",
+        "orthography.h7.coda.output.tikeut",
+        "orthography.h7.coda.output.rieul",
+        "orthography.h7.coda.output.mieum",
+        "orthography.h7.coda.output.pieup",
+        "orthography.h7.coda.output.ieung",
+        "orthography.h8.final.kiyeok",
+        "orthography.h8.final.ssangkiyeok",
+        "orthography.h8.final.kiyeok.sios",
+        "orthography.h8.final.nieun",
+        "orthography.h8.final.nieun.cieuc",
+        "orthography.h8.final.nieun.hieuh",
+        "orthography.h8.final.tikeut",
+        "orthography.h8.final.rieul",
+        "orthography.h8.final.rieul.kiyeok",
+        "orthography.h8.final.rieul.mieum",
+        "orthography.h8.final.rieul.pieup",
+        "orthography.h8.final.rieul.sios",
+        "orthography.h8.final.rieul.thieuth",
+        "orthography.h8.final.rieul.phieuph",
+        "orthography.h8.final.rieul.hieuh",
+        "orthography.h8.final.mieum",
+        "orthography.h8.final.pieup",
+        "orthography.h8.final.pieup.sios",
+        "orthography.h8.final.sios",
+        "orthography.h8.final.ssangsios",
+        "orthography.h8.final.ieung",
+        "orthography.h8.final.cieuc",
+        "orthography.h8.final.chieuch",
+        "orthography.h8.final.khieukh",
+        "orthography.h8.final.thieuth",
+        "orthography.h8.final.phieuph",
+        "orthography.h8.final.hieuh",
+        "phonology.syllable.timing",
+        "phonology.p0.sonorant.nieun",
+        "phonology.p0.sonorant.mieum",
+        "phonology.p0.sonorant.ieung",
+        "phonology.p0.rieul.intervocalic",
+        "phonology.p0.rieul.coda",
+        "phonology.p1.onset.contrast.pieup",
+        "phonology.p1.onset.contrast.tikeut",
+        "phonology.p1.onset.contrast.kiyeok",
+        "phonology.p1.onset.contrast.cieuc",
+        "phonology.p1.onset.contrast.sios",
+        "phonology.p1.onset.hieuh",
+        "phonology.p2.unreleased.coda",
+        "phonology.p3.liaison.vowel.initial.morpheme",
+        "phonology.p4.post.obstruent.tensification",
+        "phonology.p5.nasalization.velar",
+        "phonology.p5.nasalization.coronal",
+        "phonology.p5.nasalization.labial",
+        "phonology.p6.h.aspiration.coda.to.onset",
+        "phonology.p6.h.aspiration.onset.from.coda",
+        "phonology.p7.palatalization.tikeut",
+        "phonology.p7.palatalization.thieuth",
+        "phonology.p8.liquid.assimilation",
+        "phonology.p8.rieul.related.process",
+        "phonology.p8.n.insertion",
+        "phonology.p9.complex.coda.before.consonant",
+        "phonology.p9.complex.coda.before.vowel",
+        "phonology.p9.complex.coda.rule.interaction",
+        "phonology.p12.phrase.accent",
+        "phonology.p12.rate.conditioned.effects"
+      ],
+      "sequence": 139
+    }
+  ],
+  "content_hash": "89a520055cfd94eb086c9ed3e937499a71fbcb07c056e1916b645c3bd312d89d"
+}

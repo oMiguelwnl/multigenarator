@@ -8,6 +8,15 @@ import unicodedata
 
 from pydantic import BaseModel, Field
 
+from multilang.domain.korean import (
+    KOREAN_LANGUAGE_CODE,
+    KoreanAnalyzerFingerprint,
+    KoreanLexicalIdentity,
+    KoreanMatchResult,
+    KoreanMatchStatus,
+    KoreanTextError,
+    canonicalize_korean,
+)
 from multilang.domain.text_quality import (
     ConfidenceLabel,
     ValidationFlag,
@@ -20,6 +29,7 @@ from multilang.services.mandarin_orthography import (
     script_counts,
     validate_simplified_mandarin,
 )
+from multilang.services.korean_morphology import KiwiKoreanMorphologyService
 from multilang.services.morphology import MorphologicalAnalyzer, OptionalStanzaMorphologicalAnalyzer
 from multilang.services.text_generation import GeneratedSentence, GeneratedTranslation
 
@@ -185,9 +195,11 @@ class TextValidationService:
         *,
         language_identifier: LanguageIdentifier | None = None,
         morphological_analyzer: MorphologicalAnalyzer | None = None,
+        korean_matcher: KiwiKoreanMorphologyService | None = None,
     ) -> None:
         self.language_identifier = language_identifier or CorpusLanguageIdentifier()
         self.morphological_analyzer = morphological_analyzer or OptionalStanzaMorphologicalAnalyzer()
+        self.korean_matcher = korean_matcher or KiwiKoreanMorphologyService()
 
     def validate(
         self,
@@ -202,6 +214,7 @@ class TextValidationService:
         require_translation: bool = True,
         min_sentence_tokens: int | None = None,
         max_sentence_tokens: int | None = None,
+        korean_identity: KoreanLexicalIdentity | None = None,
     ) -> TextValidationResult:
         context = _ValidationContext(
             sentence_text=sentence.text.strip(),
@@ -217,7 +230,13 @@ class TextValidationService:
         )
         flags: list[ValidationFlag] = []
 
-        self._check_target_form(flags, context=context, display_form=display_form, lemma=lemma)
+        self._check_target_form(
+            flags,
+            context=context,
+            display_form=display_form,
+            lemma=lemma,
+            korean_identity=korean_identity,
+        )
         self._check_sentence_length(
             flags,
             context=context,
@@ -272,7 +291,15 @@ class TextValidationService:
         context: _ValidationContext,
         display_form: str,
         lemma: str,
+        korean_identity: KoreanLexicalIdentity | None,
     ) -> None:
+        if context.target_language == KOREAN_LANGUAGE_CODE:
+            self._check_korean_target(
+                flags,
+                sentence_text=context.sentence_text,
+                korean_identity=korean_identity,
+            )
+            return
         if context.target_language == "ja" and _japanese_contains_target(
             context.sentence_text,
             display_form=display_form,
@@ -317,6 +344,79 @@ class TextValidationService:
                 detail="sentence must include the target lemma or required study form",
             )
         )
+
+    def _check_korean_target(
+        self,
+        flags: list[ValidationFlag],
+        *,
+        sentence_text: str,
+        korean_identity: KoreanLexicalIdentity | None,
+    ) -> None:
+        if not isinstance(korean_identity, KoreanLexicalIdentity):
+            _append_korean_morphology_mismatch(
+                flags,
+                status="missing" if korean_identity is None else "invalid",
+            )
+            return
+
+        try:
+            KoreanLexicalIdentity.model_validate(
+                korean_identity.model_dump(mode="python")
+            )
+        except (AttributeError, TypeError, ValueError):
+            _append_korean_morphology_mismatch(flags, status="invalid")
+            return
+
+        try:
+            active_fingerprint = self.korean_matcher.fingerprint
+            if not isinstance(active_fingerprint, KoreanAnalyzerFingerprint):
+                raise TypeError("invalid Korean analyzer fingerprint")
+            KoreanAnalyzerFingerprint.model_validate(
+                active_fingerprint.model_dump(mode="python")
+            )
+        except (AttributeError, TypeError, ValueError):
+            _append_korean_morphology_mismatch(flags, status="unavailable")
+            return
+
+        if korean_identity.analyzer_fingerprint != active_fingerprint:
+            _append_korean_morphology_mismatch(
+                flags,
+                status=KoreanMatchStatus.FINGERPRINT_MISMATCH.value,
+            )
+            return
+
+        try:
+            raw_result = self.korean_matcher.match_target(
+                sentence_text,
+                korean_identity,
+            )
+        except Exception:
+            _append_korean_morphology_mismatch(flags, status="unavailable")
+            return
+
+        if not isinstance(raw_result, KoreanMatchResult):
+            _append_korean_morphology_mismatch(flags, status="invalid")
+            return
+        try:
+            result = KoreanMatchResult.model_validate(
+                raw_result.model_dump(mode="python")
+            )
+        except (AttributeError, TypeError, ValueError):
+            _append_korean_morphology_mismatch(flags, status="invalid")
+            return
+
+        if result.analyzer_fingerprint != active_fingerprint:
+            _append_korean_morphology_mismatch(
+                flags,
+                status=KoreanMatchStatus.FINGERPRINT_MISMATCH.value,
+            )
+            return
+        if result.status is not KoreanMatchStatus.MATCHED:
+            _append_korean_morphology_mismatch(
+                flags,
+                status=result.status.value,
+                reason=result.reason_code.value,
+            )
 
     def _check_sentence_length(
         self,
@@ -404,6 +504,7 @@ class TextValidationService:
         ) or _looks_like_short_command(
             context.sentence_text,
             context.sentence_tokens,
+            target_language=context.target_language,
             display_form=display_form,
             lemma=lemma,
             definitions_html=definitions_html,
@@ -565,6 +666,14 @@ def detect_language_mismatch(
     language_identifier: LanguageIdentifier | None = None,
 ) -> str | None:
     expected = expected_language.casefold()
+    if expected == KOREAN_LANGUAGE_CODE:
+        try:
+            canonical_text = canonicalize_korean(value)
+        except KoreanTextError:
+            return f"text does not look like language {expected_language}: invalid Korean text"
+        if _korean_script_ratio(canonical_text) < 0.55:
+            return f"text does not look like language {expected_language}"
+        return None
     if expected == "zh":
         try:
             validate_simplified_mandarin(value)
@@ -620,6 +729,24 @@ def _script_token_ratio(tokens: list[str], script_name: str) -> float:
         if sum(1 for character in letters if script_name in unicodedata.name(character, "")) / len(letters) >= 0.5:
             matching += 1
     return matching / checked if checked else 1.0
+
+
+def _korean_script_ratio(value: str) -> float:
+    letters = [character for character in value if character.isalpha()]
+    if not letters:
+        return 0.0
+    korean = sum(1 for character in letters if _is_modern_hangul(character))
+    return korean / len(letters)
+
+
+def _is_modern_hangul(character: str) -> bool:
+    codepoint = ord(character)
+    return (
+        0x1100 <= codepoint <= 0x11FF
+        or 0xA960 <= codepoint <= 0xA97F
+        or 0xAC00 <= codepoint <= 0xD7A3
+        or 0xD7B0 <= codepoint <= 0xD7FF
+    )
 
 
 def _japanese_contains_target(value: str, *, display_form: str, lemma: str) -> bool:
@@ -685,7 +812,14 @@ def _looks_like_isolated_word_translation(
     if len(translation_tokens) > 3:
         return False
 
-    target_keys = _match_keys(display_form) | _match_keys(lemma)
+    if context.target_language == KOREAN_LANGUAGE_CODE:
+        target_keys = {
+            key
+            for key in (_normalize_text(display_form), _normalize_text(lemma))
+            if key
+        }
+    else:
+        target_keys = _match_keys(display_form) | _match_keys(lemma)
     if translation_text in target_keys:
         return True
 
@@ -812,6 +946,7 @@ def _looks_like_short_command(
     value: str,
     tokens: list[str],
     *,
+    target_language: str,
     display_form: str,
     lemma: str,
     definitions_html: str | None = None,
@@ -819,6 +954,9 @@ def _looks_like_short_command(
     stripped = value.strip()
     if len(tokens) <= 4 and stripped.endswith("!"):
         return True
+
+    if target_language == KOREAN_LANGUAGE_CODE:
+        return False
 
     if len(tokens) <= 5 and tokens:
         targets = _match_keys(display_form) | _match_keys(lemma)
@@ -839,7 +977,7 @@ def _has_unexpected_target_capitalization(
     display_form: str,
     lemma: str,
 ) -> bool:
-    if target_language == "de" or _starts_with_upper(lemma):
+    if target_language in {"de", KOREAN_LANGUAGE_CODE} or _starts_with_upper(lemma):
         return False
 
     target_keys = _match_keys(display_form) | _match_keys(lemma)
@@ -860,6 +998,24 @@ def _has_unexpected_target_capitalization(
 def _starts_with_upper(value: str) -> bool:
     stripped = value.strip()
     return bool(stripped) and stripped[0].isalpha() and stripped[0].isupper()
+
+
+def _append_korean_morphology_mismatch(
+    flags: list[ValidationFlag],
+    *,
+    status: str,
+    reason: str | None = None,
+) -> None:
+    controlled_detail = f"Korean morphology verification failed (status={status}"
+    if reason is not None:
+        controlled_detail += f"; reason={reason}"
+    controlled_detail += ")"
+    flags.append(
+        ValidationFlag(
+            code=ValidationFlagCode.MORPHOLOGY_MISMATCH,
+            detail=controlled_detail,
+        )
+    )
 
 
 __all__ = ["TextValidationResult", "TextValidationService", "detect_language_mismatch", "looks_like_invalid_translation"]

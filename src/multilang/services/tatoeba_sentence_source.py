@@ -195,6 +195,9 @@ class TatoebaSentenceSource:
         target_language: str,
         translation_target_language: str,
     ) -> SentenceGenerationResult | None:
+        if target_language == "ko":
+            return None
+
         try:
             candidates = self._candidate_provider.search_candidates(
                 display_form=display_form,

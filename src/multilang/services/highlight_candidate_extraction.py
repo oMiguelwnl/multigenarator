@@ -5,14 +5,17 @@ from __future__ import annotations
 from collections.abc import Sequence
 from hashlib import sha256
 import re
+from typing import Protocol
 import unicodedata
 
 from multilang.domain.highlights import (
     HighlightCandidate,
     HighlightCandidateExtractionResult,
+    HighlightExtractionError,
     NormalizedHighlight,
 )
 from multilang.domain.jobs import SupportedLanguage
+from multilang.domain.korean import KoreanLexicalIdentity
 from multilang.services.word_list_parser import split_dense_word_list_line
 
 
@@ -46,12 +49,23 @@ _STOPWORDS: dict[SupportedLanguage, set[str]] = {
 }
 
 
+class KoreanHighlightResolver(Protocol):
+    def resolve_korean_highlight_text(self, text: str) -> Sequence[object]: ...
+
+
 def extract_highlight_candidates(
     highlights: Sequence[NormalizedHighlight],
     *,
     language: SupportedLanguage,
+    korean_resolver: KoreanHighlightResolver | None = None,
 ) -> HighlightCandidateExtractionResult:
     """Return first-seen ordered candidate forms with duplicate/noise counters."""
+
+    if language is SupportedLanguage.KO:
+        return _extract_korean_highlight_candidates(
+            highlights,
+            resolver=korean_resolver,
+        )
 
     candidates_by_key: dict[tuple[str, str], HighlightCandidate] = {}
     duplicate_count = 0
@@ -127,6 +141,116 @@ def extract_highlight_candidates(
         duplicate_count=duplicate_count,
         rejected_token_count=rejected_token_count,
     )
+
+
+def _extract_korean_highlight_candidates(
+    highlights: Sequence[NormalizedHighlight],
+    *,
+    resolver: KoreanHighlightResolver | None,
+) -> HighlightCandidateExtractionResult:
+    candidates_by_key: dict[tuple[str, str], HighlightCandidate] = {}
+    duplicate_count = 0
+    rejected_token_count = 0
+    errors: list[HighlightExtractionError] = []
+
+    for highlight in sorted(highlights, key=lambda item: item.provenance.source_index):
+        if resolver is None:
+            errors.append(
+                HighlightExtractionError(
+                    source_index=highlight.provenance.source_index,
+                    reason_code="korean_resolver_required",
+                )
+            )
+            rejected_token_count += 1
+            continue
+        try:
+            raw_lexemes = tuple(resolver.resolve_korean_highlight_text(highlight.text))
+        except Exception:
+            errors.append(
+                HighlightExtractionError(
+                    source_index=highlight.provenance.source_index,
+                    reason_code="korean_resolution_unavailable",
+                )
+            )
+            rejected_token_count += 1
+            continue
+        if not raw_lexemes:
+            errors.append(
+                HighlightExtractionError(
+                    source_index=highlight.provenance.source_index,
+                    reason_code="korean_resolution_failed",
+                )
+            )
+            rejected_token_count += 1
+            continue
+
+        resolved_lexemes: list[tuple[int, KoreanLexicalIdentity]] = []
+        malformed = False
+        for lexeme in raw_lexemes:
+            identity = getattr(lexeme, "identity", None)
+            word_position = getattr(lexeme, "word_position", None)
+            if not isinstance(identity, KoreanLexicalIdentity) or not isinstance(
+                word_position, int
+            ):
+                malformed = True
+                break
+            resolved_lexemes.append((word_position, identity))
+        if malformed:
+            errors.append(
+                HighlightExtractionError(
+                    source_index=highlight.provenance.source_index,
+                    reason_code="korean_resolution_unavailable",
+                )
+            )
+            rejected_token_count += 1
+            continue
+
+        for _word_position, identity in sorted(
+            resolved_lexemes,
+            key=lambda item: item[0],
+        ):
+            duplicate_count += _record_korean_candidate(
+                candidates_by_key,
+                highlight=highlight,
+                identity=identity,
+            )
+
+    return HighlightCandidateExtractionResult(
+        candidates=list(candidates_by_key.values()),
+        duplicate_count=duplicate_count,
+        rejected_token_count=rejected_token_count,
+        errors=errors,
+    )
+
+
+def _record_korean_candidate(
+    candidates_by_key: dict[tuple[str, str], HighlightCandidate],
+    *,
+    highlight: NormalizedHighlight,
+    identity: KoreanLexicalIdentity,
+) -> int:
+    identity_key = identity.lexical_key
+    candidate_key = (highlight.provenance.content_hash, identity_key)
+    existing = candidates_by_key.get(candidate_key)
+    if existing is not None:
+        candidates_by_key[candidate_key] = existing.model_copy(
+            update={"occurrence_count": existing.occurrence_count + 1}
+        )
+        return 1
+
+    identity_hash = sha256(identity_key.encode("utf-8")).hexdigest()[:16]
+    source_hash = highlight.provenance.content_hash[:16]
+    candidates_by_key[candidate_key] = HighlightCandidate(
+        item_key=f"highlight-ko-{source_hash}-{identity_hash}",
+        source_content_hash=highlight.provenance.content_hash,
+        display_form=identity.lemma,
+        lemma_key=identity_key,
+        first_highlight_id=highlight.highlight_id,
+        first_source_index=highlight.provenance.source_index,
+        occurrence_count=1,
+        korean_identity=identity,
+    )
+    return 0
 
 
 def _raw_token_like_parts(text: str) -> list[str]:
@@ -227,4 +351,4 @@ def _record_candidate(
     return 0
 
 
-__all__ = ["extract_highlight_candidates"]
+__all__ = ["KoreanHighlightResolver", "extract_highlight_candidates"]

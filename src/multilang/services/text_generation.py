@@ -3,18 +3,40 @@
 from __future__ import annotations
 
 from hashlib import sha256
+import re
 from time import perf_counter
 from typing import Any, Protocol
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, model_validator
 
+from multilang.domain.korean import KoreanLexicalIdentity, canonicalize_korean
 from multilang.domain.text_quality import TextProvenance
 from multilang.domain.jobs import SupportedLanguage
 from multilang.domain.lexicon import GroundingStatus, LexicalCardCandidate
+from multilang.security.redaction import redact_sensitive_text
 from multilang.services.rate_limit import RateLimiter
 from multilang.services.provider_response_cache import ProviderCacheKey, ProviderResponseCacheService
 from multilang.services.provider_retry import ProviderCircuitBreaker, ProviderRetryContext, retry_provider_call
 from multilang.repositories.provider_call_log_repository import ProviderCallLogCreate
+
+_CONTEXT_TOKEN_RE = re.compile(r"\b[\w'-]+\b", re.UNICODE)
+_PRIVATE_PATH_RE = re.compile(
+    r"(?i)(?:\b[A-Z]:\\(?:[^\s\\]+\\)*[^\s\\]+|(?:file://)?/(?:Users|home)/[^\s]+)"
+)
+_ANALYZER_DUMP_RE = re.compile(
+    r"(?is)\b(?:Token|Korean(?:AnalysisAlternative|MorphemeEvidence|MorphologyResult|WordAnalysis))\s*\([^)]*\)"
+)
+_PROMPT_INJECTION_RE = re.compile(
+    r"(?i)\b(?:ignore|disregard)\s+(?:all|previous|above)\s+instructions?\b"
+    r"|\b(?:override|replace|change|set)\s+(?:the\s+)?"
+    r"(?:lemma|part[_ -]?of[_ -]?speech|pos|sense(?:_id)?|morpheme[_ -]?signature|"
+    r"analyzer[_ -]?fingerprint|approval(?:_status)?)[^\n.!?]*"
+)
+_IDENTITY_ASSIGNMENT_RE = re.compile(
+    r"(?i)\b(?:lemma|part[_ -]?of[_ -]?speech|pos|sense(?:_id)?|"
+    r"morpheme[_ -]?signature|analyzer[_ -]?fingerprint|approval(?:_status)?)"
+    r"\s*[:=]\s*[^\s,;]+"
+)
 
 
 class SentenceGenerationRequest(BaseModel):
@@ -25,6 +47,55 @@ class SentenceGenerationRequest(BaseModel):
     translation_target_language: str = Field(min_length=2)
     source_type: str | None = None
     highlight_context: str | None = None
+    korean_identity: KoreanLexicalIdentity | None = Field(
+        default=None,
+        exclude_if=lambda value: value is None,
+    )
+
+    @model_validator(mode="before")
+    @classmethod
+    def sanitize_private_korean_context(cls, data: Any) -> Any:
+        if not isinstance(data, dict):
+            return data
+        context = data.get("highlight_context")
+        display_form = data.get("display_form")
+        lemma = data.get("lemma")
+        if (
+            data.get("target_language") == SupportedLanguage.KO.value
+            and data.get("source_type") == "kindle-highlights"
+            and isinstance(context, str)
+            and isinstance(display_form, str)
+            and isinstance(lemma, str)
+        ):
+            data["highlight_context"] = _sanitize_korean_highlight_context(
+                context,
+                display_form=display_form,
+                lemma=lemma,
+            )
+        return data
+
+    @model_validator(mode="after")
+    def korean_identity_must_match_language(self) -> "SentenceGenerationRequest":
+        if self.target_language == SupportedLanguage.KO.value:
+            if self.korean_identity is None:
+                raise ValueError("Korean sentence request requires a persisted Korean identity")
+            if self.lemma != self.korean_identity.lemma:
+                raise ValueError("Korean sentence request must match persisted Korean identity")
+            if self.translation_target_language != SupportedLanguage.PT.value:
+                raise ValueError("Korean sentence translation target must be Portuguese")
+        elif self.korean_identity is not None:
+            raise ValueError("non-Korean sentence request must not carry Korean identity")
+        if (
+            self.target_language == SupportedLanguage.KO.value
+            and self.source_type == "kindle-highlights"
+            and self.highlight_context
+        ):
+            self.highlight_context = _sanitize_korean_highlight_context(
+                self.highlight_context,
+                display_form=self.display_form,
+                lemma=self.lemma,
+            )
+        return self
 
     @classmethod
     def from_candidate(
@@ -45,6 +116,7 @@ class SentenceGenerationRequest(BaseModel):
             translation_target_language=candidate.translation_target_language,
             source_type=source_type,
             highlight_context=highlight_context,
+            korean_identity=candidate.korean_identity,
         )
 
 
@@ -54,6 +126,27 @@ class DefinitionGenerationRequest(BaseModel):
     source_language: str = Field(min_length=2)
     target_language: str = Field(min_length=2)
     part_of_speech: str | None = None
+    korean_identity: KoreanLexicalIdentity | None = Field(
+        default=None,
+        exclude_if=lambda value: value is None,
+    )
+
+    @model_validator(mode="after")
+    def korean_identity_must_match_language(self) -> "DefinitionGenerationRequest":
+        if self.source_language == SupportedLanguage.KO.value:
+            identity = self.korean_identity
+            if identity is None:
+                raise ValueError("Korean definition request requires a persisted Korean identity")
+            if self.lemma != identity.lemma or (
+                self.part_of_speech is not None
+                and self.part_of_speech != identity.part_of_speech
+            ):
+                raise ValueError("Korean definition request must match persisted Korean identity")
+            if self.target_language != SupportedLanguage.PT.value:
+                raise ValueError("Korean definition target must be Portuguese")
+        elif self.korean_identity is not None:
+            raise ValueError("non-Korean definition request must not carry Korean identity")
+        return self
 
 
 class DefinitionGenerationResult(BaseModel):
@@ -192,6 +285,14 @@ class TextGenerationService:
         job_id: str | None = None,
     ) -> GeneratedTextBundle:
         sentence_result = fallback.sentence_result
+        if deck_language is SupportedLanguage.KO:
+            identity = candidate.korean_identity
+            if identity is None:
+                raise ValueError("Korean sentence handoff requires persisted identity")
+            sentence_result = _canonicalize_korean_sentence_result(
+                sentence_result,
+                identity=identity,
+            )
         translation_request = SentenceTranslationRequest.from_sentence(
             sentence_result=sentence_result,
             translation_target_language=candidate.translation_target_language,
@@ -254,6 +355,14 @@ class TextGenerationService:
         rate_limiter: RateLimiter | None = None,
         job_id: str | None = None,
     ) -> GeneratedTextBundle:
+        if deck_language is SupportedLanguage.KO:
+            identity = candidate.korean_identity
+            if identity is None:
+                raise ValueError("Korean sentence handoff requires persisted identity")
+            sentence_result = _canonicalize_korean_sentence_result(
+                sentence_result,
+                identity=identity,
+            )
         if candidate.translation_target_language == deck_language.value:
             translation_result = SentenceTranslationResult(
                 translation=sentence_result.sentence,
@@ -284,7 +393,16 @@ class TextGenerationService:
         if self._provider_cache is not None:
             cached = self._provider_cache.get(key)
             if cached is not None:
-                return SentenceGenerationResult.model_validate(cached.response)
+                cached_result = SentenceGenerationResult.model_validate(cached.response)
+                return (
+                    _canonicalize_korean_sentence_result(
+                        cached_result,
+                        identity=request.korean_identity,
+                    )
+                    if request.target_language == SupportedLanguage.KO.value
+                    else cached_result
+                )
+
         result = self._call_with_telemetry(
             lambda: self._sentence_adapter.generate_sentence(request),
             operation="sentence",
@@ -293,6 +411,11 @@ class TextGenerationService:
             job_id=job_id,
             item_key=item_key,
         )
+        if request.target_language == SupportedLanguage.KO.value:
+            result = _canonicalize_korean_sentence_result(
+                result,
+                identity=request.korean_identity,
+            )
         if self._provider_cache is not None:
             self._provider_cache.put(key, result.model_dump(mode="json"), metadata={"provider": key.provider, "model": key.model})
         return result
@@ -400,6 +523,53 @@ def _safe_hash(payload: object) -> str:
 
 def _elapsed_ms(started: float) -> int:
     return max(0, int((perf_counter() - started) * 1000))
+
+
+def _canonicalize_korean_sentence_result(
+    result: SentenceGenerationResult,
+    *,
+    identity: KoreanLexicalIdentity | None,
+) -> SentenceGenerationResult:
+    if identity is None:
+        raise ValueError("Korean sentence result requires persisted identity")
+    uncertainty_notes = [
+        canonicalize_korean(note) if note.strip() else note
+        for note in result.uncertainty_notes
+    ]
+    return result.model_copy(
+        update={
+            "sentence": canonicalize_korean(result.sentence),
+            "intended_sense": identity.sense_id,
+            "uncertainty_notes": uncertainty_notes,
+        }
+    )
+
+
+def _sanitize_korean_highlight_context(
+    value: str,
+    *,
+    display_form: str,
+    lemma: str,
+    max_tokens: int = 24,
+) -> str:
+    sanitized = redact_sensitive_text(value)
+    sanitized = _PRIVATE_PATH_RE.sub("[REDACTED]", sanitized)
+    sanitized = _ANALYZER_DUMP_RE.sub("[REDACTED]", sanitized)
+    sanitized = _PROMPT_INJECTION_RE.sub("[REDACTED]", sanitized)
+    sanitized = _IDENTITY_ASSIGNMENT_RE.sub("[REDACTED]", sanitized)
+    tokens = _CONTEXT_TOKEN_RE.findall(sanitized)
+    if not tokens:
+        return ""
+    match_keys = {display_form.casefold(), lemma.casefold()}
+    center = next(
+        (index for index, token in enumerate(tokens) if token.casefold() in match_keys),
+        0,
+    )
+    half_window = max_tokens // 2
+    start = max(0, center - half_window)
+    end = min(len(tokens), start + max_tokens)
+    start = max(0, end - max_tokens)
+    return " ".join(tokens[start:end])
 
 
 def _cache_key_for_request(task_type: str, request: BaseModel, *, adapter: object, prompt_version: str) -> ProviderCacheKey:

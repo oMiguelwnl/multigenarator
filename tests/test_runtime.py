@@ -4,9 +4,12 @@ from __future__ import annotations
 
 import pytest
 
-from multilang.runtime import build_runtime_service
+from multilang.domain.jobs import SupportedLanguage
+from multilang.domain.korean import KoreanMorphologyStatus
+from multilang.runtime import _default_deck_name, build_runtime_service
 from multilang.services.audio_synthesis import AudioSynthesisResponse
 from multilang.services.fallback_audio_adapter import FallbackAudioAdapter
+from multilang.services.korean_morphology import KiwiKoreanMorphologyService
 from multilang.services.library_pronunciation_adapters import (
     FallbackPronunciationAdapter,
     LibraryPronunciationAdapter,
@@ -188,3 +191,128 @@ def test_runtime_wires_configured_audio_fallback_chain(tmp_path, monkeypatch) ->
     assert isinstance(adapter, FallbackAudioAdapter)
     assert len(FakeAzureSpeechAdapter.instances) == 1
     assert len(FakeElevenLabsSpeechAdapter.instances) == 1
+
+
+def test_runtime_injects_one_korean_morphology_object_into_all_consumers(tmp_path) -> None:
+    morphology = KiwiKoreanMorphologyService(
+        analyzer_factory=lambda: (_ for _ in ()).throw(RuntimeError("not requested"))
+    )
+
+    service = build_runtime_service(
+        Settings(
+            _env_file=None,
+            database_url=f"sqlite+pysqlite:///{tmp_path / 'runtime.db'}",
+            text_generation_provider="local",
+            translation_provider="local",
+        ),
+        korean_morphology_service=morphology,
+    )
+
+    generation_validator = service.generate_text_items_service.text_validation_service
+    regeneration_validator = service.regenerate_text_item_service.text_validation_service
+
+    assert service.grounding_service._korean_morphology is morphology
+    assert generation_validator is regeneration_validator
+    assert generation_validator.korean_matcher is morphology
+    assert regeneration_validator.korean_matcher is morphology
+    assert generation_validator.korean_matcher.fingerprint is morphology.fingerprint
+
+
+def test_runtime_default_korean_adapter_is_single_and_vendor_construction_is_lazy(
+    tmp_path,
+    monkeypatch,
+) -> None:
+    import multilang.runtime as runtime_module
+
+    wrapper_instances: list[KiwiKoreanMorphologyService] = []
+    analyzer_factory_calls = 0
+
+    def unavailable_analyzer_factory() -> object:
+        nonlocal analyzer_factory_calls
+        analyzer_factory_calls += 1
+        raise RuntimeError("private vendor detail")
+
+    def morphology_factory() -> KiwiKoreanMorphologyService:
+        wrapper = KiwiKoreanMorphologyService(
+            analyzer_factory=unavailable_analyzer_factory
+        )
+        wrapper_instances.append(wrapper)
+        return wrapper
+
+    monkeypatch.setattr(
+        runtime_module,
+        "KiwiKoreanMorphologyService",
+        morphology_factory,
+        raising=False,
+    )
+
+    service = runtime_module.build_runtime_service(
+        Settings(
+            _env_file=None,
+            database_url=f"sqlite+pysqlite:///{tmp_path / 'runtime.db'}",
+            text_generation_provider="local",
+            translation_provider="local",
+        )
+    )
+
+    assert len(wrapper_instances) == 1
+    assert analyzer_factory_calls == 0
+    shared_morphology = wrapper_instances[0]
+    assert service.grounding_service._korean_morphology is shared_morphology
+    assert (
+        service.generate_text_items_service.text_validation_service.korean_matcher
+        is shared_morphology
+    )
+    assert (
+        service.regenerate_text_item_service.text_validation_service.korean_matcher
+        is shared_morphology
+    )
+
+    first = shared_morphology.analyze("학교")
+    second = shared_morphology.analyze("학교")
+
+    assert analyzer_factory_calls == 1
+    assert first.status is KoreanMorphologyStatus.UNAVAILABLE
+    assert second.status is KoreanMorphologyStatus.UNAVAILABLE
+    assert "private vendor detail" not in first.model_dump_json()
+    assert "private vendor detail" not in second.model_dump_json()
+
+
+def test_unavailable_korean_factory_does_not_block_non_korean_runtime_startup(
+    tmp_path,
+) -> None:
+    analyzer_factory_calls = 0
+
+    def unavailable_analyzer_factory() -> object:
+        nonlocal analyzer_factory_calls
+        analyzer_factory_calls += 1
+        raise RuntimeError("private vendor detail")
+
+    morphology = KiwiKoreanMorphologyService(
+        analyzer_factory=unavailable_analyzer_factory
+    )
+    service = build_runtime_service(
+        Settings(
+            _env_file=None,
+            database_url=f"sqlite+pysqlite:///{tmp_path / 'runtime.db'}",
+            text_generation_provider="local",
+            translation_provider="local",
+        ),
+        korean_morphology_service=morphology,
+    )
+
+    assert service is not None
+    assert analyzer_factory_calls == 0
+    assert _default_deck_name(SupportedLanguage.EN) == "Multilang English"
+
+    korean_result = service.grounding_service.resolve_korean_source_identity(
+        surface_form="학교"
+    )
+
+    assert korean_result.status == "unavailable"
+    assert analyzer_factory_calls == 1
+    assert _default_deck_name(SupportedLanguage.EN) == "Multilang English"
+
+
+def test_runtime_has_korean_display_name() -> None:
+    assert _default_deck_name(SupportedLanguage.KO) == "Multilang Korean"

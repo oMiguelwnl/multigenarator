@@ -15,11 +15,13 @@ Generate reliable, high-quality Anki cards for real vocabulary the learner needs
 ## Current State
 
 - **Milestone:** v3.0 Korean Learning System - IN PROGRESS
-- **Phases:** 30-34 (0 of 5 complete)
+- **Phases:** 30-34 (1 of 5 complete)
 - **Last completed milestone:** v2.1 Latin Google TTS Finalization
-- **Execution blocker:** Quick task 027 (Mandarin integration) currently changes shared language, persistence, audio, and export surfaces. Korean execution must begin only after that work is completed, separated, or otherwise reconciled.
-- **Research gate:** A Korean frequency source and redistribution policy must be approved before a frozen 3000-lemma asset is committed.
-- **Next:** `/gsdd-plan 30` after the shared Mandarin worktree is reconciled.
+- **Active Phase:** Phase 31 - Hangul and Pronunciation i+1 (implementation in progress; Plan 31-10 complete; Phase 31 remains open).
+- **Last Completed:** Plan 31-10 - fixed the pathless `korean-foundations` CLI, proved the temporary evidence-to-receipt-to-snapshot-to-activation-to-export workflow, reran write-poisoned verification with a Windows Python 3.12-compatible poison helper, and passed the complete offline isolated Python 3.12 pytest suite with unchanged `.venv` and canonical evidence/export state on 2026-08-17.
+- **Decisions:** Keep the public Korean foundation CLI fixed to hash/enums-only state commands plus export destination output; use private temporary-root composition for tests only; require write-poisoned prepared verification, six-artifact export inspection, lock consistency, isolated Python 3.12, full offline pytest, unchanged shared `.venv`, and `canonical_mutation_count=0` before the first human checkpoint.
+- **Blockers:** No Plan 31-10 engineering blocker. Genuine qualified reviews, Portuguese policy, rights dispositions, licensed exact media, playback evidence, the canonical receipt, canonical snapshot preparation/authorization/activation, production exports, and observed Anki acceptance remain unavailable and later-plan work. The Korean frequency source/redistribution decision remains a Phase 32 blocker.
+- **Next:** Execute Plan 31-11 as the first human checkpoint to populate/validate the fixed canonical inbox and prepare an inactive canonical snapshot without activating or exporting production state.
 
 ## Validated Capabilities
 
@@ -35,10 +37,10 @@ Generate reliable, high-quality Anki cards for real vocabulary the learner needs
 
 ### Language And Morphology
 
-- [ ] **[KMODE-01]**: User can select Korean with canonical language code `ko` for frequency, word-list, and highlight generation, while `ko-KR` is used only as a provider or locale value. [Done-When: requests, settings, persistence, providers, runtime, and tags resolve one canonical Korean identity across all three modes.]
-- [ ] **[KMODE-02]**: User retains all existing language, source-mode, template, audio, and export behavior after Korean is added. [Done-When: focused regressions for existing modern, Japanese, Mandarin, Latin, highlight, and phoneme paths pass without contract drift.]
-- [ ] **[KNLP-01]**: User receives Korean content normalized to Unicode NFC and analyzed by lemma, part of speech, and morphology with a pinned Korean analyzer. [Done-When: deterministic golden cases cover nouns, attached particles, regular and irregular predicates, compound predicates, and canonically equivalent Hangul.]
-- [ ] **[KNLP-02]**: User receives example and highlight matches based on Korean morpheme signatures rather than whitespace, substring, or naive suffix stripping. [Done-When: inflected targets such as `먹다` in `먹었어요` match, noun/predicate homographs remain distinct, and unavailable or inconclusive analysis blocks acceptance.]
+- [x] **[KMODE-01]**: User can select Korean with canonical language code `ko` for frequency, word-list, and highlight generation, while `ko-KR` is used only as a provider or locale value. [Done-When: requests, settings, persistence, providers, runtime, and tags resolve one canonical Korean identity across all three modes.]
+- [x] **[KMODE-02]**: User retains all existing language, source-mode, template, audio, and export behavior after Korean is added. [Done-When: focused regressions for existing modern, Japanese, Mandarin, Latin, highlight, and phoneme paths pass without contract drift.]
+- [x] **[KNLP-01]**: User receives Korean content normalized to Unicode NFC and analyzed by lemma, part of speech, and morphology with a pinned Korean analyzer. [Done-When: deterministic golden cases cover nouns, attached particles, regular and irregular predicates, compound predicates, and canonically equivalent Hangul.]
+- [x] **[KNLP-02]**: User receives example and highlight matches based on Korean morpheme signatures rather than whitespace, substring, or naive suffix stripping. [Done-When: inflected targets such as `먹다` in `먹었어요` match, noun/predicate homographs remain distinct, and unavailable or inconclusive analysis blocks acceptance.]
 
 ### Hangul Foundations
 
@@ -156,4 +158,4 @@ KoreanFrequencyEntry = {
 - Do not claim Desktop/mobile visual acceptance without an observed human or project-approved renderer proof.
 
 ---
-*Last updated: 2026-07-20 - v3.0 Korean Learning System initialized*
+*Last updated: 2026-08-17 - Phase 31 Plan 10 implemented; phase remains open for Plan 31-11*

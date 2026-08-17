@@ -3,6 +3,8 @@
 from __future__ import annotations
 
 from collections.abc import Callable
+from dataclasses import dataclass
+from hashlib import sha256
 import json
 from pathlib import Path
 from typing import Annotated, Any
@@ -22,9 +24,11 @@ from multilang.services.generate_job import GenerateJobResult, GenerateJobServic
 from multilang.services.generate_text_items import GenerateTextProgress
 from multilang.services.highlight_import_preview import build_highlight_import_preview
 from multilang.services.ingest_lexical_items import IngestLexicalItemsService
+from multilang.services.korean_morphology import KiwiKoreanMorphologyService
 from multilang.services.rate_limit import SimpleRateLimiter
 from multilang.services.deck_audit_reader import read_apkg_cards
 from multilang.services.deck_audit_reports import write_deck_audit_reports
+from multilang.services.lexical_grounding import LexicalGroundingService
 from multilang.services.lexical_lookup import LexicalLookup, normalize_lexical_key
 from multilang.services.job_summary import JobLifecycleSummary, JobSummaryBuilder
 from multilang.services.latin_mvp import LatinMvpGenerationService
@@ -57,6 +61,26 @@ from multilang.services.japanese_kana_deck import (
     export_kana_deck,
 )
 from multilang.services.japanese_kana_generated_deck import export_generated_kana_deck
+from multilang.services.korean_curriculum import KoreanFoundationFamily
+from multilang.services.korean_foundation_evidence import (
+    check_korean_foundation_validation_receipt_continuity,
+    inspect_fixed_korean_foundation_evidence_inbox,
+    validate_and_write_fixed_korean_foundation_validation_receipt,
+)
+from multilang.services.korean_foundation_export import (
+    _build_korean_foundation_export_bundle_from_snapshot,
+    _inspect_staged_apkg,
+    _inspect_staged_tabular_bundle,
+    build_korean_foundation_export_bundle,
+    export_korean_foundation,
+)
+from multilang.services.korean_foundation_snapshot import (
+    activate_prepared_korean_foundation_snapshot_from_receipt,
+    prepare_korean_foundation_snapshot_from_receipt,
+    resolve_active_korean_foundation_snapshot,
+    verify_active_korean_foundation_snapshot_provenance,
+    verify_prepared_korean_foundation_snapshot,
+)
 from multilang.services.text_review import ReviewReport, TextReviewService
 from multilang.services.webdav_highlight_fetch import WebDAVHighlightFetchService
 from multilang.settings import Settings
@@ -67,6 +91,16 @@ TEST_MODE_CARDS_PER_LEVEL = 3
 LOCAL_SMOKE_LANGUAGE = SupportedLanguage.EN
 LOCAL_SMOKE_FIXTURE_DIR = Path(".multilang/live-smoke-azure")
 LOCAL_SMOKE_WORDS = ("harbor", "lantern", "meadow")
+_KOREAN_FOUNDATION_EXPORT_ROOT = Path(".multilang/exports/korean-foundations")
+
+_KOREAN_FOUNDATION_EXPORT_NAMES = (
+    "hangul.apkg",
+    "hangul-csv",
+    "hangul-tsv",
+    "pronunciation-i-plus-1.apkg",
+    "pronunciation-i-plus-1-csv",
+    "pronunciation-i-plus-1-tsv",
+)
 
 ConflictChecker = Callable[[GenerationRequest], bool]
 GenerateExecutor = Callable[[GenerationRequest], Any]
@@ -75,6 +109,109 @@ ItemProcessor = Callable[[str], None]
 ProgressSink = Callable[[str], None]
 ReviewReportBuilder = Callable[..., ReviewReport]
 WebDAVServiceFactory = Callable[[], Any]
+_KOREAN_PREVIEW_ERROR = (
+    "korean_highlight_preview_error=korean_resolution_unavailable"
+)
+
+
+@dataclass(frozen=True, slots=True)
+class _KoreanFoundationExportInspection:
+    artifact_count: int
+    receipt_sha256: str
+    bundle_sha256: str
+    snapshot_root_sha256: str
+
+
+def _validate_foundation_sha256(value: str) -> str:
+    if len(value) != 64 or any(
+        character not in "0123456789abcdef" for character in value
+    ):
+        raise typer.BadParameter("lowercase SHA-256")
+    return value
+
+
+def _foundation_receipt_sha256(receipt: object) -> str:
+    payload = receipt.model_dump(mode="json")
+    raw = (
+        json.dumps(
+            payload,
+            ensure_ascii=False,
+            allow_nan=False,
+            separators=(",", ":"),
+            sort_keys=True,
+        ).encode("utf-8")
+        + b"\n"
+    )
+    return sha256(raw).hexdigest()
+
+
+def _foundation_failure_reason(exc: ValueError) -> str:
+    reason = getattr(getattr(exc, "reason_code", None), "value", None)
+    return reason if isinstance(reason, str) else "operation_failed"
+
+
+def _fail_korean_foundation_operation(exc: ValueError) -> None:
+    typer.echo(f"korean_foundations_error={_foundation_failure_reason(exc)}")
+    raise typer.Exit(code=1) from exc
+
+
+def _inspect_fixed_korean_foundation_exports() -> _KoreanFoundationExportInspection:
+    snapshot = resolve_active_korean_foundation_snapshot()
+    root = _KOREAN_FOUNDATION_EXPORT_ROOT
+    if not root.is_absolute():
+        root = Path(__file__).resolve().parents[2] / root
+    if not root.is_dir() or root.is_symlink():
+        raise ValueError("fixed export set is unavailable")
+    children = tuple(root.iterdir())
+    if {child.name for child in children} != set(_KOREAN_FOUNDATION_EXPORT_NAMES):
+        raise ValueError("fixed export set does not match the allowlist")
+    if any(child.is_symlink() for child in children):
+        raise ValueError("fixed export set contains an unsafe member")
+
+    for family, stem in (
+        (KoreanFoundationFamily.HANGUL, "hangul"),
+        (KoreanFoundationFamily.PRONUNCIATION, "pronunciation-i-plus-1"),
+    ):
+        bundle = _build_korean_foundation_export_bundle_from_snapshot(
+            snapshot,
+            family=family,
+        )
+        _inspect_staged_apkg(root / f"{stem}.apkg", bundle=bundle)
+        for export_format in (ExportArtifactFormat.CSV, ExportArtifactFormat.TSV):
+            _inspect_staged_tabular_bundle(
+                root / f"{stem}-{export_format.value}",
+                bundle=bundle,
+                export_format=export_format,
+            )
+
+    if snapshot.receipt_sha256 is None or snapshot.snapshot_root_sha256 is None:
+        raise ValueError("active snapshot provenance is incomplete")
+    return _KoreanFoundationExportInspection(
+        artifact_count=len(children),
+        receipt_sha256=snapshot.receipt_sha256,
+        bundle_sha256=snapshot.bundle_sha256,
+        snapshot_root_sha256=snapshot.snapshot_root_sha256,
+    )
+
+
+class _FailClosedKoreanPreviewResolver:
+    """Hide resolver failures while recording that preview must be rejected."""
+
+    def __init__(self, resolver: object) -> None:
+        self._resolver = resolver
+        self.failed = False
+
+    def resolve_korean_highlight_text(self, text: str) -> tuple[object, ...]:
+        try:
+            resolved = tuple(
+                self._resolver.resolve_korean_highlight_text(text)
+            )
+        except Exception:
+            self.failed = True
+            return ()
+        if not resolved:
+            self.failed = True
+        return resolved
 
 
 def default_conflict_checker(_: GenerationRequest) -> bool:
@@ -411,11 +548,54 @@ def _print_webdav_error(exc: WebDAVError) -> None:
         typer.echo(f"webdav_error_detail={detail}")
 
 
-def _print_highlight_preview_counts(input_file: Path, *, language: SupportedLanguage, planned_card_limit: int | None) -> None:
+def _build_cli_highlight_preview(
+    input_file: Path,
+    *,
+    language: SupportedLanguage,
+    planned_card_limit: int | None,
+    korean_resolver: object | None,
+) -> object:
+    guarded_resolver = (
+        _FailClosedKoreanPreviewResolver(korean_resolver)
+        if language is SupportedLanguage.KO and korean_resolver is not None
+        else None
+    )
     preview = build_highlight_import_preview(
         input_file,
         language=language,
         planned_card_limit=planned_card_limit,
+        korean_resolver=guarded_resolver,
+    )
+    if language is SupportedLanguage.KO and (
+        guarded_resolver is None or guarded_resolver.failed
+    ):
+        raise ValueError(_KOREAN_PREVIEW_ERROR)
+    return preview
+
+
+def _print_korean_foundation_prepared_hashes(prepared: object) -> None:
+    typer.echo(f"receipt_sha256={prepared.receipt_sha256}")
+    typer.echo(f"bundle_sha256={prepared.bundle_sha256}")
+    typer.echo(
+        f"snapshot_manifest_sha256={prepared.snapshot_manifest_sha256}"
+    )
+    typer.echo(f"snapshot_root_sha256={prepared.snapshot_root_sha256}")
+    typer.echo(f"active_prestate_sha256={prepared.active_prestate_sha256}")
+    typer.echo(f"authorization_sha256={prepared.authorization_sha256}")
+
+
+def _print_highlight_preview_counts(
+    input_file: Path,
+    *,
+    language: SupportedLanguage,
+    planned_card_limit: int | None,
+    korean_resolver: object | None = None,
+) -> None:
+    preview = _build_cli_highlight_preview(
+        input_file,
+        language=language,
+        planned_card_limit=planned_card_limit,
+        korean_resolver=korean_resolver,
     )
     typer.echo(f"imported_highlights={preview.imported_highlights}")
     typer.echo(f"extracted_candidates={preview.extracted_candidates}")
@@ -488,13 +668,42 @@ def create_app(
     """Build the CLI application with injectable collaborators for tests."""
 
     cli = typer.Typer(help="Multilang operator CLI.")
+    korean_foundations = typer.Typer(
+        help="Operate the fixed Korean foundation evidence and export workflow."
+    )
+    cli.add_typer(korean_foundations, name="korean-foundations")
+    korean_morphology: KiwiKoreanMorphologyService | None = None
+    korean_preview_resolver: object | None = None
+
+    def resolve_korean_morphology() -> KiwiKoreanMorphologyService:
+        nonlocal korean_morphology
+        if korean_morphology is None:
+            korean_morphology = KiwiKoreanMorphologyService()
+        return korean_morphology
+
+    def resolve_korean_preview_resolver() -> object:
+        nonlocal korean_preview_resolver
+        injected_grounding = getattr(service, "grounding_service", None)
+        if callable(
+            getattr(injected_grounding, "resolve_korean_highlight_text", None)
+        ):
+            return injected_grounding
+        if korean_preview_resolver is None:
+            preview_settings = Settings()
+            korean_preview_resolver = LexicalGroundingService(
+                lookup=LexicalLookup(data_dir=preview_settings.lexicon_data_dir),
+                korean_morphology=resolve_korean_morphology(),
+            )
+        return korean_preview_resolver
 
     def resolve_service() -> GenerateJobService | IngestLexicalItemsService | None:
         if service is not None:
             return service
         if generate_executor is not None:
             return None
-        return build_runtime_service()
+        return build_runtime_service(
+            korean_morphology_service=resolve_korean_morphology()
+        )
 
     def resolve_executor(resolved_service: GenerateJobService | None) -> GenerateExecutor:
         if resolved_service is not None:
@@ -516,6 +725,205 @@ def create_app(
         """Root command group for Multilang."""
 
         return None
+
+    @korean_foundations.command("inspect-inbox")
+    def inspect_korean_foundation_inbox() -> None:
+        try:
+            inventory = inspect_fixed_korean_foundation_evidence_inbox()
+            if not inventory.complete:
+                typer.echo("korean_foundations_error=inbox_incomplete")
+                raise typer.Exit(code=1)
+        except ValueError as exc:
+            _fail_korean_foundation_operation(exc)
+        typer.echo("inbox_status=complete_unvalidated")
+        typer.echo(f"evidence_index_sha256={inventory.index_sha256}")
+        typer.echo(f"declared_member_count={inventory.evidence_member_count}")
+
+    @korean_foundations.command("validate-and-write-receipt")
+    def validate_and_write_korean_foundation_receipt(
+        confirmed_index_sha256: Annotated[
+            str,
+            typer.Option(
+                "--confirmed-index-sha256",
+                callback=_validate_foundation_sha256,
+            ),
+        ],
+    ) -> None:
+        try:
+            receipt = validate_and_write_fixed_korean_foundation_validation_receipt(
+                confirmed_index_sha256=confirmed_index_sha256
+            )
+        except ValueError as exc:
+            _fail_korean_foundation_operation(exc)
+        status = getattr(receipt, "_receipt_write_status", "written")
+        typer.echo(f"receipt_write_status={status}")
+        typer.echo(f"receipt_sha256={_foundation_receipt_sha256(receipt)}")
+        typer.echo(f"bundle_sha256={receipt.evidence_bundle_sha256}")
+
+    @korean_foundations.command("check-receipt")
+    def check_korean_foundation_receipt(
+        expected_receipt_sha256: Annotated[
+            str,
+            typer.Option(
+                "--expected-receipt-sha256",
+                callback=_validate_foundation_sha256,
+            ),
+        ],
+    ) -> None:
+        try:
+            report = check_korean_foundation_validation_receipt_continuity(
+                expected_receipt_sha256=expected_receipt_sha256
+            )
+        except ValueError as exc:
+            _fail_korean_foundation_operation(exc)
+        typer.echo("receipt_status=continuous")
+        typer.echo(f"receipt_sha256={report.receipt_sha256}")
+        typer.echo(f"bundle_sha256={report.evidence_bundle_sha256}")
+
+    @korean_foundations.command("prepare-snapshot")
+    def prepare_korean_foundation_snapshot(
+        expected_receipt_sha256: Annotated[
+            str,
+            typer.Option(
+                "--expected-receipt-sha256",
+                callback=_validate_foundation_sha256,
+            ),
+        ],
+    ) -> None:
+        try:
+            prepared = prepare_korean_foundation_snapshot_from_receipt(
+                expected_receipt_sha256=expected_receipt_sha256
+            )
+        except ValueError as exc:
+            _fail_korean_foundation_operation(exc)
+        _print_korean_foundation_prepared_hashes(prepared)
+        typer.echo("snapshot_status=prepared_inactive")
+
+    @korean_foundations.command("verify-prepared")
+    def verify_prepared_korean_foundation(
+        expected_receipt_sha256: Annotated[
+            str,
+            typer.Option(
+                "--expected-receipt-sha256",
+                callback=_validate_foundation_sha256,
+            ),
+        ],
+    ) -> None:
+        try:
+            prepared = verify_prepared_korean_foundation_snapshot(
+                expected_receipt_sha256=expected_receipt_sha256
+            )
+        except ValueError as exc:
+            _fail_korean_foundation_operation(exc)
+        _print_korean_foundation_prepared_hashes(prepared)
+        typer.echo("prepared_status=verified")
+
+    @korean_foundations.command("activate")
+    def activate_korean_foundation_snapshot(
+        expected_receipt_sha256: Annotated[
+            str,
+            typer.Option(
+                "--expected-receipt-sha256",
+                callback=_validate_foundation_sha256,
+            ),
+        ],
+        authorization_sha256: Annotated[
+            str,
+            typer.Option(
+                "--authorization-sha256",
+                callback=_validate_foundation_sha256,
+            ),
+        ],
+    ) -> None:
+        try:
+            result = activate_prepared_korean_foundation_snapshot_from_receipt(
+                expected_receipt_sha256=expected_receipt_sha256,
+                authorization_sha256=authorization_sha256,
+            )
+        except ValueError as exc:
+            _fail_korean_foundation_operation(exc)
+        status = "already_active" if result.already_active else "activated"
+        typer.echo(f"activation_status={status}")
+        typer.echo(f"receipt_sha256={result.receipt_sha256}")
+        typer.echo(f"bundle_sha256={result.bundle_sha256}")
+
+    @korean_foundations.command("verify-active")
+    def verify_active_korean_foundation(
+        expected_receipt_sha256: Annotated[
+            str,
+            typer.Option(
+                "--expected-receipt-sha256",
+                callback=_validate_foundation_sha256,
+            ),
+        ],
+    ) -> None:
+        try:
+            report = verify_active_korean_foundation_snapshot_provenance(
+                expected_receipt_sha256=expected_receipt_sha256
+            )
+        except ValueError as exc:
+            _fail_korean_foundation_operation(exc)
+        typer.echo("active_status=verified")
+        typer.echo(f"receipt_sha256={report.receipt_sha256}")
+        typer.echo(f"bundle_sha256={report.bundle_sha256}")
+        typer.echo(f"snapshot_root_sha256={report.snapshot_root_sha256}")
+
+    @korean_foundations.command("check")
+    def check_korean_foundation(
+        family: Annotated[
+            KoreanFoundationFamily,
+            typer.Option("--family"),
+        ],
+    ) -> None:
+        try:
+            bundle = build_korean_foundation_export_bundle(family=family)
+        except ValueError as exc:
+            _fail_korean_foundation_operation(exc)
+        typer.echo(f"family={family.value}")
+        typer.echo("readiness_status=ready")
+        typer.echo(f"card_count={len(bundle.rows)}")
+        typer.echo(f"media_count={len(bundle.media)}")
+
+    @korean_foundations.command("export")
+    def export_korean_foundation_command(
+        family: Annotated[
+            KoreanFoundationFamily,
+            typer.Option("--family"),
+        ],
+        format: Annotated[
+            ExportArtifactFormat,
+            typer.Option("--format"),
+        ],
+        output: Annotated[
+            Path,
+            typer.Option("--output", exists=False),
+        ],
+    ) -> None:
+        try:
+            result = export_korean_foundation(
+                family=family,
+                export_format=format,
+                output_destination=output,
+            )
+        except ValueError as exc:
+            _fail_korean_foundation_operation(exc)
+        typer.echo(f"family={family.value}")
+        typer.echo(f"format={format.value}")
+        typer.echo("export_status=written")
+        typer.echo(f"card_count={result.card_count}")
+        typer.echo(f"media_count={result.media_count}")
+
+    @korean_foundations.command("inspect-exports")
+    def inspect_korean_foundation_exports() -> None:
+        try:
+            report = _inspect_fixed_korean_foundation_exports()
+        except ValueError as exc:
+            _fail_korean_foundation_operation(exc)
+        typer.echo("export_set_status=verified")
+        typer.echo(f"artifact_count={report.artifact_count}")
+        typer.echo(f"receipt_sha256={report.receipt_sha256}")
+        typer.echo(f"bundle_sha256={report.bundle_sha256}")
+        typer.echo(f"snapshot_root_sha256={report.snapshot_root_sha256}")
 
     @cli.command("prepare-local-smoke")
     def prepare_local_smoke(
@@ -558,10 +966,15 @@ def create_app(
         ] = None,
     ) -> None:
         try:
-            preview = build_highlight_import_preview(
+            preview = _build_cli_highlight_preview(
                 input_file,
                 language=language,
                 planned_card_limit=planned_card_limit,
+                korean_resolver=(
+                    resolve_korean_preview_resolver()
+                    if language is SupportedLanguage.KO
+                    else None
+                ),
             )
         except ValueError as exc:
             typer.echo(str(exc))
@@ -606,13 +1019,19 @@ def create_app(
     ) -> None:
         try:
             fetch_result: WebDAVFetchResult = resolve_webdav_service().fetch_export(remote_path)
-            typer.echo(f"webdav_content_hash={fetch_result.content_hash}")
-            typer.echo(f"webdav_cached_file={fetch_result.cached_path}")
-            typer.echo(f"webdav_size_bytes={fetch_result.size_bytes}")
+            if language is not SupportedLanguage.KO:
+                typer.echo(f"webdav_content_hash={fetch_result.content_hash}")
+                typer.echo(f"webdav_cached_file={fetch_result.cached_path}")
+                typer.echo(f"webdav_size_bytes={fetch_result.size_bytes}")
             _print_highlight_preview_counts(
                 fetch_result.cached_path,
                 language=language,
                 planned_card_limit=planned_card_limit,
+                korean_resolver=(
+                    resolve_korean_preview_resolver()
+                    if language is SupportedLanguage.KO
+                    else None
+                ),
             )
         except WebDAVError as exc:
             _print_webdav_error(exc)

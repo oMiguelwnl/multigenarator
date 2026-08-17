@@ -2,11 +2,23 @@
 
 from __future__ import annotations
 
+from types import SimpleNamespace
+
+import pytest
+
+from multilang.domain.korean import (
+    KoreanAnalyzerFingerprint,
+    KoreanLexicalIdentity,
+    KoreanMatchResult,
+    KoreanMatchStatus,
+    KoreanReasonCode,
+    KoreanSignatureItem,
+)
 from multilang.domain.text_quality import ConfidenceLabel, ValidationFlagCode, ValidationStatus
 from multilang.services.language_identifier import LanguageDetectionResult
 from multilang.services.morphology import MorphologyValidationResult
 from multilang.services.text_generation import GeneratedSentence, GeneratedTranslation
-from multilang.services.text_validation import TextValidationService
+from multilang.services.text_validation import TextValidationService, detect_language_mismatch
 
 
 def build_service() -> TextValidationService:
@@ -31,6 +43,7 @@ class FakeLanguageIdentifier:
 class FakeMorphologicalAnalyzer:
     def __init__(self, result: MorphologyValidationResult) -> None:
         self.result = result
+        self.call_count = 0
 
     def contains_target_lemma(
         self,
@@ -40,7 +53,99 @@ class FakeMorphologicalAnalyzer:
         display_form: str,
         lemma: str,
     ) -> MorphologyValidationResult:
+        self.call_count += 1
         return self.result
+
+
+class FakeKoreanMatcher:
+    def __init__(
+        self,
+        *,
+        fingerprint: KoreanAnalyzerFingerprint,
+        result: object,
+    ) -> None:
+        self.fingerprint = fingerprint
+        self.result = result
+        self.calls: list[tuple[str, KoreanLexicalIdentity]] = []
+
+    def match_target(
+        self,
+        sentence_text: str,
+        target: KoreanLexicalIdentity,
+    ) -> object:
+        self.calls.append((sentence_text, target))
+        return self.result
+
+
+class ForbiddenLanguageIdentifier:
+    def detect(self, value: str, *, expected_language: str | None = None) -> LanguageDetectionResult:
+        raise AssertionError("generic language identification must not run for Korean")
+
+
+def build_korean_fingerprint(
+    *, analyzer_package_version: str = "0.23.2"
+) -> KoreanAnalyzerFingerprint:
+    return KoreanAnalyzerFingerprint(
+        analyzer_name="kiwi",
+        analyzer_package_version=analyzer_package_version,
+        model_package_version="0.23.0",
+        model_type="cong",
+        enabled_dialects="standard",
+        num_workers=1,
+        integrate_allomorph=True,
+        top_n=2,
+        split_complex=False,
+        compatible_jamo=False,
+        normalize_coda=False,
+        z_coda=False,
+        typos=None,
+        oov_handling="chr",
+        policy_version="kiwi-top2-consensus-v1",
+    )
+
+
+def build_korean_identity(
+    *, fingerprint: KoreanAnalyzerFingerprint | None = None
+) -> KoreanLexicalIdentity:
+    return KoreanLexicalIdentity(
+        submitted_form="먹다",
+        canonical_nfc="먹다",
+        lemma="먹다",
+        part_of_speech="VV",
+        sense_id="reviewed:eat:1",
+        register="standard",
+        morpheme_signature=(KoreanSignatureItem(form="먹", pos="VV"),),
+        analyzer_fingerprint=fingerprint or build_korean_fingerprint(),
+        status="resolved",
+    )
+
+
+def build_korean_match_result(
+    status: KoreanMatchStatus,
+    *,
+    fingerprint: KoreanAnalyzerFingerprint,
+) -> KoreanMatchResult:
+    reason_codes = {
+        KoreanMatchStatus.MATCHED: KoreanReasonCode.CONSENSUS_MATCH,
+        KoreanMatchStatus.MISMATCH: KoreanReasonCode.NO_SIGNATURE_MATCH,
+        KoreanMatchStatus.AMBIGUOUS: KoreanReasonCode.ANALYSIS_DISAGREEMENT,
+        KoreanMatchStatus.OOV: KoreanReasonCode.OOV_TOKEN,
+        KoreanMatchStatus.UNAVAILABLE: KoreanReasonCode.ANALYZER_RUNTIME_ERROR,
+        KoreanMatchStatus.MISSING: KoreanReasonCode.MISSING_IDENTITY,
+        KoreanMatchStatus.FINGERPRINT_MISMATCH: KoreanReasonCode.FINGERPRINT_MISMATCH,
+        KoreanMatchStatus.INVALID: KoreanReasonCode.INVALID_SIGNATURE,
+    }
+    alternative_matches = {
+        KoreanMatchStatus.MATCHED: (True, True),
+        KoreanMatchStatus.MISMATCH: (False, False),
+        KoreanMatchStatus.AMBIGUOUS: (True, False),
+    }.get(status, ())
+    return KoreanMatchResult(
+        status=status,
+        reason_code=reason_codes[status],
+        analyzer_fingerprint=fingerprint,
+        alternative_matches=alternative_matches,
+    )
 
 
 def build_sentence(*, text: str, target_language: str = "en") -> GeneratedSentence:
@@ -530,3 +635,247 @@ def test_validation_accepts_configurable_highlight_max_sentence_tokens() -> None
 
     assert result.validation_status is ValidationStatus.PASSED
     assert ValidationFlagCode.SENTENCE_TOO_LONG not in {flag.code for flag in result.validation_flags}
+
+
+def test_korean_matched_identity_accepts_inflection_without_generic_paths(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    import multilang.services.text_validation as validation_module
+
+    fingerprint = build_korean_fingerprint()
+    identity = build_korean_identity(fingerprint=fingerprint)
+    matcher = FakeKoreanMatcher(
+        fingerprint=fingerprint,
+        result=build_korean_match_result(
+            KoreanMatchStatus.MATCHED,
+            fingerprint=fingerprint,
+        ),
+    )
+    generic_analyzer = FakeMorphologicalAnalyzer(
+        MorphologyValidationResult(
+            matched=True,
+            reliable=True,
+            provider="forbidden-generic-morphology",
+            detail="must not run",
+        )
+    )
+
+    def forbidden_path(*args: object, **kwargs: object) -> object:
+        raise AssertionError("Japanese, Mandarin, generic key, suffix, or heuristic path ran")
+
+    monkeypatch.setattr(validation_module, "_japanese_contains_target", forbidden_path)
+    monkeypatch.setattr(validation_module, "_mandarin_contains_target", forbidden_path)
+    monkeypatch.setattr(validation_module, "_match_keys", forbidden_path)
+    monkeypatch.setattr(validation_module, "_derive_matchable_forms", forbidden_path)
+
+    sentence_text = "저는 오늘 집에서 맛있는 밥을 먹었어요."
+    result = TextValidationService(
+        language_identifier=ForbiddenLanguageIdentifier(),
+        morphological_analyzer=generic_analyzer,
+        korean_matcher=matcher,
+    ).validate(
+        sentence=build_sentence(text=sentence_text, target_language="ko"),
+        translation=build_translation(text="translation omitted"),
+        display_form="먹다",
+        lemma="먹다",
+        definitions_html="comer",
+        korean_identity=identity,
+        require_translation=False,
+    )
+
+    assert result.validation_status is ValidationStatus.PASSED
+    assert result.validation_flags == []
+    assert matcher.calls == [(sentence_text, identity)]
+    assert generic_analyzer.call_count == 0
+
+
+@pytest.mark.parametrize(
+    "status",
+    [
+        KoreanMatchStatus.MISMATCH,
+        KoreanMatchStatus.AMBIGUOUS,
+        KoreanMatchStatus.OOV,
+        KoreanMatchStatus.UNAVAILABLE,
+        KoreanMatchStatus.MISSING,
+        KoreanMatchStatus.FINGERPRINT_MISMATCH,
+        KoreanMatchStatus.INVALID,
+    ],
+)
+def test_korean_non_matched_statuses_fail_with_content_free_morphology_detail(
+    status: KoreanMatchStatus,
+) -> None:
+    fingerprint = build_korean_fingerprint()
+    identity = build_korean_identity(fingerprint=fingerprint)
+    matcher = FakeKoreanMatcher(
+        fingerprint=fingerprint,
+        result=build_korean_match_result(status, fingerprint=fingerprint),
+    )
+    sentence_text = "저는 오늘 집에서 맛있는 밥을 먹었어요."
+
+    result = TextValidationService(korean_matcher=matcher).validate(
+        sentence=build_sentence(text=sentence_text, target_language="ko"),
+        translation=build_translation(text="translation omitted"),
+        display_form="먹다",
+        lemma="먹다",
+        definitions_html="comer",
+        korean_identity=identity,
+        require_translation=False,
+    )
+
+    morphology_flags = [
+        flag
+        for flag in result.validation_flags
+        if flag.code is ValidationFlagCode.MORPHOLOGY_MISMATCH
+    ]
+    assert result.validation_status is ValidationStatus.FAILED
+    assert len(morphology_flags) == 1
+    assert status.value in morphology_flags[0].detail
+    assert sentence_text not in morphology_flags[0].detail
+    assert identity.lemma not in morphology_flags[0].detail
+    assert identity.sense_id not in morphology_flags[0].detail
+
+
+@pytest.mark.parametrize("identity_kind", ["missing", "malformed"])
+def test_korean_missing_or_malformed_identity_fails_before_matcher(
+    identity_kind: str,
+) -> None:
+    fingerprint = build_korean_fingerprint()
+    valid_identity = build_korean_identity(fingerprint=fingerprint)
+    identity = (
+        None
+        if identity_kind == "missing"
+        else valid_identity.model_copy(update={"morpheme_signature": ()})
+    )
+    matcher = FakeKoreanMatcher(
+        fingerprint=fingerprint,
+        result=build_korean_match_result(
+            KoreanMatchStatus.MATCHED,
+            fingerprint=fingerprint,
+        ),
+    )
+
+    result = TextValidationService(korean_matcher=matcher).validate(
+        sentence=build_sentence(
+            text="저는 오늘 집에서 맛있는 밥을 먹었어요.",
+            target_language="ko",
+        ),
+        translation=build_translation(text="translation omitted"),
+        display_form="먹다",
+        lemma="먹다",
+        definitions_html="comer",
+        korean_identity=identity,
+        require_translation=False,
+    )
+
+    assert result.validation_status is ValidationStatus.FAILED
+    assert ValidationFlagCode.MORPHOLOGY_MISMATCH in {
+        flag.code for flag in result.validation_flags
+    }
+    assert matcher.calls == []
+
+
+def test_korean_persisted_fingerprint_drift_fails_before_matcher() -> None:
+    active_fingerprint = build_korean_fingerprint()
+    persisted_fingerprint = build_korean_fingerprint(analyzer_package_version="0.23.1")
+    identity = build_korean_identity(fingerprint=persisted_fingerprint)
+    matcher = FakeKoreanMatcher(
+        fingerprint=active_fingerprint,
+        result=build_korean_match_result(
+            KoreanMatchStatus.MATCHED,
+            fingerprint=active_fingerprint,
+        ),
+    )
+
+    result = TextValidationService(korean_matcher=matcher).validate(
+        sentence=build_sentence(
+            text="저는 오늘 집에서 맛있는 밥을 먹었어요.",
+            target_language="ko",
+        ),
+        translation=build_translation(text="translation omitted"),
+        display_form="먹다",
+        lemma="먹다",
+        definitions_html="comer",
+        korean_identity=identity,
+        require_translation=False,
+    )
+
+    assert result.validation_status is ValidationStatus.FAILED
+    assert matcher.calls == []
+    morphology_detail = next(
+        flag.detail
+        for flag in result.validation_flags
+        if flag.code is ValidationFlagCode.MORPHOLOGY_MISMATCH
+    )
+    assert "fingerprint-mismatch" in morphology_detail
+    assert "0.23.1" not in morphology_detail
+    assert "0.23.2" not in morphology_detail
+
+
+@pytest.mark.parametrize("result_kind", ["untyped", "drifted"])
+def test_korean_only_typed_matched_result_with_equal_fingerprint_passes(
+    result_kind: str,
+) -> None:
+    fingerprint = build_korean_fingerprint()
+    identity = build_korean_identity(fingerprint=fingerprint)
+    if result_kind == "untyped":
+        match_result: object = SimpleNamespace(
+            status=KoreanMatchStatus.MATCHED,
+            analyzer_fingerprint=fingerprint,
+        )
+    else:
+        match_result = build_korean_match_result(
+            KoreanMatchStatus.MATCHED,
+            fingerprint=build_korean_fingerprint(analyzer_package_version="0.23.1"),
+        )
+    matcher = FakeKoreanMatcher(fingerprint=fingerprint, result=match_result)
+
+    result = TextValidationService(korean_matcher=matcher).validate(
+        sentence=build_sentence(
+            text="저는 오늘 집에서 맛있는 밥을 먹었어요.",
+            target_language="ko",
+        ),
+        translation=build_translation(text="translation omitted"),
+        display_form="먹다",
+        lemma="먹다",
+        definitions_html="comer",
+        korean_identity=identity,
+        require_translation=False,
+    )
+
+    assert result.validation_status is ValidationStatus.FAILED
+    assert ValidationFlagCode.MORPHOLOGY_MISMATCH in {
+        flag.code for flag in result.validation_flags
+    }
+
+
+def test_korean_language_check_accepts_modern_hangul_without_generic_identifier() -> None:
+    assert (
+        detect_language_mismatch(
+            "저는 오늘 집에서 밥을 먹었어요.",
+            expected_language="ko",
+            language_identifier=ForbiddenLanguageIdentifier(),
+        )
+        is None
+    )
+
+
+@pytest.mark.parametrize(
+    "unsafe_text",
+    [
+        "학교ㄱ",
+        "Friends eat lunch together.",
+        "私は学校で昼ご飯を食べます。",
+        "我每天在学校吃午饭。",
+    ],
+)
+def test_korean_language_check_rejects_forbidden_or_non_korean_text_without_echo(
+    unsafe_text: str,
+) -> None:
+    detail = detect_language_mismatch(
+        unsafe_text,
+        expected_language="ko",
+        language_identifier=ForbiddenLanguageIdentifier(),
+    )
+
+    assert detail is not None
+    assert unsafe_text not in detail

@@ -44,6 +44,7 @@ from multilang.services.generate_job import GenerateJobService
 from multilang.services.generate_audio_items import GenerateAudioItemsService
 from multilang.services.generate_text_items import GenerateTextItemsService, GenerateTextProgress
 from multilang.services.ingest_lexical_items import IngestLexicalItemsService
+from multilang.services.korean_morphology import KiwiKoreanMorphologyService
 from multilang.services.lexical_lookup import LexicalLookup
 from multilang.services.lexical_grounding import LexicalGroundingService
 from multilang.services.rate_limit import RateLimiter
@@ -99,6 +100,7 @@ _LANGUAGE_NAMES = {
     SupportedLanguage.LA: "Latin",
     SupportedLanguage.JA: "Japanese",
     SupportedLanguage.ZH: "Mandarin Chinese",
+    SupportedLanguage.KO: "Korean",
 }
 
 
@@ -522,6 +524,7 @@ def build_runtime_service(
     settings: Settings | None = None,
     *,
     audio_adapter: AudioSynthesisAdapter | None = None,
+    korean_morphology_service: KiwiKoreanMorphologyService | None = None,
 ) -> IngestLexicalItemsService:
     """Construct the repository-backed orchestration service from runtime settings."""
 
@@ -567,7 +570,14 @@ def build_runtime_service(
             )
         except Exception:
             latin_card_service = None
-    text_validation_service = TextValidationService()
+    korean_morphology = (
+        korean_morphology_service
+        if korean_morphology_service is not None
+        else KiwiKoreanMorphologyService()
+    )
+    text_validation_service = TextValidationService(
+        korean_matcher=korean_morphology
+    )
     tatoeba_sentence_source = TatoebaSentenceSource(
         candidate_provider=(
             TatoebaApiCandidateProvider()
@@ -591,6 +601,7 @@ def build_runtime_service(
             pronunciation_generator=_build_pronunciation_adapter(runtime_settings),
             definition_generator=sentence_adapter,
             allow_frequency_seed_fallback=True,
+            korean_morphology=korean_morphology,
         ),
         text_repository=text_repository,
         audio_repository=audio_repository,

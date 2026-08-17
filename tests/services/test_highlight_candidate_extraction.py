@@ -1,12 +1,19 @@
 from __future__ import annotations
 
 import hashlib
+import unicodedata
 
 import pytest
 
 from multilang.domain.highlights import HighlightImportManifest, HighlightProvenance, NormalizedHighlight
 from multilang.domain.jobs import SupportedLanguage
+from multilang.domain.korean import (
+    KoreanAnalyzerFingerprint,
+    KoreanLexicalIdentity,
+    KoreanSignatureItem,
+)
 from multilang.services.highlight_candidate_extraction import extract_highlight_candidates
+from multilang.services.lexical_grounding import KoreanResolvedLexeme
 
 
 LANGUAGE_EXAMPLES = {
@@ -58,6 +65,8 @@ def test_extract_highlight_candidates_supports_every_language(language: Supporte
 
     assert result.candidates
     assert all(candidate.first_source_index == 0 for candidate in result.candidates)
+    assert "errors" not in result.model_dump()
+    assert all("korean_identity" not in candidate.model_dump() for candidate in result.candidates)
 
 
 def test_extract_highlight_candidates_deduplicates_with_first_seen_provenance() -> None:
@@ -167,3 +176,242 @@ def test_same_lemma_in_different_source_content_has_distinct_item_keys() -> None
     assert len(jardin_candidates) == 2
     assert len({candidate.source_content_hash for candidate in jardin_candidates}) == 2
     assert len({candidate.item_key for candidate in jardin_candidates}) == 2
+
+
+def _korean_fingerprint() -> KoreanAnalyzerFingerprint:
+    return KoreanAnalyzerFingerprint(
+        analyzer_name="kiwi",
+        analyzer_package_version="0.23.2",
+        model_package_version="0.23.0",
+        model_type="cong",
+        enabled_dialects="standard",
+        num_workers=1,
+        integrate_allomorph=True,
+        top_n=2,
+        split_complex=False,
+        compatible_jamo=False,
+        normalize_coda=False,
+        z_coda=False,
+        typos=None,
+        oov_handling="chr",
+        policy_version="kiwi-top2-consensus-v1",
+    )
+
+
+def _resolved_lexeme(
+    *,
+    surface_form: str,
+    lemma: str,
+    part_of_speech: str,
+    sense_id: str,
+    signature: tuple[tuple[str, str], ...],
+    word_position: int,
+) -> KoreanResolvedLexeme:
+    return KoreanResolvedLexeme(
+        surface_form=surface_form,
+        word_position=word_position,
+        identity=KoreanLexicalIdentity(
+            submitted_form=None,
+            canonical_nfc=surface_form,
+            lemma=lemma,
+            part_of_speech=part_of_speech,
+            sense_id=sense_id,
+            register="standard",
+            morpheme_signature=tuple(
+                KoreanSignatureItem(form=form, pos=pos)
+                for form, pos in signature
+            ),
+            analyzer_fingerprint=_korean_fingerprint(),
+            status="resolved",
+        ),
+    )
+
+
+class _KoreanHighlightResolver:
+    def __init__(
+        self,
+        mapping: dict[str, tuple[KoreanResolvedLexeme, ...]],
+    ) -> None:
+        self.mapping = mapping
+        self.calls: list[str] = []
+
+    def resolve_korean_highlight_text(
+        self,
+        text: str,
+    ) -> tuple[KoreanResolvedLexeme, ...]:
+        self.calls.append(text)
+        return self.mapping.get(text, ())
+
+
+class _FailingKoreanHighlightResolver:
+    def resolve_korean_highlight_text(
+        self,
+        text: str,
+    ) -> tuple[KoreanResolvedLexeme, ...]:
+        raise RuntimeError(
+            "C:/private/reader/Secret Book.txt raw excerpt vendor token traceback prompt"
+        )
+
+
+def test_korean_extraction_retains_one_syllable_particle_and_compound_identities() -> None:
+    text = "물은 학교에서 공부해요"
+    resolver = _KoreanHighlightResolver(
+        {
+            text: (
+                _resolved_lexeme(
+                    surface_form="물은",
+                    lemma="물",
+                    part_of_speech="NNG",
+                    sense_id="fixture:water:1",
+                    signature=(("물", "NNG"),),
+                    word_position=0,
+                ),
+                _resolved_lexeme(
+                    surface_form="학교에서",
+                    lemma="학교",
+                    part_of_speech="NNG",
+                    sense_id="fixture:school:1",
+                    signature=(("학교", "NNG"),),
+                    word_position=1,
+                ),
+                _resolved_lexeme(
+                    surface_form="공부해요",
+                    lemma="공부하다",
+                    part_of_speech="VV",
+                    sense_id="fixture:study:1",
+                    signature=(("공부", "NNG"), ("하", "XSV")),
+                    word_position=2,
+                ),
+            )
+        }
+    )
+
+    result = extract_highlight_candidates(
+        [_highlight(text, 4)],
+        language=SupportedLanguage.KO,
+        korean_resolver=resolver,
+    )
+
+    assert [candidate.display_form for candidate in result.candidates] == [
+        "물",
+        "학교",
+        "공부하다",
+    ]
+    assert [candidate.korean_identity.sense_id for candidate in result.candidates] == [
+        "fixture:water:1",
+        "fixture:school:1",
+        "fixture:study:1",
+    ]
+    assert tuple(
+        (item.form, item.pos)
+        for item in result.candidates[-1].korean_identity.morpheme_signature
+    ) == (("공부", "NNG"), ("하", "XSV"))
+    assert resolver.calls == [text]
+    assert result.errors == []
+
+
+def test_korean_extraction_deduplicates_full_identity_and_keeps_homographs_distinct() -> None:
+    text = "말 말 말"
+    noun = _resolved_lexeme(
+        surface_form="말",
+        lemma="말",
+        part_of_speech="NNG",
+        sense_id="fixture:speech:1",
+        signature=(("말", "NNG"),),
+        word_position=0,
+    )
+    predicate = _resolved_lexeme(
+        surface_form="말",
+        lemma="말",
+        part_of_speech="VV",
+        sense_id="fixture:say:1",
+        signature=(("말", "VV"),),
+        word_position=1,
+    )
+    noun_again = noun.model_copy(update={"word_position": 2})
+    resolver = _KoreanHighlightResolver({text: (noun, predicate, noun_again)})
+
+    result = extract_highlight_candidates(
+        [_highlight(text, 3)],
+        language=SupportedLanguage.KO,
+        korean_resolver=resolver,
+    )
+
+    assert len(result.candidates) == 2
+    assert [candidate.korean_identity.part_of_speech for candidate in result.candidates] == [
+        "NNG",
+        "VV",
+    ]
+    assert [candidate.korean_identity.sense_id for candidate in result.candidates] == [
+        "fixture:speech:1",
+        "fixture:say:1",
+    ]
+    assert result.candidates[0].occurrence_count == 2
+    assert result.candidates[1].occurrence_count == 1
+    assert result.duplicate_count == 1
+    assert len({candidate.item_key for candidate in result.candidates}) == 2
+
+
+def test_korean_extraction_nfc_nfd_forms_share_identity_hash_payload() -> None:
+    nfc = "학교에서"
+    nfd = unicodedata.normalize("NFD", nfc)
+    lexeme = _resolved_lexeme(
+        surface_form=nfc,
+        lemma="학교",
+        part_of_speech="NNG",
+        sense_id="fixture:school:1",
+        signature=(("학교", "NNG"),),
+        word_position=0,
+    )
+    resolver = _KoreanHighlightResolver({nfc: (lexeme,), nfd: (lexeme,)})
+
+    nfc_result = extract_highlight_candidates(
+        [_highlight(nfc, 0)],
+        language=SupportedLanguage.KO,
+        korean_resolver=resolver,
+    )
+    nfd_result = extract_highlight_candidates(
+        [_highlight(nfd, 0)],
+        language=SupportedLanguage.KO,
+        korean_resolver=resolver,
+    )
+
+    nfc_candidate = nfc_result.candidates[0]
+    nfd_candidate = nfd_result.candidates[0]
+    assert nfc_candidate.korean_identity == nfd_candidate.korean_identity
+    assert nfc_candidate.lemma_key == nfd_candidate.lemma_key
+    assert nfc_candidate.item_key.rsplit("-", 1)[1] == nfd_candidate.item_key.rsplit("-", 1)[1]
+    assert nfd not in nfd_candidate.model_dump_json()
+
+
+@pytest.mark.parametrize(
+    ("resolver", "reason_code"),
+    [
+        (None, "korean_resolver_required"),
+        (_KoreanHighlightResolver({}), "korean_resolution_failed"),
+        (_FailingKoreanHighlightResolver(), "korean_resolution_unavailable"),
+    ],
+)
+def test_korean_extraction_failures_are_controlled_and_never_fall_through(
+    resolver: object,
+    reason_code: str,
+) -> None:
+    private_text = "비밀 원문 prompt instruction"
+    private_path = "C:/private/reader/Secret Book.txt"
+    highlight = _highlight_with_path(private_text, 8, private_path)
+
+    result = extract_highlight_candidates(
+        [highlight],
+        language=SupportedLanguage.KO,
+        korean_resolver=resolver,
+    )
+    serialized = result.model_dump_json()
+
+    assert result.candidates == []
+    assert [error.reason_code for error in result.errors] == [reason_code]
+    assert result.errors[0].source_index == 8
+    assert private_text not in serialized
+    assert private_path not in serialized
+    assert "vendor token" not in serialized
+    assert "traceback" not in serialized
+    assert "prompt instruction" not in serialized

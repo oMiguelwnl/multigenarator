@@ -17,7 +17,8 @@ from multilang.settings import Settings
 def test_voice_registry_resolves_supported_languages() -> None:
     registry = get_voice_registry()
 
-    assert set(registry) == set(SupportedLanguage)
+    assert SupportedLanguage.KO not in registry
+    assert set(registry) == set(SupportedLanguage) - {SupportedLanguage.KO}
 
     for language in registry:
         selection = select_voice(language)
@@ -26,6 +27,13 @@ def test_voice_registry_resolves_supported_languages() -> None:
         assert selection.locale
         assert selection.registry_version == VOICE_REGISTRY_VERSION
         assert selection.fallback_used is False
+
+
+def test_voice_registry_rejects_korean_without_an_approved_voice() -> None:
+    with pytest.raises(VoiceSelectionError) as exc_info:
+        select_voice(SupportedLanguage.KO)
+
+    assert str(exc_info.value) == "No approved Azure voice available for language ko"
 
 
 def test_voice_registry_uses_deterministic_fallback_order() -> None:

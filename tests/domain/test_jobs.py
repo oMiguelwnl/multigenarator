@@ -37,6 +37,7 @@ def test_supported_languages() -> None:
         "la",
         "ja",
         "zh",
+        "ko",
     }
 
     request = GenerationRequest(language="pt", source_type="frequency", level=1)
@@ -108,6 +109,21 @@ def test_generation_request_accepts_canonical_mandarin_code(source_type: str) ->
 def test_generation_request_rejects_mandarin_locale_as_language_identity() -> None:
     with pytest.raises(ValidationError):
         GenerationRequest(language="zh-CN", source_type="frequency")
+
+
+@pytest.mark.parametrize(
+    "source_type",
+    ["frequency", "word-list", "kindle-highlights"],
+)
+def test_generation_request_accepts_canonical_korean_code(source_type: str) -> None:
+    request = GenerationRequest(language="ko", source_type=source_type)
+
+    assert request.language is SupportedLanguage.KO
+
+
+def test_generation_request_rejects_korean_locale_as_language_identity() -> None:
+    with pytest.raises(ValidationError):
+        GenerationRequest(language="ko-KR", source_type="frequency")
 
 
 def test_generation_request_accepts_latin_mvp_source_for_shared_infrastructure() -> None:

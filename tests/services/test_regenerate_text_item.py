@@ -3,8 +3,19 @@
 from __future__ import annotations
 
 from dataclasses import dataclass, field
+from types import SimpleNamespace
+
+import pytest
 
 from multilang.domain.jobs import JobStage, SupportedLanguage
+from multilang.domain.korean import (
+    KoreanAnalyzerFingerprint,
+    KoreanLexicalIdentity,
+    KoreanMatchResult,
+    KoreanMatchStatus,
+    KoreanReasonCode,
+    KoreanSignatureItem,
+)
 from multilang.domain.lexicon import DefinitionRecord, GroundingStatus, LexicalCardCandidate, LexicalProvenance
 from multilang.domain.text_quality import (
     ConfidenceLabel,
@@ -17,8 +28,9 @@ from multilang.domain.text_quality import (
     ValidationStatus,
 )
 from multilang.services.regenerate_text_item import RegenerateTextItemService
+from multilang.services.language_identifier import LanguageDetectionResult
 from multilang.services.text_generation import GeneratedSentence, GeneratedTextBundle, GeneratedTranslation
-from multilang.services.text_validation import TextValidationResult
+from multilang.services.text_validation import TextValidationResult, TextValidationService
 
 
 def make_candidate(*, lemma: str = "wash", item_key: str = "line-1") -> LexicalCardCandidate:
@@ -39,18 +51,24 @@ def make_candidate(*, lemma: str = "wash", item_key: str = "line-1") -> LexicalC
     )
 
 
-def make_bundle(*, sentence: str, translation: str) -> GeneratedTextBundle:
+def make_bundle(
+    *,
+    sentence: str,
+    translation: str,
+    sentence_language: str = "en",
+    translation_language: str = "pt",
+) -> GeneratedTextBundle:
     return GeneratedTextBundle(
         sentence=GeneratedSentence(
             text=sentence,
-            target_language="en",
+            target_language=sentence_language,
             intended_sense="habit",
             uncertainty_notes=[],
             provenance=TextProvenance(source="generator", provider="fake-gen"),
         ),
         translation=GeneratedTranslation(
             text=translation,
-            target_language="pt",
+            target_language=translation_language,
             provenance=TextProvenance(source="translator", provider="fake-translate"),
         ),
     )
@@ -167,6 +185,119 @@ class FakeValidationService:
     def validate(self, **kwargs: object) -> TextValidationResult:
         self.calls.append(kwargs)
         return self.results.pop(0)
+
+
+@dataclass
+class RecordingValidationService:
+    delegate: TextValidationService
+    calls: list[dict[str, object]] = field(default_factory=list)
+
+    def validate(self, **kwargs: object) -> TextValidationResult:
+        self.calls.append(kwargs)
+        return self.delegate.validate(**kwargs)
+
+
+class ExpectedLanguageIdentifier:
+    def detect(self, value: str, *, expected_language: str | None = None) -> LanguageDetectionResult:
+        return LanguageDetectionResult(
+            detected_language=expected_language,
+            confidence=1.0,
+            reliable=True,
+            provider="deterministic-test-identifier",
+            detail="expected language",
+        )
+
+
+@dataclass
+class FakeKoreanMatcher:
+    fingerprint: KoreanAnalyzerFingerprint
+    status: KoreanMatchStatus
+    calls: list[tuple[str, KoreanLexicalIdentity]] = field(default_factory=list)
+
+    def match_target(
+        self,
+        sentence_text: str,
+        target: KoreanLexicalIdentity,
+    ) -> KoreanMatchResult:
+        self.calls.append((sentence_text, target))
+        reasons = {
+            KoreanMatchStatus.MATCHED: KoreanReasonCode.CONSENSUS_MATCH,
+            KoreanMatchStatus.AMBIGUOUS: KoreanReasonCode.ANALYSIS_DISAGREEMENT,
+            KoreanMatchStatus.UNAVAILABLE: KoreanReasonCode.ANALYZER_RUNTIME_ERROR,
+        }
+        alternatives = {
+            KoreanMatchStatus.MATCHED: (True, True),
+            KoreanMatchStatus.AMBIGUOUS: (True, False),
+        }.get(self.status, ())
+        return KoreanMatchResult(
+            status=self.status,
+            reason_code=reasons[self.status],
+            analyzer_fingerprint=self.fingerprint,
+            alternative_matches=alternatives,
+        )
+
+
+def make_korean_fingerprint(
+    *, analyzer_package_version: str = "0.23.2"
+) -> KoreanAnalyzerFingerprint:
+    return KoreanAnalyzerFingerprint(
+        analyzer_name="kiwi",
+        analyzer_package_version=analyzer_package_version,
+        model_package_version="0.23.0",
+        model_type="cong",
+        enabled_dialects="standard",
+        num_workers=1,
+        integrate_allomorph=True,
+        top_n=2,
+        split_complex=False,
+        compatible_jamo=False,
+        normalize_coda=False,
+        z_coda=False,
+        typos=None,
+        oov_handling="chr",
+        policy_version="kiwi-top2-consensus-v1",
+    )
+
+
+def make_korean_identity(
+    *, fingerprint: KoreanAnalyzerFingerprint,
+) -> KoreanLexicalIdentity:
+    return KoreanLexicalIdentity(
+        submitted_form="먹다",
+        canonical_nfc="먹다",
+        lemma="먹다",
+        part_of_speech="VV",
+        sense_id="reviewed:eat:1",
+        register="standard",
+        morpheme_signature=(KoreanSignatureItem(form="먹", pos="VV"),),
+        analyzer_fingerprint=fingerprint,
+        status="resolved",
+    )
+
+
+def make_persisted_korean_candidate(
+    identity: KoreanLexicalIdentity,
+) -> SimpleNamespace:
+    return SimpleNamespace(
+        id="lex-ko-1",
+        item_key="ko:eat:1",
+        source_type="word-list",
+        submitted_form="먹다",
+        display_form="먹다",
+        lemma=identity.lemma,
+        lemma_key=identity.lexical_key,
+        frequency_rank=None,
+        frequency_level=None,
+        definitions_html="comer",
+        definition_language="pt",
+        ipa=None,
+        translation_target_language="pt",
+        grounding_status=GroundingStatus.GROUNDED.value,
+        warning_code=None,
+        warning_detail=None,
+        provenance={"source": "reviewed_test_fixture", "notes": []},
+        korean_identity=identity.model_dump(mode="json"),
+    )
 
 
 def test_regenerate_text_item_updates_only_requested_row() -> None:
@@ -362,3 +493,113 @@ def test_regenerate_text_item_flags_duplicate_sentence_against_other_cards() -> 
     assert regenerated.review_status is ReviewStatus.ACCEPTED
     assert validation.calls[0]["disallowed_sentence_texts"] == {"i wash the cup at home"}
     assert validation.calls[1]["disallowed_sentence_texts"] == {"i wash the cup at home"}
+
+
+@pytest.mark.parametrize("failure_kind", ["unavailable", "ambiguous", "drift"])
+def test_korean_regeneration_passes_persisted_identity_on_both_attempts_and_stays_review_required(
+    failure_kind: str,
+) -> None:
+    active_fingerprint = make_korean_fingerprint()
+    persisted_fingerprint = (
+        make_korean_fingerprint(analyzer_package_version="0.23.1")
+        if failure_kind == "drift"
+        else active_fingerprint
+    )
+    persisted_identity = make_korean_identity(fingerprint=persisted_fingerprint)
+    persisted_candidate = make_persisted_korean_candidate(persisted_identity)
+    existing_record = make_record(item_key=persisted_candidate.item_key)
+    lexical_repository = FakeLexicalRepository(
+        candidates={
+            ("job-1", persisted_candidate.item_key): persisted_candidate,
+        }
+    )
+    text_repository = FakeTextRepository(
+        records={("job-1", persisted_candidate.item_key): existing_record}
+    )
+    generation = FakeGenerationService(
+        bundles=[
+            make_bundle(
+                sentence="저는 오늘 집에서 맛있는 밥을 먹었어요.",
+                translation="Eu comi uma refeição deliciosa em casa hoje.",
+                sentence_language="ko",
+            ),
+            make_bundle(
+                sentence="오늘 저는 집에서 따뜻한 밥을 먹었어요.",
+                translation="Hoje eu comi uma refeição quente em casa.",
+                sentence_language="ko",
+            ),
+        ]
+    )
+    matcher = FakeKoreanMatcher(
+        fingerprint=active_fingerprint,
+        status={
+            "unavailable": KoreanMatchStatus.UNAVAILABLE,
+            "ambiguous": KoreanMatchStatus.AMBIGUOUS,
+            "drift": KoreanMatchStatus.MATCHED,
+        }[failure_kind],
+    )
+    validation = RecordingValidationService(
+        TextValidationService(
+            language_identifier=ExpectedLanguageIdentifier(),
+            korean_matcher=matcher,
+        )
+    )
+    job_repository = FakeJobRepository()
+    service = RegenerateTextItemService(
+        job_repository=job_repository,
+        lexical_repository=lexical_repository,
+        text_repository=text_repository,
+        text_generation_service=generation,
+        text_validation_service=validation,
+    )
+
+    regenerated = service.execute(
+        job_id="job-1",
+        item_key=persisted_candidate.item_key,
+        deck_language=SupportedLanguage.KO,
+    )
+
+    assert len(generation.calls) == 2
+    restored_candidate = generation.calls[0][0]
+    restored_identity = restored_candidate.korean_identity
+    assert isinstance(restored_identity, KoreanLexicalIdentity)
+    assert restored_identity == persisted_identity
+    assert restored_identity.model_dump(mode="json") == persisted_candidate.korean_identity
+    assert all(call[0] is restored_candidate for call in generation.calls)
+    assert [call[0].korean_identity for call in generation.calls] == [
+        restored_identity,
+        restored_identity,
+    ]
+    assert len(validation.calls) == 2
+    assert all(call["korean_identity"] is restored_identity for call in validation.calls)
+    if failure_kind == "drift":
+        assert matcher.calls == []
+    else:
+        assert [target for _sentence, target in matcher.calls] == [
+            restored_identity,
+            restored_identity,
+        ]
+
+    assert regenerated.job_id == existing_record.job_id
+    assert regenerated.item_key == existing_record.item_key
+    assert regenerated.lexical_candidate_id == existing_record.lexical_candidate_id
+    assert regenerated.generation_status is TextGenerationStatus.REPAIRED
+    assert regenerated.review_status is ReviewStatus.REVIEW_REQUIRED
+    assert regenerated.validation_status is ValidationStatus.FAILED
+    assert regenerated.repair_attempt_count == 1
+    assert regenerated.review_reason == ValidationFlagCode.MORPHOLOGY_MISMATCH.value
+    morphology_flags = [
+        flag
+        for flag in regenerated.validation_flags
+        if flag.code is ValidationFlagCode.MORPHOLOGY_MISMATCH
+    ]
+    assert len(morphology_flags) == 1
+    expected_status = "fingerprint-mismatch" if failure_kind == "drift" else failure_kind
+    assert expected_status in morphology_flags[0].detail
+    assert persisted_identity.lemma not in morphology_flags[0].detail
+    assert persisted_identity.sense_id not in morphology_flags[0].detail
+    assert regenerated.example_sentence not in morphology_flags[0].detail
+    assert len(text_repository.upserted) == 1
+    assert job_repository.successes == [
+        ("job-1", persisted_candidate.item_key, JobStage.GENERATE_TEXT)
+    ]

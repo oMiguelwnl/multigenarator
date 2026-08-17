@@ -2,10 +2,16 @@
 
 from pathlib import Path
 
+from pydantic import ValidationError
+import pytest
+
+import multilang.settings as settings_module
 from multilang.settings import Settings
 
 
-def test_default_supported_languages_include_japanese(settings: Settings) -> None:
+def test_default_supported_languages_preserve_existing_values_and_add_korean_once(
+    settings: Settings,
+) -> None:
     assert settings.supported_languages == [
         "pt",
         "es",
@@ -29,7 +35,30 @@ def test_default_supported_languages_include_japanese(settings: Settings) -> Non
         "la",
         "ja",
         "zh",
+        "ko",
     ]
+    assert settings.supported_languages.count("ko") == 1
+
+
+def test_settings_accept_canonical_korean_and_reject_provider_locale() -> None:
+    settings = Settings(_env_file=None, supported_languages=["ko"])
+
+    assert settings.supported_languages == ["ko"]
+
+    with pytest.raises(ValidationError):
+        Settings(_env_file=None, supported_languages=["ko-KR"])
+
+
+def test_approved_frequency_assets_remain_separate_from_selectable_languages() -> None:
+    approved_languages = getattr(
+        settings_module,
+        "APPROVED_FREQUENCY_ASSET_LANGUAGES",
+        None,
+    )
+
+    assert approved_languages is not None
+    assert approved_languages == tuple(settings_module.DEFAULT_SUPPORTED_LANGUAGES[:-1])
+    assert "ko" not in approved_languages
 
 
 def test_default_retry_attempts(settings: Settings) -> None:

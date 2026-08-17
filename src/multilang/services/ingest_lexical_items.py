@@ -92,7 +92,15 @@ class IngestLexicalItemsService:
             raise ValueError("kindle-highlights requests require a highlight import repository")
 
         parsed = parse_kindle_highlight_export(request.input_file)
-        extraction = extract_highlight_candidates(parsed.highlights, language=request.language)
+        extraction = extract_highlight_candidates(
+            parsed.highlights,
+            language=request.language,
+            korean_resolver=(
+                self.grounding_service
+                if request.language is SupportedLanguage.KO
+                else None
+            ),
+        )
         candidates_by_key = {candidate.item_key: candidate for candidate in extraction.candidates}
         candidate_keys = [candidate.item_key for candidate in extraction.candidates]
         import_content_hash = sha256(
@@ -117,6 +125,7 @@ class IngestLexicalItemsService:
                 rejected_highlights=len(parsed.rejected),
                 extracted_candidates=len(extraction.candidates),
                 duplicate_candidates=extraction.duplicate_count,
+                blocked_candidates=len(extraction.errors),
             )
 
         self.highlight_import_repo.upsert_import_records(
@@ -124,23 +133,26 @@ class IngestLexicalItemsService:
             import_content_hash,
             parsed.highlights,
         )
+        manifest_counts = {
+            "imported_highlights": len(parsed.highlights),
+            "rejected_highlights": len(parsed.rejected),
+            "extracted_candidates": len(extraction.candidates),
+            "duplicate_candidates": extraction.duplicate_count,
+        }
+        if request.language is SupportedLanguage.KO:
+            manifest_counts["resolution_errors"] = len(extraction.errors)
         self.highlight_import_repo.upsert_import_manifest(
             orchestration.job_id,
             HighlightImportManifest(
                 import_content_hash=import_content_hash,
                 candidate_keys=candidate_keys,
-                counts={
-                    "imported_highlights": len(parsed.highlights),
-                    "rejected_highlights": len(parsed.rejected),
-                    "extracted_candidates": len(extraction.candidates),
-                    "duplicate_candidates": extraction.duplicate_count,
-                },
+                counts=manifest_counts,
             ),
         )
 
         candidate_rows: list[tuple[str, str, LexicalCardCandidate]] = []
         grounded_item_keys: list[str] = []
-        blocked_candidates = 0
+        blocked_candidates = len(extraction.errors)
         for item_key in orchestration.pending_item_keys:
             highlight_candidate = candidates_by_key[item_key]
             grounded = self.grounding_service.ground_highlight_candidate(

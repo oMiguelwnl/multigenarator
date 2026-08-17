@@ -156,7 +156,11 @@ def select_voice(
     *,
     available_voice_ids: set[str] | None = None,
 ) -> VoiceSelection:
-    plan = _VOICE_REGISTRY[language]
+    plan = _VOICE_REGISTRY.get(language)
+    if plan is None:
+        raise VoiceSelectionError(
+            f"No approved Azure voice available for language {language.value}"
+        )
     for index, candidate in enumerate(plan.ordered_candidates()):
         if available_voice_ids is not None and candidate.voice_id not in available_voice_ids:
             continue

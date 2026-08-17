@@ -74,6 +74,35 @@ HIGHLIGHT_TEMPLATE = """
 ```
 """
 
+HANGUL_FIELD_NAMES = (
+    "SortIndex",
+    "Category",
+    "JamoOrBlock",
+    "ReadingOrName",
+    "Sound",
+    "Mnemonic",
+    "Picture",
+    "Strokes",
+    "Gif",
+    "Audio",
+    "TargetConceptId",
+    "PrerequisiteConceptIds",
+    "ObservedConceptIds",
+    "UnknownConceptIds",
+    "IPlusOnePolicy",
+)
+
+_HANGUL_TEMPLATE_PATH = (
+    Path(__file__).parents[2] / "src" / "multilang" / "templates" / "korean_hangul_card.md"
+)
+_MARKDOWN_TEMPLATE_SECTION_RE = re.compile(
+    r"## Front Template\s+```html\n(?P<front>.*?)```.*?"
+    r"## Back Template\s+```html\n(?P<back>.*?)```.*?"
+    r"## Styling \(CSS\)\s+```css\n(?P<css>.*?)```",
+    re.DOTALL,
+)
+_MUSTACHE_REFERENCE_RE = re.compile(r"{{\s*[#/^]?(?P<name>[^{}]+?)\s*}}")
+
 
 def _balanced_div(markup: str, *, class_name: str) -> str:
     opening = re.search(
@@ -130,6 +159,29 @@ def _write_templates(root: Path) -> Path:
     (template_dir / "normal_card.md").write_text(NORMAL_TEMPLATE, encoding="utf-8")
     (template_dir / "highlight_card.md").write_text(HIGHLIGHT_TEMPLATE, encoding="utf-8")
     return template_dir
+
+
+def _load_hangul_template_contract() -> tuple[tuple[str, ...], str, str, str, str]:
+    content = _HANGUL_TEMPLATE_PATH.read_text(encoding="utf-8")
+    field_section = re.search(
+        r"## Fields\s+(?P<fields>.*?)\s+## Front Template",
+        content,
+        flags=re.DOTALL,
+    )
+    sections = _MARKDOWN_TEMPLATE_SECTION_RE.search(content)
+    assert field_section is not None
+    assert sections is not None
+    fields = tuple(
+        match.group("name").strip()
+        for match in re.finditer(r"^- (?P<name>.+)$", field_section.group("fields"), re.MULTILINE)
+    )
+    return (
+        fields,
+        sections.group("front").strip(),
+        sections.group("back").strip(),
+        sections.group("css").strip(),
+        content,
+    )
 
 
 def test_load_card_template_keeps_normal_template_and_translation_field(
@@ -561,6 +613,123 @@ def test_generated_kana_model_keeps_media_sequence_and_dark_palette() -> None:
     assert _last_css_value(model.css, "--kana-color-nightMode-page") == "#0b0716"
     assert _last_css_value(model.css, "--kana-color-nightMode-card") == "#171226"
     assert "border-top: 4px solid var(--kana-color-accent);" in model.css
+
+
+def test_hangul_template_declares_exact_fields_and_allowlisted_references() -> None:
+    fields, front, back, _css, _content = _load_hangul_template_contract()
+    evidence_fields = {
+        "TargetConceptId",
+        "PrerequisiteConceptIds",
+        "ObservedConceptIds",
+        "UnknownConceptIds",
+        "IPlusOnePolicy",
+    }
+
+    assert fields == HANGUL_FIELD_NAMES
+    references = [
+        match.group("name").strip().rsplit(":", 1)[-1].strip()
+        for match in _MUSTACHE_REFERENCE_RE.finditer(f"{front}\n{back}")
+    ]
+    assert set(references) <= set(HANGUL_FIELD_NAMES)
+    assert evidence_fields.isdisjoint(references)
+    assert "SortIndex" not in references
+
+
+def test_hangul_template_uses_korean_classes_and_safe_reveal_sequence() -> None:
+    _fields, front, back, _css, _content = _load_hangul_template_contract()
+
+    assert 'class="hangulCard hangulCard--front"' in front
+    assert 'class="hangulCategory"' in front
+    assert 'class="hangulGlyph koFont"' in front
+    assert front.index("{{Category}}") < front.index("{{JamoOrBlock}}")
+    assert "Lembre a leitura ou o nome" in front
+
+    assert 'class="hangulCard hangulCard--back"' in back
+    ordered_anchors = (
+        "{{Category}}",
+        "{{JamoOrBlock}}",
+        "{{#Gif}}",
+        'class="hangulDivider"',
+        "{{#ReadingOrName}}",
+        "{{#Sound}}",
+        "{{#Audio}}",
+        "{{#Picture}}",
+        "{{#Strokes}}",
+        "{{#Mnemonic}}",
+    )
+    positions = [back.index(anchor) for anchor in ordered_anchors]
+    assert positions == sorted(positions)
+    for field in ("Gif", "Audio", "Picture", "Strokes"):
+        assert f"{{{{#{field}}}}}" in back
+        assert f"{{{{{field}}}}}" in back
+        assert f"{{{{/{field}}}}}" in back
+    for field in ("ReadingOrName", "Sound", "Mnemonic"):
+        assert f"{{{{#{field}}}}}" in back
+        assert f"{{{{{field}}}}}" in back
+        assert f"{{{{/{field}}}}}" in back
+    for label in ("Leitura ou nome", "Som", "Mnemônico"):
+        assert label in back
+
+
+def test_hangul_template_has_korean_fonts_dark_canvas_and_bounded_media() -> None:
+    _fields, _front, _back, css, _content = _load_hangul_template_contract()
+
+    for font in (
+        '"Noto Sans KR"',
+        '"Apple SD Gothic Neo"',
+        '"Malgun Gothic"',
+        '"맑은 고딕"',
+        '"Segoe UI"',
+        "sans-serif",
+    ):
+        assert font in css
+    assert ".koFont" in css
+    assert ".hangulCard" in css
+    assert "--hangul-color-page: #0b0716;" in css
+    assert "--hangul-color-card: #171226;" in css
+    for selector in ("body", "body.card", "body.nightMode", ".card"):
+        assert _last_css_value(css, "background", selector=selector) == (
+            "var(--hangul-color-page)"
+        )
+    for media_class in (".hangulAnimation img", ".hangulPicture img", ".hangulStrokes img"):
+        assert media_class in css
+    assert "max-width: 100%;" in css
+    assert "max-height: 320px;" in css
+    assert "height: auto;" in css
+    assert "object-fit: contain;" in css
+    assert "@media (max-width: 480px)" in css
+    assert _last_css_value(css, "background", selector=".replay-button") == (
+        "transparent !important"
+    )
+    assert _last_css_value(css, "background-color", selector=".replay-button") == (
+        "transparent !important"
+    )
+    assert _last_css_value(css, "border", selector=".replay-button") == "0 !important"
+    assert _last_css_value(css, "box-shadow", selector=".replay-button") == "none !important"
+
+
+def test_hangul_template_has_no_japanese_identity_or_executable_markup() -> None:
+    _fields, front, back, css, content = _load_hangul_template_contract()
+    normalized = content.casefold()
+
+    for forbidden in (
+        "japanese",
+        "kana",
+        "romaji",
+        "hiragana",
+        "katakana",
+        "jpfont",
+        "yu mincho",
+        "yumincho",
+        "hiragino",
+        "noto sans jp",
+        "noto serif jp",
+    ):
+        assert forbidden not in normalized
+    assert "<script" not in f"{front}\n{back}".casefold()
+    assert re.search(r"\son[a-z]+\s*=", f"{front}\n{back}", flags=re.IGNORECASE) is None
+    assert "@import" not in css.casefold()
+    assert "url(" not in css.casefold()
 
 
 def test_dark_templates_set_dark_anki_canvas_background() -> None:

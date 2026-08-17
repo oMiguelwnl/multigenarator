@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from pathlib import Path
+import unicodedata
 
 import pytest
 
@@ -125,3 +126,25 @@ def test_parse_word_list_rejects_non_utf8_input(tmp_path: Path) -> None:
 
     with pytest.raises(ValueError, match="UTF-8"):
         parse_word_list(word_list)
+
+
+def test_parse_word_list_converges_nfd_and_nfc_without_losing_submitted_evidence(
+    tmp_path: Path,
+) -> None:
+    nfc = "학교"
+    nfd = unicodedata.normalize("NFD", nfc)
+    word_list = _write_text(
+        tmp_path / "korean-words.txt",
+        f"  {nfd}  \n{nfc}\n물\n",
+    )
+
+    result = parse_word_list(word_list)
+
+    assert [item.submitted_form for item in result.items] == [f"  {nfd}  ", "물"]
+    assert [item.display_form for item in result.items] == [nfc, "물"]
+    assert [item.item_key for item in result.items] == [nfc, "물"]
+    assert [item.line_number for item in result.items] == [1, 3]
+    assert [(warning.code, warning.line_number) for warning in result.warnings] == [
+        ("duplicate_item", 2),
+    ]
+    assert "line 1" in result.warnings[0].detail

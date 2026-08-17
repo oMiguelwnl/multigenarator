@@ -5,6 +5,7 @@ from __future__ import annotations
 from pathlib import Path
 import re
 import shlex
+import unicodedata
 
 from pydantic import BaseModel, Field
 
@@ -36,7 +37,8 @@ class ParsedWordList(BaseModel):
 def normalize_word_list_key(value: str) -> str:
     """Normalize submitted text into a stable dedupe key."""
 
-    return " ".join(value.split()).casefold()
+    canonical = unicodedata.normalize("NFC", value)
+    return " ".join(canonical.split()).casefold()
 
 
 _MARKDOWN_LIST_PREFIX_RE = re.compile(r"^\s*(?:[-*+]\s+|\d+[.)]\s+)")
@@ -175,7 +177,7 @@ def parse_word_list(path: str | Path) -> ParsedWordList:
             continue
 
         for submitted_form in submitted_forms:
-            display_form = submitted_form.strip()
+            display_form = unicodedata.normalize("NFC", submitted_form.strip())
             item_key = normalize_word_list_key(display_form)
             if item_key in first_line_by_key:
                 warnings.append(

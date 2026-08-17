@@ -9,6 +9,7 @@ from time import monotonic
 from typing import Any, Protocol
 
 from multilang.domain.jobs import JobStage, SupportedLanguage
+from multilang.domain.korean import KoreanLexicalIdentity
 from multilang.domain.lexicon import GroundingStatus, LexicalCardCandidate, LexicalProvenance
 from multilang.domain.source_profiles import get_source_profile
 from multilang.security.redaction import redact_sensitive_text
@@ -322,6 +323,7 @@ class GenerateTextItemsService:
             require_translation=require_translation,
             min_sentence_tokens=source_profile.min_sentence_tokens,
             max_sentence_tokens=source_profile.max_sentence_tokens,
+            korean_identity=candidate.korean_identity,
         )
         return _gate_local_templates(
             validation=validation,
@@ -422,6 +424,9 @@ class GenerateTextItemsService:
         highlight_context: str | None = None,
         rate_limiter: RateLimiter | None = None,
     ) -> tuple[GeneratedTextBundle, TextValidationResult]:
+        if deck_language is SupportedLanguage.KO:
+            return generated_bundle, validation
+
         fallback_sentence = self.tatoeba_sentence_source.select_sentence(
             display_form=candidate.display_form,
             lemma=candidate.lemma,
@@ -466,6 +471,16 @@ class GenerateTextItemsService:
         if hasattr(persisted_candidate, "candidate"):
             return getattr(persisted_candidate, "candidate")
 
+        persisted_korean_identity = getattr(
+            persisted_candidate,
+            "korean_identity",
+            None,
+        )
+        korean_identity = (
+            KoreanLexicalIdentity.model_validate(persisted_korean_identity)
+            if persisted_korean_identity is not None
+            else None
+        )
         return LexicalCardCandidate(
             submitted_form=getattr(persisted_candidate, "submitted_form"),
             display_form=getattr(persisted_candidate, "display_form"),
@@ -481,6 +496,7 @@ class GenerateTextItemsService:
             warning_code=getattr(persisted_candidate, "warning_code"),
             warning_detail=getattr(persisted_candidate, "warning_detail"),
             provenance=LexicalProvenance.model_validate(getattr(persisted_candidate, "provenance")),
+            korean_identity=korean_identity,
         )
 
     @staticmethod
