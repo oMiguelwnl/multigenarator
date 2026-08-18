@@ -254,18 +254,19 @@ def test_project_normal_template_css_keeps_sentence_audio_beside_text_responsive
     template = load_card_template(source_type="frequency")
 
     assert ".exampleSentenceLine" in template.css
-    assert "display: flex;" in template.css
-    assert "align-items: center;" in template.css
-    assert "gap:" in template.css
+    assert "display: grid;" in template.css
+    assert "grid-template-columns: minmax(0, 1fr) 32px;" in template.css
+    assert "gap: 10px;" in template.css
     assert ".exampleSentenceText" in template.css
     assert "flex: 1 1 auto;" in template.css
     assert "min-width: 0;" in template.css
     assert ".sentenceAudioButton" in template.css
-    assert "flex: 0 0 auto;" in template.css
-    assert "margin-left: 8px;" in template.css
+    assert "width: 32px;" in template.css
+    assert "min-width: 32px;" in template.css
+    assert "max-width: 32px;" in template.css
 
 
-def test_project_normal_template_preserves_contract_and_uses_gemini_dark_layout() -> None:
+def test_normal_frequency_template_uses_production_dark_layout_contract() -> None:
     template = load_card_template(source_type="frequency")
     references = re.findall(r"{{[#/]?([^{}]+)}}", template.front + template.back)
 
@@ -300,30 +301,37 @@ def test_project_normal_template_preserves_contract_and_uses_gemini_dark_layout(
     desktop_css = css.split("@media", maxsplit=1)[0]
     expected_declarations = {
         ".card": {
-            "display": "block",
-            "padding": "12px",
+            "display": "flex",
+            "justify-content": "center",
+            "align-items": "flex-start",
+            "padding": "16px 12px 12px",
             "min-height": "100vh",
             "overflow-x": "hidden",
+            "text-align": "left",
         },
         "#qa": {
             "width": "100%",
+            "max-width": "680px",
             "min-width": "0",
         },
         ".customCard": {
-            "margin": "0",
-            "max-width": "none",
+            "margin": "0 auto",
+            "max-width": "680px",
             "width": "100%",
             "min-height": "0",
-            "padding": "28px 24px",
+            "padding": "32px 40px",
             "overflow": "hidden",
+            "text-align": "left",
+            "direction": "ltr",
             "border": "1px solid var(--color-divider)",
             "border-radius": "8px",
             "box-shadow": "0 4px 20px rgba(0, 0, 0, 0.5)",
             "font-family": 'Georgia, Cambria, "Times New Roman", Times, serif',
         },
         ".targetWordContainer": {
+            "display": "grid",
+            "grid-template-columns": "minmax(0, 1fr) 32px",
             "align-items": "baseline",
-            "flex-wrap": "wrap",
             "gap": "10px",
             "margin": "0 0 20px",
         },
@@ -337,12 +345,19 @@ def test_project_normal_template_preserves_contract_and_uses_gemini_dark_layout(
             "font-weight": "600",
             "line-height": "1.1",
             "letter-spacing": "-0.5px",
+            "white-space": "normal",
+            "word-break": "normal",
         },
         ".ipa": {
             "font-size": "16px",
             "font-weight": "400",
             "color": "var(--color-text-muted)",
             "font-family": '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
+        },
+        ".wordAudioButtonBack": {
+            "width": "32px",
+            "min-width": "32px",
+            "max-width": "32px",
         },
         ".dividerLine": {
             "height": "1px",
@@ -360,6 +375,8 @@ def test_project_normal_template_preserves_contract_and_uses_gemini_dark_layout(
             "font-size": "16px",
             "line-height": "1.6",
             "padding-left": "0",
+            "white-space": "normal",
+            "word-break": "normal",
         },
         ".examplePanel": {
             "padding": "0",
@@ -368,16 +385,24 @@ def test_project_normal_template_preserves_contract_and_uses_gemini_dark_layout(
             "border": "0",
         },
         ".exampleSentenceLine": {
-            "justify-content": "space-between",
+            "display": "grid",
+            "grid-template-columns": "minmax(0, 1fr) 32px",
             "gap": "10px",
             "font-size": "16px",
             "line-height": "1.5",
+        },
+        ".sentenceAudioButton": {
+            "width": "32px",
+            "min-width": "32px",
+            "max-width": "32px",
         },
         ".sentenceTranslation": {
             "margin-top": "8px",
             "font-size": "16px",
             "line-height": "1.5",
             "color": "var(--color-text-muted)",
+            "white-space": "normal",
+            "word-break": "normal",
         },
         ".replay-button": {
             "background": "transparent",
@@ -389,13 +414,11 @@ def test_project_normal_template_preserves_contract_and_uses_gemini_dark_layout(
         for property_name, expected_value in declarations.items():
             assert _last_css_value(desktop_css, property_name, selector=selector) == expected_value
 
-    card_declarations = _last_css_block(desktop_css, selector=".card")
-    assert "justify-content" not in card_declarations
-    assert "align-items" not in card_declarations
-
     assert "border-top: 4px" not in css
     assert "border-left: 3px" not in css
     assert "#3b82f6" not in css.casefold()
+    assert "overflow-x: auto" not in css
+    assert "white-space: nowrap" not in css
 
     example_panel = _balanced_div(template.front, class_name="examplePanel")
     assert example_panel.index("{{Example Sentence}}") < example_panel.index("{{sentence_audio}}")
@@ -406,13 +429,14 @@ def test_project_normal_template_preserves_contract_and_uses_gemini_dark_layout(
     assert _last_css_value(desktop_css, "overflow-wrap", selector=".customCard") == "anywhere"
     assert _last_css_value(css, "box-sizing", selector="*") == "border-box"
 
-    mobile_css = _media_query_block(css, condition="max-width: 420px")
-    assert _last_css_value(mobile_css, "padding", selector=".card") == "8px"
+    mobile_css = _media_query_block(css, condition="max-width: 720px")
+    assert _last_css_value(mobile_css, "padding", selector=".card") == "16px 12px 12px"
+    assert _last_css_value(mobile_css, "width", selector=".customCard") == "calc(100vw - 24px)"
     assert "min-height" not in _last_css_block(mobile_css, selector=".customCard")
-    assert _last_css_value(mobile_css, "padding", selector=".customCard") == "22px 18px"
+    assert _last_css_value(mobile_css, "padding", selector=".customCard") == "24px 20px"
 
 
-def test_normal_and_mandarin_panels_use_full_width_natural_height_contract() -> None:
+def test_normal_and_mandarin_panels_use_approved_q054_width_contract() -> None:
     normal = load_card_template(source_type="frequency")
     mandarin_frequency = load_card_template(
         source_type="frequency", language=SupportedLanguage.ZH
@@ -436,45 +460,31 @@ def test_normal_and_mandarin_panels_use_full_width_natural_height_contract() -> 
     for template in (normal, mandarin_frequency, mandarin_word_list):
         css = template.css
         desktop_css = css.split("@media", maxsplit=1)[0]
-        assert _last_css_value(desktop_css, "display", selector=".card") == "block"
-        assert _last_css_value(desktop_css, "padding", selector=".card") == "12px"
+        assert _last_css_value(desktop_css, "display", selector=".card") == "flex"
+        assert _last_css_value(desktop_css, "justify-content", selector=".card") == "center"
+        assert _last_css_value(desktop_css, "align-items", selector=".card") == "flex-start"
+        assert _last_css_value(desktop_css, "padding", selector=".card") == "16px 12px 12px"
         assert _last_css_value(desktop_css, "min-height", selector=".card") == "100vh"
 
-        card_block = _last_css_block(desktop_css, selector=".card")
-        for property_name in ("justify-content", "align-items"):
-            assert (
-                re.search(
-                    rf"(?:^|[;\s]){re.escape(property_name)}\s*:",
-                    card_block,
-                )
-                is None
-            )
-
         assert _last_css_value(desktop_css, "width", selector="#qa") == "100%"
+        assert _last_css_value(desktop_css, "max-width", selector="#qa") == "680px"
         assert _last_css_value(desktop_css, "min-width", selector="#qa") == "0"
 
         custom_card_block = _last_css_block(desktop_css, selector=".customCard")
         assert _last_css_value(custom_card_block, "display") == "block"
-        assert _last_css_value(custom_card_block, "margin") == "0"
-        assert _last_css_value(custom_card_block, "max-width") == "none"
+        assert _last_css_value(custom_card_block, "margin") == "0 auto"
+        assert _last_css_value(custom_card_block, "max-width") == "680px"
         assert _last_css_value(custom_card_block, "width") == "100%"
-        for property_name in ("flex-direction", "justify-content", "align-items"):
-            assert (
-                re.search(
-                    rf"(?:^|[;\s]){re.escape(property_name)}\s*:",
-                    custom_card_block,
-                )
-                is None
-            )
         assert _last_css_value(custom_card_block, "min-height") == "0"
-        assert _last_css_value(custom_card_block, "padding") == "28px 24px"
+        assert _last_css_value(custom_card_block, "padding") == "32px 40px"
         assert re.search(r"(?:^|[;\s])height\s*:", custom_card_block) is None
         assert "100vh" not in custom_card_block
 
-        mobile_css = _media_query_block(css, condition="max-width: 420px")
-        assert _last_css_value(mobile_css, "padding", selector=".card") == "8px"
+        mobile_css = _media_query_block(css, condition="max-width: 720px")
+        assert _last_css_value(mobile_css, "padding", selector=".card") == "16px 12px 12px"
+        assert _last_css_value(mobile_css, "width", selector=".customCard") == "calc(100vw - 24px)"
         assert "min-height" not in _last_css_block(mobile_css, selector=".customCard")
-        assert _last_css_value(mobile_css, "padding", selector=".customCard") == "22px 18px"
+        assert _last_css_value(mobile_css, "padding", selector=".customCard") == "24px 20px"
 
     final_custom_card_block = next(
         match

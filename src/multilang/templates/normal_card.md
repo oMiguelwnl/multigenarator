@@ -68,7 +68,7 @@ Import these into your Anki note type under **Card Template → Front / Back / S
 
 ```css
 :root {
-  --max-width-card: none;
+  --max-width-card: 680px;
   --font-size-card: 18px;
   --font-size-targetWord: 38px;
   --font-size-header: 12px;
@@ -453,7 +453,7 @@ body {
   align-items: center;
 }
 
-/* Gemini ergonomic dark layout. These canonical declarations stay last so
+/* Approved Q054 dark layout. These canonical declarations stay last so
    generated Anki cards keep the same hierarchy in day and night modes. */
 body,
 body.nightMode,
@@ -462,7 +462,7 @@ body.nightMode,
   color: var(--color-text-primary);
   font-family: Georgia, Cambria, "Times New Roman", Times, serif;
   margin: 0;
-  padding: 12px;
+  padding: 16px 12px 12px;
   min-height: 100vh;
   box-sizing: border-box;
   overflow-x: hidden;
@@ -471,27 +471,33 @@ body.nightMode,
 }
 
 .card {
-  display: block;
-  padding: 12px;
+  display: flex;
+  justify-content: center;
+  align-items: flex-start;
+  padding: 16px 12px 12px;
   min-height: 100vh;
   overflow-x: hidden;
+  text-align: left;
 }
 
 #qa {
   width: 100%;
+  max-width: 680px;
   min-width: 0;
 }
 
 .customCard,
 .nightMode .customCard {
   display: block;
-  margin: 0;
-  max-width: none;
+  margin: 0 auto;
+  max-width: 680px;
   width: 100%;
   min-height: 0;
-  padding: 28px 24px;
+  padding: 32px 40px;
   overflow: hidden;
   overflow-wrap: anywhere;
+  text-align: left;
+  direction: ltr;
   background-color: var(--color-card-background);
   color: var(--color-text-primary);
   border: 1px solid var(--color-divider);
@@ -513,10 +519,10 @@ body.nightMode,
 }
 
 .targetWordContainer {
-  display: flex;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 32px;
   justify-content: flex-start;
   align-items: baseline;
-  flex-wrap: wrap;
   gap: 10px;
   margin: 0 0 20px;
   width: 100%;
@@ -540,6 +546,8 @@ body.nightMode,
   line-height: 1.1;
   letter-spacing: -0.5px;
   overflow-wrap: anywhere;
+  white-space: normal;
+  word-break: normal;
 }
 
 .ipa {
@@ -554,8 +562,12 @@ body.nightMode,
 }
 
 .wordAudioButtonBack {
-  flex: 0 0 auto;
-  margin: 0 0 0 4px;
+  display: block;
+  grid-column: 2;
+  width: 32px;
+  min-width: 32px;
+  max-width: 32px;
+  margin: 0;
   opacity: 0.8;
 }
 
@@ -587,6 +599,9 @@ body.nightMode,
   line-height: 1.6;
   margin: 0;
   padding-left: 0;
+  overflow-wrap: break-word;
+  white-space: normal;
+  word-break: normal;
 }
 
 .definitionsList li {
@@ -609,9 +624,9 @@ body.nightMode,
 }
 
 .exampleSentenceLine {
-  display: flex;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 32px;
   align-items: center;
-  justify-content: space-between;
   gap: 10px;
   font-size: 16px;
   line-height: 1.5;
@@ -625,8 +640,12 @@ body.nightMode,
 }
 
 .sentenceAudioButton {
-  flex: 0 0 auto;
-  margin-left: 0;
+  display: block;
+  grid-column: 2;
+  width: 32px;
+  min-width: 32px;
+  max-width: 32px;
+  margin: 0;
   opacity: 0.8;
 }
 
@@ -640,7 +659,9 @@ body.nightMode,
   line-height: 1.5;
   margin-top: 8px;
   padding: 0;
-  overflow-wrap: anywhere;
+  overflow-wrap: break-word;
+  white-space: normal;
+  word-break: normal;
 }
 
 .image {
@@ -684,16 +705,17 @@ body.nightMode,
   fill: var(--color-audio-button);
 }
 
-@media (max-width: 420px) {
+@media (max-width: 720px) {
   body,
   body.nightMode,
   .card {
-    padding: 8px;
+    padding: 16px 12px 12px;
   }
 
   .customCard,
   .nightMode .customCard {
-    padding: 22px 18px;
+    width: calc(100vw - 24px);
+    padding: 24px 20px;
   }
 }
 ```
