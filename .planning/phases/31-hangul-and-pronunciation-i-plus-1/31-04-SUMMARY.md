@@ -125,7 +125,7 @@ The 16 full-suite warnings are existing third-party deprecations: one `dateparse
 - Family gate: Korean orthography for Hangul; Korean phonetics for pronunciation.
 - Summary result: 139 blocked records, 0 learner-ready records, and no rejected or approved gate.
 - Curation canonical content hash: `76d08bfa4c2780111a8d7fd89e73c86ee5393609ba1f40c003cc6e77745aff6b`.
-- Curation file SHA-256: `6a5ddc06cfdb2ec3546e8854986bbe28ef957d170444dafadb0e97a06980055e`.
+- Curation file SHA-256: `6c422c5c5edf581af39f91773b40f72ac5570b84b76cd38d6f18bea4ef190c00`.
 
 Approval receipts bind reviewer identity/role/time, source pack version, source item hash, applicable evidence hashes, and the exact gate payload. Approved gate changes require explicit force and remain isolated to the named gate.
 
@@ -146,7 +146,9 @@ Approval receipts bind reviewer identity/role/time, source pack version, source 
 - All 509 committed slots have unique IDs, basenames, and repository-relative snapshot destinations.
 - All slots are `needs_review` with controlled reason `media-evidence-required`; no artifact/review hash, rights decision, reviewer receipt, or media byte is present.
 - Candidate manifest canonical content hash: `e7ef7ed570b28ed70bb09a68426567ac5a2dc3df8bb33acb357d32c281e861dc`.
-- Candidate media file SHA-256: `ad8f05f3846da9874f49a85e045b4d225f15ffdac8fba13cbd39615d94561fcc`.
+- Candidate media file SHA-256: `9f53766ea174c963e4904dd6172e490079ad693aded8dcb025a952327c90f0e1`.
+
+> **2026-08-18 byte-binding correction:** The curation and media file SHA-256 values above now identify the final bytes committed in `c90aa0b`; their canonical content hashes and pending states are unchanged. This correction supplies no review evidence or approval.
 
 ## Immutable Snapshot Contract
 

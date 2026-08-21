@@ -41,7 +41,7 @@ Place future evidence only at the fixed filenames listed in the JSON contract af
       "filename": "korean-foundations-v1-curation.json",
       "version": "korean-foundations-v1-curation",
       "canonical_content_sha256": "76d08bfa4c2780111a8d7fd89e73c86ee5393609ba1f40c003cc6e77745aff6b",
-      "file_sha256": "6a5ddc06cfdb2ec3546e8854986bbe28ef957d170444dafadb0e97a06980055e",
+      "file_sha256": "6c422c5c5edf581af39f91773b40f72ac5570b84b76cd38d6f18bea4ef190c00",
       "record_count": 139,
       "gate_count": 973
     },
@@ -49,7 +49,7 @@ Place future evidence only at the fixed filenames listed in the JSON contract af
       "filename": "korean-foundations-v1-media.json",
       "version": "korean-foundations-v1-media",
       "canonical_content_sha256": "e7ef7ed570b28ed70bb09a68426567ac5a2dc3df8bb33acb357d32c281e861dc",
-      "file_sha256": "ad8f05f3846da9874f49a85e045b4d225f15ffdac8fba13cbd39615d94561fcc",
+      "file_sha256": "9f53766ea174c963e4904dd6172e490079ad693aded8dcb025a952327c90f0e1",
       "asset_count": 509,
       "required_asset_count": 325
     }

@@ -173,10 +173,12 @@ The final scanner reconfirmed these exact existing SHA-256 pins:
 | `korean-concepts-v1.json` | `79e50d509d3dd732f7bcadc4568697747646af1f191fc0b59a8e94e0b6b18625` |
 | `hangul-v1.json` | `80716d1f19672777ab2516f1c592066e5f443dc86a1d9e64785be1867ba079b1` |
 | `pronunciation-i-plus-1-v1.json` | `6a2eb0b6a0a467de6074ffafc2fb674a674ea96c3c2187f339d1c278aa8f55ec` |
-| `korean-foundations-v1-curation.json` | `6a5ddc06cfdb2ec3546e8854986bbe28ef957d170444dafadb0e97a06980055e` |
-| `korean-foundations-v1-media.json` | `ad8f05f3846da9874f49a85e045b4d225f15ffdac8fba13cbd39615d94561fcc` |
-| `31-CURRICULUM-REVIEW.md` | `ec20559593dbc025ccd0ca5485ed1e6fa8c895c4962f58f151a5b1d3025e9bff` |
-| `31-AUDIO-PLAYBACK-REVIEW.md` | `877eb42abe57d705d69e4a2ace077bfb905b23cd1ff22a0283fb7f256fabec44` |
+| `korean-foundations-v1-curation.json` | `6c422c5c5edf581af39f91773b40f72ac5570b84b76cd38d6f18bea4ef190c00` |
+| `korean-foundations-v1-media.json` | `9f53766ea174c963e4904dd6172e490079ad693aded8dcb025a952327c90f0e1` |
+| `31-CURRICULUM-REVIEW.md` | `788aea87abb9d710617b86d8e05878151184d9ec92e4d3f0e013747c3655ae57` |
+| `31-AUDIO-PLAYBACK-REVIEW.md` | `867aeb8e2fc79257aa1f55661f2e59f644062cedacbe55f42a65cc2f7cc424c9` |
+
+> **2026-08-18 Quick 056 correction:** This table supersedes stale pre-final-serialization byte pins. It changes deterministic byte bindings only; canonical content hashes, request-only/pending state, and the absence of evidence, activation, export, or approval remain unchanged.
 
 The canonical evidence inbox still contains only `README.md`. The canonical receipt, snapshot tree, active pointer, and Korean foundation export root remain absent.
 

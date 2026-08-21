@@ -146,8 +146,8 @@ Every audio slot requires five distinct role capabilities; the phonetics-special
 
 | Artifact | SHA-256 | Bytes |
 |---|---|---:|
-| `31-CURRICULUM-REVIEW.md` | `ec20559593dbc025ccd0ca5485ed1e6fa8c895c4962f58f151a5b1d3025e9bff` | 10,325 |
-| `31-AUDIO-PLAYBACK-REVIEW.md` | `877eb42abe57d705d69e4a2ace077bfb905b23cd1ff22a0283fb7f256fabec44` | 17,441 |
+| `31-CURRICULUM-REVIEW.md` | `788aea87abb9d710617b86d8e05878151184d9ec92e4d3f0e013747c3655ae57` | 10,323 |
+| `31-AUDIO-PLAYBACK-REVIEW.md` | `867aeb8e2fc79257aa1f55661f2e59f644062cedacbe55f42a65cc2f7cc424c9` | 17,439 |
 
 ### Byte-identical candidate manifests
 
@@ -156,10 +156,10 @@ Every audio slot requires five distinct role capabilities; the phonetics-special
 | `korean-concepts-v1.json` | `79e50d509d3dd732f7bcadc4568697747646af1f191fc0b59a8e94e0b6b18625` | `89a520055cfd94eb086c9ed3e937499a71fbcb07c056e1916b645c3bd312d89d` |
 | `hangul-v1.json` | `80716d1f19672777ab2516f1c592066e5f443dc86a1d9e64785be1867ba079b1` | `2bdbfb60aaca1419c2bb20abc8fb9954941bc8f92cb2361c3bc778b01c9b599c` |
 | `pronunciation-i-plus-1-v1.json` | `6a2eb0b6a0a467de6074ffafc2fb674a674ea96c3c2187f339d1c278aa8f55ec` | `641b06f4d1c05c70803b859aa2936fc517a1038ad190ac7c58574da8a93ea49e` |
-| `korean-foundations-v1-curation.json` | `6a5ddc06cfdb2ec3546e8854986bbe28ef957d170444dafadb0e97a06980055e` | `76d08bfa4c2780111a8d7fd89e73c86ee5393609ba1f40c003cc6e77745aff6b` |
-| `korean-foundations-v1-media.json` | `ad8f05f3846da9874f49a85e045b4d225f15ffdac8fba13cbd39615d94561fcc` | `e7ef7ed570b28ed70bb09a68426567ac5a2dc3df8bb33acb357d32c281e861dc` |
+| `korean-foundations-v1-curation.json` | `6c422c5c5edf581af39f91773b40f72ac5570b84b76cd38d6f18bea4ef190c00` | `76d08bfa4c2780111a8d7fd89e73c86ee5393609ba1f40c003cc6e77745aff6b` |
+| `korean-foundations-v1-media.json` | `9f53766ea174c963e4904dd6172e490079ad693aded8dcb025a952327c90f0e1` | `e7ef7ed570b28ed70bb09a68426567ac5a2dc3df8bb33acb357d32c281e861dc` |
 
-The candidate hashes match the pre-implementation baseline exactly. Candidate curation remains 973/973 gates at `needs_review`; all 509 media slots remain `needs_review`, with no artifact-byte hash and no review record.
+> **2026-08-18 Quick 056 correction:** These exact byte records now bind the final serialization committed in `c90aa0b`. The canonical content hashes, 973/973 pending curation gates, 509 pending media slots, request-only status, and absence of evidence or approval are unchanged.
 
 ## Required Second-Pass Reconciliation
 
@@ -344,7 +344,7 @@ Do not alter the five candidate manifests or the two request contracts in Plan 3
 
 - All three task artifacts, this summary, SPEC, and the reviewed fingerprint exist at the required paths.
 - The final focused rerun returned `8 passed in 0.22s`.
-- Both request SHA-256 values match the exact values recorded above, including curriculum request `ec20559593dbc025ccd0ca5485ed1e6fa8c895c4962f58f151a5b1d3025e9bff`, and all five candidate file hashes remain unchanged.
+- Both request SHA-256 values match the corrected exact values recorded above, including curriculum request `788aea87abb9d710617b86d8e05878151184d9ec92e4d3f0e013747c3655ae57`, and all five candidate file hashes remain unchanged.
 - Required `<checks>`, `<handoff>`, `<deltas>`, and `<judgment>` sections occur exactly once.
 - Phase 31 remains open, SPEC points to Plan 31-08, the future evidence directory/pointer/snapshot remain absent, and the fingerprint is `d2508b0d98f735acfc1020ee8b1f521618db270f001f6a10825a92a677444496`.
 - Actual task-tag and request-contract reconciliation still proves `human_checkpoint_count=0`.
