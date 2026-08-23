@@ -46,3 +46,4 @@
 | 042 | Corrigir fundo branco do card e do botão de áudio | 2026-08-03 | passed | [042-corrigir-fundo-card-audio](./042-corrigir-fundo-card-audio/) |
 | 044 | Adicionar romaji ao modo japonês de frequência | 2026-08-04 | passed | [044-romaji-frequencia-japones](./044-romaji-frequencia-japones/) |
 | 055 | Promover o layout Q054 aprovado para o template normal de produção | 2026-08-18 | passed | [055-promote-q054-normal-template](./055-promote-q054-normal-template/) |
+| 057 | Adicionar skill OpenCode para recomendar o nível de raciocínio antes de tarefas e workflows GSDD | 2026-08-23 | passed | [057-add-gsdd-reasoning-level-advisor](./057-add-gsdd-reasoning-level-advisor/) |

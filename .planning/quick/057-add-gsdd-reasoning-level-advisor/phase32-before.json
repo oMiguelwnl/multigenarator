@@ -1,0 +1,241 @@
+{
+  "entries": [
+    {
+      "path": ".",
+      "sha256": null,
+      "type": "directory"
+    },
+    {
+      "path": "32-01-PLAN.md",
+      "sha256": "57801f9d0b97d06b817deea7bfc3678744e535ca0e0ae88c65b91ba2833e165c",
+      "type": "file"
+    },
+    {
+      "path": "32-02-PLAN.md",
+      "sha256": "9e61abea69b8bbb27ed52ce96ca8b0d22332a8b354a4921d0112feb952fa792a",
+      "type": "file"
+    },
+    {
+      "path": "32-03-PLAN.md",
+      "sha256": "364125c05c8801c3b9a5a884259721dd53d042d74d18e490179eb906e9a38f40",
+      "type": "file"
+    },
+    {
+      "path": "32-04-PLAN.md",
+      "sha256": "448d173adbcc6e22bc7f6343d331713cd205c3c35e4d27cfed9bf63f55159388",
+      "type": "file"
+    },
+    {
+      "path": "32-05-PLAN.md",
+      "sha256": "c090a3686b79a6203cbdaecf78b02388885d2dcae8f0912d3075631fe5a15dbb",
+      "type": "file"
+    },
+    {
+      "path": "32-06-PLAN.md",
+      "sha256": "106a345e312a775d82a1569db3bd86b6b0063bd2091ba9410614fc9b5e7aa2ae",
+      "type": "file"
+    },
+    {
+      "path": "32-07-PLAN.md",
+      "sha256": "7957b6588b0ed1a3a552d5def413523ab75423e720fa4a84466f4ebc2b090259",
+      "type": "file"
+    },
+    {
+      "path": "32-08-PLAN.md",
+      "sha256": "c19c55a81ec03b75a95154a7d4e47e33db7c865d0bfe351d73393acf43fe1eb1",
+      "type": "file"
+    },
+    {
+      "path": "32-09-PLAN.md",
+      "sha256": "065fad8efdd2e536f5706b25b66e871c8ccfc3c88cdd7395be04ada0f55ee2fb",
+      "type": "file"
+    },
+    {
+      "path": "32-10-PLAN.md",
+      "sha256": "77a00490acc4381653c33e8a49fc720b5c2c208004abc2b2324dee8e90ecfb64",
+      "type": "file"
+    },
+    {
+      "path": "32-11-PLAN.md",
+      "sha256": "65be989d0f0e7a4dec3c1e36b9c020c093c10df2dffd3a997600f3b7324f4f93",
+      "type": "file"
+    },
+    {
+      "path": "32-12-PLAN.md",
+      "sha256": "9f8fdaf7af601396a0cb16750ea149fd1e0113fbb798b3a3533b4a0aecf09772",
+      "type": "file"
+    },
+    {
+      "path": "32-13-PLAN.md",
+      "sha256": "41e78524e0a90797523636d84c010e106a61f180f854b575fa8b92ef7241e14e",
+      "type": "file"
+    },
+    {
+      "path": "32-14-PLAN.md",
+      "sha256": "d314aefaba73316dd29ffcea03e706e9af82f45157bfc5b807aab818b4e136ec",
+      "type": "file"
+    },
+    {
+      "path": "32-15-PLAN.md",
+      "sha256": "ce956a42f317ec39d745232bbef6cfc5279a1d9716a19237f88b96a979d6eb18",
+      "type": "file"
+    },
+    {
+      "path": "32-16-PLAN.md",
+      "sha256": "73627d7f0527fa3f65480e14384e58772f78edb8e2b6923a29105f099507ad80",
+      "type": "file"
+    },
+    {
+      "path": "32-17-PLAN.md",
+      "sha256": "9cf336f5f81f0ef90e62cfa5f461f0289c8298c0d960e614f70b90efa27567e2",
+      "type": "file"
+    },
+    {
+      "path": "32-18-PLAN.md",
+      "sha256": "f7e5bc9161b19ca48e93b0ced1e63b9200db5a1e857fab2a0832ba0caa951c46",
+      "type": "file"
+    },
+    {
+      "path": "32-19-PLAN.md",
+      "sha256": "54012d0caa4dd40909a9cc3d930e212812693a40c85b442f59f1aba71e8e83de",
+      "type": "file"
+    },
+    {
+      "path": "32-20-PLAN.md",
+      "sha256": "a2c57edcc3943b8db6ae253f3fa422d5ddc5ecc2b9ede7558c46dc8c2ed18065",
+      "type": "file"
+    },
+    {
+      "path": "32-21-PLAN.md",
+      "sha256": "daf397319adee82285e7de42f40d308a499dcf420a55b64853a65ee42977a6ff",
+      "type": "file"
+    },
+    {
+      "path": "32-22-PLAN.md",
+      "sha256": "aa1468bb9632a5e5cb0639163866b29cc7a4dafc372f6956e21239fb9032d1cb",
+      "type": "file"
+    },
+    {
+      "path": "32-23-PLAN.md",
+      "sha256": "468524bf4aac9dc7ed06882d3fdcf9da224b68fefedb9be8955443bac5bdbd79",
+      "type": "file"
+    },
+    {
+      "path": "32-24-PLAN.md",
+      "sha256": "9cd9906bdda0def66b5b13161e530ccb07ca00940f5d9acf90f928db00414bb3",
+      "type": "file"
+    },
+    {
+      "path": "32-25-PLAN.md",
+      "sha256": "1426c352df84df07cd11c3643764b24ddd4616467ce81ae490b1793c225fd33c",
+      "type": "file"
+    },
+    {
+      "path": "32-26-PLAN.md",
+      "sha256": "4a3b10238729a76b4ea8393dd545b0265470f0898dd34319e82db5aa890bff8f",
+      "type": "file"
+    },
+    {
+      "path": "32-27-PLAN.md",
+      "sha256": "bc2b47fc3a4a26ce5cf9496a0206f529fae8c292e25e155222f2101ec71629ea",
+      "type": "file"
+    },
+    {
+      "path": "32-28-PLAN.md",
+      "sha256": "8f94a9fcc799958446236d0b033f40e73b6547b61754191944e9f24d2cd8fd89",
+      "type": "file"
+    },
+    {
+      "path": "32-29-PLAN.md",
+      "sha256": "42a1c8519f41b26074b8b56bc7ae3d61b4855cd61f66bdb250ab982628eb991f",
+      "type": "file"
+    },
+    {
+      "path": "32-30-PLAN.md",
+      "sha256": "eccd746e5ab77723421414448108daad3d9335e1109ac95c95067c3d4b9176b4",
+      "type": "file"
+    },
+    {
+      "path": "32-31-PLAN.md",
+      "sha256": "1a211cc8a21bfa70819818abd2d2b3b9daaa86b8cb17086dae3dac46700d58dd",
+      "type": "file"
+    },
+    {
+      "path": "32-32-PLAN.md",
+      "sha256": "4d62521c71a3d0db077ea24d73e84c450ab54f05ec36696593b4f690a0985791",
+      "type": "file"
+    },
+    {
+      "path": "32-33-PLAN.md",
+      "sha256": "0bf29258b46c99b4e8350022d31ddb27e53c241b5434785d419eaccf5930624d",
+      "type": "file"
+    },
+    {
+      "path": "32-34-PLAN.md",
+      "sha256": "bd378288204c9c3fcd8abf9eafb5d06ff7cd0e8f94c6a00da380a37adcec6683",
+      "type": "file"
+    },
+    {
+      "path": "32-35-PLAN.md",
+      "sha256": "b48a2471de3c4f2e4d40f3fbece5a81e38bb82c641796940a8217036de2cb801",
+      "type": "file"
+    },
+    {
+      "path": "32-36-PLAN.md",
+      "sha256": "24a9ca57cd0f10d63830d3ec6c5fe15778cf6de320c727833e02dd0fcf3095bb",
+      "type": "file"
+    },
+    {
+      "path": "32-37-PLAN.md",
+      "sha256": "14d7aab82d364e87acfdc3511ef13741ebdf585a818b2ece37f15c6276f6533f",
+      "type": "file"
+    },
+    {
+      "path": "32-38-PLAN.md",
+      "sha256": "cc4ad48f4444d0f1c4db1db55cfa91c5cc30f582cd2674ad1afc451fa5bc1f4d",
+      "type": "file"
+    },
+    {
+      "path": "32-39-PLAN.md",
+      "sha256": "96f96fef1f058b293b410359c9c35e00455714406efc3974c8f8781922d7d59b",
+      "type": "file"
+    },
+    {
+      "path": "32-40-PLAN.md",
+      "sha256": "a8474013b088b797bb8c40f787d14db8f1adad54f1273395c1f666a113f57d68",
+      "type": "file"
+    },
+    {
+      "path": "32-41-PLAN.md",
+      "sha256": "0de8f26d7942bf5ed3e73c098ff325680187d681ab8c475f50973ca719c0f7e7",
+      "type": "file"
+    },
+    {
+      "path": "32-42-PLAN.md",
+      "sha256": "677ddd2fb9a1f80e2393a30408d57b3a646c2282926c3343d8ed9e779fd59824",
+      "type": "file"
+    },
+    {
+      "path": "32-APPROACH.md",
+      "sha256": "d00e4320bfe5ba53a72a670d573258363c454636458cc281ecc0212b4729ca4f",
+      "type": "file"
+    },
+    {
+      "path": "32-FREQUENCY-SOURCE-DECISION.md",
+      "sha256": "077f18ee4a32dbac816d237b5d312926bd155297da4e681486353f149cf364dd",
+      "type": "file"
+    },
+    {
+      "path": "32-PATTERNS.md",
+      "sha256": "5a49d0d902a0d76c2c60be886535dbe248d10bf82efe041935af2a0d72b322d2",
+      "type": "file"
+    },
+    {
+      "path": "32-RESEARCH.md",
+      "sha256": "cec7bfd282bf4149c91177fa3b233b6b78b19fcf0d852e92a081800e5f70bd0a",
+      "type": "file"
+    }
+  ],
+  "root": ".planning/phases/32-frequency-portuguese-text-and-audio",
+  "schema_version": 1
+}
