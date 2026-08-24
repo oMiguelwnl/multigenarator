@@ -2,12 +2,14 @@
 
 import json
 import os
+import shutil
+import stat
 import tempfile
 import unicodedata
 from enum import Enum
 from hashlib import sha256
 from pathlib import Path
-from typing import Literal, Self, TypeAlias
+from typing import Any, Literal, Self, TypeAlias
 
 from pydantic import (
     BaseModel,
@@ -94,6 +96,32 @@ _FAMILY_DRAFT_PATHS = {
     ),
 }
 _DRAFT_MANIFEST_PATH = KOREAN_FOUNDATION_CURATION_DRAFT_ROOT / "draft-manifest.json"
+KOREAN_FOUNDATION_EXECUTION_HANDOFF_ROOT = (
+    _PROJECT_ROOT
+    / ".planning/phases/31-hangul-and-pronunciation-i-plus-1/execution-handoffs"
+)
+_CURATION_SELECTION_HANDOFF_PATH = (
+    KOREAN_FOUNDATION_EXECUTION_HANDOFF_ROOT / "curation-selection.json"
+)
+KOREAN_FOUNDATION_CANDIDATE_ROOT = _PROJECT_ROOT / "data/korean_foundations"
+KOREAN_FOUNDATION_CANDIDATE_BUNDLE_ROOT = (
+    KOREAN_FOUNDATION_CANDIDATE_ROOT / "candidate-bundles"
+)
+_CURRENT_CANDIDATE_POINTER_PATH = (
+    KOREAN_FOUNDATION_CANDIDATE_ROOT / "current-candidate.json"
+)
+_FOUNDATION_V1_CURATION_PATH = (
+    KOREAN_FOUNDATION_CANDIDATE_ROOT / "korean-foundations-v1-curation.json"
+)
+_FOUNDATION_V1_MEDIA_PATH = (
+    KOREAN_FOUNDATION_CANDIDATE_ROOT / "korean-foundations-v1-media.json"
+)
+_CANDIDATE_MEMBER_NAMES = (
+    "hangul-v2.json",
+    "pronunciation-i-plus-1-v2.json",
+    "korean-foundations-v2-curation.json",
+    "korean-foundations-v2-media.json",
+)
 _FAMILY_FIELDS = {
     KoreanFoundationFamily.HANGUL: frozenset(
         {"reading_or_name", "sound", "mnemonic"}
@@ -906,12 +934,222 @@ class KoreanFoundationDraftValidationReport(_FrozenDraftModel):
         return self
 
 
+class KoreanFoundationCurationSelectionHandoff(_FrozenDraftModel):
+    schema_version: Literal[1] = 1
+    handoff_version: Literal["phase31-handoff-v1"]
+    kind: Literal["curation-selection"]
+    selected_sha256: str = Field(min_length=64, max_length=64)
+    current_draft_manifest_sha256: str = Field(min_length=64, max_length=64)
+    content_hash: str = Field(min_length=64, max_length=64)
+
+    @field_validator(
+        "selected_sha256",
+        "current_draft_manifest_sha256",
+        "content_hash",
+    )
+    @classmethod
+    def hashes_must_be_sha256(cls, value: str, info: object) -> str:
+        return _sha256_text(
+            value,
+            field_name=getattr(info, "field_name", "selection hash"),
+        )
+
+    @model_validator(mode="after")
+    def selected_hash_must_be_current_and_self_hashed(self) -> Self:
+        if self.selected_sha256 != self.current_draft_manifest_sha256:
+            raise ValueError("selection handoff hash does not match current manifest")
+        if self.content_hash != korean_draft_content_hash(self):
+            raise ValueError("selection handoff content hash does not match")
+        return self
+
+
+class KoreanFoundationCandidateBundlePlan(_FrozenDraftModel):
+    schema_version: Literal[1] = 1
+    bundle_contract_version: Literal[
+        "korean-foundations-v2-candidate-bundle-plan-v1"
+    ]
+    selected_draft_manifest_sha256: str = Field(min_length=64, max_length=64)
+    validation_report_sha256: str = Field(min_length=64, max_length=64)
+    hangul_family_sha256: str = Field(min_length=64, max_length=64)
+    pronunciation_family_sha256: str = Field(min_length=64, max_length=64)
+    member_names: tuple[
+        Literal[
+            "hangul-v2.json",
+            "pronunciation-i-plus-1-v2.json",
+            "korean-foundations-v2-curation.json",
+            "korean-foundations-v2-media.json",
+        ],
+        ...,
+    ] = Field(min_length=4, max_length=4)
+    bundle_sha256: str = Field(min_length=64, max_length=64)
+    bundle_relpath: str = Field(min_length=1, max_length=256)
+    pointer_relpath: Literal["current-candidate.json"] = "current-candidate.json"
+    content_hash: str = Field(min_length=64, max_length=64)
+
+    @field_validator(
+        "selected_draft_manifest_sha256",
+        "validation_report_sha256",
+        "hangul_family_sha256",
+        "pronunciation_family_sha256",
+        "bundle_sha256",
+        "content_hash",
+    )
+    @classmethod
+    def hashes_must_be_sha256(cls, value: str, info: object) -> str:
+        return _sha256_text(
+            value,
+            field_name=getattr(info, "field_name", "candidate hash"),
+        )
+
+    @model_validator(mode="after")
+    def bundle_plan_must_be_exact_and_self_hashed(self) -> Self:
+        if self.member_names != _CANDIDATE_MEMBER_NAMES:
+            raise ValueError("candidate bundle member names do not match")
+        if self.bundle_relpath != f"candidate-bundles/{self.bundle_sha256}":
+            raise ValueError("candidate bundle relpath does not match hash")
+        if self.content_hash != korean_draft_content_hash(self):
+            raise ValueError("candidate bundle plan content hash does not match")
+        return self
+
+
+class KoreanFoundationCandidateBundleMember(_FrozenDraftModel):
+    name: Literal[
+        "hangul-v2.json",
+        "pronunciation-i-plus-1-v2.json",
+        "korean-foundations-v2-curation.json",
+        "korean-foundations-v2-media.json",
+    ]
+    sha256: str = Field(min_length=64, max_length=64)
+
+    @field_validator("sha256")
+    @classmethod
+    def sha256_must_be_hash(cls, value: str) -> str:
+        return _sha256_text(value, field_name="candidate member hash")
+
+
+class KoreanFoundationCandidateBundleManifest(_FrozenDraftModel):
+    schema_version: Literal[1] = 1
+    bundle_version: Literal["korean-foundations-v2-candidate-bundle-v1"]
+    selected_draft_manifest_sha256: str = Field(min_length=64, max_length=64)
+    draft_validation_sha256: str = Field(min_length=64, max_length=64)
+    candidate_only: Literal[True] = True
+    review_status: Literal["needs_review"] = "needs_review"
+    promotion_authority: Literal[False] = False
+    total_record_count: Literal[139]
+    hangul_record_count: Literal[92]
+    pronunciation_record_count: Literal[47]
+    media_slot_count: Literal[509]
+    members: tuple[KoreanFoundationCandidateBundleMember, ...] = Field(
+        min_length=4,
+        max_length=4,
+    )
+    bundle_sha256: str = Field(min_length=64, max_length=64)
+
+    @field_validator(
+        "selected_draft_manifest_sha256",
+        "draft_validation_sha256",
+        "bundle_sha256",
+    )
+    @classmethod
+    def hashes_must_be_sha256(cls, value: str, info: object) -> str:
+        return _sha256_text(
+            value,
+            field_name=getattr(info, "field_name", "candidate bundle hash"),
+        )
+
+    @model_validator(mode="after")
+    def manifest_must_bind_exact_members(self) -> Self:
+        if tuple(member.name for member in self.members) != _CANDIDATE_MEMBER_NAMES:
+            raise ValueError("candidate bundle members do not match")
+        payload = self.model_dump(mode="json")
+        payload.pop("bundle_sha256", None)
+        if self.bundle_sha256 != korean_canonical_json_sha256(payload):
+            raise ValueError("candidate bundle hash does not match")
+        return self
+
+
+class KoreanFoundationCandidatePointer(_FrozenDraftModel):
+    schema_version: Literal[1] = 1
+    bundle_sha256: str = Field(min_length=64, max_length=64)
+    bundle_relpath: str = Field(min_length=1, max_length=256)
+    bundle_manifest_sha256: str = Field(min_length=64, max_length=64)
+
+    @field_validator("bundle_sha256", "bundle_manifest_sha256")
+    @classmethod
+    def hashes_must_be_sha256(cls, value: str, info: object) -> str:
+        return _sha256_text(
+            value,
+            field_name=getattr(info, "field_name", "candidate pointer hash"),
+        )
+
+    @model_validator(mode="after")
+    def relpath_must_match_bundle(self) -> Self:
+        if self.bundle_relpath != f"candidate-bundles/{self.bundle_sha256}":
+            raise ValueError("candidate pointer relpath does not match bundle")
+        return self
+
+
+class KoreanFoundationCandidatePublication(_FrozenDraftModel):
+    schema_version: Literal[1] = 1
+    status: Literal["candidate_published"] = "candidate_published"
+    selected_draft_manifest_sha256: str = Field(min_length=64, max_length=64)
+    bundle_sha256: str = Field(min_length=64, max_length=64)
+    bundle_relpath: str = Field(min_length=1, max_length=256)
+    bundle_manifest_sha256: str = Field(min_length=64, max_length=64)
+    member_names: tuple[
+        Literal[
+            "hangul-v2.json",
+            "pronunciation-i-plus-1-v2.json",
+            "korean-foundations-v2-curation.json",
+            "korean-foundations-v2-media.json",
+        ],
+        ...,
+    ] = Field(min_length=4, max_length=4)
+    total_record_count: Literal[139]
+    media_slot_count: Literal[509]
+    candidate_only: Literal[True] = True
+    review_status: Literal["needs_review"] = "needs_review"
+    promotion_authority: Literal[False] = False
+    content_hash: str = Field(min_length=64, max_length=64)
+
+    @field_validator(
+        "selected_draft_manifest_sha256",
+        "bundle_sha256",
+        "bundle_manifest_sha256",
+        "content_hash",
+    )
+    @classmethod
+    def hashes_must_be_sha256(cls, value: str, info: object) -> str:
+        return _sha256_text(
+            value,
+            field_name=getattr(info, "field_name", "candidate publication hash"),
+        )
+
+    @model_validator(mode="after")
+    def publication_must_match_fixed_contract(self) -> Self:
+        if self.member_names != _CANDIDATE_MEMBER_NAMES:
+            raise ValueError("candidate publication member names do not match")
+        if self.bundle_relpath != f"candidate-bundles/{self.bundle_sha256}":
+            raise ValueError("candidate publication relpath does not match")
+        if self.content_hash != korean_draft_content_hash(self):
+            raise ValueError("candidate publication content hash does not match")
+        return self
+
+
 class KoreanFoundationAICurationReasonCode(str, Enum):
     ARTIFACT_MISSING = "artifact_missing"
     ARTIFACT_OVERSIZED = "artifact_oversized"
     ARTIFACT_MALFORMED = "artifact_malformed"
     ARTIFACT_INVALID = "artifact_invalid"
     ARTIFACT_BINDING_MISMATCH = "artifact_binding_mismatch"
+    SELECTION_MISSING = "selection_missing"
+    SELECTION_INVALID = "selection_invalid"
+    SELECTION_MISMATCH = "selection_mismatch"
+    STRUCTURAL_DIFF = "structural_diff"
+    CANDIDATE_BUNDLE_CONFLICT = "candidate_bundle_conflict"
+    CANDIDATE_POINTER_CONFLICT = "candidate_pointer_conflict"
+    CANDIDATE_POINTER_MISSING = "candidate_pointer_missing"
+    CANDIDATE_POINTER_INVALID = "candidate_pointer_invalid"
     ATOMIC_WRITE_FAILED = "atomic_write_failed"
 
 
@@ -1292,14 +1530,679 @@ def validate_korean_foundation_drafts() -> KoreanFoundationDraftValidationReport
     return KoreanFoundationDraftValidationReport.model_validate(payload)
 
 
+def _load_selected_draft_manifest_sha256() -> str:
+    try:
+        handoff = KoreanFoundationCurationSelectionHandoff.model_validate(
+            _read_fixed_model(
+                _CURATION_SELECTION_HANDOFF_PATH,
+                KoreanFoundationCurationSelectionHandoff,
+            )
+        )
+    except KoreanFoundationAICurationError as exc:
+        reason = (
+            KoreanFoundationAICurationReasonCode.SELECTION_MISSING
+            if exc.reason_code is KoreanFoundationAICurationReasonCode.ARTIFACT_MISSING
+            else KoreanFoundationAICurationReasonCode.SELECTION_INVALID
+        )
+        raise KoreanFoundationAICurationError(reason) from exc
+    return handoff.selected_sha256
+
+
+def _candidate_bundle_sha256(payload: dict[str, object]) -> str:
+    return korean_canonical_json_sha256(payload)
+
+
+def check_korean_foundation_curation_selection(
+    *,
+    expected_draft_manifest_sha256: str | None = None,
+) -> KoreanFoundationCandidateBundlePlan:
+    """Validate the selected draft hash and derive a no-write candidate plan."""
+
+    expected_hash = (
+        _sha256_text(
+            expected_draft_manifest_sha256,
+            field_name="expected draft manifest hash",
+        )
+        if expected_draft_manifest_sha256 is not None
+        else None
+    )
+    selected_hash = _load_selected_draft_manifest_sha256()
+    if expected_hash is not None and selected_hash != expected_hash:
+        raise KoreanFoundationAICurationError(
+            KoreanFoundationAICurationReasonCode.SELECTION_MISMATCH
+        )
+
+    validation = validate_korean_foundation_drafts()
+    if selected_hash != validation.draft_manifest_hash:
+        raise KoreanFoundationAICurationError(
+            KoreanFoundationAICurationReasonCode.SELECTION_MISMATCH
+        )
+    manifest = _load_fixed_draft_manifest()
+    if manifest.content_hash != selected_hash:
+        raise KoreanFoundationAICurationError(
+            KoreanFoundationAICurationReasonCode.SELECTION_MISMATCH
+        )
+    hangul = _load_fixed_family_draft(KoreanFoundationFamily.HANGUL)
+    pronunciation = _load_fixed_family_draft(KoreanFoundationFamily.PRONUNCIATION)
+    if (len(hangul.records), len(pronunciation.records)) != (92, 47):
+        raise KoreanFoundationAICurationError(
+            KoreanFoundationAICurationReasonCode.STRUCTURAL_DIFF
+        )
+    if any(binding.record_count <= 0 for binding in manifest.batch_bindings):
+        raise KoreanFoundationAICurationError(
+            KoreanFoundationAICurationReasonCode.STRUCTURAL_DIFF
+        )
+
+    bundle_seed: dict[str, object] = {
+        "bundle_contract_version": "korean-foundations-v2-candidate-bundle-plan-v1",
+        "selected_draft_manifest_sha256": selected_hash,
+        "validation_report_sha256": validation.content_hash,
+        "hangul_family_sha256": hangul.content_hash,
+        "pronunciation_family_sha256": pronunciation.content_hash,
+        "member_names": list(_CANDIDATE_MEMBER_NAMES),
+        "pointer_relpath": "current-candidate.json",
+    }
+    bundle_sha256 = _candidate_bundle_sha256(bundle_seed)
+    payload: dict[str, object] = {
+        "schema_version": 1,
+        **bundle_seed,
+        "member_names": _CANDIDATE_MEMBER_NAMES,
+        "bundle_sha256": bundle_sha256,
+        "bundle_relpath": f"candidate-bundles/{bundle_sha256}",
+    }
+    payload["content_hash"] = korean_draft_content_hash(payload)
+    return KoreanFoundationCandidateBundlePlan.model_validate(payload)
+
+
+def _plain_json_bytes(payload: dict[str, object]) -> bytes:
+    return (
+        json.dumps(
+            payload,
+            ensure_ascii=False,
+            allow_nan=False,
+            separators=(",", ":"),
+            sort_keys=True,
+        ).encode("utf-8")
+        + b"\n"
+    )
+
+
+def _rehashed_payload(payload: dict[str, Any], *, hash_field: str = "content_hash") -> dict[str, Any]:
+    payload = dict(payload)
+    payload.pop(hash_field, None)
+    payload[hash_field] = korean_canonical_json_sha256(payload)
+    return payload
+
+
+def _proposal_values(record: KoreanFoundationDraftRecord) -> dict[str, str]:
+    return {proposal.field_name: proposal.value for proposal in record.proposals}
+
+
+def _apply_family_draft_to_source_pack(
+    family: KoreanFoundationFamily,
+    draft: KoreanFoundationFamilyDraft,
+) -> KoreanHangulSourcePack | KoreanPronunciationSourcePack:
+    _, source_pack = _load_fixed_source_pack(family)
+    pack_payload = source_pack.model_dump(mode="json")
+    version = "hangul-v2" if family is KoreanFoundationFamily.HANGUL else "pronunciation-i-plus-1-v2"
+    pack_payload["source_pack_version"] = version
+    entries: list[dict[str, Any]] = []
+    for source_entry, draft_record in zip(source_pack.entries, draft.records, strict=True):
+        if (
+            source_entry.item_key != draft_record.item_key
+            or source_entry.sequence != draft_record.sequence
+            or source_entry.stage_id != draft_record.stage_id
+            or source_entry.content_hash != draft_record.source_entry_content_hash
+        ):
+            raise KoreanFoundationAICurationError(
+                KoreanFoundationAICurationReasonCode.STRUCTURAL_DIFF
+            )
+        entry_payload = source_entry.model_dump(mode="json")
+        entry_payload["source_pack_version"] = version
+        proposals = _proposal_values(draft_record)
+        if family is KoreanFoundationFamily.HANGUL:
+            for field_name in ("reading_or_name", "sound", "mnemonic"):
+                if field_name in proposals:
+                    entry_payload[field_name] = proposals[field_name]
+        else:
+            for field_name in (
+                "spellings",
+                "sound",
+                "example_word",
+                "word_translation",
+                "example_sentence",
+                "sentence_translation",
+            ):
+                if field_name in proposals:
+                    entry_payload[field_name] = proposals[field_name]
+            evidence = dict(entry_payload["pronunciation_evidence"])
+            if "example_word" in proposals:
+                evidence["canonical_spelling"] = proposals["example_word"]
+            if "normative_pronunciation" in proposals:
+                evidence["normative_pronunciation"] = proposals["normative_pronunciation"]
+            if "surface_pronunciation" in proposals:
+                evidence["surface_pronunciation"] = proposals["surface_pronunciation"]
+            if "ipa" in proposals:
+                evidence["ipa"] = proposals["ipa"]
+            entry_payload["pronunciation_evidence"] = evidence
+        entries.append(_rehashed_payload(entry_payload))
+    pack_payload["entries"] = entries
+    pack_payload = _rehashed_payload(pack_payload)
+    model_type = (
+        KoreanHangulSourcePack
+        if family is KoreanFoundationFamily.HANGUL
+        else KoreanPronunciationSourcePack
+    )
+    return model_type.model_validate(pack_payload)
+
+
+def _load_json_payload(path: Path) -> dict[str, Any]:
+    try:
+        payload = json.loads(path.read_text(encoding="utf-8"))
+    except (OSError, UnicodeDecodeError, json.JSONDecodeError, RecursionError) as exc:
+        raise KoreanFoundationAICurationError(
+            KoreanFoundationAICurationReasonCode.ARTIFACT_INVALID
+        ) from exc
+    if not isinstance(payload, dict):
+        raise KoreanFoundationAICurationError(
+            KoreanFoundationAICurationReasonCode.ARTIFACT_INVALID
+        )
+    return payload
+
+
+def _entry_hash_by_key(
+    pack: KoreanHangulSourcePack | KoreanPronunciationSourcePack,
+) -> dict[str, str]:
+    return {entry.item_key: entry.content_hash for entry in pack.entries}
+
+
+def _v2_curation_payload(
+    *,
+    hangul: KoreanHangulSourcePack,
+    pronunciation: KoreanPronunciationSourcePack,
+) -> dict[str, Any]:
+    payload = _load_json_payload(_FOUNDATION_V1_CURATION_PATH)
+    entry_hashes = {**_entry_hash_by_key(hangul), **_entry_hash_by_key(pronunciation)}
+    payload["manifest_version"] = "korean-foundations-v2-curation"
+    payload["candidate_only"] = True
+    payload["hangul_source_pack_version"] = hangul.source_pack_version
+    payload["hangul_source_pack_sha256"] = hangul.content_hash
+    payload["pronunciation_source_pack_version"] = pronunciation.source_pack_version
+    payload["pronunciation_source_pack_sha256"] = pronunciation.content_hash
+    records = []
+    for record in payload["records"]:
+        updated = dict(record)
+        family = KoreanFoundationFamily(updated["family"])
+        updated["source_pack_version"] = (
+            hangul.source_pack_version
+            if family is KoreanFoundationFamily.HANGUL
+            else pronunciation.source_pack_version
+        )
+        updated["source_content_sha256"] = entry_hashes[updated["item_key"]]
+        records.append(updated)
+    payload["records"] = records
+    return _rehashed_payload(payload)
+
+
+def _v2_media_payload(
+    *,
+    hangul: KoreanHangulSourcePack,
+    pronunciation: KoreanPronunciationSourcePack,
+) -> dict[str, Any]:
+    payload = _load_json_payload(_FOUNDATION_V1_MEDIA_PATH)
+    entry_hashes = {**_entry_hash_by_key(hangul), **_entry_hash_by_key(pronunciation)}
+    payload["manifest_version"] = "korean-foundations-v2-media"
+    payload["candidate_only"] = True
+    payload["hangul_source_pack_version"] = hangul.source_pack_version
+    payload["hangul_source_pack_sha256"] = hangul.content_hash
+    payload["pronunciation_source_pack_version"] = pronunciation.source_pack_version
+    payload["pronunciation_source_pack_sha256"] = pronunciation.content_hash
+    slots = []
+    for slot in payload["slots"]:
+        updated = dict(slot)
+        family = KoreanFoundationFamily(updated["family"])
+        updated["source_pack_version"] = (
+            hangul.source_pack_version
+            if family is KoreanFoundationFamily.HANGUL
+            else pronunciation.source_pack_version
+        )
+        updated["source_content_sha256"] = entry_hashes[updated["item_key"]]
+        slots.append(updated)
+    payload["slots"] = slots
+    return _rehashed_payload(payload)
+
+
+def _build_candidate_bundle_payloads() -> tuple[
+    KoreanFoundationCandidateBundleManifest,
+    dict[str, bytes],
+    bytes,
+]:
+    plan = check_korean_foundation_curation_selection()
+    hangul_draft = _load_fixed_family_draft(KoreanFoundationFamily.HANGUL)
+    pronunciation_draft = _load_fixed_family_draft(KoreanFoundationFamily.PRONUNCIATION)
+    hangul = _apply_family_draft_to_source_pack(
+        KoreanFoundationFamily.HANGUL,
+        hangul_draft,
+    )
+    pronunciation = _apply_family_draft_to_source_pack(
+        KoreanFoundationFamily.PRONUNCIATION,
+        pronunciation_draft,
+    )
+    member_payloads = {
+        "hangul-v2.json": hangul.model_dump(mode="json"),
+        "pronunciation-i-plus-1-v2.json": pronunciation.model_dump(mode="json"),
+        "korean-foundations-v2-curation.json": _v2_curation_payload(
+            hangul=hangul,
+            pronunciation=pronunciation,
+        ),
+        "korean-foundations-v2-media.json": _v2_media_payload(
+            hangul=hangul,
+            pronunciation=pronunciation,
+        ),
+    }
+    member_bytes = {
+        name: _plain_json_bytes(member_payloads[name]) for name in _CANDIDATE_MEMBER_NAMES
+    }
+    members = tuple(
+        KoreanFoundationCandidateBundleMember(
+            name=name,
+            sha256=sha256(member_bytes[name]).hexdigest(),
+        )
+        for name in _CANDIDATE_MEMBER_NAMES
+    )
+    manifest_payload: dict[str, object] = {
+        "schema_version": 1,
+        "bundle_version": "korean-foundations-v2-candidate-bundle-v1",
+        "selected_draft_manifest_sha256": plan.selected_draft_manifest_sha256,
+        "draft_validation_sha256": plan.validation_report_sha256,
+        "candidate_only": True,
+        "review_status": "needs_review",
+        "promotion_authority": False,
+        "total_record_count": 139,
+        "hangul_record_count": 92,
+        "pronunciation_record_count": 47,
+        "media_slot_count": len(member_payloads["korean-foundations-v2-media.json"]["slots"]),
+        "members": [member.model_dump(mode="json") for member in members],
+    }
+    manifest_payload["bundle_sha256"] = korean_canonical_json_sha256(manifest_payload)
+    manifest = KoreanFoundationCandidateBundleManifest.model_validate(manifest_payload)
+    return manifest, member_bytes, _plain_json_bytes(manifest.model_dump(mode="json"))
+
+
+def _candidate_publication(
+    *,
+    manifest: KoreanFoundationCandidateBundleManifest,
+    manifest_bytes: bytes,
+) -> KoreanFoundationCandidatePublication:
+    payload: dict[str, object] = {
+        "schema_version": 1,
+        "status": "candidate_published",
+        "selected_draft_manifest_sha256": manifest.selected_draft_manifest_sha256,
+        "bundle_sha256": manifest.bundle_sha256,
+        "bundle_relpath": f"candidate-bundles/{manifest.bundle_sha256}",
+        "bundle_manifest_sha256": sha256(manifest_bytes).hexdigest(),
+        "member_names": _CANDIDATE_MEMBER_NAMES,
+        "total_record_count": 139,
+        "media_slot_count": manifest.media_slot_count,
+        "candidate_only": True,
+        "review_status": "needs_review",
+        "promotion_authority": False,
+    }
+    payload["content_hash"] = korean_draft_content_hash(payload)
+    return KoreanFoundationCandidatePublication.model_validate(payload)
+
+
+def _path_is_link_or_reparse(value: os.stat_result) -> bool:
+    if stat.S_ISLNK(value.st_mode):
+        return True
+    reparse_flag = getattr(stat, "FILE_ATTRIBUTE_REPARSE_POINT", 0x400)
+    return bool(getattr(value, "st_file_attributes", 0) & reparse_flag)
+
+
+def _ensure_directory(path: Path) -> None:
+    path.mkdir(mode=0o700, parents=True, exist_ok=True)
+    try:
+        value = path.lstat()
+    except OSError as exc:
+        raise KoreanFoundationAICurationError(
+            KoreanFoundationAICurationReasonCode.ATOMIC_WRITE_FAILED
+        ) from exc
+    if _path_is_link_or_reparse(value) or not stat.S_ISDIR(value.st_mode):
+        raise KoreanFoundationAICurationError(
+            KoreanFoundationAICurationReasonCode.ATOMIC_WRITE_FAILED
+        )
+
+
+def _fsync_directory(path: Path) -> None:
+    flags = os.O_RDONLY | getattr(os, "O_CLOEXEC", 0)
+    flags |= getattr(os, "O_DIRECTORY", 0)
+    try:
+        descriptor = os.open(path, flags)
+    except OSError:
+        return
+    try:
+        os.fsync(descriptor)
+    except OSError:
+        pass
+    finally:
+        os.close(descriptor)
+
+
+def _write_file(path: Path, raw: bytes) -> None:
+    with path.open("wb") as handle:
+        handle.write(raw)
+        handle.flush()
+        os.fsync(handle.fileno())
+
+
+def _bundle_matches(
+    path: Path,
+    *,
+    manifest: KoreanFoundationCandidateBundleManifest,
+    member_bytes: dict[str, bytes],
+    manifest_bytes: bytes,
+) -> bool:
+    try:
+        path_stat = path.lstat()
+    except OSError:
+        return False
+    if _path_is_link_or_reparse(path_stat) or not stat.S_ISDIR(path_stat.st_mode):
+        return False
+    expected_names = {"bundle-manifest.json", *_CANDIDATE_MEMBER_NAMES}
+    actual_names = {child.name for child in path.iterdir()}
+    if actual_names != expected_names:
+        return False
+    if (path / "bundle-manifest.json").read_bytes() != manifest_bytes:
+        return False
+    return all((path / name).read_bytes() == member_bytes[name] for name in _CANDIDATE_MEMBER_NAMES)
+
+
+def _write_candidate_bundle(
+    *,
+    manifest: KoreanFoundationCandidateBundleManifest,
+    member_bytes: dict[str, bytes],
+    manifest_bytes: bytes,
+) -> Path:
+    _ensure_directory(KOREAN_FOUNDATION_CANDIDATE_ROOT)
+    _ensure_directory(KOREAN_FOUNDATION_CANDIDATE_BUNDLE_ROOT)
+    target = KOREAN_FOUNDATION_CANDIDATE_BUNDLE_ROOT / manifest.bundle_sha256
+    if target.exists():
+        if _bundle_matches(
+            target,
+            manifest=manifest,
+            member_bytes=member_bytes,
+            manifest_bytes=manifest_bytes,
+        ):
+            return target
+        raise KoreanFoundationAICurationError(
+            KoreanFoundationAICurationReasonCode.CANDIDATE_BUNDLE_CONFLICT
+        )
+    stage_name = tempfile.mkdtemp(
+        prefix=f".{manifest.bundle_sha256}.",
+        suffix=".tmp",
+        dir=KOREAN_FOUNDATION_CANDIDATE_BUNDLE_ROOT,
+    )
+    stage = Path(stage_name)
+    try:
+        for name in _CANDIDATE_MEMBER_NAMES:
+            _write_file(stage / name, member_bytes[name])
+        _write_file(stage / "bundle-manifest.json", manifest_bytes)
+        _fsync_directory(stage)
+        os.replace(stage, target)
+        _fsync_directory(KOREAN_FOUNDATION_CANDIDATE_BUNDLE_ROOT)
+    except KoreanFoundationAICurationError:
+        raise
+    except OSError as exc:
+        if target.exists() and _bundle_matches(
+            target,
+            manifest=manifest,
+            member_bytes=member_bytes,
+            manifest_bytes=manifest_bytes,
+        ):
+            shutil.rmtree(stage, ignore_errors=True)
+            return target
+        if target.exists():
+            raise KoreanFoundationAICurationError(
+                KoreanFoundationAICurationReasonCode.CANDIDATE_BUNDLE_CONFLICT
+            ) from exc
+        raise KoreanFoundationAICurationError(
+            KoreanFoundationAICurationReasonCode.ATOMIC_WRITE_FAILED
+        ) from exc
+    finally:
+        if stage.exists():
+            shutil.rmtree(stage, ignore_errors=True)
+    return target
+
+
+def _pointer_bytes(publication: KoreanFoundationCandidatePublication) -> bytes:
+    pointer = KoreanFoundationCandidatePointer(
+        schema_version=1,
+        bundle_sha256=publication.bundle_sha256,
+        bundle_relpath=publication.bundle_relpath,
+        bundle_manifest_sha256=publication.bundle_manifest_sha256,
+    )
+    return _plain_json_bytes(pointer.model_dump(mode="json"))
+
+
+def _atomic_replace_candidate_pointer(raw: bytes) -> None:
+    _ensure_directory(KOREAN_FOUNDATION_CANDIDATE_ROOT)
+    pointer_path = _CURRENT_CANDIDATE_POINTER_PATH
+    try:
+        pointer_stat = pointer_path.lstat()
+    except FileNotFoundError:
+        pointer_stat = None
+    except OSError as exc:
+        raise KoreanFoundationAICurationError(
+            KoreanFoundationAICurationReasonCode.CANDIDATE_POINTER_INVALID
+        ) from exc
+    if pointer_stat is not None:
+        if _path_is_link_or_reparse(pointer_stat) or not stat.S_ISREG(
+            pointer_stat.st_mode
+        ):
+            raise KoreanFoundationAICurationError(
+                KoreanFoundationAICurationReasonCode.CANDIDATE_POINTER_INVALID
+            )
+        try:
+            existing = pointer_path.read_bytes()
+        except OSError as exc:
+            raise KoreanFoundationAICurationError(
+                KoreanFoundationAICurationReasonCode.CANDIDATE_POINTER_INVALID
+            ) from exc
+        if existing == raw:
+            return
+        raise KoreanFoundationAICurationError(
+            KoreanFoundationAICurationReasonCode.CANDIDATE_POINTER_CONFLICT
+        )
+    descriptor = -1
+    temporary_name: str | None = None
+    try:
+        descriptor, temporary_name = tempfile.mkstemp(
+            prefix=".current-candidate.",
+            suffix=".tmp",
+            dir=KOREAN_FOUNDATION_CANDIDATE_ROOT,
+        )
+        os.fchmod(descriptor, 0o600)
+        with os.fdopen(descriptor, "wb", closefd=True) as handle:
+            descriptor = -1
+            handle.write(raw)
+            handle.flush()
+            os.fsync(handle.fileno())
+        try:
+            os.link(temporary_name, pointer_path)
+        except FileExistsError as exc:
+            try:
+                pointer_stat = pointer_path.lstat()
+                if _path_is_link_or_reparse(pointer_stat) or not stat.S_ISREG(
+                    pointer_stat.st_mode
+                ):
+                    raise KoreanFoundationAICurationError(
+                        KoreanFoundationAICurationReasonCode.CANDIDATE_POINTER_INVALID
+                    ) from exc
+                existing = pointer_path.read_bytes()
+            except KoreanFoundationAICurationError:
+                raise
+            except OSError as read_exc:
+                raise KoreanFoundationAICurationError(
+                    KoreanFoundationAICurationReasonCode.CANDIDATE_POINTER_INVALID
+                ) from read_exc
+            if existing == raw:
+                return
+            raise KoreanFoundationAICurationError(
+                KoreanFoundationAICurationReasonCode.CANDIDATE_POINTER_CONFLICT
+            ) from exc
+        os.unlink(temporary_name)
+        temporary_name = None
+        _fsync_directory(KOREAN_FOUNDATION_CANDIDATE_ROOT)
+    except KoreanFoundationAICurationError:
+        raise
+    except OSError as exc:
+        raise KoreanFoundationAICurationError(
+            KoreanFoundationAICurationReasonCode.ATOMIC_WRITE_FAILED
+        ) from exc
+    finally:
+        if descriptor >= 0:
+            os.close(descriptor)
+        if temporary_name is not None:
+            try:
+                os.unlink(temporary_name)
+            except OSError:
+                pass
+
+
+def promote_korean_foundation_curation_selection(
+    *,
+    expected_draft_manifest_sha256: str,
+) -> KoreanFoundationCandidatePublication:
+    expected = _sha256_text(
+        expected_draft_manifest_sha256,
+        field_name="expected draft manifest hash",
+    )
+    manifest, member_bytes, manifest_bytes = _build_candidate_bundle_payloads()
+    if manifest.selected_draft_manifest_sha256 != expected:
+        raise KoreanFoundationAICurationError(
+            KoreanFoundationAICurationReasonCode.SELECTION_MISMATCH
+        )
+    publication = _candidate_publication(
+        manifest=manifest,
+        manifest_bytes=manifest_bytes,
+    )
+    pointer_raw = _pointer_bytes(publication)
+    if _CURRENT_CANDIDATE_POINTER_PATH.exists() and (
+        _CURRENT_CANDIDATE_POINTER_PATH.read_bytes() != pointer_raw
+    ):
+        raise KoreanFoundationAICurationError(
+            KoreanFoundationAICurationReasonCode.CANDIDATE_POINTER_CONFLICT
+        )
+    _write_candidate_bundle(
+        manifest=manifest,
+        member_bytes=member_bytes,
+        manifest_bytes=manifest_bytes,
+    )
+    _atomic_replace_candidate_pointer(pointer_raw)
+    return verify_promoted_korean_foundation_candidate(
+        expected_draft_manifest_sha256=expected,
+    )
+
+
+def _read_candidate_pointer() -> KoreanFoundationCandidatePointer:
+    try:
+        payload = json.loads(_CURRENT_CANDIDATE_POINTER_PATH.read_text(encoding="utf-8"))
+    except FileNotFoundError as exc:
+        raise KoreanFoundationAICurationError(
+            KoreanFoundationAICurationReasonCode.CANDIDATE_POINTER_MISSING
+        ) from exc
+    except (OSError, UnicodeDecodeError, json.JSONDecodeError, RecursionError) as exc:
+        raise KoreanFoundationAICurationError(
+            KoreanFoundationAICurationReasonCode.CANDIDATE_POINTER_INVALID
+        ) from exc
+    if not isinstance(payload, dict) or set(payload) != {
+        "schema_version",
+        "bundle_sha256",
+        "bundle_relpath",
+        "bundle_manifest_sha256",
+    }:
+        raise KoreanFoundationAICurationError(
+            KoreanFoundationAICurationReasonCode.CANDIDATE_POINTER_INVALID
+        )
+    try:
+        return KoreanFoundationCandidatePointer.model_validate(payload)
+    except (ValidationError, TypeError, ValueError) as exc:
+        raise KoreanFoundationAICurationError(
+            KoreanFoundationAICurationReasonCode.CANDIDATE_POINTER_INVALID
+        ) from exc
+
+
+def read_current_korean_foundation_candidate() -> KoreanFoundationCandidatePublication:
+    pointer = _read_candidate_pointer()
+    bundle_root = KOREAN_FOUNDATION_CANDIDATE_ROOT / pointer.bundle_relpath
+    try:
+        manifest_bytes = (bundle_root / "bundle-manifest.json").read_bytes()
+        manifest_payload = json.loads(manifest_bytes.decode("utf-8"))
+    except (OSError, UnicodeDecodeError, json.JSONDecodeError, RecursionError) as exc:
+        raise KoreanFoundationAICurationError(
+            KoreanFoundationAICurationReasonCode.ARTIFACT_INVALID
+        ) from exc
+    if sha256(manifest_bytes).hexdigest() != pointer.bundle_manifest_sha256:
+        raise KoreanFoundationAICurationError(
+            KoreanFoundationAICurationReasonCode.ARTIFACT_BINDING_MISMATCH
+        )
+    manifest = KoreanFoundationCandidateBundleManifest.model_validate(manifest_payload)
+    if manifest.bundle_sha256 != pointer.bundle_sha256:
+        raise KoreanFoundationAICurationError(
+            KoreanFoundationAICurationReasonCode.ARTIFACT_BINDING_MISMATCH
+        )
+    for member in manifest.members:
+        try:
+            content = (bundle_root / member.name).read_bytes()
+        except OSError as exc:
+            raise KoreanFoundationAICurationError(
+                KoreanFoundationAICurationReasonCode.ARTIFACT_MISSING
+            ) from exc
+        if sha256(content).hexdigest() != member.sha256:
+            raise KoreanFoundationAICurationError(
+                KoreanFoundationAICurationReasonCode.ARTIFACT_BINDING_MISMATCH
+            )
+    names = {child.name for child in bundle_root.iterdir()}
+    if names != {"bundle-manifest.json", *_CANDIDATE_MEMBER_NAMES}:
+        raise KoreanFoundationAICurationError(
+            KoreanFoundationAICurationReasonCode.ARTIFACT_BINDING_MISMATCH
+        )
+    return _candidate_publication(manifest=manifest, manifest_bytes=manifest_bytes)
+
+
+def verify_promoted_korean_foundation_candidate(
+    *,
+    expected_draft_manifest_sha256: str,
+) -> KoreanFoundationCandidatePublication:
+    expected = _sha256_text(
+        expected_draft_manifest_sha256,
+        field_name="expected draft manifest hash",
+    )
+    current = read_current_korean_foundation_candidate()
+    if current.selected_draft_manifest_sha256 != expected:
+        raise KoreanFoundationAICurationError(
+            KoreanFoundationAICurationReasonCode.SELECTION_MISMATCH
+        )
+    return current
+
+
 __all__ = [
     "KOREAN_FOUNDATION_CURATION_DRAFT_ROOT",
     "KOREAN_FOUNDATION_CURATION_INPUT_ROOT",
+    "KOREAN_FOUNDATION_CANDIDATE_BUNDLE_ROOT",
+    "KOREAN_FOUNDATION_CANDIDATE_ROOT",
+    "KOREAN_FOUNDATION_EXECUTION_HANDOFF_ROOT",
     "KOREAN_FOUNDATION_PROJECTION_MAX_BYTES",
     "KoreanFoundationAICurationError",
     "KoreanFoundationAICurationReasonCode",
     "KoreanFoundationBatchDraft",
     "KoreanFoundationBatchProjection",
+    "KoreanFoundationCandidateBundleManifest",
+    "KoreanFoundationCandidateBundleMember",
+    "KoreanFoundationCandidateBundlePlan",
+    "KoreanFoundationCandidatePointer",
+    "KoreanFoundationCandidatePublication",
+    "KoreanFoundationCurationSelectionHandoff",
     "KoreanFoundationDraftArtifactBinding",
     "KoreanFoundationDraftDisagreement",
     "KoreanFoundationDraftManifest",
@@ -1312,9 +2215,13 @@ __all__ = [
     "assemble_korean_foundation_draft_manifest",
     "assemble_korean_foundation_family_draft",
     "build_korean_foundation_batch_projection",
+    "check_korean_foundation_curation_selection",
     "korean_draft_content_hash",
+    "promote_korean_foundation_curation_selection",
+    "read_current_korean_foundation_candidate",
     "validate_korean_foundation_batch_draft",
     "validate_korean_foundation_drafts",
+    "verify_promoted_korean_foundation_candidate",
     "write_korean_foundation_batch_projection",
     "write_korean_foundation_draft_manifest",
     "write_korean_foundation_family_draft",

@@ -1,4 +1,5 @@
 import importlib
+import json
 import subprocess
 import sys
 import unicodedata
@@ -434,6 +435,7 @@ def test_curation_script_exposes_only_fixed_operations_and_enum_targets() -> Non
         "assemble-family",
         "assemble",
         "validate-drafts",
+        "check-selection",
     ):
         assert operation in help_result.stdout
     for forbidden_option in (
@@ -613,3 +615,295 @@ def test_read_only_validation_aggregates_content_free_failures(
     assert tuple(seen) == tuple(BATCH_STAGES)
     assert len(exc_info.value.failures) == 2
     assert all("아기" not in failure for failure in exc_info.value.failures)
+
+
+def _validated_draft_models(module: object) -> tuple[dict[str, object], object, object, object]:
+    batches = {
+        batch_id: module.KoreanFoundationBatchDraft.model_validate(
+            _batch_payload(batch_id)
+        )
+        for batch_id in BATCH_STAGES
+    }
+    hangul = module.assemble_korean_foundation_family_draft(
+        "hangul",
+        tuple(batches[batch_id] for batch_id in tuple(BATCH_STAGES)[:3]),
+    )
+    pronunciation = module.assemble_korean_foundation_family_draft(
+        "pronunciation",
+        tuple(batches[batch_id] for batch_id in tuple(BATCH_STAGES)[3:]),
+    )
+    manifest = module.assemble_korean_foundation_draft_manifest(
+        (hangul, pronunciation),
+        tuple(batches.values()),
+    )
+    return batches, hangul, pronunciation, manifest
+
+
+def test_promotion_rejects_structural_diff_before_write(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    module = importlib.import_module(
+        "multilang.services.korean_foundation_ai_curation"
+    )
+    check_selection = getattr(
+        module,
+        "check_korean_foundation_curation_selection",
+        None,
+    )
+    assert callable(check_selection)
+    batches, hangul, pronunciation, manifest = _validated_draft_models(module)
+    stale_hangul_payload = hangul.model_dump(mode="json")
+    stale_hangul_payload["batch_bindings"][0]["content_hash"] = "0" * 64
+    stale_hangul_payload["content_hash"] = _content_hash(stale_hangul_payload)
+    stale_hangul = module.KoreanFoundationFamilyDraft.model_validate(
+        stale_hangul_payload
+    )
+
+    monkeypatch.setattr(
+        module,
+        "_load_fixed_batch_draft",
+        lambda batch_id: batches[batch_id],
+    )
+    monkeypatch.setattr(
+        module,
+        "_load_fixed_family_draft",
+        lambda family: (
+            stale_hangul
+            if str(family) in {"hangul", "KoreanFoundationFamily.HANGUL"}
+            else pronunciation
+        ),
+    )
+    monkeypatch.setattr(module, "_load_fixed_draft_manifest", lambda: manifest)
+    monkeypatch.setattr(
+        module,
+        "_load_selected_draft_manifest_sha256",
+        lambda: manifest.content_hash,
+    )
+
+    def reject_write(*args: object, **kwargs: object) -> None:
+        raise AssertionError("selection check attempted a write")
+
+    monkeypatch.setattr(module, "_atomic_write_json", reject_write)
+
+    with pytest.raises(module.KoreanFoundationAICurationError) as exc_info:
+        check_selection(expected_draft_manifest_sha256=manifest.content_hash)
+    assert exc_info.value.reason_code in {
+        module.KoreanFoundationAICurationReasonCode.ARTIFACT_BINDING_MISMATCH,
+        module.KoreanFoundationAICurationReasonCode.STRUCTURAL_DIFF,
+    }
+
+
+def test_selection_check_defines_fixed_candidate_bundle_contract(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    module = importlib.import_module(
+        "multilang.services.korean_foundation_ai_curation"
+    )
+    check_selection = getattr(
+        module,
+        "check_korean_foundation_curation_selection",
+        None,
+    )
+    assert callable(check_selection)
+    batches, hangul, pronunciation, manifest = _validated_draft_models(module)
+
+    monkeypatch.setattr(
+        module,
+        "_load_fixed_batch_draft",
+        lambda batch_id: batches[batch_id],
+    )
+    monkeypatch.setattr(
+        module,
+        "_load_fixed_family_draft",
+        lambda family: (
+            hangul
+            if str(family) in {"hangul", "KoreanFoundationFamily.HANGUL"}
+            else pronunciation
+        ),
+    )
+    monkeypatch.setattr(module, "_load_fixed_draft_manifest", lambda: manifest)
+    monkeypatch.setattr(
+        module,
+        "_load_selected_draft_manifest_sha256",
+        lambda: manifest.content_hash,
+    )
+
+    def reject_write(*args: object, **kwargs: object) -> None:
+        raise AssertionError("selection check attempted a write")
+
+    monkeypatch.setattr(module, "_atomic_write_json", reject_write)
+
+    plan = check_selection(expected_draft_manifest_sha256=manifest.content_hash)
+
+    assert plan.selected_draft_manifest_sha256 == manifest.content_hash
+    assert plan.member_names == (
+        "hangul-v2.json",
+        "pronunciation-i-plus-1-v2.json",
+        "korean-foundations-v2-curation.json",
+        "korean-foundations-v2-media.json",
+    )
+    assert plan.bundle_relpath == f"candidate-bundles/{plan.bundle_sha256}"
+    assert plan.pointer_relpath == "current-candidate.json"
+    assert plan.hangul_family_sha256 == hangul.content_hash
+    assert plan.pronunciation_family_sha256 == pronunciation.content_hash
+    assert plan.content_hash == _content_hash(plan.model_dump(mode="json"))
+
+
+def _install_candidate_paths(
+    module: object,
+    monkeypatch: pytest.MonkeyPatch,
+    root: Path,
+) -> None:
+    candidate_root = root / "data" / "korean_foundations"
+    monkeypatch.setattr(module, "KOREAN_FOUNDATION_CANDIDATE_ROOT", candidate_root)
+    monkeypatch.setattr(
+        module,
+        "KOREAN_FOUNDATION_CANDIDATE_BUNDLE_ROOT",
+        candidate_root / "candidate-bundles",
+    )
+    monkeypatch.setattr(
+        module,
+        "_CURRENT_CANDIDATE_POINTER_PATH",
+        candidate_root / "current-candidate.json",
+    )
+
+
+def _install_valid_selection_fixture(
+    module: object,
+    monkeypatch: pytest.MonkeyPatch,
+) -> object:
+    batches, hangul, pronunciation, manifest = _validated_draft_models(module)
+    monkeypatch.setattr(
+        module,
+        "_load_fixed_batch_draft",
+        lambda batch_id: batches[batch_id],
+    )
+    monkeypatch.setattr(
+        module,
+        "_load_fixed_family_draft",
+        lambda family: (
+            hangul
+            if str(family) in {"hangul", "KoreanFoundationFamily.HANGUL"}
+            else pronunciation
+        ),
+    )
+    monkeypatch.setattr(module, "_load_fixed_draft_manifest", lambda: manifest)
+    monkeypatch.setattr(
+        module,
+        "_load_selected_draft_manifest_sha256",
+        lambda: manifest.content_hash,
+    )
+    return manifest
+
+
+def test_candidate_bundle_publication_is_atomic_for_readers(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    module = importlib.import_module(
+        "multilang.services.korean_foundation_ai_curation"
+    )
+    promote = getattr(module, "promote_korean_foundation_curation_selection", None)
+    verify = getattr(module, "verify_promoted_korean_foundation_candidate", None)
+    read_current = getattr(module, "read_current_korean_foundation_candidate", None)
+    assert callable(promote)
+    assert callable(verify)
+    assert callable(read_current)
+    manifest = _install_valid_selection_fixture(module, monkeypatch)
+    _install_candidate_paths(module, monkeypatch, tmp_path)
+    candidate_root = module.KOREAN_FOUNDATION_CANDIDATE_ROOT
+    pointer_path = module._CURRENT_CANDIDATE_POINTER_PATH
+    original_pointer_replace = module._atomic_replace_candidate_pointer
+
+    def fail_before_pointer(raw: bytes) -> None:
+        raise module.KoreanFoundationAICurationError(
+            module.KoreanFoundationAICurationReasonCode.ATOMIC_WRITE_FAILED
+        )
+
+    monkeypatch.setattr(module, "_atomic_replace_candidate_pointer", fail_before_pointer)
+    with pytest.raises(module.KoreanFoundationAICurationError):
+        promote(expected_draft_manifest_sha256=manifest.content_hash)
+    assert not pointer_path.exists()
+    with pytest.raises(module.KoreanFoundationAICurationError):
+        read_current()
+
+    monkeypatch.setattr(
+        module,
+        "_atomic_replace_candidate_pointer",
+        original_pointer_replace,
+    )
+    published = promote(expected_draft_manifest_sha256=manifest.content_hash)
+    pointer = json.loads(pointer_path.read_text(encoding="utf-8"))
+    assert set(pointer) == {
+        "schema_version",
+        "bundle_sha256",
+        "bundle_relpath",
+        "bundle_manifest_sha256",
+    }
+    assert pointer["bundle_sha256"] == published.bundle_sha256
+    assert pointer["bundle_relpath"] == f"candidate-bundles/{published.bundle_sha256}"
+
+    bundle_root = candidate_root / pointer["bundle_relpath"]
+    members = sorted(path.name for path in bundle_root.iterdir())
+    assert members == [
+        "bundle-manifest.json",
+        "hangul-v2.json",
+        "korean-foundations-v2-curation.json",
+        "korean-foundations-v2-media.json",
+        "pronunciation-i-plus-1-v2.json",
+    ]
+    bundle_manifest = json.loads(
+        (bundle_root / "bundle-manifest.json").read_text(encoding="utf-8")
+    )
+    assert [member["name"] for member in bundle_manifest["members"]] == list(
+        module._CANDIDATE_MEMBER_NAMES
+    )
+    assert len(bundle_manifest["members"]) == 4
+    assert bundle_manifest["media_slot_count"] == 509
+    for member in bundle_manifest["members"]:
+        assert set(member) == {"name", "sha256"}
+        content = (bundle_root / member["name"]).read_bytes()
+        assert member["sha256"] == sha256(content).hexdigest()
+
+    verified = verify(expected_draft_manifest_sha256=manifest.content_hash)
+    current = read_current()
+    retried = promote(expected_draft_manifest_sha256=manifest.content_hash)
+    assert verified.bundle_sha256 == published.bundle_sha256
+    assert current.bundle_sha256 == published.bundle_sha256
+    assert retried.bundle_sha256 == published.bundle_sha256
+
+
+def test_candidate_bundle_publication_refuses_conflicting_pointer(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    module = importlib.import_module(
+        "multilang.services.korean_foundation_ai_curation"
+    )
+    promote = getattr(module, "promote_korean_foundation_curation_selection", None)
+    assert callable(promote)
+    manifest = _install_valid_selection_fixture(module, monkeypatch)
+    _install_candidate_paths(module, monkeypatch, tmp_path)
+    pointer_path = module._CURRENT_CANDIDATE_POINTER_PATH
+    pointer_path.parent.mkdir(parents=True, exist_ok=True)
+    pointer_path.write_text(
+        json.dumps(
+            {
+                "schema_version": 1,
+                "bundle_sha256": "0" * 64,
+                "bundle_relpath": f"candidate-bundles/{'0' * 64}",
+                "bundle_manifest_sha256": "1" * 64,
+            },
+            separators=(",", ":"),
+            sort_keys=True,
+        )
+        + "\n",
+        encoding="utf-8",
+    )
+
+    with pytest.raises(module.KoreanFoundationAICurationError) as exc_info:
+        promote(expected_draft_manifest_sha256=manifest.content_hash)
+    assert (
+        exc_info.value.reason_code
+        is module.KoreanFoundationAICurationReasonCode.CANDIDATE_POINTER_CONFLICT
+    )

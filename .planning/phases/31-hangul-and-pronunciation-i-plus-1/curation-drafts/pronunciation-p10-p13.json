@@ -1,0 +1,801 @@
+{
+  "content_hash": "1374893a8038b790189c0682c3132b4ec4a8f99a4562329bdd7eab55ea5b5a0f",
+  "schema_version": 1,
+  "batch_id": "pronunciation-p10-p13",
+  "draft_only": true,
+  "review_status": "needs_review",
+  "promotion_authority": false,
+  "source": {
+    "family": "pronunciation",
+    "registry_content_hash": "89a520055cfd94eb086c9ed3e937499a71fbcb07c056e1916b645c3bd312d89d",
+    "registry_version": "korean-concepts-v1",
+    "source_file_name": "pronunciation-i-plus-1-v1.json",
+    "source_file_sha256": "6a2eb0b6a0a467de6074ffafc2fb674a674ea96c3c2187f339d1c278aa8f55ec",
+    "source_pack_content_hash": "641b06f4d1c05c70803b859aa2936fc517a1038ad190ac7c58574da8a93ea49e",
+    "source_pack_version": "pronunciation-i-plus-1-v1"
+  },
+  "stages": [
+    "P10",
+    "P11",
+    "P12",
+    "P13"
+  ],
+  "records": [
+    {
+      "content_hash": "81d9346e24c4076a5474c3f1979660f928949ba9046de1e9fb98cec896e73de9",
+      "disagreements": [],
+      "item_key": "ko-pron-0038",
+      "proposals": [
+        {
+          "authorship": "ai-proposed",
+          "field_name": "spellings",
+          "grounding_reference_ids": [
+            "nikl.pronunciation-0002"
+          ],
+          "value": "보아요 → 봐요"
+        },
+        {
+          "authorship": "ai-proposed",
+          "field_name": "sound",
+          "grounding_reference_ids": [
+            "nikl.pronunciation-0002"
+          ],
+          "value": "[봐요]"
+        },
+        {
+          "authorship": "ai-proposed",
+          "field_name": "example_word",
+          "grounding_reference_ids": [
+            "nikl.pronunciation-0002"
+          ],
+          "value": "봐요"
+        },
+        {
+          "authorship": "ai-proposed",
+          "field_name": "word_translation",
+          "grounding_reference_ids": [
+            "nikl.pronunciation-0002"
+          ],
+          "value": "vê"
+        },
+        {
+          "authorship": "ai-proposed",
+          "field_name": "example_sentence",
+          "grounding_reference_ids": [
+            "nikl.pronunciation-0002"
+          ],
+          "value": "사진을 봐요."
+        },
+        {
+          "authorship": "ai-proposed",
+          "field_name": "sentence_translation",
+          "grounding_reference_ids": [
+            "nikl.pronunciation-0002"
+          ],
+          "value": "Vejo a foto."
+        },
+        {
+          "authorship": "ai-proposed",
+          "field_name": "normative_pronunciation",
+          "grounding_reference_ids": [
+            "nikl.pronunciation-0002"
+          ],
+          "value": "[봐요]"
+        },
+        {
+          "authorship": "ai-proposed",
+          "field_name": "surface_pronunciation",
+          "grounding_reference_ids": [
+            "nikl.pronunciation-0002"
+          ],
+          "value": "[봐요]"
+        }
+      ],
+      "sequence": 38,
+      "source_entry_content_hash": "6cd16ec0291ae9f0e5375e00232b7a796d2157d8507ed58d8713d8990abd4c3b",
+      "stage_id": "P10",
+      "uncertainties": [
+        {
+          "code": "ipa_absent_pending_phonetics_review",
+          "field_name": "ipa",
+          "grounding_reference_ids": [
+            "nikl.pronunciation-0002"
+          ]
+        }
+      ]
+    },
+    {
+      "content_hash": "c67d2c920190aab4fe6fbf00a0508d848b9e8c60773f493fa1338d6d4be3f0ca",
+      "disagreements": [],
+      "item_key": "ko-pron-0039",
+      "proposals": [
+        {
+          "authorship": "ai-proposed",
+          "field_name": "spellings",
+          "grounding_reference_ids": [
+            "nikl.pronunciation-0002"
+          ],
+          "value": "주어요 → 줘요"
+        },
+        {
+          "authorship": "ai-proposed",
+          "field_name": "sound",
+          "grounding_reference_ids": [
+            "nikl.pronunciation-0002"
+          ],
+          "value": "[줘요]"
+        },
+        {
+          "authorship": "ai-proposed",
+          "field_name": "example_word",
+          "grounding_reference_ids": [
+            "nikl.pronunciation-0002"
+          ],
+          "value": "줘요"
+        },
+        {
+          "authorship": "ai-proposed",
+          "field_name": "word_translation",
+          "grounding_reference_ids": [
+            "nikl.pronunciation-0002"
+          ],
+          "value": "dá"
+        },
+        {
+          "authorship": "ai-proposed",
+          "field_name": "example_sentence",
+          "grounding_reference_ids": [
+            "nikl.pronunciation-0002"
+          ],
+          "value": "물을 줘요."
+        },
+        {
+          "authorship": "ai-proposed",
+          "field_name": "sentence_translation",
+          "grounding_reference_ids": [
+            "nikl.pronunciation-0002"
+          ],
+          "value": "Dou água."
+        },
+        {
+          "authorship": "ai-proposed",
+          "field_name": "normative_pronunciation",
+          "grounding_reference_ids": [
+            "nikl.pronunciation-0002"
+          ],
+          "value": "[줘요]"
+        },
+        {
+          "authorship": "ai-proposed",
+          "field_name": "surface_pronunciation",
+          "grounding_reference_ids": [
+            "nikl.pronunciation-0002"
+          ],
+          "value": "[줘요]"
+        }
+      ],
+      "sequence": 39,
+      "source_entry_content_hash": "49c31012e9f8488ad327751674dfe60f994ea35ac8b7083f5000efaef712177a",
+      "stage_id": "P10",
+      "uncertainties": [
+        {
+          "code": "ipa_absent_pending_phonetics_review",
+          "field_name": "ipa",
+          "grounding_reference_ids": [
+            "nikl.pronunciation-0002"
+          ]
+        }
+      ]
+    },
+    {
+      "content_hash": "d1b79d2baa71b4e824a123584edf965028a624c6db59bac328cc2d150bd2c917",
+      "disagreements": [],
+      "item_key": "ko-pron-0040",
+      "proposals": [
+        {
+          "authorship": "ai-proposed",
+          "field_name": "spellings",
+          "grounding_reference_ids": [
+            "nikl.pronunciation-0002"
+          ],
+          "value": "되어요 → 돼요"
+        },
+        {
+          "authorship": "ai-proposed",
+          "field_name": "sound",
+          "grounding_reference_ids": [
+            "nikl.pronunciation-0002"
+          ],
+          "value": "[돼요]"
+        },
+        {
+          "authorship": "ai-proposed",
+          "field_name": "example_word",
+          "grounding_reference_ids": [
+            "nikl.pronunciation-0002"
+          ],
+          "value": "돼요"
+        },
+        {
+          "authorship": "ai-proposed",
+          "field_name": "word_translation",
+          "grounding_reference_ids": [
+            "nikl.pronunciation-0002"
+          ],
+          "value": "funciona"
+        },
+        {
+          "authorship": "ai-proposed",
+          "field_name": "example_sentence",
+          "grounding_reference_ids": [
+            "nikl.pronunciation-0002"
+          ],
+          "value": "이제 돼요."
+        },
+        {
+          "authorship": "ai-proposed",
+          "field_name": "sentence_translation",
+          "grounding_reference_ids": [
+            "nikl.pronunciation-0002"
+          ],
+          "value": "Agora funciona."
+        },
+        {
+          "authorship": "ai-proposed",
+          "field_name": "normative_pronunciation",
+          "grounding_reference_ids": [
+            "nikl.pronunciation-0002"
+          ],
+          "value": "[돼요]"
+        },
+        {
+          "authorship": "ai-proposed",
+          "field_name": "surface_pronunciation",
+          "grounding_reference_ids": [
+            "nikl.pronunciation-0002"
+          ],
+          "value": "[돼요]"
+        }
+      ],
+      "sequence": 40,
+      "source_entry_content_hash": "a6a6552240659a2e2b099b8c88b90d77d3d195db565f28b459d916cffeaf34f7",
+      "stage_id": "P10",
+      "uncertainties": [
+        {
+          "code": "ipa_absent_pending_phonetics_review",
+          "field_name": "ipa",
+          "grounding_reference_ids": [
+            "nikl.pronunciation-0002"
+          ]
+        }
+      ]
+    },
+    {
+      "content_hash": "b8de7056c7f4d323565530f6a12e1dea77402ed85bc366ca7448d0462cdb0f7c",
+      "disagreements": [],
+      "item_key": "ko-pron-0041",
+      "proposals": [
+        {
+          "authorship": "ai-proposed",
+          "field_name": "spellings",
+          "grounding_reference_ids": [
+            "nikl.pronunciation-0002"
+          ],
+          "value": "하여요 → 해요"
+        },
+        {
+          "authorship": "ai-proposed",
+          "field_name": "sound",
+          "grounding_reference_ids": [
+            "nikl.pronunciation-0002"
+          ],
+          "value": "[해요]"
+        },
+        {
+          "authorship": "ai-proposed",
+          "field_name": "example_word",
+          "grounding_reference_ids": [
+            "nikl.pronunciation-0002"
+          ],
+          "value": "해요"
+        },
+        {
+          "authorship": "ai-proposed",
+          "field_name": "word_translation",
+          "grounding_reference_ids": [
+            "nikl.pronunciation-0002"
+          ],
+          "value": "faz"
+        },
+        {
+          "authorship": "ai-proposed",
+          "field_name": "example_sentence",
+          "grounding_reference_ids": [
+            "nikl.pronunciation-0002"
+          ],
+          "value": "숙제를 해요."
+        },
+        {
+          "authorship": "ai-proposed",
+          "field_name": "sentence_translation",
+          "grounding_reference_ids": [
+            "nikl.pronunciation-0002"
+          ],
+          "value": "Faço a tarefa."
+        },
+        {
+          "authorship": "ai-proposed",
+          "field_name": "normative_pronunciation",
+          "grounding_reference_ids": [
+            "nikl.pronunciation-0002"
+          ],
+          "value": "[해요]"
+        },
+        {
+          "authorship": "ai-proposed",
+          "field_name": "surface_pronunciation",
+          "grounding_reference_ids": [
+            "nikl.pronunciation-0002"
+          ],
+          "value": "[해요]"
+        }
+      ],
+      "sequence": 41,
+      "source_entry_content_hash": "a6fe8f265e861cd6cdb15f7e976e3bc14f75383a93bd09092d5890d25f0b84ce",
+      "stage_id": "P10",
+      "uncertainties": [
+        {
+          "code": "ipa_absent_pending_phonetics_review",
+          "field_name": "ipa",
+          "grounding_reference_ids": [
+            "nikl.pronunciation-0002"
+          ]
+        }
+      ]
+    },
+    {
+      "content_hash": "3ede54c3efbe661b0fc21195ef6efd8916cdfe3ef1a079c7824e3d7f0a7f03bd",
+      "disagreements": [],
+      "item_key": "ko-pron-0042",
+      "proposals": [],
+      "sequence": 42,
+      "source_entry_content_hash": "931767b29c46ca30f582f174db1de2fbba6e4a629de6a7195edc1006fb999b33",
+      "stage_id": "P11",
+      "uncertainties": [
+        {
+          "code": "specialist_reduction_pending_review",
+          "field_name": "spellings",
+          "grounding_reference_ids": [
+            "nikl.pronunciation-0002"
+          ]
+        },
+        {
+          "code": "specialist_reduction_pending_review",
+          "field_name": "sound",
+          "grounding_reference_ids": [
+            "nikl.pronunciation-0002"
+          ]
+        },
+        {
+          "code": "specialist_reduction_pending_review",
+          "field_name": "example_word",
+          "grounding_reference_ids": [
+            "nikl.pronunciation-0002"
+          ]
+        },
+        {
+          "code": "specialist_reduction_pending_review",
+          "field_name": "word_translation",
+          "grounding_reference_ids": [
+            "nikl.pronunciation-0002"
+          ]
+        },
+        {
+          "code": "specialist_reduction_pending_review",
+          "field_name": "example_sentence",
+          "grounding_reference_ids": [
+            "nikl.pronunciation-0002"
+          ]
+        },
+        {
+          "code": "specialist_reduction_pending_review",
+          "field_name": "sentence_translation",
+          "grounding_reference_ids": [
+            "nikl.pronunciation-0002"
+          ]
+        },
+        {
+          "code": "specialist_reduction_pending_review",
+          "field_name": "normative_pronunciation",
+          "grounding_reference_ids": [
+            "nikl.pronunciation-0002"
+          ]
+        },
+        {
+          "code": "specialist_reduction_pending_review",
+          "field_name": "surface_pronunciation",
+          "grounding_reference_ids": [
+            "nikl.pronunciation-0002"
+          ]
+        },
+        {
+          "code": "ipa_absent_pending_phonetics_review",
+          "field_name": "ipa",
+          "grounding_reference_ids": [
+            "nikl.pronunciation-0002"
+          ]
+        }
+      ]
+    },
+    {
+      "content_hash": "8f660ada81b2f761d879de6feb394785ae734204f792337a9bcdc910234904a5",
+      "disagreements": [],
+      "item_key": "ko-pron-0043",
+      "proposals": [],
+      "sequence": 43,
+      "source_entry_content_hash": "7b3d24a5a2a01448d86d96b7bb6532850935a6b9d5c14e00670203da2c72e161",
+      "stage_id": "P12",
+      "uncertainties": [
+        {
+          "code": "specialist_auditory_scope_pending_review",
+          "field_name": "spellings",
+          "grounding_reference_ids": [
+            "nikl.pronunciation-0002"
+          ]
+        },
+        {
+          "code": "specialist_auditory_scope_pending_review",
+          "field_name": "sound",
+          "grounding_reference_ids": [
+            "nikl.pronunciation-0002"
+          ]
+        },
+        {
+          "code": "specialist_auditory_scope_pending_review",
+          "field_name": "example_word",
+          "grounding_reference_ids": [
+            "nikl.pronunciation-0002"
+          ]
+        },
+        {
+          "code": "specialist_auditory_scope_pending_review",
+          "field_name": "word_translation",
+          "grounding_reference_ids": [
+            "nikl.pronunciation-0002"
+          ]
+        },
+        {
+          "code": "specialist_auditory_scope_pending_review",
+          "field_name": "example_sentence",
+          "grounding_reference_ids": [
+            "nikl.pronunciation-0002"
+          ]
+        },
+        {
+          "code": "specialist_auditory_scope_pending_review",
+          "field_name": "sentence_translation",
+          "grounding_reference_ids": [
+            "nikl.pronunciation-0002"
+          ]
+        },
+        {
+          "code": "specialist_auditory_scope_pending_review",
+          "field_name": "normative_pronunciation",
+          "grounding_reference_ids": [
+            "nikl.pronunciation-0002"
+          ]
+        },
+        {
+          "code": "specialist_auditory_scope_pending_review",
+          "field_name": "surface_pronunciation",
+          "grounding_reference_ids": [
+            "nikl.pronunciation-0002"
+          ]
+        },
+        {
+          "code": "ipa_absent_pending_phonetics_review",
+          "field_name": "ipa",
+          "grounding_reference_ids": [
+            "nikl.pronunciation-0002"
+          ]
+        }
+      ]
+    },
+    {
+      "content_hash": "5e6a5b0da8ed7a7de8b4163ac1849701c46046fadba35e764cab1d8120735fdc",
+      "disagreements": [],
+      "item_key": "ko-pron-0044",
+      "proposals": [],
+      "sequence": 44,
+      "source_entry_content_hash": "322302e526f98a83ec99d042626cbf2f7749fa2d470ae887092716347b31956d",
+      "stage_id": "P12",
+      "uncertainties": [
+        {
+          "code": "specialist_auditory_scope_pending_review",
+          "field_name": "spellings",
+          "grounding_reference_ids": [
+            "nikl.pronunciation-0002"
+          ]
+        },
+        {
+          "code": "specialist_auditory_scope_pending_review",
+          "field_name": "sound",
+          "grounding_reference_ids": [
+            "nikl.pronunciation-0002"
+          ]
+        },
+        {
+          "code": "specialist_auditory_scope_pending_review",
+          "field_name": "example_word",
+          "grounding_reference_ids": [
+            "nikl.pronunciation-0002"
+          ]
+        },
+        {
+          "code": "specialist_auditory_scope_pending_review",
+          "field_name": "word_translation",
+          "grounding_reference_ids": [
+            "nikl.pronunciation-0002"
+          ]
+        },
+        {
+          "code": "specialist_auditory_scope_pending_review",
+          "field_name": "example_sentence",
+          "grounding_reference_ids": [
+            "nikl.pronunciation-0002"
+          ]
+        },
+        {
+          "code": "specialist_auditory_scope_pending_review",
+          "field_name": "sentence_translation",
+          "grounding_reference_ids": [
+            "nikl.pronunciation-0002"
+          ]
+        },
+        {
+          "code": "specialist_auditory_scope_pending_review",
+          "field_name": "normative_pronunciation",
+          "grounding_reference_ids": [
+            "nikl.pronunciation-0002"
+          ]
+        },
+        {
+          "code": "specialist_auditory_scope_pending_review",
+          "field_name": "surface_pronunciation",
+          "grounding_reference_ids": [
+            "nikl.pronunciation-0002"
+          ]
+        },
+        {
+          "code": "ipa_absent_pending_phonetics_review",
+          "field_name": "ipa",
+          "grounding_reference_ids": [
+            "nikl.pronunciation-0002"
+          ]
+        }
+      ]
+    },
+    {
+      "content_hash": "46cb3a7a6487efd1fd3c0bcbac8990729c3e076009cd718e2cd8814dc548c66c",
+      "disagreements": [],
+      "item_key": "ko-pron-0045",
+      "proposals": [],
+      "sequence": 45,
+      "source_entry_content_hash": "3842f6b7cfdcaa14ae1b97a2722d199eff6f2e74d00f347bf84e91de3441edf2",
+      "stage_id": "P12",
+      "uncertainties": [
+        {
+          "code": "specialist_auditory_scope_pending_review",
+          "field_name": "spellings",
+          "grounding_reference_ids": [
+            "nikl.pronunciation-0002"
+          ]
+        },
+        {
+          "code": "specialist_auditory_scope_pending_review",
+          "field_name": "sound",
+          "grounding_reference_ids": [
+            "nikl.pronunciation-0002"
+          ]
+        },
+        {
+          "code": "specialist_auditory_scope_pending_review",
+          "field_name": "example_word",
+          "grounding_reference_ids": [
+            "nikl.pronunciation-0002"
+          ]
+        },
+        {
+          "code": "specialist_auditory_scope_pending_review",
+          "field_name": "word_translation",
+          "grounding_reference_ids": [
+            "nikl.pronunciation-0002"
+          ]
+        },
+        {
+          "code": "specialist_auditory_scope_pending_review",
+          "field_name": "example_sentence",
+          "grounding_reference_ids": [
+            "nikl.pronunciation-0002"
+          ]
+        },
+        {
+          "code": "specialist_auditory_scope_pending_review",
+          "field_name": "sentence_translation",
+          "grounding_reference_ids": [
+            "nikl.pronunciation-0002"
+          ]
+        },
+        {
+          "code": "specialist_auditory_scope_pending_review",
+          "field_name": "normative_pronunciation",
+          "grounding_reference_ids": [
+            "nikl.pronunciation-0002"
+          ]
+        },
+        {
+          "code": "specialist_auditory_scope_pending_review",
+          "field_name": "surface_pronunciation",
+          "grounding_reference_ids": [
+            "nikl.pronunciation-0002"
+          ]
+        },
+        {
+          "code": "ipa_absent_pending_phonetics_review",
+          "field_name": "ipa",
+          "grounding_reference_ids": [
+            "nikl.pronunciation-0002"
+          ]
+        }
+      ]
+    },
+    {
+      "content_hash": "d6b1dd5c7195055a8be8755a2ebc70d6810f8a25700c32fd4296b7a016488c7d",
+      "disagreements": [],
+      "item_key": "ko-pron-0046",
+      "proposals": [],
+      "sequence": 46,
+      "source_entry_content_hash": "8349586f21b2328b3133311354e8c71032a55e739be1a19c8361957015fd231e",
+      "stage_id": "P12",
+      "uncertainties": [
+        {
+          "code": "specialist_auditory_scope_pending_review",
+          "field_name": "spellings",
+          "grounding_reference_ids": [
+            "nikl.pronunciation-0002"
+          ]
+        },
+        {
+          "code": "specialist_auditory_scope_pending_review",
+          "field_name": "sound",
+          "grounding_reference_ids": [
+            "nikl.pronunciation-0002"
+          ]
+        },
+        {
+          "code": "specialist_auditory_scope_pending_review",
+          "field_name": "example_word",
+          "grounding_reference_ids": [
+            "nikl.pronunciation-0002"
+          ]
+        },
+        {
+          "code": "specialist_auditory_scope_pending_review",
+          "field_name": "word_translation",
+          "grounding_reference_ids": [
+            "nikl.pronunciation-0002"
+          ]
+        },
+        {
+          "code": "specialist_auditory_scope_pending_review",
+          "field_name": "example_sentence",
+          "grounding_reference_ids": [
+            "nikl.pronunciation-0002"
+          ]
+        },
+        {
+          "code": "specialist_auditory_scope_pending_review",
+          "field_name": "sentence_translation",
+          "grounding_reference_ids": [
+            "nikl.pronunciation-0002"
+          ]
+        },
+        {
+          "code": "specialist_auditory_scope_pending_review",
+          "field_name": "normative_pronunciation",
+          "grounding_reference_ids": [
+            "nikl.pronunciation-0002"
+          ]
+        },
+        {
+          "code": "specialist_auditory_scope_pending_review",
+          "field_name": "surface_pronunciation",
+          "grounding_reference_ids": [
+            "nikl.pronunciation-0002"
+          ]
+        },
+        {
+          "code": "ipa_absent_pending_phonetics_review",
+          "field_name": "ipa",
+          "grounding_reference_ids": [
+            "nikl.pronunciation-0002"
+          ]
+        }
+      ]
+    },
+    {
+      "content_hash": "46cb5392a70501250b52c39a2af1d53d0c20b2a9a7a62e3233c2372a14fcebbf",
+      "disagreements": [],
+      "item_key": "ko-pron-0047",
+      "proposals": [],
+      "sequence": 47,
+      "source_entry_content_hash": "a148c652e9c17647f97e229c2673aeda3988be9cdcdf460f8a3090a1699873e8",
+      "stage_id": "P13",
+      "uncertainties": [
+        {
+          "code": "specialist_atomization_pending_review",
+          "field_name": "spellings",
+          "grounding_reference_ids": [
+            "nikl.pronunciation-0002"
+          ]
+        },
+        {
+          "code": "specialist_atomization_pending_review",
+          "field_name": "sound",
+          "grounding_reference_ids": [
+            "nikl.pronunciation-0002"
+          ]
+        },
+        {
+          "code": "specialist_atomization_pending_review",
+          "field_name": "example_word",
+          "grounding_reference_ids": [
+            "nikl.pronunciation-0002"
+          ]
+        },
+        {
+          "code": "specialist_atomization_pending_review",
+          "field_name": "word_translation",
+          "grounding_reference_ids": [
+            "nikl.pronunciation-0002"
+          ]
+        },
+        {
+          "code": "specialist_atomization_pending_review",
+          "field_name": "example_sentence",
+          "grounding_reference_ids": [
+            "nikl.pronunciation-0002"
+          ]
+        },
+        {
+          "code": "specialist_atomization_pending_review",
+          "field_name": "sentence_translation",
+          "grounding_reference_ids": [
+            "nikl.pronunciation-0002"
+          ]
+        },
+        {
+          "code": "specialist_atomization_pending_review",
+          "field_name": "normative_pronunciation",
+          "grounding_reference_ids": [
+            "nikl.pronunciation-0002"
+          ]
+        },
+        {
+          "code": "specialist_atomization_pending_review",
+          "field_name": "surface_pronunciation",
+          "grounding_reference_ids": [
+            "nikl.pronunciation-0002"
+          ]
+        },
+        {
+          "code": "ipa_absent_pending_phonetics_review",
+          "field_name": "ipa",
+          "grounding_reference_ids": [
+            "nikl.pronunciation-0002"
+          ]
+        }
+      ]
+    }
+  ]
+}

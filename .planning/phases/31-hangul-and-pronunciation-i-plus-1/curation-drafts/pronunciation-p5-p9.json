@@ -1,0 +1,1105 @@
+{
+  "content_hash": "b7b42cd50630abdbb0ffbeb2c26eff897ff2f40e8f1ef8ca15d209edba4332e2",
+  "schema_version": 1,
+  "batch_id": "pronunciation-p5-p9",
+  "draft_only": true,
+  "review_status": "needs_review",
+  "promotion_authority": false,
+  "source": {
+    "family": "pronunciation",
+    "registry_content_hash": "89a520055cfd94eb086c9ed3e937499a71fbcb07c056e1916b645c3bd312d89d",
+    "registry_version": "korean-concepts-v1",
+    "source_file_name": "pronunciation-i-plus-1-v1.json",
+    "source_file_sha256": "6a2eb0b6a0a467de6074ffafc2fb674a674ea96c3c2187f339d1c278aa8f55ec",
+    "source_pack_content_hash": "641b06f4d1c05c70803b859aa2936fc517a1038ad190ac7c58574da8a93ea49e",
+    "source_pack_version": "pronunciation-i-plus-1-v1"
+  },
+  "stages": [
+    "P5",
+    "P6",
+    "P7",
+    "P8",
+    "P9"
+  ],
+  "records": [
+    {
+      "content_hash": "aec3141c6e00a0ad4671f75ea43e6857a18588bfc373b82f521f980bb50f3202",
+      "disagreements": [],
+      "item_key": "ko-pron-0025",
+      "proposals": [
+        {
+          "authorship": "ai-proposed",
+          "field_name": "spellings",
+          "grounding_reference_ids": [
+            "nikl.pronunciation-0002"
+          ],
+          "value": "국물"
+        },
+        {
+          "authorship": "ai-proposed",
+          "field_name": "sound",
+          "grounding_reference_ids": [
+            "nikl.pronunciation-0002"
+          ],
+          "value": "[궁물]"
+        },
+        {
+          "authorship": "ai-proposed",
+          "field_name": "example_word",
+          "grounding_reference_ids": [
+            "nikl.pronunciation-0002"
+          ],
+          "value": "국물"
+        },
+        {
+          "authorship": "ai-proposed",
+          "field_name": "word_translation",
+          "grounding_reference_ids": [
+            "nikl.pronunciation-0002"
+          ],
+          "value": "caldo"
+        },
+        {
+          "authorship": "ai-proposed",
+          "field_name": "example_sentence",
+          "grounding_reference_ids": [
+            "nikl.pronunciation-0002"
+          ],
+          "value": "국물이 뜨거워요."
+        },
+        {
+          "authorship": "ai-proposed",
+          "field_name": "sentence_translation",
+          "grounding_reference_ids": [
+            "nikl.pronunciation-0002"
+          ],
+          "value": "O caldo está quente."
+        },
+        {
+          "authorship": "ai-proposed",
+          "field_name": "normative_pronunciation",
+          "grounding_reference_ids": [
+            "nikl.pronunciation-0002"
+          ],
+          "value": "[궁물]"
+        },
+        {
+          "authorship": "ai-proposed",
+          "field_name": "surface_pronunciation",
+          "grounding_reference_ids": [
+            "nikl.pronunciation-0002"
+          ],
+          "value": "[궁물]"
+        }
+      ],
+      "sequence": 25,
+      "source_entry_content_hash": "182d1aee29d1c6864209348c66d6b0eb3cb9aaf089216c00443fd4a9ce67a646",
+      "stage_id": "P5",
+      "uncertainties": [
+        {
+          "code": "ipa_absent_pending_phonetics_review",
+          "field_name": "ipa",
+          "grounding_reference_ids": [
+            "nikl.pronunciation-0002"
+          ]
+        }
+      ]
+    },
+    {
+      "content_hash": "4b6f88a5f2de8d6d313717358e915c2653a985ff09f500af7e58c6ee8e0978d6",
+      "disagreements": [],
+      "item_key": "ko-pron-0026",
+      "proposals": [
+        {
+          "authorship": "ai-proposed",
+          "field_name": "spellings",
+          "grounding_reference_ids": [
+            "nikl.pronunciation-0002"
+          ],
+          "value": "받는"
+        },
+        {
+          "authorship": "ai-proposed",
+          "field_name": "sound",
+          "grounding_reference_ids": [
+            "nikl.pronunciation-0002"
+          ],
+          "value": "[반는]"
+        },
+        {
+          "authorship": "ai-proposed",
+          "field_name": "example_word",
+          "grounding_reference_ids": [
+            "nikl.pronunciation-0002"
+          ],
+          "value": "받는"
+        },
+        {
+          "authorship": "ai-proposed",
+          "field_name": "word_translation",
+          "grounding_reference_ids": [
+            "nikl.pronunciation-0002"
+          ],
+          "value": "que recebe"
+        },
+        {
+          "authorship": "ai-proposed",
+          "field_name": "example_sentence",
+          "grounding_reference_ids": [
+            "nikl.pronunciation-0002"
+          ],
+          "value": "상을 받는 학생이에요."
+        },
+        {
+          "authorship": "ai-proposed",
+          "field_name": "sentence_translation",
+          "grounding_reference_ids": [
+            "nikl.pronunciation-0002"
+          ],
+          "value": "É o estudante que recebe um prêmio."
+        },
+        {
+          "authorship": "ai-proposed",
+          "field_name": "normative_pronunciation",
+          "grounding_reference_ids": [
+            "nikl.pronunciation-0002"
+          ],
+          "value": "[반는]"
+        },
+        {
+          "authorship": "ai-proposed",
+          "field_name": "surface_pronunciation",
+          "grounding_reference_ids": [
+            "nikl.pronunciation-0002"
+          ],
+          "value": "[반는]"
+        }
+      ],
+      "sequence": 26,
+      "source_entry_content_hash": "4ac867c5a381e83e91c92031e695f3a982a50f12491074bb044597e88d4e9418",
+      "stage_id": "P5",
+      "uncertainties": [
+        {
+          "code": "ipa_absent_pending_phonetics_review",
+          "field_name": "ipa",
+          "grounding_reference_ids": [
+            "nikl.pronunciation-0002"
+          ]
+        }
+      ]
+    },
+    {
+      "content_hash": "6c2516f9aa71b6fc4faab0109f6272f71cb93d3d887b7189a9ae788c610fad6a",
+      "disagreements": [],
+      "item_key": "ko-pron-0027",
+      "proposals": [
+        {
+          "authorship": "ai-proposed",
+          "field_name": "spellings",
+          "grounding_reference_ids": [
+            "nikl.pronunciation-0002"
+          ],
+          "value": "앞문"
+        },
+        {
+          "authorship": "ai-proposed",
+          "field_name": "sound",
+          "grounding_reference_ids": [
+            "nikl.pronunciation-0002"
+          ],
+          "value": "[암문]"
+        },
+        {
+          "authorship": "ai-proposed",
+          "field_name": "example_word",
+          "grounding_reference_ids": [
+            "nikl.pronunciation-0002"
+          ],
+          "value": "앞문"
+        },
+        {
+          "authorship": "ai-proposed",
+          "field_name": "word_translation",
+          "grounding_reference_ids": [
+            "nikl.pronunciation-0002"
+          ],
+          "value": "porta da frente"
+        },
+        {
+          "authorship": "ai-proposed",
+          "field_name": "example_sentence",
+          "grounding_reference_ids": [
+            "nikl.pronunciation-0002"
+          ],
+          "value": "앞문 닫아요."
+        },
+        {
+          "authorship": "ai-proposed",
+          "field_name": "sentence_translation",
+          "grounding_reference_ids": [
+            "nikl.pronunciation-0002"
+          ],
+          "value": "Feche a porta da frente."
+        },
+        {
+          "authorship": "ai-proposed",
+          "field_name": "normative_pronunciation",
+          "grounding_reference_ids": [
+            "nikl.pronunciation-0002"
+          ],
+          "value": "[암문]"
+        },
+        {
+          "authorship": "ai-proposed",
+          "field_name": "surface_pronunciation",
+          "grounding_reference_ids": [
+            "nikl.pronunciation-0002"
+          ],
+          "value": "[암문]"
+        }
+      ],
+      "sequence": 27,
+      "source_entry_content_hash": "54e4648b899cd39253d00f53a32728cae3a7f7ea7a0111c8634c950c7aefb9d9",
+      "stage_id": "P5",
+      "uncertainties": [
+        {
+          "code": "ipa_absent_pending_phonetics_review",
+          "field_name": "ipa",
+          "grounding_reference_ids": [
+            "nikl.pronunciation-0002"
+          ]
+        }
+      ]
+    },
+    {
+      "content_hash": "17353acd64b1e6f7cb7138158625040d42dfcd5389b68cb2d0aa6e20776656e0",
+      "disagreements": [],
+      "item_key": "ko-pron-0028",
+      "proposals": [
+        {
+          "authorship": "ai-proposed",
+          "field_name": "spellings",
+          "grounding_reference_ids": [
+            "nikl.pronunciation-0002"
+          ],
+          "value": "좋다"
+        },
+        {
+          "authorship": "ai-proposed",
+          "field_name": "sound",
+          "grounding_reference_ids": [
+            "nikl.pronunciation-0002"
+          ],
+          "value": "[조타]"
+        },
+        {
+          "authorship": "ai-proposed",
+          "field_name": "example_word",
+          "grounding_reference_ids": [
+            "nikl.pronunciation-0002"
+          ],
+          "value": "좋다"
+        },
+        {
+          "authorship": "ai-proposed",
+          "field_name": "word_translation",
+          "grounding_reference_ids": [
+            "nikl.pronunciation-0002"
+          ],
+          "value": "ser bom"
+        },
+        {
+          "authorship": "ai-proposed",
+          "field_name": "example_sentence",
+          "grounding_reference_ids": [
+            "nikl.pronunciation-0002"
+          ],
+          "value": "날씨가 좋다."
+        },
+        {
+          "authorship": "ai-proposed",
+          "field_name": "sentence_translation",
+          "grounding_reference_ids": [
+            "nikl.pronunciation-0002"
+          ],
+          "value": "O tempo está bom."
+        },
+        {
+          "authorship": "ai-proposed",
+          "field_name": "normative_pronunciation",
+          "grounding_reference_ids": [
+            "nikl.pronunciation-0002"
+          ],
+          "value": "[조타]"
+        },
+        {
+          "authorship": "ai-proposed",
+          "field_name": "surface_pronunciation",
+          "grounding_reference_ids": [
+            "nikl.pronunciation-0002"
+          ],
+          "value": "[조타]"
+        }
+      ],
+      "sequence": 28,
+      "source_entry_content_hash": "89cc84da37fb738ca6f0276df0625c1111fd1879d17c9fb0271c041d6f0d6d31",
+      "stage_id": "P6",
+      "uncertainties": [
+        {
+          "code": "ipa_absent_pending_phonetics_review",
+          "field_name": "ipa",
+          "grounding_reference_ids": [
+            "nikl.pronunciation-0002"
+          ]
+        }
+      ]
+    },
+    {
+      "content_hash": "b4b547537c95afa1a1f01f2520b5f44e559ab0758ed31c68daf0b5118bcf00d9",
+      "disagreements": [],
+      "item_key": "ko-pron-0029",
+      "proposals": [
+        {
+          "authorship": "ai-proposed",
+          "field_name": "spellings",
+          "grounding_reference_ids": [
+            "nikl.pronunciation-0002"
+          ],
+          "value": "입학"
+        },
+        {
+          "authorship": "ai-proposed",
+          "field_name": "sound",
+          "grounding_reference_ids": [
+            "nikl.pronunciation-0002"
+          ],
+          "value": "[이팍]"
+        },
+        {
+          "authorship": "ai-proposed",
+          "field_name": "example_word",
+          "grounding_reference_ids": [
+            "nikl.pronunciation-0002"
+          ],
+          "value": "입학"
+        },
+        {
+          "authorship": "ai-proposed",
+          "field_name": "word_translation",
+          "grounding_reference_ids": [
+            "nikl.pronunciation-0002"
+          ],
+          "value": "admissão"
+        },
+        {
+          "authorship": "ai-proposed",
+          "field_name": "example_sentence",
+          "grounding_reference_ids": [
+            "nikl.pronunciation-0002"
+          ],
+          "value": "입학 축하해요."
+        },
+        {
+          "authorship": "ai-proposed",
+          "field_name": "sentence_translation",
+          "grounding_reference_ids": [
+            "nikl.pronunciation-0002"
+          ],
+          "value": "Parabéns pela admissão."
+        },
+        {
+          "authorship": "ai-proposed",
+          "field_name": "normative_pronunciation",
+          "grounding_reference_ids": [
+            "nikl.pronunciation-0002"
+          ],
+          "value": "[이팍]"
+        },
+        {
+          "authorship": "ai-proposed",
+          "field_name": "surface_pronunciation",
+          "grounding_reference_ids": [
+            "nikl.pronunciation-0002"
+          ],
+          "value": "[이팍]"
+        }
+      ],
+      "sequence": 29,
+      "source_entry_content_hash": "2d7b929acd9111e34c00b925cc3f99c15db933d102239f0125eb337bdf9b8b47",
+      "stage_id": "P6",
+      "uncertainties": [
+        {
+          "code": "ipa_absent_pending_phonetics_review",
+          "field_name": "ipa",
+          "grounding_reference_ids": [
+            "nikl.pronunciation-0002"
+          ]
+        }
+      ]
+    },
+    {
+      "content_hash": "7956db2d437b2c1a4ff706b6c92f47b61e5b886fa30f67e569396bde61af0b72",
+      "disagreements": [],
+      "item_key": "ko-pron-0030",
+      "proposals": [
+        {
+          "authorship": "ai-proposed",
+          "field_name": "spellings",
+          "grounding_reference_ids": [
+            "nikl.pronunciation-0002"
+          ],
+          "value": "굳이"
+        },
+        {
+          "authorship": "ai-proposed",
+          "field_name": "sound",
+          "grounding_reference_ids": [
+            "nikl.pronunciation-0002"
+          ],
+          "value": "[구지]"
+        },
+        {
+          "authorship": "ai-proposed",
+          "field_name": "example_word",
+          "grounding_reference_ids": [
+            "nikl.pronunciation-0002"
+          ],
+          "value": "굳이"
+        },
+        {
+          "authorship": "ai-proposed",
+          "field_name": "word_translation",
+          "grounding_reference_ids": [
+            "nikl.pronunciation-0002"
+          ],
+          "value": "necessariamente"
+        },
+        {
+          "authorship": "ai-proposed",
+          "field_name": "example_sentence",
+          "grounding_reference_ids": [
+            "nikl.pronunciation-0002"
+          ],
+          "value": "굳이 갈 필요 없어요."
+        },
+        {
+          "authorship": "ai-proposed",
+          "field_name": "sentence_translation",
+          "grounding_reference_ids": [
+            "nikl.pronunciation-0002"
+          ],
+          "value": "Não precisa necessariamente ir."
+        },
+        {
+          "authorship": "ai-proposed",
+          "field_name": "normative_pronunciation",
+          "grounding_reference_ids": [
+            "nikl.pronunciation-0002"
+          ],
+          "value": "[구지]"
+        },
+        {
+          "authorship": "ai-proposed",
+          "field_name": "surface_pronunciation",
+          "grounding_reference_ids": [
+            "nikl.pronunciation-0002"
+          ],
+          "value": "[구지]"
+        }
+      ],
+      "sequence": 30,
+      "source_entry_content_hash": "3ec5dfa128c6923026b560e48c5fa6f2063b48506222eb8ddb055ced53d69d91",
+      "stage_id": "P7",
+      "uncertainties": [
+        {
+          "code": "ipa_absent_pending_phonetics_review",
+          "field_name": "ipa",
+          "grounding_reference_ids": [
+            "nikl.pronunciation-0002"
+          ]
+        }
+      ]
+    },
+    {
+      "content_hash": "7c74418bc4138dad60feadd202880399427fa0c330e59ab8a4eb319e8aa07891",
+      "disagreements": [],
+      "item_key": "ko-pron-0031",
+      "proposals": [
+        {
+          "authorship": "ai-proposed",
+          "field_name": "spellings",
+          "grounding_reference_ids": [
+            "nikl.pronunciation-0002"
+          ],
+          "value": "같이"
+        },
+        {
+          "authorship": "ai-proposed",
+          "field_name": "sound",
+          "grounding_reference_ids": [
+            "nikl.pronunciation-0002"
+          ],
+          "value": "[가치]"
+        },
+        {
+          "authorship": "ai-proposed",
+          "field_name": "example_word",
+          "grounding_reference_ids": [
+            "nikl.pronunciation-0002"
+          ],
+          "value": "같이"
+        },
+        {
+          "authorship": "ai-proposed",
+          "field_name": "word_translation",
+          "grounding_reference_ids": [
+            "nikl.pronunciation-0002"
+          ],
+          "value": "junto"
+        },
+        {
+          "authorship": "ai-proposed",
+          "field_name": "example_sentence",
+          "grounding_reference_ids": [
+            "nikl.pronunciation-0002"
+          ],
+          "value": "같이 가요."
+        },
+        {
+          "authorship": "ai-proposed",
+          "field_name": "sentence_translation",
+          "grounding_reference_ids": [
+            "nikl.pronunciation-0002"
+          ],
+          "value": "Vamos juntos."
+        },
+        {
+          "authorship": "ai-proposed",
+          "field_name": "normative_pronunciation",
+          "grounding_reference_ids": [
+            "nikl.pronunciation-0002"
+          ],
+          "value": "[가치]"
+        },
+        {
+          "authorship": "ai-proposed",
+          "field_name": "surface_pronunciation",
+          "grounding_reference_ids": [
+            "nikl.pronunciation-0002"
+          ],
+          "value": "[가치]"
+        }
+      ],
+      "sequence": 31,
+      "source_entry_content_hash": "3c5fb50b1188fd43d7852cc275d54a95cbbdddc4514bc37f3e65046d4946c849",
+      "stage_id": "P7",
+      "uncertainties": [
+        {
+          "code": "ipa_absent_pending_phonetics_review",
+          "field_name": "ipa",
+          "grounding_reference_ids": [
+            "nikl.pronunciation-0002"
+          ]
+        }
+      ]
+    },
+    {
+      "content_hash": "6e7f30b80bfd01091c8f8cba0e48deba08a0e6ba7e071a7222109461d591f4b0",
+      "disagreements": [],
+      "item_key": "ko-pron-0032",
+      "proposals": [
+        {
+          "authorship": "ai-proposed",
+          "field_name": "spellings",
+          "grounding_reference_ids": [
+            "nikl.pronunciation-0002"
+          ],
+          "value": "신라"
+        },
+        {
+          "authorship": "ai-proposed",
+          "field_name": "sound",
+          "grounding_reference_ids": [
+            "nikl.pronunciation-0002"
+          ],
+          "value": "[실라]"
+        },
+        {
+          "authorship": "ai-proposed",
+          "field_name": "example_word",
+          "grounding_reference_ids": [
+            "nikl.pronunciation-0002"
+          ],
+          "value": "신라"
+        },
+        {
+          "authorship": "ai-proposed",
+          "field_name": "word_translation",
+          "grounding_reference_ids": [
+            "nikl.pronunciation-0002"
+          ],
+          "value": "Silla"
+        },
+        {
+          "authorship": "ai-proposed",
+          "field_name": "example_sentence",
+          "grounding_reference_ids": [
+            "nikl.pronunciation-0002"
+          ],
+          "value": "신라 역사를 배워요."
+        },
+        {
+          "authorship": "ai-proposed",
+          "field_name": "sentence_translation",
+          "grounding_reference_ids": [
+            "nikl.pronunciation-0002"
+          ],
+          "value": "Aprendemos a história de Silla."
+        },
+        {
+          "authorship": "ai-proposed",
+          "field_name": "normative_pronunciation",
+          "grounding_reference_ids": [
+            "nikl.pronunciation-0002"
+          ],
+          "value": "[실라]"
+        },
+        {
+          "authorship": "ai-proposed",
+          "field_name": "surface_pronunciation",
+          "grounding_reference_ids": [
+            "nikl.pronunciation-0002"
+          ],
+          "value": "[실라]"
+        }
+      ],
+      "sequence": 32,
+      "source_entry_content_hash": "21b41e450ffe2b21f1199d318239472cd5144b836095e4bf67061679651a5f55",
+      "stage_id": "P8",
+      "uncertainties": [
+        {
+          "code": "ipa_absent_pending_phonetics_review",
+          "field_name": "ipa",
+          "grounding_reference_ids": [
+            "nikl.pronunciation-0002"
+          ]
+        }
+      ]
+    },
+    {
+      "content_hash": "2a23062d0bd1f7daedddcbc9313d27f0b3e80fcadaca052c8b2041d727387b49",
+      "disagreements": [],
+      "item_key": "ko-pron-0033",
+      "proposals": [
+        {
+          "authorship": "ai-proposed",
+          "field_name": "spellings",
+          "grounding_reference_ids": [
+            "nikl.pronunciation-0002"
+          ],
+          "value": "설날"
+        },
+        {
+          "authorship": "ai-proposed",
+          "field_name": "sound",
+          "grounding_reference_ids": [
+            "nikl.pronunciation-0002"
+          ],
+          "value": "[설랄]"
+        },
+        {
+          "authorship": "ai-proposed",
+          "field_name": "example_word",
+          "grounding_reference_ids": [
+            "nikl.pronunciation-0002"
+          ],
+          "value": "설날"
+        },
+        {
+          "authorship": "ai-proposed",
+          "field_name": "word_translation",
+          "grounding_reference_ids": [
+            "nikl.pronunciation-0002"
+          ],
+          "value": "Ano-Novo Lunar coreano"
+        },
+        {
+          "authorship": "ai-proposed",
+          "field_name": "example_sentence",
+          "grounding_reference_ids": [
+            "nikl.pronunciation-0002"
+          ],
+          "value": "설날이에요."
+        },
+        {
+          "authorship": "ai-proposed",
+          "field_name": "sentence_translation",
+          "grounding_reference_ids": [
+            "nikl.pronunciation-0002"
+          ],
+          "value": "É o Ano-Novo Lunar coreano."
+        },
+        {
+          "authorship": "ai-proposed",
+          "field_name": "normative_pronunciation",
+          "grounding_reference_ids": [
+            "nikl.pronunciation-0002"
+          ],
+          "value": "[설랄]"
+        },
+        {
+          "authorship": "ai-proposed",
+          "field_name": "surface_pronunciation",
+          "grounding_reference_ids": [
+            "nikl.pronunciation-0002"
+          ],
+          "value": "[설랄]"
+        }
+      ],
+      "sequence": 33,
+      "source_entry_content_hash": "121c78b21e727d29f22963ed4069c86106eaaf92414f076742070e060a5f8649",
+      "stage_id": "P8",
+      "uncertainties": [
+        {
+          "code": "ipa_absent_pending_phonetics_review",
+          "field_name": "ipa",
+          "grounding_reference_ids": [
+            "nikl.pronunciation-0002"
+          ]
+        }
+      ]
+    },
+    {
+      "content_hash": "b73543ba60c1acf0f20c32a1631653b5a996157dfb6ebe319bedeeeca3d5b222",
+      "disagreements": [],
+      "item_key": "ko-pron-0034",
+      "proposals": [
+        {
+          "authorship": "ai-proposed",
+          "field_name": "spellings",
+          "grounding_reference_ids": [
+            "nikl.pronunciation-0002"
+          ],
+          "value": "담요"
+        },
+        {
+          "authorship": "ai-proposed",
+          "field_name": "sound",
+          "grounding_reference_ids": [
+            "nikl.pronunciation-0002"
+          ],
+          "value": "[담뇨]"
+        },
+        {
+          "authorship": "ai-proposed",
+          "field_name": "example_word",
+          "grounding_reference_ids": [
+            "nikl.pronunciation-0002"
+          ],
+          "value": "담요"
+        },
+        {
+          "authorship": "ai-proposed",
+          "field_name": "word_translation",
+          "grounding_reference_ids": [
+            "nikl.pronunciation-0002"
+          ],
+          "value": "cobertor"
+        },
+        {
+          "authorship": "ai-proposed",
+          "field_name": "example_sentence",
+          "grounding_reference_ids": [
+            "nikl.pronunciation-0002"
+          ],
+          "value": "담요가 따뜻해요."
+        },
+        {
+          "authorship": "ai-proposed",
+          "field_name": "sentence_translation",
+          "grounding_reference_ids": [
+            "nikl.pronunciation-0002"
+          ],
+          "value": "O cobertor é quente."
+        },
+        {
+          "authorship": "ai-proposed",
+          "field_name": "normative_pronunciation",
+          "grounding_reference_ids": [
+            "nikl.pronunciation-0002"
+          ],
+          "value": "[담뇨]"
+        },
+        {
+          "authorship": "ai-proposed",
+          "field_name": "surface_pronunciation",
+          "grounding_reference_ids": [
+            "nikl.pronunciation-0002"
+          ],
+          "value": "[담뇨]"
+        }
+      ],
+      "sequence": 34,
+      "source_entry_content_hash": "ad78786f18c5734971cbcaa4dd72718f0763abbdc62814ffb95fc36019f4273f",
+      "stage_id": "P8",
+      "uncertainties": [
+        {
+          "code": "ipa_absent_pending_phonetics_review",
+          "field_name": "ipa",
+          "grounding_reference_ids": [
+            "nikl.pronunciation-0002"
+          ]
+        }
+      ]
+    },
+    {
+      "content_hash": "bd3ca085b33e0ecf82598bb179aa3aef98d965133f7540bbbf2c74207da3c2f8",
+      "disagreements": [],
+      "item_key": "ko-pron-0035",
+      "proposals": [
+        {
+          "authorship": "ai-proposed",
+          "field_name": "spellings",
+          "grounding_reference_ids": [
+            "nikl.pronunciation-0002"
+          ],
+          "value": "읽다"
+        },
+        {
+          "authorship": "ai-proposed",
+          "field_name": "sound",
+          "grounding_reference_ids": [
+            "nikl.pronunciation-0002"
+          ],
+          "value": "[익따]"
+        },
+        {
+          "authorship": "ai-proposed",
+          "field_name": "example_word",
+          "grounding_reference_ids": [
+            "nikl.pronunciation-0002"
+          ],
+          "value": "읽다"
+        },
+        {
+          "authorship": "ai-proposed",
+          "field_name": "word_translation",
+          "grounding_reference_ids": [
+            "nikl.pronunciation-0002"
+          ],
+          "value": "ler"
+        },
+        {
+          "authorship": "ai-proposed",
+          "field_name": "example_sentence",
+          "grounding_reference_ids": [
+            "nikl.pronunciation-0002"
+          ],
+          "value": "책을 읽다."
+        },
+        {
+          "authorship": "ai-proposed",
+          "field_name": "sentence_translation",
+          "grounding_reference_ids": [
+            "nikl.pronunciation-0002"
+          ],
+          "value": "Ler um livro."
+        },
+        {
+          "authorship": "ai-proposed",
+          "field_name": "normative_pronunciation",
+          "grounding_reference_ids": [
+            "nikl.pronunciation-0002"
+          ],
+          "value": "[익따]"
+        },
+        {
+          "authorship": "ai-proposed",
+          "field_name": "surface_pronunciation",
+          "grounding_reference_ids": [
+            "nikl.pronunciation-0002"
+          ],
+          "value": "[익따]"
+        }
+      ],
+      "sequence": 35,
+      "source_entry_content_hash": "c5a8f61af89e16f62db326dadc83024590ca048149311a29ccdd7ffb1767debe",
+      "stage_id": "P9",
+      "uncertainties": [
+        {
+          "code": "ipa_absent_pending_phonetics_review",
+          "field_name": "ipa",
+          "grounding_reference_ids": [
+            "nikl.pronunciation-0002"
+          ]
+        }
+      ]
+    },
+    {
+      "content_hash": "5b66e83760fd3437b2dbea9f0dfc73d8d72fd4b465de0369551f8deb363b64b9",
+      "disagreements": [],
+      "item_key": "ko-pron-0036",
+      "proposals": [
+        {
+          "authorship": "ai-proposed",
+          "field_name": "spellings",
+          "grounding_reference_ids": [
+            "nikl.pronunciation-0002"
+          ],
+          "value": "읽어"
+        },
+        {
+          "authorship": "ai-proposed",
+          "field_name": "sound",
+          "grounding_reference_ids": [
+            "nikl.pronunciation-0002"
+          ],
+          "value": "[일거]"
+        },
+        {
+          "authorship": "ai-proposed",
+          "field_name": "example_word",
+          "grounding_reference_ids": [
+            "nikl.pronunciation-0002"
+          ],
+          "value": "읽어"
+        },
+        {
+          "authorship": "ai-proposed",
+          "field_name": "word_translation",
+          "grounding_reference_ids": [
+            "nikl.pronunciation-0002"
+          ],
+          "value": "leia"
+        },
+        {
+          "authorship": "ai-proposed",
+          "field_name": "example_sentence",
+          "grounding_reference_ids": [
+            "nikl.pronunciation-0002"
+          ],
+          "value": "책을 읽어."
+        },
+        {
+          "authorship": "ai-proposed",
+          "field_name": "sentence_translation",
+          "grounding_reference_ids": [
+            "nikl.pronunciation-0002"
+          ],
+          "value": "Leia um livro."
+        },
+        {
+          "authorship": "ai-proposed",
+          "field_name": "normative_pronunciation",
+          "grounding_reference_ids": [
+            "nikl.pronunciation-0002"
+          ],
+          "value": "[일거]"
+        },
+        {
+          "authorship": "ai-proposed",
+          "field_name": "surface_pronunciation",
+          "grounding_reference_ids": [
+            "nikl.pronunciation-0002"
+          ],
+          "value": "[일거]"
+        }
+      ],
+      "sequence": 36,
+      "source_entry_content_hash": "3ae116519e0dc3e920f42581a9848d8453b5023c026eb173e36d9d23b93acf2d",
+      "stage_id": "P9",
+      "uncertainties": [
+        {
+          "code": "ipa_absent_pending_phonetics_review",
+          "field_name": "ipa",
+          "grounding_reference_ids": [
+            "nikl.pronunciation-0002"
+          ]
+        }
+      ]
+    },
+    {
+      "content_hash": "88f424c7b8a900069b108573eeacd92206b39199b6fd3b760bba8e2f201e23bc",
+      "disagreements": [],
+      "item_key": "ko-pron-0037",
+      "proposals": [
+        {
+          "authorship": "ai-proposed",
+          "field_name": "spellings",
+          "grounding_reference_ids": [
+            "nikl.pronunciation-0002"
+          ],
+          "value": "읽는"
+        },
+        {
+          "authorship": "ai-proposed",
+          "field_name": "sound",
+          "grounding_reference_ids": [
+            "nikl.pronunciation-0002"
+          ],
+          "value": "[잉는]"
+        },
+        {
+          "authorship": "ai-proposed",
+          "field_name": "example_word",
+          "grounding_reference_ids": [
+            "nikl.pronunciation-0002"
+          ],
+          "value": "읽는"
+        },
+        {
+          "authorship": "ai-proposed",
+          "field_name": "word_translation",
+          "grounding_reference_ids": [
+            "nikl.pronunciation-0002"
+          ],
+          "value": "que lê"
+        },
+        {
+          "authorship": "ai-proposed",
+          "field_name": "example_sentence",
+          "grounding_reference_ids": [
+            "nikl.pronunciation-0002"
+          ],
+          "value": "책을 읽는 사람이에요."
+        },
+        {
+          "authorship": "ai-proposed",
+          "field_name": "sentence_translation",
+          "grounding_reference_ids": [
+            "nikl.pronunciation-0002"
+          ],
+          "value": "É uma pessoa que lê livros."
+        },
+        {
+          "authorship": "ai-proposed",
+          "field_name": "normative_pronunciation",
+          "grounding_reference_ids": [
+            "nikl.pronunciation-0002"
+          ],
+          "value": "[잉는]"
+        },
+        {
+          "authorship": "ai-proposed",
+          "field_name": "surface_pronunciation",
+          "grounding_reference_ids": [
+            "nikl.pronunciation-0002"
+          ],
+          "value": "[잉는]"
+        }
+      ],
+      "sequence": 37,
+      "source_entry_content_hash": "f4f73c6c1ed0f65685787f2876cb08d1e5d45c26ba79652024d5b1a4e9182e86",
+      "stage_id": "P9",
+      "uncertainties": [
+        {
+          "code": "ipa_absent_pending_phonetics_review",
+          "field_name": "ipa",
+          "grounding_reference_ids": [
+            "nikl.pronunciation-0002"
+          ]
+        }
+      ]
+    }
+  ]
+}

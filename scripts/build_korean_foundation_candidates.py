@@ -28,6 +28,10 @@ def _parser() -> argparse.ArgumentParser:
     family.add_argument("family", choices=_FAMILIES)
     commands.add_parser("assemble")
     commands.add_parser("validate-drafts")
+    commands.add_parser("check-selection")
+    for operation in ("promote", "verify-promoted"):
+        command = commands.add_parser(operation)
+        command.add_argument("--expected-draft-manifest-sha256", required=True)
     return parser
 
 
@@ -43,6 +47,16 @@ def main() -> None:
         result = service.write_korean_foundation_family_draft(args.family)
     elif args.operation == "assemble":
         result = service.write_korean_foundation_draft_manifest()
+    elif args.operation == "check-selection":
+        result = service.check_korean_foundation_curation_selection()
+    elif args.operation == "promote":
+        result = service.promote_korean_foundation_curation_selection(
+            expected_draft_manifest_sha256=args.expected_draft_manifest_sha256
+        )
+    elif args.operation == "verify-promoted":
+        result = service.verify_promoted_korean_foundation_candidate(
+            expected_draft_manifest_sha256=args.expected_draft_manifest_sha256
+        )
     else:
         result = service.validate_korean_foundation_drafts()
     print(result.content_hash)
