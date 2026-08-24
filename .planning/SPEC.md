@@ -14,14 +14,15 @@ Generate reliable, high-quality Anki cards for real vocabulary the learner needs
 
 ## Current State
 
-- **Milestone:** v3.0 Korean Learning System - IN PROGRESS
+- **Milestone:** v3.0 Korean Learning System and Shared Generation Hardening - IN PROGRESS
 - **Phases:** 30-34 (1 of 5 complete)
 - **Last completed milestone:** v2.1 Latin Google TTS Finalization
-- **Active Phase:** Phase 31 - Hangul and Pronunciation i+1 (implementation in progress; Plan 31-10 complete; Phase 31 remains open).
+- **Active Phase:** Phase 31 - Hangul and Pronunciation i+1 (replanned for assisted curation; Plan 31-10 complete; Phase 31 remains open).
 - **Last Completed:** Plan 31-10 - fixed the pathless `korean-foundations` CLI, proved the temporary evidence-to-receipt-to-snapshot-to-activation-to-export workflow, reran write-poisoned verification with a Windows Python 3.12-compatible poison helper, and passed the complete offline isolated Python 3.12 pytest suite with unchanged `.venv` and canonical evidence/export state on 2026-08-17.
-- **Decisions:** Keep the public Korean foundation CLI fixed to hash/enums-only state commands plus export destination output; use private temporary-root composition for tests only; require write-poisoned prepared verification, six-artifact export inspection, lock consistency, isolated Python 3.12, full offline pytest, unchanged shared `.venv`, and `canonical_mutation_count=0` before the first human checkpoint.
-- **Blockers:** No Plan 31-10 engineering blocker. Genuine qualified reviews, Portuguese policy, rights dispositions, licensed exact media, playback evidence, the canonical receipt, canonical snapshot preparation/authorization/activation, production exports, and observed Anki acceptance remain unavailable and later-plan work. The Korean frequency source/redistribution decision remains a Phase 32 blocker.
-- **Next:** Execute Plan 31-11 as the first human checkpoint to populate/validate the fixed canonical inbox and prepare an inactive canonical snapshot without activating or exporting production state.
+- **Decisions:** Keep the public Korean foundation CLI fixed to hash/enums-only state commands plus export destination output; permit AI-assisted `draft_only` curation outside canonical data/evidence with exact-hash selection and immutable v2 candidate promotion; retain qualified Korean, Portuguese, rights, playback, receipt, and activation gates; keep observed Anki Desktop/mobile acceptance in Phase 34.
+- **Reconciliation:** Preserve the verified Korean Phase 30 implementation and distribute the restored shared-hardening requirements across Phases 32-34 rather than overlaying the alternate local Phase 30 implementation.
+- **Blockers:** No assisted-curation engineering blocker. Genuine qualified reviews, Portuguese policy, rights dispositions, licensed exact media, playback evidence, the canonical receipt, canonical snapshot preparation/authorization/activation, and production exports remain later Phase 31 work; observed Anki acceptance remains Phase 34. The Korean frequency source/redistribution decision remains a Phase 32 blocker.
+- **Next:** After fresh-context plan checking passes, execute the replanned Phase 31 sequence: 31-11 contracts/tooling; 31-12 through 31-19 bounded Hangul/pronunciation curation and assembly; 31-20 exact selection/handoffs; 31-21 atomic v2 candidate bundle; 31-22 request regeneration; 31-23/24 bounded service migration; 31-25 complete pre-evidence regressions/isolation; 31-26 genuine evidence; 31-27 receipt/inactive snapshot; and 31-28 authorized activation/local exports. Phase 32 must not bypass Phase 31 review gates or the Korean frequency license decision.
 
 ## Validated Capabilities
 
@@ -33,7 +34,7 @@ Generate reliable, high-quality Anki cards for real vocabulary the learner needs
 - Classical Latin has an isolated reviewed 50-card path with source, morphology, Portuguese translation, audio, review, and export gates.
 - Japanese kana, Japanese frequency, and introductory Russian, Polish, and Greek phoneme deck patterns exist as reusable language-specific precedents.
 
-## Must Have: v3.0 Korean Learning System
+## Must Have: v3.0 Korean Learning System and Shared Generation Hardening
 
 ### Language And Morphology
 
@@ -73,6 +74,20 @@ Generate reliable, high-quality Anki cards for real vocabulary the learner needs
 - [ ] **[KEXP-02]**: User receives Korean-readable templates that preserve existing Multilang visual contracts and a blank `Image` field. [Done-When: Korean font stacks, responsive layouts, hidden/revealed fields, blank images, and Desktop/mobile rendering are reviewed without mutating unrelated note types.]
 - [ ] **[KQA-01]**: User can inspect and manage Korean `needs_review`, `approved`, and `rejected` gates. [Done-When: unresolved morphology, false i+1, wrong register or sense, unapproved audio, text/media drift, or licensing uncertainty blocks learner-ready export with an actionable reason.]
 - [ ] **[KQA-02]**: User receives reproducible evidence that Korean requirements are met without regressions. [Done-When: scanner-readable manifests, tests, reports, and review artifacts cover every v3.0 requirement exactly once and prove existing modes remain operational.]
+
+### Shared Generation Hardening
+
+- [ ] **[GLEX-01]**: User receives frequency candidates from frozen, versioned, provenance-aware assets rather than live `wordfreq` fallback during final generation. [Done-When: the final runtime loads the configured asset version, rejects missing or insufficient assets, and a curated/rejection report proves 3000 entries, 1000 per level, no cross-level duplicates, and no unresolved final candidates.]
+- [ ] **[GLEX-02]**: User receives lexical candidates with enough metadata to validate the intended word before text generation. [Done-When: persisted candidates carry POS, sense hint or source sense, lexical source/version, grounding confidence, and ambiguity is blocked or routed to review instead of silently selecting the first match.]
+- [ ] **[GMOR-01]**: User receives target matching based on a language-specific morphology adapter. [Done-When: supported adapters distinguish reliable match, mismatch, and inconclusive analysis; final frequency acceptance never relies on generic suffix stripping when the adapter is unavailable or ambiguous.]
+- [ ] **[GTXT-01]**: User receives the best validated example available for each item instead of the first provider response. [Done-When: generation returns a bounded candidate set, deterministic validation and scoring select one candidate, repair cache keys differ from initial generation, and Tatoeba is never an automatic final-deck fallback.]
+- [ ] **[GPRO-01]**: User receives observable and policy-controlled provider execution. [Done-When: generation, repair, translation, judge, definition, and audio calls use explicit task routes, retries/fallbacks are visible, and every provider attempt has sanitized job/item/task/latency/status/hash/token/cost telemetry.]
+- [ ] **[GJOB-01]**: User can resume generation without losing the distinction between processed, accepted, failed, and review-required items. [Done-When: failures are isolated per item, stage status is persisted accurately, review/audio failures never count as completed, and a provider exception cannot silently abort the remaining batch.]
+- [ ] **[GAUD-01]**: User receives audio governed by an explicit provider and fallback policy. [Done-When: required word/sentence assets validate exact text, provider/voice metadata and fallback status are reported, unapproved fallback blocks final frequency export, and failed assets cannot advance the item to audio success.]
+- [ ] **[GREV-01]**: User can manage generated content at field level after automatic validation. [Done-When: review commands can list, approve, reject, edit, and regenerate a selected definition, sentence, translation, or audio field while preserving approved fields and an auditable before/after event.]
+- [ ] **[GEXP-01]**: User receives frequency exports separated into real Level 1, Level 2, and Level 3 subdecks without changing current note GUID semantics. [Done-When: APKG export routes every frequency row to the real level deck, preserves existing fields/tags/GUID formula, and import-structure tests pass for existing and Korean frequency paths.]
+- [ ] **[GOPS-01]**: User can run bounded large generation without duplicate claims or unsafe parallel state. [Done-When: PostgreSQL uses atomic leases/claims, concurrency and batch execution are bounded by provider policy, malformed batch rows fall back individually, SQLite remains safe at concurrency one, and interrupted work resumes idempotently.]
+- [ ] **[GEVAL-01]**: User receives evidence that generation hardening improves release safety without claiming unmeasured linguistic quality. [Done-When: focused tests, deterministic goldens, Polish failure replay, APKG structure checks, provider telemetry checks, and a report with numerator/denominator metrics cover all shared hardening gates.]
 
 ## Typed Data Contracts
 
@@ -135,6 +150,9 @@ KoreanFrequencyEntry = {
 - Tatoeba as the default sentence source.
 - Distribution of a Korean CSV derived from `wordfreq` before attribution and redistribution terms are approved.
 - Automatic image generation or sourcing; `Image` remains blank.
+- v4 semantic GUID migration, `SurfaceForms`, `Important Forms`, canonical editions, APKG history import, adaptive queues, and v4 Anki topology experiments.
+- Replacing the current note identity formula while adding real level subdecks.
+- Treating an LLM judge as the sole approver of lexical, morphological, translation, audio, or security quality.
 
 ## Key Decisions
 
@@ -148,6 +166,9 @@ KoreanFrequencyEntry = {
 | Use Azure `ko-KR` as the only default TTS provider | It has documented Korean voices, locale, IPA support, and live voice discovery. |
 | Require specialist review for jamo and phonological-rule audio | Raw glyph synthesis and automatic phoneme control are not reliable teaching evidence. |
 | Gate the 3000-card asset on an explicit license decision | `wordfreq` is suitable for bootstrap but its own documentation warns against CSV extraction without preserved attribution. |
+| Preserve verified Korean Phase 30 and distribute shared hardening across Phases 32-34 | Avoids replacing stronger Korean identity/morphology contracts while restoring the user-approved cross-language scope. |
+| Use manifest-bound frozen assets for final frequency generation | Final generation must be reproducible and must never replace rejected or missing entries with live `wordfreq` candidates. |
+| Require conclusive selected-adapter morphology for every final frequency candidate | Inconclusive or mismatched analysis must block rather than fall through to generic suffix heuristics. |
 
 ## Capability And Security Gates
 
@@ -158,4 +179,4 @@ KoreanFrequencyEntry = {
 - Do not claim Desktop/mobile visual acceptance without an observed human or project-approved renderer proof.
 
 ---
-*Last updated: 2026-08-17 - Phase 31 Plan 10 implemented; phase remains open for Plan 31-11*
+*Last updated: 2026-08-18 - remote/local reconciliation restored shared hardening across Phases 32-34*

@@ -1,119 +1,83 @@
 # Phase 31: Hangul and Pronunciation i+1 - Pattern Map
 
-**Mapped:** 2026-08-04
-**Requirements:** KHAN-01, KHAN-02, KPRO-01, KPRO-02
-**Files classified:** 27 inferred new/modified artifacts (17 production/data/review, 10 tests)
-**Structural analogs found:** 27 / 27
-**Exact Korean curriculum/audio analogs:** 0 / 4
+**Mapped:** 2026-08-24
+**Planning scope:** Replanned execution sequence 31-11 through 31-28
+**Coverage:** Every new or modified artifact named by those plans is classified below; related artifacts are grouped where they share one contract and analog.
 
-## Inputs And Scope Truth
+## Scope Truth
 
-- No Phase 31 `CONTEXT.md`, `APPROACH.md`, or `RESEARCH.md` exists. The file set below is inferred from `.planning/SPEC.md:45-53`, `.planning/ROADMAP.md:61-71`, `KOREAN-STRUCTURE.md:17-175,370-481`, the verified Phase 30 handoff, and the live codebase.
-- Planning lifecycle preflight returned `allowed`. The control map reports Phase 31 as next and warns that the canonical `Monarch` worktree contains the completed-but-uncommitted Phase 30 set. Treat that dirty set as the required Phase 30 baseline; do not overwrite or revert it.
-- The earlier Phase 31 slug mismatch has been reconciled. The canonical slug is now `i-plus-1`, and this map and all future Phase 31 planning artifacts belong under `.planning/phases/31-hangul-and-pronunciation-i-plus-1/`.
-- Focused analog baseline passed on the live worktree:
-
-  ```text
-  UV_OFFLINE=1 uv run --extra dev pytest \
-    tests/services/test_japanese_kana_deck.py \
-    tests/services/test_japanese_kana_generated_deck.py \
-    tests/services/test_russian_phoneme_deck.py \
-    tests/services/test_card_template_loader.py \
-    tests/services/test_export_anki_package.py \
-    tests/services/test_export_tabular_bundle.py \
-    tests/services/test_latin_audio.py \
-    tests/services/test_latin_review.py \
-    tests/services/test_latin_export.py -q
-  # 123 passed in 4.28s
-  ```
-
-### Locked Outcomes
-
-| Requirement | Concrete implication |
-|---|---|
-| KHAN-01 | A curated Hangul inventory gets a Korean-only note type, unique model/deck IDs, Korean labels/fonts, jamo/block/stroke/mnemonic fields, and complete approved media. The rendered model must contain no Japanese field, label, class, or font leakage. |
-| KHAN-02 | Bootstrap is explicit. Every strict card persists target, prerequisite, observed, and unknown concept IDs; after bootstrap, `unknown_concept_ids == (target_concept_id,)`, prerequisites precede the card, and Korean text remains NFC-safe. |
-| KPRO-01 | The Korean pronunciation note type uses exactly the existing nine phoneme study fields and the shared HTML/CSS layout, but receives Korean-specific identity/IDs and approved media that remain resolvable in APKG, CSV, and TSV bundles. |
-| KPRO-02 | The source inventory covers P0-P13 in dependency order and rejects a card if any active non-target phonological concept is not already a prerequisite/known concept. Approval cannot override invalid i+1 evidence. |
-
-### Contract Reconciliation Required In Code
-
-1. `KOREAN-STRUCTURE.md:80-95` lists the visible Hangul pedagogical fields but omits `ObservedConceptIds`, `UnknownConceptIds`, and `IPlusOnePolicy`; the normative contracts in `.planning/SPEC.md:97-103` and KHAN-02 require that evidence to be stored. Keep the extra evidence as non-rendered note/source fields rather than dropping it.
-2. `KOREAN-STRUCTURE.md:117-131` requires the pronunciation learner fields to remain exactly the existing nine-field contract. Keep curriculum and pronunciation evidence in the validated source record/manifest, not as extra study fields.
-3. Phase 30 deliberately rejects Compatibility Jamo and halfwidth Hangul at lexical/canonical boundaries (`domain/korean.py:109-120`), while the approved foundation sequence illustrates standalone jamo with compatibility display glyphs. Do not weaken `canonicalize_korean()`. Add a separate, explicit pedagogical-glyph contract that records a reviewed display glyph and its canonical conjoining-jamo identity; never let that display representation enter lexical keys, morphology, or generic Korean canonicalization silently.
-
-## Recommended Ownership Boundary
-
-Use a dedicated, frozen foundation path like Latin, not the modern frequency/job runtime:
-
-```text
-domain/korean.py
-  -> immutable concept/curriculum/pronunciation contracts
-korean_curriculum.py
-  -> load concept + Hangul + pronunciation manifests; validate graph/coverage/NFC
-korean_foundation_review.py
-  -> independent content/curriculum/media approval gates
-korean_foundation_media.py
-  -> exact-text/hash/path/reviewer-role readiness for pictures, strokes, GIFs, audio
-phoneme_deck.py
-  -> language-neutral nine-field model/note/template mechanics only
-korean_foundation_export.py
-  -> join frozen approved inputs; APKG/CSV/TSV + resolvable media bundles
-cli.py
-  -> thin local commands and controlled exit handling
-```
-
-This avoids threading foundation-only fields through `ExportCardRow`, `RuntimeGenerateService`, the database schema, or the production Korean voice registry. It also prevents the unsafe “generate TTS while exporting and silently omit failures” behavior in the legacy kana/phoneme exporters from becoming Korean policy.
+- `31-APPROACH.md` and `31-RESEARCH.md` both exist and govern this map.
+- Plans 31-01 through 31-10 already established the domain, curriculum, review, media, evidence, snapshot, export, CLI, and test patterns. Plans 31-11 through 31-28 must extend those patterns rather than create a parallel architecture.
+- Assisted curation is `draft_only`: it may propose bounded learner-copy patches and report uncertainty, but it cannot approve linguistic content, Portuguese, rights, playback, evidence, activation, release, or Anki acceptance.
+- All coordination and production operations use fixed repository roots and exact lowercase SHA-256 values. Arbitrary input paths, URLs, archives, provider hooks, and import surfaces remain forbidden.
+- The four v2 candidate members live in one immutable hash-named bundle exposed through one atomic `current-candidate.json` pointer. v1 remains immutable historical data; ordinary candidate defaults move coherently to that complete v2 bundle only after promotion.
+- Review and media manifests remain `candidate_only` with pending gates after promotion. Selection is promotion authority only; it is not review authority.
+- Evidence validation precedes receipt writing; preparation precedes activation; read-only verification precedes exact activation authorization; export resolves only the active immutable snapshot.
+- Phase 31 may prove structurally and media-valid local exports. Observed Anki Desktop/mobile import, rendering, and playback acceptance remains Phase 34.
 
 ## File Classification
 
-### Production, Data, And Review Artifacts
-
-| New/Modified File | Role | Data Flow | Closest Analog | Match Quality |
+| New/Modified File or Artifact Group | Role | Data Flow | Closest Existing Analog | Match Quality |
 |---|---|---|---|---|
-| `src/multilang/domain/korean.py` | model | transform | existing frozen Korean contracts at `domain/korean.py:99-120,335-427`; `latin_source_pack.py:152-184` | exact role / partial behavior |
-| `src/multilang/services/korean_curriculum.py` **(create)** | service/model | file-I/O, batch, transform | `latin_source_pack.py:219-313` | role-match |
-| `src/multilang/services/korean_foundation_review.py` **(create)** | service/model | file-I/O, event-driven | `latin_review.py:56-70,120-210` | exact role |
-| `src/multilang/services/korean_foundation_media.py` **(create)** | service/model | file-I/O, transform | `latin_audio.py:59-147,164-254`; `japanese_kana_deck.py:92-97` | role-match |
-| `src/multilang/services/phoneme_deck.py` **(create)** | service/utility | transform | generic portions of `russian_phoneme_deck.py:35-71,178-249,465-486` | exact extraction |
-| `src/multilang/services/russian_phoneme_deck.py` | service | batch, file-I/O | its current public API and inventories | exact regression-preserving refactor |
-| `src/multilang/services/korean_foundation_export.py` **(create)** | service | file-I/O, batch, transform | `latin_export.py:43-90,130-333`; kana model at `japanese_kana_deck.py:345-416` | role-match |
-| `src/multilang/templates/korean_hangul_card.md` **(create)** | config/template | transform | `templates/japanese_kana_card.md:23-223` | layout-match |
-| `src/multilang/cli.py` | controller/route | request-response, file-I/O | dedicated Latin export command at `cli.py:1102-1138` | exact |
-| `data/korean_foundations/korean-concepts-v1.json` **(create)** | model/config | file-I/O, batch | frozen source manifest in `data/latin_mvp/latin-mvp-50-v1.json` | role-match |
-| `data/korean_foundations/hangul-v1.json` **(create)** | model/config | file-I/O, batch | `japanese_kana_generated_deck.py:34-170`; Latin source pack JSON | partial |
-| `data/korean_foundations/pronunciation-i-plus-1-v1.json` **(create)** | model/config | file-I/O, batch | phoneme card tuples at `russian_phoneme_deck.py:74-175`; Latin source pack JSON | partial |
-| `data/korean_foundations/korean-foundations-v1-curation.json` **(create)** | model/config | file-I/O, event-driven | `data/latin_mvp/latin-mvp-50-v1-curation.json:1-41` | exact role |
-| `data/korean_foundations/korean-foundations-v1-media.json` **(create)** | model/config | file-I/O, batch | `data/latin_mvp/latin-mvp-50-v1-audio.json:1-29` | role-match |
-| `data/korean_foundations/media/korean-foundations-v1/*` **(create set)** | asset | file-I/O | `data/latin_mvp/audio/latin-mvp-50-v1/*` | exact layout |
-| `$PHASE_DIR/31-CURRICULUM-REVIEW.md` **(create)** | config/review evidence | event-driven | Phase 27 playback review artifact; Latin curation reviewer metadata | role-match |
-| `$PHASE_DIR/31-AUDIO-PLAYBACK-REVIEW.md` **(create)** | config/review evidence | event-driven | `.planning/phases/27-latin-audio-policy-and-integrity/27-AUDIO-PLAYBACK-REVIEW.md:1-81` | exact role |
-
-### Tests
-
-| New/Modified File | Role | Data Flow | Closest Analog | Match Quality |
-|---|---|---|---|---|
-| `tests/domain/test_korean.py` | test | transform | current Korean frozen/NFC tests at `test_korean.py:61-102,127-238` | exact |
-| `tests/services/test_korean_curriculum.py` **(create)** | test | file-I/O, batch, transform | `tests/services/test_latin_source_pack.py`; generated kana coverage tests | role-match |
-| `tests/services/test_korean_foundation_review.py` **(create)** | test | event-driven, transform | `tests/services/test_latin_review.py:48-119` | exact |
-| `tests/services/test_korean_foundation_media.py` **(create)** | test | file-I/O, transform | `tests/services/test_latin_audio.py:130-360` | exact role |
-| `tests/services/test_phoneme_deck.py` **(create)** | test | transform | shared-model assertions in `test_russian_phoneme_deck.py:118-263` | exact extraction |
-| `tests/services/test_russian_phoneme_deck.py` | test | batch, file-I/O | current file | exact regression |
-| `tests/services/test_korean_foundation_export.py` **(create)** | test | file-I/O, batch | `tests/services/test_latin_export.py:27-299`; kana APKG tests | exact role |
-| `tests/services/test_card_template_loader.py` | test | transform | kana/phoneme template assertions at `test_card_template_loader.py:535-563,737-775` | exact |
-| `tests/cli/test_korean_foundation_commands.py` **(create)** | test | request-response, file-I/O | phoneme CLI tests at `test_generate_command.py:865-894`; Latin command shape | role-match |
-| `tests/integration/test_korean_foundations_flow.py` **(create)** | test | file-I/O, batch | `test_v20_latin_export_evidence.py`; `test_russian_phoneme_template_refresh_flow.py` | role-match |
+| `src/multilang/services/korean_foundation_ai_curation.py` | service | transform, batch, file-I/O | `src/multilang/services/korean_curriculum.py`; `korean_foundation_review.py` | role + flow match |
+| `scripts/build_korean_foundation_candidates.py` | utility/CLI | batch, transform, file-I/O | `scripts/build_frequency_assets.py`; fixed command surface in `src/multilang/cli.py` | role match |
+| `tests/services/test_korean_foundation_ai_curation.py` | test | batch, transform, file-I/O | `tests/services/test_korean_curriculum.py`; evidence/export failure tests | role + flow match |
+| Six compact projections under `curation-drafts/inputs/`: H0-H3, H4-H7, H8-H10, P0-P4, P5-P9, P10-P13 | config/data | bounded batch input | v1 source-pack entries plus frozen curriculum models | schema match |
+| Six matching batch drafts under `curation-drafts/` | config/data | batch, transform | compact projections plus frozen patch contracts | schema match |
+| Two family drafts: `hangul-v2-draft.json`, `pronunciation-i-plus-1-v2-draft.json` | config/data | batch, transform | `data/korean_foundations/hangul-v1.json`; `pronunciation-i-plus-1-v1.json` | exact shape, new version |
+| `curation-drafts/draft-manifest.json` | config/data | batch, transform | hash-bound curation/media manifests | role + flow match |
+| `31-AI-CURATION-REPORT.md` | config/audit report | batch, transform | existing Phase 31 request contracts and summaries | partial match |
+| `scripts/phase31_handoff.py` | utility/CLI | request-response, file-I/O | fixed evidence APIs and atomic receipt writer | composite role match |
+| `tests/services/test_phase31_handoff.py` | test | request-response, file-I/O | `tests/services/test_korean_foundation_evidence.py`; CLI surface tests | role + flow match |
+| `execution-handoffs/curation-selection.json`, `evidence-confirmation.json`, `activation.json` | config/audit record | event-driven, file-I/O | validation receipt and active pointer contracts | role match |
+| `data/korean_foundations/candidate-bundles/<bundle-sha256>/` manifest plus four exact v2 members | config/data | batch, transform, immutable publication | v1 schemas plus hash-named snapshot staging | composite exact match |
+| `data/korean_foundations/current-candidate.json` | config/candidate pointer | event-driven, file-I/O | atomic active-foundations pointer | exact publication pattern, non-production authority |
+| `31-CURRICULUM-REVIEW.md`, `31-AUDIO-PLAYBACK-REVIEW.md` | config/request contract | request-response, transform | the same v1 request contracts | exact self-extension |
+| `korean_curriculum.py`, `korean_foundation_review.py`, `korean_foundation_media.py` | service | file-I/O, transform | their current v1 fixed-default loaders and gates | exact self-extension |
+| Their three service tests | test | file-I/O, transform | existing fixed-loader, pending-gate, and drift tests in the same files | exact self-extension |
+| `korean_foundation_evidence.py`, `korean_foundation_snapshot.py`, `korean_foundation_export.py` | service | request-response, file-I/O | their current fixed v1 workflow | exact self-extension |
+| Their three service tests | test | request-response, file-I/O | existing atomicity, write-poison, drift, and export tests in the same files | exact self-extension |
+| `scripts/verify_phase31_runtime_isolation.py` | utility | batch, process/file-I/O | temporary-root and state-digest mechanics in Phase 31 tests | partial; no standalone analog |
+| `tests/services/test_phase31_runtime_isolation.py` | test | batch, process/file-I/O | snapshot write-poison tests and integration canonical-state digests | role + safety match |
+| `tests/cli/test_korean_foundation_commands.py` | test | request-response | existing exact command/option allowlist in the same file | exact self-extension |
+| `tests/integration/test_korean_foundations_flow.py` | test | request-response, file-I/O | existing private full evidence-to-six-export flow | exact self-extension |
+| Exact fixed members under `evidence-inbox/` | config/evidence data | batch, file-I/O | `KoreanFoundationEvidenceIndex` and fixed inbox validator | exact contract |
+| `evidence-inbox/validation-receipt.json` | config/audit record | request-response, file-I/O | `KoreanFoundationValidationReceipt` | exact contract |
+| `data/korean_foundations/snapshots/<bundle-sha256>/` | model/immutable snapshot | batch, file-I/O | current hash-named staged snapshot implementation | exact contract |
+| `data/korean_foundations/active-foundations.json` | config/active pointer | event-driven, file-I/O | `KoreanFoundationActivePointer` and atomic activation | exact contract |
+| Six outputs under `.multilang/exports/korean-foundations/` | export artifacts | batch, file-I/O | current APKG/CSV/TSV staged writers and deep inspectors | exact contract |
 
 ## Pattern Assignments
 
-### `src/multilang/domain/korean.py` (model, transform)
+### `korean_foundation_ai_curation.py`, candidate script, draft JSON, and curation tests
 
-**Primary analog:** the existing module itself. Extend it rather than creating a second source of Korean canonical constants.
+**Primary analogs:**
 
-**Frozen, strict model pattern** (`domain/korean.py:99-106`):
+- `src/multilang/services/korean_curriculum.py`
+- `src/multilang/services/korean_foundation_review.py`
+- `scripts/build_frequency_assets.py`
+
+**Imports and ownership pattern** — keep schemas/validation in the service and leave argument parsing/orchestration in the script (`scripts/build_frequency_assets.py:3-18`):
 
 ```python
-class _FrozenContract(BaseModel):
+from __future__ import annotations
+
+import argparse
+from pathlib import Path
+
+from multilang.domain.jobs import SupportedLanguage
+from multilang.services.frequency_decks import (
+    CURATED_COLUMNS,
+    load_curated_frequency_entries,
+)
+```
+
+For Phase 31, import the frozen Korean curriculum/review contracts in the service; the script should call service functions rather than duplicate model or hash logic.
+
+**Frozen fail-closed models** — copy directly from `korean_curriculum.py:330-337`:
+
+```python
+class _FrozenManifest(BaseModel):
     model_config = ConfigDict(
         extra="forbid",
         frozen=True,
@@ -123,777 +87,492 @@ class _FrozenContract(BaseModel):
     )
 ```
 
-Use this base for the SPEC contracts:
+Apply this to batch proposals, family drafts, manifest entries, uncertainty/disagreement records, and promotion inputs. Bound string lengths and collection counts with `Field`; use tuple fields for deterministic order. Unknown fields and authority-bearing fields must fail closed.
 
-- `KoreanConcept` with `id`, domain, prerequisite IDs, and sequence;
-- `KoreanCurriculumEvidence` with target, observed, prerequisite, unknown, and policy;
-- `KoreanPronunciationEvidence` with canonical spelling, normative/surface pronunciation, IPA, rule IDs, and review status;
-- a separate pedagogical jamo/display model that explicitly distinguishes compatibility display glyph from canonical conjoining-jamo identity.
-
-**Canonical Korean pattern** (`domain/korean.py:109-120`):
+**Canonical hash pattern** — reuse, do not redefine incompatibly (`korean_curriculum.py:340-352`):
 
 ```python
-def canonicalize_korean(value: str) -> str:
-    if not isinstance(value, str) or not value.strip():
-        raise KoreanTextError("Korean text must not be blank")
-    if any(
-        ord(character) in _HANGUL_COMPATIBILITY_JAMO
-        or ord(character) in _HALFWIDTH_HANGUL
-        for character in value
-    ):
-        raise KoreanTextError("Korean text contains forbidden compatibility Hangul")
-    return unicodedata.normalize("NFC", value)
+def korean_canonical_json_sha256(value: object) -> str:
+    if isinstance(value, BaseModel):
+        value = value.model_dump(mode="json", by_alias=True)
+    encoded = json.dumps(
+        value,
+        ensure_ascii=False,
+        allow_nan=False,
+        separators=(",", ":"),
+        sort_keys=True,
+    ).encode("utf-8")
+    return sha256(encoded).hexdigest()
 ```
 
-Copy this for syllable blocks, Korean names, words, and sentences. **Do not call it on an explicitly modeled compatibility display glyph and do not relax its rejection ranges.** Halfwidth Hangul stays forbidden everywhere.
+Every draft record must bind the exact base source-pack version, item key/sequence, base content hash, and allowed learner-copy patch. The family and global manifests must hash deterministic ordered child bindings.
 
-**Cross-field invariant pattern** (`latin_source_pack.py:173-184`):
+**CLI/parser pattern** — use a fixed command vocabulary and enum/choice validation, adapting the standalone script pattern at `scripts/build_frequency_assets.py:212-232`:
 
 ```python
-@model_validator(mode="after")
-def enforce_resolved_morphology(self) -> "LatinMorphologyEvidence":
-    if self.grammar_review_status != "approved":
-        raise ValueError("grammar_review_status must be approved")
-    ...
-    return self
+def main() -> None:
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--language", choices=DEFAULT_SUPPORTED_LANGUAGES)
+    parser.add_argument("--check", action="store_true")
+    args = parser.parse_args()
+    if args.check:
+        check_assets(...)
+    else:
+        build_assets(...)
+
+if __name__ == "__main__":
+    main()
 ```
 
-For strict curriculum evidence, enforce at construction time:
+For the new script, commands and batch/family names are fixed choices: `validate-batch`, `assemble-family`, `assemble`, `validate-drafts`, `check-selection`, `promote`, `verify-promoted`, and `regenerate-requests` only when introduced by the corresponding plan. Do not expose arbitrary draft, data, manifest, or handoff paths.
 
-```text
-policy == strict
-target_concept_id in observed_concept_ids
-set(prerequisite_concept_ids) <= set(observed_concept_ids)
-unknown_concept_ids == (target_concept_id,)
+**Authority boundary** — promoted candidate manifests still fail readiness (`korean_foundation_review.py:806-826`):
+
+```python
+manifest = snapshot.curation_manifest
+validate_korean_foundation_curation(...)
+if manifest.candidate_only:
+    _raise(KoreanFoundationReviewReasonCode.CANDIDATE_MANIFEST_NOT_ACTIVE)
+summary = summarize_korean_foundation_review(manifest)
+if summary.learner_ready_records == summary.total_records:
+    return
+_raise(KoreanFoundationReviewReasonCode.REVIEW_NOT_READY, ...)
 ```
 
-Do not accept caller-supplied `unknown_concept_ids` as truth without recomputing it against the pack's explicit bootstrap and preceding concepts.
+Draft generation may change only plan-approved learner-copy fields. It must preserve identity, order, structure, prerequisite graph, media-slot identity, and all pending review state. Uncertain records stay explicit; never silently convert uncertainty into approval.
+
+**Testing pattern:**
+
+- Assert model immutability, `extra="forbid"`, bounded sizes, lowercase hashes, stale-base rejection, NFC-safe learner copy, and no structural/authority fields.
+- Validate each batch independently, then require exact nonoverlapping family coverage and exact 92 + 47 global coverage.
+- Hash repeated assembly outputs and require byte/content determinism, following the repeated-export comparison style in `tests/services/test_korean_foundation_export.py:973-1016`.
+- Poison promotion writers for every validation-failure test and compare complete pre/post trees.
 
 ---
 
-### `src/multilang/services/korean_curriculum.py` and the three source manifests
+### Batch drafts, family drafts, `draft-manifest.json`, and `31-AI-CURATION-REPORT.md`
 
-**Primary analog:** `src/multilang/services/latin_source_pack.py`.
+**Asset analogs:** the immutable v1 source packs and request contracts.
 
-**Typed entry + pack invariant pattern** (`latin_source_pack.py:219-297`):
+The family draft must retain the source-pack envelope. Existing files begin with the exact identity pair (`hangul-v1.json:3-4`, `pronunciation-i-plus-1-v1.json:3-4`):
 
-```python
-class LatinMvpSourcePackEntry(...):
-    item_key: str = Field(min_length=1)
-    sequence: int = Field(ge=1)
-    ...
-
-    @model_validator(mode="after")
-    def validate_entry_contract(self) -> "LatinMvpSourcePackEntry":
-        expected_key = f"latin-mvp-{self.sequence:04d}"
-        if self.item_key != expected_key:
-            raise ValueError(...)
-        ...
-        return self
-
-
-class LatinMvpSourcePack(BaseModel):
-    ...
-
-    @model_validator(mode="after")
-    def validate_pack_invariants(self) -> "LatinMvpSourcePack":
-        ...
-        if actual_sequences != list(range(1, LATIN_MVP_CARD_COUNT + 1)):
-            raise ValueError("entries must have sequence numbers 1 through 50")
-        ...
-        return self
+```json
+{
+  "family": "hangul",
+  "source_pack_version": "hangul-v1"
+}
 ```
 
-Use stable item keys such as `ko-hangul-0001` and `ko-pron-0001`, contiguous sequence numbers, explicit source-pack versions, and deterministic order. The concept catalog should be the single registry referenced by both inventories.
-
-**Loader/error pattern** (`latin_source_pack.py:300-314`):
-
-```python
-def load_latin_mvp_source_pack(path: Path | None = None) -> LatinMvpSourcePack:
-    manifest_path = path or DEFAULT_LATIN_MVP_SOURCE_PACK_PATH
-    try:
-        payload = json.loads(manifest_path.read_text(encoding="utf-8"))
-        return LatinMvpSourcePack.model_validate(payload)
-    except FileNotFoundError as exc:
-        raise ValueError("Latin MVP source pack is missing ...") from exc
-    except json.JSONDecodeError as exc:
-        raise ValueError("Latin MVP source pack JSON is malformed ...") from exc
+```json
+{
+  "family": "pronunciation",
+  "source_pack_version": "pronunciation-i-plus-1-v1"
+}
 ```
 
-Use UTF-8 JSON, Pydantic validation, and content-free public errors. Do not echo Korean source text, media paths, or Pydantic input values.
+Adapt versions to v2 only in assembled/promoted v2 artifacts. Batch drafts are noncanonical proposal envelopes and must preserve explicit base-v1 bindings.
 
-**Inventory-content analogs:**
+**Manifest pattern** — mirror the typed, hash-bound envelope at `korean_foundation_review.py:407-429`:
 
-- Generated kana gives deterministic categories/order (`japanese_kana_generated_deck.py:114-170`) but embeds pedagogy in Python and has no review evidence. Copy only the deterministic builder/coverage-test idea, not the storage choice.
-- Russian/Polish/Greek phoneme tuples (`russian_phoneme_deck.py:74-175`) prove that spelling, sound, word, translation, sentence, and sentence translation belong together. Move Korean content to validated JSON because each record also needs graph, pronunciation, provenance, and review metadata.
+```python
+class KoreanFoundationCurationManifest(_FrozenReviewModel):
+    schema_version: Literal[1] = 1
+    manifest_version: Literal["korean-foundations-v1-curation"]
+    candidate_only: bool
+    registry_version: str = Field(...)
+    registry_content_sha256: str = Field(min_length=64, max_length=64)
+    hangul_source_pack_sha256: str = Field(min_length=64, max_length=64)
+    pronunciation_source_pack_sha256: str = Field(min_length=64, max_length=64)
+    records: tuple[KoreanFoundationCurationRecord, ...] = Field(...)
+    content_hash: str = Field(min_length=64, max_length=64)
+```
 
-**Required curriculum checks with no exact in-repo analog:**
+`draft-manifest.json` should bind both complete family drafts, every batch hash, deterministic coverage, and aggregate uncertainty/disagreement counts. It grants no approval.
 
-1. Pack-level `bootstrap_concept_ids` is explicit and cannot be inferred from the first card.
-2. Every referenced concept exists exactly once.
-3. Every prerequisite is bootstrap-known or has a lower sequence; cycles/forward references fail.
-4. Recompute observed-minus-known and require exactly the target as the only unknown.
-5. Hangul contains H0-H10 coverage; pronunciation contains P0-P13 and the required onset, batchim, liaison, tensification, nasalization, aspiration, palatalization, complex-coda, contraction, and connected-speech categories.
-6. All canonical blocks/names/words/sentences equal their NFC form. Compatibility display jamo must carry explicit mapping metadata; halfwidth is rejected.
-7. Traditional jamo names may appear only after every orthographic concept needed to decode the name is already known, matching `KOREAN-STRUCTURE.md:113`.
+**Report pattern:** preserve the explicit non-evidence wording used by `31-CURRICULUM-REVIEW.md:1-7` and `31-AUDIO-PLAYBACK-REVIEW.md:1-7`: request/report artifacts supply no human, legal, rights, or playback evidence, and status remains `needs_review`. Report exact hashes/counts and named blockers; do not use prose as a later machine authority source.
 
 ---
 
-### `src/multilang/services/korean_foundation_review.py`, curation JSON, and review artifacts
+### `scripts/phase31_handoff.py`, handoff tests, and `execution-handoffs/*.json`
 
-**Primary analog:** `src/multilang/services/latin_review.py`.
+**Primary analog:** `src/multilang/services/korean_foundation_evidence.py`.
 
-**Gate model pattern** (`latin_review.py:56-70`):
-
-```python
-class LatinReviewGate(BaseModel):
-    status: LatinReviewStatus
-    reason: str | None = None
-    reviewed_by: str | None = None
-    reviewed_at: str | None = None
-
-    @model_validator(mode="after")
-    def require_reason_for_blocking_status(self) -> "LatinReviewGate":
-        if self.status in {"needs_review", "rejected"} and self.reason is None:
-            raise ValueError("needs_review and rejected gates require a reason")
-        return self
-```
-
-Use independent `content`, `curriculum`, `media`, and `audio` gates. Every Hangul and pronunciation record needs all gates; a record is learner-ready only when all are approved.
-
-**Fail-closed summary/export pattern** (`latin_review.py:120-156`):
+**Fixed roots** — define constants, not caller-selected paths (`korean_foundation_evidence.py:44-52`):
 
 ```python
-def _blocking_gate_names(record: LatinCuratedRecord) -> list[str]:
-    return [gate_name for field_name, gate_name in _GATE_FIELDS
-            if getattr(record, field_name).status != "approved"]
-
-
-def assert_latin_records_export_ready(records: list[LatinCuratedRecord]) -> None:
-    summary = summarize_latin_review_records(records)
-    if not summary.blocking_gates_by_item_key:
-        return
-    blockers = [
-        f"latin_export_blocked item_key={item_key} gates={','.join(gates)}"
-        for item_key, gates in summary.blocking_gates_by_item_key.items()
-    ]
-    raise ValueError("; ".join(blockers))
-```
-
-Use scanner-readable diagnostics containing only family, item key, and gate names. Approval cannot make an invalid curriculum record valid; source validation runs before review readiness.
-
-**Drift protection pattern** (`latin_review.py:159-202`): compare each copied source identity/version/hash field against the frozen source pack before accepting curation. Preserve the approved-overwrite guard at `latin_review.py:220-260` if Phase 31 includes a review updater; otherwise keep updates manual and defer gate-management UX to KQA-01/Phase 34.
-
-**Human-review artifact pattern** (`27-AUDIO-PLAYBACK-REVIEW.md:1-16`):
-
-```yaml
-review_artifact: latin-audio-playback-review
-selected_provider: google-translate-tts
-selected_voice: la
-pronunciation_policy: google_translate_latin
-playback_review_status: approved
-reviewer: user
-reviewed_at: 2026-06-17T00:00:00Z
-```
-
-For Korean, record the exact inventory/media version and artifact hashes. Jamo/phonological-rule TTS remains `needs_review` until both required reviewer roles are present: pronunciation specialist and independent native speaker. Neither an LLM response nor provider success may set `approved`.
-
----
-
-### `src/multilang/services/korean_foundation_media.py` and media manifest/assets
-
-**Primary analog:** `src/multilang/services/latin_audio.py`; **secondary analog:** kana media-reference extraction.
-
-**Hash-aligned metadata pattern** (`latin_audio.py:34-95`):
-
-```python
-def latin_audio_text_hash(value: str) -> str:
-    return sha256(normalize_latin_audio_text(value).encode("utf-8")).hexdigest()
-
-
-class LatinAudioArtifact(BaseModel):
-    audio_kind: LatinAudioKind
-    provider: LatinAudioProvider
-    provider_version: str = Field(min_length=1)
-    voice: str = Field(min_length=1)
-    pronunciation_policy: str = Field(min_length=1)
-    generated_text: str = Field(min_length=1)
-    text_hash: str = Field(min_length=64, max_length=64)
-    playback_review_status: LatinAudioReviewStatus
-    storage_path: str = Field(min_length=1)
-    ...
-```
-
-Korean needs the stricter metadata listed in `KOREAN-STRUCTURE.md:382-405`: display/spoken/NFC text, provider/version, locale, voice catalog status/time, SSML hash, output format, byte artifact hash, duration, storage path, review status, reviewed artifact hash, reviewer role, and generation/rejection reason. Verify `artifact_hash` from bytes and require it to equal `reviewed_artifact_hash`; the Latin analog does not yet provide that stronger check.
-
-**Safe repository-relative path pattern** (`latin_audio.py:164-185`):
-
-```python
-relative_path = Path(path_text)
-if relative_path.is_absolute() or ".." in relative_path.parts:
-    return False
-
-root = repo_root.resolve()
-candidate = (root / relative_path).resolve(strict=False)
-try:
-    candidate.relative_to(root)
-except ValueError:
-    return False
-
-if not candidate.is_file() or candidate.stat().st_size <= 0:
-    return False
-```
-
-Copy the root-containment, existence, non-empty, and media-marker checks. Extend them with SHA-256 byte verification. Errors expose `item_key`, media kind, and failed field only—never absolute/private paths (`test_latin_audio.py:230-260`).
-
-**Reference extraction pattern** (`japanese_kana_deck.py:92-97`):
-
-```python
-def referenced_media(self) -> set[str]:
-    names: set[str] = set()
-    for value in (self.picture, self.strokes, self.gif, self.audio):
-        for match in _MEDIA_REF_RE.finditer(value):
-            names.add(match.group(1) or match.group(2))
-    return names
-```
-
-For Korean, extraction is only the first step. Require every declared picture/stroke/GIF/audio basename to resolve to exactly one manifest entry and every required media kind to be present. Reject absolute paths, traversal, URLs, basename mismatch, duplicate basename with different bytes, script/event-handler HTML, and unmanifested references.
-
-**Raw-glyph TTS anti-pattern—do not copy** (`japanese_kana_generated_deck.py:224-241`):
-
-```python
-response = synthesizer.synthesize(
-    ssml_text=card.kana,
-    voice_id=KANA_VOICE_ID,
-    locale=KANA_LOCALE,
-    output_path=output_path,
-    ...
+PHASE31_EVIDENCE_INBOX: Final = Path(
+    ".planning/phases/31-hangul-and-pronunciation-i-plus-1/evidence-inbox"
 )
-...
-except Exception:
-    return card
-```
-
-The legacy phoneme exporter similarly synthesizes `card.letters` and swallows failures (`russian_phoneme_deck.py:353-418`). Korean production code must not import/call `AzureSpeechAdapter` during export, must not send an isolated display glyph as `spoken_text`, and must not write a deck with blank required audio after an exception. Use approved letter names, explicit syllable/coda contexts, or reviewed human recordings from the frozen manifest.
-
-**Tracked media caveat:** `.gitignore:37-44` ignores `*.mp3` and `*.wav`. Existing Latin media were intentionally force-added (`27-04-SUMMARY.md:61-81`). Follow that narrow precedent or add a narrowly scoped Korean exception; do not remove the global runtime-audio ignore.
-
----
-
-### `src/multilang/services/phoneme_deck.py` and `russian_phoneme_deck.py`
-
-**Primary analog:** generic mechanics currently embedded in `russian_phoneme_deck.py`.
-
-Extract only the shared visual/note contract; keep Russian, Polish, and Greek inventories, IDs, voices, commands, and current behavior in their existing module.
-
-**Exact shared field tuple** (`russian_phoneme_deck.py:35-45`):
-
-```python
-PHONEME_FIELD_NAMES = (
-    "Spellings",
-    "Sound",
-    "letter_audio",
-    "Example Word",
-    "word_audio",
-    "Word Translation",
-    "Example Sentence",
-    "sentence_audio",
-    "Sentence Translation",
+PHASE31_EVIDENCE_INDEX: Final = PHASE31_EVIDENCE_INBOX / "evidence-index.json"
+PHASE31_VALIDATION_RECEIPT: Final = (
+    PHASE31_EVIDENCE_INBOX / "validation-receipt.json"
 )
 ```
 
-**Generic model pattern** (`russian_phoneme_deck.py:202-216`):
+The handoff utility should similarly own one fixed `execution-handoffs/` root and exact filenames per kind. Its public arguments are operation names plus lowercase hashes only.
+
+**Typed hash contract** — copy strict model and digest validation from `korean_foundation_evidence.py:217-232`:
 
 ```python
-def _build_phoneme_model(*, model_id: int, note_type_name: str) -> genanki.Model:
-    template = _load_phoneme_template()
-    return genanki.Model(
-        model_id,
-        note_type_name,
-        fields=[{"name": field_name} for field_name in PHONEME_FIELD_NAMES],
-        templates=[{
-            "name": "Phoneme Card",
-            "qfmt": template["front"],
-            "afmt": template["back"],
-        }],
-        css=template["css"],
+class _FrozenEvidenceModel(BaseModel):
+    model_config = ConfigDict(
+        extra="forbid",
+        frozen=True,
+        hide_input_in_errors=True,
     )
+
+def _sha256_text(value: str, *, field_name: str) -> str:
+    if len(value) != 64 or any(character not in _LOWERCASE_HEX for character in value):
+        raise ValueError(f"{field_name} must be lowercase SHA-256")
+    return value
 ```
 
-Promote this to a public language-neutral builder accepting model ID, note-type name, and optional additive CSS. The Korean model should use the exact front/back template and append only a Korean font override, analogous to Mandarin composing base + language CSS in `card_template_loader.py:63-81`. Russian/Polish/Greek rendered templates and CSS must remain byte-identical.
+Each handoff needs a typed kind/version, the exact relevant current-artifact bindings, and a canonical self-hash. Selection binds the current draft manifest; evidence confirmation binds the current evidence index; activation binds the current receipt/prepared tuple.
 
-**Note/GUID injection pattern** (`russian_phoneme_deck.py:243-249`):
+**Validation-before-write and idempotency** — copy operation order from `korean_foundation_evidence.py:2252-2301`:
 
 ```python
-note = RussianPhonemeNote(
-    model=model,
-    fields=_phoneme_card_fields(card),
+with _korean_foundation_state_lock(paths.project_dir):
+    validated = _validate_fixed_evidence(...)
+    _assert_state_unchanged(paths, validated)
+    receipt = _derive_receipt(validated)
+    receipt_raw = _json_file_bytes(receipt)
+    _assert_state_unchanged(paths, validated)
+    if _receipt_exists(paths):
+        if existing == receipt_raw:
+            return receipt
+        _raise(KoreanFoundationEvidenceReasonCode.STALE_RECEIPT)
+    _assert_state_unchanged(paths, validated)
+    _atomic_write_receipt(paths, receipt_raw)
+```
+
+An identical retry returns the existing binding without rewriting. A nonidentical existing handoff is a hard refusal, not replacement.
+
+**Atomic write and cleanup** — adapt `korean_foundation_evidence.py:2201-2243`:
+
+```python
+descriptor, temporary_name = tempfile.mkstemp(
+    prefix=".validation-receipt.", suffix=".tmp", dir=paths.inbox
 )
-note._multilang_guid = card.guid
-return note
+with os.fdopen(descriptor, "wb", closefd=True) as handle:
+    handle.write(raw)
+    handle.flush()
+    os.fsync(handle.fileno())
+os.replace(temporary_name, paths.receipt)
+_fsync_parent_directory(paths.inbox)
 ```
 
-Rename the internal shared types to `PhonemeCard`/`PhonemeNote`; preserve `RussianPhonemeCard` and existing builders as aliases/wrappers so imports and tests do not break.
+Retain secure temp permissions where available, `lstat`/symlink/reparse rejection, parent `fsync`, failure cleanup, content-free errors, and no arbitrary path surface.
 
-**Exact mapping pattern** (`russian_phoneme_deck.py:465-477`):
-
-```python
-values = {
-    "Spellings": card.letters,
-    "Sound": card.ipa,
-    "letter_audio": card.letter_audio,
-    "Example Word": card.example_word,
-    "word_audio": card.word_audio,
-    "Word Translation": card.example_word_translation,
-    "Example Sentence": card.example_sentence,
-    "sentence_audio": card.sentence_audio,
-    "Sentence Translation": card.example_sentence_translation,
-}
-return [values[field_name] for field_name in PHONEME_FIELD_NAMES]
-```
-
-Korean source names may differ internally, but the exported mapping and order remain exactly this tuple.
+**Surface tests** — copy exact allowlist/signature assertions from `tests/cli/test_korean_foundation_commands.py:30-43,167-190`. For the handoff script, lock the exact operations and parameters and prove there is no filesystem option. Evidence tests show the public pathless pattern at `tests/services/test_korean_foundation_evidence.py:978-1020`.
 
 ---
 
-### `src/multilang/templates/korean_hangul_card.md`
+### One immutable four-member v2 bundle and regenerated review requests
 
-**Analog:** `src/multilang/templates/japanese_kana_card.md`.
+**Primary analogs:** the four v1 assets, their model classes, hash-named snapshot staging, and one-pointer publication.
 
-Copy the layout sequence, not Japanese semantics:
+**Direct file pairing:**
 
-```html
-<!-- japanese_kana_card.md:25-53, structural source only -->
-<div class="kanaCard kanaCard--front">
-  <div class="kanaScript">{{Script}}</div>
-  <div class="kanaGlyph jpFont">{{Kana}}</div>
-  ...
-</div>
+| Exact member inside `candidate-bundles/<bundle-sha256>/` | Copy schema/order from |
+|---|---|
+| `hangul-v2.json` | `hangul-v1.json` |
+| `pronunciation-i-plus-1-v2.json` | `pronunciation-i-plus-1-v1.json` |
+| `korean-foundations-v2-curation.json` | `korean-foundations-v1-curation.json` |
+| `korean-foundations-v2-media.json` | `korean-foundations-v1-media.json` |
 
-<div class="kanaCard kanaCard--back">
-  ...
-  {{#Gif}}...{{Gif}}...{{/Gif}}
-  <hr ... />
-  ...{{Romaji}}...
-  ...{{Audio}}...
-  {{#Picture}}...{{Picture}}...{{/Picture}}
-  {{#Strokes}}...{{Strokes}}...{{/Strokes}}
-  {{#Mnemonic}}...{{Mnemonic}}...{{/Mnemonic}}
-</div>
+The current curation and media manifests explicitly encode `candidate_only` (`korean_foundation_review.py:407-429`; `korean_foundation_media.py:653-675`). Keep that field true and every gate/status pending in the v2 candidates.
+
+**All-or-nothing staged publication** — adapt the directory staging pattern from `korean_foundation_snapshot.py:1686-1720`:
+
+```python
+stage = Path(tempfile.mkdtemp(prefix=".staging-", dir=paths.snapshot_root))
+for member in state.authority.copy_members:
+    _copy_member_to_stage(stage, member)
+_write_manifest_to_stage(stage, state.manifest_raw)
+_fsync_stage_directories(stage)
+_validate_staged_snapshot(state, stage)
+_rename_snapshot_stage(stage, state.target)
+_fsync_directory(paths.snapshot_root)
 ```
 
-Use the Korean field contract in this order:
+Stage one canonical bundle manifest plus all four exact members, fully validate selected-manifest identity, immutable v1 prestate, allowed-field-only diffs, bundle/member prestates, and staged bytes, then rename the immutable hash-named directory and atomically replace only `current-candidate.json`. Concurrent readers observe no/old or complete new bundle. A pre-existing exact unreferenced bundle is retryable only when every byte matches; nonidentical bundle/pointer state is refusal. Clean only the operation's own temporary state.
 
-```text
-SortIndex
-Category
-JamoOrBlock
-ReadingOrName
-Sound
-Mnemonic
-Picture
-Strokes
-Gif
-Audio
-TargetConceptId
-PrerequisiteConceptIds
-ObservedConceptIds
-UnknownConceptIds
-IPlusOnePolicy
-```
-
-Only the pedagogical fields render. The evidence fields remain stored but hidden.
-
-Rename all structural classes (`hangulCard`, `hangulCategory`, `hangulGlyph`, `koFont`, and so on). A model/template regression should scan for at least these forbidden Japanese tokens, case-insensitively:
-
-```text
-Japanese, Kana, Romaji, Hiragana, Katakana, jpFont,
-Yu Mincho, Hiragino, Noto Sans JP, Noto Serif JP
-```
-
-**Do not copy the Japanese font block** (`japanese_kana_card.md:107-124`). There is no Korean font analog in the repository. Use and statically assert an explicit Korean-capable stack, for example:
-
-```css
-.koFont,
-.hangulCard {
-  font-family: "Noto Sans KR", "Apple SD Gothic Neo", "Malgun Gothic",
-    "맑은 고딕", "Segoe UI", sans-serif;
-}
-```
-
-Retain the proven responsive image rules, dark canvas, replay-button reset, and conditional media sections (`japanese_kana_card.md:79-105,112-221`). Desktop/mobile observed acceptance remains Phase 34; Phase 31 can claim static structure and generated artifact integrity only.
+**Request regeneration:** keep `request_status="needs_review"`, `evidence_supplied=false`, exact selector coverage, fixed future evidence filenames, and the request-only disclaimer. Replace all v1 candidate bindings/projection digests with coherent v2 bindings. Never preserve a stale v1 hash beside a v2 label.
 
 ---
 
-### `src/multilang/services/korean_foundation_export.py`
+### v2 defaults with explicit v1 history
 
-**Primary analog:** `src/multilang/services/latin_export.py`; **Hangul model analog:** `japanese_kana_deck.py`.
+**Files:** curriculum, review, media, evidence, snapshot, export services and their tests.
 
-**Frozen row and ordered mapping** (`latin_export.py:43-90`):
+**Current default pattern to migrate** — `korean_curriculum.py:32-40`:
 
 ```python
-@dataclass(frozen=True)
-class LatinExportRow:
-    sort_index: int
-    item_key: str
-    ...
-
-    def ordered_field_mapping(self) -> dict[str, object]:
-        return {
-            "SortIndex": self.sort_index,
-            ...
-            "Image": self.image,
-        }
+KOREAN_FOUNDATION_DATA_ROOT: Final = Path("data") / "korean_foundations"
+DEFAULT_KOREAN_HANGUL_SOURCE_PACK_PATH: Path = (
+    KOREAN_FOUNDATION_DATA_ROOT / "hangul-v1.json"
+)
+DEFAULT_KOREAN_PRONUNCIATION_SOURCE_PACK_PATH: Path = (
+    KOREAN_FOUNDATION_DATA_ROOT / "pronunciation-i-plus-1-v1.json"
+)
 ```
 
-Use separate `HangulExportRow` and `KoreanPronunciationExportRow`; never put two schemas in one tabular file. Source records remain richer than learner-facing rows.
+Change ordinary candidate defaults coherently across all six services by resolving `current-candidate.json` once and validating the complete declared bundle. Preserve v1 only through an explicit historical path/version branch; do not add candidate fallback, root-level v2 lookup, or mixed v1/v2 auto-detection.
 
-**Validate all frozen inputs before joining** (`latin_export.py:130-192`):
+**Versioned compatibility pattern** — copy the complete-discriminator rule from `korean_foundation_snapshot.py:303-359`:
 
 ```python
-source_pack = source_pack_loader()
-records = curated_records_loader()
-translations = translation_pack_loader()
-audio_manifest = audio_manifest_loader()
-
-records_ready_validator(records)
-audio_ready_validator(audio_manifest, repo_root=repo_root)
-
-_require_exact_item_key_order(...)
+schema_version: Literal[1, 2] = 1
 ...
-for source_entry in source_pack.entries:
-    ...
+if self.schema_version == 1:
+    if any(value is not None for value in provenance):
+        raise ValueError("legacy pointer cannot contain activation provenance")
+    return self
+if any(value is None for value in provenance):
+    raise ValueError("active pointer provenance must be complete")
 ```
 
-The Korean join order should be: concept registry → family source pack → curation → media manifest → export rows. Require exact version, item-key order, source/content hash, review status, sound basename, and byte hash agreement before creating an output path.
+Likewise, v1 and v2 asset tuples must each be internally complete. Reject mixed source pack, curation, media, request, evidence, snapshot, and export identities. For v2, revalidate every provenance tuple as snapshot resolution does at `korean_foundation_snapshot.py:1120-1141`.
 
-**Model/note pattern** (`japanese_kana_deck.py:345-361`; `latin_export.py:195-231`):
+**Test surface:** preserve fixed/pathless production loaders. The current test at `tests/services/test_korean_curriculum.py:417-463` locks no-argument fixed loaders and forbids path/root/URL/archive/APKG parameters. Add explicit historical loading without weakening the production no-path contract, and test:
+
+- defaults resolve the exact promoted v2 tuple;
+- explicit v1 history still loads and validates;
+- mixed v1/v2 tuples fail before evidence, snapshot, pointer, or export writes;
+- missing v2 never falls back to v1;
+- v1 bytes and hashes remain unchanged.
+
+---
+
+### `verify_phase31_runtime_isolation.py` and runtime-isolation tests
+
+**Closest analogs:** no standalone repository script exists. Compose the helper from fixed-root rules, canonical tree-digest helpers in `tests/integration/test_korean_foundations_flow.py`, and the completed Plan 31-10 isolated command contract.
+
+Required fixed behavior:
+
+- operations are exactly `prepare` and `hash-venv`;
+- isolated environment is exactly current-user mode-0700 `/tmp/multilang-phase31-py312`, directly beneath root-owned sticky `/tmp`, after containment/identity checks;
+- repository `.venv` is read-only input to `hash-venv` and is never removed, synchronized, or modified;
+- reject symlink/reparse roots and unsafe pre-existing filesystem types using `lstat` before cleanup/preparation;
+- hash deterministic relative paths, file bytes, type, and relevant mode metadata; do not use mtimes as identity;
+- `prepare` removes/recreates only that fixed direct child after proving `/tmp` sticky ownership/mode plus child containment, ownership, mode, and type safety; it never traverses `/tmp/opencode`;
+- no shell interpolation, provider calls, network setup, arbitrary root, or environment-selected destination.
+
+**Write-poison test pattern** — reuse `tests/services/test_korean_foundation_snapshot.py:269-334`:
 
 ```python
-return genanki.Model(
-    MODEL_ID,
-    NOTE_TYPE_NAME,
-    fields=[{"name": name} for name in FIELD_NAMES],
-    templates=[{"name": "...", "qfmt": template["front"], "afmt": template["back"]}],
-    css=template["css"],
+def forbidden(*_args: object, **_kwargs: object) -> Any:
+    raise AssertionError("strictly read-only verification attempted a write")
+
+write_flags = os.O_WRONLY | os.O_RDWR | os.O_CREAT | os.O_TRUNC | os.O_APPEND
+...
+if flags & write_flags:
+    return forbidden(...)
+```
+
+Add containment, symlink/reparse, wrong-type, exact-root, deterministic-hash, and shared-`.venv` invariance tests. High-level CLI/integration fixtures should bind v2 but otherwise retain their existing fixed command seams.
+
+---
+
+### Genuine evidence intake, validation receipt, and inactive snapshot
+
+**Primary analogs:** `korean_foundation_evidence.py` and `korean_foundation_snapshot.py`.
+
+**Evidence intake:** place only the exact fixed member set under the fixed inbox. There is no importer. `inspect_fixed_korean_foundation_evidence_inbox()` is read-only (`korean_foundation_evidence.py:2246-2249`), while the only receipt writer takes the independently confirmed index hash (`2252-2269`).
+
+**Filesystem safety:** preserve recursive `lstat`, symlink/reparse rejection, archive/path rejection, bounded member sizes, exact member-set checking, and content-free errors. The adversarial test pattern is concrete at `tests/services/test_korean_foundation_evidence.py:1146-1184`: mutate a required member into a symlink/reparse point, require `unsafe_filesystem_component`, no receipt/temp file, an identical tree, and no leaked path in the exception.
+
+**Validation receipt:** derive it only after complete fresh semantic validation and a post-validation prestate recheck. Publish atomically and allow byte-identical retry only. `tests/services/test_korean_foundation_evidence.py:1187-1218` demonstrates asserting that the receipt is the sole changed path and its payload self-hash is canonical.
+
+**Inactive snapshot:** use fixed paths (`korean_foundation_snapshot.py:41-57`):
+
+```python
+ACTIVE_KOREAN_FOUNDATIONS_POINTER_PATH = (
+    Path("data") / "korean_foundations" / "active-foundations.json"
 )
-
-note = DedicatedNote(model=model, fields=[...], tags=[...])
-note._multilang_guid = deterministic_guid
+KOREAN_FOUNDATION_SNAPSHOT_ROOT = (
+    Path("data") / "korean_foundations" / "snapshots"
+)
 ```
 
-Use dedicated constants and assert them against every existing ID. A safe unused contiguous proposal after the current `1_762_800_901` Mandarin model is:
+Preparation validates under the shared lock before recovery and staging (`korean_foundation_snapshot.py:1723-1747`). It creates one exact hash-named immutable tree but does not create or modify the active pointer.
 
-```text
-KOREAN_HANGUL_MODEL_ID          = 1_762_801_001
-KOREAN_HANGUL_DECK_ID           = 1_762_801_002
-KOREAN_PRONUNCIATION_MODEL_ID   = 1_762_801_003
-KOREAN_PRONUNCIATION_DECK_ID    = 1_762_801_004
-```
-
-The planner may choose another unused signed-32-bit range, but must lock constants once and add a global collision test. Never derive IDs with Python `hash()`.
-
-Use exact deck names from `KOREAN-STRUCTURE.md:20-21`:
-
-```text
-Multilang Korean::Foundations::Hangul
-Multilang Korean::Foundations::Pronunciation i+1
-```
-
-**Stable GUID pattern** (`domain/exporting.py:95-117`; `latin_export.py:220-231`): hash immutable family/version/item identity, not mutable mnemonic, translation, audio filename, or template text. Tests should prove changing mutable content does not change GUID and changing family/item key does.
-
-**APKG pattern** (`latin_export.py:259-278`):
-
-```python
-model = build_latin_anki_model()
-deck = genanki.Deck(LATIN_DECK_ID, deck_name)
-media_files = _latin_media_files(bundle, repo_root=root)
-for row in sorted(bundle.rows, key=lambda row: (row.sort_index, row.item_key)):
-    deck.add_note(build_latin_anki_note(row, model=model))
-package = genanki.Package(deck)
-package.media_files = [str(path) for path in media_files]
-package.write_to_file(str(output_path))
-```
-
-Resolve and validate media before `output_path.parent.mkdir(...)`; failure must leave no partial artifact.
-
-**CSV/TSV pattern** (`latin_export.py:285-333`; `export_tabular_bundle.py:19-54`): use UTF-8, deterministic row order, `csv.writer`, and the five Anki headers:
-
-```text
-#separator:Comma|Tab
-#html:true
-#notetype:<exact Korean note type>
-#deck:<exact deck name>
-#columns:<exact field order>
-```
-
-The current generic/Latin tabular writers preserve sound tags but do not package media. That alone is insufficient for KPRO-01 and `KOREAN-STRUCTURE.md:421`. The dedicated Korean writer should also copy or stage each approved basename into a deterministic sibling media directory and write a checksum manifest mapping every sound/image reference to that file. Tests must resolve every table reference through that bundle.
-
-**Do not modify as the first choice:** `domain/exporting.py`, `export_anki_package.py`, `export_tabular_bundle.py`, or `runtime.py`. Their row models describe modern/Latin/Japanese/Mandarin job exports, not foundation curricula. Phase 34 can unify final all-family export evidence if needed.
+**Strictly read-only verification** — copy `korean_foundation_snapshot.py:1750-1818`: read receipt authority, reconstruct expected manifest/member bytes, verify the tree, re-read receipt/prestate, verify the tree again, and return a report without lock, repair, recovery, cleanup, or writes. The proof pattern is `tests/services/test_korean_foundation_snapshot.py:989-1029`, which poisons all write primitives and compares the complete tree before/after.
 
 ---
 
-### `src/multilang/cli.py`
+### Activation and six local exports
 
-**Primary analog:** dedicated Latin all-format command (`cli.py:1102-1138`), not the APKG-only legacy phoneme commands.
+**Primary analogs:** snapshot atomic pointer activation, fixed CLI command group, and export staged writers.
 
-```python
-@cli.command("export-latin-mvp")
-def export_latin_mvp(
-    format: Annotated[
-        ExportArtifactFormat,
-        typer.Option("--format", help="Latin export format: apkg, csv, or tsv."),
-    ],
-    output_dir: Annotated[Path, typer.Option("--output-dir", ...)],
-    deck_name: Annotated[str, typer.Option("--deck-name", ...)] = LATIN_DECK_NAME,
-) -> None:
-    try:
-        result = export_latin_mvp_bundle(...)
-    except ValueError as exc:
-        typer.echo(str(exc))
-        raise typer.Exit(code=1) from exc
-
-    typer.echo(f"artifact_path={result.output_path}")
-    typer.echo(f"card_count={result.card_count}")
-    typer.echo(f"media_count={result.media_count}")
-    typer.echo(f"note_type={result.note_type_name}")
-    typer.echo(f"export_status={result.export_status}")
-```
-
-Prefer two explicit family commands or one enum-constrained `--family`; do not allow arbitrary module/template/path selection. Keep output scanner-safe and aggregate. Do not print Korean source records, reviewer notes, local absolute paths, provider payloads, or credentials.
-
-No authentication layer exists: this is a local operator CLI. The guard is source/review/media validation before file output.
-
-**Runtime composition:** follow the isolated Latin command path. Do not instantiate Kiwi, Azure, the modern DB runtime, text generation, Tatoeba, or the Korean frequency pipeline merely to export frozen foundations. Tests should inject loaders/bundles or temporary repo roots rather than live providers.
-
----
-
-## Test Pattern Assignments
-
-### Domain And Curriculum Tests
-
-**Sources:** `tests/domain/test_korean.py:69-102,127-238`; `tests/services/test_latin_source_pack.py`; `test_japanese_kana_generated_deck.py:22-56`.
-
-Copy these styles:
-
-- construct complete valid frozen models through helper factories, override one field per negative test, and expect Pydantic `ValidationError`;
-- compare NFD/NFC canonical blocks while preserving explicit source/display evidence;
-- parameterize compatibility/halfwidth negatives;
-- assert exact stage/category coverage, unique item/concept IDs, contiguous order, and stable GUIDs;
-- mutate forward prerequisite, unknown set, target, bootstrap, cycle, omitted category, duplicate ID, NFD text, and false rule evidence; each must fail before review/export;
-- explicitly test the standalone-jamo display mapping boundary so compatibility display glyphs never weaken lexical canonicalization.
-
-### Review And Media Tests
-
-**Review analog** (`test_latin_review.py:104-119`):
+**Authority pattern:** this is not application authentication. Authority is one exact reviewed authorization SHA-256 bound to the current receipt, bundle, snapshot-manifest, root, and active-prestate tuple. CLI hash validation and content-free errors follow `src/multilang/cli.py:125-155`:
 
 ```python
-with pytest.raises(ValueError) as exc_info:
-    assert_latin_records_export_ready(records)
+def _validate_foundation_sha256(value: str) -> str:
+    if len(value) != 64 or any(character not in "0123456789abcdef" for character in value):
+        raise typer.BadParameter("lowercase SHA-256")
+    return value
 
-assert "latin_export_blocked item_key=... gates=grammar,audio" in str(exc_info.value)
+def _fail_korean_foundation_operation(exc: ValueError) -> None:
+    typer.echo(f"korean_foundations_error={_foundation_failure_reason(exc)}")
+    raise typer.Exit(code=1) from exc
 ```
 
-**Unsafe path/privacy analog** (`test_latin_audio.py:230-260`): test absolute Windows paths, `..`, missing, empty, wrong marker, basename mismatch, and outside-root resolution. Assert diagnostics omit the bad path and repo root.
+**Atomic pointer pattern** — `korean_foundation_snapshot.py:1944-2003`:
 
-**Exact text/hash analog** (`test_latin_audio.py:332-360`): mutate spoken text, text hash, artifact bytes, reviewed artifact hash, provider/voice/policy, source version, and item order. Every mismatch blocks.
-
-Additional Korean cases:
-
-- raw isolated jamo where `spoken_text == display_glyph` cannot become approved;
-- letter-name audio requires the approved Korean name or human-recording evidence;
-- consonant sound audio requires explicit syllable/coda context or human recording;
-- phonological-rule audio requires both specialist and independent native-speaker approvals;
-- provider/voice/SSML/prosody/spoken-text drift changes the asset identity and resets review;
-- no test may obtain `approved` by calling a fake provider alone.
-
-### Shared Phoneme Regression Tests
-
-**Source:** `test_russian_phoneme_deck.py:118-263`.
-
-Retain the existing assertions that Polish/Greek templates and CSS equal Russian, exact field order is preserved, only allowed template references occur, translations reveal on the back, and audio fields map exactly. Add Korean assertions:
-
-```text
-Korean fields == PHONEME_FIELD_NAMES
-Korean front/back == shared front/back
-Korean CSS starts with shared CSS and adds only the Korean font override
-Russian/Polish/Greek templates and CSS remain byte-identical to the pre-refactor values
+```python
+descriptor, temporary_name = tempfile.mkstemp(
+    prefix=".active-foundations.", suffix=".tmp", dir=paths.candidate_dir
+)
+_write_all(descriptor, raw)
+_fsync_descriptor(descriptor)
+...
+os.replace(temporary_path, paths.active_pointer)
+_fsync_directory(paths.candidate_dir)
 ```
 
-Do not weaken the current APKG and limited CLI tests to make the extraction pass.
+Activation revalidates everything under the shared lock before this one swap (`korean_foundation_snapshot.py:2022-2046`). An exact already-active retry is no-write success; any tuple or prestate drift requires a new preparation/review cycle.
 
-### Template Tests
+**Fixed local destinations** — copy the existing allowlist at `src/multilang/cli.py:94-103`:
 
-**Kana structure analog** (`test_card_template_loader.py:535-563`): assert exact field tuple, front/back class anchors, conditional media blocks, order of GIF/divider/reading/audio/picture/strokes/mnemonic, dark palette, and replay-button reset.
+```python
+_KOREAN_FOUNDATION_EXPORT_ROOT = Path(".multilang/exports/korean-foundations")
+_KOREAN_FOUNDATION_EXPORT_NAMES = (
+    "hangul.apkg", "hangul-csv", "hangul-tsv",
+    "pronunciation-i-plus-1.apkg",
+    "pronunciation-i-plus-1-csv",
+    "pronunciation-i-plus-1-tsv",
+)
+```
 
-**Phoneme shared-layout analog** (`test_card_template_loader.py:737-775`): assert the exact reference list and identical shared models. Add Korean font presence and Japanese token/font absence scans.
+The export command may retain its fixed local `--output` contract, but final execution writes exactly these six names.
 
-Static checks in Phase 31 do not equal observed Anki Desktop/mobile acceptance; leave that claim to Phase 34.
+**Safe destination checks** — retain `lstat`, link/reparse rejection, suffix/type checks, and snapshot exclusion from `korean_foundation_export.py:916-963`.
 
-### Export Tests
+**Stage, inspect, then replace** — copy `korean_foundation_export.py:1349-1408`:
 
-**APKG inspection analog** (`test_latin_export.py:190-231`; `test_export_anki_package.py:605-770`): open the archive, inspect `media`, extract `collection.anki2`, query models/notes/decks with SQLite, and assert model ID/name, field order, note count, deck name, GUID stability, tags, and blank/hidden evidence behavior. Mutated/missing media must fail before an output file exists.
+```python
+with tempfile.TemporaryDirectory(prefix=".korean-foundation-", dir=parent) as temporary:
+    ...
+    _canonicalize_apkg(raw_path, staged_path)
+    _inspect_staged_apkg(staged_path, bundle=bundle)
+    os.replace(staged_path, output_destination)
 
-**Tabular analog** (`test_latin_export.py:234-273`): parse both CSV and TSV with `csv.reader`, assert the exact five headers and field values/order, then resolve every media reference through the emitted media/checksum manifest.
+with tempfile.TemporaryDirectory(prefix=".korean-foundation-", dir=parent) as temporary:
+    ...
+    _inspect_staged_tabular_bundle(staged_bundle, ...)
+    os.replace(staged_bundle, output_destination)
+```
 
-**ID isolation analog** (`test_v20_existing_modes_regression_evidence.py:60-69`): assert both Korean note-type names and all four IDs are distinct from normal/manual/highlight, Japanese frequency, kana, Mandarin, Russian/Polish/Greek phoneme, and Latin IDs.
+Each export resolves one active snapshot (`korean_foundation_export.py:1450-1464`). Do not export from candidates, drafts, inbox members, or an inactive prepared snapshot.
 
-### CLI And Integration Tests
+**Testing:**
 
-**CLI analog:** `test_generate_command.py:865-894` uses `CliRunner`, temporary output, a fake boundary, and scanner-stable output assertions. Korean tests should use real committed/fixture manifests and no provider object. Test APKG/CSV/TSV routing, invalid family/format, blocked review, false i+1, missing media, and no partial output.
-
-**Integration flow:** build both real approved source packs into all requested formats; inspect APKG collections and tabular media bundles; then mutate one curriculum edge and one reviewed byte hash to prove fail-closed behavior. Keep external providers offline.
+- Parameterize both families and all three formats, as in `tests/services/test_korean_foundation_export.py:1019-1041`.
+- Require deterministic bytes/tree content (`973-1016`).
+- Inject staged-inspector failure and require no destination or temp workspace (`1044-1073`).
+- Independently deep-inspect every artifact against one bundle and record hashes, following `tests/integration/test_korean_foundations_flow.py:558-594`.
+- Do not claim observed Anki acceptance from static archive/table/media inspection.
 
 ## Shared Patterns
 
-### Deterministic Identity
+### Fixed Paths and Narrow Public Surfaces
 
-**Sources:** `domain/exporting.py:95-117`, `japanese_kana_deck.py:87-90`, `latin_export.py:220-231`.
+**Sources:** `korean_foundation_evidence.py:44-52`, `korean_foundation_snapshot.py:41-57`, `src/multilang/cli.py:729-926`, `tests/cli/test_korean_foundation_commands.py:167-190`.
 
-- Use SHA-256 truncated to 32 hex characters for Anki GUIDs.
-- Hash immutable family/version/item identity only.
-- Store model/deck IDs as literal constants and test global uniqueness.
-- Preserve item keys across text/media/template corrections; a content correction should not duplicate a learner's note.
+Apply to candidate commands, handoffs, evidence, snapshots, activation, and final exports. Public surfaces accept enums and exact hashes; only the already-established export command accepts an output path. Never add arbitrary path/root/source/import/provider options to production commands.
 
-### Fail Before Writing
+### Frozen, Bounded, Content-Free Validation
 
-**Sources:** `latin_export.py:142-192,268-278`; `export_anki_package.py:121-139,211-220`.
+**Sources:** `_FrozenManifest`, `_FrozenReviewModel`, `_FrozenMediaModel`, `_FrozenEvidenceModel`, `_FrozenSnapshotModel`.
 
-Load and validate source, curriculum, review, and media; resolve all basenames; only then create the output directory/file. Missing, stale, ambiguous, false-i+1, or unapproved input blocks every format.
+All machine-readable coordination/data models use Pydantic `extra="forbid"`, `frozen=True`, bounded fields/collections, lowercase hashes, and hidden input in validation errors. Service errors expose stable reason codes, not candidate text, filesystem paths, evidence payloads, or reviewer content.
 
-### Template References Are Schemas
+### Canonical Identity
 
-**Source:** `card_template_loader.py:116-132`.
+**Source:** `korean_curriculum.py:340-352`.
 
-```python
-for reference in _iter_template_references(template):
-    if reference in allowed_fields or reference in _ALLOWED_NON_FIELD_HELPERS:
-        continue
-    invalid_references.append(reference)
-if invalid_references:
-    raise ValueError("card template references fields that are not exported: ...")
-```
+Use UTF-8, `ensure_ascii=False`, `allow_nan=False`, sorted keys, compact separators, and aliases. Distinguish canonical object hashes from exact file-byte hashes; never label one as the other. Handoff/receipt files use their contract's exact newline convention.
 
-Run equivalent validation for the Hangul template and shared pronunciation template before constructing a model. Templates render frozen fields; they never calculate Korean concepts or pronunciation.
+### Validate Before Any Write
 
-### Media Is Manifest Data, Not A Best-Effort Side Effect
+**Sources:** `korean_foundation_evidence.py:2252-2301`, `korean_foundation_snapshot.py:1723-1747`, `korean_foundation_export.py:1417-1464`.
 
-- Every visible media/sound reference has one approved manifest record and existing checksum-aligned bytes.
-- APKG embeds those exact bytes; CSV/TSV bundles preserve tags and ship a resolvable media/checksum mapping.
-- No silent `except Exception`, no blank required audio, no live export-time synthesis, and no fallback provider.
-- Never expose an absolute path in a public artifact or error.
+Validate schema, authority, exact hashes, immutable base/prestate, filesystem type, and complete semantic relationships before creating a canonical destination. Recheck bound state immediately before the atomic publication step.
 
-### Korean Canonical Boundaries
+### Link-Safe Atomic Publication
 
-- Keep product identity `ko`; `ko-KR` occurs only as explicit media/provider locale metadata.
-- NFC-normalize Korean names, blocks, words, sentences, and pronunciations before hashing/storage.
-- Keep an explicit pedagogical display mapping for standalone jamo; do not NFKC-fold or silently admit compatibility/halfwidth data into lexical identity.
-- Romanization is not pronunciation truth and should not be introduced as a persistent pronunciation/frequency dependency.
+**Sources:** evidence receipt, snapshot staging/activation, and export writers above.
 
-### Existing Modes Stay Isolated
+Use `lstat` and link/reparse rejection, same-parent secure staging, flush/`fsync`, staged revalidation, `os.replace` or one directory rename, parent-directory `fsync`, and own-temp cleanup. Do not delete or repair unrelated stale state on a read-only or prevalidation failure.
 
-- Russian, Polish, and Greek public imports, IDs, inventories, templates, CSS, audio behavior, commands, and APKGs remain unchanged.
-- Japanese kana source/template/code remains unchanged; copy its layout into a Korean-owned template rather than parameterizing Japanese fields.
-- Modern normal/manual/highlight, Japanese frequency, Mandarin, and Latin exporter schemas remain unchanged.
-- Phase 30 morphology/runtime tests remain green; foundation export does not create another Kiwi instance.
+### Read-Only Means Write-Poisonable
 
-## No-Touch Regression Boundaries
+**Sources:** `korean_foundation_snapshot.py:1750-1818`; `tests/services/test_korean_foundation_snapshot.py:269-334,989-1029`.
 
-| File/Surface | Why it should remain untouched in the first Phase 31 plan |
-|---|---|
-| `src/multilang/runtime.py` | Modern DB-backed lexical/text/audio composition; frozen foundations can use an isolated CLI/service path. |
-| `src/multilang/domain/exporting.py` | Existing job-row schemas cannot represent two foundation field sets without unrelated drift. |
-| `src/multilang/services/export_anki_package.py` | Existing generic packaging assumes one modern row schema and two audio kinds. Copy its strict basename checks into the dedicated exporter. |
-| `src/multilang/services/export_tabular_bundle.py` | Existing writer has no media-bundle contract. Do not weaken existing outputs while adding one for Korean foundations. |
-| `src/multilang/services/japanese_kana_deck.py` and template | Required as a regression oracle; Korean must not leak back into Japanese. |
-| `src/multilang/services/audio_voice_registry.py` | Phase 30 intentionally leaves Korean without an approved production voice; live Azure voice qualification belongs to Phase 32. |
-| `assets/frequency/ko/` | Licensing blocker and Phase 32 scope; foundation manifests are not a frequency asset. |
-| Alembic/DB models/repositories | Curriculum/source/review/media evidence can be frozen manifests; no Phase 31 requirement demands job-table persistence. |
+Selection review, draft validation, inbox inspection, receipt continuity, prepared verification, active verification, and runtime hashing must pass with all reachable write/recovery/lock-creation primitives poisoned and complete trees byte-identical.
 
-If execution discovers that a no-touch surface is genuinely required, stop and replan with a focused regression proof instead of adding an opportunistic Korean branch.
+### Authority Separation
 
-## Regression Matrix
+Selection authorizes only exact candidate promotion. Reviewer/rights/playback evidence authorizes receipt creation only after complete validation. Receipt existence does not authorize activation. Activation requires a separately reviewed exact authorization hash. None of these authorize publication, distribution, provider calls, or observed Anki acceptance.
 
-### Phase 31 Focused Gates
+### Pending Gates Remain Pending
 
-```text
-UV_OFFLINE=1 uv run --extra dev pytest \
-  tests/domain/test_korean.py \
-  tests/services/test_korean_curriculum.py \
-  tests/services/test_korean_foundation_review.py \
-  tests/services/test_korean_foundation_media.py -q
+**Sources:** `korean_foundation_review.py:806-826`; `korean_foundation_media.py:1237-1255`.
 
-UV_OFFLINE=1 uv run --extra dev pytest \
-  tests/services/test_phoneme_deck.py \
-  tests/services/test_korean_foundation_export.py \
-  tests/services/test_card_template_loader.py \
-  tests/cli/test_korean_foundation_commands.py -q
+Both review and media readiness reject `candidate_only`. Promotion and request regeneration must not manufacture approvals, timestamps, reviewer identities, rights dispositions, media bytes, or heard-playback claims.
 
-UV_OFFLINE=1 uv run --extra dev pytest \
-  tests/integration/test_korean_foundations_flow.py -q
-```
+### v1 History, v2 Production Default
 
-### Direct Analog And Existing-Mode Gates
+Production defaults must become one coherent v2 tuple. Explicit historical v1 reads remain available only through a deliberately named/versioned route. Never mutate v1, silently fall back from missing v2 to v1, or resolve a mixed tuple.
 
-```text
-# Kana + phoneme contracts
-UV_OFFLINE=1 uv run --extra dev pytest \
-  tests/services/test_japanese_kana_deck.py \
-  tests/services/test_japanese_kana_generated_deck.py \
-  tests/services/test_russian_phoneme_deck.py \
-  tests/integration/test_russian_phoneme_template_refresh_flow.py -q
+### Existing Modes and Runtime Stay Isolated
 
-# Generic and Latin export/media behavior
-UV_OFFLINE=1 uv run --extra dev pytest \
-  tests/services/test_export_anki_package.py \
-  tests/services/test_export_tabular_bundle.py \
-  tests/services/test_latin_audio.py \
-  tests/services/test_latin_review.py \
-  tests/services/test_latin_export.py \
-  tests/integration/test_v20_existing_modes_regression_evidence.py -q
+Retain existing phoneme, Kana, Russian, Latin, generic export, and template behavior. Phase 31 full-suite verification runs from the fixed isolated Python 3.12 environment, leaves the shared `.venv` hash unchanged, and performs no provider, network, import, upload, publication, or release action.
 
-# Verified Korean Phase 30 boundary
-UV_OFFLINE=1 uv run --extra dev pytest \
-  tests/services/test_korean_morphology.py \
-  tests/services/test_korean_language_support.py \
-  tests/integration/test_korean_modern_flow.py -q
+## Test Pattern Matrix
 
-# Final caused-regression gate
-UV_OFFLINE=1 uv run --extra dev pytest -q
-```
-
-Also scan production foundation modules to require zero `AzureSpeechAdapter`, Tatoeba, LLM-provider, `assets/frequency/ko`, and unapproved raw-glyph synthesis paths.
-
-## No Exact Analog Found
-
-| Surface | Why no exact analog exists | Planner instruction |
+| Planned Area | Existing Test Pattern to Copy | Required New Assertion |
 |---|---|---|
-| Strict curriculum graph and bootstrap | Existing inventories are ordered lists, not executable concept graphs. | Implement one shared validator over explicit concept IDs; recompute unknowns and fail on cycles/forward edges/false i+1. Do not infer prerequisites from sequence labels alone. |
-| Standalone jamo versus Phase 30 canonicalization | Existing Korean contracts reject Compatibility Jamo, while foundation display needs reviewed standalone symbols. | Keep lexical canonicalization unchanged and model the display-to-conjoining-jamo mapping explicitly. Stop if product decisions require silently treating compatibility glyphs as canonical lexical text. |
-| Specialist-reviewed pedagogical audio | Legacy kana/phoneme decks synthesize raw glyphs/letters and silently tolerate failure; Latin has human playback gates but not Korean reviewer-role/artifact-hash requirements. | Use frozen approved media, dual reviewer roles where required, and byte-hash alignment. No auto-approval or live export-time TTS. |
-| CSV/TSV media survival | Existing tabular writers preserve sound tags but do not package a resolvable media bundle. | Add Korean-owned media/checksum bundle output and tests; do not claim KPRO-01 from text columns alone. |
-| Korean font rendering | No existing template has a Korean-specific font stack or observed Anki Korean rendering evidence. | Add static Korean stack/leakage checks now; reserve Desktop/mobile observed acceptance for Phase 34. |
-| Complete Korean pedagogical inventory | No in-repo source proves H0-H10/P0-P13 linguistic correctness. | Use `KOREAN-STRUCTURE.md` plus current authoritative research/specialist review; code analogs establish shape, not linguistic truth. |
+| Curation contracts | `test_korean_curriculum.py` fixed/frozen/hash validation | bounded patch-only drafts; no structural or authority fields |
+| Draft assembly | deterministic export comparison at `test_korean_foundation_export.py:973-1016` | repeated batch/family/global assembly is byte/hash identical |
+| Promotion | hash-named snapshot staging plus one atomic pointer and concurrent-reader tests | one immutable four-member v2 bundle becomes visible through one pointer or not at all |
+| Handoffs | `test_korean_foundation_evidence.py:978-1020,1146-1218` | fixed operations, hash-only args, link refusal, identical retry, nonidentical refusal |
+| v2 migration | curriculum fixed-loader test and snapshot v1/v2 discriminator | v2 default, explicit v1 history, mixed-tuple refusal, no fallback |
+| Runtime isolation | snapshot write poisoning and integration state digests | only fixed temp root changes; `.venv` hash identical |
+| Evidence/receipt | existing 37-case evidence suite | genuine v2 bindings and independently confirmed current index |
+| Snapshot/verification | `test_korean_foundation_snapshot.py:989-1029` | inactive immutable v2 tree; verifier cannot write or repair |
+| Activation | existing drift/idempotence/concurrency tests | exact handoff authorization and v2 provenance only |
+| Six exports | `test_korean_foundation_export.py:1019-1073`; integration deep inspection | both families × APKG/CSV/TSV, fixed names, no partial replacement |
+
+## No Single Exact Analog
+
+| File/Area | Reason | Planner Direction |
+|---|---|---|
+| `korean_foundation_ai_curation.py` | No existing bounded assisted-curation patch compiler exists. | Compose frozen curriculum models, canonical hashes, pending review gates, and existing deterministic batch utilities. Do not add an LLM/provider runtime dependency. |
+| `scripts/phase31_handoff.py` | No existing multi-kind checkpoint handoff utility exists. | Compose fixed paths, strict evidence models, validation-before-atomic-write, and exact command allowlist tests. |
+| `verify_phase31_runtime_isolation.py` | No standalone runtime-isolation helper exists. | Implement only the exact plan-defined fixed root/operations and copy link safety plus deterministic tree-hash/write-poison test patterns. |
+| `31-AI-CURATION-REPORT.md` | Existing documents are request contracts or execution summaries, not this bounded draft report. | Reuse explicit non-evidence/authority-limit wording and report exact machine hashes/counts without creating authority. |
 
 ## Planner Guardrails
 
-1. Use the reconciled canonical Phase 31 slug `i-plus-1` for all plans and internal references.
-2. Keep one concept registry and one strict validator shared by Hangul and pronunciation.
-3. Keep complete curriculum/pronunciation metadata in frozen source records; expose only the approved learner field schemas.
-4. Build a Korean-owned Hangul template; do not parameterize or mutate the Japanese template.
-5. Extract only language-neutral phoneme mechanics and preserve every existing Russian/Polish/Greek public symbol and behavior.
-6. Never reuse the legacy raw-letter/raw-glyph export-time TTS or silent exception patterns for Korean.
-7. Require real specialist/native-speaker review evidence and exact reviewed byte hashes before `approved` media can export.
-8. Treat all source/review/media manifests as untrusted input to Pydantic/path/hash validation even when committed.
-9. Support exact APKG/CSV/TSV structural/media evidence for foundation families without claiming Phase 34's final all-family visual/import acceptance.
-10. Do not add a Korean frequency asset, production voice registry entry, Tatoeba route, LLM approval path, DB migration, Hanja, dialect, or persistent romanization.
-11. Preserve `ko` internally and allow `ko-KR` only in explicit media/provider locale fields.
-12. Run the focused analog baseline, Phase 30 Korean boundary, global ID-collision test, and full suite before claiming no regression.
+1. Plans 31-11 through 31-19 create and assemble only bounded noncanonical drafts; no v2 candidate may appear.
+2. Plan 31-20 records one exact selection and implements bundle/pointer promotion primitives without promotion.
+3. Plan 31-21 is the sole v2 promotion step: one immutable hash-named four-member bundle becomes visible through one atomic pointer, never four sibling replaces.
+4. Plan 31-22 separately implements and runs exact pending request regeneration.
+5. Plans 31-23 and 31-24 migrate bounded service groups to v2 while preserving explicit immutable v1 history and blocked production.
+6. Plan 31-25 completes all named cross-mode pre-evidence regressions and adds only the fixed isolated-runtime helper; no canonical state change.
+7. Plan 31-26 accepts only genuine direct-placement evidence and records independent exact index confirmation; no receipt/snapshot/pointer/export write.
+8. Plan 31-27 creates the canonical receipt and one inactive immutable snapshot; it does not activate or export.
+9. Plan 31-28 verifies read-only, obtains exact separate authorization, atomically activates, writes and deep-inspects six fixed local outputs, and runs isolated Python 3.12 closure.
+10. Any stale hash, structural diff, mixed version, partial destination, link/reparse component, malformed authority, or prestate drift fails closed without repair.
+11. Phase 34 owns observed Anki Desktop/mobile import, rendering, and playback acceptance.
 
 ## Metadata
 
-**Analog search scope:** `.planning/SPEC.md`, `.planning/ROADMAP.md`, `.planning/STATE.md`, `KOREAN-STRUCTURE.md`, Phase 30 handoff/verification/patterns, Phase 27 review artifacts, `src/multilang/domain`, `src/multilang/services`, `src/multilang/templates`, `src/multilang/runtime.py`, `src/multilang/cli.py`, `data/latin_mvp`, and relevant domain/service/CLI/integration tests.
-**Primary precedents:** Japanese kana layout/model/media references; shared Russian/Polish/Greek phoneme contract; Latin frozen source/review/audio/export path; generic strict APKG/CSV/TSV packaging; Phase 30 Korean NFC/fail-closed contracts.
-**Files directly read:** 35+ source, data, test, and planning artifacts; broader source/test inventories and ID usages searched.
-**Pattern extraction date:** 2026-08-04.
-**Known live baseline:** lifecycle preflight allowed with expected completed Phase 30 dirt; focused analog suite 123/123 passed offline; no source file was modified by this mapping task.
+**Analog search scope:** `src/multilang/`, `scripts/`, `tests/`, `data/korean_foundations/`, and Phase 31 plans/request contracts/summaries.
+
+**Primary analog set:** curriculum, review, media, evidence, snapshot, export, fixed CLI, standalone asset builder, and their focused tests.
+
+**Pattern extraction date:** 2026-08-23

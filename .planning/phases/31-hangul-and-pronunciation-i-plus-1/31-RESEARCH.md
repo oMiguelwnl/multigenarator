@@ -1,6 +1,6 @@
 # Phase 31: Hangul and Pronunciation i+1 - Research
 
-**Researched:** 2026-08-04
+**Researched:** 2026-08-04; execution-gate resolutions updated 2026-08-23
 **Domain:** Korean orthography and phonology curricula, reviewed foundation media, and deterministic Anki export
 **Confidence:** MEDIUM
 
@@ -10,7 +10,7 @@ Phase 31 should be implemented as an isolated, frozen foundation-content path: v
 
 The core implementation challenge is not Hangul composition itself; Unicode defines deterministic modern Hangul composition, and Python provides normalization directly. The hard part is proving that every strict note has one atomic target concept, every other observed/active concept is already known and explicitly declared, normative and surface pronunciation are not conflated, and the exact reviewed media bytes survive APKG/CSV/TSV output. [CITED: https://www.unicode.org/versions/Unicode17.0.0/core-spec/chapter-3/#G24646] [VERIFIED: `.planning/SPEC.md:45-53,77-112`; `KOREAN-STRUCTURE.md:41-75,115-175,410-452`]
 
-No Phase 31 `CONTEXT.md` or `APPROACH.md` exists, so there are no additional phase-specific user constraints to copy. The controlling inputs are the active SPEC, ROADMAP, approved Korean structure, Phase 30 judgment, and project instructions. Learner-ready completion is nevertheless blocked on real licensed stroke/mnemonic media, real reviewed audio, Korean orthography/phonetics review, Portuguese review, and exact artifact-hash approvals; tests or fake providers cannot manufacture those approvals. [VERIFIED: `.planning/phases/31-hangul-and-pronunciation-i-plus-1/31-PATTERNS.md:9-13`; `.planning/SPEC.md:152-158`; `KOREAN-STRUCTURE.md:168-175,423-452`]
+`31-APPROACH.md` now records the user-confirmed assisted-curation amendment: AI may prepare bounded hash-bound drafts, while qualified Korean/Portuguese review, rights, exact-byte playback, receipt, activation, and observed Anki acceptance remain separate authorities. The controlling inputs are the active SPEC, ROADMAP, approved Korean structure, Phase 30 judgment, this approach amendment, and project instructions. Learner-ready completion remains blocked on genuine licensed media and exact qualified evidence; tests, drafts, or fake providers cannot manufacture those approvals. [VERIFIED: `.planning/phases/31-hangul-and-pronunciation-i-plus-1/31-APPROACH.md:6-40`; `.planning/phases/31-hangul-and-pronunciation-i-plus-1/31-PATTERNS.md:7-16`; `.planning/SPEC.md:20-25`; `KOREAN-STRUCTURE.md:168-175,423-452`]
 
 **Primary recommendation:** Build one shared Korean concept registry and strict validator, two frozen family manifests, independent review/media manifests, a Korean-owned Hangul template, a language-neutral extraction of the existing phoneme model mechanics, and a dedicated all-format foundation exporter; stop at explicit human checkpoints until the exact content and media hashes are approved. [VERIFIED: `.planning/phases/31-hangul-and-pronunciation-i-plus-1/31-PATTERNS.md:45-66,878-891`]
 
@@ -590,36 +590,44 @@ All validation and media resolution must happen before this write block, and the
 |---|---|---|---|
 | — | None. All factual claims are tied to repository evidence, official documentation, Context7, or current registry/environment probes. | — | — |
 
-## Open Questions
+## Open Questions (RESOLVED)
 
-1. **Which stroke-order, mnemonic, image/GIF, and recording assets may be redistributed?**
-   - What we know: Phase 31 needs complete reviewed media, and project policy blocks assets with unresolved source/license/attribution. [VERIFIED: `.planning/SPEC.md:47,156`; `AGENTS.md`, Korean Licensing]
-   - What's unclear: No approved reusable Korean foundation media source/license was identified in this research session. [VERIFIED: research source audit, 2026-08-04]
-   - Recommendation: Plan an explicit human media-source/license checkpoint before committing bytes; keep affected entries `needs_review` until decisions and exact hashes exist.
+The external values are not fabricated during planning. Each is resolved by an exact execution authority and a fail-closed consequence; missing values stop Phase 31 rather than becoming an implementation ambiguity.
 
-2. **Who are the qualified Korean and Portuguese reviewers, and can both required audio roles review the exact files?**
-   - What we know: 100% of Hangul and pronunciation content needs human review, and jamo/rule TTS requires a specialist plus independent native speaker. [VERIFIED: `KOREAN-STRUCTURE.md:168-175,446-452`]
-   - What's unclear: Reviewer identities and availability are not recorded in current phase artifacts. [VERIFIED: current Phase 31 directory audit]
-   - Recommendation: Make plans non-autonomous at approval tasks and record reviewer role, timestamp, pack version, and artifact hash.
+1. **Redistributable stroke, mnemonic, image/GIF, and recording assets**
+   - Resolution: The fixed Phase 31 evidence bundle accepts an asset only when its rights record names the exact source/version, attribution, license, exact artifact hash, and both `reuse_disposition=approved` and `redistribution_disposition=approved`. Unknown or merely convenient assets remain absent. [VERIFIED: `src/multilang/services/korean_foundation_evidence.py:605-614`; `31-APPROACH.md:184-201`]
+   - Owner: The user coordinates the source/rightsholder evidence at Plan 31-26; the named rights authority supplies the disposition.
+   - Authority: Exact rights records plus exact licensed bytes reviewed through the fixed request/inbox contracts, not the executor, AI draft, filename, or provider response.
+   - Fail-closed consequence: Any missing/ambiguous source, attribution, license, reuse, redistribution, or byte hash blocks `inspect-inbox`; no receipt, snapshot, activation, or export is written.
 
-3. **What exact reviewed P11 reductions and P12/P13 auditory contrasts belong in v1?**
-   - What we know: P11-P13 categories are locked, but the approved structure does not enumerate a complete item list. [VERIFIED: `KOREAN-STRUCTURE.md:162-164`]
-   - What's unclear: Exact atomic records, normative citations, and recordings. [VERIFIED: research source audit]
-   - Recommendation: Treat stage/category coverage as required but stop content freeze until a Korean phonetics specialist approves the item-level inventory.
+2. **Qualified Korean/Portuguese reviewers and distinct playback roles**
+   - Resolution: Plan 31-26 requires the four fixed reviewer records and all request-declared qualifications. Korean phonetics-specialist and independent-native-speaker playback authority must be distinct for jamo/rule audio; one identity cannot satisfy both. [VERIFIED: `evidence-inbox/README.md:8-20`; `31-APPROACH.md:190-201`]
+   - Owner: The user coordinates direct placement; each named person owns only the qualifications and decisions recorded in their signed/hash-bound reviewer evidence.
+   - Authority: Qualified Korean orthography, Korean phonetics, Portuguese, and independent native-speaker records bound to exact v2/request/artifact hashes and timestamps.
+   - Fail-closed consequence: Missing identity, qualification, role separation, scope, timestamp, or exact-hash binding blocks inbox validation with zero canonical mutation. There is no automated fallback.
 
-4. **Which Portuguese regional style should human review enforce?**
-   - What we know: The product uses Portuguese and existing frozen contracts identify it as `pt`; several existing example decks use Brazilian wording but do not define a project-wide regional translation contract. [VERIFIED: `KOREAN-STRUCTURE.md:10`; `src/multilang/services/latin_translation_quality.py:99-108`; `src/multilang/services/russian_phoneme_deck.py:126-175`]
-   - What's unclear: Whether Korean foundation copy must be specifically pt-BR, pt-PT, or neutral project Portuguese. [VERIFIED: no locked regional translation decision found]
-   - Recommendation: Preserve code `pt`, follow existing learner-facing style, and require the user/content reviewer to lock the regional editorial policy before final approval.
+3. **P11 reductions and P12/P13 auditory contrasts**
+   - Resolution: The structurally frozen item inventory is the exact selected/promoted v2 projection of the existing 47-record P0-P13 candidate. Plan 31-26 requires a qualified Korean phonetics specialist to approve all six specialist-atomization scopes plus every item-level normative/surface/active-rule claim against that exact version. [VERIFIED: `src/multilang/services/korean_foundation_evidence.py:581-592`; `31-APPROACH.md:108-117,233-236`]
+   - Owner: The Korean phonetics specialist owns item/atomization acceptance; the user only coordinates the checkpoint and exact evidence placement.
+   - Authority: Exact specialist review records, normative sources, and reviewed recordings bound to v2 content hashes.
+   - Fail-closed consequence: Rejection or need for a structural item/graph change stops Phase 31 and requires a new candidate version/replan before evidence receipt; the executor cannot patch structure inside the inbox.
 
-5. **Phase 31 directory canonicalization has been resolved.**
-   - Resolution: The earlier slug mismatch has been reconciled, and the canonical slug is now `i-plus-1`. All Phase 31 planning artifacts belong under `.planning/phases/31-hangul-and-pronunciation-i-plus-1/`. [VERIFIED: current directory audit; pattern map]
-   - Recommendation: Write all PLAN files to the canonical Phase 31 directory and keep internal references aligned with it.
+4. **Portuguese regional editorial policy**
+   - Resolution: Canonical language identity remains exactly `pt`. A qualified Portuguese reviewer must choose and record one bounded `regional_editorial_policy` value in the fixed curriculum review and approve every learner-facing translation/alignment/register decision under that policy. The executor and AI drafts do not choose `pt-BR`, `pt-PT`, or neutral style implicitly. [VERIFIED: `src/multilang/services/korean_foundation_evidence.py:558-579`; `31-APPROACH.md:228-236`]
+   - Owner: The qualified Portuguese reviewer owns the editorial decision; the user coordinates its evidence at Plan 31-26.
+   - Authority: The exact reviewer record and policy review bound to the v2 proposed-curation/request hashes.
+   - Fail-closed consequence: Missing policy, unqualified reviewer, mixed policy application, English leakage, or translation contradiction blocks inbox validation and production readiness.
 
-6. **Will foundation audio be approved PCM WAV or another format?**
-   - What we know: `ffmpeg`/`ffprobe` are unavailable, while the existing Latin path exports WAV and stdlib can support a WAV-only validation strategy. [VERIFIED: environment probe; `src/multilang/services/latin_export.py:259-278`]
-   - What's unclear: Format of future approved human recordings. [VERIFIED: no Phase 31 media manifest exists]
-   - Recommendation: Prefer PCM WAV for this frozen foundation pack; if reviewers provide MP3, add an explicit validated duration-inspection dependency rather than guessing metadata.
+5. **Phase 31 directory canonicalization**
+   - Resolution: The canonical slug is `i-plus-1`; all Phase 31 planning/handoff/evidence artifacts remain under `.planning/phases/31-hangul-and-pronunciation-i-plus-1/`. [VERIFIED: current directory audit; pattern map]
+   - Owner/authority: Repository planning contract.
+   - Fail-closed consequence: The fixed-root helpers reject alternate roots or arbitrary path input.
+
+6. **Foundation audio format**
+   - Resolution: Phase 31 production audio is exact `pcm_s16le_wav` with `.wav` paths and stdlib header/duration validation. PNG/GIF remain the only supported non-audio media formats declared by the fixed slots. [VERIFIED: `src/multilang/services/korean_foundation_media.py:83,99-107,1123-1131`; `src/multilang/services/korean_foundation_evidence.py:1007,1599-1607`]
+   - Owner: The fixed media/evidence contract owns the accepted format; reviewers/rightsholders supply exact compliant bytes.
+   - Authority: Exact media manifest, rights, playback, and recomputed byte/header/hash evidence.
+   - Fail-closed consequence: MP3 or any other undeclared format is rejected. Supporting it requires an explicit dependency/validator replan; no silent conversion or guessed duration is permitted.
 
 ## Environment Availability
 
@@ -635,13 +643,15 @@ All validation and media resolution must happen before this write block, and the
 | Anki Desktop CLI/app | Observed import/render/playback | ✗ | — | Automated ZIP/SQLite checks now; explicit human Anki evidence in Phase 34. [VERIFIED: environment probe; `.planning/ROADMAP.md:97-107`] |
 | `ffmpeg` | Optional transcoding/media inspection | ✗ | — | Prefer reviewed PCM WAV and stdlib validation; do not transcode silently. [VERIFIED: environment probe] |
 | `ffprobe` | Optional MP3 duration inspection | ✗ | — | PCM WAV + stdlib `wave`, or add a planned dependency only if approved assets require MP3. [VERIFIED: environment probe] |
-| Korean orthography/phonetics reviewers | Learner-ready content/audio approval | ? | — | None; human gate is blocking. [VERIFIED: reviewer identities absent from current Phase 31 artifacts] |
+| Korean orthography/phonetics reviewers | Learner-ready content/audio approval | execution input | — | Fixed Plan 31-26 reviewer records and role-separation gate; absence blocks with no fallback. [VERIFIED: resolved Question 2] |
 
-**Missing dependencies with no fallback:** qualified human review and approved licensed media are completion blockers. [VERIFIED: `.planning/SPEC.md:47,149,155-158`]
+**Execution inputs with no fallback:** qualified human review and approved licensed media remain mandatory Plan 31-26 inputs under the resolved contracts above. Their absence is a defined zero-mutation stop condition, not an unresolved implementation decision. [VERIFIED: `.planning/SPEC.md:47,149,155-158`; resolved Questions 1-4 and 6]
 
 **Missing dependencies with fallback:** Anki Desktop and ffmpeg/ffprobe are not needed for Phase 31's bounded automated structure claim if PCM WAV and archive inspection are used; final observed Anki acceptance remains Phase 34. [VERIFIED: `.planning/ROADMAP.md:97-107`; environment audit]
 
 ## Validation Architecture
+
+The execution-current per-task Nyquist matrix, checkpoint handoffs, latencies, and new assisted-curation tests are maintained in `31-VALIDATION.md`. The original architecture below remains the requirement-level rationale.
 
 ### Test Framework
 
@@ -656,10 +666,10 @@ All validation and media resolution must happen before this write block, and the
 
 | Req ID | Behavior | Test Type | Automated Command | File Exists? |
 |---|---|---|---|---|
-| KHAN-01 | Exact modern inventory, Korean-only note/template IDs/fields/fonts, complete hash-aligned required media, APKG/table structure | unit + integration + human gate | `UV_OFFLINE=1 uv run --extra dev pytest tests/services/test_korean_curriculum.py tests/services/test_korean_foundation_media.py tests/services/test_korean_foundation_export.py tests/services/test_card_template_loader.py -q` | ❌ Wave 0 for first three; template test exists. [VERIFIED: test file audit] |
-| KHAN-02 | Explicit bootstrap, DAG, NFC, recomputed exactly-one target unknown, no compatibility/halfwidth leakage | unit/property-style parametrization | `UV_OFFLINE=1 uv run --extra dev pytest tests/domain/test_korean.py tests/services/test_korean_curriculum.py -q` | Domain file ✅; curriculum file ❌ Wave 0. [VERIFIED: test file audit] |
-| KPRO-01 | Exact nine fields and shared HTML/CSS, Korean IDs, Portuguese fields, APKG/CSV/TSV media references resolve | contract + archive/integration | `UV_OFFLINE=1 uv run --extra dev pytest tests/services/test_phoneme_deck.py tests/services/test_korean_foundation_export.py tests/integration/test_korean_foundations_flow.py -q` | ❌ Wave 0. [VERIFIED: test file audit] |
-| KPRO-02 | P0-P13 coverage, active non-target rules are prerequisites, cycles/forward edges/false i+1 block approval/export | unit + mutation negatives + human gate | `UV_OFFLINE=1 uv run --extra dev pytest tests/services/test_korean_curriculum.py tests/services/test_korean_foundation_review.py -q` | ❌ Wave 0. [VERIFIED: test file audit] |
+| KHAN-01 | Exact modern inventory, Korean-only note/template IDs/fields/fonts, complete hash-aligned required media, APKG/table structure | unit + integration + human gate | `UV_OFFLINE=1 uv run --extra dev pytest tests/services/test_korean_curriculum.py tests/services/test_korean_foundation_media.py tests/services/test_korean_foundation_export.py tests/services/test_card_template_loader.py -q` | ✅ Existing after Plans 31-01 through 31-10; v2 additions mapped in `31-VALIDATION.md`. |
+| KHAN-02 | Explicit bootstrap, DAG, NFC, recomputed exactly-one target unknown, no compatibility/halfwidth leakage | unit/property-style parametrization | `UV_OFFLINE=1 uv run --extra dev pytest tests/domain/test_korean.py tests/services/test_korean_curriculum.py -q` | ✅ Existing after Plans 31-01 through 31-10. |
+| KPRO-01 | Exact nine fields and shared HTML/CSS, Korean IDs, Portuguese fields, APKG/CSV/TSV media references resolve | contract + archive/integration | `UV_OFFLINE=1 uv run --extra dev pytest tests/services/test_phoneme_deck.py tests/services/test_korean_foundation_export.py tests/integration/test_korean_foundations_flow.py -q` | ✅ Existing after Plans 31-01 through 31-10; v2 migration remains planned. |
+| KPRO-02 | P0-P13 coverage, active non-target rules are prerequisites, cycles/forward edges/false i+1 block approval/export | unit + mutation negatives + human gate | `UV_OFFLINE=1 uv run --extra dev pytest tests/services/test_korean_curriculum.py tests/services/test_korean_foundation_review.py -q` | ✅ Existing after Plans 31-01 through 31-10. |
 
 ### Required Automated Evidence
 
@@ -682,16 +692,13 @@ All validation and media resolution must happen before this write block, and the
 - **Per wave merge:** run Phase 31 focused tests plus kana, phoneme, Latin export/media, and Phase 30 Korean boundary regressions. [VERIFIED: `.planning/phases/31-hangul-and-pronunciation-i-plus-1/31-PATTERNS.md:815-863`]
 - **Phase gate:** full offline suite green, Python 3.12 compatibility smoke green, human artifacts present and hash-aligned, and no unapproved record exported before `/gsd-verify-work`. [VERIFIED: `AGENTS.md`, Engineering Quality; Phase 30 verification precedent]
 
-### Wave 0 Gaps
+### Wave 0 Status
 
-- [ ] `tests/services/test_korean_curriculum.py` — KHAN-02/KPRO-02 graph, inventory, Unicode, and strict-evidence contracts. [VERIFIED: absent in test audit]
-- [ ] `tests/services/test_korean_foundation_review.py` — independent gate/readiness and source-drift contracts. [VERIFIED: absent]
-- [ ] `tests/services/test_korean_foundation_media.py` — path/hash/exact-text/reviewer-role contracts. [VERIFIED: absent]
-- [ ] `tests/services/test_phoneme_deck.py` — shared mechanics and existing-language compatibility. [VERIFIED: absent]
-- [ ] `tests/services/test_korean_foundation_export.py` — APKG/CSV/TSV and media bundle evidence. [VERIFIED: absent]
-- [ ] `tests/cli/test_korean_foundation_commands.py` — enum-constrained offline CLI and no-partial-output behavior. [VERIFIED: absent]
-- [ ] `tests/integration/test_korean_foundations_flow.py` — two-family all-format offline closure. [VERIFIED: absent]
-- [ ] No framework install gap; pytest is configured and installed. [VERIFIED: environment and `pyproject.toml`]
+- [x] Original curriculum, review, media, shared phoneme, export, CLI, and integration test gaps were closed by Plans 31-01 through 31-10. [VERIFIED: live test-file audit; `31-10-SUMMARY.md`]
+- [x] No framework install gap; pytest is configured and installed. [VERIFIED: environment and `pyproject.toml`]
+- [ ] `tests/services/test_korean_foundation_ai_curation.py` is intentionally created test-first by Task 31-11-01.
+- [ ] `tests/services/test_phase31_handoff.py` is intentionally created test-first by Task 31-20-02.
+- [ ] `tests/services/test_phase31_runtime_isolation.py` is intentionally created test-first by Task 31-25-01.
 
 ## Security Domain
 

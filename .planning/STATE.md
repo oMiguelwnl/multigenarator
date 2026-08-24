@@ -1,17 +1,17 @@
 ---
 gsd_state_version: 1.0
 milestone: v3.0
-milestone_name: Korean Learning System
-status: planned
-stopped_at: Milestone v3.0 initialized; Phase 30 not planned
-last_updated: "2026-07-20T00:00:00Z"
-last_activity: 2026-07-20
+milestone_name: Korean Learning System and Shared Generation Hardening
+status: in_progress
+stopped_at: Phase 31 Plan 10 complete; Plan 31-11 human checkpoint next
+last_updated: "2026-08-18T14:19:29Z"
+last_activity: 2026-08-18
 progress:
   total_phases: 5
-  completed_phases: 0
-  total_plans: 0
-  completed_plans: 0
-  percent: 0
+  completed_phases: 1
+  total_plans: 20
+  completed_plans: 18
+  percent: 20
 ---
 
 # Project State
@@ -21,16 +21,16 @@ progress:
 See: .planning/PROJECT.md (updated 2026-06-01)
 
 **Core value:** Generate reliable, high-quality Anki cards for real vocabulary the learner needs to study, with accurate definitions, examples, translations where appropriate, and audio.  
-**Current focus:** v3.0 Korean Learning System planning and execution
+**Current focus:** Phase 31 human evidence closure and Phase 32 shared-hardening planning
 
 ## Current Position
 
-Phase: 30
-Plan: Not planned
-Status: Milestone initialized; execution waits for shared Mandarin worktree reconciliation
-Last activity: 2026-07-20
+Phase: 31
+Plan: 31-10 complete; 31-11 next
+Status: Phase 31 implementation in progress; first human evidence checkpoint is next
+Last activity: 2026-08-18
 
-Progress: 0 of 5 phases complete
+Progress: 1 of 5 phases complete
 
 ## Performance Metrics
 
@@ -99,7 +99,8 @@ Full current decision history is in `.planning/SPEC.md` and `KOREAN-STRUCTURE.md
 - Hangul, pronunciation, and grammar use explicit curriculum-i+1 concept graphs; frequency/custom/highlights use adaptive or contextual ordering.
 - Azure `ko-KR` is the only default TTS policy; jamo and phonological-rule audio require specialist review.
 - The 3000-entry frequency asset is blocked until source, attribution, and redistribution terms are approved.
-- Phase 30 must not execute over a partially completed Mandarin quick task because both touch shared registries, persistence, audio, and export routing.
+- Phase 30 execution was gated on reconciling the overlapping Mandarin quick-task surfaces before shared registries were changed.
+- The verified remote Phase 30 remains authoritative; restored shared hardening is distributed across Phases 32-34 and must not replace its Korean identity, migration, or matcher contracts.
 
 Historical v2.0/v2.1 decisions retained for reference:
 
@@ -169,12 +170,14 @@ Historical v2.0/v2.1 decisions retained for reference:
 ### Pending Todos
 
 - Repair broad-suite drift before treating full `python -m pytest -q` as authoritative again.
-- Complete or otherwise reconcile quick task 027 before planning/executing Korean Phase 30.
+- Complete Phase 31 Plans 31-11 and 31-12 with genuine human evidence before claiming foundations ready.
+- Plan Phase 32 against the restored shared-hardening requirements without bypassing Phase 31 or licensing gates.
 - Approve the Korean frequency-source and redistribution policy before committing a 3000-entry asset.
 
 ### Blockers/Concerns
 
-- Korean execution currently overlaps the uncommitted Mandarin integration on shared files.
+- Phase 31 remains blocked on genuine qualified reviews, rights dispositions, exact media/playback evidence, canonical activation, production export, and observed Anki acceptance.
+- Current final frequency loading still permits live `wordfreq` replacement and generic non-Korean suffix fallback; Phase 32 owns fail-closed remediation.
 - `wordfreq` supports `ko` as a candidate bootstrap, but its documentation warns against CSV extraction without preserved attribution/licensing information.
 - Latin TTS quality is approved only for the current 50-card Google Translate TTS MVP pack; future higher-quality Latin audio should use a new review artifact.
 - Source licensing for Phase 23 is license-gated in the frozen source pack; later phases must preserve those provenance fields.
@@ -194,6 +197,6 @@ Items acknowledged and carried forward:
 
 ## Session Continuity
 
-Last session: 2026-06-22T00:00:00Z
-Stopped at: v3.0 initialized; Phase 30 ready to plan after Mandarin reconciliation
+Last session: 2026-08-18T14:19:29Z
+Stopped at: Reconciled remote Korean baseline and restored shared hardening; Phase 31 Plan 11 human checkpoint remains next
 Resume file: None

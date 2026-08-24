@@ -1,14 +1,14 @@
 # Phase 31: Hangul and Pronunciation i+1 - Approach
 
 **Explored:** 2026-08-04
-**Status:** Ready for planning — implement the complete technical path and keep learner-ready production output blocked
+**Status:** Replanned for bounded AI-assisted draft curation while learner-ready production output remains blocked
 
 ## Alignment Proof
 
 - `workflow.discuss`: true
 - `alignment_status`: user_confirmed
-- `alignment_method`: Direct user decisions in the Korean milestone and Phase 31 planning conversations. The user previously selected the approved `KOREAN-STRUCTURE.md` decisions for the Korean milestone and, on 2026-08-04, explicitly selected **“Implementar e bloquear (Recommended)”** for Phase 31.
-- `user_confirmed_at`: 2026-08-04
+- `alignment_method`: Direct user decisions in the Korean milestone and Phase 31 planning conversations. The user selected **“Implementar e bloquear (Recommended)”** on 2026-08-04 and explicitly requested **“replanejar para curadoria assistida”** on 2026-08-23 after confirming that AI output remains a draft rather than qualified approval.
+- `user_confirmed_at`: 2026-08-23
 - `explicit_skip_approved`: false
 - `skip_scope`: N/A
 - `skip_rationale`: N/A — discussion was not skipped; the user explicitly chose the implementation and blocking posture.
@@ -22,7 +22,22 @@
   - Create a Korean-owned Hangul template and extract only language-neutral phoneme mechanics while preserving existing public APIs and rendered behavior.
   - Build a deterministic dedicated exporter for both foundation families in APKG, CSV, and TSV that refuses unapproved production inputs before writing anything.
   - Permit generated temporary media only inside tests; never treat it as production media, review evidence, or a learner-ready approval.
+  - Permit the executor agent to author bounded, hash-bound, noncanonical `draft_only` learner-copy proposals outside `data/korean_foundations/` and `evidence-inbox/`; every proposal remains `needs_review`, has no promotion authority, and must be selected by exact hash before it can become a new candidate asset.
+  - Preserve qualified Korean, Portuguese, rights, exact-byte playback, and activation checkpoints after assisted curation; AI draft generation cannot satisfy or impersonate any of those roles.
+  - Keep observed Anki Desktop/mobile import, rendering, and playback acceptance in Phase 34; it does not block Phase 31 local activation/export after genuine evidence and exact authorization pass.
   - Do not fabricate approval, synthesize a raw glyph, ship silence/dummy production media, make a live/paid provider call, or claim visual acceptance.
+
+## 2026-08-23 Assisted-Curation Amendment
+
+The user clarified that the assistant is expected to perform the initial content curation. This changes the pre-review preparation path, not the authority model.
+
+- AI-assisted output is written only under `curation-drafts/` as typed, hash-bound patches against exact source-entry hashes. It is never written directly into the canonical evidence inbox.
+- Drafts may propose Hangul learner names/readings, sound guidance, mnemonics, Korean pronunciation examples, normative/surface pronunciation, and Portuguese learner copy. They must preserve item keys, sequence, graph identities, stages, categories, prerequisites, observed/unknown concepts, active rules, and media-slot identities.
+- Every proposed field records source grounding or an explicit uncertainty code. Unsupported values remain unresolved; plausible wording is not promoted as fact merely to obtain complete coverage.
+- The draft schema forbids `approved`, reviewer identity/role/timestamp, qualification claims, rights/redistribution dispositions, media hashes, playback results, and production voice approval.
+- A user checkpoint may select exact draft hashes for candidate promotion only. Selection does not constitute linguistic, Portuguese, legal, playback, release, or Anki acceptance.
+- Selected drafts create new immutable `v2` candidate packs because the existing `v1` source packs are immutable. All regenerated curation/media manifests remain `candidate_only: true` and `needs_review`.
+- Production evidence, receipt preparation, activation, and export remain separate later gates and remain provider-free.
 
 <domain>
 ## Phase Boundary
@@ -80,7 +95,7 @@ The governing delivery posture is **implement and block**:
 - Load all manifests through frozen Pydantic v2 contracts with `extra="forbid"`, bounded values/counts, hidden input values in errors, deterministic ordering, and cross-record validation.
 - Treat committed manifests as untrusted input. Reject malformed JSON, duplicate or unknown IDs, unsafe HTML/media markup, absolute/traversal/URL paths, unsupported scripts, unbounded values, and source/version/hash drift with privacy-safe reason codes.
 - Source packs are immutable snapshots. A content, dependency, spoken-text, translation, provenance, or media-identity change requires a new source/media version and invalidates prior hash-bound review; it is not an in-place silent correction.
-- “Complete technical curriculum” means all contracts, H0-H10/P0-P13 coverage rules, candidate inventory structures, review/media states, joins, output schemas, and failure modes exist. It does not authorize an agent to invent linguistic truth or mark candidate copy as reviewed.
+- “Complete technical curriculum” means all contracts, H0-H10/P0-P13 coverage rules, candidate inventory structures, review/media states, joins, output schemas, and failure modes exist. The agent may propose explicitly nonauthoritative learner copy under the assisted-curation amendment, but it cannot invent source authority or mark candidate copy as reviewed.
 - Checked-in production candidate records may carry source-backed provisional content, but unresolved exact values remain explicitly pending. Conditional contracts require complete learner fields, provenance, and media metadata before `approved`; they must still represent a valid, actionable `needs_review` state when evidence is absent.
 - Use a local operator CLI/service path like the Latin foundation flow. Do not instantiate Kiwi, Azure, a database runtime, text generation, Tatoeba, or the frequency pipeline to validate or export frozen foundations.
 
@@ -169,7 +184,7 @@ The governing delivery posture is **implement and block**:
 ### Review and Media Gates
 
 **Chosen approach:** Keep source validity, human review, licensing, media-byte integrity, and playback approval independent and hash-bound; initialize real production state as `needs_review`.
-**Alternatives considered:** A single coarse approval flag; existence-only media checks; provider success as approval; agent/LLM review; filename-bound review; generated placeholder media; silent fallback or blank required audio.
+**Alternatives considered:** A single coarse approval flag; existence-only media checks; provider success as approval; agent/LLM approval; filename-bound review; generated placeholder media; silent fallback or blank required audio.
 **Why this one:** Automated checks can prove structure and exact bytes, but they cannot prove Korean pedagogy, pronunciation, Portuguese quality, redistribution permission, or heard playback quality.
 
 - Supported gate states are `needs_review`, `approved`, and `rejected`. Missing evidence is `needs_review`, never implicit approval.
@@ -213,12 +228,31 @@ The governing delivery posture is **implement and block**:
 ### Approval and Checkpoint Plan
 
 1. **Technical implementation checkpoint — automatic/offline.** Complete contracts, graph/Unicode validation, pending production manifests, templates, shared mechanics, exporters, CLI, tests, scanners, and regression evidence without waiting for media or reviewers.
-2. **Curriculum and content checkpoint — blocking human review.** A qualified Korean orthography reviewer approves 100% of Hangul content and concept atomicity; a qualified Korean phonetics specialist approves 100% of pronunciation content, P0-P13 atomization, normative/surface/optional IPA evidence, and active-rule analysis.
-3. **Portuguese checkpoint — blocking human review.** A qualified Portuguese reviewer chooses/records the regional editorial policy under canonical language code `pt` and approves all learner-facing Portuguese meaning, naturalness, alignment, and register. The agent must not silently choose `pt-BR` or `pt-PT` as a new canonical identity.
-4. **Media source/license checkpoint — blocking human/legal decision.** Record source, attribution, license, and reuse/redistribution disposition before adding each real production byte. Unknown rights remain `needs_review`; the executor does not search-and-commit a convenient asset.
-5. **Exact-byte playback checkpoint — blocking human review.** Bind each real recording to exact text/context and hashes. Required phonetics-specialist and independent-native-speaker roles review the exact bytes; record playback result, timestamp, source/media version, and reviewed artifact hash.
-6. **Production export checkpoint — deterministic.** Only after all structural and applicable human gates pass may the exact production manifests emit learner-ready APKG/CSV/TSV artifacts. Re-run all joins, hashes, archive/table/reference checks, focused regressions, and the full offline suite.
-7. **Observed visual/import checkpoint — deferred to Phase 34.** Real Anki Desktop/mobile import, rendering, font, responsive layout, and playback evidence must be captured there; it cannot be inferred from Phase 31's static/export checks.
+2. **AI-assisted draft checkpoint — automatic then user selection.** Produce grounded `draft_only` field patches, validate exact coverage and immutable structural bindings, and ask the user to select exact draft hashes for candidate promotion. No production gate changes here.
+3. **Candidate promotion checkpoint — deterministic/offline.** Promote only the selected hashes into new immutable `v2` candidate packs, regenerate all pending manifests/request bindings, and prove learner-ready export remains blocked.
+4. **Curriculum and content checkpoint — blocking human review.** A qualified Korean orthography reviewer approves 100% of Hangul content and concept atomicity; a qualified Korean phonetics specialist approves 100% of pronunciation content, P0-P13 atomization, normative/surface/optional IPA evidence, and active-rule analysis.
+5. **Portuguese checkpoint — blocking human review.** A qualified Portuguese reviewer chooses/records the regional editorial policy under canonical language code `pt` and approves all learner-facing Portuguese meaning, naturalness, alignment, and register. The agent must not silently choose `pt-BR` or `pt-PT` as a new canonical identity.
+6. **Media source/license checkpoint — blocking human/legal decision.** Record source, attribution, license, and reuse/redistribution disposition before adding each real production byte. Unknown rights remain `needs_review`; the executor does not search-and-commit a convenient asset.
+7. **Exact-byte playback checkpoint — blocking human review.** Bind each real recording to exact text/context and hashes. Required phonetics-specialist and independent-native-speaker roles review the exact bytes; record playback result, timestamp, source/media version, and reviewed artifact hash.
+8. **Production export checkpoint — deterministic.** Only after all structural and applicable human gates pass may the exact production manifests emit learner-ready APKG/CSV/TSV artifacts. Re-run all joins, hashes, archive/table/reference checks, focused regressions, and the full offline suite.
+9. **Observed visual/import checkpoint — deferred to Phase 34.** Real Anki Desktop/mobile import, rendering, font, responsive layout, and playback evidence must be captured there; it cannot be inferred from Phase 31's static/export checks.
+
+### Replanned Execution Map
+
+- **31-11:** Build draft schemas and fixed tooling test-first; no content or canonical write.
+- **31-12 through 31-15:** Curate H0-H10 in three bounded projections, then assemble and audit the complete Hangul family draft.
+- **31-16 through 31-19:** Curate P0-P13 in three bounded projections, then assemble both family drafts and the exact 139-record manifest/report.
+- **31-20:** Run exact read-only draft selection, persist the typed handoff, and implement no-write bundle-promotion primitives test-first.
+- **31-21:** Publish four immutable v2 candidates as one hash-named bundle through one atomic visibility pointer.
+- **31-22:** Implement, regenerate, and verify the fully pending v2 review/media requests.
+- **31-23:** Migrate curriculum/review/media defaults to the exact v2 bundle while retaining explicit immutable v1 history.
+- **31-24:** Migrate evidence/snapshot/export provenance to v2 and prove canonical production remains blocked/write-free.
+- **31-25:** Migrate CLI/integration expectations, run the complete pre-evidence regression matrix, and build fixed safe Python 3.12 runtime-isolation tooling.
+- **31-26:** Accept only one indivisible genuine evidence bundle and record its independently confirmed index hash.
+- **31-27:** Write the sole canonical receipt and prepare/verify one inactive immutable snapshot.
+- **31-28:** Review the exact prepared tuple, record authorization, activate atomically, create six local outputs, and run focused/full isolated Python 3.12 closure.
+
+All checkpoint values flow through fixed typed JSON handoffs or canonical files. Plan commands never use brace placeholders or parse hashes from prose summaries.
 
 If qualified reviewers, licensed media, or exact bytes are unavailable, execution does **not** wait or invent replacements: it completes the technical path, records actionable blockers, verifies refusal behavior, and leaves learner-ready production output at `needs_review`. Plans should place human checkpoints only around real approval/asset actions, not use them to block earlier offline engineering work.
 
@@ -231,7 +265,7 @@ If qualified reviewers, licensed media, or exact bytes are unavailable, executio
 - Keep Japanese kana source, generation, model, IDs, fields, template, fonts, media behavior, imports, and tests unchanged; it is a structural regression oracle only.
 - Preserve every existing Russian/Polish/Greek phoneme public API and artifact identity/behavior while extracting shared mechanics.
 - Preserve modern normal/manual/highlight, Japanese frequency, Mandarin, Latin, card-schema, blank-`Image`, audio, persistence, and export behavior.
-- No Korean foundation production module may import/call Azure synthesis, Tatoeba, an LLM provider, a remote downloader, or the frequency runtime.
+- No Korean foundation production approval, evidence, activation, or export module may import/call Azure synthesis, Tatoeba, an LLM provider, a remote downloader, or the frequency runtime. Assisted curation is executor-authored and validated as untrusted draft data rather than integrated as production provider authority.
 - No export may catch a broad media/provider exception and continue with blank required fields. All required-media failures are typed and blocking.
 - No approval bypass, `allow_unapproved`, generated-production-media switch, environment-controlled fake approval, or test backdoor enters production code.
 - Keep model/deck IDs globally unique and GUID inputs immutable. Never “fix” a collision or changed output by regenerating IDs nondeterministically.
@@ -260,7 +294,7 @@ Phase 31 creates Anki template source but no application page, review dashboard,
 - Exact deterministic temporary media bytes and fixture factories used by tests, provided they live only under temporary test roots, are never committed as production evidence, and no live provider/raw-glyph path is used.
 - Exact test-module split, parametrization, mutation cases, and scanner implementation, provided every required contract, all-format path, human-gate boundary, and anti-regression target is covered.
 - Whether a read-only readiness/check command is separate from export or shared internally, provided it uses the same validators and never writes learner artifacts for blocked production inputs.
-- No agent discretion extends to selecting a licensed media source, identifying/impersonating a qualified reviewer, approving content or playback, choosing a production voice, weakening strict i+1, broadening canonical Hangul acceptance, changing locked fields/IDs/deck names, making a live call, or claiming visual acceptance.
+- Agent discretion extends to bounded `draft_only` learner-copy proposals under the 2026-08-23 amendment. It still does not extend to selecting rights dispositions, identifying/impersonating a qualified reviewer, approving content or playback, choosing a production voice, weakening strict i+1, broadening canonical Hangul acceptance, changing locked graph/ID/deck contracts, making a live/paid call, or claiming visual acceptance.
 
 </decisions>
 
