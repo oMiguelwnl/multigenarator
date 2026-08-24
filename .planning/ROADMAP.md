@@ -73,7 +73,7 @@ Archives:
 5. Jamo and phonological-rule audio cannot become approved through unreviewed raw-glyph TTS.
 **Out of Scope**: Korean 3000-card frequency content, unapproved live synthesis, automatic specialist approval, and unrelated template redesign.
 **Stop/Replan Conditions**: Stop if qualified human evidence, media rights, exact playback evidence, or canonical snapshot authorization is unavailable. Observed Anki Desktop/mobile import, rendering, and playback acceptance remains a Phase 34 gate and does not block Phase 31 local activation/export after the Phase 31 evidence and authorization gates pass.
-**Remaining Plans**: 31-11 draft contracts/tooling; 31-12 through 31-15 bounded Hangul curation/assembly; 31-16 through 31-19 bounded pronunciation curation/final assembly; 31-20 exact selection and machine-readable handoffs; 31-21 atomic immutable v2 candidate bundle; 31-22 pending request regeneration; 31-23/24 bounded service/default migration; 31-25 CLI/integration/runtime-isolation regressions; 31-26 genuine evidence checkpoint; 31-27 receipt and inactive snapshot; 31-28 exact activation and six local exports.
+**Remaining Plans**: 31-17 through 31-19 bounded pronunciation curation/final assembly; 31-20 exact selection and machine-readable handoffs; 31-21 atomic immutable v2 candidate bundle; 31-22 pending request regeneration; 31-23/24 bounded service/default migration; 31-25 CLI/integration/runtime-isolation regressions; 31-26 genuine evidence checkpoint; 31-27 receipt and inactive snapshot; 31-28 exact activation and six local exports.
 
 ### Phase 32: Frequency, Portuguese Text, and Audio
 **Status**: [ ] Not started

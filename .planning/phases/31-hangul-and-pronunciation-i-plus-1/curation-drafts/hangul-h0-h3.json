@@ -1,0 +1,1029 @@
+{
+  "batch_id": "hangul-h0-h3",
+  "content_hash": "a14590a950ad9cde3bef63d58e47c0dee102ebd41e309b074d2d2f8f113a87a3",
+  "draft_only": true,
+  "promotion_authority": false,
+  "records": [
+    {
+      "content_hash": "e9cfcddea30089ccc1a2769f63bd850c066ac22a4ebd47156eb2f765f8d1472e",
+      "disagreements": [],
+      "item_key": "ko-hangul-0001",
+      "proposals": [
+        {
+          "authorship": "ai-proposed",
+          "field_name": "reading_or_name",
+          "grounding_reference_ids": [
+            "unicode.hangul-17.0",
+            "nikl.orthography-0001"
+          ],
+          "value": "jamo, unidade gráfica do hangul"
+        },
+        {
+          "authorship": "ai-proposed",
+          "field_name": "mnemonic",
+          "grounding_reference_ids": [
+            "unicode.hangul-17.0",
+            "nikl.orthography-0001"
+          ],
+          "value": "Pense no jamo como uma peça que entra em um bloco de sílaba."
+        }
+      ],
+      "sequence": 1,
+      "source_entry_content_hash": "7f68f731516a1b8428bbe157ec45c8798bee9838b7e47473ae32bb81ade2c111",
+      "stage_id": "H0",
+      "uncertainties": [
+        {
+          "code": "not_applicable_structural_concept",
+          "field_name": "sound",
+          "grounding_reference_ids": [
+            "unicode.hangul-17.0",
+            "nikl.orthography-0001"
+          ]
+        }
+      ]
+    },
+    {
+      "content_hash": "52545f3355e99dc83c38a0c647929a069ee63214757a1f41b1ffd3a7dfd09d17",
+      "disagreements": [],
+      "item_key": "ko-hangul-0002",
+      "proposals": [
+        {
+          "authorship": "ai-proposed",
+          "field_name": "reading_or_name",
+          "grounding_reference_ids": [
+            "unicode.hangul-17.0",
+            "nikl.orthography-0001"
+          ],
+          "value": "bloco silábico"
+        },
+        {
+          "authorship": "ai-proposed",
+          "field_name": "mnemonic",
+          "grounding_reference_ids": [
+            "unicode.hangul-17.0",
+            "nikl.orthography-0001"
+          ],
+          "value": "Um bloco junta letras em uma sílaba escrita, como uma caixa compacta."
+        }
+      ],
+      "sequence": 2,
+      "source_entry_content_hash": "772f61c294c82e02eb9a33a7a8cccf2ab7cb6ae5256a131c0d820dc3ed58a7d0",
+      "stage_id": "H0",
+      "uncertainties": [
+        {
+          "code": "not_applicable_structural_concept",
+          "field_name": "sound",
+          "grounding_reference_ids": [
+            "unicode.hangul-17.0",
+            "nikl.orthography-0001"
+          ]
+        }
+      ]
+    },
+    {
+      "content_hash": "65a36da7a60773c1d76e94894b73237cf08fa6b6efd81e15fe54e02910ee27d0",
+      "disagreements": [],
+      "item_key": "ko-hangul-0003",
+      "proposals": [
+        {
+          "authorship": "ai-proposed",
+          "field_name": "reading_or_name",
+          "grounding_reference_ids": [
+            "unicode.hangul-17.0",
+            "nikl.orthography-0001"
+          ],
+          "value": "posição inicial"
+        },
+        {
+          "authorship": "ai-proposed",
+          "field_name": "mnemonic",
+          "grounding_reference_ids": [
+            "unicode.hangul-17.0",
+            "nikl.orthography-0001"
+          ],
+          "value": "A posição inicial fica antes da vogal e abre o bloco."
+        }
+      ],
+      "sequence": 3,
+      "source_entry_content_hash": "313582f2f6971a5d8cadc5c97c3c7fdbf3257f35f06b5b34a264dab186461461",
+      "stage_id": "H0",
+      "uncertainties": [
+        {
+          "code": "not_applicable_structural_concept",
+          "field_name": "sound",
+          "grounding_reference_ids": [
+            "unicode.hangul-17.0",
+            "nikl.orthography-0001"
+          ]
+        }
+      ]
+    },
+    {
+      "content_hash": "b5fd856f314c49a73fb55a37501a1e5f44dd39cb5d74ab0653c73680d249e7eb",
+      "disagreements": [],
+      "item_key": "ko-hangul-0004",
+      "proposals": [
+        {
+          "authorship": "ai-proposed",
+          "field_name": "reading_or_name",
+          "grounding_reference_ids": [
+            "unicode.hangul-17.0",
+            "nikl.orthography-0001"
+          ],
+          "value": "núcleo vocálico"
+        },
+        {
+          "authorship": "ai-proposed",
+          "field_name": "mnemonic",
+          "grounding_reference_ids": [
+            "unicode.hangul-17.0",
+            "nikl.orthography-0001"
+          ],
+          "value": "O núcleo é a vogal que dá voz ao bloco."
+        }
+      ],
+      "sequence": 4,
+      "source_entry_content_hash": "566fb3c669076a4de982c2c3b823fde8d27de721ece3829375baf1d5866f1938",
+      "stage_id": "H0",
+      "uncertainties": [
+        {
+          "code": "not_applicable_structural_concept",
+          "field_name": "sound",
+          "grounding_reference_ids": [
+            "unicode.hangul-17.0",
+            "nikl.orthography-0001"
+          ]
+        }
+      ]
+    },
+    {
+      "content_hash": "b62d2231e0b18f918b457d552b35706322a7a7c9990c82b92eb71a1300d1f357",
+      "disagreements": [],
+      "item_key": "ko-hangul-0005",
+      "proposals": [
+        {
+          "authorship": "ai-proposed",
+          "field_name": "reading_or_name",
+          "grounding_reference_ids": [
+            "unicode.hangul-17.0",
+            "nikl.orthography-0001"
+          ],
+          "value": "coda final opcional"
+        },
+        {
+          "authorship": "ai-proposed",
+          "field_name": "mnemonic",
+          "grounding_reference_ids": [
+            "unicode.hangul-17.0",
+            "nikl.orthography-0001"
+          ],
+          "value": "A coda fecha o bloco quando uma consoante aparece no fim."
+        }
+      ],
+      "sequence": 5,
+      "source_entry_content_hash": "f77e4bd2e1408d52dfd0022d2ee1625ce46d68ebe2d1889c6d53fcafa6c1536a",
+      "stage_id": "H0",
+      "uncertainties": [
+        {
+          "code": "not_applicable_structural_concept",
+          "field_name": "sound",
+          "grounding_reference_ids": [
+            "unicode.hangul-17.0",
+            "nikl.orthography-0001"
+          ]
+        }
+      ]
+    },
+    {
+      "content_hash": "1a9d17be43e6e056344f64239e309aa95d86c7e08e7e6436646e21a4801db558",
+      "disagreements": [],
+      "item_key": "ko-hangul-0006",
+      "proposals": [
+        {
+          "authorship": "ai-proposed",
+          "field_name": "reading_or_name",
+          "grounding_reference_ids": [
+            "unicode.hangul-17.0",
+            "nikl.orthography-0001"
+          ],
+          "value": "layout vertical"
+        },
+        {
+          "authorship": "ai-proposed",
+          "field_name": "mnemonic",
+          "grounding_reference_ids": [
+            "unicode.hangul-17.0",
+            "nikl.orthography-0001"
+          ],
+          "value": "Com vogal vertical, a consoante fica à esquerda e a vogal à direita."
+        }
+      ],
+      "sequence": 6,
+      "source_entry_content_hash": "c21bf5cb32bde20f4c1910cc0cd7327188001a86288fb0307fbfba611f3b2f0a",
+      "stage_id": "H0",
+      "uncertainties": [
+        {
+          "code": "not_applicable_structural_concept",
+          "field_name": "sound",
+          "grounding_reference_ids": [
+            "unicode.hangul-17.0",
+            "nikl.orthography-0001"
+          ]
+        }
+      ]
+    },
+    {
+      "content_hash": "e3714b95baf0f113a684f40f55020e31a683739442144ba8898b5a6ff47d75a3",
+      "disagreements": [],
+      "item_key": "ko-hangul-0007",
+      "proposals": [
+        {
+          "authorship": "ai-proposed",
+          "field_name": "reading_or_name",
+          "grounding_reference_ids": [
+            "unicode.hangul-17.0",
+            "nikl.orthography-0001"
+          ],
+          "value": "layout horizontal"
+        },
+        {
+          "authorship": "ai-proposed",
+          "field_name": "mnemonic",
+          "grounding_reference_ids": [
+            "unicode.hangul-17.0",
+            "nikl.orthography-0001"
+          ],
+          "value": "Com vogal horizontal, a consoante fica acima e a vogal abaixo."
+        }
+      ],
+      "sequence": 7,
+      "source_entry_content_hash": "26e758bf4c3889d76ad08db66404b3228e933259a2dfa3ff11aa5fd259cb2898",
+      "stage_id": "H0",
+      "uncertainties": [
+        {
+          "code": "not_applicable_structural_concept",
+          "field_name": "sound",
+          "grounding_reference_ids": [
+            "unicode.hangul-17.0",
+            "nikl.orthography-0001"
+          ]
+        }
+      ]
+    },
+    {
+      "content_hash": "9b961c4df3d19f2553c7a341d4303b1d87f8f03f3dbe88bda9ef2f6746bc9369",
+      "disagreements": [],
+      "item_key": "ko-hangul-0008",
+      "proposals": [
+        {
+          "authorship": "ai-proposed",
+          "field_name": "reading_or_name",
+          "grounding_reference_ids": [
+            "unicode.hangul-17.0",
+            "unicode.uax15-r57",
+            "nikl.orthography-0001"
+          ],
+          "value": "a"
+        },
+        {
+          "authorship": "ai-proposed",
+          "field_name": "sound",
+          "grounding_reference_ids": [
+            "unicode.hangul-17.0",
+            "unicode.uax15-r57",
+            "nikl.orthography-0001"
+          ],
+          "value": "a aberto, parecido com a em pá"
+        },
+        {
+          "authorship": "ai-proposed",
+          "field_name": "mnemonic",
+          "grounding_reference_ids": [
+            "unicode.hangul-17.0",
+            "unicode.uax15-r57",
+            "nikl.orthography-0001"
+          ],
+          "value": "Traço curto à direita do eixo vertical aponta para a abertura do som a."
+        }
+      ],
+      "sequence": 8,
+      "source_entry_content_hash": "701676c71dbfce38046e9804368d56f8469d2deab23d5018521deab6fe7881b2",
+      "stage_id": "H1",
+      "uncertainties": []
+    },
+    {
+      "content_hash": "a8736ad0cf3dd44d197c89e68b39125df13c20c2598e9375b19a13f751256fa6",
+      "disagreements": [],
+      "item_key": "ko-hangul-0009",
+      "proposals": [
+        {
+          "authorship": "ai-proposed",
+          "field_name": "reading_or_name",
+          "grounding_reference_ids": [
+            "unicode.hangul-17.0",
+            "unicode.uax15-r57",
+            "nikl.orthography-0001"
+          ],
+          "value": "eo"
+        },
+        {
+          "authorship": "ai-proposed",
+          "field_name": "sound",
+          "grounding_reference_ids": [
+            "unicode.hangul-17.0",
+            "unicode.uax15-r57",
+            "nikl.orthography-0001"
+          ],
+          "value": "vogal aberta posterior sem arredondar os lábios"
+        },
+        {
+          "authorship": "ai-proposed",
+          "field_name": "mnemonic",
+          "grounding_reference_ids": [
+            "unicode.hangul-17.0",
+            "unicode.uax15-r57",
+            "nikl.orthography-0001"
+          ],
+          "value": "Traço curto à esquerda lembra voltar a boca para o som eo."
+        }
+      ],
+      "sequence": 9,
+      "source_entry_content_hash": "fa68ebfe385f318de5a4dc08478b2688e3e6e2c21723fc81c628086b93e94bbc",
+      "stage_id": "H1",
+      "uncertainties": []
+    },
+    {
+      "content_hash": "898be319475214df96ee0a9579df2581449da6341dceb38de9a7bad4f4398406",
+      "disagreements": [],
+      "item_key": "ko-hangul-0010",
+      "proposals": [
+        {
+          "authorship": "ai-proposed",
+          "field_name": "reading_or_name",
+          "grounding_reference_ids": [
+            "unicode.hangul-17.0",
+            "unicode.uax15-r57",
+            "nikl.orthography-0001"
+          ],
+          "value": "o"
+        },
+        {
+          "authorship": "ai-proposed",
+          "field_name": "sound",
+          "grounding_reference_ids": [
+            "unicode.hangul-17.0",
+            "unicode.uax15-r57",
+            "nikl.orthography-0001"
+          ],
+          "value": "o fechado com lábios arredondados"
+        },
+        {
+          "authorship": "ai-proposed",
+          "field_name": "mnemonic",
+          "grounding_reference_ids": [
+            "unicode.hangul-17.0",
+            "unicode.uax15-r57",
+            "nikl.orthography-0001"
+          ],
+          "value": "Traço curto acima da linha horizontal levanta o som o."
+        }
+      ],
+      "sequence": 10,
+      "source_entry_content_hash": "7feb5e4ae61fbcfde4305d76aa4efa6896f0e6e20006fb61acea22ec650ac395",
+      "stage_id": "H1",
+      "uncertainties": []
+    },
+    {
+      "content_hash": "255be77af31332256e9a6949fb91681bce400769a608aa2cc9ec938c5ce21b29",
+      "disagreements": [],
+      "item_key": "ko-hangul-0011",
+      "proposals": [
+        {
+          "authorship": "ai-proposed",
+          "field_name": "reading_or_name",
+          "grounding_reference_ids": [
+            "unicode.hangul-17.0",
+            "unicode.uax15-r57",
+            "nikl.orthography-0001"
+          ],
+          "value": "u"
+        },
+        {
+          "authorship": "ai-proposed",
+          "field_name": "sound",
+          "grounding_reference_ids": [
+            "unicode.hangul-17.0",
+            "unicode.uax15-r57",
+            "nikl.orthography-0001"
+          ],
+          "value": "u fechado com lábios arredondados"
+        },
+        {
+          "authorship": "ai-proposed",
+          "field_name": "mnemonic",
+          "grounding_reference_ids": [
+            "unicode.hangul-17.0",
+            "unicode.uax15-r57",
+            "nikl.orthography-0001"
+          ],
+          "value": "Traço curto abaixo da linha horizontal afunda para u."
+        }
+      ],
+      "sequence": 11,
+      "source_entry_content_hash": "2200dd4c44bef4734692fab1cc87552431957b1682b1ec38b590eaf2a6e1d3b7",
+      "stage_id": "H1",
+      "uncertainties": []
+    },
+    {
+      "content_hash": "451a22c90d931e5efa98800bb3cac675d77e2e505d59ce1e08772aae0d7309e5",
+      "disagreements": [],
+      "item_key": "ko-hangul-0012",
+      "proposals": [
+        {
+          "authorship": "ai-proposed",
+          "field_name": "reading_or_name",
+          "grounding_reference_ids": [
+            "unicode.hangul-17.0",
+            "unicode.uax15-r57",
+            "nikl.orthography-0001"
+          ],
+          "value": "eu"
+        },
+        {
+          "authorship": "ai-proposed",
+          "field_name": "sound",
+          "grounding_reference_ids": [
+            "unicode.hangul-17.0",
+            "unicode.uax15-r57",
+            "nikl.orthography-0001"
+          ],
+          "value": "vogal fechada central sem arredondar os lábios"
+        },
+        {
+          "authorship": "ai-proposed",
+          "field_name": "mnemonic",
+          "grounding_reference_ids": [
+            "unicode.hangul-17.0",
+            "unicode.uax15-r57",
+            "nikl.orthography-0001"
+          ],
+          "value": "Linha horizontal reta: segure a boca firme para eu."
+        }
+      ],
+      "sequence": 12,
+      "source_entry_content_hash": "aba4d9692fdd0dd60ae0ac3d196a9d50b280f2984117f03ac239db7207cdfb79",
+      "stage_id": "H1",
+      "uncertainties": []
+    },
+    {
+      "content_hash": "ce15379d4a687bcdcc3b408b0b915563f09f650ab5a0a61437febf5b29f66b6d",
+      "disagreements": [],
+      "item_key": "ko-hangul-0013",
+      "proposals": [
+        {
+          "authorship": "ai-proposed",
+          "field_name": "reading_or_name",
+          "grounding_reference_ids": [
+            "unicode.hangul-17.0",
+            "unicode.uax15-r57",
+            "nikl.orthography-0001"
+          ],
+          "value": "i"
+        },
+        {
+          "authorship": "ai-proposed",
+          "field_name": "sound",
+          "grounding_reference_ids": [
+            "unicode.hangul-17.0",
+            "unicode.uax15-r57",
+            "nikl.orthography-0001"
+          ],
+          "value": "i fechado, parecido com i em vida"
+        },
+        {
+          "authorship": "ai-proposed",
+          "field_name": "mnemonic",
+          "grounding_reference_ids": [
+            "unicode.hangul-17.0",
+            "unicode.uax15-r57",
+            "nikl.orthography-0001"
+          ],
+          "value": "Linha vertical simples: fique ereto para i."
+        }
+      ],
+      "sequence": 13,
+      "source_entry_content_hash": "cd7e797da47176e98d813105c6a07c31834428fbc501c1a7c64fed0f9e32e3e1",
+      "stage_id": "H1",
+      "uncertainties": []
+    },
+    {
+      "content_hash": "8e703a174792bd4e181039b890a4f1a4debdaedd436bed86cf8eda35847a8819",
+      "disagreements": [],
+      "item_key": "ko-hangul-0014",
+      "proposals": [
+        {
+          "authorship": "ai-proposed",
+          "field_name": "reading_or_name",
+          "grounding_reference_ids": [
+            "unicode.hangul-17.0",
+            "unicode.uax15-r57",
+            "nikl.orthography-0001"
+          ],
+          "value": "ieung inicial silencioso"
+        },
+        {
+          "authorship": "ai-proposed",
+          "field_name": "sound",
+          "grounding_reference_ids": [
+            "unicode.hangul-17.0",
+            "unicode.uax15-r57",
+            "nikl.orthography-0001"
+          ],
+          "value": "sem som no início da sílaba"
+        },
+        {
+          "authorship": "ai-proposed",
+          "field_name": "mnemonic",
+          "grounding_reference_ids": [
+            "unicode.hangul-17.0",
+            "unicode.uax15-r57",
+            "nikl.orthography-0001"
+          ],
+          "value": "O círculo marca o lugar da consoante inicial quando a sílaba começa por vogal."
+        }
+      ],
+      "sequence": 14,
+      "source_entry_content_hash": "71086abeadfdb133c93f6e7961bb05c16dcf71727ea52fa0ff52b21860e8d52b",
+      "stage_id": "H2",
+      "uncertainties": []
+    },
+    {
+      "content_hash": "dd21737db45a5d96f9e10178425abce3a2c5a584c56312158c0dda701abba501",
+      "disagreements": [],
+      "item_key": "ko-hangul-0015",
+      "proposals": [
+        {
+          "authorship": "ai-proposed",
+          "field_name": "reading_or_name",
+          "grounding_reference_ids": [
+            "unicode.hangul-17.0",
+            "unicode.uax15-r57",
+            "nikl.orthography-0001"
+          ],
+          "value": "a em bloco vertical"
+        },
+        {
+          "authorship": "ai-proposed",
+          "field_name": "sound",
+          "grounding_reference_ids": [
+            "unicode.hangul-17.0",
+            "unicode.uax15-r57",
+            "nikl.orthography-0001"
+          ],
+          "value": "아 soa como a"
+        },
+        {
+          "authorship": "ai-proposed",
+          "field_name": "mnemonic",
+          "grounding_reference_ids": [
+            "unicode.hangul-17.0",
+            "unicode.uax15-r57",
+            "nikl.orthography-0001"
+          ],
+          "value": "Ieung silencioso mais a forma o bloco 아."
+        }
+      ],
+      "sequence": 15,
+      "source_entry_content_hash": "02be1d74b458bdd79a17e2b8f71f387cc4adb92dcfd897247f9e5ae7552275e5",
+      "stage_id": "H2",
+      "uncertainties": []
+    },
+    {
+      "content_hash": "7839708208ca71aebed4bbf34008d7e7749ea050cdacbd6811937a74bf2e2eef",
+      "disagreements": [],
+      "item_key": "ko-hangul-0016",
+      "proposals": [
+        {
+          "authorship": "ai-proposed",
+          "field_name": "reading_or_name",
+          "grounding_reference_ids": [
+            "unicode.hangul-17.0",
+            "unicode.uax15-r57",
+            "nikl.orthography-0001"
+          ],
+          "value": "o em bloco horizontal"
+        },
+        {
+          "authorship": "ai-proposed",
+          "field_name": "sound",
+          "grounding_reference_ids": [
+            "unicode.hangul-17.0",
+            "unicode.uax15-r57",
+            "nikl.orthography-0001"
+          ],
+          "value": "오 soa como o"
+        },
+        {
+          "authorship": "ai-proposed",
+          "field_name": "mnemonic",
+          "grounding_reference_ids": [
+            "unicode.hangul-17.0",
+            "unicode.uax15-r57",
+            "nikl.orthography-0001"
+          ],
+          "value": "Ieung silencioso mais o forma o bloco 오."
+        }
+      ],
+      "sequence": 16,
+      "source_entry_content_hash": "9376973b6f94b61c35725a8153ed8443471c771271a5aeeea3dddd8ea3e04564",
+      "stage_id": "H2",
+      "uncertainties": []
+    },
+    {
+      "content_hash": "f8be8bbdb1a30bba65e052c3ed6ddec1253f92e5b386025e140b8314c0f59c5e",
+      "disagreements": [],
+      "item_key": "ko-hangul-0017",
+      "proposals": [
+        {
+          "authorship": "ai-proposed",
+          "field_name": "reading_or_name",
+          "grounding_reference_ids": [
+            "unicode.hangul-17.0",
+            "unicode.uax15-r57",
+            "nikl.orthography-0001"
+          ],
+          "value": "nieun"
+        },
+        {
+          "authorship": "ai-proposed",
+          "field_name": "sound",
+          "grounding_reference_ids": [
+            "unicode.hangul-17.0",
+            "unicode.uax15-r57",
+            "nikl.orthography-0001"
+          ],
+          "value": "n inicial"
+        },
+        {
+          "authorship": "ai-proposed",
+          "field_name": "mnemonic",
+          "grounding_reference_ids": [
+            "unicode.hangul-17.0",
+            "unicode.uax15-r57",
+            "nikl.orthography-0001"
+          ],
+          "value": "Som de n: comece a sílaba pelo nariz."
+        }
+      ],
+      "sequence": 17,
+      "source_entry_content_hash": "d933d3ba474c4bf772254d8c5963161084d2c879b35dcaddd2509bd87e228fef",
+      "stage_id": "H3",
+      "uncertainties": []
+    },
+    {
+      "content_hash": "e00c198c1271d721cadd7ecefe732432731c12109cfaf4666f64ef19f51dc79b",
+      "disagreements": [],
+      "item_key": "ko-hangul-0018",
+      "proposals": [
+        {
+          "authorship": "ai-proposed",
+          "field_name": "reading_or_name",
+          "grounding_reference_ids": [
+            "unicode.hangul-17.0",
+            "unicode.uax15-r57",
+            "nikl.orthography-0001"
+          ],
+          "value": "mieum"
+        },
+        {
+          "authorship": "ai-proposed",
+          "field_name": "sound",
+          "grounding_reference_ids": [
+            "unicode.hangul-17.0",
+            "unicode.uax15-r57",
+            "nikl.orthography-0001"
+          ],
+          "value": "m inicial"
+        },
+        {
+          "authorship": "ai-proposed",
+          "field_name": "mnemonic",
+          "grounding_reference_ids": [
+            "unicode.hangul-17.0",
+            "unicode.uax15-r57",
+            "nikl.orthography-0001"
+          ],
+          "value": "Som de m: feche os lábios antes da vogal."
+        }
+      ],
+      "sequence": 18,
+      "source_entry_content_hash": "fd13cdd0231d7d94cf97b030e847ddf05f8aee820f174e6ff700d21b6974037d",
+      "stage_id": "H3",
+      "uncertainties": []
+    },
+    {
+      "content_hash": "7c9d0f13b331f051373d45a99fa2c1423bd35f4bca82c1e606b6538d00cff120",
+      "disagreements": [],
+      "item_key": "ko-hangul-0019",
+      "proposals": [
+        {
+          "authorship": "ai-proposed",
+          "field_name": "reading_or_name",
+          "grounding_reference_ids": [
+            "unicode.hangul-17.0",
+            "unicode.uax15-r57",
+            "nikl.orthography-0001"
+          ],
+          "value": "rieul"
+        },
+        {
+          "authorship": "ai-proposed",
+          "field_name": "sound",
+          "grounding_reference_ids": [
+            "unicode.hangul-17.0",
+            "unicode.uax15-r57",
+            "nikl.orthography-0001"
+          ],
+          "value": "r brando ou l conforme o contexto"
+        },
+        {
+          "authorship": "ai-proposed",
+          "field_name": "mnemonic",
+          "grounding_reference_ids": [
+            "unicode.hangul-17.0",
+            "unicode.uax15-r57",
+            "nikl.orthography-0001"
+          ],
+          "value": "Rieul desliza entre r fraco e l; confirme o som no contexto."
+        }
+      ],
+      "sequence": 19,
+      "source_entry_content_hash": "13296d8b42f287295895f182ca67ba6d848637cd9a6e6f50bf2329026bca5426",
+      "stage_id": "H3",
+      "uncertainties": []
+    },
+    {
+      "content_hash": "f236c0dfc64169e8cb735337740ca80383f32b6a1bb29da6923e70e6f3f2f87d",
+      "disagreements": [],
+      "item_key": "ko-hangul-0020",
+      "proposals": [
+        {
+          "authorship": "ai-proposed",
+          "field_name": "reading_or_name",
+          "grounding_reference_ids": [
+            "unicode.hangul-17.0",
+            "unicode.uax15-r57",
+            "nikl.orthography-0001"
+          ],
+          "value": "giyeok"
+        },
+        {
+          "authorship": "ai-proposed",
+          "field_name": "sound",
+          "grounding_reference_ids": [
+            "unicode.hangul-17.0",
+            "unicode.uax15-r57",
+            "nikl.orthography-0001"
+          ],
+          "value": "g ou k leve no início"
+        },
+        {
+          "authorship": "ai-proposed",
+          "field_name": "mnemonic",
+          "grounding_reference_ids": [
+            "unicode.hangul-17.0",
+            "unicode.uax15-r57",
+            "nikl.orthography-0001"
+          ],
+          "value": "Som leve entre g e k antes da vogal; a aspiração forte aparece em outra letra."
+        }
+      ],
+      "sequence": 20,
+      "source_entry_content_hash": "70b88940c659fd5152e5da863e532b29843b3f4567c23d26b5dc7f0b9e594359",
+      "stage_id": "H3",
+      "uncertainties": []
+    },
+    {
+      "content_hash": "8d348ca3c73ff45a88162f3ed82d85813106353913bb758171f0c302ad6fea49",
+      "disagreements": [],
+      "item_key": "ko-hangul-0021",
+      "proposals": [
+        {
+          "authorship": "ai-proposed",
+          "field_name": "reading_or_name",
+          "grounding_reference_ids": [
+            "unicode.hangul-17.0",
+            "unicode.uax15-r57",
+            "nikl.orthography-0001"
+          ],
+          "value": "digeut"
+        },
+        {
+          "authorship": "ai-proposed",
+          "field_name": "sound",
+          "grounding_reference_ids": [
+            "unicode.hangul-17.0",
+            "unicode.uax15-r57",
+            "nikl.orthography-0001"
+          ],
+          "value": "d ou t leve no início"
+        },
+        {
+          "authorship": "ai-proposed",
+          "field_name": "mnemonic",
+          "grounding_reference_ids": [
+            "unicode.hangul-17.0",
+            "unicode.uax15-r57",
+            "nikl.orthography-0001"
+          ],
+          "value": "Som leve entre d e t antes da vogal; a aspiração forte aparece em outra letra."
+        }
+      ],
+      "sequence": 21,
+      "source_entry_content_hash": "6f5f72221223d8507a1d69360e786e069e2ad10eaf67ae5a492fbf9fbe961263",
+      "stage_id": "H3",
+      "uncertainties": []
+    },
+    {
+      "content_hash": "e5dd5500374d7d5bc0dab0a38ba0c868e62c15601fbe7d2567d1b8f95295d4a8",
+      "disagreements": [],
+      "item_key": "ko-hangul-0022",
+      "proposals": [
+        {
+          "authorship": "ai-proposed",
+          "field_name": "reading_or_name",
+          "grounding_reference_ids": [
+            "unicode.hangul-17.0",
+            "unicode.uax15-r57",
+            "nikl.orthography-0001"
+          ],
+          "value": "bieup"
+        },
+        {
+          "authorship": "ai-proposed",
+          "field_name": "sound",
+          "grounding_reference_ids": [
+            "unicode.hangul-17.0",
+            "unicode.uax15-r57",
+            "nikl.orthography-0001"
+          ],
+          "value": "b ou p leve no início"
+        },
+        {
+          "authorship": "ai-proposed",
+          "field_name": "mnemonic",
+          "grounding_reference_ids": [
+            "unicode.hangul-17.0",
+            "unicode.uax15-r57",
+            "nikl.orthography-0001"
+          ],
+          "value": "Som leve entre b e p antes da vogal; a aspiração forte aparece em outra letra."
+        }
+      ],
+      "sequence": 22,
+      "source_entry_content_hash": "ca1ee0b1296bc67b321fff562fe11ef502863f7180ab2fb463e7fea8d1a64a0c",
+      "stage_id": "H3",
+      "uncertainties": []
+    },
+    {
+      "content_hash": "bfb4c4d438c29367e631545128119bd87ed2c8604cbadf2a343b2293891c671b",
+      "disagreements": [],
+      "item_key": "ko-hangul-0023",
+      "proposals": [
+        {
+          "authorship": "ai-proposed",
+          "field_name": "reading_or_name",
+          "grounding_reference_ids": [
+            "unicode.hangul-17.0",
+            "unicode.uax15-r57",
+            "nikl.orthography-0001"
+          ],
+          "value": "jieut"
+        },
+        {
+          "authorship": "ai-proposed",
+          "field_name": "sound",
+          "grounding_reference_ids": [
+            "unicode.hangul-17.0",
+            "unicode.uax15-r57",
+            "nikl.orthography-0001"
+          ],
+          "value": "j ou ch leve no início"
+        },
+        {
+          "authorship": "ai-proposed",
+          "field_name": "mnemonic",
+          "grounding_reference_ids": [
+            "unicode.hangul-17.0",
+            "unicode.uax15-r57",
+            "nikl.orthography-0001"
+          ],
+          "value": "Som leve de j antes da vogal; contrastes fortes aparecem depois."
+        }
+      ],
+      "sequence": 23,
+      "source_entry_content_hash": "bdfb6132f3853ce130ded7df61d7bf91f294038ffb140ef652103965412ce18a",
+      "stage_id": "H3",
+      "uncertainties": []
+    },
+    {
+      "content_hash": "03c107e225ed34fe70fb59ea35692e762711c55b4d2fd451cc5b42c63df90cd4",
+      "disagreements": [],
+      "item_key": "ko-hangul-0024",
+      "proposals": [
+        {
+          "authorship": "ai-proposed",
+          "field_name": "reading_or_name",
+          "grounding_reference_ids": [
+            "unicode.hangul-17.0",
+            "unicode.uax15-r57",
+            "nikl.orthography-0001"
+          ],
+          "value": "siot"
+        },
+        {
+          "authorship": "ai-proposed",
+          "field_name": "sound",
+          "grounding_reference_ids": [
+            "unicode.hangul-17.0",
+            "unicode.uax15-r57",
+            "nikl.orthography-0001"
+          ],
+          "value": "s inicial"
+        },
+        {
+          "authorship": "ai-proposed",
+          "field_name": "mnemonic",
+          "grounding_reference_ids": [
+            "unicode.hangul-17.0",
+            "unicode.uax15-r57",
+            "nikl.orthography-0001"
+          ],
+          "value": "Som de s: solte ar estreito antes da vogal."
+        }
+      ],
+      "sequence": 24,
+      "source_entry_content_hash": "150d737b0a40d6ee4b5b26840c1efc52bdd730fa7ff3029b6ed504677f68ef56",
+      "stage_id": "H3",
+      "uncertainties": []
+    },
+    {
+      "content_hash": "9d8307d9ad203e41b919e9349b42efa57ba5e8b3f02576129b5ba675ef2818dd",
+      "disagreements": [],
+      "item_key": "ko-hangul-0025",
+      "proposals": [
+        {
+          "authorship": "ai-proposed",
+          "field_name": "reading_or_name",
+          "grounding_reference_ids": [
+            "unicode.hangul-17.0",
+            "unicode.uax15-r57",
+            "nikl.orthography-0001"
+          ],
+          "value": "hieut"
+        },
+        {
+          "authorship": "ai-proposed",
+          "field_name": "sound",
+          "grounding_reference_ids": [
+            "unicode.hangul-17.0",
+            "unicode.uax15-r57",
+            "nikl.orthography-0001"
+          ],
+          "value": "h inicial"
+        },
+        {
+          "authorship": "ai-proposed",
+          "field_name": "mnemonic",
+          "grounding_reference_ids": [
+            "unicode.hangul-17.0",
+            "unicode.uax15-r57",
+            "nikl.orthography-0001"
+          ],
+          "value": "Som de h: comece com sopro leve antes da vogal."
+        }
+      ],
+      "sequence": 25,
+      "source_entry_content_hash": "b1c9206e759e2c79b3035edfc02f8428b4421d3b7cc086ef20f737acccd526ed",
+      "stage_id": "H3",
+      "uncertainties": []
+    }
+  ],
+  "review_status": "needs_review",
+  "schema_version": 1,
+  "source": {
+    "family": "hangul",
+    "registry_content_hash": "89a520055cfd94eb086c9ed3e937499a71fbcb07c056e1916b645c3bd312d89d",
+    "registry_version": "korean-concepts-v1",
+    "source_file_name": "hangul-v1.json",
+    "source_file_sha256": "80716d1f19672777ab2516f1c592066e5f443dc86a1d9e64785be1867ba079b1",
+    "source_pack_content_hash": "2bdbfb60aaca1419c2bb20abc8fb9954941bc8f92cb2361c3bc778b01c9b599c",
+    "source_pack_version": "hangul-v1"
+  },
+  "stages": [
+    "H0",
+    "H1",
+    "H2",
+    "H3"
+  ]
+}
