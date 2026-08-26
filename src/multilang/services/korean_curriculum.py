@@ -7,6 +7,7 @@ from graphlib import CycleError, TopologicalSorter
 from hashlib import sha256
 import json
 from pathlib import Path
+import stat
 from typing import Final, Literal, Self, TypeVar
 import unicodedata
 
@@ -20,6 +21,8 @@ from pydantic import (
 )
 
 from multilang.domain.korean import (
+    KOREAN_FOUNDATION_DEFAULT_SOURCE,
+    KOREAN_FOUNDATION_HISTORY_SOURCE,
     KOREAN_LANGUAGE_CODE,
     KoreanConcept,
     KoreanCurriculumEvidence,
@@ -30,14 +33,22 @@ from multilang.domain.korean import (
 
 
 KOREAN_FOUNDATION_DATA_ROOT: Final = Path("data") / "korean_foundations"
-DEFAULT_KOREAN_CONCEPT_REGISTRY_PATH: Path = (
+KOREAN_CONCEPT_REGISTRY_V1_PATH: Final[Path] = (
     KOREAN_FOUNDATION_DATA_ROOT / "korean-concepts-v1.json"
 )
-DEFAULT_KOREAN_HANGUL_SOURCE_PACK_PATH: Path = (
+KOREAN_HANGUL_SOURCE_PACK_V1_PATH: Final[Path] = (
     KOREAN_FOUNDATION_DATA_ROOT / "hangul-v1.json"
 )
-DEFAULT_KOREAN_PRONUNCIATION_SOURCE_PACK_PATH: Path = (
+KOREAN_PRONUNCIATION_SOURCE_PACK_V1_PATH: Final[Path] = (
     KOREAN_FOUNDATION_DATA_ROOT / "pronunciation-i-plus-1-v1.json"
+)
+CURRENT_KOREAN_FOUNDATION_CANDIDATE_PATH: Final[Path] = (
+    KOREAN_FOUNDATION_DATA_ROOT / "current-candidate.json"
+)
+DEFAULT_KOREAN_CONCEPT_REGISTRY_PATH: Path = KOREAN_CONCEPT_REGISTRY_V1_PATH
+DEFAULT_KOREAN_HANGUL_SOURCE_PACK_PATH: Path = KOREAN_HANGUL_SOURCE_PACK_V1_PATH
+DEFAULT_KOREAN_PRONUNCIATION_SOURCE_PACK_PATH: Path = (
+    KOREAN_PRONUNCIATION_SOURCE_PACK_V1_PATH
 )
 
 KOREAN_MANIFEST_MAX_BYTES: Final = 1_048_576
@@ -64,6 +75,12 @@ _UNSAFE_TEXT_MARKERS: Final = (
     "javascript:",
     "data:text/html",
     "file://",
+)
+_CURRENT_CANDIDATE_MEMBER_NAMES: Final = (
+    "hangul-v2.json",
+    "pronunciation-i-plus-1-v2.json",
+    "korean-foundations-v2-curation.json",
+    "korean-foundations-v2-media.json",
 )
 
 _HANGUL_STAGE_CATEGORIES: Final[dict[str, tuple[str, ...]]] = {
@@ -1146,6 +1163,71 @@ class KoreanCurriculumValidation(_FrozenManifest):
     )
 
 
+class KoreanFoundationSourceBundle(_FrozenManifest):
+    """One resolved Korean foundation tuple from current candidates or v1 history."""
+
+    source_kind: Literal["current-candidate", "v1-history"]
+    source_root: str = Field(min_length=1, max_length=_MAX_TEXT_LENGTH)
+    bundle_sha256: str | None = Field(default=None, min_length=64, max_length=64)
+    bundle_manifest_sha256: str | None = Field(
+        default=None,
+        min_length=64,
+        max_length=64,
+    )
+    member_file_sha256: dict[str, str]
+    registry: KoreanConceptRegistry
+    hangul: KoreanHangulSourcePack
+    pronunciation: KoreanPronunciationSourcePack
+
+    @field_validator("source_root")
+    @classmethod
+    def source_root_must_be_fixed_project_path(cls, value: str) -> str:
+        if value != value.strip() or value.startswith(("/", "\\")):
+            raise ValueError("source root must be a fixed relative project path")
+        if ".." in Path(value).parts or ":" in value or "\\" in value:
+            raise ValueError("source root must be a fixed relative project path")
+        return value
+
+    @field_validator("bundle_sha256", "bundle_manifest_sha256")
+    @classmethod
+    def optional_bundle_hash_must_be_sha256(cls, value: str | None) -> str | None:
+        if value is None:
+            return None
+        return _sha256_text(value, field_name="bundle hash")
+
+    @field_validator("member_file_sha256")
+    @classmethod
+    def member_hashes_must_be_fixed(cls, value: dict[str, str]) -> dict[str, str]:
+        if not value:
+            raise ValueError("source bundle must declare member hashes")
+        for name, digest in value.items():
+            _identifier(name, field_name="member filename")
+            _sha256_text(digest, field_name="member file hash")
+        return value
+
+    @model_validator(mode="after")
+    def bundle_identity_must_be_consistent(self) -> Self:
+        if self.source_kind == KOREAN_FOUNDATION_DEFAULT_SOURCE:
+            if self.bundle_sha256 is None or self.bundle_manifest_sha256 is None:
+                raise ValueError("current candidate bundle requires bundle hashes")
+            if self.source_root != str(
+                KOREAN_FOUNDATION_DATA_ROOT
+                / "candidate-bundles"
+                / self.bundle_sha256
+            ):
+                raise ValueError("current candidate source root does not match bundle hash")
+        else:
+            if self.bundle_sha256 is not None or self.bundle_manifest_sha256 is not None:
+                raise ValueError("v1 history cannot carry current bundle hashes")
+            if self.source_root != str(KOREAN_FOUNDATION_DATA_ROOT):
+                raise ValueError("v1 history source root is invalid")
+        if self.hangul.registry_content_hash != self.registry.content_hash:
+            raise ValueError("Hangul pack registry hash mismatch")
+        if self.pronunciation.registry_content_hash != self.registry.content_hash:
+            raise ValueError("pronunciation pack registry hash mismatch")
+        return self
+
+
 _ManifestT = TypeVar("_ManifestT", bound=BaseModel)
 
 
@@ -1184,6 +1266,160 @@ def _load_fixed_manifest(path: Path, model_type: type[_ManifestT]) -> _ManifestT
         ) from exc
 
 
+def _read_regular_json_payload(path: Path) -> tuple[dict[str, object], bytes]:
+    try:
+        path_stat = path.lstat()
+    except FileNotFoundError as exc:
+        raise KoreanCurriculumError(
+            KoreanCurriculumReasonCode.MANIFEST_MISSING
+        ) from exc
+    except OSError as exc:
+        raise KoreanCurriculumError(
+            KoreanCurriculumReasonCode.MANIFEST_MALFORMED
+        ) from exc
+    if stat.S_ISLNK(path_stat.st_mode) or not stat.S_ISREG(path_stat.st_mode):
+        raise KoreanCurriculumError(KoreanCurriculumReasonCode.MANIFEST_MALFORMED)
+    if path_stat.st_size > KOREAN_MANIFEST_MAX_BYTES:
+        raise KoreanCurriculumError(KoreanCurriculumReasonCode.MANIFEST_OVERSIZED)
+    try:
+        raw = path.read_bytes()
+        if len(raw) > KOREAN_MANIFEST_MAX_BYTES:
+            raise KoreanCurriculumError(
+                KoreanCurriculumReasonCode.MANIFEST_OVERSIZED
+            )
+        payload = json.loads(raw.decode("utf-8"))
+    except KoreanCurriculumError:
+        raise
+    except (OSError, UnicodeDecodeError, json.JSONDecodeError, RecursionError) as exc:
+        raise KoreanCurriculumError(
+            KoreanCurriculumReasonCode.MANIFEST_MALFORMED
+        ) from exc
+    if not isinstance(payload, dict):
+        raise KoreanCurriculumError(KoreanCurriculumReasonCode.MANIFEST_INVALID)
+    return payload, raw
+
+
+def _sha256_bytes(raw: bytes) -> str:
+    return sha256(raw).hexdigest()
+
+
+def _require_sha256(value: object) -> str:
+    if not isinstance(value, str):
+        raise KoreanCurriculumError(KoreanCurriculumReasonCode.MANIFEST_INVALID)
+    try:
+        return _sha256_text(value, field_name="candidate hash")
+    except ValueError as exc:
+        raise KoreanCurriculumError(
+            KoreanCurriculumReasonCode.MANIFEST_INVALID
+        ) from exc
+
+
+def _load_current_candidate_payloads() -> tuple[
+    dict[str, object],
+    Path,
+    dict[str, object],
+    dict[str, dict[str, object]],
+    dict[str, str],
+]:
+    pointer, _ = _read_regular_json_payload(CURRENT_KOREAN_FOUNDATION_CANDIDATE_PATH)
+    if set(pointer) != {
+        "schema_version",
+        "bundle_sha256",
+        "bundle_relpath",
+        "bundle_manifest_sha256",
+    } or pointer.get("schema_version") != 1:
+        raise KoreanCurriculumError(KoreanCurriculumReasonCode.MANIFEST_INVALID)
+    bundle_sha256 = _require_sha256(pointer.get("bundle_sha256"))
+    bundle_manifest_sha256 = _require_sha256(pointer.get("bundle_manifest_sha256"))
+    bundle_relpath = pointer.get("bundle_relpath")
+    expected_relpath = f"candidate-bundles/{bundle_sha256}"
+    if bundle_relpath != expected_relpath:
+        raise KoreanCurriculumError(KoreanCurriculumReasonCode.MANIFEST_INVALID)
+
+    bundle_root = KOREAN_FOUNDATION_DATA_ROOT / expected_relpath
+    try:
+        root_stat = bundle_root.lstat()
+    except OSError as exc:
+        raise KoreanCurriculumError(
+            KoreanCurriculumReasonCode.MANIFEST_MISSING
+        ) from exc
+    if stat.S_ISLNK(root_stat.st_mode) or not stat.S_ISDIR(root_stat.st_mode):
+        raise KoreanCurriculumError(KoreanCurriculumReasonCode.MANIFEST_MALFORMED)
+
+    manifest, manifest_raw = _read_regular_json_payload(bundle_root / "bundle-manifest.json")
+    if _sha256_bytes(manifest_raw) != bundle_manifest_sha256:
+        raise KoreanCurriculumError(KoreanCurriculumReasonCode.MANIFEST_INVALID)
+    if (
+        manifest.get("bundle_sha256") != bundle_sha256
+        or manifest.get("candidate_only") is not True
+        or manifest.get("review_status") != "needs_review"
+        or manifest.get("promotion_authority") is not False
+    ):
+        raise KoreanCurriculumError(KoreanCurriculumReasonCode.MANIFEST_INVALID)
+    member_declarations = manifest.get("members")
+    if not isinstance(member_declarations, list) or tuple(
+        item.get("name") if isinstance(item, dict) else None
+        for item in member_declarations
+    ) != _CURRENT_CANDIDATE_MEMBER_NAMES:
+        raise KoreanCurriculumError(KoreanCurriculumReasonCode.MANIFEST_INVALID)
+    if any(
+        not isinstance(item, dict) or set(item) != {"name", "sha256"}
+        for item in member_declarations
+    ):
+        raise KoreanCurriculumError(KoreanCurriculumReasonCode.MANIFEST_INVALID)
+
+    members: dict[str, dict[str, object]] = {}
+    member_hashes: dict[str, str] = {}
+    for declaration in member_declarations:
+        name = str(declaration["name"])
+        expected_hash = _require_sha256(declaration["sha256"])
+        payload, raw = _read_regular_json_payload(bundle_root / name)
+        if _sha256_bytes(raw) != expected_hash:
+            raise KoreanCurriculumError(KoreanCurriculumReasonCode.MANIFEST_INVALID)
+        members[name] = payload
+        member_hashes[name] = expected_hash
+    return pointer, bundle_root, manifest, members, member_hashes
+
+
+def _validate_current_candidate_sidecars(members: dict[str, dict[str, object]]) -> None:
+    curation = members["korean-foundations-v2-curation.json"]
+    media = members["korean-foundations-v2-media.json"]
+    records = curation.get("records")
+    slots = media.get("slots")
+    if (
+        curation.get("manifest_version") != "korean-foundations-v2-curation"
+        or curation.get("candidate_only") is not True
+        or not isinstance(records, list)
+        or len(records) != 139
+        or media.get("manifest_version") != "korean-foundations-v2-media"
+        or media.get("candidate_only") is not True
+        or not isinstance(slots, list)
+        or len(slots) != 509
+    ):
+        raise KoreanCurriculumError(KoreanCurriculumReasonCode.MANIFEST_INVALID)
+    if any(
+        not isinstance(record, dict)
+        or not isinstance(record.get("gates"), list)
+        or any(
+            not isinstance(gate, dict)
+            or gate.get("status") != "needs_review"
+            or gate.get("reviewer_id") is not None
+            or gate.get("reviewed_at") is not None
+            for gate in record["gates"]
+        )
+        for record in records
+    ):
+        raise KoreanCurriculumError(KoreanCurriculumReasonCode.MANIFEST_INVALID)
+    if any(
+        not isinstance(slot, dict)
+        or slot.get("status") != "needs_review"
+        or slot.get("artifact_sha256") is not None
+        or slot.get("review_receipts") != []
+        for slot in slots
+    ):
+        raise KoreanCurriculumError(KoreanCurriculumReasonCode.MANIFEST_INVALID)
+
+
 def load_korean_concept_registry() -> KoreanConceptRegistry:
     """Load the only supported concept registry from its fixed project path."""
 
@@ -1193,22 +1429,101 @@ def load_korean_concept_registry() -> KoreanConceptRegistry:
     )
 
 
-def load_korean_hangul_source_pack() -> KoreanHangulSourcePack:
-    """Load the only supported Hangul source pack from its fixed project path."""
+def load_korean_current_foundation_bundle() -> KoreanFoundationSourceBundle:
+    """Load the current v2 candidate tuple through one fixed atomic pointer."""
 
-    return _load_fixed_manifest(
+    _, bundle_root, _, members, member_hashes = _load_current_candidate_payloads()
+    _validate_current_candidate_sidecars(members)
+    registry = load_korean_concept_registry()
+    try:
+        hangul = KoreanHangulSourcePack.model_validate(members["hangul-v2.json"])
+        pronunciation = KoreanPronunciationSourcePack.model_validate(
+            members["pronunciation-i-plus-1-v2.json"]
+        )
+    except (ValidationError, TypeError, ValueError) as exc:
+        raise KoreanCurriculumError(
+            KoreanCurriculumReasonCode.MANIFEST_INVALID
+        ) from exc
+    if (
+        hangul.source_pack_version != "hangul-v2"
+        or pronunciation.source_pack_version != "pronunciation-i-plus-1-v2"
+        or len(hangul.entries) != 92
+        or len(pronunciation.entries) != 47
+    ):
+        raise KoreanCurriculumError(KoreanCurriculumReasonCode.MANIFEST_INVALID)
+    return KoreanFoundationSourceBundle(
+        source_kind=KOREAN_FOUNDATION_DEFAULT_SOURCE,
+        source_root=str(bundle_root),
+        bundle_sha256=bundle_root.name,
+        bundle_manifest_sha256=_sha256_bytes(
+            (bundle_root / "bundle-manifest.json").read_bytes()
+        ),
+        member_file_sha256=member_hashes,
+        registry=registry,
+        hangul=hangul,
+        pronunciation=pronunciation,
+    )
+
+
+def load_korean_v1_foundation_bundle() -> KoreanFoundationSourceBundle:
+    """Load immutable historical v1 manifests explicitly, never as production default."""
+
+    registry = _load_fixed_manifest(
+        DEFAULT_KOREAN_CONCEPT_REGISTRY_PATH,
+        KoreanConceptRegistry,
+    )
+    hangul = _load_fixed_manifest(
         DEFAULT_KOREAN_HANGUL_SOURCE_PACK_PATH,
         KoreanHangulSourcePack,
     )
-
-
-def load_korean_pronunciation_source_pack() -> KoreanPronunciationSourcePack:
-    """Load the only supported pronunciation pack from its fixed project path."""
-
-    return _load_fixed_manifest(
+    pronunciation = _load_fixed_manifest(
         DEFAULT_KOREAN_PRONUNCIATION_SOURCE_PACK_PATH,
         KoreanPronunciationSourcePack,
     )
+    return KoreanFoundationSourceBundle(
+        source_kind=KOREAN_FOUNDATION_HISTORY_SOURCE,
+        source_root=str(KOREAN_FOUNDATION_DATA_ROOT),
+        bundle_sha256=None,
+        bundle_manifest_sha256=None,
+        member_file_sha256={
+            "korean-concepts-v1.json": _sha256_bytes(
+                DEFAULT_KOREAN_CONCEPT_REGISTRY_PATH.read_bytes()
+            ),
+            "hangul-v1.json": _sha256_bytes(
+                DEFAULT_KOREAN_HANGUL_SOURCE_PACK_PATH.read_bytes()
+            ),
+            "pronunciation-i-plus-1-v1.json": _sha256_bytes(
+                DEFAULT_KOREAN_PRONUNCIATION_SOURCE_PACK_PATH.read_bytes()
+            ),
+        },
+        registry=registry,
+        hangul=hangul,
+        pronunciation=pronunciation,
+    )
+
+
+def load_korean_v1_hangul_source_pack() -> KoreanHangulSourcePack:
+    """Load historical Hangul v1 explicitly."""
+
+    return load_korean_v1_foundation_bundle().hangul
+
+
+def load_korean_v1_pronunciation_source_pack() -> KoreanPronunciationSourcePack:
+    """Load historical pronunciation v1 explicitly."""
+
+    return load_korean_v1_foundation_bundle().pronunciation
+
+
+def load_korean_hangul_source_pack() -> KoreanHangulSourcePack:
+    """Load the current default Hangul source pack from the candidate bundle."""
+
+    return load_korean_current_foundation_bundle().hangul
+
+
+def load_korean_pronunciation_source_pack() -> KoreanPronunciationSourcePack:
+    """Load the current default pronunciation source pack from the candidate bundle."""
+
+    return load_korean_current_foundation_bundle().pronunciation
 
 
 def _raise(reason_code: KoreanCurriculumReasonCode) -> None:
@@ -1352,17 +1667,22 @@ def validate_korean_foundation_pack(
 
 
 __all__ = [
+    "CURRENT_KOREAN_FOUNDATION_CANDIDATE_PATH",
     "DEFAULT_KOREAN_CONCEPT_REGISTRY_PATH",
     "DEFAULT_KOREAN_HANGUL_SOURCE_PACK_PATH",
     "DEFAULT_KOREAN_PRONUNCIATION_SOURCE_PACK_PATH",
+    "KOREAN_CONCEPT_REGISTRY_V1_PATH",
     "KOREAN_FOUNDATION_DATA_ROOT",
+    "KOREAN_HANGUL_SOURCE_PACK_V1_PATH",
     "KOREAN_MANIFEST_MAX_BYTES",
+    "KOREAN_PRONUNCIATION_SOURCE_PACK_V1_PATH",
     "KoreanConceptRegistry",
     "KoreanCurriculumError",
     "KoreanCurriculumReasonCode",
     "KoreanCurriculumValidation",
     "KoreanFoundationEntry",
     "KoreanFoundationFamily",
+    "KoreanFoundationSourceBundle",
     "KoreanHangulSourceEntry",
     "KoreanHangulSourcePack",
     "KoreanMediaSlotReference",
@@ -1373,8 +1693,12 @@ __all__ = [
     "KoreanSourceProvenance",
     "KoreanStageCoverage",
     "korean_canonical_json_sha256",
+    "load_korean_current_foundation_bundle",
     "load_korean_concept_registry",
     "load_korean_hangul_source_pack",
     "load_korean_pronunciation_source_pack",
+    "load_korean_v1_foundation_bundle",
+    "load_korean_v1_hangul_source_pack",
+    "load_korean_v1_pronunciation_source_pack",
     "validate_korean_foundation_pack",
 ]

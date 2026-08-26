@@ -64,6 +64,8 @@ def test_korean_constants_separate_canonical_code_from_provider_locale() -> None
     assert api.KOREAN_LANGUAGE_CODE == "ko"
     assert api.KOREAN_PROVIDER_LOCALE == "ko-KR"
     assert api.KOREAN_MORPHOLOGY_POLICY_VERSION
+    assert api.KOREAN_FOUNDATION_DEFAULT_SOURCE == "current-candidate"
+    assert api.KOREAN_FOUNDATION_HISTORY_SOURCE == "v1-history"
 
 
 def test_nfd_and_nfc_share_canonical_value_key_while_submission_is_preserved() -> None:

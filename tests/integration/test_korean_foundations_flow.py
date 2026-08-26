@@ -47,6 +47,17 @@ LOCKED_EXPORT_NAMES = {
     "pronunciation-i-plus-1-csv",
     "pronunciation-i-plus-1-tsv",
 }
+CURRENT_BUNDLE_SHA256 = (
+    "36c1442b161fb3d8529678099b4df1c93b43fb2456a24260ac2942787b7f44f0"
+)
+V2_CANDIDATE_FILENAMES = (
+    "current-candidate.json",
+    "bundle-manifest.json",
+    "hangul-v2.json",
+    "pronunciation-i-plus-1-v2.json",
+    "korean-foundations-v2-curation.json",
+    "korean-foundations-v2-media.json",
+)
 
 
 def _load_private_helper(filename: str, module_name: str) -> ModuleType:
@@ -397,6 +408,14 @@ def test_complete_cli_flow_through_active_provenance_and_all_six_exports(
         "evidence_index_sha256": state.fixture.index_sha256,
         "declared_member_count": "519",
     }
+    index = json.loads(state.fixture.index_path.read_text(encoding="utf-8"))
+    assert tuple(
+        binding["filename"] for binding in index["candidate_bindings"]
+    ) == V2_CANDIDATE_FILENAMES
+    assert index["candidate_bindings"][0]["bundle_sha256"] == CURRENT_BUNDLE_SHA256
+    assert "hangul-v1.json" not in json.dumps(index, sort_keys=True)
+    curriculum_api = import_module("multilang.services.korean_curriculum")
+    assert curriculum_api.load_korean_v1_foundation_bundle().source_kind == "v1-history"
 
     receipt = _invoke(
         state.app,
@@ -451,6 +470,16 @@ def test_complete_cli_flow_through_active_provenance_and_all_six_exports(
     )
     assert prepared_manifest["bundle_sha256"] == prepared["bundle_sha256"]
     assert prepared_manifest["evidence_bundle_sha256"] == receipt["bundle_sha256"]
+    prepared_relpaths = {member["relpath"] for member in prepared_manifest["members"]}
+    assert "content/hangul-v2.json" in prepared_relpaths
+    assert "content/pronunciation-i-plus-1-v2.json" in prepared_relpaths
+    assert "content/korean-foundations-v2-curation.json" in prepared_relpaths
+    assert "content/korean-foundations-v2-media.json" in prepared_relpaths
+    assert "content/korean-concepts-v1.json" in prepared_relpaths
+    assert not any(
+        "-v1" in relpath and relpath != "content/korean-concepts-v1.json"
+        for relpath in prepared_relpaths
+    )
     assert state.paths.active_pointer.exists() is False
     before_verify = state.snapshot_helpers._tree_state(state.fixture.project_root)
     with monkeypatch.context() as poison:
@@ -555,6 +584,17 @@ def test_complete_cli_flow_through_active_provenance_and_all_six_exports(
         )
         for family in state.export_api.KoreanFoundationFamily
     }
+    assert bundles["hangul"].source_pack_version == "hangul-v2"
+    assert bundles["pronunciation"].source_pack_version == "pronunciation-i-plus-1-v2"
+    assert bundles["hangul"].rows[0].source_pack_version == "hangul-v2"
+    assert bundles["pronunciation"].rows[0].source_pack_version == (
+        "pronunciation-i-plus-1-v2"
+    )
+    assert state.export_api.stable_korean_foundation_guid(
+        family=state.export_api.KoreanFoundationFamily.HANGUL,
+        source_pack_version="hangul-v2",
+        item_key="ko-hangul-0001",
+    ) == sha256(b"hangul|hangul-v2|ko-hangul-0001").hexdigest()[:32]
     inspection_workspace = tmp_path / "independent-apkg-inspection"
     inspection_workspace.mkdir()
     for (family, format_name), destination in paths.items():
@@ -634,7 +674,7 @@ def test_cli_verify_prepared_drift_is_write_poisoned_and_zero_write(
     if drift_case == "missing-member":
         (target / "review" / "rights.json").unlink()
     elif drift_case == "source-member":
-        path = target / "content" / "hangul-v1.json"
+        path = target / "content" / "hangul-v2.json"
         path.write_bytes(path.read_bytes() + b" ")
     elif drift_case == "media-member":
         path = next(

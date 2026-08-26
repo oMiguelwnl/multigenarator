@@ -436,6 +436,10 @@ def test_curation_script_exposes_only_fixed_operations_and_enum_targets() -> Non
         "assemble",
         "validate-drafts",
         "check-selection",
+        "promote",
+        "verify-promoted",
+        "regenerate-requests",
+        "verify-requests",
     ):
         assert operation in help_result.stdout
     for forbidden_option in (
@@ -906,4 +910,190 @@ def test_candidate_bundle_publication_refuses_conflicting_pointer(
     assert (
         exc_info.value.reason_code
         is module.KoreanFoundationAICurationReasonCode.CANDIDATE_POINTER_CONFLICT
+    )
+
+
+def test_regenerate_requests_fixed_operation_is_implemented() -> None:
+    module = importlib.import_module(
+        "multilang.services.korean_foundation_ai_curation"
+    )
+    regenerate = getattr(module, "regenerate_korean_foundation_review_requests", None)
+    verify = getattr(module, "verify_korean_foundation_review_requests", None)
+    assert callable(regenerate)
+    assert callable(verify)
+
+    help_result = subprocess.run(
+        [sys.executable, str(CURATION_SCRIPT), "--help"],
+        cwd=PROJECT_ROOT,
+        check=False,
+        capture_output=True,
+        text=True,
+    )
+    assert help_result.returncode == 0
+    assert "regenerate-requests" in help_result.stdout
+    assert "verify-requests" in help_result.stdout
+
+
+def _install_review_request_paths(
+    module: object,
+    monkeypatch: pytest.MonkeyPatch,
+    root: Path,
+) -> tuple[Path, Path]:
+    curriculum_path = root / "31-CURRICULUM-REVIEW.md"
+    audio_path = root / "31-AUDIO-PLAYBACK-REVIEW.md"
+    monkeypatch.setattr(
+        module,
+        "_CURRICULUM_REVIEW_REQUEST_PATH",
+        curriculum_path,
+    )
+    monkeypatch.setattr(
+        module,
+        "_AUDIO_PLAYBACK_REVIEW_REQUEST_PATH",
+        audio_path,
+    )
+    return curriculum_path, audio_path
+
+
+def _extract_request_payload(path: Path) -> dict[str, object]:
+    text = path.read_text(encoding="utf-8")
+    assert text.count("```json\n") == 1
+    payload_text = text.split("```json\n", maxsplit=1)[1].split(
+        "\n```",
+        maxsplit=1,
+    )[0]
+    return json.loads(payload_text)
+
+
+def test_regenerate_requests_writes_complete_pending_request_files(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    module = importlib.import_module(
+        "multilang.services.korean_foundation_ai_curation"
+    )
+    regenerate = getattr(module, "regenerate_korean_foundation_review_requests", None)
+    verify = getattr(module, "verify_korean_foundation_review_requests", None)
+    assert callable(regenerate)
+    assert callable(verify)
+    curriculum_path, audio_path = _install_review_request_paths(
+        module,
+        monkeypatch,
+        tmp_path,
+    )
+
+    result = regenerate()
+    verified = verify()
+
+    assert result.content_hash == verified.content_hash
+    assert curriculum_path.is_file()
+    assert audio_path.is_file()
+    curriculum = _extract_request_payload(curriculum_path)
+    audio = _extract_request_payload(audio_path)
+    assert curriculum["request_status"] == "needs_review"
+    assert audio["request_status"] == "needs_review"
+    assert curriculum["candidate_bindings"] == audio["candidate_bindings"]
+    assert curriculum["coverage"]["item_count"] == 139
+    assert audio["coverage"]["asset_count"] == 509
+    assert audio["coverage"]["audio_asset_count"] == 233
+    assert result.curriculum_request_sha256 == sha256(curriculum_path.read_bytes()).hexdigest()
+    assert result.audio_playback_request_sha256 == sha256(audio_path.read_bytes()).hexdigest()
+
+
+def test_regenerate_requests_rejects_candidate_pointer_drift_before_write(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    module = importlib.import_module(
+        "multilang.services.korean_foundation_ai_curation"
+    )
+    regenerate = getattr(module, "regenerate_korean_foundation_review_requests", None)
+    assert callable(regenerate)
+    curriculum_path, audio_path = _install_review_request_paths(
+        module,
+        monkeypatch,
+        tmp_path,
+    )
+    monkeypatch.setattr(
+        module,
+        "read_current_korean_foundation_candidate",
+        lambda: (_ for _ in ()).throw(
+            module.KoreanFoundationAICurationError(
+                module.KoreanFoundationAICurationReasonCode.CANDIDATE_POINTER_INVALID
+            )
+        ),
+    )
+
+    def reject_write(*args: object, **kwargs: object) -> None:
+        raise AssertionError("regeneration wrote before candidate validation")
+
+    monkeypatch.setattr(module, "_write_review_request_pair", reject_write)
+
+    with pytest.raises(module.KoreanFoundationAICurationError):
+        regenerate()
+    assert not curriculum_path.exists()
+    assert not audio_path.exists()
+
+
+def test_regenerate_requests_rejects_symlink_candidate_pointer(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    module = importlib.import_module(
+        "multilang.services.korean_foundation_ai_curation"
+    )
+    regenerate = getattr(module, "regenerate_korean_foundation_review_requests", None)
+    assert callable(regenerate)
+    _install_candidate_paths(module, monkeypatch, tmp_path)
+    _install_review_request_paths(module, monkeypatch, tmp_path)
+    pointer_path = module._CURRENT_CANDIDATE_POINTER_PATH
+    pointer_path.parent.mkdir(parents=True, exist_ok=True)
+    outside = tmp_path / "outside-pointer.json"
+    outside.write_text(
+        json.dumps(
+            {
+                "schema_version": 1,
+                "bundle_sha256": "0" * 64,
+                "bundle_relpath": f"candidate-bundles/{'0' * 64}",
+                "bundle_manifest_sha256": "1" * 64,
+            }
+        ),
+        encoding="utf-8",
+    )
+    pointer_path.symlink_to(outside)
+
+    with pytest.raises(module.KoreanFoundationAICurationError) as exc_info:
+        regenerate()
+    assert (
+        exc_info.value.reason_code
+        is module.KoreanFoundationAICurationReasonCode.CANDIDATE_POINTER_INVALID
+    )
+
+
+def test_verify_requests_rejects_request_drift(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    module = importlib.import_module(
+        "multilang.services.korean_foundation_ai_curation"
+    )
+    regenerate = getattr(module, "regenerate_korean_foundation_review_requests", None)
+    verify = getattr(module, "verify_korean_foundation_review_requests", None)
+    assert callable(regenerate)
+    assert callable(verify)
+    curriculum_path, _ = _install_review_request_paths(module, monkeypatch, tmp_path)
+    regenerate()
+    curriculum_path.write_text(
+        curriculum_path.read_text(encoding="utf-8").replace(
+            "needs_review",
+            "approved",
+            1,
+        ),
+        encoding="utf-8",
+    )
+
+    with pytest.raises(module.KoreanFoundationAICurationError) as exc_info:
+        verify()
+    assert (
+        exc_info.value.reason_code
+        is module.KoreanFoundationAICurationReasonCode.REVIEW_REQUEST_MISMATCH
     )

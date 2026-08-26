@@ -297,6 +297,9 @@ def test_media_public_contract_has_no_path_or_url_production_inputs() -> None:
     assert tuple(
         inspect.signature(api.load_pending_korean_foundation_media_manifest).parameters
     ) == ()
+    assert tuple(
+        inspect.signature(api.load_korean_v1_foundation_media_manifest).parameters
+    ) == ()
     assert tuple(inspect.signature(api.assert_korean_foundation_media_ready).parameters) == (
         "snapshot",
     )
@@ -328,6 +331,16 @@ def test_committed_media_candidate_has_every_slot_pending_inactive_and_byte_free
     hangul = curriculum.load_korean_hangul_source_pack()
     pronunciation = curriculum.load_korean_pronunciation_source_pack()
 
+    assert api.DEFAULT_KOREAN_FOUNDATION_MEDIA_MANIFEST_PATH == (
+        curriculum.CURRENT_KOREAN_FOUNDATION_CANDIDATE_PATH
+    )
+    assert manifest.manifest_version == "korean-foundations-v2-media"
+    assert manifest.hangul_source_pack_version == "hangul-v2"
+    assert manifest.pronunciation_source_pack_version == "pronunciation-i-plus-1-v2"
+    history = api.load_korean_v1_foundation_media_manifest()
+    assert history.manifest_version == "korean-foundations-v1-media"
+    assert history.hangul_source_pack_version == "hangul-v1"
+    assert history.pronunciation_source_pack_version == "pronunciation-i-plus-1-v1"
     assert manifest.candidate_only is True
     assert len(manifest.slots) == 509
     assert sum(slot.required for slot in manifest.slots) == 325
@@ -586,7 +599,7 @@ def test_hash_text_provider_voice_ssml_prosody_format_and_version_drift_block(
         if slot.status == "approved" and slot.media_kind == "letter_audio"
     )
     mutations = {
-        "source_pack_version": "pronunciation-i-plus-1-v2",
+        "source_pack_version": "pronunciation-i-plus-1-v1",
         "source_content_sha256": "f" * 64,
         "display_text": "다른 글자",
         "spoken_text": "다른 발음",
@@ -710,10 +723,12 @@ def test_fixture_validation_does_not_mutate_candidates_pointer_or_call_resolver(
 ) -> None:
     api = _media()
     candidate_path = api.DEFAULT_KOREAN_FOUNDATION_MEDIA_MANIFEST_PATH
+    history_path = Path("data/korean_foundations/korean-foundations-v1-media.json")
     curation_path = Path(
         "data/korean_foundations/korean-foundations-v1-curation.json"
     )
-    before_media = candidate_path.read_bytes()
+    before_candidate = candidate_path.read_bytes()
+    before_history = history_path.read_bytes()
     before_curation = curation_path.read_bytes()
     pointer = Path("data/korean_foundations/active-foundations.json")
     assert not pointer.exists()
@@ -729,7 +744,8 @@ def test_fixture_validation_does_not_mutate_candidates_pointer_or_call_resolver(
     api.assert_korean_foundation_media_ready(snapshot)
 
     assert calls == 0
-    assert candidate_path.read_bytes() == before_media
+    assert candidate_path.read_bytes() == before_candidate
+    assert history_path.read_bytes() == before_history
     assert curation_path.read_bytes() == before_curation
     assert not pointer.exists()
 

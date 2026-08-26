@@ -1,8 +1,10 @@
 # Korean Foundation Curriculum Review Request
 
-This is a request contract only. It supplies no human or legal evidence. Every selector applies to every identity in the exact hash-bound candidate arrays described below; the projection digests make omissions or drift scanner-detectable.
+Review the exact v2 Hangul and pronunciation candidate identities, curriculum atomicity, Korean orthography/phonetics, and Portuguese policy.
 
-Place future evidence only at the fixed filenames listed in the JSON contract after Plan 31-08 defines their schemas. There is no source-location importer or alternate filename.
+This is a request contract only. It supplies no human, legal, media, playback, activation, or export evidence. Every selector applies to the exact current-candidate bundle and remains scanner-detectable.
+
+Place future evidence only at the fixed filenames listed in the JSON contract. There is no source-location importer or alternate filename.
 
 `review_status=needs_review`
 `human_checkpoint_count=0`
@@ -16,40 +18,49 @@ Place future evidence only at the fixed filenames listed in the JSON contract af
   "evidence_supplied": false,
   "human_checkpoint_count": 0,
   "candidate_bindings": {
-    "korean-concepts-v1.json": {
-      "filename": "korean-concepts-v1.json",
-      "version": "korean-concepts-v1",
-      "canonical_content_sha256": "89a520055cfd94eb086c9ed3e937499a71fbcb07c056e1916b645c3bd312d89d",
-      "file_sha256": "79e50d509d3dd732f7bcadc4568697747646af1f191fc0b59a8e94e0b6b18625",
-      "concept_count": 139
+    "current-candidate.json": {
+      "filename": "current-candidate.json",
+      "bundle_sha256": "36c1442b161fb3d8529678099b4df1c93b43fb2456a24260ac2942787b7f44f0",
+      "bundle_relpath": "candidate-bundles/36c1442b161fb3d8529678099b4df1c93b43fb2456a24260ac2942787b7f44f0",
+      "bundle_manifest_sha256": "2390974b9f48534665d474b9fe18290e28edc361aa3cc119481db70e44acfd40",
+      "file_sha256": "0fa9e0756ab59969dc55ab428544c18aad1d1d14631b0d2569a33823feb24518"
     },
-    "hangul-v1.json": {
-      "filename": "hangul-v1.json",
-      "version": "hangul-v1",
-      "canonical_content_sha256": "2bdbfb60aaca1419c2bb20abc8fb9954941bc8f92cb2361c3bc778b01c9b599c",
-      "file_sha256": "80716d1f19672777ab2516f1c592066e5f443dc86a1d9e64785be1867ba079b1",
+    "bundle-manifest.json": {
+      "filename": "bundle-manifest.json",
+      "bundle_sha256": "36c1442b161fb3d8529678099b4df1c93b43fb2456a24260ac2942787b7f44f0",
+      "selected_draft_manifest_sha256": "8f053a815b4b18c9e8004d295849f562989410f05f4a1cc8725bc37f8c7f26b5",
+      "draft_validation_sha256": "d254eac81d058ea6406d5d0d981480cce5d8968801116063d9835b1f7625bfe0",
+      "file_sha256": "2390974b9f48534665d474b9fe18290e28edc361aa3cc119481db70e44acfd40",
+      "total_record_count": 139,
+      "media_slot_count": 509
+    },
+    "hangul-v2.json": {
+      "filename": "hangul-v2.json",
+      "version": "hangul-v2",
+      "canonical_content_sha256": "15143e23dea2236b0ada6f3603f79babb52bc4a89213906084d16c8bf864843a",
+      "file_sha256": "63c36c50c0efa61f7ba76ebdf92ff174f79aadedb63b46d15da01599f2594f59",
       "item_count": 92
     },
-    "pronunciation-i-plus-1-v1.json": {
-      "filename": "pronunciation-i-plus-1-v1.json",
-      "version": "pronunciation-i-plus-1-v1",
-      "canonical_content_sha256": "641b06f4d1c05c70803b859aa2936fc517a1038ad190ac7c58574da8a93ea49e",
-      "file_sha256": "6a2eb0b6a0a467de6074ffafc2fb674a674ea96c3c2187f339d1c278aa8f55ec",
+    "pronunciation-i-plus-1-v2.json": {
+      "filename": "pronunciation-i-plus-1-v2.json",
+      "version": "pronunciation-i-plus-1-v2",
+      "canonical_content_sha256": "4cb7f0b2a453a61858bf6a4b15a95568328a7348ba164d6ef9fd2bdf68119682",
+      "file_sha256": "cdac65b7e3a9615e62f187dcf7c7f6c543a480710b618ce0c9eb580281cd955c",
       "item_count": 47
     },
-    "korean-foundations-v1-curation.json": {
-      "filename": "korean-foundations-v1-curation.json",
-      "version": "korean-foundations-v1-curation",
-      "canonical_content_sha256": "76d08bfa4c2780111a8d7fd89e73c86ee5393609ba1f40c003cc6e77745aff6b",
-      "file_sha256": "6c422c5c5edf581af39f91773b40f72ac5570b84b76cd38d6f18bea4ef190c00",
+    "korean-foundations-v2-curation.json": {
+      "filename": "korean-foundations-v2-curation.json",
+      "version": "korean-foundations-v2-curation",
+      "canonical_content_sha256": "08874c6f4c64240d79cbdb982c1aa0d8a886749bc8100da41036b7c1b8ba9b22",
+      "file_sha256": "faa233cdc67f99c28c3f203e1b206f4ad4f631bc34b8e2fbb970db336f1157db",
       "record_count": 139,
       "gate_count": 973
     },
-    "korean-foundations-v1-media.json": {
-      "filename": "korean-foundations-v1-media.json",
-      "version": "korean-foundations-v1-media",
-      "canonical_content_sha256": "e7ef7ed570b28ed70bb09a68426567ac5a2dc3df8bb33acb357d32c281e861dc",
-      "file_sha256": "9f53766ea174c963e4904dd6172e490079ad693aded8dcb025a952327c90f0e1",
+    "korean-foundations-v2-media.json": {
+      "filename": "korean-foundations-v2-media.json",
+      "version": "korean-foundations-v2-media",
+      "canonical_content_sha256": "8d860b5e41738d2322dc63eb220eb23de66f4b68b4ff1f9e3dd8979e90b5b55a",
+      "file_sha256": "e21c7a11006cf70a0559ec7fff7279b466097cf3bbc1fa092cee84e7b963e938",
       "asset_count": 509,
       "required_asset_count": 325
     }
@@ -121,9 +132,9 @@ Place future evidence only at the fixed filenames listed in the JSON contract af
       "hash_algorithm": "sha256-utf8-canonical-json"
     },
     "item_key_set_sha256": "197e248708bfa675c618631b00c5a8a4fc36246b21d1e4fa393905f0e8f86b7b",
-    "item_identity_set_sha256": "b5d0c55c4ecaf92651dde54b75a30261b2e9832a0eef1d4861d3e72481d0b27a",
-    "hangul_item_identity_sha256": "04471f50c11124d0b58b13008cbfee404fd2dc70b557f1ee8293a237064ca6ad",
-    "pronunciation_item_identity_sha256": "28e1d38b0200239865d88280351f30261b7c6394968e22a4e0b21a26538c52fa"
+    "item_identity_set_sha256": "06cc331130811e1c6a27081d86ca14a1afa1abd060fe485ca2c8d463a182375d",
+    "hangul_item_identity_sha256": "216c5923a3f7b46891bba14526d38f5ec43b5c2b9e2bebe77336329cc0f5ee36",
+    "pronunciation_item_identity_sha256": "b616562e591907343189e6f326870bc79080a8ee390380c1a109b122b6182841"
   },
   "gate_role_matrix": {
     "hangul": [
@@ -299,8 +310,8 @@ Place future evidence only at the fixed filenames listed in the JSON contract af
       "sequence": 1,
       "stage_id": "H0",
       "category_id": "jamo-unit",
-      "source_pack_version": "hangul-v1",
-      "source_content_sha256": "7f68f731516a1b8428bbe157ec45c8798bee9838b7e47473ae32bb81ade2c111",
+      "source_pack_version": "hangul-v2",
+      "source_content_sha256": "397f390fa320837ccdd12882af9015e0b7ab993c6f9dcc0a2c135d49cd6af038",
       "target_concept_id": "orthography.jamo.unit",
       "active_rule_ids": [
         "orthography.jamo.unit"
@@ -312,8 +323,8 @@ Place future evidence only at the fixed filenames listed in the JSON contract af
       "sequence": 47,
       "stage_id": "P13",
       "category_id": "rule-ordering-relation",
-      "source_pack_version": "pronunciation-i-plus-1-v1",
-      "source_content_sha256": "a148c652e9c17647f97e229c2673aeda3988be9cdcdf460f8a3090a1699873e8",
+      "source_pack_version": "pronunciation-i-plus-1-v2",
+      "source_content_sha256": "f17a60790b4cd659dbf14909d7e57d15480b630a831b752276384278ce1ab6bb",
       "target_concept_id": "phonology.p13.rule.ordering.relation",
       "active_rule_ids": [
         "phonology.p2.unreleased.coda",
@@ -326,4 +337,4 @@ Place future evidence only at the fixed filenames listed in the JSON contract af
 }
 ```
 
-The content and curriculum selectors cover all 92 Hangul candidates and all 47 P0-P13 pronunciation candidates. The global Portuguese policy remains unresolved under canonical language identity `pt`; this request selects no regional policy.
+This request selects no approval, regional policy, rights disposition, spoken-text result, media byte, activation, export, or production state.

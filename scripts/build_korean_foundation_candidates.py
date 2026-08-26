@@ -29,6 +29,8 @@ def _parser() -> argparse.ArgumentParser:
     commands.add_parser("assemble")
     commands.add_parser("validate-drafts")
     commands.add_parser("check-selection")
+    commands.add_parser("regenerate-requests")
+    commands.add_parser("verify-requests")
     for operation in ("promote", "verify-promoted"):
         command = commands.add_parser(operation)
         command.add_argument("--expected-draft-manifest-sha256", required=True)
@@ -57,6 +59,10 @@ def main() -> None:
         result = service.verify_promoted_korean_foundation_candidate(
             expected_draft_manifest_sha256=args.expected_draft_manifest_sha256
         )
+    elif args.operation == "regenerate-requests":
+        result = service.regenerate_korean_foundation_review_requests()
+    elif args.operation == "verify-requests":
+        result = service.verify_korean_foundation_review_requests()
     else:
         result = service.validate_korean_foundation_drafts()
     print(result.content_hash)

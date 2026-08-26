@@ -20,6 +20,8 @@ KOREAN_LANGUAGE_CODE: Final = "ko"
 KOREAN_PROVIDER_LOCALE: Final = "ko-KR"
 KOREAN_LANGUAGE_VARIANT: Final = "modern-standard-seoul"
 KOREAN_MORPHOLOGY_POLICY_VERSION: Final = "kiwi-top2-consensus-v1"
+KOREAN_FOUNDATION_DEFAULT_SOURCE: Final = "current-candidate"
+KOREAN_FOUNDATION_HISTORY_SOURCE: Final = "v1-history"
 
 KOREAN_LEXICAL_POS_TAGS: Final[frozenset[str]] = frozenset(
     {
@@ -786,6 +788,8 @@ class KoreanMatchResult(_FrozenContract):
 
 __all__ = [
     "KOREAN_LANGUAGE_CODE",
+    "KOREAN_FOUNDATION_DEFAULT_SOURCE",
+    "KOREAN_FOUNDATION_HISTORY_SOURCE",
     "KOREAN_LANGUAGE_VARIANT",
     "KOREAN_LEXICAL_POS_TAGS",
     "KOREAN_MORPHOLOGY_POLICY_VERSION",

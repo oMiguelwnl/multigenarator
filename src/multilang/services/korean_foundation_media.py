@@ -20,6 +20,7 @@ from pydantic import BaseModel, ConfigDict, Field, ValidationError, field_valida
 
 from multilang.domain.korean import KOREAN_PROVIDER_LOCALE
 from multilang.services.korean_curriculum import (
+    CURRENT_KOREAN_FOUNDATION_CANDIDATE_PATH,
     KoreanConceptRegistry,
     KoreanCurriculumError,
     KoreanFoundationFamily,
@@ -27,9 +28,8 @@ from multilang.services.korean_curriculum import (
     KoreanHangulSourcePack,
     KoreanPronunciationSourceEntry,
     KoreanPronunciationSourcePack,
-    load_korean_concept_registry,
-    load_korean_hangul_source_pack,
-    load_korean_pronunciation_source_pack,
+    load_korean_current_foundation_bundle,
+    load_korean_v1_foundation_bundle,
     validate_korean_foundation_pack,
 )
 from multilang.services.korean_foundation_snapshot import (
@@ -39,7 +39,13 @@ from multilang.services.korean_foundation_snapshot import (
 
 
 DEFAULT_KOREAN_FOUNDATION_MEDIA_MANIFEST_PATH: Final = (
+    CURRENT_KOREAN_FOUNDATION_CANDIDATE_PATH
+)
+_KOREAN_FOUNDATION_MEDIA_MANIFEST_V1_PATH: Final = (
     Path("data") / "korean_foundations" / "korean-foundations-v1-media.json"
+)
+_KOREAN_FOUNDATION_CURRENT_MEDIA_MEMBER: Final = (
+    "korean-foundations-v2-media.json"
 )
 _MEDIA_MANIFEST_MAX_BYTES: Final = 4 * 1_048_576
 _MAX_SLOTS: Final = 8_192
@@ -70,6 +76,10 @@ KoreanFoundationMediaStatus: TypeAlias = Literal[
     "needs_review",
     "approved",
     "rejected",
+]
+_MediaManifestVersion: TypeAlias = Literal[
+    "korean-foundations-v1-media",
+    "korean-foundations-v2-media",
 ]
 _MediaKind: TypeAlias = Literal[
     "picture",
@@ -148,6 +158,18 @@ _METADATA_HASH_FIELDS: Final = (
     "duration_ms",
     "artifact_sha256",
 )
+_MEDIA_MANIFEST_VERSION_BY_SOURCE_PACKS: Final[
+    dict[tuple[str, str], _MediaManifestVersion]
+] = {
+    ("hangul-v1", "pronunciation-i-plus-1-v1"): "korean-foundations-v1-media",
+    ("hangul-v2", "pronunciation-i-plus-1-v2"): "korean-foundations-v2-media",
+}
+_SOURCE_PACK_VERSIONS_BY_MEDIA_MANIFEST: Final[
+    dict[_MediaManifestVersion, tuple[str, str]]
+] = {
+    manifest_version: source_versions
+    for source_versions, manifest_version in _MEDIA_MANIFEST_VERSION_BY_SOURCE_PACKS.items()
+}
 
 
 class KoreanFoundationMediaReasonCode(str, Enum):
@@ -654,7 +676,7 @@ class KoreanFoundationMediaManifest(_FrozenMediaModel):
     """Complete media-slot join for both Korean foundation candidate packs."""
 
     schema_version: Literal[1] = 1
-    manifest_version: Literal["korean-foundations-v1-media"]
+    manifest_version: _MediaManifestVersion
     candidate_only: bool
     registry_version: str = Field(min_length=1, max_length=_MAX_IDENTIFIER_LENGTH)
     registry_content_sha256: str = Field(min_length=64, max_length=64)
@@ -709,9 +731,25 @@ class KoreanFoundationMediaManifest(_FrozenMediaModel):
 
     @model_validator(mode="after")
     def order_uniqueness_and_hash_must_be_deterministic(self) -> Self:
+        expected_hangul_version, expected_pronunciation_version = (
+            _SOURCE_PACK_VERSIONS_BY_MEDIA_MANIFEST[self.manifest_version]
+        )
+        if (
+            self.hangul_source_pack_version != expected_hangul_version
+            or self.pronunciation_source_pack_version != expected_pronunciation_version
+        ):
+            raise ValueError("media manifest source versions are mixed")
         slot_ids = tuple(slot.slot_id for slot in self.slots)
         basenames = tuple(slot.basename for slot in self.slots)
         relpaths = tuple(slot.storage_relpath for slot in self.slots)
+        for slot in self.slots:
+            expected_version = (
+                expected_hangul_version
+                if slot.family is KoreanFoundationFamily.HANGUL
+                else expected_pronunciation_version
+            )
+            if slot.source_pack_version != expected_version:
+                raise ValueError("media slot source version is mixed")
         if len(slot_ids) != len(set(slot_ids)):
             raise ValueError("media slot ids must be unique")
         if len(basenames) != len(set(basenames)):
@@ -761,6 +799,14 @@ def _build_pending_korean_foundation_media_manifest(
     hangul_pack: KoreanHangulSourcePack,
     pronunciation_pack: KoreanPronunciationSourcePack,
 ) -> KoreanFoundationMediaManifest:
+    source_versions = (
+        hangul_pack.source_pack_version,
+        pronunciation_pack.source_pack_version,
+    )
+    try:
+        manifest_version = _MEDIA_MANIFEST_VERSION_BY_SOURCE_PACKS[source_versions]
+    except KeyError as exc:
+        raise ValueError("unsupported Korean foundation source-pack tuple") from exc
     slots: list[KoreanFoundationMediaSlot] = []
     slot_sequence = 0
     for pack in (hangul_pack, pronunciation_pack):
@@ -788,7 +834,7 @@ def _build_pending_korean_foundation_media_manifest(
                 )
     payload: dict[str, object] = {
         "schema_version": 1,
-        "manifest_version": "korean-foundations-v1-media",
+        "manifest_version": manifest_version,
         "candidate_only": True,
         "registry_version": registry.registry_version,
         "registry_content_sha256": registry.content_hash,
@@ -816,8 +862,7 @@ def _load_media_manifest_bytes(raw: bytes) -> KoreanFoundationMediaManifest:
         ) from exc
 
 
-def _load_pending_media_manifest_file() -> KoreanFoundationMediaManifest:
-    path = DEFAULT_KOREAN_FOUNDATION_MEDIA_MANIFEST_PATH
+def _load_media_manifest_file(path: Path) -> KoreanFoundationMediaManifest:
     try:
         size = path.stat().st_size
     except FileNotFoundError as exc:
@@ -839,6 +884,17 @@ def _load_pending_media_manifest_file() -> KoreanFoundationMediaManifest:
     if len(raw) > _MEDIA_MANIFEST_MAX_BYTES:
         _raise(KoreanFoundationMediaReasonCode.MANIFEST_OVERSIZED)
     return _load_media_manifest_bytes(raw)
+
+
+def _assert_member_file_hash(path: Path, expected_hash: str) -> None:
+    try:
+        actual_hash = sha256(path.read_bytes()).hexdigest()
+    except OSError as exc:
+        raise KoreanFoundationMediaError(
+            KoreanFoundationMediaReasonCode.MANIFEST_MALFORMED
+        ) from exc
+    if actual_hash != expected_hash:
+        _raise(KoreanFoundationMediaReasonCode.MANIFEST_INTEGRITY_MISMATCH)
 
 
 def _expected_slot_rows(
@@ -898,16 +954,22 @@ def _validate_source_alignment(
 
 
 def load_pending_korean_foundation_media_manifest() -> KoreanFoundationMediaManifest:
-    """Load the fixed complete top-level candidate; never resolve production."""
+    """Load the fixed current-candidate bundle media member."""
 
-    manifest = _load_pending_media_manifest_file()
+    bundle = load_korean_current_foundation_bundle()
+    manifest_path = Path(bundle.source_root) / _KOREAN_FOUNDATION_CURRENT_MEDIA_MEMBER
+    _assert_member_file_hash(
+        manifest_path,
+        bundle.member_file_sha256[_KOREAN_FOUNDATION_CURRENT_MEDIA_MEMBER],
+    )
+    manifest = _load_media_manifest_file(manifest_path)
     if not manifest.candidate_only:
         _raise(KoreanFoundationMediaReasonCode.MANIFEST_INVALID)
     rows = _validate_source_alignment(
         manifest,
-        registry=load_korean_concept_registry(),
-        hangul_pack=load_korean_hangul_source_pack(),
-        pronunciation_pack=load_korean_pronunciation_source_pack(),
+        registry=bundle.registry,
+        hangul_pack=bundle.hangul,
+        pronunciation_pack=bundle.pronunciation,
     )
     for slot, (entry, source_slot, sequence) in zip(
         manifest.slots,
@@ -919,6 +981,20 @@ def load_pending_korean_foundation_media_manifest() -> KoreanFoundationMediaMani
             _raise(KoreanFoundationMediaReasonCode.MANIFEST_INVALID)
     if manifest.content_hash != korean_foundation_media_manifest_sha256(manifest):
         _raise(KoreanFoundationMediaReasonCode.MANIFEST_INTEGRITY_MISMATCH)
+    return manifest
+
+
+def load_korean_v1_foundation_media_manifest() -> KoreanFoundationMediaManifest:
+    """Load the immutable v1 media manifest explicitly for history."""
+
+    bundle = load_korean_v1_foundation_bundle()
+    manifest = _load_media_manifest_file(_KOREAN_FOUNDATION_MEDIA_MANIFEST_V1_PATH)
+    _validate_source_alignment(
+        manifest,
+        registry=bundle.registry,
+        hangul_pack=bundle.hangul,
+        pronunciation_pack=bundle.pronunciation,
+    )
     return manifest
 
 
@@ -1293,6 +1369,7 @@ __all__ = [
     "assert_korean_foundation_media_ready",
     "korean_foundation_media_manifest_sha256",
     "korean_foundation_media_metadata_sha256",
+    "load_korean_v1_foundation_media_manifest",
     "load_pending_korean_foundation_media_manifest",
     "resolve_active_korean_foundation_media",
     "resolve_korean_foundation_media",

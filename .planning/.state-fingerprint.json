@@ -1,7 +1,7 @@
 {
   "schemaVersion": 2,
   "algorithm": "sha256:v2:exists-content",
-  "hash": "ab24b1102015b70714ea370327d0bf3826ff4054aff0031214e47b1c0e985660",
+  "hash": "392b9e0ead9504398a6b042f4e2d66ac8d98415d9db9bbfbd6ef031dc57b3db6",
   "sources": {
     "ROADMAP.md": true,
     "SPEC.md": true,
@@ -10,16 +10,16 @@
   "files": {
     "ROADMAP.md": {
       "exists": true,
-      "hash": "449ab3afef05616bd6b7109f480f361f1572afbadd19b7fa20a42fdd1746fb72"
+      "hash": "6244dedeccf6651dff345e3df2514e3b4c42075638159eedbb797badd65bb9be"
     },
     "SPEC.md": {
       "exists": true,
-      "hash": "9d70f25b6f5a11a9567082fedbf8eeb520f0399f5fbc2cc9f6e39901e11404b8"
+      "hash": "fcead0667dc8ea9cf9e502d8bfbf8f0295f30e029969ebcb2e4eaf072ba8decb"
     },
     "config.json": {
       "exists": true,
       "hash": "420450d5a8017885257849b310c55d7702e7d2d1ceb893ce84838bb250d4e181"
     }
   },
-  "timestamp": "2026-08-24T15:16:15.538Z"
+  "timestamp": "2026-08-26T13:40:26.061Z"
 }

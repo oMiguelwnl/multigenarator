@@ -19,19 +19,16 @@ PHASE_ROOT = (
 )
 CURRICULUM_REQUEST = PHASE_ROOT / "31-CURRICULUM-REVIEW.md"
 AUDIO_REQUEST = PHASE_ROOT / "31-AUDIO-PLAYBACK-REVIEW.md"
-PLAN_PATH = PHASE_ROOT / "31-07-PLAN.md"
+PLAN_PATH = PHASE_ROOT / "31-22-PLAN.md"
+CURRENT_CANDIDATE = DATA_ROOT / "current-candidate.json"
 
-MANIFEST_FILENAMES = (
-    "korean-concepts-v1.json",
-    "hangul-v1.json",
-    "pronunciation-i-plus-1-v1.json",
-    "korean-foundations-v1-curation.json",
-    "korean-foundations-v1-media.json",
+MEMBER_FILENAMES = (
+    "hangul-v2.json",
+    "pronunciation-i-plus-1-v2.json",
+    "korean-foundations-v2-curation.json",
+    "korean-foundations-v2-media.json",
 )
-EXPECTED_FILE_SHA256 = {
-    "korean-concepts-v1.json": (
-        "79e50d509d3dd732f7bcadc4568697747646af1f191fc0b59a8e94e0b6b18625"
-    ),
+EXPECTED_V1_FILE_SHA256 = {
     "hangul-v1.json": (
         "80716d1f19672777ab2516f1c592066e5f443dc86a1d9e64785be1867ba079b1"
     ),
@@ -45,10 +42,7 @@ EXPECTED_FILE_SHA256 = {
         "9f53766ea174c963e4904dd6172e490079ad693aded8dcb025a952327c90f0e1"
     ),
 }
-EXPECTED_CANONICAL_SHA256 = {
-    "korean-concepts-v1.json": (
-        "89a520055cfd94eb086c9ed3e937499a71fbcb07c056e1916b645c3bd312d89d"
-    ),
+EXPECTED_V1_CANONICAL_SHA256 = {
     "hangul-v1.json": (
         "2bdbfb60aaca1419c2bb20abc8fb9954941bc8f92cb2361c3bc778b01c9b599c"
     ),
@@ -62,19 +56,12 @@ EXPECTED_CANONICAL_SHA256 = {
         "e7ef7ed570b28ed70bb09a68426567ac5a2dc3df8bb33acb357d32c281e861dc"
     ),
 }
-EXPECTED_VERSIONS = {
-    "korean-concepts-v1.json": "korean-concepts-v1",
-    "hangul-v1.json": "hangul-v1",
-    "pronunciation-i-plus-1-v1.json": "pronunciation-i-plus-1-v1",
-    "korean-foundations-v1-curation.json": "korean-foundations-v1-curation",
-    "korean-foundations-v1-media.json": "korean-foundations-v1-media",
-}
 EXPECTED_REQUEST_SHA256 = {
     "31-CURRICULUM-REVIEW.md": (
-        "788aea87abb9d710617b86d8e05878151184d9ec92e4d3f0e013747c3655ae57"
+        "df52d78f2bcd3a89e9589ea68d645df02841a2f9017394d14c833cb7580b36cc"
     ),
     "31-AUDIO-PLAYBACK-REVIEW.md": (
-        "867aeb8e2fc79257aa1f55661f2e59f644062cedacbe55f42a65cc2f7cc424c9"
+        "4e28149921c9602c78f1e15633923b55eaf572993fce506651d6d474acf73035"
     ),
 }
 
@@ -121,8 +108,8 @@ def _canonical_sha256(value: Any) -> str:
     return _sha256_bytes(encoded)
 
 
-def _load_json(filename: str) -> dict[str, Any]:
-    return json.loads((DATA_ROOT / filename).read_text(encoding="utf-8"))
+def _load_json(path: Path) -> dict[str, Any]:
+    return json.loads(path.read_text(encoding="utf-8"))
 
 
 def _load_request(path: Path) -> tuple[dict[str, Any], str]:
@@ -135,36 +122,60 @@ def _load_request(path: Path) -> tuple[dict[str, Any], str]:
     return json.loads(payload_text), text
 
 
-def _manifests() -> dict[str, dict[str, Any]]:
-    return {filename: _load_json(filename) for filename in MANIFEST_FILENAMES}
+def _candidate_bundle() -> tuple[dict[str, Any], Path, dict[str, Any], dict[str, dict[str, Any]]]:
+    pointer = _load_json(CURRENT_CANDIDATE)
+    bundle_root = DATA_ROOT / pointer["bundle_relpath"]
+    bundle_manifest = _load_json(bundle_root / "bundle-manifest.json")
+    members = {filename: _load_json(bundle_root / filename) for filename in MEMBER_FILENAMES}
+    return pointer, bundle_root, bundle_manifest, members
+
+
+def _member_manifests() -> dict[str, dict[str, Any]]:
+    return _candidate_bundle()[3]
 
 
 def _expected_candidate_bindings() -> dict[str, dict[str, Any]]:
-    manifests = _manifests()
+    pointer, bundle_root, bundle_manifest, members = _candidate_bundle()
     counts = {
-        "korean-concepts-v1.json": {"concept_count": 139},
-        "hangul-v1.json": {"item_count": 92},
-        "pronunciation-i-plus-1-v1.json": {"item_count": 47},
-        "korean-foundations-v1-curation.json": {
+        "hangul-v2.json": {"item_count": 92},
+        "pronunciation-i-plus-1-v2.json": {"item_count": 47},
+        "korean-foundations-v2-curation.json": {
             "record_count": 139,
             "gate_count": 973,
         },
-        "korean-foundations-v1-media.json": {
+        "korean-foundations-v2-media.json": {
             "asset_count": 509,
             "required_asset_count": 325,
         },
     }
     version_fields = {
-        "korean-concepts-v1.json": "registry_version",
-        "hangul-v1.json": "source_pack_version",
-        "pronunciation-i-plus-1-v1.json": "source_pack_version",
-        "korean-foundations-v1-curation.json": "manifest_version",
-        "korean-foundations-v1-media.json": "manifest_version",
+        "hangul-v2.json": "source_pack_version",
+        "pronunciation-i-plus-1-v2.json": "source_pack_version",
+        "korean-foundations-v2-curation.json": "manifest_version",
+        "korean-foundations-v2-media.json": "manifest_version",
     }
     bindings: dict[str, dict[str, Any]] = {}
-    for filename in MANIFEST_FILENAMES:
-        path = DATA_ROOT / filename
-        manifest = manifests[filename]
+    bindings["current-candidate.json"] = {
+        "filename": "current-candidate.json",
+        "bundle_sha256": pointer["bundle_sha256"],
+        "bundle_relpath": pointer["bundle_relpath"],
+        "bundle_manifest_sha256": pointer["bundle_manifest_sha256"],
+        "file_sha256": _sha256_bytes(CURRENT_CANDIDATE.read_bytes()),
+    }
+    bindings["bundle-manifest.json"] = {
+        "filename": "bundle-manifest.json",
+        "bundle_sha256": bundle_manifest["bundle_sha256"],
+        "selected_draft_manifest_sha256": bundle_manifest[
+            "selected_draft_manifest_sha256"
+        ],
+        "draft_validation_sha256": bundle_manifest["draft_validation_sha256"],
+        "file_sha256": _sha256_bytes((bundle_root / "bundle-manifest.json").read_bytes()),
+        "total_record_count": 139,
+        "media_slot_count": 509,
+    }
+    for filename in MEMBER_FILENAMES:
+        path = bundle_root / filename
+        manifest = members[filename]
         binding = {
             "filename": filename,
             "version": manifest[version_fields[filename]],
@@ -177,9 +188,10 @@ def _expected_candidate_bindings() -> dict[str, dict[str, Any]]:
 
 
 def _source_entries() -> list[dict[str, Any]]:
+    members = _member_manifests()
     return [
-        *_load_json("hangul-v1.json")["entries"],
-        *_load_json("pronunciation-i-plus-1-v1.json")["entries"],
+        *members["hangul-v2.json"]["entries"],
+        *members["pronunciation-i-plus-1-v2.json"]["entries"],
     ]
 
 
@@ -201,7 +213,7 @@ def _item_identity_rows() -> list[dict[str, Any]]:
 
 
 def _asset_identity_rows() -> list[dict[str, Any]]:
-    media = _load_json("korean-foundations-v1-media.json")
+    media = _member_manifests()["korean-foundations-v2-media.json"]
     return [
         {field: slot[field] for field in ASSET_IDENTITY_FIELDS}
         for slot in media["slots"]
@@ -231,7 +243,7 @@ def _expected_display_text(
 
 
 def _text_binding_rows() -> list[dict[str, str]]:
-    media = _load_json("korean-foundations-v1-media.json")
+    media = _member_manifests()["korean-foundations-v2-media.json"]
     entries = _entry_lookup()
     rows: list[dict[str, str]] = []
     for slot in media["slots"]:
@@ -258,6 +270,28 @@ def _assert_common_request_contract(payload: dict[str, Any]) -> None:
     assert payload["evidence_supplied"] is False
     assert payload["human_checkpoint_count"] == 0
     assert payload["candidate_bindings"] == _expected_candidate_bindings()
+
+
+def test_requests_bind_complete_candidate_sets() -> None:
+    curriculum, _ = _load_request(CURRICULUM_REQUEST)
+    audio, _ = _load_request(AUDIO_REQUEST)
+    pointer, _, bundle_manifest, members = _candidate_bundle()
+
+    assert curriculum["candidate_bindings"] == audio["candidate_bindings"]
+    assert curriculum["candidate_bindings"] == _expected_candidate_bindings()
+    assert pointer["bundle_sha256"] == bundle_manifest["bundle_sha256"]
+    assert tuple(member["name"] for member in bundle_manifest["members"]) == MEMBER_FILENAMES
+    assert members["hangul-v2.json"]["source_pack_version"] == "hangul-v2"
+    assert len(members["hangul-v2.json"]["entries"]) == 92
+    assert (
+        members["pronunciation-i-plus-1-v2.json"]["source_pack_version"]
+        == "pronunciation-i-plus-1-v2"
+    )
+    assert len(members["pronunciation-i-plus-1-v2.json"]["entries"]) == 47
+    assert members["korean-foundations-v2-curation.json"]["candidate_only"] is True
+    assert len(members["korean-foundations-v2-curation.json"]["records"]) == 139
+    assert members["korean-foundations-v2-media.json"]["candidate_only"] is True
+    assert len(members["korean-foundations-v2-media.json"]["slots"]) == 509
 
 
 def test_curriculum_request_binds_exact_candidate_versions_hashes_and_item_set() -> None:
@@ -510,7 +544,7 @@ def test_audio_request_binds_exact_asset_set_text_projection_and_counts() -> Non
     _assert_common_request_contract(payload)
 
     assets = _asset_identity_rows()
-    media = _load_json("korean-foundations-v1-media.json")
+    media = _member_manifests()["korean-foundations-v2-media.json"]
     slots = media["slots"]
     text_rows = _text_binding_rows()
     expected_coverage = {
@@ -888,24 +922,34 @@ def test_requests_remain_pending_without_fabricated_evidence_or_checkpoint() -> 
     ]
     plan_text = PLAN_PATH.read_text(encoding="utf-8")
     task_tags = re.findall(r"<task\b[^>]*>", plan_text)
-    assert len(task_tags) == 1
+    assert len(task_tags) == 2
     assert all('type="checkpoint' not in tag for tag in task_tags)
 
 
-def test_candidate_manifests_remain_byte_identical_and_pending() -> None:
-    manifests = _manifests()
-    for filename in MANIFEST_FILENAMES:
-        path = DATA_ROOT / filename
-        assert _sha256_bytes(path.read_bytes()) == EXPECTED_FILE_SHA256[filename]
-        assert manifests[filename]["content_hash"] == EXPECTED_CANONICAL_SHA256[
-            filename
+def test_candidate_bundle_remains_hash_bound_and_pending_without_v1_mutation() -> None:
+    pointer, bundle_root, bundle_manifest, manifests = _candidate_bundle()
+    assert set(pointer) == {
+        "schema_version",
+        "bundle_sha256",
+        "bundle_relpath",
+        "bundle_manifest_sha256",
+    }
+    assert pointer["bundle_relpath"] == f"candidate-bundles/{pointer['bundle_sha256']}"
+    assert _sha256_bytes((bundle_root / "bundle-manifest.json").read_bytes()) == pointer[
+        "bundle_manifest_sha256"
+    ]
+    assert bundle_manifest["candidate_only"] is True
+    assert bundle_manifest["review_status"] == "needs_review"
+    assert bundle_manifest["promotion_authority"] is False
+    for member in bundle_manifest["members"]:
+        assert set(member) == {"name", "sha256"}
+        assert _sha256_bytes((bundle_root / member["name"]).read_bytes()) == member[
+            "sha256"
         ]
-        binding = _expected_candidate_bindings()[filename]
-        assert binding["version"] == EXPECTED_VERSIONS[filename]
 
     for manifest_name in (
-        "hangul-v1.json",
-        "pronunciation-i-plus-1-v1.json",
+        "hangul-v2.json",
+        "pronunciation-i-plus-1-v2.json",
     ):
         manifest = manifests[manifest_name]
         assert manifest["review_status"] == "needs_review"
@@ -919,15 +963,20 @@ def test_candidate_manifests_remain_byte_identical_and_pending() -> None:
         gate["status"] == "needs_review"
         and gate["reviewer_id"] is None
         and gate["reviewed_at"] is None
-        for record in manifests["korean-foundations-v1-curation.json"]["records"]
+        for record in manifests["korean-foundations-v2-curation.json"]["records"]
         for gate in record["gates"]
     )
     assert all(
         slot["status"] == "needs_review"
         and slot["artifact_sha256"] is None
         and slot["review_receipts"] == []
-        for slot in manifests["korean-foundations-v1-media.json"]["slots"]
+        for slot in manifests["korean-foundations-v2-media.json"]["slots"]
     )
+    for filename, expected_hash in EXPECTED_V1_FILE_SHA256.items():
+        assert _sha256_bytes((DATA_ROOT / filename).read_bytes()) == expected_hash
+        assert _load_json(DATA_ROOT / filename)["content_hash"] == EXPECTED_V1_CANONICAL_SHA256[
+            filename
+        ]
 
 
 def test_request_coverage_reconciles_exact_item_asset_gate_and_role_counts() -> None:

@@ -650,6 +650,44 @@ def test_join_uses_one_typed_immutable_snapshot_for_exact_separate_rows(
     )
 
 
+def test_hangul_row_allows_blank_optional_sound_but_requires_core_copy(
+    tmp_path: Path,
+    approved_snapshot: object,
+) -> None:
+    api = _export()
+    source_entry = approved_snapshot.hangul_source_pack.entries[0]
+    entry = source_entry.model_copy(update={"sound": None})
+    strokes_content = _png_bytes()
+    audio_content = _pcm_wav_bytes()
+    media_by_slot = {
+        (entry.item_key, "strokes"): api.KoreanFoundationExportMedia(
+            item_key=entry.item_key,
+            media_kind="strokes",
+            basename="strokes.png",
+            path=tmp_path / "strokes.png",
+            sha256=sha256(strokes_content).hexdigest(),
+            content=strokes_content,
+        ),
+        (entry.item_key, "audio"): api.KoreanFoundationExportMedia(
+            item_key=entry.item_key,
+            media_kind="audio",
+            basename="audio.wav",
+            path=tmp_path / "audio.wav",
+            sha256=sha256(audio_content).hexdigest(),
+            content=audio_content,
+        ),
+    }
+
+    row = api._hangul_row_from_source(entry, media_by_slot)
+
+    assert row.sound == ""
+    assert row.ordered_fields()[4] == ""
+    for required_field in ("reading_or_name", "mnemonic"):
+        missing = source_entry.model_copy(update={required_field: None})
+        with pytest.raises(ValueError, match="learner_copy_missing"):
+            api._hangul_row_from_source(missing, media_by_slot)
+
+
 def test_guid_ignores_mutable_copy_template_and_media_filename_changes() -> None:
     api = _export()
     hangul = _hangul_row(api)
@@ -1095,7 +1133,7 @@ def test_version_item_and_reference_drift_fail_before_any_output(
     )
     first = bundle.rows[0]
     if mutation == "source_version":
-        changed = replace(first, source_pack_version="hangul-v2")
+        changed = replace(first, source_pack_version="hangul-v1")
     elif mutation == "item_key":
         changed = replace(first, item_key="ko-hangul-9999")
     else:

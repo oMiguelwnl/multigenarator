@@ -70,12 +70,19 @@ _ARCHIVE_SUFFIXES: Final = frozenset(
 _PHASE_RELPATH: Final = Path(
     ".planning/phases/31-hangul-and-pronunciation-i-plus-1"
 )
+_REGISTRY_FILENAME: Final = "korean-concepts-v1.json"
+_CURRENT_CANDIDATE_FILENAME: Final = "current-candidate.json"
+_BUNDLE_MANIFEST_FILENAME: Final = "bundle-manifest.json"
+_CANDIDATE_MEMBER_FILENAMES: Final = (
+    "hangul-v2.json",
+    "pronunciation-i-plus-1-v2.json",
+    "korean-foundations-v2-curation.json",
+    "korean-foundations-v2-media.json",
+)
 _CANDIDATE_FILENAMES: Final = (
-    "korean-concepts-v1.json",
-    "hangul-v1.json",
-    "pronunciation-i-plus-1-v1.json",
-    "korean-foundations-v1-curation.json",
-    "korean-foundations-v1-media.json",
+    _CURRENT_CANDIDATE_FILENAME,
+    _BUNDLE_MANIFEST_FILENAME,
+    *_CANDIDATE_MEMBER_FILENAMES,
 )
 _REQUEST_FILENAMES: Final = (
     "31-CURRICULUM-REVIEW.md",
@@ -1201,10 +1208,27 @@ def _read_receipt_authority(
         ):
             _raise(KoreanFoundationSnapshotReasonCode.ACTIVE_PRESTATE_DRIFT)
 
+        bundle_relpath = evidence._current_bundle_relpath(validated.layout.index)
+        registry_raw = evidence._read_regular_file(
+            evidence._candidate_source_path(
+                evidence_paths,
+                _REGISTRY_FILENAME,
+                bundle_relpath=bundle_relpath,
+            ),
+            paths=evidence_paths,
+            maximum_bytes=evidence._CANDIDATE_MAX_BYTES,
+            missing_reason=(
+                evidence.KoreanFoundationEvidenceReasonCode.SOURCE_BINDING_MISMATCH
+            ),
+        )
         candidate_raw: dict[str, bytes] = {}
         for binding in validated.layout.index.candidate_bindings:
             raw = evidence._read_regular_file(
-                paths.candidate_dir / binding.filename,
+                evidence._candidate_source_path(
+                    evidence_paths,
+                    binding.filename,
+                    bundle_relpath=bundle_relpath,
+                ),
                 paths=evidence_paths,
                 maximum_bytes=evidence._CANDIDATE_MAX_BYTES,
                 missing_reason=(
@@ -1248,26 +1272,26 @@ def _read_receipt_authority(
             _SnapshotCopyMember(
                 role="concept_registry",
                 relpath="content/korean-concepts-v1.json",
-                content=candidate_raw["korean-concepts-v1.json"],
+                content=registry_raw,
             ),
             _SnapshotCopyMember(
                 role="hangul_source_pack",
-                relpath="content/hangul-v1.json",
-                content=candidate_raw["hangul-v1.json"],
+                relpath="content/hangul-v2.json",
+                content=candidate_raw["hangul-v2.json"],
             ),
             _SnapshotCopyMember(
                 role="pronunciation_source_pack",
-                relpath="content/pronunciation-i-plus-1-v1.json",
-                content=candidate_raw["pronunciation-i-plus-1-v1.json"],
+                relpath="content/pronunciation-i-plus-1-v2.json",
+                content=candidate_raw["pronunciation-i-plus-1-v2.json"],
             ),
             _SnapshotCopyMember(
                 role="curation_manifest",
-                relpath="content/korean-foundations-v1-curation.json",
+                relpath="content/korean-foundations-v2-curation.json",
                 content=members["proposed-curation.json"],
             ),
             _SnapshotCopyMember(
                 role="media_manifest",
-                relpath="content/korean-foundations-v1-media.json",
+                relpath="content/korean-foundations-v2-media.json",
                 content=members["proposed-media.json"],
             ),
             _SnapshotCopyMember(
@@ -1282,13 +1306,13 @@ def _read_receipt_authority(
             ),
             _SnapshotCopyMember(
                 role="review_evidence",
-                relpath="review/candidates/korean-foundations-v1-curation.json",
-                content=candidate_raw["korean-foundations-v1-curation.json"],
+                relpath="review/candidates/korean-foundations-v2-curation.json",
+                content=candidate_raw["korean-foundations-v2-curation.json"],
             ),
             _SnapshotCopyMember(
                 role="review_evidence",
-                relpath="review/candidates/korean-foundations-v1-media.json",
-                content=candidate_raw["korean-foundations-v1-media.json"],
+                relpath="review/candidates/korean-foundations-v2-media.json",
+                content=candidate_raw["korean-foundations-v2-media.json"],
             ),
         ]
         copy_members.extend(

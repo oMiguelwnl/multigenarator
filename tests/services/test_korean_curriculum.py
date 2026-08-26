@@ -418,11 +418,16 @@ def test_curriculum_contracts_and_only_fixed_no_argument_loaders_are_exported() 
     api = _curriculum()
     expected = {
         "DEFAULT_KOREAN_CONCEPT_REGISTRY_PATH",
+        "CURRENT_KOREAN_FOUNDATION_CANDIDATE_PATH",
         "DEFAULT_KOREAN_HANGUL_SOURCE_PACK_PATH",
         "DEFAULT_KOREAN_PRONUNCIATION_SOURCE_PACK_PATH",
+        "KOREAN_CONCEPT_REGISTRY_V1_PATH",
+        "KOREAN_HANGUL_SOURCE_PACK_V1_PATH",
+        "KOREAN_PRONUNCIATION_SOURCE_PACK_V1_PATH",
         "KoreanConceptRegistry",
         "KoreanCurriculumError",
         "KoreanCurriculumReasonCode",
+        "KoreanFoundationSourceBundle",
         "KoreanCurriculumValidation",
         "KoreanFoundationEntry",
         "KoreanFoundationFamily",
@@ -435,8 +440,12 @@ def test_curriculum_contracts_and_only_fixed_no_argument_loaders_are_exported() 
         "KoreanSourceProvenance",
         "KoreanStageCoverage",
         "korean_canonical_json_sha256",
+        "load_korean_current_foundation_bundle",
         "load_korean_concept_registry",
         "load_korean_hangul_source_pack",
+        "load_korean_v1_foundation_bundle",
+        "load_korean_v1_hangul_source_pack",
+        "load_korean_v1_pronunciation_source_pack",
         "load_korean_pronunciation_source_pack",
         "validate_korean_foundation_pack",
     }
@@ -499,9 +508,9 @@ def test_fixed_utf8_json_loaders_return_typed_manifests(
         monkeypatch.setattr(api, constant_name, path)
 
     assert isinstance(api.load_korean_concept_registry(), api.KoreanConceptRegistry)
-    assert isinstance(api.load_korean_hangul_source_pack(), api.KoreanHangulSourcePack)
+    assert isinstance(api.load_korean_v1_hangul_source_pack(), api.KoreanHangulSourcePack)
     assert isinstance(
-        api.load_korean_pronunciation_source_pack(),
+        api.load_korean_v1_pronunciation_source_pack(),
         api.KoreanPronunciationSourcePack,
     )
 
@@ -595,6 +604,77 @@ def test_manifest_schema_rejects_extra_unsafe_unbounded_or_drifted_data(
     assert _reason(exc_info) == "manifest_invalid"
     assert "private marker" not in str(exc_info.value)
     assert str(tmp_path) not in str(exc_info.value)
+
+
+def test_curriculum_defaults_to_atomic_v2_candidate_bundle() -> None:
+    api = _curriculum()
+
+    bundle = api.load_korean_current_foundation_bundle()
+    registry = api.load_korean_concept_registry()
+    hangul = api.load_korean_hangul_source_pack()
+    pronunciation = api.load_korean_pronunciation_source_pack()
+
+    assert bundle.source_kind == "current-candidate"
+    assert bundle.source_root == (
+        "data/korean_foundations/candidate-bundles/"
+        "36c1442b161fb3d8529678099b4df1c93b43fb2456a24260ac2942787b7f44f0"
+    )
+    assert bundle.bundle_sha256 == (
+        "36c1442b161fb3d8529678099b4df1c93b43fb2456a24260ac2942787b7f44f0"
+    )
+    assert bundle.bundle_manifest_sha256 == (
+        "2390974b9f48534665d474b9fe18290e28edc361aa3cc119481db70e44acfd40"
+    )
+    assert bundle.member_file_sha256 == {
+        "hangul-v2.json": "63c36c50c0efa61f7ba76ebdf92ff174f79aadedb63b46d15da01599f2594f59",
+        "pronunciation-i-plus-1-v2.json": "cdac65b7e3a9615e62f187dcf7c7f6c543a480710b618ce0c9eb580281cd955c",
+        "korean-foundations-v2-curation.json": "faa233cdc67f99c28c3f203e1b206f4ad4f631bc34b8e2fbb970db336f1157db",
+        "korean-foundations-v2-media.json": "e21c7a11006cf70a0559ec7fff7279b466097cf3bbc1fa092cee84e7b963e938",
+    }
+    assert registry == bundle.registry
+    assert hangul == bundle.hangul
+    assert pronunciation == bundle.pronunciation
+    assert registry.registry_version == "korean-concepts-v1"
+    assert hangul.source_pack_version == "hangul-v2"
+    assert pronunciation.source_pack_version == "pronunciation-i-plus-1-v2"
+    assert len(hangul.entries) == 92
+    assert len(pronunciation.entries) == 47
+    assert hangul.registry_content_hash == registry.content_hash
+    assert pronunciation.registry_content_hash == registry.content_hash
+    assert set(_all_status_values(bundle.model_dump(mode="json"))) == {"needs_review"}
+
+    hangul_validation = api.validate_korean_foundation_pack(
+        registry=registry,
+        pack=hangul,
+    )
+    pronunciation_validation = api.validate_korean_foundation_pack(
+        registry=registry,
+        pack=pronunciation,
+        inherited_known_ids=hangul_validation.known_concept_ids,
+    )
+    assert hangul_validation.validated_entry_count == 92
+    assert pronunciation_validation.validated_entry_count == 47
+
+
+def test_curriculum_explicit_history_resolves_v1_without_changing_defaults() -> None:
+    api = _curriculum()
+
+    history = api.load_korean_v1_foundation_bundle()
+
+    assert history.source_kind == "v1-history"
+    assert history.source_root == "data/korean_foundations"
+    assert history.bundle_sha256 is None
+    assert history.bundle_manifest_sha256 is None
+    assert history.registry.registry_version == "korean-concepts-v1"
+    assert history.hangul.source_pack_version == "hangul-v1"
+    assert history.pronunciation.source_pack_version == "pronunciation-i-plus-1-v1"
+    assert api.load_korean_hangul_source_pack().source_pack_version == "hangul-v2"
+    assert (
+        api.load_korean_pronunciation_source_pack().source_pack_version
+        == "pronunciation-i-plus-1-v2"
+    )
+    assert api.load_korean_v1_hangul_source_pack() == history.hangul
+    assert api.load_korean_v1_pronunciation_source_pack() == history.pronunciation
 
 
 def _registry_with_concepts(concepts: list[dict[str, object]]) -> dict[str, object]:
@@ -1184,13 +1264,16 @@ def _all_status_values(value: object) -> list[str]:
 def test_real_registry_and_complete_packs_load_from_fixed_paths() -> None:
     api = _curriculum()
 
+    bundle = api.load_korean_current_foundation_bundle()
     registry = api.load_korean_concept_registry()
     hangul = api.load_korean_hangul_source_pack()
     pronunciation = api.load_korean_pronunciation_source_pack()
 
+    assert bundle.hangul == hangul
+    assert bundle.pronunciation == pronunciation
     assert registry.registry_version == "korean-concepts-v1"
-    assert hangul.source_pack_version == "hangul-v1"
-    assert pronunciation.source_pack_version == "pronunciation-i-plus-1-v1"
+    assert hangul.source_pack_version == "hangul-v2"
+    assert pronunciation.source_pack_version == "pronunciation-i-plus-1-v2"
     assert hangul.registry_content_hash == registry.content_hash
     assert pronunciation.registry_content_hash == registry.content_hash
     assert registry.content_hash == _canonical_hash(registry.model_dump(mode="json"))
@@ -1515,9 +1598,10 @@ def test_hangul_h1_h6_candidates_are_nfc_provenance_bound_pending_and_strict() -
     assert len(entries) == 42
     for entry in entries:
         assert unicodedata.normalize("NFC", entry.canonical_jamo_or_block) == entry.canonical_jamo_or_block
-        assert entry.reading_or_name is None
-        assert entry.sound is None
-        assert entry.mnemonic is None
+        for learner_text in (entry.reading_or_name, entry.sound, entry.mnemonic):
+            if learner_text is not None:
+                assert learner_text
+                assert unicodedata.normalize("NFC", learner_text) == learner_text
         assert {source.source_id for source in entry.provenance} >= {
             "unicode.hangul-17.0",
             "nikl.orthography-0001",
@@ -1598,9 +1682,10 @@ def test_hangul_h7_h10_exact_stage_inventory_and_machine_only_copy() -> None:
     for stage_id in ("H9", "H10"):
         for entry in _entries_for_stage(pack, stage_id):
             assert entry.canonical_jamo_or_block == entry.evidence.target_concept_id
-            assert entry.reading_or_name is None
-            assert entry.sound is None
-            assert entry.mnemonic is None
+            for learner_text in (entry.reading_or_name, entry.sound, entry.mnemonic):
+                if learner_text is not None:
+                    assert learner_text
+                    assert unicodedata.normalize("NFC", learner_text) == learner_text
 
 
 def test_jongseong_h7_has_position_and_exactly_seven_output_categories() -> None:
@@ -2012,8 +2097,11 @@ def test_pronunciation_p0_p7_keeps_rich_evidence_nine_fields_and_all_human_media
         assert len(values) == len(_PRONUNCIATION_FIELD_ORDER) == 9
         assert all(isinstance(value, str) and value for value in values)
         assert entry.example_word == entry.pronunciation_evidence.canonical_spelling
-        assert entry.word_translation == "needs_review"
-        assert entry.sentence_translation == "needs_review"
+        assert unicodedata.normalize("NFC", entry.word_translation) == entry.word_translation
+        assert (
+            unicodedata.normalize("NFC", entry.sentence_translation)
+            == entry.sentence_translation
+        )
         assert entry.pronunciation_evidence.ipa is None
         assert entry.pronunciation_evidence.review_status.value == "needs_review"
         assert entry.register_context

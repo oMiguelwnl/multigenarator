@@ -60,12 +60,19 @@ _PROJECT_ROOT: Final = Path(__file__).resolve().parents[3]
 _PHASE_RELPATH: Final = Path(
     ".planning/phases/31-hangul-and-pronunciation-i-plus-1"
 )
+_REGISTRY_FILENAME: Final = "korean-concepts-v1.json"
+_CURRENT_CANDIDATE_FILENAME: Final = "current-candidate.json"
+_BUNDLE_MANIFEST_FILENAME: Final = "bundle-manifest.json"
+_CANDIDATE_MEMBER_FILENAMES: Final = (
+    "hangul-v2.json",
+    "pronunciation-i-plus-1-v2.json",
+    "korean-foundations-v2-curation.json",
+    "korean-foundations-v2-media.json",
+)
 _CANDIDATE_FILENAMES: Final = (
-    "korean-concepts-v1.json",
-    "hangul-v1.json",
-    "pronunciation-i-plus-1-v1.json",
-    "korean-foundations-v1-curation.json",
-    "korean-foundations-v1-media.json",
+    _CURRENT_CANDIDATE_FILENAME,
+    _BUNDLE_MANIFEST_FILENAME,
+    *_CANDIDATE_MEMBER_FILENAMES,
 )
 _REQUEST_FILENAMES: Final = (
     "31-CURRICULUM-REVIEW.md",
@@ -134,6 +141,7 @@ _RECEIPT_MAX_BYTES: Final = 1_048_576
 _REQUEST_MAX_BYTES: Final = 1_048_576
 _CANDIDATE_MAX_BYTES: Final = 32 * 1_048_576
 _MAX_IDENTIFIER_LENGTH: Final = 192
+_MAX_ENTRIES: Final = 4_096
 _MAX_RELPATH_LENGTH: Final = 512
 _ABSENT_PRESTATE_SHA256: Final = sha256(
     b"phase31-korean-foundation-active-prestate:absent"
@@ -314,9 +322,45 @@ def _safe_relpath(value: str) -> str:
 
 class KoreanFoundationEvidenceCandidateBinding(_FrozenEvidenceModel):
     filename: str = Field(min_length=1, max_length=128)
-    version: str = Field(min_length=1, max_length=_MAX_IDENTIFIER_LENGTH)
     file_sha256: str = Field(min_length=64, max_length=64)
-    canonical_content_sha256: str = Field(min_length=64, max_length=64)
+    version: str | None = Field(
+        default=None,
+        min_length=1,
+        max_length=_MAX_IDENTIFIER_LENGTH,
+    )
+    canonical_content_sha256: str | None = Field(
+        default=None,
+        min_length=64,
+        max_length=64,
+    )
+    bundle_sha256: str | None = Field(default=None, min_length=64, max_length=64)
+    bundle_relpath: str | None = Field(
+        default=None,
+        min_length=1,
+        max_length=_MAX_RELPATH_LENGTH,
+    )
+    bundle_manifest_sha256: str | None = Field(
+        default=None,
+        min_length=64,
+        max_length=64,
+    )
+    selected_draft_manifest_sha256: str | None = Field(
+        default=None,
+        min_length=64,
+        max_length=64,
+    )
+    draft_validation_sha256: str | None = Field(
+        default=None,
+        min_length=64,
+        max_length=64,
+    )
+    total_record_count: int | None = Field(default=None, ge=1, le=_MAX_ENTRIES)
+    media_slot_count: int | None = Field(default=None, ge=1, le=8_192)
+    item_count: int | None = Field(default=None, ge=1, le=_MAX_ENTRIES)
+    record_count: int | None = Field(default=None, ge=1, le=_MAX_ENTRIES)
+    gate_count: int | None = Field(default=None, ge=1, le=32_768)
+    asset_count: int | None = Field(default=None, ge=1, le=8_192)
+    required_asset_count: int | None = Field(default=None, ge=1, le=8_192)
 
     @field_validator("filename")
     @classmethod
@@ -327,16 +371,104 @@ class KoreanFoundationEvidenceCandidateBinding(_FrozenEvidenceModel):
 
     @field_validator("version")
     @classmethod
-    def version_must_be_bounded(cls, value: str) -> str:
+    def version_must_be_bounded(cls, value: str | None) -> str | None:
+        if value is None:
+            return None
         return _identifier(value, field_name="candidate version")
 
-    @field_validator("file_sha256", "canonical_content_sha256")
+    @field_validator(
+        "file_sha256",
+        "canonical_content_sha256",
+        "bundle_sha256",
+        "bundle_manifest_sha256",
+        "selected_draft_manifest_sha256",
+        "draft_validation_sha256",
+    )
     @classmethod
-    def hashes_must_be_sha256(cls, value: str, info: object) -> str:
+    def hashes_must_be_sha256(cls, value: str | None, info: object) -> str | None:
+        if value is None:
+            return None
         return _sha256_text(
             value,
             field_name=getattr(info, "field_name", "candidate hash"),
         )
+
+    @field_validator("bundle_relpath")
+    @classmethod
+    def bundle_relpath_must_be_exact_current_path(cls, value: str | None) -> str | None:
+        if value is None:
+            return None
+        try:
+            relpath = _safe_relpath(value)
+        except ValueError as exc:
+            raise ValueError("bundle path must be fixed") from exc
+        parts = PurePosixPath(relpath).parts
+        if (
+            len(parts) != 2
+            or parts[0] != "candidate-bundles"
+            or len(parts[1]) != 64
+            or any(character not in _LOWERCASE_HEX for character in parts[1])
+        ):
+            raise ValueError("bundle path must be fixed")
+        return relpath
+
+    @model_validator(mode="after")
+    def binding_shape_must_match_filename(self) -> Self:
+        provided = set(self.model_fields_set)
+        pointer_fields = {
+            "filename",
+            "bundle_sha256",
+            "bundle_relpath",
+            "bundle_manifest_sha256",
+            "file_sha256",
+        }
+        manifest_fields = {
+            "filename",
+            "bundle_sha256",
+            "selected_draft_manifest_sha256",
+            "draft_validation_sha256",
+            "file_sha256",
+            "total_record_count",
+            "media_slot_count",
+        }
+        member_fields = {
+            "filename",
+            "version",
+            "file_sha256",
+            "canonical_content_sha256",
+        }
+        expected_versions = {
+            "hangul-v2.json": "hangul-v2",
+            "pronunciation-i-plus-1-v2.json": "pronunciation-i-plus-1-v2",
+            "korean-foundations-v2-curation.json": "korean-foundations-v2-curation",
+            "korean-foundations-v2-media.json": "korean-foundations-v2-media",
+        }
+        if self.filename == _CURRENT_CANDIDATE_FILENAME:
+            if provided != pointer_fields:
+                raise ValueError("current candidate binding shape is unsupported")
+            if self.bundle_relpath != f"candidate-bundles/{self.bundle_sha256}":
+                raise ValueError("current candidate bundle path mismatch")
+            return self
+        if self.filename == _BUNDLE_MANIFEST_FILENAME:
+            if provided != manifest_fields:
+                raise ValueError("bundle manifest binding shape is unsupported")
+            if self.total_record_count != 139 or self.media_slot_count != 509:
+                raise ValueError("bundle manifest counts are unsupported")
+            return self
+        if self.filename in expected_versions:
+            expected_fields = set(member_fields)
+            if self.filename in {"hangul-v2.json", "pronunciation-i-plus-1-v2.json"}:
+                expected_fields.add("item_count")
+            elif self.filename == "korean-foundations-v2-curation.json":
+                expected_fields.update({"record_count", "gate_count"})
+            else:
+                expected_fields.update({"asset_count", "required_asset_count"})
+            if provided != expected_fields:
+                raise ValueError("candidate member binding shape is unsupported")
+            if self.version != expected_versions[self.filename]:
+                raise ValueError("candidate member version mismatch")
+            return self
+        raise ValueError("candidate filename is unsupported")
 
 
 class KoreanFoundationEvidenceRequestBinding(_FrozenEvidenceModel):
@@ -387,8 +519,8 @@ class KoreanFoundationEvidenceIndex(_FrozenEvidenceModel):
     layout_version: Literal["phase31-korean-foundation-evidence-layout-v1"]
     policy_version: Literal["phase31-korean-foundation-evidence-policy-v1"]
     candidate_bindings: tuple[KoreanFoundationEvidenceCandidateBinding, ...] = Field(
-        min_length=5,
-        max_length=5,
+        min_length=6,
+        max_length=6,
     )
     request_bindings: tuple[KoreanFoundationEvidenceRequestBinding, ...] = Field(
         min_length=2,
@@ -411,10 +543,13 @@ class KoreanFoundationEvidenceIndex(_FrozenEvidenceModel):
 
     @model_validator(mode="after")
     def declarations_and_payload_hash_must_match(self) -> Self:
-        members = [member.model_dump(mode="json") for member in self.members]
+        members = [
+            member.model_dump(mode="json", exclude_none=True)
+            for member in self.members
+        ]
         if self.declared_members_sha256 != _canonical_sha256(members):
             raise ValueError("declared member hash does not match")
-        payload = self.model_dump(mode="json")
+        payload = self.model_dump(mode="json", exclude_none=True)
         payload.pop("index_payload_sha256", None)
         if self.index_payload_sha256 != _canonical_sha256(payload):
             raise ValueError("index payload hash does not match")
@@ -1188,13 +1323,162 @@ def _inspect_inventory(paths: _KoreanFoundationEvidencePaths) -> KoreanFoundatio
 
 def _candidate_version(filename: str, model: BaseModel) -> str:
     field_name = {
-        "korean-concepts-v1.json": "registry_version",
-        "hangul-v1.json": "source_pack_version",
-        "pronunciation-i-plus-1-v1.json": "source_pack_version",
-        "korean-foundations-v1-curation.json": "manifest_version",
-        "korean-foundations-v1-media.json": "manifest_version",
+        "hangul-v2.json": "source_pack_version",
+        "pronunciation-i-plus-1-v2.json": "source_pack_version",
+        "korean-foundations-v2-curation.json": "manifest_version",
+        "korean-foundations-v2-media.json": "manifest_version",
     }[filename]
     return str(getattr(model, field_name))
+
+
+def _parse_json_object(
+    raw: bytes,
+    reason_code: KoreanFoundationEvidenceReasonCode,
+) -> dict[str, Any]:
+    try:
+        payload = json.loads(raw.decode("utf-8"))
+    except (UnicodeDecodeError, json.JSONDecodeError, RecursionError) as exc:
+        raise KoreanFoundationEvidenceError(reason_code) from exc
+    if not isinstance(payload, dict):
+        _raise(reason_code)
+    return payload
+
+
+def _binding_by_filename(
+    index: KoreanFoundationEvidenceIndex,
+) -> dict[str, KoreanFoundationEvidenceCandidateBinding]:
+    return {binding.filename: binding for binding in index.candidate_bindings}
+
+
+def _current_bundle_relpath(index: KoreanFoundationEvidenceIndex) -> str:
+    binding = _binding_by_filename(index)[_CURRENT_CANDIDATE_FILENAME]
+    if binding.bundle_relpath is None:
+        _raise(KoreanFoundationEvidenceReasonCode.INDEX_INVALID)
+    return binding.bundle_relpath
+
+
+def _candidate_source_path(
+    paths: _KoreanFoundationEvidencePaths,
+    filename: str,
+    *,
+    bundle_relpath: str,
+) -> Path:
+    if filename == _REGISTRY_FILENAME or filename == _CURRENT_CANDIDATE_FILENAME:
+        return paths.candidate_dir / filename
+    if filename not in {_BUNDLE_MANIFEST_FILENAME, *_CANDIDATE_MEMBER_FILENAMES}:
+        _raise(KoreanFoundationEvidenceReasonCode.SOURCE_BINDING_MISMATCH)
+    return (
+        paths.candidate_dir.joinpath(*PurePosixPath(bundle_relpath).parts)
+        / filename
+    )
+
+
+def _read_bound_candidate_file(
+    paths: _KoreanFoundationEvidencePaths,
+    binding: KoreanFoundationEvidenceCandidateBinding,
+    *,
+    bundle_relpath: str,
+) -> bytes:
+    raw = _read_regular_file(
+        _candidate_source_path(paths, binding.filename, bundle_relpath=bundle_relpath),
+        paths=paths,
+        maximum_bytes=_CANDIDATE_MAX_BYTES,
+        missing_reason=KoreanFoundationEvidenceReasonCode.SOURCE_BINDING_MISMATCH,
+    )
+    if _has_archive_magic(raw) or sha256(raw).hexdigest() != binding.file_sha256:
+        _raise(KoreanFoundationEvidenceReasonCode.SOURCE_BINDING_MISMATCH)
+    return raw
+
+
+def _assert_current_pointer_binding(
+    pointer: dict[str, Any],
+    binding: KoreanFoundationEvidenceCandidateBinding,
+) -> None:
+    if (
+        set(pointer) != {
+            "schema_version",
+            "bundle_sha256",
+            "bundle_relpath",
+            "bundle_manifest_sha256",
+        }
+        or pointer.get("schema_version") != 1
+        or pointer.get("bundle_sha256") != binding.bundle_sha256
+        or pointer.get("bundle_relpath") != binding.bundle_relpath
+        or pointer.get("bundle_manifest_sha256") != binding.bundle_manifest_sha256
+        or pointer.get("bundle_relpath") != f"candidate-bundles/{binding.bundle_sha256}"
+    ):
+        _raise(KoreanFoundationEvidenceReasonCode.SOURCE_BINDING_MISMATCH)
+
+
+def _assert_bundle_manifest_binding(
+    manifest: dict[str, Any],
+    binding: KoreanFoundationEvidenceCandidateBinding,
+    member_bindings: dict[str, KoreanFoundationEvidenceCandidateBinding],
+) -> None:
+    declarations = manifest.get("members")
+    if not isinstance(declarations, list):
+        _raise(KoreanFoundationEvidenceReasonCode.SOURCE_BINDING_MISMATCH)
+    declared_names = tuple(
+        declaration.get("name") if isinstance(declaration, dict) else None
+        for declaration in declarations
+    )
+    if declared_names != _CANDIDATE_MEMBER_FILENAMES:
+        _raise(KoreanFoundationEvidenceReasonCode.SOURCE_BINDING_MISMATCH)
+    declared_hashes = {
+        str(declaration["name"]): declaration.get("sha256")
+        for declaration in declarations
+        if isinstance(declaration, dict) and set(declaration) == {"name", "sha256"}
+    }
+    if set(declared_hashes) != set(_CANDIDATE_MEMBER_FILENAMES):
+        _raise(KoreanFoundationEvidenceReasonCode.SOURCE_BINDING_MISMATCH)
+    if any(
+        declared_hashes[filename] != member_bindings[filename].file_sha256
+        for filename in _CANDIDATE_MEMBER_FILENAMES
+    ):
+        _raise(KoreanFoundationEvidenceReasonCode.SOURCE_BINDING_MISMATCH)
+    if (
+        manifest.get("schema_version") != 1
+        or manifest.get("bundle_sha256") != binding.bundle_sha256
+        or manifest.get("candidate_only") is not True
+        or manifest.get("review_status") != "needs_review"
+        or manifest.get("promotion_authority") is not False
+        or manifest.get("selected_draft_manifest_sha256")
+        != binding.selected_draft_manifest_sha256
+        or manifest.get("draft_validation_sha256") != binding.draft_validation_sha256
+        or manifest.get("total_record_count") != binding.total_record_count
+        or manifest.get("media_slot_count") != binding.media_slot_count
+        or manifest.get("hangul_record_count") != 92
+        or manifest.get("pronunciation_record_count") != 47
+    ):
+        _raise(KoreanFoundationEvidenceReasonCode.SOURCE_BINDING_MISMATCH)
+
+
+def _assert_member_binding_counts(
+    binding: KoreanFoundationEvidenceCandidateBinding,
+    model: BaseModel,
+) -> None:
+    if binding.filename == "hangul-v2.json":
+        count_valid = binding.item_count == len(getattr(model, "entries")) == 92
+    elif binding.filename == "pronunciation-i-plus-1-v2.json":
+        count_valid = binding.item_count == len(getattr(model, "entries")) == 47
+    elif binding.filename == "korean-foundations-v2-curation.json":
+        records = getattr(model, "records")
+        count_valid = (
+            binding.record_count == len(records) == 139
+            and binding.gate_count
+            == sum(len(record.gates) for record in records)
+        )
+    elif binding.filename == "korean-foundations-v2-media.json":
+        slots = getattr(model, "slots")
+        count_valid = (
+            binding.asset_count == len(slots) == 509
+            and binding.required_asset_count
+            == sum(slot.required for slot in slots)
+        )
+    else:
+        count_valid = False
+    if not count_valid:
+        _raise(KoreanFoundationEvidenceReasonCode.SOURCE_BINDING_MISMATCH)
 
 
 def _load_sources(
@@ -1210,23 +1494,58 @@ def _load_sources(
     tuple[bytes, ...],
 ]:
     model_types: dict[str, type[BaseModel]] = {
-        "korean-concepts-v1.json": KoreanConceptRegistry,
-        "hangul-v1.json": KoreanHangulSourcePack,
-        "pronunciation-i-plus-1-v1.json": KoreanPronunciationSourcePack,
-        "korean-foundations-v1-curation.json": KoreanFoundationCurationManifest,
-        "korean-foundations-v1-media.json": KoreanFoundationMediaManifest,
+        "hangul-v2.json": KoreanHangulSourcePack,
+        "pronunciation-i-plus-1-v2.json": KoreanPronunciationSourcePack,
+        "korean-foundations-v2-curation.json": KoreanFoundationCurationManifest,
+        "korean-foundations-v2-media.json": KoreanFoundationMediaManifest,
     }
+    bindings = _binding_by_filename(index)
+    current_binding = bindings[_CURRENT_CANDIDATE_FILENAME]
+    bundle_relpath = _current_bundle_relpath(index)
+    current_raw = _read_bound_candidate_file(
+        paths,
+        current_binding,
+        bundle_relpath=bundle_relpath,
+    )
+    current_pointer = _parse_json_object(
+        current_raw,
+        KoreanFoundationEvidenceReasonCode.SOURCE_BINDING_MISMATCH,
+    )
+    _assert_current_pointer_binding(current_pointer, current_binding)
+    bundle_binding = bindings[_BUNDLE_MANIFEST_FILENAME]
+    bundle_raw = _read_bound_candidate_file(
+        paths,
+        bundle_binding,
+        bundle_relpath=bundle_relpath,
+    )
+    if current_binding.bundle_manifest_sha256 != sha256(bundle_raw).hexdigest():
+        _raise(KoreanFoundationEvidenceReasonCode.SOURCE_BINDING_MISMATCH)
+    bundle_manifest = _parse_json_object(
+        bundle_raw,
+        KoreanFoundationEvidenceReasonCode.SOURCE_BINDING_MISMATCH,
+    )
+    _assert_bundle_manifest_binding(bundle_manifest, bundle_binding, bindings)
+
+    registry_raw = _read_regular_file(
+        _candidate_source_path(paths, _REGISTRY_FILENAME, bundle_relpath=bundle_relpath),
+        paths=paths,
+        maximum_bytes=_CANDIDATE_MAX_BYTES,
+        missing_reason=KoreanFoundationEvidenceReasonCode.SOURCE_BINDING_MISMATCH,
+    )
+    registry = _parse_model(
+        registry_raw,
+        KoreanConceptRegistry,
+        KoreanFoundationEvidenceReasonCode.SOURCE_BINDING_MISMATCH,
+    )
     models: dict[str, BaseModel] = {}
-    candidate_raw: list[bytes] = []
-    for binding in index.candidate_bindings:
-        raw = _read_regular_file(
-            paths.candidate_dir / binding.filename,
-            paths=paths,
-            maximum_bytes=_CANDIDATE_MAX_BYTES,
-            missing_reason=KoreanFoundationEvidenceReasonCode.SOURCE_BINDING_MISMATCH,
+    candidate_raw = [current_raw, bundle_raw]
+    for filename in _CANDIDATE_MEMBER_FILENAMES:
+        binding = bindings[filename]
+        raw = _read_bound_candidate_file(
+            paths,
+            binding,
+            bundle_relpath=bundle_relpath,
         )
-        if _has_archive_magic(raw) or sha256(raw).hexdigest() != binding.file_sha256:
-            _raise(KoreanFoundationEvidenceReasonCode.SOURCE_BINDING_MISMATCH)
         model = _parse_model(
             raw,
             model_types[binding.filename],
@@ -1238,6 +1557,7 @@ def _load_sources(
             != binding.canonical_content_sha256
         ):
             _raise(KoreanFoundationEvidenceReasonCode.SOURCE_BINDING_MISMATCH)
+        _assert_member_binding_counts(binding, model)
         candidate_raw.append(raw)
         models[binding.filename] = model
 
@@ -1257,11 +1577,10 @@ def _load_sources(
             _raise(KoreanFoundationEvidenceReasonCode.SOURCE_BINDING_MISMATCH)
         request_raw.append(raw)
 
-    registry = models["korean-concepts-v1.json"]
-    hangul = models["hangul-v1.json"]
-    pronunciation = models["pronunciation-i-plus-1-v1.json"]
-    candidate_curation = models["korean-foundations-v1-curation.json"]
-    candidate_media = models["korean-foundations-v1-media.json"]
+    hangul = models["hangul-v2.json"]
+    pronunciation = models["pronunciation-i-plus-1-v2.json"]
+    candidate_curation = models["korean-foundations-v2-curation.json"]
+    candidate_media = models["korean-foundations-v2-media.json"]
     assert isinstance(registry, KoreanConceptRegistry)
     assert isinstance(hangul, KoreanHangulSourcePack)
     assert isinstance(pronunciation, KoreanPronunciationSourcePack)
@@ -1877,13 +2196,16 @@ def _fingerprint_file(
     paths: _KoreanFoundationEvidencePaths,
     maximum_bytes: int,
     optional: bool = False,
+    missing_reason: KoreanFoundationEvidenceReasonCode = (
+        KoreanFoundationEvidenceReasonCode.MEMBER_MISSING
+    ),
 ) -> tuple[object, ...]:
     try:
         path.lstat()
     except FileNotFoundError:
         if optional:
             return (label, "absent")
-        _raise(KoreanFoundationEvidenceReasonCode.MEMBER_MISSING)
+        _raise(missing_reason)
     except OSError:
         _raise(KoreanFoundationEvidenceReasonCode.UNSAFE_FILESYSTEM_COMPONENT)
     raw = _read_regular_file(
@@ -1941,15 +2263,34 @@ def _capture_state_fingerprint(
                 ),
             )
         )
+    bundle_relpath = _current_bundle_relpath(index)
     for filename in _CANDIDATE_FILENAMES:
         rows.append(
             _fingerprint_file(
                 label=f"candidate/{filename}",
-                path=paths.candidate_dir / filename,
+                path=_candidate_source_path(
+                    paths,
+                    filename,
+                    bundle_relpath=bundle_relpath,
+                ),
                 paths=paths,
                 maximum_bytes=_CANDIDATE_MAX_BYTES,
+                missing_reason=KoreanFoundationEvidenceReasonCode.SOURCE_BINDING_MISMATCH,
             )
         )
+    rows.append(
+        _fingerprint_file(
+            label=f"candidate/{_REGISTRY_FILENAME}",
+            path=_candidate_source_path(
+                paths,
+                _REGISTRY_FILENAME,
+                bundle_relpath=bundle_relpath,
+            ),
+            paths=paths,
+            maximum_bytes=_CANDIDATE_MAX_BYTES,
+            missing_reason=KoreanFoundationEvidenceReasonCode.SOURCE_BINDING_MISMATCH,
+        )
+    )
     for filename, path in (
         ("31-CURRICULUM-REVIEW.md", paths.curriculum_request),
         ("31-AUDIO-PLAYBACK-REVIEW.md", paths.audio_request),
@@ -1960,6 +2301,7 @@ def _capture_state_fingerprint(
                 path=path,
                 paths=paths,
                 maximum_bytes=_REQUEST_MAX_BYTES,
+                missing_reason=KoreanFoundationEvidenceReasonCode.SOURCE_BINDING_MISMATCH,
             )
         )
     rows.append(

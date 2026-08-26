@@ -32,13 +32,20 @@ PHASE_ROOT = (
     / "31-hangul-and-pronunciation-i-plus-1"
 )
 CANONICAL_INBOX = PHASE_ROOT / "evidence-inbox"
-CANDIDATE_FILENAMES = (
-    "korean-concepts-v1.json",
-    "hangul-v1.json",
-    "pronunciation-i-plus-1-v1.json",
-    "korean-foundations-v1-curation.json",
-    "korean-foundations-v1-media.json",
+CURRENT_BUNDLE_SHA256 = (
+    "36c1442b161fb3d8529678099b4df1c93b43fb2456a24260ac2942787b7f44f0"
 )
+CURRENT_BUNDLE_RELPATH = f"candidate-bundles/{CURRENT_BUNDLE_SHA256}"
+REGISTRY_FILENAME = "korean-concepts-v1.json"
+CANDIDATE_FILENAMES = (
+    "current-candidate.json",
+    "bundle-manifest.json",
+    "hangul-v2.json",
+    "pronunciation-i-plus-1-v2.json",
+    "korean-foundations-v2-curation.json",
+    "korean-foundations-v2-media.json",
+)
+CANDIDATE_MEMBER_FILENAMES = CANDIDATE_FILENAMES[2:]
 REQUEST_FILENAMES = (
     "31-CURRICULUM-REVIEW.md",
     "31-AUDIO-PLAYBACK-REVIEW.md",
@@ -109,28 +116,37 @@ AUDIO_KINDS = frozenset(
     {"audio", "letter_audio", "word_audio", "sentence_audio"}
 )
 EXPECTED_CANDIDATE_SHA256 = {
-    "korean-concepts-v1.json": (
-        "79e50d509d3dd732f7bcadc4568697747646af1f191fc0b59a8e94e0b6b18625"
+    "current-candidate.json": (
+        "0fa9e0756ab59969dc55ab428544c18aad1d1d14631b0d2569a33823feb24518"
     ),
-    "hangul-v1.json": (
-        "80716d1f19672777ab2516f1c592066e5f443dc86a1d9e64785be1867ba079b1"
+    "bundle-manifest.json": (
+        "2390974b9f48534665d474b9fe18290e28edc361aa3cc119481db70e44acfd40"
     ),
-    "pronunciation-i-plus-1-v1.json": (
-        "6a2eb0b6a0a467de6074ffafc2fb674a674ea96c3c2187f339d1c278aa8f55ec"
+    "hangul-v2.json": (
+        "63c36c50c0efa61f7ba76ebdf92ff174f79aadedb63b46d15da01599f2594f59"
     ),
-    "korean-foundations-v1-curation.json": (
-        "6c422c5c5edf581af39f91773b40f72ac5570b84b76cd38d6f18bea4ef190c00"
+    "pronunciation-i-plus-1-v2.json": (
+        "cdac65b7e3a9615e62f187dcf7c7f6c543a480710b618ce0c9eb580281cd955c"
     ),
-    "korean-foundations-v1-media.json": (
-        "9f53766ea174c963e4904dd6172e490079ad693aded8dcb025a952327c90f0e1"
+    "korean-foundations-v2-curation.json": (
+        "faa233cdc67f99c28c3f203e1b206f4ad4f631bc34b8e2fbb970db336f1157db"
+    ),
+    "korean-foundations-v2-media.json": (
+        "e21c7a11006cf70a0559ec7fff7279b466097cf3bbc1fa092cee84e7b963e938"
+    ),
+}
+EXPECTED_REGISTRY_SHA256 = {
+    "file_sha256": "79e50d509d3dd732f7bcadc4568697747646af1f191fc0b59a8e94e0b6b18625",
+    "canonical_content_sha256": (
+        "89a520055cfd94eb086c9ed3e937499a71fbcb07c056e1916b645c3bd312d89d"
     ),
 }
 EXPECTED_REQUEST_SHA256 = {
     "31-CURRICULUM-REVIEW.md": (
-        "788aea87abb9d710617b86d8e05878151184d9ec92e4d3f0e013747c3655ae57"
+        "df52d78f2bcd3a89e9589ea68d645df02841a2f9017394d14c833cb7580b36cc"
     ),
     "31-AUDIO-PLAYBACK-REVIEW.md": (
-        "867aeb8e2fc79257aa1f55661f2e59f644062cedacbe55f42a65cc2f7cc424c9"
+        "4e28149921c9602c78f1e15633923b55eaf572993fce506651d6d474acf73035"
     ),
 }
 
@@ -275,13 +291,74 @@ def _reseal_payload(payload: dict[str, Any], hash_field: str) -> None:
 
 def _candidate_version(filename: str, payload: dict[str, Any]) -> str:
     field = {
-        "korean-concepts-v1.json": "registry_version",
-        "hangul-v1.json": "source_pack_version",
-        "pronunciation-i-plus-1-v1.json": "source_pack_version",
-        "korean-foundations-v1-curation.json": "manifest_version",
-        "korean-foundations-v1-media.json": "manifest_version",
+        "hangul-v2.json": "source_pack_version",
+        "pronunciation-i-plus-1-v2.json": "source_pack_version",
+        "korean-foundations-v2-curation.json": "manifest_version",
+        "korean-foundations-v2-media.json": "manifest_version",
     }[filename]
     return str(payload[field])
+
+
+def _canonical_candidate_path(filename: str) -> Path:
+    root = PROJECT_ROOT / "data" / "korean_foundations"
+    if filename in {REGISTRY_FILENAME, "current-candidate.json"}:
+        return root / filename
+    return root / CURRENT_BUNDLE_RELPATH / filename
+
+
+def _fixture_candidate_path(candidate_root: Path, filename: str) -> Path:
+    if filename in {REGISTRY_FILENAME, "current-candidate.json"}:
+        return candidate_root / filename
+    return candidate_root / CURRENT_BUNDLE_RELPATH / filename
+
+
+def _candidate_binding(
+    filename: str,
+    payload: dict[str, Any],
+    raw: bytes,
+) -> dict[str, Any]:
+    if filename == "current-candidate.json":
+        return {
+            "filename": filename,
+            "bundle_sha256": payload["bundle_sha256"],
+            "bundle_relpath": payload["bundle_relpath"],
+            "bundle_manifest_sha256": payload["bundle_manifest_sha256"],
+            "file_sha256": _sha256_bytes(raw),
+        }
+    if filename == "bundle-manifest.json":
+        return {
+            "filename": filename,
+            "bundle_sha256": payload["bundle_sha256"],
+            "selected_draft_manifest_sha256": payload[
+                "selected_draft_manifest_sha256"
+            ],
+            "draft_validation_sha256": payload["draft_validation_sha256"],
+            "file_sha256": _sha256_bytes(raw),
+            "total_record_count": 139,
+            "media_slot_count": 509,
+        }
+
+    binding: dict[str, Any] = {
+        "filename": filename,
+        "version": _candidate_version(filename, payload),
+        "file_sha256": _sha256_bytes(raw),
+        "canonical_content_sha256": payload["content_hash"],
+    }
+    if filename == "hangul-v2.json":
+        binding["item_count"] = 92
+    elif filename == "pronunciation-i-plus-1-v2.json":
+        binding["item_count"] = 47
+    elif filename == "korean-foundations-v2-curation.json":
+        binding["record_count"] = 139
+        binding["gate_count"] = sum(
+            len(record["gates"]) for record in payload["records"]
+        )
+    else:
+        binding["asset_count"] = 509
+        binding["required_asset_count"] = sum(
+            1 for slot in payload["slots"] if slot["required"]
+        )
+    return binding
 
 
 def _reviewer_records() -> dict[str, dict[str, Any]]:
@@ -604,102 +681,7 @@ class EvidenceFixture:
 def _export_ready_candidates(
     candidates: dict[str, dict[str, Any]],
 ) -> dict[str, dict[str, Any]]:
-    curriculum_api = import_module("multilang.services.korean_curriculum")
-    review_api = import_module("multilang.services.korean_foundation_review")
-    media_api = _media_api()
-    registry = curriculum_api.KoreanConceptRegistry.model_validate(
-        candidates["korean-concepts-v1.json"]
-    )
-    hangul = curriculum_api.KoreanHangulSourcePack.model_validate(
-        candidates["hangul-v1.json"]
-    )
-    pronunciation = curriculum_api.KoreanPronunciationSourcePack.model_validate(
-        candidates["pronunciation-i-plus-1-v1.json"]
-    )
-
-    def reseal(model_type: type, payload: dict[str, Any]) -> object:
-        payload.pop("content_hash", None)
-        payload["content_hash"] = curriculum_api.korean_canonical_json_sha256(
-            payload
-        )
-        return model_type.model_validate(payload)
-
-    approved_hangul_entries = []
-    for entry in hangul.entries:
-        payload = entry.model_dump(mode="json")
-        payload.update(
-            {
-                "reading_or_name": f"nome de teste {entry.sequence}",
-                "sound": f"som de teste {entry.sequence}",
-                "mnemonic": f"mnemônico de teste {entry.sequence}",
-            }
-        )
-        approved_hangul_entries.append(
-            reseal(curriculum_api.KoreanHangulSourceEntry, payload)
-        )
-    hangul_payload = hangul.model_dump(mode="json")
-    hangul_payload["entries"] = [
-        entry.model_dump(mode="json") for entry in approved_hangul_entries
-    ]
-    hangul = reseal(curriculum_api.KoreanHangulSourcePack, hangul_payload)
-
-    approved_pronunciation_entries = []
-    for entry in pronunciation.entries:
-        payload = entry.model_dump(mode="json")
-        payload.update(
-            {
-                "spellings": "가",
-                "sound": "[가]",
-                "example_word": "가",
-                "word_translation": f"palavra de teste {entry.sequence}",
-                "example_sentence": "가요.",
-                "sentence_translation": f"frase de teste {entry.sequence}",
-            }
-        )
-        pronunciation_evidence = dict(payload["pronunciation_evidence"])
-        pronunciation_evidence.update(
-            {
-                "canonical_spelling": "가",
-                "normative_pronunciation": "가",
-                "surface_pronunciation": "가",
-            }
-        )
-        payload["pronunciation_evidence"] = pronunciation_evidence
-        approved_pronunciation_entries.append(
-            reseal(curriculum_api.KoreanPronunciationSourceEntry, payload)
-        )
-    pronunciation_payload = pronunciation.model_dump(mode="json")
-    pronunciation_payload["entries"] = [
-        entry.model_dump(mode="json")
-        for entry in approved_pronunciation_entries
-    ]
-    pronunciation = reseal(
-        curriculum_api.KoreanPronunciationSourcePack,
-        pronunciation_payload,
-    )
-
-    pending_curation = review_api._build_pending_korean_foundation_curation(
-        registry=registry,
-        hangul_pack=hangul,
-        pronunciation_pack=pronunciation,
-    )
-    pending_media = media_api._build_pending_korean_foundation_media_manifest(
-        registry=registry,
-        hangul_pack=hangul,
-        pronunciation_pack=pronunciation,
-    )
-    updated = dict(candidates)
-    updated["hangul-v1.json"] = hangul.model_dump(mode="json")
-    updated["pronunciation-i-plus-1-v1.json"] = pronunciation.model_dump(
-        mode="json"
-    )
-    updated["korean-foundations-v1-curation.json"] = (
-        pending_curation.model_dump(mode="json")
-    )
-    updated["korean-foundations-v1-media.json"] = pending_media.model_dump(
-        mode="json"
-    )
-    return updated
+    return candidates
 
 
 def _build_complete_fixture(
@@ -726,16 +708,25 @@ def _build_complete_fixture(
         encoding="utf-8",
     )
 
+    registry_raw = _canonical_candidate_path(REGISTRY_FILENAME).read_bytes()
+    assert _sha256_bytes(registry_raw) == EXPECTED_REGISTRY_SHA256["file_sha256"]
+    (candidate_root / REGISTRY_FILENAME).write_bytes(registry_raw)
+
     candidates: dict[str, dict[str, Any]] = {}
     for filename in CANDIDATE_FILENAMES:
-        raw = (PROJECT_ROOT / "data" / "korean_foundations" / filename).read_bytes()
+        raw = _canonical_candidate_path(filename).read_bytes()
         assert _sha256_bytes(raw) == EXPECTED_CANDIDATE_SHA256[filename]
-        (candidate_root / filename).write_bytes(raw)
+        destination = _fixture_candidate_path(candidate_root, filename)
+        destination.parent.mkdir(parents=True, exist_ok=True)
+        destination.write_bytes(raw)
         candidates[filename] = json.loads(raw.decode("utf-8"))
     if export_ready:
         candidates = _export_ready_candidates(candidates)
         for filename in CANDIDATE_FILENAMES:
-            _write_json(candidate_root / filename, candidates[filename])
+            _write_json(
+                _fixture_candidate_path(candidate_root, filename),
+                candidates[filename],
+            )
     requests: dict[str, bytes] = {}
     for filename in REQUEST_FILENAMES:
         raw = (PHASE_ROOT / filename).read_bytes()
@@ -744,8 +735,8 @@ def _build_complete_fixture(
         requests[filename] = raw
 
     source_entries = [
-        *candidates["hangul-v1.json"]["entries"],
-        *candidates["pronunciation-i-plus-1-v1.json"]["entries"],
+        *candidates["hangul-v2.json"]["entries"],
+        *candidates["pronunciation-i-plus-1-v2.json"]["entries"],
     ]
     entries_by_key = {str(entry["item_key"]): entry for entry in source_entries}
 
@@ -754,7 +745,7 @@ def _build_complete_fixture(
         reviewer_raw[relpath] = _write_json(inbox / relpath, payload)
 
     proposed_curation = _approved_curation(
-        candidates["korean-foundations-v1-curation.json"],
+        candidates["korean-foundations-v2-curation.json"],
         entries_by_key,
     )
     proposed_curation_raw = _write_json(
@@ -772,7 +763,7 @@ def _build_complete_fixture(
     )
 
     proposed_media, media_members = _approved_media(
-        candidate=candidates["korean-foundations-v1-media.json"],
+        candidate=candidates["korean-foundations-v2-media.json"],
         entries_by_key=entries_by_key,
         media_root=media_root,
     )
@@ -830,16 +821,9 @@ def _build_complete_fixture(
 
     candidate_bindings = []
     for filename in CANDIDATE_FILENAMES:
-        raw = (candidate_root / filename).read_bytes()
+        raw = _fixture_candidate_path(candidate_root, filename).read_bytes()
         payload = candidates[filename]
-        candidate_bindings.append(
-            {
-                "filename": filename,
-                "version": _candidate_version(filename, payload),
-                "file_sha256": _sha256_bytes(raw),
-                "canonical_content_sha256": payload["content_hash"],
-            }
-        )
+        candidate_bindings.append(_candidate_binding(filename, payload, raw))
     request_bindings = [
         {
             "filename": filename,
@@ -1058,6 +1042,126 @@ def test_assembler_exact_layout_and_canonical_hashes_are_deterministic(
     _install_fixture_paths(api, monkeypatch, second)
     second_inventory = api.inspect_fixed_korean_foundation_evidence_inbox()
     assert second_inventory.model_dump() == inventory.model_dump()
+
+
+def test_evidence_contract_binds_exact_v2_candidate_and_request_hashes(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    api = _evidence()
+    assert api._CANDIDATE_FILENAMES == CANDIDATE_FILENAMES
+
+    fixture = _build_complete_fixture(tmp_path / "valid")
+    index = json.loads(fixture.index_path.read_text(encoding="utf-8"))
+    candidate_bindings = {
+        binding["filename"]: binding for binding in index["candidate_bindings"]
+    }
+    request_bindings = {
+        binding["filename"]: binding for binding in index["request_bindings"]
+    }
+    assert tuple(candidate_bindings) == CANDIDATE_FILENAMES
+    assert {
+        filename: binding["file_sha256"]
+        for filename, binding in candidate_bindings.items()
+    } == EXPECTED_CANDIDATE_SHA256
+    assert {
+        filename: binding["file_sha256"]
+        for filename, binding in request_bindings.items()
+    } == EXPECTED_REQUEST_SHA256
+    assert candidate_bindings["current-candidate.json"] == {
+        "filename": "current-candidate.json",
+        "bundle_sha256": CURRENT_BUNDLE_SHA256,
+        "bundle_relpath": CURRENT_BUNDLE_RELPATH,
+        "bundle_manifest_sha256": EXPECTED_CANDIDATE_SHA256["bundle-manifest.json"],
+        "file_sha256": EXPECTED_CANDIDATE_SHA256["current-candidate.json"],
+    }
+    assert candidate_bindings["bundle-manifest.json"] == {
+        "filename": "bundle-manifest.json",
+        "bundle_sha256": CURRENT_BUNDLE_SHA256,
+        "selected_draft_manifest_sha256": (
+            "8f053a815b4b18c9e8004d295849f562989410f05f4a1cc8725bc37f8c7f26b5"
+        ),
+        "draft_validation_sha256": (
+            "d254eac81d058ea6406d5d0d981480cce5d8968801116063d9835b1f7625bfe0"
+        ),
+        "file_sha256": EXPECTED_CANDIDATE_SHA256["bundle-manifest.json"],
+        "total_record_count": 139,
+        "media_slot_count": 509,
+    }
+    serialized_index = json.dumps(index, sort_keys=True)
+    assert "hangul-v1.json" not in serialized_index
+    assert "pronunciation-i-plus-1-v1.json" not in serialized_index
+    _install_fixture_paths(api, monkeypatch, fixture)
+    receipt = api.validate_and_write_fixed_korean_foundation_validation_receipt(
+        confirmed_index_sha256=fixture.index_sha256
+    )
+    assert receipt.confirmed_index_sha256 == fixture.index_sha256
+    assert fixture.receipt_path.is_file()
+
+    def stale_v1_binding(stale_fixture: EvidenceFixture) -> str:
+        def mutate(payload: dict[str, Any]) -> None:
+            payload["candidate_bindings"][2] = {
+                "filename": "hangul-v1.json",
+                "version": "hangul-v1",
+                "file_sha256": "0" * 64,
+                "canonical_content_sha256": "1" * 64,
+            }
+
+        return _reseal_index(stale_fixture, mutate)
+
+    def draft_binding(stale_fixture: EvidenceFixture) -> str:
+        def mutate(payload: dict[str, Any]) -> None:
+            payload["candidate_bindings"][2]["filename"] = "hangul-v2-draft.json"
+
+        return _reseal_index(stale_fixture, mutate)
+
+    def stale_request_binding(stale_fixture: EvidenceFixture) -> str:
+        def mutate(payload: dict[str, Any]) -> None:
+            payload["request_bindings"][0]["file_sha256"] = (
+                "788aea87abb9d710617b86d8e05878151184d9ec92e4d3f0e013747c3655ae57"
+            )
+
+        return _reseal_index(stale_fixture, mutate)
+
+    def mixed_v1_manifest_binding(stale_fixture: EvidenceFixture) -> str:
+        def mutate(payload: dict[str, Any]) -> None:
+            payload["candidate_bindings"][4] = {
+                "filename": "korean-foundations-v1-curation.json",
+                "version": "korean-foundations-v1-curation",
+                "file_sha256": "2" * 64,
+                "canonical_content_sha256": "3" * 64,
+            }
+
+        return _reseal_index(stale_fixture, mutate)
+
+    def incomplete_member(stale_fixture: EvidenceFixture) -> str:
+        candidate_root = stale_fixture.project_root / "data" / "korean_foundations"
+        _fixture_candidate_path(
+            candidate_root,
+            "korean-foundations-v2-media.json",
+        ).unlink()
+        return stale_fixture.index_sha256
+
+    cases: tuple[tuple[str, Callable[[EvidenceFixture], str], str], ...] = (
+        ("v1-binding", stale_v1_binding, "index_invalid"),
+        ("draft-binding", draft_binding, "index_invalid"),
+        ("stale-request", stale_request_binding, "source_binding_mismatch"),
+        ("mixed-v1-manifest", mixed_v1_manifest_binding, "index_invalid"),
+        ("incomplete-member", incomplete_member, "source_binding_mismatch"),
+    )
+    for case_name, mutate, expected_reason in cases:
+        case_fixture = _build_complete_fixture(tmp_path / case_name)
+        _install_fixture_paths(api, monkeypatch, case_fixture)
+        confirmed = mutate(case_fixture)
+        before = _tree_bytes(case_fixture.project_root)
+        with pytest.raises(api.KoreanFoundationEvidenceError) as exc_info:
+            api.validate_and_write_fixed_korean_foundation_validation_receipt(
+                confirmed_index_sha256=confirmed
+            )
+        assert _reason(exc_info) == expected_reason
+        assert case_fixture.receipt_path.exists() is False
+        assert not tuple(case_fixture.inbox.glob(".validation-receipt.*.tmp"))
+        assert _tree_bytes(case_fixture.project_root) == before
 
 
 @pytest.mark.parametrize(
@@ -1323,12 +1427,8 @@ def _mutate_media_byte(fixture: EvidenceFixture) -> str:
 
 
 def _mutate_candidate_source(fixture: EvidenceFixture) -> str:
-    path = (
-        fixture.project_root
-        / "data"
-        / "korean_foundations"
-        / "hangul-v1.json"
-    )
+    candidate_root = fixture.project_root / "data" / "korean_foundations"
+    path = _fixture_candidate_path(candidate_root, "hangul-v2.json")
     raw = bytearray(path.read_bytes())
     raw[-2] = ord(" ")
     path.write_bytes(bytes(raw))
@@ -1501,13 +1601,15 @@ def test_read_only_continuity_accepts_exact_state_and_uses_no_write_primitive(
                 fixture.project_root
                 / "data"
                 / "korean_foundations"
-                / "korean-concepts-v1.json"
+                / CURRENT_BUNDLE_RELPATH
+                / "hangul-v2.json"
             ).write_bytes(
                 (
                     fixture.project_root
                     / "data"
                     / "korean_foundations"
-                    / "korean-concepts-v1.json"
+                    / CURRENT_BUNDLE_RELPATH
+                    / "hangul-v2.json"
                 ).read_bytes()
                 + b" "
             ),
@@ -1609,8 +1711,12 @@ def test_public_source_has_no_importer_provider_network_or_forged_writer_surface
 
 def test_canonical_candidates_requests_and_production_roots_remain_untouched() -> None:
     for filename, expected_hash in EXPECTED_CANDIDATE_SHA256.items():
-        path = PROJECT_ROOT / "data" / "korean_foundations" / filename
+        path = _canonical_candidate_path(filename)
         assert _sha256_bytes(path.read_bytes()) == expected_hash
+    registry_path = _canonical_candidate_path(REGISTRY_FILENAME)
+    assert _sha256_bytes(registry_path.read_bytes()) == (
+        EXPECTED_REGISTRY_SHA256["file_sha256"]
+    )
     for filename, expected_hash in EXPECTED_REQUEST_SHA256.items():
         path = PHASE_ROOT / filename
         assert _sha256_bytes(path.read_bytes()) == expected_hash

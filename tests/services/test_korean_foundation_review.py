@@ -2,9 +2,13 @@
 
 from __future__ import annotations
 
+import hashlib
+import json
 from importlib import import_module, util
 import inspect
+from pathlib import Path
 from types import ModuleType
+from types import SimpleNamespace
 
 import pytest
 from pydantic import ValidationError
@@ -21,9 +25,25 @@ def _curriculum() -> ModuleType:
     return import_module("multilang.services.korean_curriculum")
 
 
+def _media() -> ModuleType:
+    return import_module("multilang.services.korean_foundation_media")
+
+
 def _reason(exc_info: pytest.ExceptionInfo[BaseException]) -> str:
     reason_code = getattr(exc_info.value, "reason_code")
     return getattr(reason_code, "value", reason_code)
+
+
+def _sha256_file(path: Path) -> str:
+    return hashlib.sha256(path.read_bytes()).hexdigest()
+
+
+PHASE_ROOT = (
+    Path(__file__).resolve().parents[2]
+    / ".planning"
+    / "phases"
+    / "31-hangul-and-pronunciation-i-plus-1"
+)
 
 
 def _approved_gate(api: ModuleType, record: object, gate_name: str) -> object:
@@ -62,6 +82,7 @@ def test_review_public_contract_has_fixed_no_path_production_apis() -> None:
         "KoreanFoundationReviewStatus",
         "KoreanFoundationReviewSummary",
         "assert_korean_foundation_review_ready",
+        "load_korean_v1_foundation_curation",
         "load_pending_korean_foundation_curation",
         "summarize_korean_foundation_review",
         "update_korean_foundation_review_gate",
@@ -71,17 +92,172 @@ def test_review_public_contract_has_fixed_no_path_production_apis() -> None:
     assert tuple(
         inspect.signature(api.load_pending_korean_foundation_curation).parameters
     ) == ()
+    assert tuple(
+        inspect.signature(api.load_korean_v1_foundation_curation).parameters
+    ) == ()
     assert tuple(inspect.signature(api.assert_korean_foundation_review_ready).parameters) == (
         "snapshot",
     )
     for function_name in (
         "load_pending_korean_foundation_curation",
+        "load_korean_v1_foundation_curation",
         "assert_korean_foundation_review_ready",
     ):
         source = inspect.getsource(getattr(api, function_name)).casefold()
         assert "http://" not in source
         assert "https://" not in source
         assert "requests" not in source
+
+
+def test_review_and_media_default_to_exact_v2_bundle_with_all_gates_pending() -> None:
+    review_api = _review()
+    media_api = _media()
+    curriculum = _curriculum()
+
+    bundle = curriculum.load_korean_current_foundation_bundle()
+    assert review_api.DEFAULT_KOREAN_FOUNDATION_CURATION_PATH == (
+        curriculum.CURRENT_KOREAN_FOUNDATION_CANDIDATE_PATH
+    )
+    assert media_api.DEFAULT_KOREAN_FOUNDATION_MEDIA_MANIFEST_PATH == (
+        curriculum.CURRENT_KOREAN_FOUNDATION_CANDIDATE_PATH
+    )
+
+    curation_load_error = None
+    try:
+        curation = review_api.load_pending_korean_foundation_curation()
+    except review_api.KoreanFoundationReviewError as exc:
+        curation = None
+        curation_load_error = getattr(exc.reason_code, "value", exc.reason_code)
+    media_load_error = None
+    try:
+        media = media_api.load_pending_korean_foundation_media_manifest()
+    except media_api.KoreanFoundationMediaError as exc:
+        media = None
+        media_load_error = getattr(exc.reason_code, "value", exc.reason_code)
+
+    assert curation_load_error is None
+    assert media_load_error is None
+    assert curation is not None
+    assert media is not None
+
+    bundle_root = Path(bundle.source_root)
+    assert bundle.source_kind == "current-candidate"
+    assert bundle.bundle_sha256 == (
+        "36c1442b161fb3d8529678099b4df1c93b43fb2456a24260ac2942787b7f44f0"
+    )
+    assert bundle.bundle_manifest_sha256 == (
+        "2390974b9f48534665d474b9fe18290e28edc361aa3cc119481db70e44acfd40"
+    )
+    assert bundle.member_file_sha256["korean-foundations-v2-curation.json"] == (
+        "faa233cdc67f99c28c3f203e1b206f4ad4f631bc34b8e2fbb970db336f1157db"
+    )
+    assert bundle.member_file_sha256["korean-foundations-v2-media.json"] == (
+        "e21c7a11006cf70a0559ec7fff7279b466097cf3bbc1fa092cee84e7b963e938"
+    )
+    assert _sha256_file(bundle_root / "korean-foundations-v2-curation.json") == (
+        "faa233cdc67f99c28c3f203e1b206f4ad4f631bc34b8e2fbb970db336f1157db"
+    )
+    assert _sha256_file(bundle_root / "korean-foundations-v2-media.json") == (
+        "e21c7a11006cf70a0559ec7fff7279b466097cf3bbc1fa092cee84e7b963e938"
+    )
+    assert _sha256_file(PHASE_ROOT / "31-CURRICULUM-REVIEW.md") == (
+        "df52d78f2bcd3a89e9589ea68d645df02841a2f9017394d14c833cb7580b36cc"
+    )
+    assert _sha256_file(PHASE_ROOT / "31-AUDIO-PLAYBACK-REVIEW.md") == (
+        "4e28149921c9602c78f1e15633923b55eaf572993fce506651d6d474acf73035"
+    )
+
+    assert curation.manifest_version == "korean-foundations-v2-curation"
+    assert curation.hangul_source_pack_version == bundle.hangul.source_pack_version
+    assert curation.pronunciation_source_pack_version == (
+        bundle.pronunciation.source_pack_version
+    )
+    assert curation.hangul_source_pack_sha256 == bundle.hangul.content_hash
+    assert curation.pronunciation_source_pack_sha256 == (
+        bundle.pronunciation.content_hash
+    )
+    assert curation.content_hash == (
+        "08874c6f4c64240d79cbdb982c1aa0d8a886749bc8100da41036b7c1b8ba9b22"
+    )
+    assert len(curation.records) == 139
+    assert sum(record.family == "hangul" for record in curation.records) == 92
+    assert sum(record.family == "pronunciation" for record in curation.records) == 47
+    assert sum(len(record.gates) for record in curation.records) == 973
+    assert {record.source_pack_version for record in curation.records} == {
+        "hangul-v2",
+        "pronunciation-i-plus-1-v2",
+    }
+    assert {
+        gate.status for record in curation.records for gate in record.gates
+    } == {"needs_review"}
+    assert all(
+        gate.reviewer_id is None
+        and gate.reviewer_role is None
+        and gate.reviewed_at is None
+        and gate.reviewed_evidence_sha256 is None
+        for record in curation.records
+        for gate in record.gates
+    )
+
+    assert media.manifest_version == "korean-foundations-v2-media"
+    assert media.hangul_source_pack_version == bundle.hangul.source_pack_version
+    assert media.pronunciation_source_pack_version == (
+        bundle.pronunciation.source_pack_version
+    )
+    assert media.hangul_source_pack_sha256 == bundle.hangul.content_hash
+    assert media.pronunciation_source_pack_sha256 == bundle.pronunciation.content_hash
+    assert media.content_hash == (
+        "8d860b5e41738d2322dc63eb220eb23de66f4b68b4ff1f9e3dd8979e90b5b55a"
+    )
+    assert len(media.slots) == 509
+    assert sum(slot.family == "hangul" for slot in media.slots) == 368
+    assert sum(slot.family == "pronunciation" for slot in media.slots) == 141
+    assert sum(slot.required for slot in media.slots) == 325
+    assert {slot.status for slot in media.slots} == {"needs_review"}
+    assert all(
+        slot.reason_code == "media-evidence-required"
+        and slot.artifact_sha256 is None
+        and slot.reviewed_artifact_sha256 is None
+        and slot.review_receipts == ()
+        for slot in media.slots
+    )
+
+    summary = review_api.summarize_korean_foundation_review(curation)
+    assert summary.learner_ready_records == 0
+    assert summary.blocked_records == 139
+    review_snapshot = SimpleNamespace(
+        concept_registry=bundle.registry,
+        hangul_source_pack=bundle.hangul,
+        pronunciation_source_pack=bundle.pronunciation,
+        curation_manifest=curation,
+    )
+    with pytest.raises(review_api.KoreanFoundationReviewError) as review_exc:
+        review_api.assert_korean_foundation_review_ready(review_snapshot)
+    assert _reason(review_exc) == "candidate_manifest_not_active"
+
+    media_snapshot = SimpleNamespace(
+        concept_registry=bundle.registry,
+        hangul_source_pack=bundle.hangul,
+        pronunciation_source_pack=bundle.pronunciation,
+        snapshot_root=bundle_root,
+        media_root=bundle_root / "media",
+        media_manifest_bytes=(
+            json.dumps(media.model_dump(mode="json"), ensure_ascii=False) + "\n"
+        ).encode("utf-8"),
+        media_members=(),
+    )
+    with pytest.raises(media_api.KoreanFoundationMediaError) as media_exc:
+        media_api.assert_korean_foundation_media_ready(media_snapshot)
+    assert _reason(media_exc) == "candidate_manifest_not_active"
+
+    history_curation = review_api.load_korean_v1_foundation_curation()
+    history_media = media_api.load_korean_v1_foundation_media_manifest()
+    assert history_curation.manifest_version == "korean-foundations-v1-curation"
+    assert history_media.manifest_version == "korean-foundations-v1-media"
+    assert history_curation.hangul_source_pack_version == "hangul-v1"
+    assert history_media.pronunciation_source_pack_version == (
+        "pronunciation-i-plus-1-v1"
+    )
 
 
 @pytest.mark.parametrize("status", ["needs_review", "rejected"])
@@ -243,7 +419,7 @@ def test_source_or_curriculum_invalidity_precedes_approved_gate_state() -> None:
 @pytest.mark.parametrize(
     ("field_name", "value", "expected_reason"),
     [
-        ("source_pack_version", "hangul-v2", "source_identity_mismatch"),
+        ("source_pack_version", "hangul-v1", "source_identity_mismatch"),
         ("source_content_sha256", "f" * 64, "source_identity_mismatch"),
     ],
 )

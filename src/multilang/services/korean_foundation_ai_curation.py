@@ -6,6 +6,7 @@ import shutil
 import stat
 import tempfile
 import unicodedata
+from collections import Counter
 from enum import Enum
 from hashlib import sha256
 from pathlib import Path
@@ -115,6 +116,12 @@ _FOUNDATION_V1_CURATION_PATH = (
 )
 _FOUNDATION_V1_MEDIA_PATH = (
     KOREAN_FOUNDATION_CANDIDATE_ROOT / "korean-foundations-v1-media.json"
+)
+_CURRICULUM_REVIEW_REQUEST_PATH = (
+    KOREAN_FOUNDATION_EXECUTION_HANDOFF_ROOT.parent / "31-CURRICULUM-REVIEW.md"
+)
+_AUDIO_PLAYBACK_REVIEW_REQUEST_PATH = (
+    KOREAN_FOUNDATION_EXECUTION_HANDOFF_ROOT.parent / "31-AUDIO-PLAYBACK-REVIEW.md"
 )
 _CANDIDATE_MEMBER_NAMES = (
     "hangul-v2.json",
@@ -1136,6 +1143,36 @@ class KoreanFoundationCandidatePublication(_FrozenDraftModel):
         return self
 
 
+class KoreanFoundationReviewRequestsResult(_FrozenDraftModel):
+    schema_version: Literal[1] = 1
+    status: Literal["review_requests_ready"] = "review_requests_ready"
+    candidate_bundle_sha256: str = Field(min_length=64, max_length=64)
+    candidate_bundle_manifest_sha256: str = Field(min_length=64, max_length=64)
+    curriculum_request_sha256: str = Field(min_length=64, max_length=64)
+    audio_playback_request_sha256: str = Field(min_length=64, max_length=64)
+    content_hash: str = Field(min_length=64, max_length=64)
+
+    @field_validator(
+        "candidate_bundle_sha256",
+        "candidate_bundle_manifest_sha256",
+        "curriculum_request_sha256",
+        "audio_playback_request_sha256",
+        "content_hash",
+    )
+    @classmethod
+    def hashes_must_be_sha256(cls, value: str, info: object) -> str:
+        return _sha256_text(
+            value,
+            field_name=getattr(info, "field_name", "review request hash"),
+        )
+
+    @model_validator(mode="after")
+    def result_must_be_self_hashed(self) -> Self:
+        if self.content_hash != korean_draft_content_hash(self):
+            raise ValueError("review requests result content hash does not match")
+        return self
+
+
 class KoreanFoundationAICurationReasonCode(str, Enum):
     ARTIFACT_MISSING = "artifact_missing"
     ARTIFACT_OVERSIZED = "artifact_oversized"
@@ -1150,6 +1187,8 @@ class KoreanFoundationAICurationReasonCode(str, Enum):
     CANDIDATE_POINTER_CONFLICT = "candidate_pointer_conflict"
     CANDIDATE_POINTER_MISSING = "candidate_pointer_missing"
     CANDIDATE_POINTER_INVALID = "candidate_pointer_invalid"
+    REVIEW_REQUEST_MISMATCH = "review_request_mismatch"
+    REVIEW_REQUEST_UNSAFE_PATH = "review_request_unsafe_path"
     ATOMIC_WRITE_FAILED = "atomic_write_failed"
 
 
@@ -2106,11 +2145,21 @@ def promote_korean_foundation_curation_selection(
 
 def _read_candidate_pointer() -> KoreanFoundationCandidatePointer:
     try:
-        payload = json.loads(_CURRENT_CANDIDATE_POINTER_PATH.read_text(encoding="utf-8"))
+        pointer_stat = _CURRENT_CANDIDATE_POINTER_PATH.lstat()
     except FileNotFoundError as exc:
         raise KoreanFoundationAICurationError(
             KoreanFoundationAICurationReasonCode.CANDIDATE_POINTER_MISSING
         ) from exc
+    except OSError as exc:
+        raise KoreanFoundationAICurationError(
+            KoreanFoundationAICurationReasonCode.CANDIDATE_POINTER_INVALID
+        ) from exc
+    if _path_is_link_or_reparse(pointer_stat) or not stat.S_ISREG(pointer_stat.st_mode):
+        raise KoreanFoundationAICurationError(
+            KoreanFoundationAICurationReasonCode.CANDIDATE_POINTER_INVALID
+        )
+    try:
+        payload = json.loads(_CURRENT_CANDIDATE_POINTER_PATH.read_text(encoding="utf-8"))
     except (OSError, UnicodeDecodeError, json.JSONDecodeError, RecursionError) as exc:
         raise KoreanFoundationAICurationError(
             KoreanFoundationAICurationReasonCode.CANDIDATE_POINTER_INVALID
@@ -2186,6 +2235,968 @@ def verify_promoted_korean_foundation_candidate(
     return current
 
 
+def _current_candidate_bundle_payloads() -> tuple[
+    KoreanFoundationCandidatePublication,
+    Path,
+    dict[str, Any],
+    dict[str, dict[str, Any]],
+]:
+    publication = read_current_korean_foundation_candidate()
+    bundle_root = KOREAN_FOUNDATION_CANDIDATE_ROOT / publication.bundle_relpath
+    manifest = _load_json_payload(bundle_root / "bundle-manifest.json")
+    members = {name: _load_json_payload(bundle_root / name) for name in _CANDIDATE_MEMBER_NAMES}
+    _validate_current_candidate_projection(publication, manifest, members)
+    return publication, bundle_root, manifest, members
+
+
+def _validate_current_candidate_projection(
+    publication: KoreanFoundationCandidatePublication,
+    manifest: dict[str, Any],
+    members: dict[str, dict[str, Any]],
+) -> None:
+    if publication.member_names != _CANDIDATE_MEMBER_NAMES:
+        raise KoreanFoundationAICurationError(
+            KoreanFoundationAICurationReasonCode.ARTIFACT_BINDING_MISMATCH
+        )
+    if manifest.get("candidate_only") is not True or manifest.get("review_status") != "needs_review":
+        raise KoreanFoundationAICurationError(
+            KoreanFoundationAICurationReasonCode.ARTIFACT_BINDING_MISMATCH
+        )
+    hangul = members["hangul-v2.json"]
+    pronunciation = members["pronunciation-i-plus-1-v2.json"]
+    curation = members["korean-foundations-v2-curation.json"]
+    media = members["korean-foundations-v2-media.json"]
+    if (
+        hangul.get("source_pack_version") != "hangul-v2"
+        or pronunciation.get("source_pack_version") != "pronunciation-i-plus-1-v2"
+        or len(hangul.get("entries", ())) != 92
+        or len(pronunciation.get("entries", ())) != 47
+        or curation.get("manifest_version") != "korean-foundations-v2-curation"
+        or curation.get("candidate_only") is not True
+        or len(curation.get("records", ())) != 139
+        or media.get("manifest_version") != "korean-foundations-v2-media"
+        or media.get("candidate_only") is not True
+        or len(media.get("slots", ())) != 509
+    ):
+        raise KoreanFoundationAICurationError(
+            KoreanFoundationAICurationReasonCode.ARTIFACT_BINDING_MISMATCH
+        )
+    if any(
+        gate.get("status") != "needs_review"
+        or gate.get("reviewer_id") is not None
+        or gate.get("reviewed_at") is not None
+        or gate.get("reviewed_evidence_sha256") is not None
+        for record in curation["records"]
+        for gate in record["gates"]
+    ):
+        raise KoreanFoundationAICurationError(
+            KoreanFoundationAICurationReasonCode.ARTIFACT_BINDING_MISMATCH
+        )
+    if any(
+        slot.get("status") != "needs_review"
+        or slot.get("artifact_sha256") is not None
+        or slot.get("source_id") is not None
+        or slot.get("review_receipts") != []
+        for slot in media["slots"]
+    ):
+        raise KoreanFoundationAICurationError(
+            KoreanFoundationAICurationReasonCode.ARTIFACT_BINDING_MISMATCH
+        )
+
+
+def _file_sha256(path: Path) -> str:
+    return sha256(path.read_bytes()).hexdigest()
+
+
+def _candidate_request_bindings(
+    *,
+    publication: KoreanFoundationCandidatePublication,
+    bundle_root: Path,
+    manifest: dict[str, Any],
+    members: dict[str, dict[str, Any]],
+) -> dict[str, Any]:
+    media_slots = members["korean-foundations-v2-media.json"]["slots"]
+    curation_records = members["korean-foundations-v2-curation.json"]["records"]
+    bindings: dict[str, Any] = {
+        "current-candidate.json": {
+            "filename": "current-candidate.json",
+            "bundle_sha256": publication.bundle_sha256,
+            "bundle_relpath": publication.bundle_relpath,
+            "bundle_manifest_sha256": publication.bundle_manifest_sha256,
+            "file_sha256": _file_sha256(_CURRENT_CANDIDATE_POINTER_PATH),
+        },
+        "bundle-manifest.json": {
+            "filename": "bundle-manifest.json",
+            "bundle_sha256": manifest["bundle_sha256"],
+            "selected_draft_manifest_sha256": manifest[
+                "selected_draft_manifest_sha256"
+            ],
+            "draft_validation_sha256": manifest["draft_validation_sha256"],
+            "file_sha256": _file_sha256(bundle_root / "bundle-manifest.json"),
+            "total_record_count": 139,
+            "media_slot_count": 509,
+        },
+    }
+    for name in _CANDIDATE_MEMBER_NAMES:
+        payload = members[name]
+        version_field = "source_pack_version" if "entries" in payload else "manifest_version"
+        binding: dict[str, Any] = {
+            "filename": name,
+            "version": payload[version_field],
+            "canonical_content_sha256": payload["content_hash"],
+            "file_sha256": _file_sha256(bundle_root / name),
+        }
+        if name == "hangul-v2.json":
+            binding["item_count"] = 92
+        elif name == "pronunciation-i-plus-1-v2.json":
+            binding["item_count"] = 47
+        elif name == "korean-foundations-v2-curation.json":
+            binding["record_count"] = 139
+            binding["gate_count"] = sum(
+                len(record["gates"]) for record in curation_records
+            )
+        else:
+            binding["asset_count"] = 509
+            binding["required_asset_count"] = sum(
+                1 for slot in media_slots if slot["required"]
+            )
+        bindings[name] = binding
+    return bindings
+
+
+def _item_identity_rows(members: dict[str, dict[str, Any]]) -> list[dict[str, Any]]:
+    return [
+        {
+            "family": entry["family"],
+            "item_key": entry["item_key"],
+            "sequence": entry["sequence"],
+            "stage_id": entry["stage_id"],
+            "category_id": entry["category_id"],
+            "source_pack_version": entry["source_pack_version"],
+            "source_content_sha256": entry["content_hash"],
+            "target_concept_id": entry["evidence"]["target_concept_id"],
+            "active_rule_ids": entry["active_rule_ids"],
+        }
+        for entry in (
+            *members["hangul-v2.json"]["entries"],
+            *members["pronunciation-i-plus-1-v2.json"]["entries"],
+        )
+    ]
+
+
+def _asset_identity_rows(members: dict[str, dict[str, Any]]) -> list[dict[str, Any]]:
+    fields = (
+        "family",
+        "item_key",
+        "sequence",
+        "slot_id",
+        "media_kind",
+        "required",
+        "source_pack_version",
+        "source_content_sha256",
+        "basename",
+        "storage_relpath",
+        "output_format",
+    )
+    return [
+        {field: slot[field] for field in fields}
+        for slot in members["korean-foundations-v2-media.json"]["slots"]
+    ]
+
+
+def _source_entry_lookup(
+    members: dict[str, dict[str, Any]],
+) -> dict[tuple[str, str], dict[str, Any]]:
+    return {
+        (entry["family"], entry["item_key"]): entry
+        for entry in (
+            *members["hangul-v2.json"]["entries"],
+            *members["pronunciation-i-plus-1-v2.json"]["entries"],
+        )
+    }
+
+
+def _slot_display_text(slot: dict[str, Any], entry: dict[str, Any]) -> str:
+    if slot["family"] == "hangul":
+        mapping = entry.get("pedagogical_jamo_mapping")
+        if mapping is not None:
+            return str(mapping["display_glyph"])
+        return str(entry["canonical_jamo_or_block"])
+    if slot["media_kind"] == "letter_audio":
+        return str(entry["spellings"])
+    if slot["media_kind"] == "word_audio":
+        return str(entry["example_word"])
+    return str(entry["example_sentence"])
+
+
+def _text_binding_rows(members: dict[str, dict[str, Any]]) -> list[dict[str, str]]:
+    entries = _source_entry_lookup(members)
+    rows = []
+    for slot in members["korean-foundations-v2-media.json"]["slots"]:
+        display_text = _slot_display_text(slot, entries[(slot["family"], slot["item_key"])])
+        rows.append(
+            {
+                "slot_id": slot["slot_id"],
+                "display_text": display_text,
+                "display_text_sha256": sha256(display_text.encode("utf-8")).hexdigest(),
+                "text_nfc": unicodedata.normalize("NFC", display_text),
+            }
+        )
+    return rows
+
+
+def _curriculum_gate_role_matrix() -> dict[str, list[dict[str, Any]]]:
+    return {
+        "hangul": [
+            {
+                "gate_name": "source_content",
+                "required_role": "korean-foundation-content-reviewer",
+                "scope_ids": [
+                    "mapping",
+                    "name-or-reading",
+                    "block-or-example",
+                    "stroke-order",
+                    "mnemonic",
+                ],
+                "selector": "all-hangul-items",
+                "decision_count": 92,
+                "status": "needs_review",
+            },
+            {
+                "gate_name": "curriculum_atomicity",
+                "required_role": "korean-curriculum-reviewer",
+                "scope_ids": [
+                    "target-concept",
+                    "prerequisites",
+                    "observed-concepts",
+                    "one-target-unknown",
+                ],
+                "selector": "all-hangul-items",
+                "decision_count": 92,
+                "status": "needs_review",
+            },
+            {
+                "gate_name": "korean_orthography",
+                "required_role": "korean-orthography-reviewer",
+                "scope_ids": [
+                    "canonical-jamo-or-block",
+                    "pedagogical-jamo-mapping",
+                    "orthographic-example",
+                ],
+                "selector": "all-hangul-items",
+                "decision_count": 92,
+                "status": "needs_review",
+            },
+            {
+                "gate_name": "portuguese",
+                "required_role": "portuguese-reviewer",
+                "scope_ids": ["learner-facing-portuguese"],
+                "selector": "all-hangul-items",
+                "decision_count": 92,
+                "status": "needs_review",
+            },
+        ],
+        "pronunciation": [
+            {
+                "gate_name": "source_content",
+                "required_role": "korean-foundation-content-reviewer",
+                "scope_ids": [
+                    "spelling",
+                    "example-word",
+                    "example-sentence",
+                    "register-context",
+                ],
+                "selector": "all-pronunciation-items",
+                "decision_count": 47,
+                "status": "needs_review",
+            },
+            {
+                "gate_name": "curriculum_atomicity",
+                "required_role": "korean-curriculum-reviewer",
+                "scope_ids": [
+                    "target-concept",
+                    "prerequisites",
+                    "active-rules",
+                    "one-target-unknown",
+                ],
+                "selector": "all-pronunciation-items",
+                "decision_count": 47,
+                "status": "needs_review",
+            },
+            {
+                "gate_name": "korean_phonetics",
+                "required_role": "korean-phonetics-specialist",
+                "scope_ids": [
+                    "normative-pronunciation",
+                    "surface-pronunciation",
+                    "optional-ipa",
+                    "phonological-rules",
+                ],
+                "selector": "all-pronunciation-items",
+                "decision_count": 47,
+                "status": "needs_review",
+            },
+            {
+                "gate_name": "portuguese",
+                "required_role": "portuguese-reviewer",
+                "scope_ids": [
+                    "word-translation",
+                    "sentence-translation",
+                    "register-alignment",
+                ],
+                "selector": "all-pronunciation-items",
+                "decision_count": 47,
+                "status": "needs_review",
+            },
+        ],
+    }
+
+
+def _audio_item_gate_role_matrix() -> dict[str, list[dict[str, Any]]]:
+    return {
+        "hangul": [
+            {
+                "gate_name": "media_license",
+                "required_role": "media-rights-reviewer",
+                "scope_ids": ["all-declared-media-rights"],
+                "selector": "all-hangul-items",
+                "decision_count": 92,
+                "status": "needs_review",
+            },
+            {
+                "gate_name": "media_integrity",
+                "required_role": "media-integrity-reviewer",
+                "scope_ids": ["all-required-media-slots"],
+                "selector": "all-hangul-items",
+                "decision_count": 92,
+                "status": "needs_review",
+            },
+            {
+                "gate_name": "audio_playback",
+                "required_role": "audio-playback-reviewer",
+                "scope_ids": ["exact-audio-bytes", "heard-playback"],
+                "selector": "all-hangul-items",
+                "decision_count": 92,
+                "status": "needs_review",
+            },
+        ],
+        "pronunciation": [
+            {
+                "gate_name": "media_license",
+                "required_role": "media-rights-reviewer",
+                "scope_ids": ["all-declared-audio-rights"],
+                "selector": "all-pronunciation-items",
+                "decision_count": 47,
+                "status": "needs_review",
+            },
+            {
+                "gate_name": "media_integrity",
+                "required_role": "media-integrity-reviewer",
+                "scope_ids": ["letter-word-sentence-audio"],
+                "selector": "all-pronunciation-items",
+                "decision_count": 47,
+                "status": "needs_review",
+            },
+            {
+                "gate_name": "audio_playback",
+                "required_role": "audio-playback-reviewer",
+                "scope_ids": ["exact-audio-bytes", "heard-playback"],
+                "selector": "all-pronunciation-items",
+                "decision_count": 47,
+                "status": "needs_review",
+            },
+        ],
+    }
+
+
+def _build_curriculum_request_payload(
+    bindings: dict[str, Any],
+    members: dict[str, dict[str, Any]],
+) -> dict[str, Any]:
+    rows = _item_identity_rows(members)
+    hangul_rows = [row for row in rows if row["family"] == "hangul"]
+    pronunciation_rows = [row for row in rows if row["family"] == "pronunciation"]
+    matrix = _curriculum_gate_role_matrix()
+    return {
+        "artifact_type": "korean_foundation_curriculum_review_request",
+        "schema_version": 1,
+        "request_status": "needs_review",
+        "request_only": True,
+        "evidence_supplied": False,
+        "human_checkpoint_count": 0,
+        "candidate_bindings": bindings,
+        "coverage": {
+            "item_count": 139,
+            "hangul_item_count": 92,
+            "pronunciation_item_count": 47,
+            "item_key_selectors": [
+                {
+                    "family": "hangul",
+                    "prefix": "ko-hangul-",
+                    "first_sequence": 1,
+                    "last_sequence": 92,
+                    "zero_pad_width": 4,
+                    "count": 92,
+                },
+                {
+                    "family": "pronunciation",
+                    "prefix": "ko-pron-",
+                    "first_sequence": 1,
+                    "last_sequence": 47,
+                    "zero_pad_width": 4,
+                    "count": 47,
+                },
+            ],
+            "stage_counts": dict(Counter(row["stage_id"] for row in rows)),
+            "item_identity_projection": {
+                "source_array": "entries",
+                "selection": "all",
+                "fields": [
+                    "family",
+                    "item_key",
+                    "sequence",
+                    "stage_id",
+                    "category_id",
+                    "source_pack_version",
+                    "source_content_sha256",
+                    "target_concept_id",
+                    "active_rule_ids",
+                ],
+                "order": "hangul-then-pronunciation-source-order",
+                "hash_algorithm": "sha256-utf8-canonical-json",
+            },
+            "item_key_set_sha256": korean_canonical_json_sha256(
+                [[row["family"], row["item_key"]] for row in rows]
+            ),
+            "item_identity_set_sha256": korean_canonical_json_sha256(rows),
+            "hangul_item_identity_sha256": korean_canonical_json_sha256(hangul_rows),
+            "pronunciation_item_identity_sha256": korean_canonical_json_sha256(
+                pronunciation_rows
+            ),
+        },
+        "gate_role_matrix": matrix,
+        "global_decisions": [
+            {
+                "decision_name": "portuguese_editorial_policy",
+                "canonical_language_code": "pt",
+                "required_role": "portuguese-reviewer",
+                "required_output_field": "regional_editorial_policy",
+                "decision_count": 1,
+                "status": "needs_review",
+            }
+        ],
+        "additional_role_requirements": [
+            {
+                "requirement_name": "specialist_atomization",
+                "gate_name": "curriculum_atomicity",
+                "required_role": "korean-phonetics-specialist",
+                "selector": {
+                    "family": "pronunciation",
+                    "item_keys": [f"ko-pron-{sequence:04d}" for sequence in range(42, 48)],
+                    "stages": ["P11", "P12", "P13"],
+                    "source_reason_code": "specialist-atomization-review-required",
+                },
+                "scope_ids": [
+                    "P11-P13-atomization",
+                    "active-rule-analysis",
+                    "rule-ordering",
+                ],
+                "role_assignment_count": 6,
+                "status": "needs_review",
+            }
+        ],
+        "decision_counts": {
+            "item_gate_decisions": 556,
+            "global_policy_decisions": 1,
+            "total_decisions": 557,
+            "total_role_assignments": 563,
+            "by_required_role": {
+                "korean-foundation-content-reviewer": 139,
+                "korean-curriculum-reviewer": 139,
+                "korean-orthography-reviewer": 92,
+                "korean-phonetics-specialist": 53,
+                "portuguese-reviewer": 140,
+            },
+        },
+        "future_fixed_evidence_filenames": [
+            "proposed-curation.json",
+            "curriculum-review.json",
+            "reviewers/korean-orthography.json",
+            "reviewers/korean-phonetics.json",
+            "reviewers/portuguese.json",
+        ],
+        "high_leverage_traces": [rows[0], rows[-1]],
+    }
+
+
+def _build_audio_request_payload(
+    bindings: dict[str, Any],
+    members: dict[str, dict[str, Any]],
+) -> dict[str, Any]:
+    assets = _asset_identity_rows(members)
+    slots = members["korean-foundations-v2-media.json"]["slots"]
+    text_rows = _text_binding_rows(members)
+    audio_kinds = {"audio", "letter_audio", "word_audio", "sentence_audio"}
+    decision_matrix = [
+        {
+            "decision_name": "source_identity",
+            "gate_name": "media_license",
+            "selector": "all-assets",
+            "decision_count": 509,
+            "required_role": "media-rights-reviewer",
+            "required_evidence_fields": ["source_id", "source_version"],
+            "status": "needs_review",
+        },
+        {
+            "decision_name": "attribution",
+            "gate_name": "media_license",
+            "selector": "all-assets",
+            "decision_count": 509,
+            "required_role": "media-rights-reviewer",
+            "required_evidence_fields": ["attribution"],
+            "status": "needs_review",
+        },
+        {
+            "decision_name": "license",
+            "gate_name": "media_license",
+            "selector": "all-assets",
+            "decision_count": 509,
+            "required_role": "media-rights-reviewer",
+            "required_evidence_fields": ["license_id"],
+            "status": "needs_review",
+        },
+        {
+            "decision_name": "reuse",
+            "gate_name": "media_license",
+            "selector": "all-assets",
+            "decision_count": 509,
+            "required_role": "media-rights-reviewer",
+            "required_evidence_fields": ["reuse_disposition"],
+            "status": "needs_review",
+        },
+        {
+            "decision_name": "redistribution",
+            "gate_name": "media_license",
+            "selector": "all-assets",
+            "decision_count": 509,
+            "required_role": "media-rights-reviewer",
+            "required_evidence_fields": ["redistribution_disposition"],
+            "status": "needs_review",
+        },
+        {
+            "decision_name": "exact_byte_integrity",
+            "gate_name": "media_integrity",
+            "selector": "all-assets",
+            "decision_count": 509,
+            "required_role": "media-integrity-reviewer",
+            "required_evidence_fields": [
+                "artifact_sha256",
+                "reviewed_artifact_sha256",
+                "metadata_sha256",
+                "reviewed_metadata_sha256",
+                "output_format",
+                "duration_ms",
+            ],
+            "status": "needs_review",
+        },
+        {
+            "decision_name": "exact_spoken_text",
+            "gate_name": "audio_playback",
+            "selector": "all-audio-assets",
+            "decision_count": 233,
+            "required_role": "korean-phonetics-specialist",
+            "required_evidence_fields": [
+                "display_text",
+                "display_text_sha256",
+                "spoken_text",
+                "spoken_text_sha256",
+                "text_nfc",
+                "text_nfc_sha256",
+            ],
+            "status": "needs_review",
+        },
+        {
+            "decision_name": "specialist_playback",
+            "gate_name": "audio_playback",
+            "selector": "all-audio-assets",
+            "decision_count": 233,
+            "required_role": "korean-phonetics-specialist",
+            "required_evidence_fields": [
+                "exact_media_version",
+                "exact_text_hashes",
+                "exact_byte_hash",
+                "heard_playback_result",
+            ],
+            "status": "needs_review",
+        },
+        {
+            "decision_name": "independent_native_playback",
+            "gate_name": "audio_playback",
+            "selector": "all-audio-assets",
+            "decision_count": 233,
+            "required_role": "independent-native-speaker",
+            "required_evidence_fields": [
+                "exact_media_version",
+                "exact_text_hashes",
+                "exact_byte_hash",
+                "heard_playback_result",
+            ],
+            "status": "needs_review",
+        },
+        {
+            "decision_name": "heard_playback",
+            "gate_name": "audio_playback",
+            "selector": "all-audio-assets",
+            "decision_count": 233,
+            "required_role": "audio-playback-reviewer",
+            "required_evidence_fields": [
+                "exact_media_version",
+                "exact_text_hashes",
+                "exact_byte_hash",
+                "heard_playback_result",
+            ],
+            "status": "needs_review",
+        },
+    ]
+    return {
+        "artifact_type": "korean_foundation_audio_playback_review_request",
+        "schema_version": 1,
+        "request_status": "needs_review",
+        "request_only": True,
+        "evidence_supplied": False,
+        "human_checkpoint_count": 0,
+        "candidate_bindings": bindings,
+        "coverage": {
+            "asset_count": 509,
+            "required_asset_count": 325,
+            "optional_asset_count": 184,
+            "hangul_asset_count": 368,
+            "pronunciation_asset_count": 141,
+            "hangul_required_asset_count": 184,
+            "pronunciation_required_asset_count": 141,
+            "audio_asset_count": 233,
+            "non_audio_asset_count": 276,
+            "asset_kind_counts": dict(Counter(slot["media_kind"] for slot in slots)),
+            "asset_id_selectors": [
+                {
+                    "family": "hangul",
+                    "media_kind": kind,
+                    "prefix": f"hangul.{kind}.",
+                    "first_sequence": 1,
+                    "last_sequence": 92,
+                    "zero_pad_width": 4,
+                    "count": 92,
+                }
+                for kind in ("picture", "strokes", "gif", "audio")
+            ]
+            + [
+                {
+                    "family": "pronunciation",
+                    "media_kind": kind,
+                    "prefix": f"pron.{kind.replace('_', '-')}.",
+                    "first_sequence": 1,
+                    "last_sequence": 47,
+                    "zero_pad_width": 4,
+                    "count": 47,
+                }
+                for kind in ("letter_audio", "word_audio", "sentence_audio")
+            ],
+            "asset_identity_projection": {
+                "source_array": "slots",
+                "selection": "all",
+                "fields": [
+                    "family",
+                    "item_key",
+                    "sequence",
+                    "slot_id",
+                    "media_kind",
+                    "required",
+                    "source_pack_version",
+                    "source_content_sha256",
+                    "basename",
+                    "storage_relpath",
+                    "output_format",
+                ],
+                "order": "media-manifest-source-order",
+                "hash_algorithm": "sha256-utf8-canonical-json",
+            },
+            "asset_id_set_sha256": korean_canonical_json_sha256(
+                [asset["slot_id"] for asset in assets]
+            ),
+            "asset_identity_set_sha256": korean_canonical_json_sha256(assets),
+            "hangul_asset_identity_sha256": korean_canonical_json_sha256(
+                [asset for asset in assets if asset["family"] == "hangul"]
+            ),
+            "pronunciation_asset_identity_sha256": korean_canonical_json_sha256(
+                [asset for asset in assets if asset["family"] == "pronunciation"]
+            ),
+            "required_asset_identity_sha256": korean_canonical_json_sha256(
+                [asset for asset, slot in zip(assets, slots, strict=True) if slot["required"]]
+            ),
+            "audio_asset_identity_sha256": korean_canonical_json_sha256(
+                [
+                    asset
+                    for asset, slot in zip(assets, slots, strict=True)
+                    if slot["media_kind"] in audio_kinds
+                ]
+            ),
+            "text_binding_projection": {
+                "hangul": (
+                    "pedagogical_jamo_mapping.display_glyph-if-present-else-"
+                    "canonical_jamo_or_block"
+                ),
+                "pronunciation_letter_audio": "spellings",
+                "pronunciation_word_audio": "example_word",
+                "pronunciation_sentence_audio": "example_sentence",
+                "selection": "all-assets",
+                "fields": [
+                    "slot_id",
+                    "display_text",
+                    "display_text_sha256",
+                    "text_nfc",
+                ],
+                "hash_algorithm": "sha256-utf8-canonical-json",
+            },
+            "text_binding_set_sha256": korean_canonical_json_sha256(text_rows),
+            "hangul_text_binding_sha256": korean_canonical_json_sha256(text_rows[:368]),
+            "pronunciation_text_binding_sha256": korean_canonical_json_sha256(
+                text_rows[368:]
+            ),
+        },
+        "item_gate_role_matrix": _audio_item_gate_role_matrix(),
+        "asset_role_matrix": {
+            "non_audio_assets": {
+                "media_kinds": ["picture", "strokes", "gif"],
+                "selector": "all-non-audio-assets",
+                "asset_count": 276,
+                "required_roles": [
+                    "media-rights-reviewer",
+                    "media-integrity-reviewer",
+                ],
+            },
+            "audio_assets": {
+                "media_kinds": [
+                    "audio",
+                    "letter_audio",
+                    "word_audio",
+                    "sentence_audio",
+                ],
+                "selector": "all-audio-assets",
+                "asset_count": 233,
+                "required_roles": [
+                    "media-rights-reviewer",
+                    "media-integrity-reviewer",
+                    "audio-playback-reviewer",
+                    "korean-phonetics-specialist",
+                    "independent-native-speaker",
+                ],
+                "distinct_role_constraints": [
+                    [
+                        "korean-phonetics-specialist",
+                        "independent-native-speaker",
+                    ]
+                ],
+            },
+        },
+        "decision_matrix": decision_matrix,
+        "decision_counts": {
+            "item_gate_decisions": 417,
+            "asset_decisions": 3986,
+            "total_decisions": 4403,
+            "unique_item_and_asset_role_bindings": 2134,
+            "by_required_role": {
+                "media-rights-reviewer": 2684,
+                "media-integrity-reviewer": 648,
+                "audio-playback-reviewer": 372,
+                "korean-phonetics-specialist": 466,
+                "independent-native-speaker": 233,
+            },
+        },
+        "future_fixed_evidence_filenames": [
+            "proposed-media.json",
+            "audio-playback-review.json",
+            "rights.json",
+            "reviewers/korean-phonetics.json",
+            "reviewers/independent-native-speaker.json",
+        ],
+        "high_leverage_traces": {
+            "hangul_first_audio": {
+                "asset": assets[3],
+                "text_binding": text_rows[3],
+            },
+            "pronunciation_p13_audio": [
+                {"asset": asset, "text_binding": text}
+                for asset, text in zip(assets[-3:], text_rows[-3:], strict=True)
+            ],
+        },
+    }
+
+
+def _review_request_bytes(title: str, intro: str, payload: dict[str, Any]) -> bytes:
+    body = json.dumps(payload, ensure_ascii=False, indent=2) + "\n"
+    return (
+        f"# {title}\n\n"
+        f"{intro}\n\n"
+        "This is a request contract only. It supplies no human, legal, media, "
+        "playback, activation, or export evidence. Every selector applies to "
+        "the exact current-candidate bundle and remains scanner-detectable.\n\n"
+        "Place future evidence only at the fixed filenames listed in the JSON "
+        "contract. There is no source-location importer or alternate filename.\n\n"
+        "`review_status=needs_review`\n"
+        "`human_checkpoint_count=0`\n\n"
+        "```json\n"
+        f"{body}"
+        "```\n\n"
+        "This request selects no approval, regional policy, rights disposition, "
+        "spoken-text result, media byte, activation, export, or production state.\n"
+    ).encode("utf-8")
+
+
+def _build_review_request_files() -> tuple[bytes, bytes, KoreanFoundationReviewRequestsResult]:
+    publication, bundle_root, manifest, members = _current_candidate_bundle_payloads()
+    bindings = _candidate_request_bindings(
+        publication=publication,
+        bundle_root=bundle_root,
+        manifest=manifest,
+        members=members,
+    )
+    curriculum_payload = _build_curriculum_request_payload(bindings, members)
+    audio_payload = _build_audio_request_payload(bindings, members)
+    curriculum_raw = _review_request_bytes(
+        "Korean Foundation Curriculum Review Request",
+        "Review the exact v2 Hangul and pronunciation candidate identities, "
+        "curriculum atomicity, Korean orthography/phonetics, and Portuguese policy.",
+        curriculum_payload,
+    )
+    audio_raw = _review_request_bytes(
+        "Korean Foundation Audio, Media Rights, and Playback Review Request",
+        "Review the exact v2 media slots, rights selectors, text bindings, "
+        "specialist playback, independent native playback, and heard playback.",
+        audio_payload,
+    )
+    _parse_review_request_payload(curriculum_raw)
+    _parse_review_request_payload(audio_raw)
+    result_payload: dict[str, Any] = {
+        "schema_version": 1,
+        "status": "review_requests_ready",
+        "candidate_bundle_sha256": publication.bundle_sha256,
+        "candidate_bundle_manifest_sha256": publication.bundle_manifest_sha256,
+        "curriculum_request_sha256": sha256(curriculum_raw).hexdigest(),
+        "audio_playback_request_sha256": sha256(audio_raw).hexdigest(),
+    }
+    result_payload["content_hash"] = korean_draft_content_hash(result_payload)
+    return (
+        curriculum_raw,
+        audio_raw,
+        KoreanFoundationReviewRequestsResult.model_validate(result_payload),
+    )
+
+
+def _parse_review_request_payload(raw: bytes) -> dict[str, Any]:
+    try:
+        text = raw.decode("utf-8")
+        if text.count("```json\n") != 1:
+            raise ValueError("request does not contain exactly one JSON block")
+        payload_text = text.split("```json\n", maxsplit=1)[1].split(
+            "\n```",
+            maxsplit=1,
+        )[0]
+        payload = json.loads(payload_text)
+    except (UnicodeDecodeError, json.JSONDecodeError, ValueError, RecursionError) as exc:
+        raise KoreanFoundationAICurationError(
+            KoreanFoundationAICurationReasonCode.REVIEW_REQUEST_MISMATCH
+        ) from exc
+    if not isinstance(payload, dict):
+        raise KoreanFoundationAICurationError(
+            KoreanFoundationAICurationReasonCode.REVIEW_REQUEST_MISMATCH
+        )
+    return payload
+
+
+def _assert_safe_review_request_target(path: Path) -> None:
+    if path not in {_CURRICULUM_REVIEW_REQUEST_PATH, _AUDIO_PLAYBACK_REVIEW_REQUEST_PATH}:
+        raise KoreanFoundationAICurationError(
+            KoreanFoundationAICurationReasonCode.REVIEW_REQUEST_UNSAFE_PATH
+        )
+    _ensure_directory(path.parent)
+    try:
+        target_stat = path.lstat()
+    except FileNotFoundError:
+        return
+    except OSError as exc:
+        raise KoreanFoundationAICurationError(
+            KoreanFoundationAICurationReasonCode.REVIEW_REQUEST_UNSAFE_PATH
+        ) from exc
+    if _path_is_link_or_reparse(target_stat) or not stat.S_ISREG(target_stat.st_mode):
+        raise KoreanFoundationAICurationError(
+            KoreanFoundationAICurationReasonCode.REVIEW_REQUEST_UNSAFE_PATH
+        )
+
+
+def _write_review_request_file(path: Path, raw: bytes) -> None:
+    _assert_safe_review_request_target(path)
+    descriptor = -1
+    temporary_name: str | None = None
+    try:
+        descriptor, temporary_name = tempfile.mkstemp(
+            prefix=f".{path.name}.",
+            suffix=".tmp",
+            dir=path.parent,
+        )
+        os.fchmod(descriptor, 0o600)
+        with os.fdopen(descriptor, "wb", closefd=True) as handle:
+            descriptor = -1
+            handle.write(raw)
+            handle.flush()
+            os.fsync(handle.fileno())
+        os.replace(temporary_name, path)
+        temporary_name = None
+        _fsync_directory(path.parent)
+    except OSError as exc:
+        raise KoreanFoundationAICurationError(
+            KoreanFoundationAICurationReasonCode.ATOMIC_WRITE_FAILED
+        ) from exc
+    finally:
+        if descriptor >= 0:
+            os.close(descriptor)
+        if temporary_name is not None:
+            try:
+                os.unlink(temporary_name)
+            except OSError:
+                pass
+
+
+def _write_review_request_pair(curriculum_raw: bytes, audio_raw: bytes) -> None:
+    _parse_review_request_payload(curriculum_raw)
+    _parse_review_request_payload(audio_raw)
+    _assert_safe_review_request_target(_CURRICULUM_REVIEW_REQUEST_PATH)
+    _assert_safe_review_request_target(_AUDIO_PLAYBACK_REVIEW_REQUEST_PATH)
+    _write_review_request_file(_CURRICULUM_REVIEW_REQUEST_PATH, curriculum_raw)
+    _write_review_request_file(_AUDIO_PLAYBACK_REVIEW_REQUEST_PATH, audio_raw)
+
+
+def regenerate_korean_foundation_review_requests() -> KoreanFoundationReviewRequestsResult:
+    curriculum_raw, audio_raw, result = _build_review_request_files()
+    _write_review_request_pair(curriculum_raw, audio_raw)
+    return verify_korean_foundation_review_requests()
+
+
+def verify_korean_foundation_review_requests() -> KoreanFoundationReviewRequestsResult:
+    expected_curriculum, expected_audio, expected = _build_review_request_files()
+    try:
+        actual_curriculum = _CURRICULUM_REVIEW_REQUEST_PATH.read_bytes()
+        actual_audio = _AUDIO_PLAYBACK_REVIEW_REQUEST_PATH.read_bytes()
+    except OSError as exc:
+        raise KoreanFoundationAICurationError(
+            KoreanFoundationAICurationReasonCode.ARTIFACT_MISSING
+        ) from exc
+    if actual_curriculum != expected_curriculum or actual_audio != expected_audio:
+        raise KoreanFoundationAICurationError(
+            KoreanFoundationAICurationReasonCode.REVIEW_REQUEST_MISMATCH
+        )
+    return expected
+
+
 __all__ = [
     "KOREAN_FOUNDATION_CURATION_DRAFT_ROOT",
     "KOREAN_FOUNDATION_CURATION_INPUT_ROOT",
@@ -2212,6 +3223,7 @@ __all__ = [
     "KoreanFoundationDraftValidationReport",
     "KoreanFoundationFamilyDraft",
     "KoreanFoundationFieldProposal",
+    "KoreanFoundationReviewRequestsResult",
     "assemble_korean_foundation_draft_manifest",
     "assemble_korean_foundation_family_draft",
     "build_korean_foundation_batch_projection",
@@ -2219,9 +3231,11 @@ __all__ = [
     "korean_draft_content_hash",
     "promote_korean_foundation_curation_selection",
     "read_current_korean_foundation_candidate",
+    "regenerate_korean_foundation_review_requests",
     "validate_korean_foundation_batch_draft",
     "validate_korean_foundation_drafts",
     "verify_promoted_korean_foundation_candidate",
+    "verify_korean_foundation_review_requests",
     "write_korean_foundation_batch_projection",
     "write_korean_foundation_draft_manifest",
     "write_korean_foundation_family_draft",

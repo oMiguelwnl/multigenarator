@@ -23,6 +23,48 @@ import pytest
 from pydantic import ValidationError
 
 
+CURRENT_BUNDLE_SHA256 = (
+    "36c1442b161fb3d8529678099b4df1c93b43fb2456a24260ac2942787b7f44f0"
+)
+CURRENT_BUNDLE_RELPATH = f"candidate-bundles/{CURRENT_BUNDLE_SHA256}"
+V2_CANDIDATE_FILENAMES = (
+    "current-candidate.json",
+    "bundle-manifest.json",
+    "hangul-v2.json",
+    "pronunciation-i-plus-1-v2.json",
+    "korean-foundations-v2-curation.json",
+    "korean-foundations-v2-media.json",
+)
+EXPECTED_V2_CANDIDATE_SHA256 = {
+    "current-candidate.json": (
+        "0fa9e0756ab59969dc55ab428544c18aad1d1d14631b0d2569a33823feb24518"
+    ),
+    "bundle-manifest.json": (
+        "2390974b9f48534665d474b9fe18290e28edc361aa3cc119481db70e44acfd40"
+    ),
+    "hangul-v2.json": (
+        "63c36c50c0efa61f7ba76ebdf92ff174f79aadedb63b46d15da01599f2594f59"
+    ),
+    "pronunciation-i-plus-1-v2.json": (
+        "cdac65b7e3a9615e62f187dcf7c7f6c543a480710b618ce0c9eb580281cd955c"
+    ),
+    "korean-foundations-v2-curation.json": (
+        "faa233cdc67f99c28c3f203e1b206f4ad4f631bc34b8e2fbb970db336f1157db"
+    ),
+    "korean-foundations-v2-media.json": (
+        "e21c7a11006cf70a0559ec7fff7279b466097cf3bbc1fa092cee84e7b963e938"
+    ),
+}
+EXPECTED_V2_REQUEST_SHA256 = {
+    "31-CURRICULUM-REVIEW.md": (
+        "df52d78f2bcd3a89e9589ea68d645df02841a2f9017394d14c833cb7580b36cc"
+    ),
+    "31-AUDIO-PLAYBACK-REVIEW.md": (
+        "4e28149921c9602c78f1e15633923b55eaf572993fce506651d6d474acf73035"
+    ),
+}
+
+
 def _snapshot() -> ModuleType:
     assert (
         util.find_spec("multilang.services.korean_foundation_snapshot")
@@ -415,6 +457,88 @@ def test_missing_active_pointer_fails_before_any_candidate_fallback(
         api.resolve_active_korean_foundation_snapshot()
     assert _reason(exc_info) == "production_not_active"
     assert str(exc_info.value) == "production_not_active"
+
+
+def test_snapshot_and_export_bind_exact_v2_and_refuse_before_activation(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    api = _snapshot()
+    export_api = import_module("multilang.services.korean_foundation_export")
+    assert api._CANDIDATE_FILENAMES == V2_CANDIDATE_FILENAMES
+
+    helpers = _plan_31_08_fixture_helpers()
+    fixture = helpers._build_complete_fixture(tmp_path / "blocked")
+    helpers._install_fixture_paths(
+        import_module("multilang.services.korean_foundation_evidence"),
+        monkeypatch,
+        fixture,
+    )
+    _install_snapshot_fixture_paths(api, monkeypatch, fixture.project_root)
+    index = json.loads(fixture.index_path.read_text(encoding="utf-8"))
+    assert {
+        binding["filename"]: binding["file_sha256"]
+        for binding in index["candidate_bindings"]
+    } == EXPECTED_V2_CANDIDATE_SHA256
+    assert {
+        binding["filename"]: binding["file_sha256"]
+        for binding in index["request_bindings"]
+    } == EXPECTED_V2_REQUEST_SHA256
+
+    before = _tree_state(fixture.project_root)
+    with pytest.raises(api.KoreanFoundationSnapshotError) as exc_info:
+        api.resolve_active_korean_foundation_snapshot()
+    assert _reason(exc_info) == "production_not_active"
+    with pytest.raises(api.KoreanFoundationSnapshotError) as exc_info:
+        api.verify_prepared_korean_foundation_snapshot(
+            expected_receipt_sha256="0" * 64
+        )
+    assert _reason(exc_info) == "receipt_missing"
+    for family in export_api.KoreanFoundationFamily:
+        for export_format in export_api.ExportArtifactFormat:
+            destination = fixture.project_root / "exports" / (
+                f"{family.value}.apkg"
+                if export_format is export_api.ExportArtifactFormat.APKG
+                else family.value
+            )
+            with pytest.raises(api.KoreanFoundationSnapshotError) as exc_info:
+                export_api.export_korean_foundation(
+                    family=family,
+                    export_format=export_format,
+                    output_destination=destination,
+                )
+            assert _reason(exc_info) == "production_not_active"
+            assert destination.exists() is False
+    assert _tree_state(fixture.project_root) == before
+
+    receipted = _build_receipted_snapshot_fixture(
+        tmp_path / "receipted",
+        monkeypatch,
+    )
+    authority = receipted.api._read_receipt_authority(
+        receipted.paths,
+        expected_receipt_sha256=receipted.receipt_sha256,
+        require_recorded_prestate=True,
+    )
+    copy_relpaths = tuple(member.relpath for member in authority.copy_members)
+    assert "content/korean-concepts-v1.json" in copy_relpaths
+    assert "content/hangul-v2.json" in copy_relpaths
+    assert "content/pronunciation-i-plus-1-v2.json" in copy_relpaths
+    assert "content/korean-foundations-v2-curation.json" in copy_relpaths
+    assert "content/korean-foundations-v2-media.json" in copy_relpaths
+    assert "review/candidates/korean-foundations-v2-curation.json" in copy_relpaths
+    assert "review/candidates/korean-foundations-v2-media.json" in copy_relpaths
+    assert "review/requests/31-CURRICULUM-REVIEW.md" in copy_relpaths
+    assert "review/requests/31-AUDIO-PLAYBACK-REVIEW.md" in copy_relpaths
+    assert not any(
+        "-v1" in relpath and relpath != "content/korean-concepts-v1.json"
+        for relpath in copy_relpaths
+    )
+    assert export_api.stable_korean_foundation_guid(
+        family=export_api.KoreanFoundationFamily.HANGUL,
+        source_pack_version="hangul-v2",
+        item_key="ko-hangul-0001",
+    ) == sha256(b"hangul|hangul-v2|ko-hangul-0001").hexdigest()[:32]
 
 
 def test_resolver_reads_pointer_once_and_returns_one_frozen_complete_snapshot(
@@ -824,7 +948,7 @@ def test_prepare_zero_write_drift_preserves_stale_stages_and_every_path(
         path = evidence.inbox / "media" / "hangul-audio-0001.wav"
         path.write_bytes(path.read_bytes() + b" ")
     elif drift_case == "candidate-source":
-        path = state.paths.candidate_dir / "hangul-v1.json"
+        path = state.paths.candidate_dir / CURRENT_BUNDLE_RELPATH / "hangul-v2.json"
         path.write_bytes(path.read_bytes() + b" ")
     else:
         evidence.active_pointer.write_bytes(_valid_pointer_bytes())
@@ -938,7 +1062,7 @@ def test_prepare_exact_immutable_retry_is_no_write_and_collision_is_never_overwr
     assert stale.is_dir()
 
     target = state.paths.snapshot_root / prepared.bundle_sha256
-    collision_member = target / "content" / "hangul-v1.json"
+    collision_member = target / "content" / "hangul-v2.json"
     collision_member.write_bytes(collision_member.read_bytes() + b"collision")
     before_collision = _tree_state(state.evidence.project_root)
     with pytest.raises(state.api.KoreanFoundationSnapshotError) as exc_info:
@@ -1057,7 +1181,7 @@ def test_verify_prepared_drift_fails_read_only_with_tree_byte_identical(
     if drift_case == "missing-member":
         (target / "review" / "rights.json").unlink()
     elif drift_case == "source-member":
-        path = target / "content" / "hangul-v1.json"
+        path = target / "content" / "hangul-v2.json"
         path.write_bytes(path.read_bytes() + b" ")
     elif drift_case == "media-member":
         path = next(

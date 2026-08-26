@@ -1,8 +1,10 @@
 # Korean Foundation Audio, Media Rights, and Playback Review Request
 
-This is a request contract only. It supplies no media, human evidence, rights disposition, recording identity, or heard-playback result. Every selector applies to every identity in the exact hash-bound media candidate; projection digests bind the complete asset and source-text sets without inventing spoken text.
+Review the exact v2 media slots, rights selectors, text bindings, specialist playback, independent native playback, and heard playback.
 
-Place future evidence only at the fixed filenames listed in the JSON contract after Plan 31-08 defines their schemas. There is no source-location importer or alternate filename.
+This is a request contract only. It supplies no human, legal, media, playback, activation, or export evidence. Every selector applies to the exact current-candidate bundle and remains scanner-detectable.
+
+Place future evidence only at the fixed filenames listed in the JSON contract. There is no source-location importer or alternate filename.
 
 `review_status=needs_review`
 `human_checkpoint_count=0`
@@ -16,40 +18,49 @@ Place future evidence only at the fixed filenames listed in the JSON contract af
   "evidence_supplied": false,
   "human_checkpoint_count": 0,
   "candidate_bindings": {
-    "korean-concepts-v1.json": {
-      "filename": "korean-concepts-v1.json",
-      "version": "korean-concepts-v1",
-      "canonical_content_sha256": "89a520055cfd94eb086c9ed3e937499a71fbcb07c056e1916b645c3bd312d89d",
-      "file_sha256": "79e50d509d3dd732f7bcadc4568697747646af1f191fc0b59a8e94e0b6b18625",
-      "concept_count": 139
+    "current-candidate.json": {
+      "filename": "current-candidate.json",
+      "bundle_sha256": "36c1442b161fb3d8529678099b4df1c93b43fb2456a24260ac2942787b7f44f0",
+      "bundle_relpath": "candidate-bundles/36c1442b161fb3d8529678099b4df1c93b43fb2456a24260ac2942787b7f44f0",
+      "bundle_manifest_sha256": "2390974b9f48534665d474b9fe18290e28edc361aa3cc119481db70e44acfd40",
+      "file_sha256": "0fa9e0756ab59969dc55ab428544c18aad1d1d14631b0d2569a33823feb24518"
     },
-    "hangul-v1.json": {
-      "filename": "hangul-v1.json",
-      "version": "hangul-v1",
-      "canonical_content_sha256": "2bdbfb60aaca1419c2bb20abc8fb9954941bc8f92cb2361c3bc778b01c9b599c",
-      "file_sha256": "80716d1f19672777ab2516f1c592066e5f443dc86a1d9e64785be1867ba079b1",
+    "bundle-manifest.json": {
+      "filename": "bundle-manifest.json",
+      "bundle_sha256": "36c1442b161fb3d8529678099b4df1c93b43fb2456a24260ac2942787b7f44f0",
+      "selected_draft_manifest_sha256": "8f053a815b4b18c9e8004d295849f562989410f05f4a1cc8725bc37f8c7f26b5",
+      "draft_validation_sha256": "d254eac81d058ea6406d5d0d981480cce5d8968801116063d9835b1f7625bfe0",
+      "file_sha256": "2390974b9f48534665d474b9fe18290e28edc361aa3cc119481db70e44acfd40",
+      "total_record_count": 139,
+      "media_slot_count": 509
+    },
+    "hangul-v2.json": {
+      "filename": "hangul-v2.json",
+      "version": "hangul-v2",
+      "canonical_content_sha256": "15143e23dea2236b0ada6f3603f79babb52bc4a89213906084d16c8bf864843a",
+      "file_sha256": "63c36c50c0efa61f7ba76ebdf92ff174f79aadedb63b46d15da01599f2594f59",
       "item_count": 92
     },
-    "pronunciation-i-plus-1-v1.json": {
-      "filename": "pronunciation-i-plus-1-v1.json",
-      "version": "pronunciation-i-plus-1-v1",
-      "canonical_content_sha256": "641b06f4d1c05c70803b859aa2936fc517a1038ad190ac7c58574da8a93ea49e",
-      "file_sha256": "6a2eb0b6a0a467de6074ffafc2fb674a674ea96c3c2187f339d1c278aa8f55ec",
+    "pronunciation-i-plus-1-v2.json": {
+      "filename": "pronunciation-i-plus-1-v2.json",
+      "version": "pronunciation-i-plus-1-v2",
+      "canonical_content_sha256": "4cb7f0b2a453a61858bf6a4b15a95568328a7348ba164d6ef9fd2bdf68119682",
+      "file_sha256": "cdac65b7e3a9615e62f187dcf7c7f6c543a480710b618ce0c9eb580281cd955c",
       "item_count": 47
     },
-    "korean-foundations-v1-curation.json": {
-      "filename": "korean-foundations-v1-curation.json",
-      "version": "korean-foundations-v1-curation",
-      "canonical_content_sha256": "76d08bfa4c2780111a8d7fd89e73c86ee5393609ba1f40c003cc6e77745aff6b",
-      "file_sha256": "6c422c5c5edf581af39f91773b40f72ac5570b84b76cd38d6f18bea4ef190c00",
+    "korean-foundations-v2-curation.json": {
+      "filename": "korean-foundations-v2-curation.json",
+      "version": "korean-foundations-v2-curation",
+      "canonical_content_sha256": "08874c6f4c64240d79cbdb982c1aa0d8a886749bc8100da41036b7c1b8ba9b22",
+      "file_sha256": "faa233cdc67f99c28c3f203e1b206f4ad4f631bc34b8e2fbb970db336f1157db",
       "record_count": 139,
       "gate_count": 973
     },
-    "korean-foundations-v1-media.json": {
-      "filename": "korean-foundations-v1-media.json",
-      "version": "korean-foundations-v1-media",
-      "canonical_content_sha256": "e7ef7ed570b28ed70bb09a68426567ac5a2dc3df8bb33acb357d32c281e861dc",
-      "file_sha256": "9f53766ea174c963e4904dd6172e490079ad693aded8dcb025a952327c90f0e1",
+    "korean-foundations-v2-media.json": {
+      "filename": "korean-foundations-v2-media.json",
+      "version": "korean-foundations-v2-media",
+      "canonical_content_sha256": "8d860b5e41738d2322dc63eb220eb23de66f4b68b4ff1f9e3dd8979e90b5b55a",
+      "file_sha256": "e21c7a11006cf70a0559ec7fff7279b466097cf3bbc1fa092cee84e7b963e938",
       "asset_count": 509,
       "required_asset_count": 325
     }
@@ -158,11 +169,11 @@ Place future evidence only at the fixed filenames listed in the JSON contract af
       "hash_algorithm": "sha256-utf8-canonical-json"
     },
     "asset_id_set_sha256": "2a5131dfd268fb8a261dead300104c029e42e06392f8472e3987f91fa4be2949",
-    "asset_identity_set_sha256": "a61ebccce4457e70a4e6ec59d7759297d9c2512f62094ebe769fc4f7d918e37e",
-    "hangul_asset_identity_sha256": "35ea70b8bedbab165b32a6ae1f367a0ac8c95b58564bdca915a5dfb78ebf7013",
-    "pronunciation_asset_identity_sha256": "eaf1033ea4b3b3fd4ba87e68e3f40b5ca451a39d08dcacce6cad1043e6fb61eb",
-    "required_asset_identity_sha256": "c4ba5f57ecfadbb62e810dac25f05fe9fcedc38f38f8b85302579a2b47b3bc48",
-    "audio_asset_identity_sha256": "5acd7c8c8b3420c407f6caad03c0a549a7598b52e82ffe1ede1f649769fce48e",
+    "asset_identity_set_sha256": "7b66c592d2c7683299dc013524aa5fe254a7df997e4fe0ad3cdeccec8c4780cf",
+    "hangul_asset_identity_sha256": "1d531667b1a8ba2fd025f2923dd01102961073350daf7a52ce3f4d45d9eba72e",
+    "pronunciation_asset_identity_sha256": "87cab969d513b166b04cfa0542c99b4651b0e6eb393e5a55e024b5efe94073bf",
+    "required_asset_identity_sha256": "8258400e916a37f0f955423925287ac17efc9976568898faedf9312ad77dc006",
+    "audio_asset_identity_sha256": "4cfdcf75329e4829ea7713357219c24541a3599e78c390a46da7b5ed13babcf2",
     "text_binding_projection": {
       "hangul": "pedagogical_jamo_mapping.display_glyph-if-present-else-canonical_jamo_or_block",
       "pronunciation_letter_audio": "spellings",
@@ -177,9 +188,9 @@ Place future evidence only at the fixed filenames listed in the JSON contract af
       ],
       "hash_algorithm": "sha256-utf8-canonical-json"
     },
-    "text_binding_set_sha256": "5ef47d0c99d209886b7a35659c465983c2cfc0dfa562b054d16bf7fc0a46881c",
+    "text_binding_set_sha256": "23ac50549577581591ae7687f9fdda2a74dcddf7675e57625a21a4c8bf053a6e",
     "hangul_text_binding_sha256": "44471f0833761859e8a831778a69d042f5257f071d02c044da9a9bccda1f1e4e",
-    "pronunciation_text_binding_sha256": "50b98918cf50918d8364d21a4239a927ba3d1292e731220f8bad969a8514d343"
+    "pronunciation_text_binding_sha256": "b8238b2bcde043e3daa4324a05fb78f9d72bbc31cf32d5e50c22514435d02f9e"
   },
   "item_gate_role_matrix": {
     "hangul": [
@@ -448,8 +459,8 @@ Place future evidence only at the fixed filenames listed in the JSON contract af
         "slot_id": "hangul.audio.0001",
         "media_kind": "audio",
         "required": true,
-        "source_pack_version": "hangul-v1",
-        "source_content_sha256": "7f68f731516a1b8428bbe157ec45c8798bee9838b7e47473ae32bb81ade2c111",
+        "source_pack_version": "hangul-v2",
+        "source_content_sha256": "397f390fa320837ccdd12882af9015e0b7ab993c6f9dcc0a2c135d49cd6af038",
         "basename": "hangul-audio-0001.wav",
         "storage_relpath": "media/hangul/hangul-audio-0001.wav",
         "output_format": "pcm_s16le_wav"
@@ -470,8 +481,8 @@ Place future evidence only at the fixed filenames listed in the JSON contract af
           "slot_id": "pron.letter-audio.0047",
           "media_kind": "letter_audio",
           "required": true,
-          "source_pack_version": "pronunciation-i-plus-1-v1",
-          "source_content_sha256": "a148c652e9c17647f97e229c2673aeda3988be9cdcdf460f8a3090a1699873e8",
+          "source_pack_version": "pronunciation-i-plus-1-v2",
+          "source_content_sha256": "f17a60790b4cd659dbf14909d7e57d15480b630a831b752276384278ce1ab6bb",
           "basename": "pron-letter-audio-0047.wav",
           "storage_relpath": "media/pronunciation/pron-letter-audio-0047.wav",
           "output_format": "pcm_s16le_wav"
@@ -491,8 +502,8 @@ Place future evidence only at the fixed filenames listed in the JSON contract af
           "slot_id": "pron.word-audio.0047",
           "media_kind": "word_audio",
           "required": true,
-          "source_pack_version": "pronunciation-i-plus-1-v1",
-          "source_content_sha256": "a148c652e9c17647f97e229c2673aeda3988be9cdcdf460f8a3090a1699873e8",
+          "source_pack_version": "pronunciation-i-plus-1-v2",
+          "source_content_sha256": "f17a60790b4cd659dbf14909d7e57d15480b630a831b752276384278ce1ab6bb",
           "basename": "pron-word-audio-0047.wav",
           "storage_relpath": "media/pronunciation/pron-word-audio-0047.wav",
           "output_format": "pcm_s16le_wav"
@@ -512,8 +523,8 @@ Place future evidence only at the fixed filenames listed in the JSON contract af
           "slot_id": "pron.sentence-audio.0047",
           "media_kind": "sentence_audio",
           "required": true,
-          "source_pack_version": "pronunciation-i-plus-1-v1",
-          "source_content_sha256": "a148c652e9c17647f97e229c2673aeda3988be9cdcdf460f8a3090a1699873e8",
+          "source_pack_version": "pronunciation-i-plus-1-v2",
+          "source_content_sha256": "f17a60790b4cd659dbf14909d7e57d15480b630a831b752276384278ce1ab6bb",
           "basename": "pron-sentence-audio-0047.wav",
           "storage_relpath": "media/pronunciation/pron-sentence-audio-0047.wav",
           "output_format": "pcm_s16le_wav"
@@ -530,4 +541,4 @@ Place future evidence only at the fixed filenames listed in the JSON contract af
 }
 ```
 
-The request covers all 509 candidate slots, including all 325 required slots and all 233 audio slots. Candidate display text is bound exactly; spoken text and every exact-byte, rights, specialist, independent-native, and heard-playback decision remain unresolved.
+This request selects no approval, regional policy, rights disposition, spoken-text result, media byte, activation, export, or production state.

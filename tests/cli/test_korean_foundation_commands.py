@@ -26,6 +26,10 @@ runner = CliRunner()
 
 HASHES = tuple(str(index) * 64 for index in range(1, 7))
 RECEIPT_SHA256, BUNDLE_SHA256, MANIFEST_SHA256, ROOT_SHA256, PRESTATE_SHA256, AUTHORIZATION_SHA256 = HASHES
+CURRENT_BUNDLE_SHA256 = (
+    "36c1442b161fb3d8529678099b4df1c93b43fb2456a24260ac2942787b7f44f0"
+)
+CURRENT_BUNDLE_RELPATH = Path("candidate-bundles") / CURRENT_BUNDLE_SHA256
 
 EXPECTED_COMMAND_OPTIONS = {
     "inspect-inbox": (),
@@ -71,10 +75,16 @@ CANONICAL_CANDIDATES = tuple(
     Path("data/korean_foundations") / filename
     for filename in (
         "korean-concepts-v1.json",
-        "hangul-v1.json",
-        "pronunciation-i-plus-1-v1.json",
-        "korean-foundations-v1-curation.json",
-        "korean-foundations-v1-media.json",
+        "current-candidate.json",
+    )
+) + tuple(
+    Path("data/korean_foundations") / CURRENT_BUNDLE_RELPATH / filename
+    for filename in (
+        "bundle-manifest.json",
+        "hangul-v2.json",
+        "pronunciation-i-plus-1-v2.json",
+        "korean-foundations-v2-curation.json",
+        "korean-foundations-v2-media.json",
     )
 )
 CANONICAL_STATE_PATHS = (

@@ -634,10 +634,7 @@ def _hangul_row_from_source(
         item_key=entry.item_key,
         media_kind="audio",
     )
-    if any(
-        value is None
-        for value in (entry.reading_or_name, entry.sound, entry.mnemonic)
-    ):
+    if entry.reading_or_name is None or entry.mnemonic is None:
         raise ValueError(f"learner_copy_missing item_key={entry.item_key}")
     return HangulExportRow(
         sort_index=entry.sort_index,
@@ -854,9 +851,9 @@ def _validate_export_bundle(bundle: KoreanFoundationExportBundle) -> None:
     if tuple(row.sort_index for row in bundle.rows) != expected_sequences:
         raise ValueError("foundation export row order mismatch")
     expected_source_pack_version = (
-        "hangul-v1"
+        "hangul-v2"
         if bundle.family is KoreanFoundationFamily.HANGUL
-        else "pronunciation-i-plus-1-v1"
+        else "pronunciation-i-plus-1-v2"
     )
     if (
         bundle.source_pack_version != expected_source_pack_version
