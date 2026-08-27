@@ -1,7 +1,7 @@
 {
   "schemaVersion": 2,
   "algorithm": "sha256:v2:exists-content",
-  "hash": "7fa9806b6c2d7faae60e9bf37cb60739d6823bd411fa7538639b7cb93127a652",
+  "hash": "fb4de0f2e00de2d396b9ec665643e5e6a1b61b476d0c9b6032201841b16bba6f",
   "sources": {
     "ROADMAP.md": true,
     "SPEC.md": true,
@@ -14,12 +14,12 @@
     },
     "SPEC.md": {
       "exists": true,
-      "hash": "a517f04b9326980a796cc60d05fe7b7cb2186e39d0efc40982b3ee4dc28c18db"
+      "hash": "0536e4359ed99a9578cf36366b23f01bf68b51208c42de925b34c51089ed9273"
     },
     "config.json": {
       "exists": true,
       "hash": "420450d5a8017885257849b310c55d7702e7d2d1ceb893ce84838bb250d4e181"
     }
   },
-  "timestamp": "2026-08-27T14:12:51.483Z"
+  "timestamp": "2026-08-27T15:01:12.690Z"
 }

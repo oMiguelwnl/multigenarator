@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v3.0
 milestone_name: Korean Learning System and Shared Generation Hardening
 status: in_progress
-stopped_at: Phase 31 replanning checker-passed; Plan 31-29 ready to execute
-last_updated: "2026-08-27T00:00:00Z"
+stopped_at: Phase 31 Plan 31-29 complete; Plans 31-30 and 31-31 ready in isolated worktrees
+last_updated: "2026-08-27T14:59:16Z"
 last_activity: 2026-08-27
 progress:
   total_phases: 5
   completed_phases: 1
   total_plans: 32
-  completed_plans: 25
+  completed_plans: 26
   percent: 20
 ---
 
@@ -26,8 +26,8 @@ See: .planning/PROJECT.md (updated 2026-06-01)
 ## Current Position
 
 Phase: 31
-Plan: 31-25 complete; checker-passed 31-29 launch preflight next, then 31-30/31-31 in parallel
-Status: Phase 31 replacement plans are approved for execution under the global AI linguistic review policy
+Plan: 31-29 complete; 31-30 AI and 31-31 media lanes ready to execute in parallel
+Status: Exact common baseline/runtime verified; Phase 31 remains open for lane evidence and the 31-32 join
 Last activity: 2026-08-27
 
 Progress: 1 of 5 phases complete
@@ -170,7 +170,7 @@ Historical v2.0/v2.1 decisions retained for reference:
 ### Pending Todos
 
 - Repair broad-suite drift before treating full `python -m pytest -q` as authoritative again.
-- Execute Phase 31 Plan 31-29 once, then Plans 31-30 and 31-31 concurrently and join them in 31-32.
+- Execute Phase 31 Plans 31-30 and 31-31 concurrently from their exact prepared worktrees and join them in 31-32.
 - Start Phase 32 offline lanes concurrently without bypassing the later Phase 31 production join or licensing gates.
 - Approve the Korean frequency-source and redistribution policy before committing a 3000-entry asset.
 
@@ -197,6 +197,6 @@ Items acknowledged and carried forward:
 
 ## Session Continuity
 
-Last session: 2026-08-18T14:19:29Z
-Stopped at: AI/parallel Plans 31-29 through 31-32 passed fresh-context plan checking; Phase 31 Plan 31-29 is next
+Last session: 2026-08-27T14:59:16Z
+Stopped at: Plan 31-29 baseline/runtime complete; isolated AI and media lanes are ready for Plans 31-30 and 31-31
 Resume file: None
