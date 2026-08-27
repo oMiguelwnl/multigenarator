@@ -135,23 +135,32 @@ def _assert_hex(value: str, pattern: re.Pattern[str], reason: str) -> None:
         _raise(reason)
 
 
+def _shared_tmp_parent_is_safe(metadata: os.stat_result) -> bool:
+    mode = stat.S_IMODE(metadata.st_mode)
+    return (
+        not _is_link_or_reparse(metadata)
+        and stat.S_ISDIR(metadata.st_mode)
+        and metadata.st_uid == 0
+        and mode & 0o777 == 0o777
+        and bool(metadata.st_mode & stat.S_ISVTX)
+    )
+
+
 def _assert_safe_state_root() -> None:
     parent = BASELINE_ROOT.parent
     try:
         parent_metadata = parent.lstat()
     except OSError:
         _raise("parallel_root_unsafe")
-    parent_mode = stat.S_IMODE(parent_metadata.st_mode)
     if _is_link_or_reparse(parent_metadata) or not stat.S_ISDIR(parent_metadata.st_mode):
         _raise("parallel_root_unsafe")
     if parent == Path("/tmp"):
-        if (
-            parent_metadata.st_uid != 0
-            or parent_mode != 0o777
-            or not (parent_metadata.st_mode & stat.S_ISVTX)
-        ):
+        if not _shared_tmp_parent_is_safe(parent_metadata):
             _raise("parallel_root_unsafe")
-    elif parent_metadata.st_uid != os.getuid() or parent_mode & 0o022:
+    elif (
+        parent_metadata.st_uid != os.getuid()
+        or stat.S_IMODE(parent_metadata.st_mode) & 0o022
+    ):
         _raise("parallel_root_unsafe")
 
     try:

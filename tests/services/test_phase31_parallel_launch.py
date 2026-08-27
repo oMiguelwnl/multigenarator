@@ -132,6 +132,13 @@ def test_parallel_helper_contract_is_fixed_and_pathless() -> None:
     assert set(helper.LANE_ALLOWLISTS["ai"]).isdisjoint(helper.LANE_ALLOWLISTS["media"])
 
 
+def test_real_shared_tmp_parent_is_accepted_only_with_sticky_0777_mode() -> None:
+    helper = _load_helper()
+    metadata = Path("/tmp").lstat()
+
+    assert helper._shared_tmp_parent_is_safe(metadata)
+
+
 def test_prepare_baseline_rejects_dirty_repo_and_overlapping_lanes(
     committed_repo: Path,
     tmp_path: Path,
