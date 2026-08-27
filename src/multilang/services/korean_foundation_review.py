@@ -44,6 +44,7 @@ _LOWERCASE_HEX: Final = frozenset("0123456789abcdef")
 KoreanFoundationReviewStatus: TypeAlias = Literal[
     "needs_review",
     "approved",
+    "ai_review_passed",
     "rejected",
 ]
 _CurationManifestVersion: TypeAlias = Literal[
@@ -343,16 +344,36 @@ class KoreanFoundationReviewGate(_FrozenReviewModel):
             self.source_content_sha256,
             self.reviewed_evidence_sha256,
         )
-        if self.status != "approved":
+        if self.status not in {"approved", "ai_review_passed"}:
             if self.reason_code != expected_reason:
                 raise ValueError("blocking gate requires its controlled reason")
             if any(value is not None for value in approval_fields):
                 raise ValueError("blocking gate cannot carry approval metadata")
             return self
 
-        if self.reason_code is not None or any(
-            value is None for value in approval_fields
-        ):
+        if self.status == "ai_review_passed":
+            ai_fields = (
+                self.reviewed_at,
+                self.source_pack_version,
+                self.source_content_sha256,
+                self.reviewed_evidence_sha256,
+            )
+            if (
+                self.reason_code is not None
+                or self.reviewer_id is not None
+                or self.reviewer_role is not None
+                or any(value is None for value in ai_fields)
+            ):
+                raise ValueError(
+                    "AI-passed gate requires evidence without human reviewer fields"
+                )
+            try:
+                datetime.strptime(self.reviewed_at or "", "%Y-%m-%dT%H:%M:%SZ")
+            except ValueError as exc:
+                raise ValueError("reviewed_at must be an exact UTC timestamp") from exc
+            return self
+
+        if self.reason_code is not None or any(value is None for value in approval_fields):
             raise ValueError("approved gate requires complete review metadata")
         if self.reviewer_role != KOREAN_FOUNDATION_GATE_REVIEWER_ROLES[
             self.gate_name
@@ -418,7 +439,7 @@ class KoreanFoundationCurationRecord(_FrozenReviewModel):
         ):
             raise ValueError("curation gate scope is invalid")
         if any(
-            gate.status == "approved"
+            gate.status in {"approved", "ai_review_passed"}
             and (
                 gate.source_pack_version != self.source_pack_version
                 or gate.source_content_sha256 != self.source_content_sha256
@@ -736,7 +757,7 @@ def validate_korean_foundation_curation(
         for gate in record.gates:
             if gate.scope_ids != expected_scopes[gate.gate_name]:
                 _raise(KoreanFoundationReviewReasonCode.GATE_APPLICABILITY_MISMATCH)
-            if gate.status == "approved" and (
+            if gate.status in {"approved", "ai_review_passed"} and (
                 gate.source_pack_version != record.source_pack_version
                 or gate.source_content_sha256 != record.source_content_sha256
             ):
@@ -795,14 +816,19 @@ def summarize_korean_foundation_review(
         )
         gate_counts[gate_name] = {
             status: counter.get(status, 0)
-            for status in ("needs_review", "approved", "rejected")
+            for status in ("needs_review", "approved", "ai_review_passed", "rejected")
         }
     blockers = {
         record.item_key: tuple(
-            gate.gate_name for gate in record.gates if gate.status != "approved"
+            gate.gate_name
+            for gate in record.gates
+            if gate.status not in {"approved", "ai_review_passed"}
         )
         for record in manifest.records
-        if any(gate.status != "approved" for gate in record.gates)
+        if any(
+            gate.status not in {"approved", "ai_review_passed"}
+            for gate in record.gates
+        )
     }
     fully_approved = len(manifest.records) - len(blockers)
     learner_ready = 0 if manifest.candidate_only else fully_approved
@@ -852,7 +878,7 @@ def update_korean_foundation_review_gate(
             if current_gate.gate_name == gate_name
         )
         if (
-            current.status == "approved"
+            current.status in {"approved", "ai_review_passed"}
             and current != gate
             and not force
         ):
