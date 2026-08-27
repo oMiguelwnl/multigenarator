@@ -326,6 +326,39 @@ def test_verify_worktree_runtime_requires_exact_pythonpath(
         )
 
 
+def test_protected_state_uses_git_reproducible_modes_across_worktrees(
+    committed_repo: Path,
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    helper = _load_helper()
+    _configure(helper, monkeypatch, committed_repo, tmp_path)
+    (committed_repo / "protected.txt").chmod(0o600)
+    expected = helper.prepare_baseline()
+    baseline = helper.verify_baseline(helper.BASELINE_PATH, expected)
+    ai = helper.AI_WORKTREE
+    _git(committed_repo, "worktree", "add", "-b", "ai-modes", str(ai), baseline["baseline_commit"])
+
+    assert stat.S_IMODE((ai / "protected.txt").lstat().st_mode) != 0o600
+    assert helper.verify_protected_state(
+        (), helper.BASELINE_PATH, expected, worktree=ai
+    ) == "parallel_protected_state_status=verified"
+
+
+def test_linked_lane_resolves_canonical_integration_worktree(
+    committed_repo: Path,
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    helper = _load_helper()
+    _configure(helper, monkeypatch, committed_repo, tmp_path)
+    ai = helper.AI_WORKTREE
+    _git(committed_repo, "worktree", "add", "-b", "ai-common-root", str(ai), "HEAD")
+    monkeypatch.setattr(helper, "PROJECT_ROOT", ai)
+
+    assert helper._integration_root() == committed_repo.resolve(strict=True)
+
+
 def test_record_lane_rejects_symlinked_handoff_parent_without_external_write(
     committed_repo: Path,
     tmp_path: Path,

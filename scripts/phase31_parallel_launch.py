@@ -253,6 +253,35 @@ def _git_clean(root: Path) -> bool:
     return _git(root, "status", "--porcelain=v1", "--untracked-files=all") == ""
 
 
+def _integration_root() -> Path:
+    common_dir = Path(
+        str(
+            _git(
+                PROJECT_ROOT,
+                "rev-parse",
+                "--path-format=absolute",
+                "--git-common-dir",
+            )
+        )
+    )
+    try:
+        metadata = common_dir.lstat()
+        root = common_dir.parent.resolve(strict=True)
+        top_level = Path(str(_git(root, "rev-parse", "--show-toplevel"))).resolve(
+            strict=True
+        )
+    except OSError:
+        _raise("integration_worktree_invalid")
+    if (
+        _is_link_or_reparse(metadata)
+        or not stat.S_ISDIR(metadata.st_mode)
+        or common_dir.name != ".git"
+        or top_level != root
+    ):
+        _raise("integration_worktree_invalid")
+    return root
+
+
 def _git_head(root: Path) -> str:
     head = str(_git(root, "rev-parse", "HEAD"))
     _assert_hex(head, HEX_40, "git_head_invalid")
@@ -372,12 +401,19 @@ def _snapshot_path_rows(root: Path, relpath: str) -> list[list[str]]:
         _raise("protected_state_unsafe")
     if _is_link_or_reparse(metadata):
         _raise("protected_state_unsafe")
-    mode = f"{stat.S_IMODE(metadata.st_mode):04o}"
     if stat.S_ISREG(metadata.st_mode):
-        return [[relpath, "file", mode, sha256_bytes(_read_regular_no_follow(path, "protected_state_unsafe"))]]
+        stable_mode = "0755" if metadata.st_mode & 0o111 else "0644"
+        return [
+            [
+                relpath,
+                "file",
+                stable_mode,
+                sha256_bytes(_read_regular_no_follow(path, "protected_state_unsafe")),
+            ]
+        ]
     if not stat.S_ISDIR(metadata.st_mode):
         _raise("protected_state_unsafe")
-    rows = [[relpath, "directory", mode, ""]]
+    rows = [[relpath, "directory", "0755", ""]]
     try:
         entries = sorted(path.iterdir(), key=lambda entry: entry.name)
     except OSError:
@@ -421,6 +457,7 @@ def _load_runtime_helper() -> object:
 
 def _venv_fingerprint() -> Mapping[str, object]:
     helper = _load_runtime_helper()
+    helper.PROJECT_ROOT = _integration_root()
     try:
         value = helper.fingerprint_repository_venv()
     except Exception:
