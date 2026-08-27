@@ -16,8 +16,11 @@ PROJECT_ROOT: Path = Path(__file__).resolve().parents[1]
 TMP_ROOT: Path = Path("/tmp")
 FIXED_ENV_PATH: Path = TMP_ROOT / "multilang-phase31-py312"
 REPOSITORY_VENV_RELPATH: Final = Path(".venv")
-PUBLIC_OPERATIONS: Final = ("prepare", "hash-venv")
+PUBLIC_OPERATIONS: Final = ("prepare", "hash-venv", "fingerprint-venv")
 ABSENT_VENV_SHA256: Final = sha256(b"phase31-runtime-isolation:.venv:absent").hexdigest()
+ABSENT_VENV_FINGERPRINT_SHA256: Final = sha256(
+    b"phase31-runtime-isolation:.venv:fingerprint:absent"
+).hexdigest()
 _ENV_BASENAME: Final = "multilang-phase31-py312"
 
 
@@ -172,6 +175,159 @@ def hash_repository_venv() -> dict[str, object]:
     }
 
 
+def _fingerprint_file_at(directory_fd: int, name: str, metadata: os.stat_result) -> str:
+    flags = os.O_RDONLY | getattr(os, "O_CLOEXEC", 0) | getattr(os, "O_NOFOLLOW", 0)
+    try:
+        file_fd = os.open(name, flags, dir_fd=directory_fd)
+    except OSError:
+        _raise("venv_unsafe")
+    try:
+        opened = os.fstat(file_fd)
+        if (
+            not stat.S_ISREG(opened.st_mode)
+            or opened.st_dev != metadata.st_dev
+            or opened.st_ino != metadata.st_ino
+        ):
+            _raise("venv_unsafe")
+        digest = sha256()
+        while chunk := os.read(file_fd, 1024 * 1024):
+            digest.update(chunk)
+        return digest.hexdigest()
+    except OSError:
+        _raise("venv_unsafe")
+    finally:
+        os.close(file_fd)
+
+
+def _fingerprint_directory_rows(
+    directory_fd: int,
+    relpath: str,
+    metadata: os.stat_result,
+    rows: list[list[str]],
+    counts: dict[str, int],
+) -> None:
+    rows.append([relpath, "directory", _mode_text(metadata), ""])
+    try:
+        entries = sorted(os.scandir(directory_fd), key=lambda entry: entry.name)
+    except OSError:
+        _raise("venv_unsafe")
+    for entry in entries:
+        name = entry.name
+        child_relpath = name if relpath == "." else f"{relpath}/{name}"
+        try:
+            child = os.stat(name, dir_fd=directory_fd, follow_symlinks=False)
+        except OSError:
+            _raise("venv_unsafe")
+        if _is_link_or_reparse(child):
+            try:
+                target = os.readlink(name, dir_fd=directory_fd)
+            except OSError:
+                _raise("venv_unsafe")
+            counts["link"] += 1
+            rows.append([child_relpath, "link", _mode_text(child), target])
+        elif stat.S_ISDIR(child.st_mode):
+            flags = (
+                os.O_RDONLY
+                | getattr(os, "O_CLOEXEC", 0)
+                | getattr(os, "O_DIRECTORY", 0)
+                | getattr(os, "O_NOFOLLOW", 0)
+            )
+            try:
+                child_fd = os.open(name, flags, dir_fd=directory_fd)
+            except OSError:
+                _raise("venv_unsafe")
+            try:
+                opened = os.fstat(child_fd)
+                if opened.st_dev != child.st_dev or opened.st_ino != child.st_ino:
+                    _raise("venv_unsafe")
+                _fingerprint_directory_rows(
+                    child_fd,
+                    child_relpath,
+                    child,
+                    rows,
+                    counts,
+                )
+            finally:
+                os.close(child_fd)
+        elif stat.S_ISREG(child.st_mode):
+            counts["file"] += 1
+            rows.append(
+                [
+                    child_relpath,
+                    "file",
+                    _mode_text(child),
+                    _fingerprint_file_at(directory_fd, name, child),
+                ]
+            )
+        else:
+            counts["special"] += 1
+            rows.append([child_relpath, "special", _mode_text(child), ""])
+
+
+def fingerprint_repository_venv() -> dict[str, object]:
+    """Fingerprint `.venv` metadata and bytes without following filesystem links."""
+
+    venv = PROJECT_ROOT / REPOSITORY_VENV_RELPATH
+    try:
+        metadata = venv.lstat()
+    except FileNotFoundError:
+        return {
+            "operation": "fingerprint-venv",
+            "path": ".venv",
+            "status": "absent",
+            "tree_sha256": ABSENT_VENV_FINGERPRINT_SHA256,
+            "file_count": 0,
+            "link_count": 0,
+            "special_count": 0,
+        }
+    except OSError:
+        _raise("venv_unsafe")
+
+    rows: list[list[str]] = []
+    counts = {"file": 0, "link": 0, "special": 0}
+    if _is_link_or_reparse(metadata):
+        try:
+            target = os.readlink(venv)
+        except OSError:
+            _raise("venv_unsafe")
+        counts["link"] = 1
+        rows.append([".", "link", _mode_text(metadata), target])
+    elif stat.S_ISDIR(metadata.st_mode):
+        flags = (
+            os.O_RDONLY
+            | getattr(os, "O_CLOEXEC", 0)
+            | getattr(os, "O_DIRECTORY", 0)
+            | getattr(os, "O_NOFOLLOW", 0)
+        )
+        try:
+            directory_fd = os.open(venv, flags)
+        except OSError:
+            _raise("venv_unsafe")
+        try:
+            opened = os.fstat(directory_fd)
+            if opened.st_dev != metadata.st_dev or opened.st_ino != metadata.st_ino:
+                _raise("venv_unsafe")
+            _fingerprint_directory_rows(directory_fd, ".", metadata, rows, counts)
+        finally:
+            os.close(directory_fd)
+    else:
+        counts["special"] = 1
+        rows.append([".", "special", _mode_text(metadata), ""])
+
+    digest = sha256(
+        json.dumps(rows, ensure_ascii=False, separators=(",", ":")).encode("utf-8")
+    ).hexdigest()
+    return {
+        "operation": "fingerprint-venv",
+        "path": ".venv",
+        "status": "unsafe" if counts["link"] or counts["special"] else "safe",
+        "tree_sha256": digest,
+        "file_count": counts["file"],
+        "link_count": counts["link"],
+        "special_count": counts["special"],
+    }
+
+
 def _print_result(result: dict[str, object]) -> None:
     for key, value in result.items():
         print(f"{key}={value}")
@@ -183,11 +339,12 @@ def main(argv: list[str] | None = None) -> int:
         print("runtime_isolation_error=unsupported_operation", file=sys.stderr)
         return 2
     try:
-        result = (
-            prepare_runtime_isolation()
-            if args[0] == "prepare"
-            else hash_repository_venv()
-        )
+        if args[0] == "prepare":
+            result = prepare_runtime_isolation()
+        elif args[0] == "hash-venv":
+            result = hash_repository_venv()
+        else:
+            result = fingerprint_repository_venv()
     except RuntimeIsolationError as exc:
         print(f"runtime_isolation_error={exc}", file=sys.stderr)
         return 1

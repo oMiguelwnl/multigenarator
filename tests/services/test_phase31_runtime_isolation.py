@@ -48,7 +48,11 @@ def test_runtime_isolation_contract_is_not_implemented() -> None:
         "multilang-phase31-py312",
     )
     assert tuple(helper.REPOSITORY_VENV_RELPATH.parts) == (".venv",)
-    assert tuple(helper.PUBLIC_OPERATIONS) == ("prepare", "hash-venv")
+    assert tuple(helper.PUBLIC_OPERATIONS) == (
+        "prepare",
+        "hash-venv",
+        "fingerprint-venv",
+    )
 
 
 def test_prepare_creates_only_fixed_current_user_0700_child(
@@ -228,6 +232,58 @@ def test_hash_venv_rejects_links_and_special_files_read_only(
 
     assert _reason(exc_info) == "venv_unsafe"
     assert _tree_state(tmp_path) == before
+
+
+def test_fingerprint_venv_records_links_without_following_targets(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    helper = _load_helper()
+    monkeypatch.setattr(helper, "PROJECT_ROOT", tmp_path)
+    venv = tmp_path / ".venv"
+    venv.mkdir(mode=0o700)
+    outside = tmp_path / "outside-one"
+    outside.write_bytes(b"secret-one")
+    link = venv / "python"
+    link.symlink_to(outside)
+
+    first = helper.fingerprint_repository_venv()
+    outside.write_bytes(b"changed-but-must-not-be-read")
+    second = helper.fingerprint_repository_venv()
+    link.unlink()
+    replacement = tmp_path / "outside-two"
+    replacement.write_bytes(b"secret-one")
+    link.symlink_to(replacement)
+    third = helper.fingerprint_repository_venv()
+
+    assert first == second
+    assert first["operation"] == "fingerprint-venv"
+    assert first["status"] == "unsafe"
+    assert first["link_count"] == 1
+    assert first["special_count"] == 0
+    assert first["tree_sha256"] != third["tree_sha256"]
+
+
+def test_fingerprint_venv_reports_deterministic_absent_state(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    helper = _load_helper()
+    monkeypatch.setattr(helper, "PROJECT_ROOT", tmp_path)
+
+    first = helper.fingerprint_repository_venv()
+    second = helper.fingerprint_repository_venv()
+
+    assert first == second
+    assert first == {
+        "operation": "fingerprint-venv",
+        "path": ".venv",
+        "status": "absent",
+        "tree_sha256": helper.ABSENT_VENV_FINGERPRINT_SHA256,
+        "file_count": 0,
+        "link_count": 0,
+        "special_count": 0,
+    }
 
 
 def test_cli_accepts_only_fixed_operations_and_content_free_errors(
