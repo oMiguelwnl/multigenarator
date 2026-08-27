@@ -1,7 +1,7 @@
 # Phase 32: Frequency, Portuguese Text, and Audio - Approach
 
 **Explored:** 2026-08-21
-**Status:** Ready for planning — complete the safe offline technical path first and keep learner-ready production blocked at the named external checkpoints
+**Status:** Ready for parallel execution under the global AI linguistic review policy and bounded external-authority lanes
 
 ## Alignment Proof
 
@@ -13,6 +13,8 @@
 - `skip_scope`: N/A
 - `skip_rationale`: discussion was completed
 - `confirmed_decisions`:
+- The 2026-08-27 user amendment adopts `.planning/AI-LINGUISTIC-REVIEW-POLICY.md` for Korean, Portuguese, pronunciation, lexical, morphology, and text-quality review. Human linguistic review is optional and no longer blocks execution.
+- Plans form a dependency DAG. Offline contract/ID lanes and source-readiness lanes run in parallel isolated worktrees; production generation joins exact Phase 31 output only when it consumes foundation known-state/media authority.
 - Use one reusable shared final-mode contract, activated first for Korean through one atomic manifest-bound 3000-entry bundle; do not recurate all existing language assets in Phase 32.
 - Use the National Institute of Korean Language (NIKL) `한국어 학습용 어휘 목록` as the selected rank and initial lexical-authority path. The official page identifies 5,965 entries and KOGL Type 1 use with specific source attribution; exact attachment bytes, terms evidence, attribution, transformation notes, modernity review, and repository-redistribution disposition must still pass their own checkpoint before any production asset is created or committed.
   - Create real Korean `Level 1`, `Level 2`, and `Level 3` child decks in Phase 32. Phase 34 generalizes the topology and owns final all-family export, import, rendering, playback, and evidence closure.
@@ -27,7 +29,28 @@
   - Implement all safe offline contracts, tests, and refusal behavior before pausing at license/source, exact-asset, Phase 31 dependency, provider budget/model, live catalog, paid generation, human review, asset commit, and publication checkpoints.
   - Preserve verified Phase 30 `ko`, NFC, source-backed identity, Kiwi top-two consensus, matcher, persistence, and privacy contracts plus Phase 31 hash-bound gates; final mode never reaches live `wordfreq` or generic suffix rescue.
   - Persist only sanitized hashes and bounded provider metrics in telemetry, never prompts, private excerpts or paths, provider payloads, secrets, or raw analyzer dumps.
-  - Keep Phase 33 field-level review and job hardening, Phase 34 worker/generalized closure beyond the explicitly assigned Korean child decks, and all v4/GUID/history/adaptive-queue work outside Phase 32.
+- Keep Phase 33 field-level review and job hardening, Phase 34 worker/generalized closure beyond the explicitly assigned Korean child decks, and all v4/GUID/history/adaptive-queue work outside Phase 32.
+
+## 2026-08-27 AI-Review And Parallelism Amendment
+
+This amendment supersedes earlier Phase 32 requirements for qualified human
+Korean, pt-BR, native-speaker, or human playback review.
+
+- Linguistic/text/source-curation review uses two standard or three critical
+  fresh-context AI passes plus deterministic validators. Results are
+  `ai_review_passed` and never impersonate human qualifications.
+- Audio uses 100% integrity/decoder/acoustic validation and policy-bound AI
+  acoustic review where a capable route exists. It does not claim human hearing.
+- Legal/source rights, private provider processing, network access, paid budget,
+  production database mutation, and publication remain project-owner powers.
+- Existing plans that say "qualified human linguistic review" are interpreted as
+  the global AI policy. Existing user checkpoints remain only when they grant an
+  external side effect or legal/project-owner authority.
+- Plans 32-01 and 32-10 may start together; 32-17 and 32-18 may start together;
+  32-25 and 32-26 may start together. Each pair uses isolated worktrees and joins
+  only after exact output hashes are current.
+- Phase 32 offline execution no longer waits for Phase 31. Plan 32-27 is the
+  production join and depends on exact Phase 31 Plan 31-32 output.
 
 <domain>
 ## Phase Boundary

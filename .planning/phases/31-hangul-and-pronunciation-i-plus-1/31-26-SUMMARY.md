@@ -4,9 +4,14 @@ plan: "26"
 runtime: opencode
 assurance: self_checked
 status: blocked
+superseded_by: [31-29, 31-30, 31-31, 31-32]
 ---
 
 # Phase 31: Hangul and Pronunciation i+1 - Plan 26 Summary
+
+> Historical blocker: accurate for the former human-evidence contract and
+> superseded by the user-approved AI review/parallel execution amendment on
+> 2026-08-27.
 
 **Completed**: Not complete; blocked at the required human evidence checkpoint on 2026-08-26
 **Tasks**: 1 checkpoint reached, 0 automatic handoff tasks executed

@@ -12,7 +12,7 @@
 
 ## Current Focus
 
-Complete the Phase 31 human evidence gates, then deliver Korean learning content and the restored shared generation hardening through Phases 32-34 without rewriting verified Phase 30 contracts.
+Run Phase 31 foundations, Phase 32 offline frequency infrastructure, and Phase 33 independent job/review scaffolding as parallel lanes where write ownership is disjoint; join exact AI-reviewed, rights-cleared artifacts before production generation and final Phase 34 closure.
 
 ## Archived Phases
 
@@ -70,15 +70,16 @@ Archives:
 2. Pronunciation uses the shared phoneme layout with Korean-specific IDs and complete spelling/sound/word/sentence fields.
 3. Every strict card records prerequisites, observed concepts, and exactly one target unknown after bootstrap.
 4. The pronunciation sequence covers onset contrasts, batchim, connected-speech rules, alternations, and contractions in dependency order.
-5. Jamo and phonological-rule audio cannot become approved through unreviewed raw-glyph TTS.
+5. Jamo and phonological-rule audio cannot become ready through raw-glyph TTS or provider success; deterministic integrity and the versioned AI linguistic/acoustic review policy must pass.
 **Out of Scope**: Korean 3000-card frequency content, unapproved live synthesis, automatic specialist approval, and unrelated template redesign.
-**Stop/Replan Conditions**: Stop if qualified human evidence, media rights, exact playback evidence, or canonical snapshot authorization is unavailable. Observed Anki Desktop/mobile import, rendering, and playback acceptance remains a Phase 34 gate and does not block Phase 31 local activation/export after the Phase 31 evidence and authorization gates pass.
-**Remaining Plans**: 31-26 genuine evidence checkpoint; 31-27 receipt and inactive snapshot; 31-28 exact activation and six local exports.
+**Stop/Replan Conditions**: Stop the affected lane on AI-review disagreement/uncertainty, failed deterministic validation, missing media rights/provider authority, exact-byte drift, or canonical snapshot failure. Do not block unrelated offline lanes. Instrumented Anki Desktop/mobile import, rendering, and playback acceptance remains a Phase 34 gate.
+**Remaining Plans**: Historical 31-26 through 31-28 are superseded. Plan 31-29 records the clean common runtime/baseline; then run 31-30 AI linguistic evidence and 31-31 media/rights/acoustic evidence in parallel; 31-32 joins exact outputs, activates locally, and creates six local exports.
+**Planning Readiness**: Plans 31-29 through 31-32 passed fresh-context plan checking on 2026-08-27 with no remaining findings.
 
 ### Phase 32: Frequency, Portuguese Text, and Audio
 **Status**: [ ] Not started
 **Goal**: Users receive three license-approved 1000-card Korean frequency subdecks with natural standard-Seoul examples, Portuguese text, and approved Azure audio.
-**Depends on**: Phase 31
+**Depends on**: Phase 30 for offline implementation; production text/audio generation joins the exact active Phase 31 Plan 31-32 output at Plan 32-27.
 **Requirements**: KFREQ-01, KFREQ-02, KFREQ-03, KTXT-01, KAUD-01, GLEX-01, GLEX-02, GMOR-01, GTXT-01, GPRO-01, GAUD-01
 **Success Criteria**:
 1. A documented frequency-source and rights decision precedes production use; a committed or published 3000-entry asset additionally requires explicit redistribution approval.
@@ -92,12 +93,12 @@ Archives:
 9. Provider routes, retries, fallbacks, latency, sanitized hashes, tokens, and estimated cost are observable without leaking prompts or private context.
 10. Word and sentence audio preserve exact-text/provider/voice/fallback evidence, and failed or unapproved fallback assets cannot advance success.
 **Out of Scope**: Field-level review commands, production worker rollout, APKG-history adaptation, v4 form cards, and unapproved lexical/provider assets.
-**Stop/Replan Conditions**: Stop before provider or production work if transformation and local-use rights are not explicitly approved. When local use is approved but redistribution is denied, continue only in private/ignored storage to a local deck and mechanically exclude source-derived data from commit/publication; committed or published source-derived assets still require explicit redistribution approval. Also stop if final loading can call `wordfreq`, existing Korean identity/matcher contracts would be replaced, telemetry exposes private data, provider budgets are absent, or exact Azure evidence cannot be obtained safely.
+**Stop/Replan Conditions**: Stop only the consuming lane before provider or production work if transformation/local-use rights or bounded provider authority are absent. When local use is approved but redistribution is denied, continue only in private/ignored storage. AI linguistic review follows the global policy and does not require a human checkpoint. Also stop on live `wordfreq` fallback, identity/matcher replacement, private-data leakage, absent budgets, AI-review disagreement, or unsafe Azure evidence.
 
 ### Phase 33: Grammar and Personal Sources
 **Status**: [ ] Not started
 **Goal**: Users receive an i+1 Particles & Endings curriculum and morphology-aware Korean cards from personal word lists and reading highlights.
-**Depends on**: Phase 32
+**Depends on**: Phase 30 for independent grammar/personal-source and job/review infrastructure; production joins consume the exact Phase 31/32 contracts they actually use.
 **Requirements**: KGRAM-01, KGRAM-02, KPERS-01, KPERS-02, GJOB-01, GREV-01
 **Success Criteria**:
 1. Particles, endings, speech levels, connectors, and irregular paradigms follow a reviewed dependency sequence.
@@ -113,7 +114,7 @@ Archives:
 ### Phase 34: Export, Review, and Evidence
 **Status**: [ ] Not started
 **Goal**: Users can export all Korean deck families with stable contracts, approved content/media, and evidence that Korean and existing modes work end to end.
-**Depends on**: Phase 33
+**Depends on**: Integration join over completed Phase 31, Phase 32, and Phase 33 production artifacts; planning and isolated test scaffolding may begin earlier.
 **Requirements**: KEXP-01, KEXP-02, KQA-01, KQA-02, GEXP-01, GOPS-01, GEVAL-01
 **Success Criteria**:
 1. Hangul, pronunciation, frequency, grammar, custom, and highlight rows export to APKG, CSV, and TSV with stable identities and fields.
@@ -130,6 +131,15 @@ Archives:
 ## Coverage
 
 All 32 v3.0 requirements are assigned exactly once across Phases 30-34. Verified Phase 30 remains authoritative for Korean identity and morphology; shared hardening is assigned to Phases 32-34 by owning contract.
+
+## Parallel Execution Policy
+
+- `.planning/AI-LINGUISTIC-REVIEW-POLICY.md` replaces mandatory human linguistic review for every language.
+- Phase/plan ordering is a DAG. Only real artifact dependencies belong in `depends_on`.
+- Disjoint lanes run concurrently in isolated worktrees with declared write ownership; join plans rehash every lane output before activation.
+- Phase 31 Plan 31-29 is the common launch preflight; Plans 31-30 and 31-31 are the parallel pair and 31-32 is their join. Phase 32 Plans 32-01 and 32-10, 32-17 and 32-18, and 32-25 and 32-26 are parallel pairs.
+- Legal rights, paid/network/provider operations, private-content processing, production database mutation, and publication remain bounded external authorities. They block only the consuming side-effect lane.
+- Phase 34 is the final integration join; it is not a reason to serialize unrelated offline implementation.
 
 ---
 *v3.0 roadmap reconciled with shared generation hardening: 2026-08-18*

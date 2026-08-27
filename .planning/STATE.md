@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v3.0
 milestone_name: Korean Learning System and Shared Generation Hardening
 status: in_progress
-stopped_at: Phase 31 Plan 10 complete; Plan 31-11 human checkpoint next
-last_updated: "2026-08-18T14:19:29Z"
-last_activity: 2026-08-18
+stopped_at: Phase 31 replanning checker-passed; Plan 31-29 ready to execute
+last_updated: "2026-08-27T00:00:00Z"
+last_activity: 2026-08-27
 progress:
   total_phases: 5
   completed_phases: 1
-  total_plans: 20
-  completed_plans: 18
+  total_plans: 32
+  completed_plans: 25
   percent: 20
 ---
 
@@ -21,14 +21,14 @@ progress:
 See: .planning/PROJECT.md (updated 2026-06-01)
 
 **Core value:** Generate reliable, high-quality Anki cards for real vocabulary the learner needs to study, with accurate definitions, examples, translations where appropriate, and audio.  
-**Current focus:** Phase 31 human evidence closure and Phase 32 shared-hardening planning
+**Current focus:** Parallel Phase 31 AI/media closure and Phase 32 offline shared-hardening execution
 
 ## Current Position
 
 Phase: 31
-Plan: 31-10 complete; 31-11 next
-Status: Phase 31 implementation in progress; first human evidence checkpoint is next
-Last activity: 2026-08-18
+Plan: 31-25 complete; checker-passed 31-29 launch preflight next, then 31-30/31-31 in parallel
+Status: Phase 31 replacement plans are approved for execution under the global AI linguistic review policy
+Last activity: 2026-08-27
 
 Progress: 1 of 5 phases complete
 
@@ -97,7 +97,7 @@ Full current decision history is in `.planning/SPEC.md` and `KOREAN-STRUCTURE.md
 - Kiwi/`kiwipiepy` is the planned primary morphology engine and Korean morphology fails closed when unavailable.
 - Hangul reuses the kana layout, pronunciation reuses the phoneme layout, and frequency/grammar reuse the normal layout with Korean note identities.
 - Hangul, pronunciation, and grammar use explicit curriculum-i+1 concept graphs; frequency/custom/highlights use adaptive or contextual ordering.
-- Azure `ko-KR` is the only default TTS policy; jamo and phonological-rule audio require specialist review.
+- Azure `ko-KR` is the only default TTS policy; jamo and phonological-rule audio require deterministic integrity plus AI linguistic/acoustic review.
 - The 3000-entry frequency asset is blocked until source, attribution, and redistribution terms are approved.
 - Phase 30 execution was gated on reconciling the overlapping Mandarin quick-task surfaces before shared registries were changed.
 - The verified remote Phase 30 remains authoritative; restored shared hardening is distributed across Phases 32-34 and must not replace its Korean identity, migration, or matcher contracts.
@@ -170,13 +170,13 @@ Historical v2.0/v2.1 decisions retained for reference:
 ### Pending Todos
 
 - Repair broad-suite drift before treating full `python -m pytest -q` as authoritative again.
-- Complete Phase 31 Plans 31-11 and 31-12 with genuine human evidence before claiming foundations ready.
-- Plan Phase 32 against the restored shared-hardening requirements without bypassing Phase 31 or licensing gates.
+- Execute Phase 31 Plan 31-29 once, then Plans 31-30 and 31-31 concurrently and join them in 31-32.
+- Start Phase 32 offline lanes concurrently without bypassing the later Phase 31 production join or licensing gates.
 - Approve the Korean frequency-source and redistribution policy before committing a 3000-entry asset.
 
 ### Blockers/Concerns
 
-- Phase 31 remains blocked on genuine qualified reviews, rights dispositions, exact media/playback evidence, canonical activation, production export, and observed Anki acceptance.
+- Human linguistic review is no longer a blocker. Phase 31 still requires AI review consensus, rights dispositions, exact media/integrity/acoustic evidence, canonical activation, and production export.
 - Current final frequency loading still permits live `wordfreq` replacement and generic non-Korean suffix fallback; Phase 32 owns fail-closed remediation.
 - `wordfreq` supports `ko` as a candidate bootstrap, but its documentation warns against CSV extraction without preserved attribution/licensing information.
 - Latin TTS quality is approved only for the current 50-card Google Translate TTS MVP pack; future higher-quality Latin audio should use a new review artifact.
@@ -198,5 +198,5 @@ Items acknowledged and carried forward:
 ## Session Continuity
 
 Last session: 2026-08-18T14:19:29Z
-Stopped at: Reconciled remote Korean baseline and restored shared hardening; Phase 31 Plan 11 human checkpoint remains next
+Stopped at: AI/parallel Plans 31-29 through 31-32 passed fresh-context plan checking; Phase 31 Plan 31-29 is next
 Resume file: None

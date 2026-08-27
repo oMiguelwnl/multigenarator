@@ -17,12 +17,12 @@ Generate reliable, high-quality Anki cards for real vocabulary the learner needs
 - **Milestone:** v3.0 Korean Learning System and Shared Generation Hardening - IN PROGRESS
 - **Phases:** 30-34 (1 of 5 complete)
 - **Last completed milestone:** v2.1 Latin Google TTS Finalization
-- **Active Phase:** Phase 31 - Hangul and Pronunciation i+1 (replanned for assisted curation; Plan 31-25 complete; Phase 31 remains open).
-- **Last Completed:** Plan 31-25 - migrated high-level CLI/integration regressions to exact current-candidate v2 provenance, added the fixed runtime-isolation helper, proved exact blocked-production refusal output, and reran focused Korean/existing-mode/foundation/kana/phoneme/template/Latin/Mandarin matrices without provider calls, approvals, activation, canonical evidence/snapshot/export mutation, or production readiness claims on 2026-08-26.
-- **Decisions:** Keep Korean foundation production defaults bound to one atomic `current-candidate` bundle while preserving immutable explicit v1 history; keep the public Korean foundation CLI fixed to hash/enums-only state commands plus export destination output; permit AI-assisted `draft_only` curation outside canonical data/evidence with exact-hash selection and immutable v2 candidate promotion; retain qualified Korean, Portuguese, rights, playback, receipt, and activation gates; keep observed Anki Desktop/mobile acceptance in Phase 34.
+- **Active Phase:** Phase 31 - Hangul and Pronunciation i+1 (Plan 31-25 complete; Plans 31-26 through 31-28 are superseded; replacement Plans 31-29 through 31-32 passed fresh-context plan checking and Phase 31 remains open).
+- **Last Completed:** Plan 31-25 - migrated high-level CLI/integration regressions to exact current-candidate v2 provenance, added the fixed runtime-isolation helper, proved exact blocked-production refusal output, and reran focused Korean/existing-mode/foundation/kana/phoneme/template/Latin/Mandarin matrices without provider calls, activation, canonical evidence/snapshot/export mutation, or production readiness claims on 2026-08-26.
+- **Decisions:** Keep Korean foundation production defaults bound to one atomic `current-candidate` bundle while preserving immutable explicit v1 history; adopt `.planning/AI-LINGUISTIC-REVIEW-POLICY.md` for every language; AI review is explicit, hash-bound, multi-pass, and never impersonates a human; human linguistic review is optional rather than blocking; legal rights, provider spend, private-content processing, and publication authority remain separate; execute disjoint plans as a dependency DAG in isolated parallel lanes.
 - **Reconciliation:** Preserve the verified Korean Phase 30 implementation and distribute the restored shared-hardening requirements across Phases 32-34 rather than overlaying the alternate local Phase 30 implementation.
-- **Blockers:** No first-, second-, or high-level service/default migration blocker. Genuine qualified reviews, Portuguese policy, rights dispositions, licensed exact media, playback evidence, the canonical receipt, canonical snapshot preparation/authorization/activation, and production exports remain later Phase 31 work; observed Anki acceptance remains Phase 34. The real shared `.venv` is intentionally not repaired by Plan 31-25 and is reported as `venv_unsafe` by the new helper because it contains unsafe/link state.
-- **Next:** Continue the replanned Phase 31 sequence with 31-26 genuine evidence; 31-27 receipt/inactive snapshot; and 31-28 authorized activation/local exports. Phase 32 must not bypass Phase 31 review gates or the Korean frequency license decision.
+- **Blockers:** Human linguistic availability is no longer a blocker. Remaining Phase 31 blockers are exact media creation/integrity, applicable rights/provider authority, AI review disagreement or uncertainty, canonical snapshot activation, and exports. The real shared `.venv` remains `venv_unsafe` and must not be silently repaired.
+- **Next:** Run Phase 31 launch preflight 31-29, then execute 31-30 AI review and 31-31 media/rights concurrently and join them in 31-32. Begin the Phase 32 offline contract/ID lanes concurrently in isolated worktrees; its production generation still requires the exact Phase 31 active snapshot and source/license/provider authority.
 
 ## Validated Capabilities
 
@@ -59,7 +59,7 @@ Generate reliable, high-quality Anki cards for real vocabulary the learner needs
 - [ ] **[KFREQ-02]**: User receives three real Korean frequency subdecks with exactly 1000 unique lemma/sense cards per level. [Done-When: 3000 cards are partitioned 1000/1000/1000, inflectional duplicates are absent, and particles/endings are routed to grammar rather than ranked as standalone lexical vocabulary.]
 - [ ] **[KFREQ-03]**: User receives frequency examples ordered with adaptive i+1 scoring. [Done-When: each card records known and incidental concepts, introduces the target lexeme, minimizes other novelty, and rejects unnatural examples created only to improve the score.]
 - [ ] **[KTXT-01]**: User receives natural standard-Seoul Korean examples, context-matched Portuguese glosses, and Portuguese sentence translations. [Done-When: validation and review block English leakage, wrong senses, omitted-context inventions, mixed speech levels, unnatural wording, and translations that contradict the Korean sentence.]
-- [ ] **[KAUD-01]**: User receives approved Azure `ko-KR` word and sentence audio plus specialist-reviewed audio for jamo and phonological rules. [Done-When: the exact Azure voice is verified from the live catalog, request/artifact/review hashes and metadata are persisted, jamo is not synthesized as an unexplained raw glyph, and only approved exact-text audio can be exported.]
+- [ ] **[KAUD-01]**: User receives approved Azure `ko-KR` word and sentence audio plus AI-policy-reviewed audio for jamo and phonological rules. [Done-When: the exact Azure voice is verified from the live catalog, request/artifact/review hashes and metadata are persisted, jamo is not synthesized as an unexplained raw glyph, and only exact-text audio that passes deterministic integrity plus AI acoustic review can be exported.]
 
 ### Grammar And Personal Sources
 
@@ -152,7 +152,7 @@ KoreanFrequencyEntry = {
 - Automatic image generation or sourcing; `Image` remains blank.
 - v4 semantic GUID migration, `SurfaceForms`, `Important Forms`, canonical editions, APKG history import, adaptive queues, and v4 Anki topology experiments.
 - Replacing the current note identity formula while adding real level subdecks.
-- Treating an LLM judge as the sole approver of lexical, morphological, translation, audio, or security quality.
+- Treating an untracked single-pass model verdict as approval without the versioned AI policy, independent passes, deterministic validators, exact hashes, and fail-closed disagreement handling.
 
 ## Key Decisions
 
@@ -164,7 +164,7 @@ KoreanFrequencyEntry = {
 | Define project-specific curriculum i+1 | Linguistic `i+1` is not itself an executable exactly-one-unknown algorithm. |
 | Keep frequency, custom, and authentic highlights adaptive rather than falsely strict | Natural Korean morphology and user-selected text can contain unavoidable incidental concepts. |
 | Use Azure `ko-KR` as the only default TTS provider | It has documented Korean voices, locale, IPA support, and live voice discovery. |
-| Require specialist review for jamo and phonological-rule audio | Raw glyph synthesis and automatic phoneme control are not reliable teaching evidence. |
+| Require AI-policy linguistic and acoustic review for jamo and phonological-rule audio | Raw glyph synthesis and provider success are not reliable teaching evidence; exact deterministic and multi-pass AI evidence is required. |
 | Gate the 3000-card asset on an explicit license decision | `wordfreq` is suitable for bootstrap but its own documentation warns against CSV extraction without preserved attribution. |
 | Preserve verified Korean Phase 30 and distribute shared hardening across Phases 32-34 | Avoids replacing stronger Korean identity/morphology contracts while restoring the user-approved cross-language scope. |
 | Use manifest-bound frozen assets for final frequency generation | Final generation must be reproducible and must never replace rejected or missing entries with live `wordfreq` candidates. |
@@ -173,10 +173,10 @@ KoreanFrequencyEntry = {
 ## Capability And Security Gates
 
 - Do not make paid provider calls, publish decks, or upload private highlight content without explicit approval.
-- Do not approve Korean pronunciation, morphology, translation, or strict-i+1 status solely from an LLM response.
+- Do not approve linguistic content from an unversioned or single-pass LLM response; require `.planning/AI-LINGUISTIC-REVIEW-POLICY.md` evidence and deterministic validators.
 - Do not commit redistributed lexical/corpus assets until their license and attribution path is documented.
 - Do not overwrite approved curated fields during provider regeneration without an explicit forced review transition.
-- Do not claim Desktop/mobile visual acceptance without an observed human or project-approved renderer proof.
+- Do not claim Desktop/mobile visual acceptance without an instrumented project-approved renderer/device proof bound to the exact artifact and environment.
 
 ---
 *Last updated: 2026-08-18 - remote/local reconciliation restored shared hardening across Phases 32-34*
