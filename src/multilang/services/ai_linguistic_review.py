@@ -41,6 +41,7 @@ _ReasonCode: TypeAlias = Literal[
     "unsupported-evidence",
     "low-confidence",
     "correlation-metadata-missing",
+    "attempt-cap-exhausted",
     "review-disagreement",
     "source-binding-stale",
     "linguistic-error",
@@ -542,6 +543,7 @@ def _consensus_decision(
     subject: AIReviewSubject,
     validators: tuple[AIValidatorRun, ...],
     attempts: tuple[AIReviewAttempt, ...],
+    exhausted: bool = False,
 ) -> _ConsensusDecision:
     required = policy.critical_pass_count if subject.critical else policy.standard_pass_count
     matching = tuple(
@@ -556,6 +558,8 @@ def _consensus_decision(
         status, reason = "ai_review_failed", "deterministic-validator-failed"
     elif any(run.subject_content_sha256 != subject.content_hash for run in validators):
         status, reason = "stale", "source-binding-stale"
+    elif exhausted:
+        status, reason = "blocked_uncertainty", "attempt-cap-exhausted"
     elif len(matching) != required:
         status, reason = "blocked_uncertainty", "missing-pass"
     elif len({attempt.pass_id for attempt, _ in matching}) != required:
@@ -607,6 +611,7 @@ def build_ai_review_aggregate(
     request_sha256: str,
     validator_manifest_sha256: str,
     generated_at: str,
+    exhausted_subject_ids: tuple[str, ...] = (),
 ) -> AIReviewAggregate:
     """Compute unanimous consensus; deterministic failure always wins."""
 
@@ -617,6 +622,10 @@ def build_ai_review_aggregate(
     subject_ids = tuple(subject.subject_id for subject in subjects)
     if len(subject_ids) != len(set(subject_ids)):
         raise ValueError("subject_set_invalid")
+    if len(exhausted_subject_ids) != len(set(exhausted_subject_ids)) or not set(
+        exhausted_subject_ids
+    ).issubset(subject_ids):
+        raise ValueError("exhausted_subject_set_invalid")
     if any(subject.candidate_sha256 != candidate_sha256 for subject in subjects):
         raise ValueError("candidate_binding_mismatch")
     for attempt in attempts:
@@ -636,6 +645,7 @@ def build_ai_review_aggregate(
                 run for run in validator_runs if run.subject_id == subject.subject_id
             ),
             attempts=attempts,
+            exhausted=subject.subject_id in exhausted_subject_ids,
         )
         for subject in subjects
     )

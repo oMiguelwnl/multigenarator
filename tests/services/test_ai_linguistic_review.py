@@ -7,7 +7,7 @@ from importlib import import_module, util
 import inspect
 import json
 from pathlib import Path
-from types import ModuleType
+from types import ModuleType, SimpleNamespace
 
 import pytest
 from pydantic import ValidationError
@@ -365,6 +365,31 @@ def test_any_disagreement_or_uncertainty_blocks_without_majority_override() -> N
     assert aggregate.decisions[0].reason_code == "review-disagreement"
 
 
+def test_exhausted_review_slot_blocks_every_affected_subject_explicitly() -> None:
+    api = _api()
+    policy = _hashed(api, "AIReviewPolicy", _policy_payload())
+    subject = _hashed(api, "AIReviewSubject", _subject_payload())
+    validator = _hashed(api, "AIValidatorRun", _validator_payload(subject))
+
+    aggregate = api.build_ai_review_aggregate(
+        policy=policy,
+        subjects=(subject,),
+        validator_runs=(validator,),
+        attempts=(),
+        candidate_sha256=subject.candidate_sha256,
+        request_sha256="3" * 64,
+        validator_manifest_sha256="4" * 64,
+        generated_at="2026-08-27T15:02:00Z",
+        exhausted_subject_ids=(subject.subject_id,),
+    )
+
+    assert aggregate.total_subjects == 1
+    assert aggregate.passing_subjects == 0
+    assert aggregate.blocked_subjects == 1
+    assert aggregate.decisions[0].status == "blocked_uncertainty"
+    assert aggregate.decisions[0].reason_code == "attempt-cap-exhausted"
+
+
 def test_cli_exposes_only_fixed_operations_and_no_network_or_provider_imports() -> None:
     path = Path("scripts/review_korean_foundations_ai.py")
     assert path.exists()
@@ -376,3 +401,145 @@ def test_cli_exposes_only_fixed_operations_and_no_network_or_provider_imports() 
     assert "max_attempts" in source
     assert "max_concurrent_invocations" in source
     assert "not_applicable" in source
+
+
+def test_fixed_projection_balances_all_subjects_below_the_input_token_ceiling() -> None:
+    path = Path("scripts/review_korean_foundations_ai.py")
+    spec = util.spec_from_file_location("_review_korean_foundations_ai_test", path)
+    assert spec is not None and spec.loader is not None
+    module = util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+
+    subjects = module._build_subjects()
+    batches = module._balanced_review_batches(subjects)
+
+    assert len(batches) == 7
+    assert sorted(len(batch) for batch in batches) == [19, 20, 20, 20, 20, 20, 20]
+    assert {subject.subject_id for batch in batches for subject in batch} == {
+        subject.subject_id for subject in subjects
+    }
+    assert sum(len(batch) for batch in batches) == 139
+
+    for index, batch in enumerate(batches, start=1):
+        projection = module._projection_document(module._batch_id(index), batch)
+        assert module._projection_token_count(projection) <= (
+            module.MAX_INPUT_TOKENS - module.MAX_AGENT_OVERHEAD_TOKENS
+        )
+        assert all(
+            set(projected) == {
+                "subject_id",
+                "claim_ids",
+                "source_reference_ids",
+                "projection",
+            }
+            for projected in projection["subjects"]
+        )
+        assert projection["output_schema"]["reason_codes"] == [
+            "none",
+            "atomic-claim-failed",
+            "uncertainty-present",
+            "unsupported-evidence",
+            "low-confidence",
+            "linguistic-error",
+            "curriculum-invalid",
+        ]
+        assert projection["output_schema"]["uncertainty_codes"] == [
+            "source-insufficient",
+            "linguistic-ambiguity",
+            "confidence-below-threshold",
+        ]
+        assert projection["output_schema"]["compact_keys"] == {
+            "v": "schema_version",
+            "b": "batch_id",
+            "p": "pass_id",
+            "d": "decisions",
+            "s": "subject_id",
+            "a": "atomic_claims",
+            "i": "claim_id",
+            "c": "confidence",
+            "r": "reason_code",
+            "u": "uncertainty_codes",
+            "e": "evidence_reference_ids",
+        }
+        assert module._maximum_compact_output_tokens(projection) <= (
+            module.MAX_OUTPUT_TOKENS
+        )
+
+
+def test_failed_attempt_ledger_preserves_raw_bytes_and_marks_two_attempts_exhausted(
+    tmp_path: Path,
+) -> None:
+    path = Path("scripts/review_korean_foundations_ai.py")
+    spec = util.spec_from_file_location("_review_korean_foundations_ai_failure_test", path)
+    assert spec is not None and spec.loader is not None
+    module = util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+    module.EVIDENCE_ROOT = tmp_path
+    module.ATTEMPTS_ROOT = tmp_path / "attempts"
+    module.FAILED_ATTEMPTS_ROOT = tmp_path / "failed-attempts"
+    tmp_path.mkdir(exist_ok=True)
+
+    raw_path = tmp_path / "raw.json"
+    raw_path.write_bytes(b'{"malformed":true}\n')
+    base = {
+        "input": raw_path,
+        "batch_id": "batch-01",
+        "pass_id": "pass-1",
+        "actor_id": "review-agent",
+        "route_id": "opencode-cli-tool-less",
+        "provider_id": "openai",
+        "provider_api_version": "opencode-1.18.25",
+        "model_id": "gpt-5.6-sol",
+        "model_version": "gpt-5.6-sol",
+        "prompt_id": "korean-foundation-linguistic-review",
+        "prompt_version": "1",
+        "prompt_template_sha256": "1" * 64,
+        "independence_scope": "fresh_context_same_model",
+        "started_at": "2026-08-28T11:19:38Z",
+    }
+    for attempt_number in (1, 2):
+        args = SimpleNamespace(
+            **base,
+            attempt_number=attempt_number,
+            fresh_context_id=f"fresh-{attempt_number}",
+        )
+        module._record_failed_attempt(args, "result_schema_invalid")
+
+    failures = module._load_failed_attempts()
+    assert len(failures) == 2
+    assert failures[0].raw_result_base64 == "eyJtYWxmb3JtZWQiOnRydWV9Cg=="
+    assert module._exhausted_slots(failures) == {("batch-01", "pass-1")}
+
+
+def test_compact_raw_pass_schema_rebuilds_for_ingestion() -> None:
+    path = Path("scripts/review_korean_foundations_ai.py")
+    spec = util.spec_from_file_location("_review_korean_foundations_ai_raw_test", path)
+    assert spec is not None and spec.loader is not None
+    module = util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+
+    raw = module._RawPass.model_validate(
+        {
+            "v": 1,
+            "b": "batch-01",
+            "p": "pass-1",
+            "d": [
+                {
+                    "s": "ko-hangul-0001",
+                    "a": [
+                        {
+                            "i": "source_content.mapping",
+                            "v": "u",
+                            "c": 0.8,
+                            "r": "s",
+                            "u": ["s"],
+                            "e": ["unicode.hangul-17.0"],
+                        }
+                    ],
+                }
+            ],
+        }
+    )
+
+    assert raw.batch_id == "batch-01"
+    assert raw.decisions[0].atomic_claims[0].reason_code == "s"
