@@ -29,6 +29,12 @@ _EVIDENCE_INDEX_PATH: Path = (
 _RECEIPT_PATH: Path = (
     _PROJECT_ROOT / _PHASE_RELPATH / "evidence-inbox" / "validation-receipt.json"
 )
+_MEDIA_RIGHTS_PATH: Path = (
+    _PROJECT_ROOT / _PHASE_RELPATH / "evidence-inbox" / "media-rights.json"
+)
+_MEDIA_AUTHORITY_PATH: Path = (
+    _PROJECT_ROOT / _PHASE_RELPATH / "execution-handoffs" / "media-authority.json"
+)
 _HANDOFF_VERSION: Final = "phase31-handoff-v1"
 _MAX_JSON_BYTES: Final = 1_048_576
 
@@ -92,6 +98,18 @@ def _canonical_hash(payload: dict[str, object]) -> str:
 
 def _json_file_bytes(payload: dict[str, object]) -> bytes:
     return _canonical_bytes(payload) + b"\n"
+
+
+def _utc_timestamp(value: str) -> str:
+    if not isinstance(value, str) or len(value) != 20:
+        raise ValueError("timestamp must be UTC")
+    from datetime import datetime
+
+    try:
+        datetime.strptime(value, "%Y-%m-%dT%H:%M:%SZ")
+    except ValueError as exc:
+        raise ValueError("timestamp must be UTC") from exc
+    return value
 
 
 def _is_link_or_reparse(value: os.stat_result) -> bool:
@@ -231,6 +249,7 @@ def _handoff_path(filename: str) -> Path:
         "curation-selection.json",
         "evidence-confirmation.json",
         "activation.json",
+        "media-authority.json",
     }:
         _raise(Phase31HandoffReasonCode.UNSAFE_PATH)
     return _HANDOFF_ROOT / filename
@@ -397,6 +416,179 @@ def get_authorization() -> str:
         raise Phase31HandoffError(Phase31HandoffReasonCode.HANDOFF_INVALID) from exc
 
 
+def _read_media_rights() -> tuple[dict[str, object], str]:
+    raw = _read_regular_bytes(
+        _MEDIA_RIGHTS_PATH,
+        missing_reason=Phase31HandoffReasonCode.ARTIFACT_MISSING,
+    )
+    try:
+        payload = json.loads(raw.decode("utf-8"))
+    except (UnicodeDecodeError, json.JSONDecodeError, RecursionError) as exc:
+        raise Phase31HandoffError(Phase31HandoffReasonCode.ARTIFACT_INVALID) from exc
+    if not isinstance(payload, dict):
+        _raise(Phase31HandoffReasonCode.ARTIFACT_INVALID)
+    return payload, sha256(raw).hexdigest()
+
+
+def _media_scope(payload: dict[str, object]) -> tuple[dict[str, object], dict[str, object]]:
+    provider = payload.get("provider_scope")
+    item_set = payload.get("item_set")
+    if not isinstance(provider, dict) or not isinstance(item_set, dict):
+        _raise(Phase31HandoffReasonCode.ARTIFACT_INVALID)
+    required_provider = {
+        "route",
+        "voice_profile_id",
+        "voice_profile_version",
+        "provider_attempt_ceiling",
+        "budget_ceiling_amount",
+        "budget_ceiling_currency",
+        "credential_boundary",
+    }
+    required_items = {"item_set_sha256", "required_slots"}
+    if not required_provider <= set(provider) or not required_items <= set(item_set):
+        _raise(Phase31HandoffReasonCode.ARTIFACT_INVALID)
+    return provider, item_set
+
+
+def _validate_media_authority_payload(payload: dict[str, object]) -> None:
+    required = {
+        "schema_version",
+        "handoff_version",
+        "kind",
+        "actor_type",
+        "agent_authored",
+        "confirmation_method",
+        "exact_supplied_response",
+        "supplied_response_sha256",
+        "orchestration_timestamp",
+        "rights_document_sha256",
+        "route",
+        "item_set_sha256",
+        "item_count",
+        "voice_profile_id",
+        "voice_profile_version",
+        "provider_attempt_ceiling",
+        "budget_ceiling_amount",
+        "budget_ceiling_currency",
+        "credential_boundary",
+        "single_use_operation_id",
+        "consumed",
+        "replay_constraints",
+        "content_hash",
+    }
+    if set(payload) != required:
+        _raise(Phase31HandoffReasonCode.HANDOFF_INVALID)
+    if (
+        payload.get("schema_version") != 1
+        or payload.get("handoff_version") != _HANDOFF_VERSION
+        or payload.get("kind") != "media-authority"
+        or payload.get("actor_type") != "project_owner"
+        or payload.get("agent_authored") is not False
+        or payload.get("consumed") is not False
+    ):
+        _raise(Phase31HandoffReasonCode.HANDOFF_INVALID)
+    for field in ("rights_document_sha256", "item_set_sha256", "content_hash"):
+        try:
+            _sha256_text(str(payload[field]), field_name=field)
+        except (KeyError, ValueError) as exc:
+            raise Phase31HandoffError(Phase31HandoffReasonCode.HANDOFF_INVALID) from exc
+    if payload["content_hash"] != _canonical_hash(payload):
+        _raise(Phase31HandoffReasonCode.HANDOFF_INVALID)
+
+
+def record_media_authority(
+    response: str,
+    *,
+    confirmation_method: str,
+    orchestration_timestamp: str,
+) -> dict[str, object]:
+    if not isinstance(response, str) or response.startswith("decline:"):
+        _raise(Phase31HandoffReasonCode.HANDOFF_INVALID)
+    prefix = "authorize-media "
+    if not response.startswith(prefix):
+        _raise(Phase31HandoffReasonCode.HANDOFF_INVALID)
+    supplied_hash = _checked_sha256(response.removeprefix(prefix))
+    rights, rights_sha256 = _read_media_rights()
+    if supplied_hash != rights_sha256:
+        _raise(Phase31HandoffReasonCode.HASH_MISMATCH)
+    provider, item_set = _media_scope(rights)
+    try:
+        timestamp = _utc_timestamp(orchestration_timestamp)
+        item_set_hash = _sha256_text(str(item_set["item_set_sha256"]))
+        item_count = int(item_set["required_slots"])
+        attempt_ceiling = int(provider["provider_attempt_ceiling"])
+    except (KeyError, TypeError, ValueError) as exc:
+        raise Phase31HandoffError(Phase31HandoffReasonCode.ARTIFACT_INVALID) from exc
+    if item_count <= 0 or attempt_ceiling <= 0:
+        _raise(Phase31HandoffReasonCode.ARTIFACT_INVALID)
+    payload: dict[str, object] = {
+        "schema_version": 1,
+        "handoff_version": _HANDOFF_VERSION,
+        "kind": "media-authority",
+        "actor_type": "project_owner",
+        "agent_authored": False,
+        "confirmation_method": confirmation_method,
+        "exact_supplied_response": response,
+        "supplied_response_sha256": sha256(response.encode("utf-8")).hexdigest(),
+        "orchestration_timestamp": timestamp,
+        "rights_document_sha256": rights_sha256,
+        "route": str(provider["route"]),
+        "item_set_sha256": item_set_hash,
+        "item_count": item_count,
+        "voice_profile_id": str(provider["voice_profile_id"]),
+        "voice_profile_version": str(provider["voice_profile_version"]),
+        "provider_attempt_ceiling": attempt_ceiling,
+        "budget_ceiling_amount": str(provider["budget_ceiling_amount"]),
+        "budget_ceiling_currency": str(provider["budget_ceiling_currency"]),
+        "credential_boundary": str(provider["credential_boundary"]),
+        "single_use_operation_id": str(rights.get("single_use_operation_id", "")),
+        "consumed": False,
+        "replay_constraints": rights.get("replay_constraints", {}),
+    }
+    payload["content_hash"] = _canonical_hash(payload)
+    _validate_media_authority_payload(payload)
+    _atomic_write_handoff(_MEDIA_AUTHORITY_PATH, _json_file_bytes(payload))
+    return payload
+
+
+def _read_media_authority() -> dict[str, object]:
+    payload = _read_json(
+        _MEDIA_AUTHORITY_PATH,
+        missing_reason=Phase31HandoffReasonCode.HANDOFF_MISSING,
+    )
+    _validate_media_authority_payload(payload)
+    return payload
+
+
+def get_media_authority() -> str:
+    payload = _read_media_authority()
+    return _sha256_text(str(payload["rights_document_sha256"]))
+
+
+def verify_media_authority(
+    *,
+    require_project_owner: bool = False,
+    require_unconsumed: bool = False,
+    require_voice_profile: bool = False,
+    require_provider_attempt_ceiling: bool = False,
+) -> dict[str, object]:
+    payload = _read_media_authority()
+    _, rights_sha256 = _read_media_rights()
+    if payload["rights_document_sha256"] != rights_sha256:
+        _raise(Phase31HandoffReasonCode.HASH_MISMATCH)
+    if require_project_owner and (
+        payload["actor_type"] != "project_owner" or payload["agent_authored"] is not False
+    ):
+        _raise(Phase31HandoffReasonCode.HANDOFF_INVALID)
+    if require_unconsumed and payload["consumed"] is not False:
+        _raise(Phase31HandoffReasonCode.HANDOFF_INVALID)
+    if require_voice_profile and not payload["voice_profile_id"]:
+        _raise(Phase31HandoffReasonCode.HANDOFF_INVALID)
+    if require_provider_attempt_ceiling and int(payload["provider_attempt_ceiling"]) <= 0:
+        _raise(Phase31HandoffReasonCode.HANDOFF_INVALID)
+    return payload
+
+
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
         description="Record or read fixed Phase 31 hash-only handoffs."
@@ -413,6 +605,16 @@ def build_parser() -> argparse.ArgumentParser:
     authorization.add_argument("--sha256", required=True)
     authorization.add_argument("--expected-receipt-sha256", required=True)
     commands.add_parser("get-authorization")
+    media = commands.add_parser("record-media-authority")
+    media.add_argument("--response", required=True)
+    media.add_argument("--confirmation-method", required=True)
+    media.add_argument("--orchestration-timestamp", required=True)
+    verify_media = commands.add_parser("verify-media-authority")
+    verify_media.add_argument("--require-project-owner", action="store_true")
+    verify_media.add_argument("--require-unconsumed", action="store_true")
+    verify_media.add_argument("--require-voice-profile", action="store_true")
+    verify_media.add_argument("--require-provider-attempt-ceiling", action="store_true")
+    commands.add_parser("get-media-authority")
     return parser
 
 
@@ -436,6 +638,24 @@ def main() -> int:
                     expected_receipt_sha256=args.expected_receipt_sha256,
                 )["content_hash"]
             )
+        elif args.operation == "record-media-authority":
+            print(
+                record_media_authority(
+                    args.response,
+                    confirmation_method=args.confirmation_method,
+                    orchestration_timestamp=args.orchestration_timestamp,
+                )["content_hash"]
+            )
+        elif args.operation == "verify-media-authority":
+            verify_media_authority(
+                require_project_owner=args.require_project_owner,
+                require_unconsumed=args.require_unconsumed,
+                require_voice_profile=args.require_voice_profile,
+                require_provider_attempt_ceiling=args.require_provider_attempt_ceiling,
+            )
+            print("media_authority_status=verified")
+        elif args.operation == "get-media-authority":
+            print(get_media_authority())
         else:
             print(get_authorization())
     except Phase31HandoffError as exc:

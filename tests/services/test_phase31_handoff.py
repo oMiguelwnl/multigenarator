@@ -90,6 +90,53 @@ def _install_root(api: ModuleType, monkeypatch: pytest.MonkeyPatch, root: Path) 
         "_RECEIPT_PATH",
         root / PHASE_RELPATH / "evidence-inbox" / "validation-receipt.json",
     )
+    monkeypatch.setattr(
+        api,
+        "_MEDIA_RIGHTS_PATH",
+        root / PHASE_RELPATH / "evidence-inbox" / "media-rights.json",
+    )
+    monkeypatch.setattr(
+        api,
+        "_MEDIA_AUTHORITY_PATH",
+        root / PHASE_RELPATH / "execution-handoffs" / "media-authority.json",
+    )
+
+
+def _write_media_rights(project_root: Path) -> tuple[str, dict[str, object]]:
+    rights = {
+        "schema_version": 1,
+        "document_type": "phase31-media-rights-request",
+        "status": "awaiting_project_owner_authorization",
+        "provider_scope": {
+            "route": "azure-speech-tts",
+            "locale": "ko-KR",
+            "voice_profile_id": "ko-KR-SunHiNeural",
+            "voice_profile_version": "azure-docs-2026-08-13-ebc37366082bd4d002282e679e4fc07099083d5b",
+            "provider_attempt_ceiling": 72,
+            "budget_ceiling_amount": "5.00",
+            "budget_ceiling_currency": "USD",
+            "credential_boundary": "existing-environment-only-no-secrets-recorded",
+        },
+        "item_set": {
+            "item_set_sha256": "7" * 64,
+            "required_slots": 325,
+            "audio_subjects": 233,
+            "visual_subjects": 92,
+        },
+        "single_use_operation_id": "phase31-media-authority-v1",
+        "content_hash": "6" * 64,
+    }
+    path = project_root / PHASE_RELPATH / "evidence-inbox" / "media-rights.json"
+    path.parent.mkdir(parents=True, exist_ok=True)
+    raw = json.dumps(
+        rights,
+        ensure_ascii=False,
+        allow_nan=False,
+        separators=(",", ":"),
+        sort_keys=True,
+    ).encode("utf-8") + b"\n"
+    path.write_bytes(raw)
+    return sha256(raw).hexdigest(), rights
 
 
 def test_fixed_handoff_contract_is_not_implemented(
@@ -137,6 +184,73 @@ def test_handoff_records_evidence_receipt_and_authorization(
         == authorization_sha256
     )
     assert api.get_authorization() == authorization_sha256
+
+
+def test_handoff_records_project_owner_media_authority_once(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    api = _handoff()
+    _install_root(api, monkeypatch, tmp_path)
+    rights_sha256, rights = _write_media_rights(tmp_path)
+    response = f"authorize-media {rights_sha256}"
+
+    authority = api.record_media_authority(
+        response,
+        confirmation_method="opencode-user-message",
+        orchestration_timestamp="2026-08-28T00:00:00Z",
+    )
+
+    assert authority["actor_type"] == "project_owner"
+    assert authority["agent_authored"] is False
+    assert authority["rights_document_sha256"] == rights_sha256
+    assert authority["route"] == rights["provider_scope"]["route"]
+    assert authority["item_set_sha256"] == rights["item_set"]["item_set_sha256"]
+    assert authority["item_count"] == rights["item_set"]["required_slots"]
+    assert authority["voice_profile_id"] == "ko-KR-SunHiNeural"
+    assert authority["provider_attempt_ceiling"] == 72
+    assert authority["consumed"] is False
+    assert api.get_media_authority() == rights_sha256
+    api.verify_media_authority(
+        require_project_owner=True,
+        require_unconsumed=True,
+        require_voice_profile=True,
+        require_provider_attempt_ceiling=True,
+    )
+
+
+def test_media_authority_rejects_decline_stale_hash_and_replay(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    api = _handoff()
+    _install_root(api, monkeypatch, tmp_path)
+    rights_sha256, _ = _write_media_rights(tmp_path)
+
+    with pytest.raises(api.Phase31HandoffError):
+        api.record_media_authority(
+            "decline: no budget",
+            confirmation_method="opencode-user-message",
+            orchestration_timestamp="2026-08-28T00:00:00Z",
+        )
+    with pytest.raises(api.Phase31HandoffError):
+        api.record_media_authority(
+            f"authorize-media {'0' * 64}",
+            confirmation_method="opencode-user-message",
+            orchestration_timestamp="2026-08-28T00:00:00Z",
+        )
+
+    api.record_media_authority(
+        f"authorize-media {rights_sha256}",
+        confirmation_method="opencode-user-message",
+        orchestration_timestamp="2026-08-28T00:00:00Z",
+    )
+    with pytest.raises(api.Phase31HandoffError):
+        api.record_media_authority(
+            f"authorize-media {rights_sha256}",
+            confirmation_method="opencode-user-message",
+            orchestration_timestamp="2026-08-28T00:00:01Z",
+        )
 
 
 def test_handoff_rejects_malformed_hash_and_nonidentical_overwrite(
@@ -192,6 +306,9 @@ def test_handoff_cli_exposes_only_fixed_operations() -> None:
         "get-receipt",
         "record-authorization",
         "get-authorization",
+        "record-media-authority",
+        "verify-media-authority",
+        "get-media-authority",
     ):
         assert operation in help_text
     for forbidden_option in ("--root", "--path", "--output", "--force", "--repair"):
