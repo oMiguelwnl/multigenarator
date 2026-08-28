@@ -5,10 +5,11 @@ from __future__ import annotations
 from collections.abc import Iterable
 from uuid import uuid4
 
-from sqlalchemy import select
+from sqlalchemy import func, select
 from sqlalchemy.orm import Session
 
-from multilang.db.models import GenerationItem, GenerationJob
+from multilang.db.models import GenerationItem, GenerationJob, ProviderCallLogModel
+from multilang.domain.korean import KoreanFrequencyJobAuthority
 from multilang.domain.jobs import (
     GenerationRequest,
     JobProgressSnapshot,
@@ -16,6 +17,17 @@ from multilang.domain.jobs import (
     JobStatus,
     ResumeDiagnostic,
 )
+
+
+_KOREAN_OPERATION_STAGE: dict[str, str] = {
+    "pilot_text": "pilot_base",
+    "pilot_catalog": "pilot_base",
+    "pilot_audio_sample": "pilot_audio",
+    "production_text": "full",
+    "production_audio": "full",
+    "production_export": "full",
+}
+_KOREAN_STAGE_ORDER = {"pilot_base": 1, "pilot_audio": 2, "full": 3}
 
 
 class JobRepository:
@@ -67,6 +79,48 @@ class JobRepository:
             statement = statement.where(GenerationJob.run_key == run_key)
 
         return self.session.scalar(statement)
+
+    def bind_execution_authority(
+        self,
+        job_id: str,
+        authority: KoreanFrequencyJobAuthority,
+    ) -> KoreanFrequencyJobAuthority:
+        if authority.stage == "pilot_audio":
+            raise ValueError("audio authority must be bound through bind_audio_authority")
+        return self._bind_korean_authority(job_id, authority)
+
+    def bind_audio_authority(
+        self,
+        job_id: str,
+        authority: KoreanFrequencyJobAuthority,
+    ) -> KoreanFrequencyJobAuthority:
+        if authority.stage not in {"pilot_audio", "full"}:
+            raise ValueError("audio authority requires pilot_audio or full stage")
+        return self._bind_korean_authority(job_id, authority)
+
+    def load_korean_authority(self, job_id: str) -> KoreanFrequencyJobAuthority:
+        job = self._require_job(job_id)
+        if job.korean_frequency_authority is None:
+            raise ValueError("Korean frequency authority is not bound")
+        authority = KoreanFrequencyJobAuthority.model_validate(job.korean_frequency_authority)
+        self._assert_authority_columns_match(job, authority)
+        return authority
+
+    def require_korean_attempt_authority(self, job_id: str, operation: str) -> None:
+        required_stage = _KOREAN_OPERATION_STAGE.get(operation)
+        if required_stage is None:
+            raise ValueError("unknown Korean provider operation")
+        authority = self.load_korean_authority(job_id)
+        if _KOREAN_STAGE_ORDER[authority.stage] < _KOREAN_STAGE_ORDER[required_stage]:
+            raise ValueError("Korean provider attempt is not authorized for this stage")
+
+    def count_provider_attempts(self, job_id: str) -> int:
+        return int(
+            self.session.scalar(
+                select(func.count(ProviderCallLogModel.id)).where(ProviderCallLogModel.job_id == job_id)
+            )
+            or 0
+        )
 
     def list_completed_item_keys(self, run_key: str) -> set[str]:
         rows = self.session.scalars(
@@ -299,6 +353,65 @@ class JobRepository:
         self.session.commit()
         self.session.refresh(job)
         return self._snapshot(job)
+
+    def _bind_korean_authority(
+        self,
+        job_id: str,
+        authority: KoreanFrequencyJobAuthority,
+    ) -> KoreanFrequencyJobAuthority:
+        job = self._require_job(job_id)
+        payload = authority.model_dump(mode="json", exclude_none=True)
+        existing_payload = job.korean_frequency_authority
+        if existing_payload is not None:
+            existing = KoreanFrequencyJobAuthority.model_validate(existing_payload)
+            self._assert_authority_columns_match(job, existing)
+            if existing.model_dump(mode="json", exclude_none=True) == payload:
+                return existing
+            if _KOREAN_STAGE_ORDER[authority.stage] <= _KOREAN_STAGE_ORDER[existing.stage]:
+                raise ValueError("Korean frequency authority drift")
+        self._store_korean_authority_columns(job, authority, payload)
+        self.session.add(job)
+        self.session.commit()
+        self.session.refresh(job)
+        return self.load_korean_authority(job_id)
+
+    @staticmethod
+    def _store_korean_authority_columns(
+        job: GenerationJob,
+        authority: KoreanFrequencyJobAuthority,
+        payload: dict[str, object],
+    ) -> None:
+        job.korean_phase31_pointer_locator_sha256 = authority.phase31_pointer_locator_sha256
+        job.korean_phase31_pointer_content_sha256 = authority.phase31_pointer_content_sha256
+        job.korean_phase31_validation_receipt_sha256 = authority.phase31_validation_receipt_sha256
+        job.korean_phase31_snapshot_manifest_sha256 = authority.phase31_snapshot_manifest_sha256
+        job.korean_phase31_snapshot_root_sha256 = authority.phase31_snapshot_root_sha256
+        job.korean_frequency_bundle_locator_sha256 = authority.frequency_bundle_locator_sha256
+        job.korean_frequency_bundle_content_sha256 = authority.frequency_bundle_content_sha256
+        job.korean_provider_policy_sha256 = authority.provider_policy_sha256
+        job.korean_frequency_authority = payload
+        job.korean_provider_policy = {
+            "provider_policy_sha256": authority.provider_policy_sha256,
+        }
+
+    @staticmethod
+    def _assert_authority_columns_match(
+        job: GenerationJob,
+        authority: KoreanFrequencyJobAuthority,
+    ) -> None:
+        expected = {
+            "korean_phase31_pointer_locator_sha256": authority.phase31_pointer_locator_sha256,
+            "korean_phase31_pointer_content_sha256": authority.phase31_pointer_content_sha256,
+            "korean_phase31_validation_receipt_sha256": authority.phase31_validation_receipt_sha256,
+            "korean_phase31_snapshot_manifest_sha256": authority.phase31_snapshot_manifest_sha256,
+            "korean_phase31_snapshot_root_sha256": authority.phase31_snapshot_root_sha256,
+            "korean_frequency_bundle_locator_sha256": authority.frequency_bundle_locator_sha256,
+            "korean_frequency_bundle_content_sha256": authority.frequency_bundle_content_sha256,
+            "korean_provider_policy_sha256": authority.provider_policy_sha256,
+        }
+        for field, value in expected.items():
+            if getattr(job, field) != value:
+                raise ValueError("Korean frequency authority column drift")
 
     def _require_job(self, job_id: str) -> GenerationJob:
         job = self.get_job(job_id)

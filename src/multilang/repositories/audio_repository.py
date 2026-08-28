@@ -15,6 +15,7 @@ from multilang.domain.audio import (
     AudioFormat,
     AudioProvenance,
     AudioProvider,
+    AudioReviewStatus,
     AudioSynthesisStatus,
     NormalizedTtsInput,
 )
@@ -54,6 +55,20 @@ class AudioRepository:
             "duration_ms": record.provenance.duration_ms,
             "status": record.provenance.status.value,
             "fallback_used": record.provenance.fallback_used,
+            "provider_sdk_version": record.provenance.provider_sdk_version,
+            "voice_profile_sha256": record.provenance.voice_profile_sha256,
+            "catalog_receipt_sha256": record.provenance.catalog_receipt_sha256,
+            "synthesis_request_sha256": record.provenance.synthesis_request_sha256,
+            "artifact_sha256": record.provenance.artifact_sha256,
+            "audio_review_status": (
+                record.provenance.audio_review_status.value
+                if record.provenance.audio_review_status is not None
+                else None
+            ),
+            "audio_review_receipt_sha256": record.provenance.audio_review_receipt_sha256,
+            "heard_review_receipt_sha256": record.provenance.heard_review_receipt_sha256,
+            "fallback_origin": record.provenance.fallback_origin,
+            "rejection_reason_code": record.provenance.rejection_reason_code,
         }
 
         if row is None:
@@ -172,6 +187,18 @@ class AudioRepository:
                 duration_ms=row.duration_ms,
                 status=AudioSynthesisStatus(row.status),
                 fallback_used=row.fallback_used,
+                provider_sdk_version=row.provider_sdk_version,
+                voice_profile_sha256=row.voice_profile_sha256,
+                catalog_receipt_sha256=row.catalog_receipt_sha256,
+                synthesis_request_sha256=row.synthesis_request_sha256,
+                artifact_sha256=row.artifact_sha256,
+                audio_review_status=AudioReviewStatus(row.audio_review_status)
+                if row.audio_review_status is not None
+                else None,
+                audio_review_receipt_sha256=row.audio_review_receipt_sha256,
+                heard_review_receipt_sha256=row.heard_review_receipt_sha256,
+                fallback_origin=row.fallback_origin,
+                rejection_reason_code=row.rejection_reason_code,
             ),
         )
 

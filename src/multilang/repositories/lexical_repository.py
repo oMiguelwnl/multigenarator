@@ -11,7 +11,12 @@ from sqlalchemy.orm import Session
 
 from multilang.db.models import LexicalCandidate
 from multilang.domain.korean import KoreanLexicalIdentity
-from multilang.domain.lexicon import GroundingStatus, LexicalCardCandidate, LexicalProvenance
+from multilang.domain.lexicon import (
+    GroundingStatus,
+    KoreanFrequencyLexicalEvidence,
+    LexicalCardCandidate,
+    LexicalProvenance,
+)
 
 
 class LexicalRepository:
@@ -193,6 +198,9 @@ class LexicalRepository:
         normalized_source: str,
         candidate: LexicalCardCandidate,
     ) -> dict[str, object]:
+        evidence = candidate.korean_frequency_evidence
+        if evidence is not None and source_type != "frequency":
+            raise ValueError("Korean frequency lexical evidence requires frequency source type")
         return {
             "job_id": job_id,
             "run_key": run_key,
@@ -219,9 +227,15 @@ class LexicalRepository:
                 if candidate.korean_identity is not None
                 else None
             ),
+            "frequency_bundle_sha256": evidence.bundle_sha256 if evidence is not None else None,
+            "frequency_source_sha256": evidence.source_sha256 if evidence is not None else None,
+            "source_review_receipt_sha256": evidence.source_review_receipt_sha256 if evidence is not None else None,
+            "source_review_aggregate_sha256": evidence.source_review_aggregate_sha256 if evidence is not None else None,
+            "lexical_evidence": evidence.model_dump(mode="json") if evidence is not None else None,
         }
 
     def _to_domain(self, row: LexicalCandidate) -> LexicalCardCandidate:
+        evidence = self._korean_frequency_evidence_from_row(row)
         return LexicalCardCandidate(
             submitted_form=row.submitted_form,
             display_form=row.display_form,
@@ -243,4 +257,30 @@ class LexicalRepository:
                 if row.korean_identity is not None
                 else None
             ),
+            korean_frequency_evidence=evidence,
         )
+
+    @staticmethod
+    def _korean_frequency_evidence_from_row(
+        row: LexicalCandidate,
+    ) -> KoreanFrequencyLexicalEvidence | None:
+        hash_columns = {
+            "frequency_bundle_sha256": row.frequency_bundle_sha256,
+            "frequency_source_sha256": row.frequency_source_sha256,
+            "source_review_receipt_sha256": row.source_review_receipt_sha256,
+            "source_review_aggregate_sha256": row.source_review_aggregate_sha256,
+        }
+        if row.lexical_evidence is None:
+            if any(value is not None for value in hash_columns.values()):
+                raise ValueError("Korean frequency lexical evidence column drift")
+            return None
+        evidence = KoreanFrequencyLexicalEvidence.model_validate(row.lexical_evidence)
+        expected = {
+            "frequency_bundle_sha256": evidence.bundle_sha256,
+            "frequency_source_sha256": evidence.source_sha256,
+            "source_review_receipt_sha256": evidence.source_review_receipt_sha256,
+            "source_review_aggregate_sha256": evidence.source_review_aggregate_sha256,
+        }
+        if hash_columns != expected:
+            raise ValueError("Korean frequency lexical evidence hash drift")
+        return evidence

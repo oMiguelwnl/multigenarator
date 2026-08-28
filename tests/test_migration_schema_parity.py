@@ -15,6 +15,7 @@ from pathlib import Path
 from alembic import command
 from alembic.config import Config
 from alembic.script import ScriptDirectory
+import pytest
 from sqlalchemy import JSON, MetaData, Table, create_engine, inspect, select
 
 from multilang.db.base import Base
@@ -25,6 +26,76 @@ from multilang.db import models as _models  # noqa: F401
 
 _PROJECT_ROOT = Path(__file__).resolve().parents[1]
 _KOREAN_IDENTITY_REVISION = "20260804_17"
+_FREQUENCY_TEXT_AUDIO_REVISION = "20260821_18"
+
+_FREQUENCY_TEXT_AUDIO_COLUMNS = {
+    "generation_jobs": {
+        "korean_phase31_pointer_locator_sha256",
+        "korean_phase31_pointer_content_sha256",
+        "korean_phase31_validation_receipt_sha256",
+        "korean_phase31_snapshot_manifest_sha256",
+        "korean_phase31_snapshot_root_sha256",
+        "korean_frequency_bundle_locator_sha256",
+        "korean_frequency_bundle_content_sha256",
+        "korean_frequency_authority",
+        "korean_provider_policy_sha256",
+        "korean_provider_policy",
+    },
+    "generation_items": {
+        "stage_authority_sha256",
+        "stage_input_sha256",
+        "stage_output_sha256",
+        "stage_evidence",
+    },
+    "lexical_candidates": {
+        "frequency_bundle_sha256",
+        "frequency_source_sha256",
+        "source_review_receipt_sha256",
+        "source_review_aggregate_sha256",
+        "lexical_evidence",
+    },
+    "text_quality_records": {
+        "candidate_selection_evidence",
+        "adaptive_i_plus_one_evidence",
+        "provider_review_evidence",
+        "text_review_receipt_sha256",
+    },
+    "audio_assets": {
+        "provider_sdk_version",
+        "voice_profile_sha256",
+        "catalog_receipt_sha256",
+        "synthesis_request_sha256",
+        "artifact_sha256",
+        "audio_review_status",
+        "audio_review_receipt_sha256",
+        "heard_review_receipt_sha256",
+        "fallback_origin",
+        "rejection_reason_code",
+    },
+    "card_exports": {
+        "frequency_level",
+        "frequency_bundle_sha256",
+        "export_gate_receipt_sha256",
+    },
+    "deck_exports": {
+        "frequency_bundle_sha256",
+        "export_manifest_sha256",
+        "export_gate_receipt_sha256",
+    },
+    "provider_call_logs": {
+        "route_policy_sha256",
+        "budget_snapshot_sha256",
+        "cache_key_sha256",
+        "response_schema_sha256",
+    },
+}
+
+_HASH_COLUMNS = {
+    column
+    for columns in _FREQUENCY_TEXT_AUDIO_COLUMNS.values()
+    for column in columns
+    if column.endswith("_sha256")
+}
 
 
 def _alembic_config(database_url: str) -> Config:
@@ -103,10 +174,141 @@ def test_card_exports_mandarin_columns_are_migrated(tmp_path: Path) -> None:
     } <= columns
 
 
-def test_korean_identity_revision_is_the_sole_linear_head() -> None:
+def test_frequency_text_audio_revision_is_the_sole_linear_head() -> None:
     heads = ScriptDirectory.from_config(_alembic_config("sqlite://")).get_heads()
 
-    assert heads == [_KOREAN_IDENTITY_REVISION]
+    assert heads == [_FREQUENCY_TEXT_AUDIO_REVISION]
+
+
+def test_frequency_text_audio_schema_has_expected_evidence_columns_without_sensitive_names() -> None:
+    forbidden_fragments = ("raw", "private", "path", "prompt", "payload", "credential", "secret", "traceback")
+
+    for table_name, expected_columns in _FREQUENCY_TEXT_AUDIO_COLUMNS.items():
+        table = Base.metadata.tables[table_name]
+        missing = expected_columns - {column.name for column in table.columns}
+        assert not missing, f"{table_name} is missing ORM columns: {sorted(missing)}"
+        leaked = {
+            column
+            for column in expected_columns
+            if any(fragment in column for fragment in forbidden_fragments)
+        }
+        assert not leaked, f"sensitive evidence column names: {sorted(leaked)}"
+
+
+def test_frequency_text_audio_migration_upgrade_downgrade_and_reupgrade(tmp_path: Path) -> None:
+    migration_path = (
+        _PROJECT_ROOT
+        / "alembic"
+        / "versions"
+        / "20260821_18_frequency_text_audio_evidence.py"
+    )
+    assert migration_path.is_file()
+    database_url = f"sqlite:///{tmp_path / 'frequency_text_audio_migration.db'}"
+    config = _alembic_config(database_url)
+    command.upgrade(config, _KOREAN_IDENTITY_REVISION)
+
+    engine = create_engine(database_url)
+    try:
+        legacy_metadata = MetaData()
+        legacy_jobs = Table("generation_jobs", legacy_metadata, autoload_with=engine)
+        with engine.begin() as connection:
+            connection.execute(
+                legacy_jobs.insert().values(
+                    id="fixture-legacy-job",
+                    run_key="fixture-legacy-run",
+                    language="ko",
+                    source_type="frequency",
+                    source_fingerprint="fixture-source",
+                    status="created",
+                    current_stage="lexical",
+                )
+            )
+    finally:
+        engine.dispose()
+
+    command.upgrade(config, _FREQUENCY_TEXT_AUDIO_REVISION)
+    engine = create_engine(database_url)
+    try:
+        inspector = inspect(engine)
+        for table_name, expected_columns in _FREQUENCY_TEXT_AUDIO_COLUMNS.items():
+            migrated_columns = {
+                column["name"]: column
+                for column in inspector.get_columns(table_name)
+            }
+            missing = expected_columns - set(migrated_columns)
+            assert not missing, f"{table_name} migration columns missing: {sorted(missing)}"
+            for column_name in expected_columns:
+                assert migrated_columns[column_name]["nullable"] is True
+                if column_name in _HASH_COLUMNS:
+                    assert getattr(migrated_columns[column_name]["type"], "length", None) == 64
+        upgraded_metadata = MetaData()
+        upgraded_jobs = Table("generation_jobs", upgraded_metadata, autoload_with=engine)
+        with engine.connect() as connection:
+            row = connection.execute(
+                select(
+                    upgraded_jobs.c.korean_phase31_pointer_locator_sha256,
+                    upgraded_jobs.c.korean_frequency_authority,
+                ).where(upgraded_jobs.c.id == "fixture-legacy-job")
+            ).one()
+        assert row.korean_phase31_pointer_locator_sha256 is None
+        assert row.korean_frequency_authority is None
+    finally:
+        engine.dispose()
+
+    command.downgrade(config, _KOREAN_IDENTITY_REVISION)
+    engine = create_engine(database_url)
+    try:
+        inspector = inspect(engine)
+        for table_name, expected_columns in _FREQUENCY_TEXT_AUDIO_COLUMNS.items():
+            downgraded_columns = {
+                column["name"]
+                for column in inspector.get_columns(table_name)
+            }
+            assert expected_columns.isdisjoint(downgraded_columns)
+    finally:
+        engine.dispose()
+
+    command.upgrade(config, _FREQUENCY_TEXT_AUDIO_REVISION)
+    engine = create_engine(database_url)
+    try:
+        inspector = inspect(engine)
+        for table_name, expected_columns in _FREQUENCY_TEXT_AUDIO_COLUMNS.items():
+            restored_columns = {
+                column["name"]
+                for column in inspector.get_columns(table_name)
+            }
+            assert expected_columns <= restored_columns
+    finally:
+        engine.dispose()
+
+
+def test_frequency_text_audio_domain_evidence_rejects_bad_locator_hashes_and_private_fields() -> None:
+    from multilang.domain.korean import KoreanFrequencyTextAudioEvidence
+
+    valid_hash = "a" * 64
+    evidence = KoreanFrequencyTextAudioEvidence(
+        phase31_pointer_locator_sha256=valid_hash,
+        phase31_pointer_content_sha256=valid_hash,
+        phase31_validation_receipt_sha256=valid_hash,
+        phase31_snapshot_manifest_sha256=valid_hash,
+        phase31_snapshot_root_sha256=valid_hash,
+        frequency_bundle_locator_sha256=valid_hash,
+        frequency_bundle_content_sha256=valid_hash,
+        provider_policy_sha256=valid_hash,
+    )
+
+    assert evidence.phase31_pointer_locator_sha256 == valid_hash
+    with pytest.raises(ValueError):
+        KoreanFrequencyTextAudioEvidence(
+            phase31_pointer_locator_sha256="A" * 64,
+        )
+    with pytest.raises(ValueError):
+        KoreanFrequencyTextAudioEvidence.model_validate(
+            {
+                "phase31_pointer_locator_sha256": valid_hash,
+                "private_path": "/tmp/secret",
+            }
+        )
 
 
 def test_korean_identity_column_upgrade_downgrade_and_reupgrade(tmp_path: Path) -> None:

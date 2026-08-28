@@ -1,0 +1,14 @@
+{
+  "environment_descriptor": "repo-local uv virtualenv; no shared .venv repair",
+  "environment_path": ".planning/.local/phase32-py312",
+  "lock_check_passed": true,
+  "pyproject_sha256": "a5058d5b2847b85c9caac7de46bf286fe456970cf899e5b1b9841a3cf49a3dcd",
+  "python_minor": "3.12",
+  "python_version": "3.12.3",
+  "shared_venv_post_hash": "d6a8151e363a1c511d3a614082c2be646b6f24ef1a2211c4dffece73c57ffbf6",
+  "shared_venv_pre_hash": "d6a8151e363a1c511d3a614082c2be646b6f24ef1a2211c4dffece73c57ffbf6",
+  "shared_venv_unchanged": true,
+  "sync_frozen": true,
+  "uv_lock_sha256": "5bd00b7864f0e64ff10327a8cfa93001878693576180e9e8b29b7e73d0bfcdcc",
+  "uv_version": "uv 0.11.7 (x86_64-unknown-linux-gnu)"
+}

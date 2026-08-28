@@ -3,12 +3,17 @@
 from __future__ import annotations
 
 from enum import Enum
-from typing import Self
+from typing import Literal, Self
 
-from pydantic import BaseModel, Field, model_validator
+from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator
 
 from multilang.domain.jobs import SupportedLanguage
-from multilang.domain.korean import KoreanLexicalIdentity
+from multilang.domain.korean import (
+    KOREAN_FREQUENCY_EXPECTED_ENTRY_COUNT,
+    KOREAN_FREQUENCY_EXPECTED_SOURCE_COUNT,
+    KoreanAnalyzerFingerprint,
+    KoreanLexicalIdentity,
+)
 
 DEFAULT_DEFINITION_LANGUAGE = "en"
 
@@ -37,6 +42,54 @@ class LexicalProvenance(BaseModel):
     definition: DefinitionRecord | None = None
     pronunciation: PronunciationRecord | None = None
     notes: list[str] = Field(default_factory=list)
+
+
+_HEX = frozenset("0123456789abcdef")
+
+
+def _sha256(value: str, *, field_name: str) -> str:
+    if not isinstance(value, str) or len(value) != 64 or any(character not in _HEX for character in value):
+        raise ValueError(f"{field_name} must be lowercase SHA-256")
+    return value
+
+
+class KoreanFrequencyLexicalEvidence(BaseModel):
+    """Source-backed lexical authority for one Korean final frequency candidate."""
+
+    model_config = ConfigDict(extra="forbid", frozen=True, hide_input_in_errors=True)
+
+    source_id: Literal["nikl-korean-learners-vocabulary"]
+    source_version: str = Field(min_length=1, max_length=128)
+    source_rank: int = Field(ge=1, le=KOREAN_FREQUENCY_EXPECTED_SOURCE_COUNT)
+    final_rank: int = Field(ge=1, le=KOREAN_FREQUENCY_EXPECTED_ENTRY_COUNT)
+    level: int = Field(ge=1, le=3)
+    part_of_speech: str = Field(min_length=1, max_length=32)
+    sense_id: str = Field(min_length=1, max_length=128)
+    grounding_confidence: Literal["source-backed", "reviewed-source-backed"]
+    license_decision: str = Field(min_length=1, max_length=128)
+    curation_decision: Literal["accepted"]
+    bundle_sha256: str = Field(min_length=64, max_length=64)
+    source_sha256: str = Field(min_length=64, max_length=64)
+    source_review_receipt_sha256: str = Field(min_length=64, max_length=64)
+    source_review_aggregate_sha256: str = Field(min_length=64, max_length=64)
+    analyzer_fingerprint: KoreanAnalyzerFingerprint
+
+    @field_validator(
+        "bundle_sha256",
+        "source_sha256",
+        "source_review_receipt_sha256",
+        "source_review_aggregate_sha256",
+    )
+    @classmethod
+    def hashes_must_be_sha256(cls, value: str, info: object) -> str:
+        return _sha256(value, field_name=getattr(info, "field_name", "hash"))
+
+    @model_validator(mode="after")
+    def level_must_match_final_rank(self) -> Self:
+        expected_level = ((self.final_rank - 1) // 1000) + 1
+        if self.level != expected_level:
+            raise ValueError("Korean frequency lexical evidence level drift")
+        return self
 
 
 class DeckLanguagePolicy(BaseModel):
@@ -70,6 +123,7 @@ class LexicalCardCandidate(BaseModel):
     warning_detail: str | None = None
     provenance: LexicalProvenance
     korean_identity: KoreanLexicalIdentity | None = None
+    korean_frequency_evidence: KoreanFrequencyLexicalEvidence | None = None
 
     @model_validator(mode="after")
     def korean_identity_must_match_candidate(self) -> Self:
@@ -80,6 +134,19 @@ class LexicalCardCandidate(BaseModel):
             raise ValueError("Korean identity lemma must match candidate lemma")
         if self.lemma_key != identity.lexical_key:
             raise ValueError("Korean identity key must match candidate lemma_key")
+        evidence = self.korean_frequency_evidence
+        if evidence is None:
+            return self
+        if self.frequency_rank != evidence.final_rank:
+            raise ValueError("Korean frequency evidence rank must match candidate rank")
+        if self.frequency_level != evidence.level:
+            raise ValueError("Korean frequency evidence level must match candidate level")
+        if evidence.part_of_speech != identity.part_of_speech:
+            raise ValueError("Korean frequency evidence POS must match identity")
+        if evidence.sense_id != identity.sense_id:
+            raise ValueError("Korean frequency evidence sense must match identity")
+        if evidence.analyzer_fingerprint != identity.analyzer_fingerprint:
+            raise ValueError("Korean frequency evidence analyzer fingerprint drift")
         return self
 
 
@@ -101,6 +168,7 @@ __all__ = [
     "DeckLanguagePolicy",
     "DefinitionRecord",
     "GroundingStatus",
+    "KoreanFrequencyLexicalEvidence",
     "LexicalCardCandidate",
     "LexicalProvenance",
     "PronunciationRecord",

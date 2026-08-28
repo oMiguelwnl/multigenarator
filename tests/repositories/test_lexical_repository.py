@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import pytest
 from sqlalchemy import create_engine, text
 from sqlalchemy.orm import Session
 
@@ -10,6 +11,7 @@ from multilang.domain.korean import (
     KoreanAnalyzerFingerprint,
     KoreanLexicalIdentity,
     KoreanSignatureItem,
+    raw_bytes_sha256,
 )
 from multilang.domain.jobs import GenerationRequest, SupportedLanguage
 from multilang.domain.lexicon import (
@@ -17,6 +19,7 @@ from multilang.domain.lexicon import (
     GroundingStatus,
     LexicalCardCandidate,
     LexicalProvenance,
+    KoreanFrequencyLexicalEvidence,
     PronunciationRecord,
 )
 from multilang.repositories.job_repository import JobRepository
@@ -36,6 +39,10 @@ def make_request(
     language: SupportedLanguage = SupportedLanguage.EN,
 ) -> GenerationRequest:
     return GenerationRequest(language=language, source_type=source_type, input_file=None)
+
+
+def _hash(seed: str) -> str:
+    return raw_bytes_sha256(seed.encode("utf-8"))
 
 
 def make_candidate(
@@ -72,7 +79,7 @@ def make_candidate(
     )
 
 
-def make_korean_candidate() -> LexicalCardCandidate:
+def make_korean_candidate(*, include_frequency_evidence: bool = False) -> LexicalCardCandidate:
     identity = KoreanLexicalIdentity(
         submitted_form="학교",
         canonical_nfc="학교",
@@ -100,17 +107,37 @@ def make_korean_candidate() -> LexicalCardCandidate:
         ),
         status="resolved",
     )
+    evidence = KoreanFrequencyLexicalEvidence(
+        source_id="nikl-korean-learners-vocabulary",
+        source_version="fixture-v1",
+        source_rank=23,
+        final_rank=17,
+        level=1,
+        part_of_speech=identity.part_of_speech,
+        sense_id=identity.sense_id,
+        grounding_confidence="reviewed-source-backed",
+        license_decision="approved-local-use",
+        curation_decision="accepted",
+        bundle_sha256=_hash("bundle"),
+        source_sha256=_hash("source"),
+        source_review_receipt_sha256=_hash("source-review-receipt"),
+        source_review_aggregate_sha256=_hash("source-review-aggregate"),
+        analyzer_fingerprint=identity.analyzer_fingerprint,
+    )
     return LexicalCardCandidate(
         submitted_form="학교",
         display_form="학교",
         lemma=identity.lemma,
         lemma_key=identity.lexical_key,
+        frequency_rank=17,
+        frequency_level=1,
         definitions_html="escola",
         definition_language="pt",
         translation_target_language="pt",
         grounding_status=GroundingStatus.GROUNDED,
         provenance=LexicalProvenance(source="reviewed-fixture"),
         korean_identity=identity,
+        korean_frequency_evidence=evidence if include_frequency_evidence else None,
     )
 
 
@@ -348,4 +375,78 @@ def test_non_korean_candidate_expire_reload_preserves_null_korean_identity() -> 
     row = repository.get_candidate_for_item(job.id, "line-1")
     assert row is not None
     assert row.korean_identity is None
-    assert repository.list_candidates(job.id)[0].korean_identity is None
+    restored = repository.list_candidates(job.id)[0]
+    assert restored.korean_identity is None
+    assert restored.korean_frequency_evidence is None
+
+
+def test_korean_frequency_provenance_survives_commit_expire_reload() -> None:
+    repository, job_repository, session = build_repositories()
+    job = job_repository.create_job(
+        request=make_request(source_type="frequency", language=SupportedLanguage.KO),
+        run_key="run-ko-frequency-evidence",
+        source_fingerprint="fixture-frequency",
+        total_items=1,
+    )
+    candidate = make_korean_candidate(include_frequency_evidence=True)
+    assert candidate.korean_frequency_evidence is not None
+
+    repository.upsert_candidate(
+        job_id=job.id,
+        run_key=job.run_key,
+        item_key="level-1-rank-0017",
+        source_type="frequency",
+        normalized_source="학교",
+        candidate=candidate,
+    )
+    session.commit()
+    session.expire_all()
+
+    row = repository.get_candidate_for_item(job.id, "level-1-rank-0017")
+    assert row is not None
+    assert row.frequency_bundle_sha256 == candidate.korean_frequency_evidence.bundle_sha256
+    assert row.frequency_source_sha256 == candidate.korean_frequency_evidence.source_sha256
+    assert row.source_review_receipt_sha256 == candidate.korean_frequency_evidence.source_review_receipt_sha256
+    assert row.source_review_aggregate_sha256 == candidate.korean_frequency_evidence.source_review_aggregate_sha256
+    assert "private_path" not in row.lexical_evidence
+
+    restored = repository.list_candidates(job.id)[0]
+    assert restored.korean_identity == candidate.korean_identity
+    assert restored.korean_frequency_evidence == candidate.korean_frequency_evidence
+
+
+def test_korean_frequency_provenance_rejects_identity_and_storage_drift() -> None:
+    repository, job_repository, session = build_repositories()
+    job = job_repository.create_job(
+        request=make_request(source_type="frequency", language=SupportedLanguage.KO),
+        run_key="run-ko-frequency-drift",
+        source_fingerprint="fixture-frequency",
+        total_items=1,
+    )
+    candidate = make_korean_candidate(include_frequency_evidence=True)
+    assert candidate.korean_frequency_evidence is not None
+
+    bad_identity = candidate.korean_frequency_evidence.model_copy(update={"part_of_speech": "VA"})
+    with pytest.raises(ValueError):
+        LexicalCardCandidate.model_validate(
+            candidate.model_dump(mode="json")
+            | {"korean_frequency_evidence": bad_identity.model_dump(mode="json")}
+        )
+
+    repository.upsert_candidate(
+        job_id=job.id,
+        run_key=job.run_key,
+        item_key="level-1-rank-0017",
+        source_type="frequency",
+        normalized_source="학교",
+        candidate=candidate,
+    )
+    row = repository.get_candidate_for_item(job.id, "level-1-rank-0017")
+    assert row is not None
+    row.frequency_bundle_sha256 = _hash("different-bundle")
+    session.add(row)
+    session.commit()
+    session.expire_all()
+
+    with pytest.raises(ValueError):
+        repository.list_candidates(job.id)

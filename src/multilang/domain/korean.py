@@ -5,8 +5,9 @@ from __future__ import annotations
 from enum import Enum
 from hashlib import sha256
 import json
-from typing import Final, Literal, Self
+from typing import Any, Final, Literal, Self
 import unicodedata
+from urllib.parse import urlparse
 
 from pydantic import (
     BaseModel,
@@ -22,6 +23,17 @@ KOREAN_LANGUAGE_VARIANT: Final = "modern-standard-seoul"
 KOREAN_MORPHOLOGY_POLICY_VERSION: Final = "kiwi-top2-consensus-v1"
 KOREAN_FOUNDATION_DEFAULT_SOURCE: Final = "current-candidate"
 KOREAN_FOUNDATION_HISTORY_SOURCE: Final = "v1-history"
+KOREAN_FREQUENCY_EXPECTED_SOURCE_COUNT: Final = 5965
+KOREAN_FREQUENCY_EXPECTED_ENTRY_COUNT: Final = 3000
+KOREAN_FREQUENCY_EXPECTED_REJECTION_COUNT: Final = 2965
+KOREAN_FREQUENCY_EXPECTED_LEVEL_COUNT: Final = 1000
+KOREAN_FREQUENCY_SOURCE_ID: Final = "nikl-korean-learners-vocabulary"
+KOREAN_FREQUENCY_SCHEMA_VERSION: Final = "korean-frequency-bundle-v1"
+KOREAN_FREQUENCY_RETRIEVAL_SCHEMA_VERSION: Final = "nikl-frequency-retrieval-v1"
+KOREAN_FREQUENCY_EXPECTED_FILENAME: Final = "한국어 학습용 어휘 목록.txt"
+KOREAN_FREQUENCY_LANDING_URL: Final = (
+    "https://www.korean.go.kr/front/etcData/etcDataView.do?mn_id=46&etc_seq=70"
+)
 
 KOREAN_LEXICAL_POS_TAGS: Final[frozenset[str]] = frozenset(
     {
@@ -132,6 +144,71 @@ class _FrozenContract(BaseModel):
         populate_by_name=True,
         serialize_by_alias=True,
     )
+
+
+def canonical_json_sha256(payload: Any) -> str:
+    """Hash canonical UTF-8 JSON for stable cross-process evidence."""
+
+    encoded = json.dumps(
+        payload,
+        ensure_ascii=False,
+        separators=(",", ":"),
+        sort_keys=True,
+        allow_nan=False,
+    ).encode("utf-8")
+    return sha256(encoded).hexdigest()
+
+
+def raw_bytes_sha256(payload: bytes) -> str:
+    """Hash exact source or artifact bytes without decoding side effects."""
+
+    if not isinstance(payload, bytes):
+        raise TypeError("payload must be bytes")
+    return sha256(payload).hexdigest()
+
+
+def _sha256_identifier(value: str, *, field_name: str) -> str:
+    if not isinstance(value, str):
+        raise ValueError(f"{field_name} must be lowercase SHA-256")
+    normalized = value.strip()
+    if (
+        normalized != value
+        or len(normalized) != 64
+        or any(character not in _LOWERCASE_HEX for character in normalized)
+    ):
+        raise ValueError(f"{field_name} must be lowercase SHA-256")
+    return normalized
+
+
+def _safe_relative_path(value: str, *, field_name: str) -> str:
+    if not isinstance(value, str):
+        raise ValueError(f"{field_name} must be a safe relative path")
+    normalized = value.strip().replace("\\", "/")
+    parts = tuple(part for part in normalized.split("/") if part)
+    if (
+        not normalized
+        or normalized != value
+        or normalized.startswith("/")
+        or normalized.startswith("~")
+        or "//" in normalized
+        or any(part in {".", ".."} for part in parts)
+    ):
+        raise ValueError(f"{field_name} must be a safe relative path")
+    return normalized
+
+
+def _require_official_korean_url(value: str, *, field_name: str, landing: bool) -> str:
+    if not isinstance(value, str):
+        raise ValueError(f"{field_name} must use the official Korean source host")
+    normalized = value.strip()
+    parsed = urlparse(normalized)
+    if parsed.scheme != "https" or parsed.netloc != "www.korean.go.kr":
+        raise ValueError(f"{field_name} must use the official Korean source host")
+    if landing and normalized != KOREAN_FREQUENCY_LANDING_URL:
+        raise ValueError("landing URL must match the approved NIKL page")
+    if not landing and not parsed.path.startswith("/front/etcData/"):
+        raise ValueError("attachment URL must be derived from the approved NIKL response")
+    return normalized
 
 
 def canonicalize_korean(value: str) -> str:
@@ -786,10 +863,406 @@ class KoreanMatchResult(_FrozenContract):
         return self.status is KoreanMatchStatus.MATCHED
 
 
+class KoreanFrequencyRetrievalResult(_FrozenContract):
+    """Read-only evidence for discovering and retrieving the exact NIKL TXT."""
+
+    source_id: Literal["nikl-korean-learners-vocabulary"]
+    landing_url: str = Field(min_length=1)
+    accepted_filename: Literal["한국어 학습용 어휘 목록.txt"]
+    landing_sha256: str = Field(min_length=64, max_length=64)
+    attachment_url: str = Field(min_length=1)
+    attachment_sha256: str = Field(min_length=64, max_length=64)
+    source_bytes_sha256: str = Field(min_length=64, max_length=64)
+    source_byte_count: int = Field(gt=0, le=20_000_000)
+    retrieved_at: str = Field(min_length=1, max_length=64)
+    text_encoding: Literal["utf-8"]
+    schema_version: Literal["nikl-frequency-retrieval-v1"]
+
+    @field_validator("landing_url")
+    @classmethod
+    def landing_url_must_be_fixed(cls, value: str) -> str:
+        return _require_official_korean_url(value, field_name="landing URL", landing=True)
+
+    @field_validator("attachment_url")
+    @classmethod
+    def attachment_url_must_be_official(cls, value: str) -> str:
+        return _require_official_korean_url(value, field_name="attachment URL", landing=False)
+
+    @field_validator("landing_sha256", "attachment_sha256", "source_bytes_sha256")
+    @classmethod
+    def hashes_must_be_sha256(cls, value: str, info: object) -> str:
+        return _sha256_identifier(value, field_name=getattr(info, "field_name", "hash"))
+
+    @property
+    def grants_transform_power(self) -> bool:
+        return False
+
+
+class KoreanFrequencyBuildPolicy(_FrozenContract):
+    """Exact source-use authority consumed by a transformation build."""
+
+    source_id: Literal["nikl-korean-learners-vocabulary"]
+    source_version: str = Field(min_length=1, max_length=128)
+    allowed_use: Literal["local-generation", "test-fixture"]
+    redistribution: Literal["not-approved", "approved-repository", "approved-publication"]
+    attribution_required: bool
+    storage_disposition: Literal["private-local-only", "repository-redistributable", "synthetic-test-only"]
+    retrieval_sha256: str = Field(min_length=64, max_length=64)
+    source_bytes_sha256: str = Field(min_length=64, max_length=64)
+    analyzer_fingerprint: KoreanAnalyzerFingerprint
+
+    @field_validator("source_version")
+    @classmethod
+    def source_version_must_be_resolved(cls, value: str) -> str:
+        return _required_identifier(value, field_name="source_version")
+
+    @field_validator("retrieval_sha256", "source_bytes_sha256")
+    @classmethod
+    def hashes_must_be_sha256(cls, value: str, info: object) -> str:
+        return _sha256_identifier(value, field_name=getattr(info, "field_name", "hash"))
+
+    @model_validator(mode="after")
+    def rights_and_storage_must_match(self) -> Self:
+        if self.allowed_use == "test-fixture" and self.storage_disposition != "synthetic-test-only":
+            raise ValueError("test fixture source policy requires synthetic storage")
+        if self.redistribution == "not-approved" and self.storage_disposition == "repository-redistributable":
+            raise ValueError("repository storage requires redistribution approval")
+        return self
+
+
+class KoreanFrequencyBuildResult(_FrozenContract):
+    """Inactive transformation output bound to exact retrieval bytes and policy."""
+
+    policy: KoreanFrequencyBuildPolicy
+    retrieval_sha256: str = Field(min_length=64, max_length=64)
+    source_bytes_sha256: str = Field(min_length=64, max_length=64)
+    accepted_count: int = Field(ge=0, le=KOREAN_FREQUENCY_EXPECTED_SOURCE_COUNT)
+    rejection_count: int = Field(ge=0, le=KOREAN_FREQUENCY_EXPECTED_SOURCE_COUNT)
+    level_counts: dict[int, int]
+    inventory_sha256: str = Field(min_length=64, max_length=64)
+    rejection_sha256: str = Field(min_length=64, max_length=64)
+    report_sha256: str = Field(min_length=64, max_length=64)
+    bundle_sha256: str = Field(min_length=64, max_length=64)
+    active: Literal[False]
+
+    @field_validator(
+        "retrieval_sha256",
+        "source_bytes_sha256",
+        "inventory_sha256",
+        "rejection_sha256",
+        "report_sha256",
+        "bundle_sha256",
+    )
+    @classmethod
+    def hashes_must_be_sha256(cls, value: str, info: object) -> str:
+        return _sha256_identifier(value, field_name=getattr(info, "field_name", "hash"))
+
+    @model_validator(mode="after")
+    def output_must_match_policy_and_counts(self) -> Self:
+        if self.retrieval_sha256 != self.policy.retrieval_sha256:
+            raise ValueError("build result retrieval hash does not match policy")
+        if self.source_bytes_sha256 != self.policy.source_bytes_sha256:
+            raise ValueError("build result source hash does not match policy")
+        if self.accepted_count != KOREAN_FREQUENCY_EXPECTED_ENTRY_COUNT:
+            raise ValueError("Korean frequency build must contain exactly 3000 accepted entries")
+        if self.rejection_count != KOREAN_FREQUENCY_EXPECTED_REJECTION_COUNT:
+            raise ValueError("Korean frequency build must contain exactly 2965 rejections")
+        if self.accepted_count + self.rejection_count != KOREAN_FREQUENCY_EXPECTED_SOURCE_COUNT:
+            raise ValueError("Korean frequency source accounting must reconcile")
+        if self.level_counts != {1: 1000, 2: 1000, 3: 1000}:
+            raise ValueError("Korean frequency levels must be 1000/1000/1000")
+        return self
+
+    @property
+    def total_source_dispositions(self) -> int:
+        return self.accepted_count + self.rejection_count
+
+    @property
+    def grants_runtime_activation(self) -> bool:
+        return False
+
+
+class KoreanFrequencyTextAudioEvidence(_FrozenContract):
+    """Hash-only Phase 32 authority tuple shared by DB-bound evidence rows."""
+
+    phase31_pointer_locator_sha256: str | None = None
+    phase31_pointer_content_sha256: str | None = None
+    phase31_validation_receipt_sha256: str | None = None
+    phase31_snapshot_manifest_sha256: str | None = None
+    phase31_snapshot_root_sha256: str | None = None
+    frequency_bundle_locator_sha256: str | None = None
+    frequency_bundle_content_sha256: str | None = None
+    provider_policy_sha256: str | None = None
+
+    @field_validator(
+        "phase31_pointer_locator_sha256",
+        "phase31_pointer_content_sha256",
+        "phase31_validation_receipt_sha256",
+        "phase31_snapshot_manifest_sha256",
+        "phase31_snapshot_root_sha256",
+        "frequency_bundle_locator_sha256",
+        "frequency_bundle_content_sha256",
+        "provider_policy_sha256",
+    )
+    @classmethod
+    def hashes_must_be_sha256(cls, value: str | None, info: object) -> str | None:
+        if value is None:
+            return value
+        return _sha256_identifier(value, field_name=getattr(info, "field_name", "hash"))
+
+
+class KoreanFrequencyJobAuthority(_FrozenContract):
+    """Hash-only staged authority for Korean frequency execution attempts."""
+
+    stage: Literal["pilot_base", "pilot_audio", "full"]
+    phase31_pointer_locator_sha256: str | None = None
+    phase31_pointer_content_sha256: str | None = None
+    phase31_validation_receipt_sha256: str | None = None
+    phase31_snapshot_manifest_sha256: str | None = None
+    phase31_snapshot_root_sha256: str | None = None
+    frequency_bundle_locator_sha256: str | None = None
+    frequency_bundle_content_sha256: str | None = None
+    source_retrieval_sha256: str | None = None
+    source_build_result_sha256: str | None = None
+    source_review_aggregate_sha256: str | None = None
+    provider_policy_sha256: str | None = None
+    pilot_authority_sha256: str | None = None
+    catalog_locator_sha256: str | None = None
+    catalog_content_sha256: str | None = None
+    profile_sample_authority_sha256: str | None = None
+    provider_review_authority_sha256: str | None = None
+    heard_review_authority_sha256: str | None = None
+
+    @field_validator(
+        "phase31_pointer_locator_sha256",
+        "phase31_pointer_content_sha256",
+        "phase31_validation_receipt_sha256",
+        "phase31_snapshot_manifest_sha256",
+        "phase31_snapshot_root_sha256",
+        "frequency_bundle_locator_sha256",
+        "frequency_bundle_content_sha256",
+        "source_retrieval_sha256",
+        "source_build_result_sha256",
+        "source_review_aggregate_sha256",
+        "provider_policy_sha256",
+        "pilot_authority_sha256",
+        "catalog_locator_sha256",
+        "catalog_content_sha256",
+        "profile_sample_authority_sha256",
+        "provider_review_authority_sha256",
+        "heard_review_authority_sha256",
+    )
+    @classmethod
+    def hashes_must_be_sha256(cls, value: str | None, info: object) -> str | None:
+        if value is None:
+            return value
+        return _sha256_identifier(value, field_name=getattr(info, "field_name", "hash"))
+
+    @model_validator(mode="after")
+    def required_hashes_must_match_stage(self) -> Self:
+        base_required = {
+            "phase31_pointer_locator_sha256",
+            "phase31_pointer_content_sha256",
+            "phase31_validation_receipt_sha256",
+            "phase31_snapshot_manifest_sha256",
+            "phase31_snapshot_root_sha256",
+            "frequency_bundle_locator_sha256",
+            "frequency_bundle_content_sha256",
+            "source_retrieval_sha256",
+            "source_build_result_sha256",
+            "source_review_aggregate_sha256",
+            "provider_policy_sha256",
+            "pilot_authority_sha256",
+        }
+        audio_required = {
+            "catalog_locator_sha256",
+            "catalog_content_sha256",
+            "profile_sample_authority_sha256",
+        }
+        full_required = {
+            "provider_review_authority_sha256",
+            "heard_review_authority_sha256",
+        }
+        required = set(base_required)
+        if self.stage in {"pilot_audio", "full"}:
+            required |= audio_required
+        if self.stage == "full":
+            required |= full_required
+        missing = [field for field in sorted(required) if getattr(self, field) is None]
+        if missing:
+            raise ValueError(f"Korean frequency authority is missing required hashes: {missing}")
+        return self
+
+
+class KoreanFrequencyEntry(_FrozenContract):
+    """One final Korean frequency identity from the approved frozen bundle."""
+
+    language: Literal["ko"]
+    version: str = Field(min_length=1, max_length=128)
+    level: int = Field(ge=1, le=3)
+    final_rank: int = Field(ge=1, le=KOREAN_FREQUENCY_EXPECTED_ENTRY_COUNT)
+    source_rank: int = Field(ge=1, le=KOREAN_FREQUENCY_EXPECTED_SOURCE_COUNT)
+    source_provenance: str = Field(min_length=1, max_length=128)
+    source_version: str = Field(min_length=1, max_length=128)
+    license_decision: str = Field(min_length=1, max_length=128)
+    storage_disposition: Literal["private-local-only", "repository-redistributable", "synthetic-test-only"]
+    curation_decision: Literal["accepted"]
+    curation_flags: tuple[str, ...] = Field(min_length=1, max_length=16)
+    grounding_confidence: Literal["source-backed", "reviewed-source-backed"]
+    bundle_sha256: str = Field(min_length=64, max_length=64)
+    retrieval_sha256: str = Field(min_length=64, max_length=64)
+    analyzer_fingerprint: KoreanAnalyzerFingerprint
+    lexical_identity: KoreanLexicalIdentity
+
+    @field_validator("version", "source_provenance", "source_version", "license_decision")
+    @classmethod
+    def identifiers_must_be_resolved(cls, value: str, info: object) -> str:
+        return _required_identifier(value, field_name=getattr(info, "field_name", "identifier"))
+
+    @field_validator("curation_flags")
+    @classmethod
+    def curation_flags_must_be_safe(cls, value: tuple[str, ...]) -> tuple[str, ...]:
+        return _foundation_identifiers(value, field_name="curation flags")
+
+    @field_validator("bundle_sha256", "retrieval_sha256")
+    @classmethod
+    def hashes_must_be_sha256(cls, value: str, info: object) -> str:
+        return _sha256_identifier(value, field_name=getattr(info, "field_name", "hash"))
+
+    @model_validator(mode="after")
+    def identity_must_match_entry_authority(self) -> Self:
+        expected_level = ((self.final_rank - 1) // KOREAN_FREQUENCY_EXPECTED_LEVEL_COUNT) + 1
+        if self.level != expected_level:
+            raise ValueError("Korean frequency level must match final rank window")
+        if self.lexical_identity.analyzer_fingerprint != self.analyzer_fingerprint:
+            raise ValueError("Korean frequency identity analyzer fingerprint drift")
+        if self.lexical_identity.status != "resolved":
+            raise ValueError("Korean frequency identity must be resolved")
+        return self
+
+
+class KoreanFrequencyBundleMember(_FrozenContract):
+    """One hash-bound member of a Korean frequency bundle."""
+
+    relative_path: str = Field(min_length=1, max_length=256)
+    sha256: str = Field(min_length=64, max_length=64)
+    byte_count: int = Field(gt=0, le=100_000_000)
+    row_count: int = Field(ge=0, le=KOREAN_FREQUENCY_EXPECTED_SOURCE_COUNT)
+    kind: Literal["attribution", "curated-inventory", "rejections", "curation-report", "source-snapshot"]
+
+    @field_validator("relative_path")
+    @classmethod
+    def relative_path_must_be_safe(cls, value: str) -> str:
+        return _safe_relative_path(value, field_name="relative path")
+
+    @field_validator("sha256")
+    @classmethod
+    def hash_must_be_sha256(cls, value: str) -> str:
+        return _sha256_identifier(value, field_name="member hash")
+
+
+class KoreanFrequencyBundleManifest(_FrozenContract):
+    """Root manifest binding Korean frequency source, members, and counts."""
+
+    schema_version: Literal["korean-frequency-bundle-v1"]
+    language: Literal["ko"]
+    version: str = Field(min_length=1, max_length=128)
+    source_id: Literal["nikl-korean-learners-vocabulary"]
+    source_version: str = Field(min_length=1, max_length=128)
+    license_decision: str = Field(min_length=1, max_length=128)
+    storage_disposition: Literal["private-local-only", "repository-redistributable", "synthetic-test-only"]
+    synthetic: bool
+    analyzer_fingerprint: KoreanAnalyzerFingerprint
+    members: tuple[KoreanFrequencyBundleMember, ...] = Field(min_length=1, max_length=12)
+    inventory_sha256: str = Field(min_length=64, max_length=64)
+    rejection_sha256: str = Field(min_length=64, max_length=64)
+    report_sha256: str = Field(min_length=64, max_length=64)
+    bundle_sha256: str = Field(min_length=64, max_length=64)
+    level_counts: dict[int, int]
+    entry_count: int = Field(ge=0, le=KOREAN_FREQUENCY_EXPECTED_ENTRY_COUNT)
+    rejection_count: int = Field(ge=0, le=KOREAN_FREQUENCY_EXPECTED_SOURCE_COUNT)
+
+    @field_validator("version", "source_version", "license_decision")
+    @classmethod
+    def identifiers_must_be_resolved(cls, value: str, info: object) -> str:
+        return _required_identifier(value, field_name=getattr(info, "field_name", "identifier"))
+
+    @field_validator("inventory_sha256", "rejection_sha256", "report_sha256", "bundle_sha256")
+    @classmethod
+    def hashes_must_be_sha256(cls, value: str, info: object) -> str:
+        return _sha256_identifier(value, field_name=getattr(info, "field_name", "hash"))
+
+    @model_validator(mode="after")
+    def manifest_must_be_count_and_authority_consistent(self) -> Self:
+        if self.synthetic and self.storage_disposition != "synthetic-test-only":
+            raise ValueError("synthetic Korean frequency bundles cannot be production storage")
+        if self.entry_count != KOREAN_FREQUENCY_EXPECTED_ENTRY_COUNT:
+            raise ValueError("Korean frequency manifest must contain exactly 3000 entries")
+        if self.rejection_count != KOREAN_FREQUENCY_EXPECTED_REJECTION_COUNT:
+            raise ValueError("Korean frequency manifest must contain exactly 2965 rejections")
+        if self.level_counts != {1: 1000, 2: 1000, 3: 1000}:
+            raise ValueError("Korean frequency manifest levels must be 1000/1000/1000")
+        if self.entry_count + self.rejection_count != KOREAN_FREQUENCY_EXPECTED_SOURCE_COUNT:
+            raise ValueError("Korean frequency manifest accounting must reconcile")
+        member_hashes = {member.kind: member.sha256 for member in self.members}
+        if member_hashes.get("curated-inventory") not in {None, self.inventory_sha256}:
+            raise ValueError("inventory member hash drift")
+        if member_hashes.get("rejections") not in {None, self.rejection_sha256}:
+            raise ValueError("rejection member hash drift")
+        if member_hashes.get("curation-report") not in {None, self.report_sha256}:
+            raise ValueError("report member hash drift")
+        return self
+
+    @property
+    def production_eligible(self) -> bool:
+        return (
+            not self.synthetic
+            and self.storage_disposition == "repository-redistributable"
+            and self.license_decision == "approved-redistribution"
+        )
+
+
+def validate_korean_frequency_accounting(
+    entries: tuple[KoreanFrequencyEntry, ...],
+    *,
+    source_candidate_count: int,
+    rejection_count: int,
+) -> dict[int, int]:
+    """Validate exact final Korean frequency counts and identity uniqueness."""
+
+    if source_candidate_count != KOREAN_FREQUENCY_EXPECTED_SOURCE_COUNT:
+        raise ValueError("Korean frequency source count must be 5965")
+    if rejection_count != KOREAN_FREQUENCY_EXPECTED_REJECTION_COUNT:
+        raise ValueError("Korean frequency rejection count must be 2965")
+    if len(entries) != KOREAN_FREQUENCY_EXPECTED_ENTRY_COUNT:
+        raise ValueError("Korean frequency inventory must contain exactly 3000 entries")
+    if len(entries) + rejection_count != source_candidate_count:
+        raise ValueError("Korean frequency accounting must reconcile")
+    ranks = tuple(entry.final_rank for entry in entries)
+    if ranks != tuple(range(1, KOREAN_FREQUENCY_EXPECTED_ENTRY_COUNT + 1)):
+        raise ValueError("Korean frequency ranks must be contiguous")
+    identity_keys = tuple(entry.lexical_identity.lexical_key for entry in entries)
+    if len(identity_keys) != len(set(identity_keys)):
+        raise ValueError("Korean frequency identities must be unique")
+    level_counts = {level: sum(1 for entry in entries if entry.level == level) for level in (1, 2, 3)}
+    if level_counts != {1: 1000, 2: 1000, 3: 1000}:
+        raise ValueError("Korean frequency levels must be 1000/1000/1000")
+    return level_counts
+
+
 __all__ = [
     "KOREAN_LANGUAGE_CODE",
     "KOREAN_FOUNDATION_DEFAULT_SOURCE",
     "KOREAN_FOUNDATION_HISTORY_SOURCE",
+    "KOREAN_FREQUENCY_EXPECTED_ENTRY_COUNT",
+    "KOREAN_FREQUENCY_EXPECTED_FILENAME",
+    "KOREAN_FREQUENCY_EXPECTED_LEVEL_COUNT",
+    "KOREAN_FREQUENCY_EXPECTED_REJECTION_COUNT",
+    "KOREAN_FREQUENCY_EXPECTED_SOURCE_COUNT",
+    "KOREAN_FREQUENCY_LANDING_URL",
+    "KOREAN_FREQUENCY_RETRIEVAL_SCHEMA_VERSION",
+    "KOREAN_FREQUENCY_SCHEMA_VERSION",
+    "KOREAN_FREQUENCY_SOURCE_ID",
     "KOREAN_LANGUAGE_VARIANT",
     "KOREAN_LEXICAL_POS_TAGS",
     "KOREAN_MORPHOLOGY_POLICY_VERSION",
@@ -798,6 +1271,14 @@ __all__ = [
     "KoreanAnalyzerFingerprint",
     "KoreanConcept",
     "KoreanCurriculumEvidence",
+    "KoreanFrequencyBuildPolicy",
+    "KoreanFrequencyBuildResult",
+    "KoreanFrequencyBundleManifest",
+    "KoreanFrequencyBundleMember",
+    "KoreanFrequencyEntry",
+    "KoreanFrequencyJobAuthority",
+    "KoreanFrequencyRetrievalResult",
+    "KoreanFrequencyTextAudioEvidence",
     "KoreanLexicalIdentity",
     "KoreanMatchResult",
     "KoreanMatchStatus",
@@ -812,8 +1293,11 @@ __all__ = [
     "KoreanTextError",
     "KoreanWordAnalysis",
     "canonicalize_korean",
+    "canonical_json_sha256",
     "compose_modern_hangul",
     "decompose_modern_hangul",
     "korean_lexical_key",
     "normalize_korean_pos",
+    "raw_bytes_sha256",
+    "validate_korean_frequency_accounting",
 ]

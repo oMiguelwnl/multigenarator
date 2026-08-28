@@ -52,6 +52,22 @@ class TextRepository:
             "review_reason": record.review_reason,
             "sentence_provenance": record.sentence_provenance.model_dump(mode="json"),
             "translation_provenance": record.translation_provenance.model_dump(mode="json"),
+            "candidate_selection_evidence": (
+                record.candidate_selection_evidence.model_dump(mode="json")
+                if record.candidate_selection_evidence is not None
+                else None
+            ),
+            "adaptive_i_plus_one_evidence": (
+                record.adaptive_i_plus_one_evidence.model_dump(mode="json")
+                if record.adaptive_i_plus_one_evidence is not None
+                else None
+            ),
+            "provider_review_evidence": (
+                record.provider_review_evidence.model_dump(mode="json")
+                if record.provider_review_evidence is not None
+                else None
+            ),
+            "text_review_receipt_sha256": record.text_review_receipt_sha256,
         }
 
         if row is None:
@@ -257,4 +273,8 @@ class TextRepository:
             review_reason=row.review_reason,
             sentence_provenance=TextProvenance.model_validate(row.sentence_provenance),
             translation_provenance=TextProvenance.model_validate(row.translation_provenance),
+            candidate_selection_evidence=row.candidate_selection_evidence,
+            adaptive_i_plus_one_evidence=row.adaptive_i_plus_one_evidence,
+            provider_review_evidence=row.provider_review_evidence,
+            text_review_receipt_sha256=row.text_review_receipt_sha256,
         )

@@ -42,7 +42,7 @@ Archives:
 
 - [x] **Phase 30: Korean Contracts and Morphology** — [KMODE-01, KMODE-02, KNLP-01, KNLP-02]
 - [-] **Phase 31: Hangul and Pronunciation i+1** — [KHAN-01, KHAN-02, KPRO-01, KPRO-02]
-- [ ] **Phase 32: Frequency, Portuguese Text, and Audio** — [KFREQ-01, KFREQ-02, KFREQ-03, KTXT-01, KAUD-01, GLEX-01, GLEX-02, GMOR-01, GTXT-01, GPRO-01, GAUD-01]
+- [-] **Phase 32: Frequency, Portuguese Text, and Audio** — [KFREQ-01, KFREQ-02, KFREQ-03, KTXT-01, KAUD-01, GLEX-01, GLEX-02, GMOR-01, GTXT-01, GPRO-01, GAUD-01]
 - [ ] **Phase 33: Grammar and Personal Sources** — [KGRAM-01, KGRAM-02, KPERS-01, KPERS-02, GJOB-01, GREV-01]
 - [ ] **Phase 34: Export, Review, and Evidence** — [KEXP-01, KEXP-02, KQA-01, KQA-02, GEXP-01, GOPS-01, GEVAL-01]
 
@@ -77,7 +77,7 @@ Archives:
 **Planning Readiness**: Plans 31-29 through 31-32 passed fresh-context plan checking on 2026-08-27 with no remaining findings.
 
 ### Phase 32: Frequency, Portuguese Text, and Audio
-**Status**: [ ] Not started
+**Status**: [-] In progress
 **Goal**: Users receive three license-approved 1000-card Korean frequency subdecks with natural standard-Seoul examples, Portuguese text, and approved Azure audio.
 **Depends on**: Phase 30 for offline implementation; production text/audio generation joins the exact active Phase 31 Plan 31-32 output at Plan 32-27.
 **Requirements**: KFREQ-01, KFREQ-02, KFREQ-03, KTXT-01, KAUD-01, GLEX-01, GLEX-02, GMOR-01, GTXT-01, GPRO-01, GAUD-01

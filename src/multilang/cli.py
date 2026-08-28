@@ -81,6 +81,16 @@ from multilang.services.korean_foundation_snapshot import (
     verify_active_korean_foundation_snapshot_provenance,
     verify_prepared_korean_foundation_snapshot,
 )
+from multilang.services.korean_checkpoint_authority import validate_korean_checkpoint_authority
+from multilang.services.korean_frequency import (
+    KoreanFrequencySourceRetriever,
+    validate_korean_source_build_result,
+    validate_korean_source_retrieval_result,
+)
+from multilang.services.korean_source_review import (
+    import_korean_bundle_review_batch,
+    validate_korean_bundle_review_batches,
+)
 from multilang.services.text_review import ReviewReport, TextReviewService
 from multilang.services.webdav_highlight_fetch import WebDAVHighlightFetchService
 from multilang.settings import Settings
@@ -152,6 +162,21 @@ def _foundation_failure_reason(exc: ValueError) -> str:
 
 def _fail_korean_foundation_operation(exc: ValueError) -> None:
     typer.echo(f"korean_foundations_error={_foundation_failure_reason(exc)}")
+    raise typer.Exit(code=1) from exc
+
+
+def _fail_korean_frequency_source_operation(exc: ValueError) -> None:
+    typer.echo("korean_frequency_source_error=operation_failed")
+    raise typer.Exit(code=1) from exc
+
+
+def _fail_korean_checkpoint_authority_operation(exc: ValueError) -> None:
+    typer.echo("korean_checkpoint_authority_error=operation_failed")
+    raise typer.Exit(code=1) from exc
+
+
+def _fail_korean_source_review_operation(exc: ValueError) -> None:
+    typer.echo("korean_source_review_error=operation_failed")
     raise typer.Exit(code=1) from exc
 
 
@@ -949,6 +974,159 @@ def create_app(
             "uv run python -m multilang.cli generate --language en --source word-list "
             f"--input-file {words_path}"
         )
+
+    @cli.command("retrieve-korean-frequency-source")
+    def retrieve_korean_frequency_source(
+        output_dir: Annotated[
+            Path,
+            typer.Option(
+                "--output-dir",
+                file_okay=False,
+                dir_okay=True,
+                writable=True,
+                help="Directory for the quarantined Korean frequency source and retrieval result.",
+            ),
+        ],
+    ) -> None:
+        try:
+            result, result_path = KoreanFrequencySourceRetriever().retrieve_to_directory(output_dir)
+        except ValueError as exc:
+            _fail_korean_frequency_source_operation(exc)
+        typer.echo("retrieval_status=validated")
+        typer.echo(f"source_id={result.source_id}")
+        typer.echo(f"accepted_filename={result.accepted_filename}")
+        typer.echo(f"source_bytes_sha256={result.source_bytes_sha256}")
+        typer.echo(f"source_byte_count={result.source_byte_count}")
+        typer.echo(f"retrieval_result={result_path}")
+
+    @cli.command("validate-korean-source-retrieval-result")
+    def validate_korean_source_retrieval_result_command(
+        result_file: Annotated[
+            Path,
+            typer.Option("--result-file", exists=True, dir_okay=False, readable=True),
+        ],
+        source_file: Annotated[
+            Path | None,
+            typer.Option("--source-file", exists=True, dir_okay=False, readable=True),
+        ] = None,
+    ) -> None:
+        try:
+            result = validate_korean_source_retrieval_result(result_file, source_file=source_file)
+        except ValueError as exc:
+            _fail_korean_frequency_source_operation(exc)
+        typer.echo("retrieval_result_status=valid")
+        typer.echo(f"source_id={result.source_id}")
+        typer.echo(f"accepted_filename={result.accepted_filename}")
+        typer.echo(f"source_byte_count={result.source_byte_count}")
+
+    @cli.command("validate-korean-source-build-result")
+    def validate_korean_source_build_result_command(
+        result_file: Annotated[
+            Path,
+            typer.Option("--result-file", exists=False, dir_okay=False, readable=True),
+        ],
+        bundle_dir: Annotated[
+            Path | None,
+            typer.Option("--bundle-dir", exists=False, file_okay=False, readable=True),
+        ] = None,
+    ) -> None:
+        try:
+            result = validate_korean_source_build_result(
+                result_file,
+                bundle_dir=bundle_dir,
+            )
+        except ValueError as exc:
+            _fail_korean_frequency_source_operation(exc)
+        typer.echo("build_result_status=valid")
+        typer.echo(f"accepted_count={result.accepted_count}")
+        typer.echo(f"rejection_count={result.rejection_count}")
+        typer.echo(f"bundle_sha256={result.bundle_sha256}")
+
+    @cli.command("import-korean-bundle-review-batch")
+    def import_korean_bundle_review_batch_command(
+        batch_file: Annotated[
+            Path,
+            typer.Option("--batch-file", exists=False, dir_okay=False, readable=True),
+        ],
+        build_result_file: Annotated[
+            Path,
+            typer.Option("--build-result-file", exists=False, dir_okay=False, readable=True),
+        ],
+        bundle_dir: Annotated[
+            Path,
+            typer.Option("--bundle-dir", exists=False, file_okay=False, readable=True),
+        ],
+        receipt_dir: Annotated[
+            Path,
+            typer.Option("--receipt-dir", exists=False, file_okay=False, writable=True),
+        ],
+    ) -> None:
+        try:
+            receipt = import_korean_bundle_review_batch(
+                batch_file,
+                build_result_file=build_result_file,
+                bundle_dir=bundle_dir,
+                receipt_dir=receipt_dir,
+            )
+        except ValueError as exc:
+            _fail_korean_source_review_operation(exc)
+        typer.echo("review_batch_status=imported")
+        typer.echo(f"batch_id={receipt.batch_id}")
+        typer.echo(f"decision_count={receipt.decision_count}")
+        typer.echo(f"accepted_count={receipt.accepted_count}")
+        typer.echo(f"rejected_count={receipt.rejected_count}")
+        typer.echo(f"receipt_sha256={receipt.receipt_sha256}")
+
+    @cli.command("validate-korean-bundle-review-batches")
+    def validate_korean_bundle_review_batches_command(
+        receipt_dir: Annotated[
+            Path,
+            typer.Option("--receipt-dir", exists=False, file_okay=False, readable=True),
+        ],
+        build_result_file: Annotated[
+            Path,
+            typer.Option("--build-result-file", exists=False, dir_okay=False, readable=True),
+        ],
+        bundle_dir: Annotated[
+            Path,
+            typer.Option("--bundle-dir", exists=False, file_okay=False, readable=True),
+        ],
+    ) -> None:
+        try:
+            aggregate = validate_korean_bundle_review_batches(
+                receipt_dir,
+                build_result_file=build_result_file,
+                bundle_dir=bundle_dir,
+            )
+        except ValueError as exc:
+            _fail_korean_source_review_operation(exc)
+        typer.echo(f"review_batches_status={aggregate.status}")
+        typer.echo(f"total_dispositions={aggregate.total_dispositions}")
+        typer.echo(f"accepted_count={aggregate.accepted_count}")
+        typer.echo(f"rejected_count={aggregate.rejected_count}")
+        typer.echo(f"receipt_count={aggregate.receipt_count}")
+        typer.echo(f"aggregate_sha256={aggregate.aggregate_sha256}")
+
+    @cli.command("validate-korean-checkpoint-authority")
+    def validate_korean_checkpoint_authority_command(
+        authority_file: Annotated[
+            Path,
+            typer.Option("--authority-file", exists=True, dir_okay=False, readable=True),
+        ],
+        expected_kind: Annotated[
+            str,
+            typer.Option("--expected-kind", help="Expected fixed authority kind."),
+        ],
+    ) -> None:
+        try:
+            result = validate_korean_checkpoint_authority(authority_file, expected_kind=expected_kind)
+        except ValueError as exc:
+            _fail_korean_checkpoint_authority_operation(exc)
+        typer.echo("authority_status=valid")
+        typer.echo(f"authority_kind={result.kind}")
+        typer.echo(f"power_count={len(result.powers)}")
+        typer.echo(f"binding_count={result.binding_count}")
+        typer.echo(f"authority_sha256={result.authority_sha256}")
 
     @cli.command("preview-kindle-highlights")
     def preview_kindle_highlights(
