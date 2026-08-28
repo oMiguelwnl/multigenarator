@@ -14,6 +14,10 @@ from hashlib import sha256
 from pathlib import Path
 from typing import Final
 
+from multilang.services.ai_acoustic_review import (
+    AIAcousticReviewAggregate,
+    ai_acoustic_review_sha256,
+)
 from multilang.services.korean_foundation_media import (
     load_pending_korean_foundation_media_manifest,
 )
@@ -26,6 +30,13 @@ _PHASE_RELPATH: Final = Path(
 _MEDIA_RIGHTS_PATH: Path = (
     _PROJECT_ROOT / _PHASE_RELPATH / "evidence-inbox" / "media-rights.json"
 )
+_MEDIA_AUTHORITY_PATH: Path = (
+    _PROJECT_ROOT / _PHASE_RELPATH / "execution-handoffs" / "media-authority.json"
+)
+_ACOUSTIC_REVIEW_PATH: Path = (
+    _PROJECT_ROOT / _PHASE_RELPATH / "evidence-inbox" / "acoustic-review.json"
+)
+_MEDIA_ROOT: Path = _PROJECT_ROOT / _PHASE_RELPATH / "evidence-inbox" / "media"
 _LOWERCASE_HEX: Final = frozenset("0123456789abcdef")
 _AUDIO_KINDS: Final = frozenset(
     {"audio", "letter_audio", "word_audio", "sentence_audio"}
@@ -46,6 +57,10 @@ class MediaRightsReasonCode(str, Enum):
     RIGHTS_INVALID = "rights_invalid"
     RIGHTS_HASH_MISMATCH = "rights_hash_mismatch"
     RIGHTS_WRITE_FAILED = "rights_write_failed"
+    AUTHORITY_MISSING = "authority_missing"
+    AUTHORITY_INVALID = "authority_invalid"
+    ACOUSTIC_MISSING = "acoustic_missing"
+    ACOUSTIC_INVALID = "acoustic_invalid"
     UNSAFE_PATH = "unsafe_path"
 
 
@@ -74,6 +89,12 @@ def _json_file_bytes(payload: dict[str, object]) -> bytes:
 
 
 def _rights_content_hash(payload: dict[str, object]) -> str:
+    unsigned = dict(payload)
+    unsigned.pop("content_hash", None)
+    return sha256(_canonical_bytes(unsigned)).hexdigest()
+
+
+def _canonical_handoff_hash(payload: dict[str, object]) -> str:
     unsigned = dict(payload)
     unsigned.pop("content_hash", None)
     return sha256(_canonical_bytes(unsigned)).hexdigest()
@@ -247,6 +268,25 @@ def _read_rights() -> dict[str, object]:
     return payload
 
 
+def _read_json_file(path: Path, *, missing: MediaRightsReasonCode) -> tuple[dict[str, object], str]:
+    try:
+        metadata = path.lstat()
+        if _is_link_or_reparse(metadata) or not stat.S_ISREG(metadata.st_mode):
+            _raise(MediaRightsReasonCode.UNSAFE_PATH)
+        raw = path.read_bytes()
+    except FileNotFoundError as exc:
+        raise MediaRightsError(missing) from exc
+    except OSError as exc:
+        raise MediaRightsError(MediaRightsReasonCode.RIGHTS_INVALID) from exc
+    try:
+        payload = json.loads(raw.decode("utf-8"))
+    except (UnicodeDecodeError, json.JSONDecodeError, RecursionError) as exc:
+        raise MediaRightsError(MediaRightsReasonCode.RIGHTS_INVALID) from exc
+    if not isinstance(payload, dict) or raw != _json_file_bytes(payload):
+        _raise(MediaRightsReasonCode.RIGHTS_INVALID)
+    return payload, sha256(raw).hexdigest()
+
+
 def validate_rights() -> str:
     document = _read_rights()
     expected = _rights_document()
@@ -273,11 +313,215 @@ def validate_rights() -> str:
     return _file_sha256(document)
 
 
+def _read_authority() -> tuple[dict[str, object], str]:
+    authority, authority_sha256 = _read_json_file(
+        _MEDIA_AUTHORITY_PATH,
+        missing=MediaRightsReasonCode.AUTHORITY_MISSING,
+    )
+    required = {
+        "schema_version",
+        "handoff_version",
+        "kind",
+        "actor_type",
+        "agent_authored",
+        "rights_document_sha256",
+        "route",
+        "item_set_sha256",
+        "item_count",
+        "voice_profile_id",
+        "voice_profile_version",
+        "provider_attempt_ceiling",
+        "consumed",
+        "content_hash",
+    }
+    if not required <= set(authority):
+        _raise(MediaRightsReasonCode.AUTHORITY_INVALID)
+    if (
+        authority["schema_version"] != 1
+        or authority["handoff_version"] != "phase31-handoff-v1"
+        or authority["kind"] != "media-authority"
+        or authority["actor_type"] != "project_owner"
+        or authority["agent_authored"] is not False
+        or authority["consumed"] is not False
+        or authority["content_hash"] != _canonical_handoff_hash(authority)
+    ):
+        _raise(MediaRightsReasonCode.AUTHORITY_INVALID)
+    return authority, authority_sha256
+
+
+def _validate_authority_scope(rights_sha256: str) -> tuple[dict[str, object], str]:
+    rights = _read_rights()
+    authority, authority_sha256 = _read_authority()
+    provider = rights["provider_scope"]
+    item_set = rights["item_set"]
+    if (
+        authority["rights_document_sha256"] != rights_sha256
+        or authority["route"] != provider["route"]
+        or authority["item_set_sha256"] != item_set["item_set_sha256"]
+        or authority["item_count"] != item_set["required_slots"]
+        or authority["voice_profile_id"] != provider["voice_profile_id"]
+        or authority["voice_profile_version"] != provider["voice_profile_version"]
+        or authority["provider_attempt_ceiling"] != provider["provider_attempt_ceiling"]
+    ):
+        _raise(MediaRightsReasonCode.AUTHORITY_INVALID)
+    return authority, authority_sha256
+
+
+def _required_slots() -> list[object]:
+    return [slot for slot in load_pending_korean_foundation_media_manifest().slots if slot.required]
+
+
+def _credentials_present() -> bool:
+    return bool(
+        os.environ.get("MULTILANG_AZURE_SPEECH_KEY")
+        and os.environ.get("MULTILANG_AZURE_SPEECH_REGION")
+    )
+
+
+def _write_acoustic(payload: dict[str, object]) -> dict[str, object]:
+    _atomic_write_json(_ACOUSTIC_REVIEW_PATH, payload)
+    return payload
+
+
+def _blocked_acoustic_document(reason_code: str) -> dict[str, object]:
+    rights_sha256 = validate_rights()
+    authority, authority_sha256 = _validate_authority_scope(rights_sha256)
+    rights = _read_rights()
+    blockers = [
+        {
+            "slot_id": slot.slot_id,
+            "media_kind": slot.media_kind,
+            "reason_code": reason_code,
+        }
+        for slot in _required_slots()
+    ]
+    item_set = rights["item_set"]
+    payload: dict[str, object] = {
+        "schema_version": 1,
+        "phase": "31-hangul-and-pronunciation-i-plus-1",
+        "status": "blocked",
+        "media_rights_sha256": rights_sha256,
+        "media_authority_sha256": authority_sha256,
+        "item_set_sha256": authority["item_set_sha256"],
+        "required_slots": item_set["required_slots"],
+        "audio_subjects": item_set["audio_subjects"],
+        "visual_subjects": item_set["visual_subjects"],
+        "passing": 0,
+        "blocked": item_set["required_slots"],
+        "blockers": blockers,
+    }
+    payload["aggregate_root"] = ai_acoustic_review_sha256(payload)
+    AIAcousticReviewAggregate.model_validate(payload)
+    return payload
+
+
+def generate_authorized() -> dict[str, object]:
+    if not _credentials_present():
+        payload = _blocked_acoustic_document("azure_speech_credentials_missing")
+        _write_acoustic(payload)
+        return {
+            "status": "blocked",
+            "reason_code": "azure_speech_credentials_missing",
+            "aggregate_root": payload["aggregate_root"],
+        }
+    payload = _blocked_acoustic_document("provider_execution_not_available")
+    _write_acoustic(payload)
+    return {
+        "status": "blocked",
+        "reason_code": "provider_execution_not_available",
+        "aggregate_root": payload["aggregate_root"],
+    }
+
+
+def project_acoustic() -> dict[str, object]:
+    try:
+        return _read_acoustic()
+    except MediaRightsError as exc:
+        if exc.reason_code is not MediaRightsReasonCode.ACOUSTIC_MISSING:
+            raise
+    payload = _blocked_acoustic_document("acoustic_review_missing")
+    _write_acoustic(payload)
+    return payload
+
+
+def _read_acoustic() -> dict[str, object]:
+    payload, _ = _read_json_file(
+        _ACOUSTIC_REVIEW_PATH,
+        missing=MediaRightsReasonCode.ACOUSTIC_MISSING,
+    )
+    try:
+        AIAcousticReviewAggregate.model_validate(payload)
+    except Exception as exc:
+        raise MediaRightsError(MediaRightsReasonCode.ACOUSTIC_INVALID) from exc
+    return payload
+
+
+def acoustic_status() -> dict[str, object]:
+    payload = _read_acoustic()
+    return {
+        "status": payload["status"],
+        "required_slots": payload["required_slots"],
+        "audio_subjects": payload["audio_subjects"],
+        "visual_subjects": payload["visual_subjects"],
+        "passing": payload["passing"],
+        "blocked": payload["blocked"],
+    }
+
+
+def aggregate_acoustic() -> str:
+    return str(_read_acoustic()["aggregate_root"])
+
+
+def verify_evidence() -> str:
+    rights_sha256 = validate_rights()
+    _validate_authority_scope(rights_sha256)
+    payload = _read_acoustic()
+    if _MEDIA_ROOT.exists():
+        _raise(MediaRightsReasonCode.ACOUSTIC_INVALID)
+    return str(payload["aggregate_root"])
+
+
+def record_lane(*, baseline: Path, baseline_sha256: str) -> dict[str, object]:
+    import importlib.util
+
+    aggregate_root = verify_evidence()
+    evidence_root = sha256(
+        _canonical_bytes(
+            {
+                "media_rights_sha256": validate_rights(),
+                "acoustic_root": aggregate_root,
+            }
+        )
+    ).hexdigest()
+    launch_path = _PROJECT_ROOT / "scripts" / "phase31_parallel_launch.py"
+    spec = importlib.util.spec_from_file_location("phase31_parallel_launch", launch_path)
+    if spec is None or spec.loader is None:
+        _raise(MediaRightsReasonCode.ACOUSTIC_INVALID)
+    launch = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(launch)
+    return launch.record_lane(
+        "media",
+        worktree=_PROJECT_ROOT,
+        baseline_path=baseline,
+        baseline_sha256=baseline_sha256,
+        aggregate_root=aggregate_root,
+        evidence_root=evidence_root,
+    )
+
+
 def _parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser()
     commands = parser.add_subparsers(dest="operation", required=True)
     commands.add_parser("prepare-rights")
     commands.add_parser("validate-rights")
+    commands.add_parser("generate-authorized")
+    commands.add_parser("project-acoustic")
+    commands.add_parser("acoustic-status")
+    commands.add_parser("aggregate-acoustic")
+    commands.add_parser("verify-evidence")
+    record = commands.add_parser("record-lane")
+    record.add_argument("--baseline", type=Path, required=True)
+    record.add_argument("--baseline-sha256", required=True)
     return parser
 
 
@@ -287,8 +531,21 @@ def main(argv: list[str] | None = None) -> int:
         if args.operation == "prepare-rights":
             prepare_rights()
             print(validate_rights())
-        else:
+        elif args.operation == "validate-rights":
             print(validate_rights())
+        elif args.operation == "generate-authorized":
+            print(json.dumps(generate_authorized(), sort_keys=True, separators=(",", ":")))
+        elif args.operation == "project-acoustic":
+            print(project_acoustic()["aggregate_root"])
+        elif args.operation == "acoustic-status":
+            print(json.dumps(acoustic_status(), sort_keys=True, separators=(",", ":")))
+        elif args.operation == "aggregate-acoustic":
+            print(aggregate_acoustic())
+        elif args.operation == "verify-evidence":
+            print(verify_evidence())
+        else:
+            record_lane(baseline=args.baseline, baseline_sha256=args.baseline_sha256)
+            print("media_lane_status=recorded")
     except MediaRightsError as exc:
         print(exc.reason_code.value, file=sys.stderr)
         return 1
