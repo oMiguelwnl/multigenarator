@@ -549,3 +549,30 @@ def test_gate_binding_drift_and_candidate_state_can_never_be_ready() -> None:
     diagnostic = str(exc_info.value)
     assert "아기" not in diagnostic
     assert "C:\\" not in diagnostic
+
+
+def test_ai_review_passed_is_explicit_and_cannot_populate_human_reviewer_fields() -> None:
+    api = _review()
+    pending = api.load_pending_korean_foundation_curation().records[0].gates[0]
+    payload = pending.model_dump(mode="json")
+    payload.update(
+        status="ai_review_passed",
+        reason_code=None,
+        reviewed_at="2026-08-27T15:00:00Z",
+        source_pack_version="hangul-v2",
+        source_content_sha256="a" * 64,
+        reviewed_evidence_sha256="b" * 64,
+    )
+    gate = api.KoreanFoundationReviewGate.model_validate(payload)
+    assert gate.status == "ai_review_passed"
+    assert gate.reviewer_id is None
+    assert gate.reviewer_role is None
+
+    for field_name, value in (
+        ("reviewer_id", "ai-agent"),
+        ("reviewer_role", "korean-foundation-content-reviewer"),
+    ):
+        forged = dict(payload)
+        forged[field_name] = value
+        with pytest.raises(ValidationError):
+            api.KoreanFoundationReviewGate.model_validate(forged)
