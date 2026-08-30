@@ -14,11 +14,14 @@ human_needed
 - Media rights now validate for the final candidate.
 - Project-owner media authority now verifies for the final rights SHA.
 - Media evidence now verifies structurally as a blocked aggregate rooted at `3efdef776e3374fcacbcdf8f4b8289ffcef427702c42efc391e417690426b798`.
+- Fresh post-recovery lane baseline verifies at `2f7438fa624cd1a3cf763eff4bf9cc19c5140771a2fcbbdda1472a8247d9d937`.
+- AI and media lane handoffs verify in their temporary worktrees.
+- Lane join and temporary merged-lane state verify.
 
 ## Gaps
 
 - Full media byte generation remains blocked by missing Azure Speech credentials: `generate-authorized` returns `azure_speech_credentials_missing`.
-- Lane handoff recording remains blocked by missing temporary worktrees/baseline and the dirty canonical worktree. The lane helper requires a clean integration checkout to prepare the baseline and the fixed `/tmp/multilang-phase31-ai` or `/tmp/multilang-phase31-media` worktree paths to record lanes. This requires an explicit commit or a clean baseline strategy before `record-lane` can honestly succeed.
+- Canonical `ai-lane.json` and `media-lane.json` are updated from verified temporary handoffs rather than by running `merge-lanes` in the canonical checkout, because unrelated dirty files prevent the canonical checkout from serving as the clean integration worktree.
 
 ## Commands Run
 
@@ -32,3 +35,8 @@ human_needed
 - `PYTHONPATH="$PWD/src" python scripts/build_korean_foundation_media.py generate-authorized`
 - `PYTHONPATH="$PWD/src" python scripts/build_korean_foundation_media.py acoustic-status`
 - `PYTHONPATH="$PWD/src" python scripts/build_korean_foundation_media.py verify-evidence`
+- `PYTHONPATH="/tmp/multilang-phase31-integration/src" /tmp/multilang-phase31-py312/bin/python scripts/phase31_parallel_launch.py prepare-baseline --output /tmp/multilang-phase31-parallel/baseline.json --print-sha256`
+- `PYTHONPATH="/tmp/multilang-phase31-ai/src" /tmp/multilang-phase31-py312/bin/python scripts/review_korean_foundations_ai.py record-lane --baseline /tmp/multilang-phase31-parallel/baseline.json --baseline-sha256 2f7438fa624cd1a3cf763eff4bf9cc19c5140771a2fcbbdda1472a8247d9d937`
+- `PYTHONPATH="/tmp/multilang-phase31-media/src" /tmp/multilang-phase31-py312/bin/python scripts/build_korean_foundation_media.py record-lane --baseline /tmp/multilang-phase31-parallel/baseline.json --baseline-sha256 2f7438fa624cd1a3cf763eff4bf9cc19c5140771a2fcbbdda1472a8247d9d937`
+- `PYTHONPATH="/tmp/multilang-phase31-integration/src" /tmp/multilang-phase31-py312/bin/python scripts/phase31_parallel_launch.py verify-join --baseline /tmp/multilang-phase31-parallel/baseline.json --baseline-sha256 2f7438fa624cd1a3cf763eff4bf9cc19c5140771a2fcbbdda1472a8247d9d937`
+- `PYTHONPATH="/tmp/multilang-phase31-integration/src" /tmp/multilang-phase31-py312/bin/python scripts/phase31_parallel_launch.py verify-merged-lanes --baseline /tmp/multilang-phase31-parallel/baseline.json --baseline-sha256 2f7438fa624cd1a3cf763eff4bf9cc19c5140771a2fcbbdda1472a8247d9d937`

@@ -19,6 +19,10 @@ human_needed
 - Added a stale-only media authority replacement command and test so a superseded single-use authority can be replaced only after the rights document hash changes.
 - Recorded fresh project-owner media authority for `ab28ba11512a44e21837212da9a421c8e58832c0ba8a3b498ebe69dc197de637` after explicit user authorization.
 - Ran authorized media generation; it failed closed with `azure_speech_credentials_missing` because Azure Speech credentials are not present in the environment.
+- Committed Phase 31 recovery as `e6d2eae284a53376ea06b77ffd963aa64ea94f40`.
+- Prepared fresh sealed post-recovery baseline `2f7438fa624cd1a3cf763eff4bf9cc19c5140771a2fcbbdda1472a8247d9d937` in `/tmp/multilang-phase31-parallel/`.
+- Recorded and verified AI lane head `f0670e05711fafd1913cb58f598924c84b354ef3` and media lane head `c7abbf4c54e0865ef629e5cbcc711d52d4afc218` in temporary worktrees.
+- Verified temporary lane join and merged-lane state.
 
 ## Verification
 
@@ -31,14 +35,17 @@ human_needed
 - `PYTHONPATH="$PWD/src" python scripts/phase31_handoff.py verify-media-authority --require-project-owner --require-unconsumed --require-voice-profile --require-provider-attempt-ceiling` passed: `media_authority_status=verified`.
 - `PYTHONPATH="$PWD/src" python scripts/build_korean_foundation_media.py generate-authorized` returned blocked aggregate root `3efdef776e3374fcacbcdf8f4b8289ffcef427702c42efc391e417690426b798` with reason `azure_speech_credentials_missing`.
 - `PYTHONPATH="$PWD/src" python scripts/build_korean_foundation_media.py verify-evidence` passed structurally with blocked aggregate root `3efdef776e3374fcacbcdf8f4b8289ffcef427702c42efc391e417690426b798`.
+- `/tmp/multilang-phase31-py312/bin/python scripts/phase31_parallel_launch.py verify-join --baseline /tmp/multilang-phase31-parallel/baseline.json --baseline-sha256 2f7438fa624cd1a3cf763eff4bf9cc19c5140771a2fcbbdda1472a8247d9d937` passed: `parallel_join_status=verified`.
+- `/tmp/multilang-phase31-py312/bin/python scripts/phase31_parallel_launch.py verify-merged-lanes --baseline /tmp/multilang-phase31-parallel/baseline.json --baseline-sha256 2f7438fa624cd1a3cf763eff4bf9cc19c5140771a2fcbbdda1472a8247d9d937` passed: `parallel_merged_status=verified`.
 
 ## Remaining Blockers
 
 - Full media bytes cannot regenerate until Azure Speech credentials are present in `MULTILANG_AZURE_SPEECH_KEY` and `MULTILANG_AZURE_SPEECH_REGION`; current evidence is a verified blocked aggregate.
-- AI/media lane handoff recording is not completed. The previous `/tmp` worktrees and baseline disappeared, and the lane helper requires a clean integration checkout plus fixed lane worktree paths. No commit was made because commits require explicit user request.
+- Canonical lane handoff files are being updated from the verified temporary lane merge in a follow-up commit because the canonical checkout has unrelated dirty files and cannot run `merge-lanes` directly.
 - The worktree contains unrelated dirty Phase 32/33 and service changes; they were not modified as part of this recovery.
 
 ## Notes
 
 - Prompt-template hash used for the final AI review ingests: `9c85b9019d66bfbb5962e6f7ba3ef60c21a6cf039b3802c86b6bc02a73a21deb`.
 - Legacy failed-attempt evidence files from the previous blocked run were removed from the AI evidence ledger because the final run has no failed attempts.
+- The recreated lane handoffs have empty `changed_paths` by design: this was a recovery-after-commit baseline, not a replay of the original lost worktrees.
