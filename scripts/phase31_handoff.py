@@ -307,6 +307,50 @@ def _atomic_write_handoff(path: Path, raw: bytes) -> None:
                 pass
 
 
+def _atomic_replace_existing_handoff(path: Path, raw: bytes) -> None:
+    _ensure_handoff_root()
+    current_stat = _assert_existing_path_safe(path, missing_ok=False)
+    if current_stat is None or not stat.S_ISREG(current_stat.st_mode):
+        _raise(Phase31HandoffReasonCode.UNSAFE_PATH)
+    descriptor = -1
+    temporary_name: str | None = None
+    try:
+        descriptor, temporary_name = tempfile.mkstemp(
+            prefix=f".{path.name}.",
+            suffix=".tmp",
+            dir=path.parent,
+        )
+        try:
+            os.fchmod(descriptor, 0o600)
+        except (AttributeError, OSError):
+            pass
+        with os.fdopen(descriptor, "wb", closefd=True) as handle:
+            descriptor = -1
+            handle.write(raw)
+            handle.flush()
+            os.fsync(handle.fileno())
+        current_stat = _assert_existing_path_safe(path, missing_ok=False)
+        if current_stat is None or not stat.S_ISREG(current_stat.st_mode):
+            _raise(Phase31HandoffReasonCode.UNSAFE_PATH)
+        os.replace(temporary_name, path)
+        temporary_name = None
+    except Phase31HandoffError:
+        raise
+    except OSError as exc:
+        raise Phase31HandoffError(Phase31HandoffReasonCode.ATOMIC_WRITE_FAILED) from exc
+    finally:
+        if descriptor >= 0:
+            try:
+                os.close(descriptor)
+            except OSError:
+                pass
+        if temporary_name is not None:
+            try:
+                os.unlink(temporary_name)
+            except OSError:
+                pass
+
+
 def _write_handoff(filename: str, payload: dict[str, object]) -> dict[str, object]:
     payload = dict(payload)
     payload["schema_version"] = 1
@@ -496,7 +540,7 @@ def _validate_media_authority_payload(payload: dict[str, object]) -> None:
         _raise(Phase31HandoffReasonCode.HANDOFF_INVALID)
 
 
-def record_media_authority(
+def _build_media_authority_payload(
     response: str,
     *,
     confirmation_method: str,
@@ -547,7 +591,39 @@ def record_media_authority(
     }
     payload["content_hash"] = _canonical_hash(payload)
     _validate_media_authority_payload(payload)
+    return payload
+
+
+def record_media_authority(
+    response: str,
+    *,
+    confirmation_method: str,
+    orchestration_timestamp: str,
+) -> dict[str, object]:
+    payload = _build_media_authority_payload(
+        response,
+        confirmation_method=confirmation_method,
+        orchestration_timestamp=orchestration_timestamp,
+    )
     _atomic_write_handoff(_MEDIA_AUTHORITY_PATH, _json_file_bytes(payload))
+    return payload
+
+
+def replace_stale_media_authority(
+    response: str,
+    *,
+    confirmation_method: str,
+    orchestration_timestamp: str,
+) -> dict[str, object]:
+    existing = _read_media_authority()
+    payload = _build_media_authority_payload(
+        response,
+        confirmation_method=confirmation_method,
+        orchestration_timestamp=orchestration_timestamp,
+    )
+    if existing["rights_document_sha256"] == payload["rights_document_sha256"]:
+        _raise(Phase31HandoffReasonCode.HANDOFF_CONFLICT)
+    _atomic_replace_existing_handoff(_MEDIA_AUTHORITY_PATH, _json_file_bytes(payload))
     return payload
 
 
@@ -609,6 +685,10 @@ def build_parser() -> argparse.ArgumentParser:
     media.add_argument("--response", required=True)
     media.add_argument("--confirmation-method", required=True)
     media.add_argument("--orchestration-timestamp", required=True)
+    replace_media = commands.add_parser("replace-stale-media-authority")
+    replace_media.add_argument("--response", required=True)
+    replace_media.add_argument("--confirmation-method", required=True)
+    replace_media.add_argument("--orchestration-timestamp", required=True)
     verify_media = commands.add_parser("verify-media-authority")
     verify_media.add_argument("--require-project-owner", action="store_true")
     verify_media.add_argument("--require-unconsumed", action="store_true")
@@ -641,6 +721,14 @@ def main() -> int:
         elif args.operation == "record-media-authority":
             print(
                 record_media_authority(
+                    args.response,
+                    confirmation_method=args.confirmation_method,
+                    orchestration_timestamp=args.orchestration_timestamp,
+                )["content_hash"]
+            )
+        elif args.operation == "replace-stale-media-authority":
+            print(
+                replace_stale_media_authority(
                     args.response,
                     confirmation_method=args.confirmation_method,
                     orchestration_timestamp=args.orchestration_timestamp,

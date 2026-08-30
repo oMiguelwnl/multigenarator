@@ -102,7 +102,11 @@ def _install_root(api: ModuleType, monkeypatch: pytest.MonkeyPatch, root: Path) 
     )
 
 
-def _write_media_rights(project_root: Path) -> tuple[str, dict[str, object]]:
+def _write_media_rights(
+    project_root: Path,
+    *,
+    item_set_sha256: str = "7" * 64,
+) -> tuple[str, dict[str, object]]:
     rights = {
         "schema_version": 1,
         "document_type": "phase31-media-rights-request",
@@ -118,7 +122,7 @@ def _write_media_rights(project_root: Path) -> tuple[str, dict[str, object]]:
             "credential_boundary": "existing-environment-only-no-secrets-recorded",
         },
         "item_set": {
-            "item_set_sha256": "7" * 64,
+            "item_set_sha256": item_set_sha256,
             "required_slots": 325,
             "audio_subjects": 233,
             "visual_subjects": 92,
@@ -253,6 +257,38 @@ def test_media_authority_rejects_decline_stale_hash_and_replay(
         )
 
 
+def test_media_authority_can_replace_only_stale_authority(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    api = _handoff()
+    _install_root(api, monkeypatch, tmp_path)
+    old_rights_sha256, _ = _write_media_rights(tmp_path, item_set_sha256="7" * 64)
+    api.record_media_authority(
+        f"authorize-media {old_rights_sha256}",
+        confirmation_method="opencode-user-message",
+        orchestration_timestamp="2026-08-28T00:00:00Z",
+    )
+    new_rights_sha256, _ = _write_media_rights(tmp_path, item_set_sha256="8" * 64)
+
+    replacement = api.replace_stale_media_authority(
+        f"authorize-media {new_rights_sha256}",
+        confirmation_method="opencode-question-selection",
+        orchestration_timestamp="2026-08-30T13:37:18Z",
+    )
+
+    assert replacement["rights_document_sha256"] == new_rights_sha256
+    assert replacement["item_set_sha256"] == "8" * 64
+    assert api.get_media_authority() == new_rights_sha256
+    api.verify_media_authority(require_project_owner=True, require_unconsumed=True)
+    with pytest.raises(api.Phase31HandoffError):
+        api.replace_stale_media_authority(
+            f"authorize-media {new_rights_sha256}",
+            confirmation_method="opencode-question-selection",
+            orchestration_timestamp="2026-08-30T13:37:19Z",
+        )
+
+
 def test_handoff_rejects_malformed_hash_and_nonidentical_overwrite(
     tmp_path: Path,
     monkeypatch: pytest.MonkeyPatch,
@@ -307,6 +343,7 @@ def test_handoff_cli_exposes_only_fixed_operations() -> None:
         "record-authorization",
         "get-authorization",
         "record-media-authority",
+        "replace-stale-media-authority",
         "verify-media-authority",
         "get-media-authority",
     ):

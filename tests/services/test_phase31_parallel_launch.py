@@ -345,6 +345,60 @@ def test_protected_state_uses_git_reproducible_modes_across_worktrees(
     ) == "parallel_protected_state_status=verified"
 
 
+def test_record_lane_allows_only_configured_lane_protected_prefixes(
+    committed_repo: Path,
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    helper = _load_helper()
+    _configure(helper, monkeypatch, committed_repo, tmp_path)
+    _write(committed_repo / "candidate" / "current.json", "old\n")
+    _git(committed_repo, "add", "candidate/current.json")
+    _git(committed_repo, "commit", "-m", "fixture candidate")
+    monkeypatch.setattr(
+        helper,
+        "LANE_ALLOWLISTS",
+        {
+            "ai": ("candidate/current.json", "handoffs/ai-lane.json"),
+            "media": ("media.txt", "handoffs/media-lane.json"),
+        },
+    )
+    monkeypatch.setattr(
+        helper,
+        "PROTECTED_PATHS",
+        ("candidate", "protected.txt"),
+    )
+    monkeypatch.setattr(
+        helper,
+        "PROTECTED_ALLOW_CATEGORIES",
+        {
+            "ai-candidate-data": ("candidate/current.json",),
+        },
+    )
+    monkeypatch.setattr(
+        helper,
+        "LANE_PROTECTED_ALLOW_CATEGORIES",
+        {"ai": ("ai-candidate-data",), "media": ()},
+    )
+    expected = helper.prepare_baseline()
+    baseline = helper.verify_baseline(helper.BASELINE_PATH, expected)
+    ai = helper.AI_WORKTREE
+    _git(committed_repo, "worktree", "add", "-b", "ai-protected", str(ai), baseline["baseline_commit"])
+    _write(ai / "candidate" / "current.json", "new\n")
+
+    helper.record_lane(
+        "ai",
+        worktree=ai,
+        baseline_path=helper.BASELINE_PATH,
+        baseline_sha256=expected,
+        aggregate_root="a" * 64,
+        evidence_root="b" * 64,
+    )
+
+    handoff = json.loads((ai / "handoffs" / "ai-lane.json").read_text(encoding="utf-8"))
+    assert handoff["changed_paths"] == ["candidate/current.json"]
+
+
 def test_linked_lane_resolves_canonical_integration_worktree(
     committed_repo: Path,
     tmp_path: Path,

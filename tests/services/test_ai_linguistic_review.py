@@ -430,6 +430,7 @@ def test_fixed_projection_balances_all_subjects_below_the_input_token_ceiling() 
                 "subject_id",
                 "claim_ids",
                 "source_reference_ids",
+                "claim_evidence",
                 "projection",
             }
             for projected in projection["subjects"]
@@ -543,3 +544,78 @@ def test_compact_raw_pass_schema_rebuilds_for_ingestion() -> None:
 
     assert raw.batch_id == "batch-01"
     assert raw.decisions[0].atomic_claims[0].reason_code == "s"
+
+
+def test_projection_claims_are_linguistic_and_locally_reviewable() -> None:
+    path = Path("scripts/review_korean_foundations_ai.py")
+    spec = util.spec_from_file_location("_review_korean_foundations_ai_scope_test", path)
+    assert spec is not None and spec.loader is not None
+    module = util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+
+    subjects = module._build_subjects()
+    for subject in subjects:
+        if subject.family == "hangul":
+            assert subject.claim_ids == (
+                "source_content.fields",
+                "curriculum_atomicity.evidence",
+                "korean_orthography.fields",
+                "portuguese.learner-facing-portuguese",
+            )
+        else:
+            assert subject.claim_ids == (
+                "source_content.fields",
+                "curriculum_atomicity.evidence",
+                "korean_phonetics.fields",
+                "portuguese.translations",
+            )
+        assert "source_content.stroke-order" not in subject.claim_ids
+
+    projection = module._projection_document("batch-01", subjects[:1])
+    claim_evidence = projection["subjects"][0]["claim_evidence"]
+    assert claim_evidence["curriculum_atomicity.evidence"]["basis"] == (
+        "deterministic-curriculum-validators"
+    )
+    phonetics_fields = module._claim_projection_fields("korean_phonetics.fields")
+    assert phonetics_fields == (
+        "spellings",
+        "sound",
+        "pronunciation_evidence.canonical_spelling",
+        "pronunciation_evidence.normative_pronunciation",
+        "pronunciation_evidence.surface_pronunciation",
+        "pronunciation_evidence.ipa",
+    )
+    assert "phonological_rule_ids" not in phonetics_fields
+    assert "active_rule_ids" not in phonetics_fields
+    assert "internal linguistic competence" in projection["review_instruction"]
+    assert "Internal curriculum taxonomy names" in projection["review_instruction"]
+    assert "no tools, files, network" in projection["security_boundary"]
+
+
+def test_pronunciation_review_projection_contains_no_placeholder_linguistic_fields() -> None:
+    path = Path("scripts/review_korean_foundations_ai.py")
+    spec = util.spec_from_file_location(
+        "_review_korean_foundations_ai_placeholder_test", path
+    )
+    assert spec is not None and spec.loader is not None
+    module = util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+
+    subjects = module._build_subjects()
+    for subject in subjects:
+        if subject.family != "pronunciation":
+            continue
+        projection = subject.projection
+        pronunciation_evidence = projection["pronunciation_evidence"]
+        checked = (
+            projection["spellings"],
+            projection["sound"],
+            projection["example_word"],
+            projection["word_translation"],
+            projection["example_sentence"],
+            projection["sentence_translation"],
+            pronunciation_evidence["canonical_spelling"],
+            pronunciation_evidence["normative_pronunciation"],
+            pronunciation_evidence["surface_pronunciation"],
+        )
+        assert "needs_review" not in checked, subject.subject_id

@@ -52,12 +52,17 @@ PUBLIC_OPERATIONS: Final = (
 
 LANE_ALLOWLISTS: Mapping[str, tuple[str, ...]] = {
     "ai": (
+        f"{PHASE_RELPATH}/31-30-PLAN.md",
+        f"{PHASE_RELPATH}/curation-drafts/",
         "src/multilang/services/ai_linguistic_review.py",
         "src/multilang/services/korean_foundation_review.py",
         "scripts/review_korean_foundations_ai.py",
         "tests/services/test_ai_linguistic_review.py",
         "tests/services/test_korean_foundation_review.py",
+        "data/korean_foundations/current-candidate.json",
+        "data/korean_foundations/candidate-bundles/",
         f"{PHASE_RELPATH}/evidence-inbox/ai-review/",
+        f"{PHASE_RELPATH}/execution-handoffs/curation-selection.json",
         f"{PHASE_RELPATH}/execution-handoffs/ai-lane.json",
     ),
     "media": (
@@ -89,11 +94,20 @@ PROTECTED_PATHS: tuple[str, ...] = (
     ".multilang/exports/korean-foundations",
 )
 PROTECTED_ALLOW_CATEGORIES: Mapping[str, tuple[str, ...]] = {
+    "ai-candidate-data": (
+        "data/korean_foundations/current-candidate.json",
+        "data/korean_foundations/candidate-bundles",
+        f"{PHASE_RELPATH}/execution-handoffs/curation-selection.json",
+    ),
     "staged-closure": (".planning/.local/phase31-staged-closure",),
     "receipt": (f"{PHASE_RELPATH}/evidence-inbox/validation-receipt.json",),
     "snapshot": ("data/korean_foundations/snapshots",),
     "pointer": ("data/korean_foundations/active-foundations.json",),
     "exports": (".multilang/exports/korean-foundations",),
+}
+LANE_PROTECTED_ALLOW_CATEGORIES: Mapping[str, tuple[str, ...]] = {
+    "ai": ("ai-candidate-data",),
+    "media": (),
 }
 
 
@@ -432,6 +446,13 @@ def _allowed_protected_prefixes(categories: Sequence[str]) -> tuple[str, ...]:
     return tuple(prefix.rstrip("/") for prefix in prefixes)
 
 
+def _lane_protected_allow_categories(lane: str) -> tuple[str, ...]:
+    try:
+        return LANE_PROTECTED_ALLOW_CATEGORIES[lane]
+    except KeyError:
+        _raise("lane_invalid")
+
+
 def _capture_protected(root: Path, categories: Sequence[str] = ()) -> list[list[str]]:
     allowed = _allowed_protected_prefixes(categories)
     rows: list[list[str]] = []
@@ -646,7 +667,12 @@ def verify_worktree_runtime(
         _raise("lane_ancestry_invalid")
     changed = _changed_paths(root, str(baseline["baseline_commit"]))
     _assert_lane_paths(lane, changed)
-    verify_protected_state((), baseline_path, baseline_sha256, worktree=root)
+    verify_protected_state(
+        _lane_protected_allow_categories(lane),
+        baseline_path,
+        baseline_sha256,
+        worktree=root,
+    )
     try:
         result = subprocess.run(
             [str(RUNTIME_PYTHON), "-c", "import multilang; print(multilang.__file__)"],
@@ -771,7 +797,12 @@ def record_lane(
     handoff_relpath = LANE_HANDOFF_RELPATHS[lane]
     changed.discard(handoff_relpath)
     _assert_lane_paths(lane, changed)
-    verify_protected_state((), baseline_path, baseline_sha256, worktree=worktree)
+    verify_protected_state(
+        _lane_protected_allow_categories(lane),
+        baseline_path,
+        baseline_sha256,
+        worktree=worktree,
+    )
     rows = _patch_rows_worktree(worktree, baseline_commit, changed)
     handoff: dict[str, object] = {
         "schema_version": 1,
@@ -875,7 +906,12 @@ def verify_lane(
     rows = _patch_rows_worktree(root, str(baseline["baseline_commit"]), changed)
     if _patch_sha(rows) != handoff["patch_sha256"]:
         _raise("lane_patch_mismatch")
-    verify_protected_state((), baseline_path, baseline_sha256, worktree=root)
+    verify_protected_state(
+        _lane_protected_allow_categories(lane),
+        baseline_path,
+        baseline_sha256,
+        worktree=root,
+    )
     return handoff
 
 
