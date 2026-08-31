@@ -52,7 +52,7 @@ Recreate the verified Phase 31 Korean foundation candidate-data fixes in the can
     <automated>PYTHONPATH="$PWD/src" python scripts/review_korean_foundations_ai.py status</automated>
     <automated>PYTHONPATH="$PWD/src" python scripts/review_korean_foundations_ai.py aggregate</automated>
     <automated>PYTHONPATH="$PWD/src" python scripts/review_korean_foundations_ai.py verify</automated>
-    <automated>PYTHONPATH="/tmp/multilang-phase31-ai/src" /tmp/multilang-phase31-py312/bin/python scripts/review_korean_foundations_ai.py record-lane --baseline /tmp/multilang-phase31-parallel/baseline.json --baseline-sha256 2f7438fa624cd1a3cf763eff4bf9cc19c5140771a2fcbbdda1472a8247d9d937</automated>
+    <automated>PYTHONPATH="/tmp/multilang-phase31-ai/src" /tmp/multilang-phase31-py312/bin/python scripts/review_korean_foundations_ai.py record-lane --baseline /tmp/multilang-phase31-parallel/baseline.json --baseline-sha256 c66b72e9a05266b69d24ee491597cc2151130d459277d433b7d1b1b5ee582074</automated>
   </verify>
   <done>AI lane handoff records verified aggregate evidence without write-scope violation.</done>
 </task>
@@ -84,7 +84,7 @@ Recreate the verified Phase 31 Korean foundation candidate-data fixes in the can
 
 ## Recovery Baseline Note
 
-The original lane baseline and worktrees were unavailable. After explicit user approval, recovery changes were committed first and a fresh post-recovery sealed baseline was prepared from clean temporary worktrees. The resulting AI/media lane handoffs bind the verified evidence roots with empty lane patches because the recovery content is already present in baseline commit `e6d2eae284a53376ea06b77ffd963aa64ea94f40`.
+The original lane baseline and worktrees were unavailable. After explicit user approval, recovery changes were committed first and a fresh post-recovery sealed baseline was prepared from clean temporary worktrees. The resulting AI/media lane handoffs bind the verified evidence roots with empty lane patches because the recovery content is already present in baseline commit `38bcd1c05dafe2852dd889731de87d6ef795f864`.
 
 ## Scope Note
 

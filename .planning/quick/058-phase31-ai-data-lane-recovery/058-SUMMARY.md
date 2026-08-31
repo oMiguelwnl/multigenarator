@@ -20,8 +20,8 @@ human_needed
 - Recorded fresh project-owner media authority for `ab28ba11512a44e21837212da9a421c8e58832c0ba8a3b498ebe69dc197de637` after explicit user authorization.
 - Ran authorized media generation with `.env` loaded; credentials are present, and the script fails closed with `provider_execution_not_available` because actual Azure synthesis is not implemented in this Phase 31 media builder yet.
 - Committed Phase 31 recovery as `e6d2eae284a53376ea06b77ffd963aa64ea94f40`.
-- Prepared fresh sealed post-recovery baseline `2f7438fa624cd1a3cf763eff4bf9cc19c5140771a2fcbbdda1472a8247d9d937` in `/tmp/multilang-phase31-parallel/`.
-- Recorded and verified AI lane head `f0670e05711fafd1913cb58f598924c84b354ef3` and media lane head `c7abbf4c54e0865ef629e5cbcc711d52d4afc218` in temporary worktrees.
+- Prepared fresh sealed post-recovery baseline `c66b72e9a05266b69d24ee491597cc2151130d459277d433b7d1b1b5ee582074` in `/tmp/multilang-phase31-parallel/`.
+- Recorded and verified AI lane head `22da6977e50cf81e48c8f3695c8819c9db1a9870` and media lane head `ece95660a507d75c6a26e125db3d04ddd4d5320c` in temporary worktrees.
 - Verified temporary lane join and merged-lane state.
 
 ## Verification
@@ -35,8 +35,8 @@ human_needed
 - `PYTHONPATH="$PWD/src" python scripts/phase31_handoff.py verify-media-authority --require-project-owner --require-unconsumed --require-voice-profile --require-provider-attempt-ceiling` passed: `media_authority_status=verified`.
 - `PYTHONPATH="$PWD/src" python scripts/build_korean_foundation_media.py generate-authorized` now reads `.env` through `Settings` and returned blocked aggregate root `76456c7049edc187d438cc8445af4600cf63c047051ab802198567e1f7ddab1c` with reason `provider_execution_not_available`.
 - `PYTHONPATH="$PWD/src" python scripts/build_korean_foundation_media.py verify-evidence` passed structurally with blocked aggregate root `76456c7049edc187d438cc8445af4600cf63c047051ab802198567e1f7ddab1c`.
-- `/tmp/multilang-phase31-py312/bin/python scripts/phase31_parallel_launch.py verify-join --baseline /tmp/multilang-phase31-parallel/baseline.json --baseline-sha256 2f7438fa624cd1a3cf763eff4bf9cc19c5140771a2fcbbdda1472a8247d9d937` passed: `parallel_join_status=verified`.
-- `/tmp/multilang-phase31-py312/bin/python scripts/phase31_parallel_launch.py verify-merged-lanes --baseline /tmp/multilang-phase31-parallel/baseline.json --baseline-sha256 2f7438fa624cd1a3cf763eff4bf9cc19c5140771a2fcbbdda1472a8247d9d937` passed: `parallel_merged_status=verified`.
+- `/tmp/multilang-phase31-py312/bin/python scripts/phase31_parallel_launch.py verify-join --baseline /tmp/multilang-phase31-parallel/baseline.json --baseline-sha256 c66b72e9a05266b69d24ee491597cc2151130d459277d433b7d1b1b5ee582074` passed: `parallel_join_status=verified`.
+- `/tmp/multilang-phase31-py312/bin/python scripts/phase31_parallel_launch.py verify-merged-lanes --baseline /tmp/multilang-phase31-parallel/baseline.json --baseline-sha256 c66b72e9a05266b69d24ee491597cc2151130d459277d433b7d1b1b5ee582074` passed: `parallel_merged_status=verified`.
 
 ## Remaining Blockers
 

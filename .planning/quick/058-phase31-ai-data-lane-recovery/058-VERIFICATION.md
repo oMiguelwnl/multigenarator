@@ -14,7 +14,7 @@ human_needed
 - Media rights now validate for the final candidate.
 - Project-owner media authority now verifies for the final rights SHA.
 - Media evidence now verifies structurally as a blocked aggregate rooted at `76456c7049edc187d438cc8445af4600cf63c047051ab802198567e1f7ddab1c`.
-- Fresh post-recovery lane baseline verifies at `2f7438fa624cd1a3cf763eff4bf9cc19c5140771a2fcbbdda1472a8247d9d937`.
+- Fresh post-recovery lane baseline verifies at `c66b72e9a05266b69d24ee491597cc2151130d459277d433b7d1b1b5ee582074`.
 - AI and media lane handoffs verify in their temporary worktrees.
 - Lane join and temporary merged-lane state verify.
 
@@ -36,7 +36,7 @@ human_needed
 - `PYTHONPATH="$PWD/src" python scripts/build_korean_foundation_media.py acoustic-status`
 - `PYTHONPATH="$PWD/src" python scripts/build_korean_foundation_media.py verify-evidence`
 - `PYTHONPATH="/tmp/multilang-phase31-integration/src" /tmp/multilang-phase31-py312/bin/python scripts/phase31_parallel_launch.py prepare-baseline --output /tmp/multilang-phase31-parallel/baseline.json --print-sha256`
-- `PYTHONPATH="/tmp/multilang-phase31-ai/src" /tmp/multilang-phase31-py312/bin/python scripts/review_korean_foundations_ai.py record-lane --baseline /tmp/multilang-phase31-parallel/baseline.json --baseline-sha256 2f7438fa624cd1a3cf763eff4bf9cc19c5140771a2fcbbdda1472a8247d9d937`
-- `PYTHONPATH="/tmp/multilang-phase31-media/src" /tmp/multilang-phase31-py312/bin/python scripts/build_korean_foundation_media.py record-lane --baseline /tmp/multilang-phase31-parallel/baseline.json --baseline-sha256 2f7438fa624cd1a3cf763eff4bf9cc19c5140771a2fcbbdda1472a8247d9d937`
-- `PYTHONPATH="/tmp/multilang-phase31-integration/src" /tmp/multilang-phase31-py312/bin/python scripts/phase31_parallel_launch.py verify-join --baseline /tmp/multilang-phase31-parallel/baseline.json --baseline-sha256 2f7438fa624cd1a3cf763eff4bf9cc19c5140771a2fcbbdda1472a8247d9d937`
-- `PYTHONPATH="/tmp/multilang-phase31-integration/src" /tmp/multilang-phase31-py312/bin/python scripts/phase31_parallel_launch.py verify-merged-lanes --baseline /tmp/multilang-phase31-parallel/baseline.json --baseline-sha256 2f7438fa624cd1a3cf763eff4bf9cc19c5140771a2fcbbdda1472a8247d9d937`
+- `PYTHONPATH="/tmp/multilang-phase31-ai/src" /tmp/multilang-phase31-py312/bin/python scripts/review_korean_foundations_ai.py record-lane --baseline /tmp/multilang-phase31-parallel/baseline.json --baseline-sha256 c66b72e9a05266b69d24ee491597cc2151130d459277d433b7d1b1b5ee582074`
+- `PYTHONPATH="/tmp/multilang-phase31-media/src" /tmp/multilang-phase31-py312/bin/python scripts/build_korean_foundation_media.py record-lane --baseline /tmp/multilang-phase31-parallel/baseline.json --baseline-sha256 c66b72e9a05266b69d24ee491597cc2151130d459277d433b7d1b1b5ee582074`
+- `PYTHONPATH="/tmp/multilang-phase31-integration/src" /tmp/multilang-phase31-py312/bin/python scripts/phase31_parallel_launch.py verify-join --baseline /tmp/multilang-phase31-parallel/baseline.json --baseline-sha256 c66b72e9a05266b69d24ee491597cc2151130d459277d433b7d1b1b5ee582074`
+- `PYTHONPATH="/tmp/multilang-phase31-integration/src" /tmp/multilang-phase31-py312/bin/python scripts/phase31_parallel_launch.py verify-merged-lanes --baseline /tmp/multilang-phase31-parallel/baseline.json --baseline-sha256 c66b72e9a05266b69d24ee491597cc2151130d459277d433b7d1b1b5ee582074`
