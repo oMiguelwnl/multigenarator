@@ -21,6 +21,7 @@ from multilang.services.ai_acoustic_review import (
 from multilang.services.korean_foundation_media import (
     load_pending_korean_foundation_media_manifest,
 )
+from multilang.settings import Settings
 
 
 _PROJECT_ROOT: Path = Path(__file__).resolve().parents[1]
@@ -372,10 +373,15 @@ def _required_slots() -> list[object]:
 
 
 def _credentials_present() -> bool:
-    return bool(
-        os.environ.get("MULTILANG_AZURE_SPEECH_KEY")
-        and os.environ.get("MULTILANG_AZURE_SPEECH_REGION")
-    )
+    if os.environ.get("MULTILANG_AZURE_SPEECH_KEY") and os.environ.get(
+        "MULTILANG_AZURE_SPEECH_REGION"
+    ):
+        return True
+    try:
+        settings = Settings(_env_file=_PROJECT_ROOT / ".env")
+    except Exception:
+        return False
+    return bool(settings.azure_speech_key and settings.azure_speech_region)
 
 
 def _write_acoustic(payload: dict[str, object]) -> dict[str, object]:

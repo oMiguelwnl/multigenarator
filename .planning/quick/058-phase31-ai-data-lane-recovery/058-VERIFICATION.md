@@ -13,14 +13,14 @@ human_needed
 - AI aggregate verifies with `139` passing subjects and `0` blocked subjects.
 - Media rights now validate for the final candidate.
 - Project-owner media authority now verifies for the final rights SHA.
-- Media evidence now verifies structurally as a blocked aggregate rooted at `3efdef776e3374fcacbcdf8f4b8289ffcef427702c42efc391e417690426b798`.
+- Media evidence now verifies structurally as a blocked aggregate rooted at `76456c7049edc187d438cc8445af4600cf63c047051ab802198567e1f7ddab1c`.
 - Fresh post-recovery lane baseline verifies at `2f7438fa624cd1a3cf763eff4bf9cc19c5140771a2fcbbdda1472a8247d9d937`.
 - AI and media lane handoffs verify in their temporary worktrees.
 - Lane join and temporary merged-lane state verify.
 
 ## Gaps
 
-- Full media byte generation remains blocked by missing Azure Speech credentials: `generate-authorized` returns `azure_speech_credentials_missing`.
+- Full media byte generation remains blocked because actual Azure Speech execution is not implemented in this builder: `generate-authorized` returns `provider_execution_not_available` after loading credentials from `.env`.
 - Canonical `ai-lane.json` and `media-lane.json` are updated from verified temporary handoffs rather than by running `merge-lanes` in the canonical checkout, because unrelated dirty files prevent the canonical checkout from serving as the clean integration worktree.
 
 ## Commands Run

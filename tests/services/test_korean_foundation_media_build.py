@@ -4,7 +4,7 @@ import importlib.util
 import json
 from hashlib import sha256
 from pathlib import Path
-from types import ModuleType
+from types import ModuleType, SimpleNamespace
 
 import pytest
 
@@ -184,4 +184,48 @@ def test_generate_authorized_records_missing_credentials_without_media_bytes(
     assert projected["aggregate_root"] == result["aggregate_root"]
     assert {blocker["reason_code"] for blocker in projected["blockers"]} == {
         "azure_speech_credentials_missing"
+    }
+
+
+def test_generate_authorized_reads_azure_credentials_from_dotenv(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    api = _builder()
+    _install_root(api, monkeypatch, tmp_path)
+    monkeypatch.setattr(
+        api,
+        "_item_set",
+        lambda: {
+            "item_set_sha256": "9" * 64,
+            "all_slots": 509,
+            "required_slots": 325,
+            "audio_subjects": 233,
+            "visual_subjects": 92,
+        },
+    )
+    monkeypatch.setattr(
+        api,
+        "_required_slots",
+        lambda: [SimpleNamespace(slot_id="hangul.audio.0001", media_kind="audio")],
+    )
+    monkeypatch.chdir(tmp_path)
+    monkeypatch.delenv("MULTILANG_AZURE_SPEECH_KEY", raising=False)
+    monkeypatch.delenv("MULTILANG_AZURE_SPEECH_REGION", raising=False)
+    (tmp_path / ".env").write_text(
+        "MULTILANG_AZURE_SPEECH_KEY=test-key\n"
+        "MULTILANG_AZURE_SPEECH_REGION=westeurope\n",
+        encoding="utf-8",
+    )
+    api.prepare_rights()
+    rights_sha256 = api.validate_rights()
+    _write_media_authority(api, tmp_path, rights_sha256)
+
+    result = api.generate_authorized()
+    projected = api.project_acoustic()
+
+    assert result["status"] == "blocked"
+    assert result["reason_code"] == "provider_execution_not_available"
+    assert {blocker["reason_code"] for blocker in projected["blockers"]} == {
+        "provider_execution_not_available"
     }

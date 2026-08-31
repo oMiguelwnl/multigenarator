@@ -77,7 +77,7 @@ Recreate the verified Phase 31 Korean foundation candidate-data fixes in the can
     <automated>PYTHONPATH="$PWD/src" python scripts/phase31_handoff.py verify-media-authority --require-project-owner --require-unconsumed --require-voice-profile --require-provider-attempt-ceiling</automated>
     <automated>PYTHONPATH="$PWD/src" python scripts/build_korean_foundation_media.py generate-authorized</automated>
     <automated>PYTHONPATH="$PWD/src" python scripts/build_korean_foundation_media.py verify-evidence</automated>
-    <manual_blocker>Full media generation remains blocked if `MULTILANG_AZURE_SPEECH_KEY` and `MULTILANG_AZURE_SPEECH_REGION` are unavailable.</manual_blocker>
+    <manual_blocker>Full media generation remains blocked until the Phase 31 media builder implements actual Azure Speech execution. Credentials are loaded from `.env` through project settings.</manual_blocker>
   </verify>
   <done>Media lane is either regenerated and verified for the new candidate or explicitly identified as the remaining join blocker.</done>
 </task>
