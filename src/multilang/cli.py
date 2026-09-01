@@ -87,6 +87,14 @@ from multilang.services.korean_frequency import (
     validate_korean_source_build_result,
     validate_korean_source_retrieval_result,
 )
+from multilang.services.korean_production_evidence import (
+    KoreanProductionEvidenceAuthority,
+    build_korean_production_audit_payload,
+    load_korean_production_evidence_rows,
+    render_korean_production_audit_markdown,
+    validate_korean_production_final_evidence,
+    validate_korean_production_run_result,
+)
 from multilang.services.korean_source_review import (
     import_korean_bundle_review_batch,
     validate_korean_bundle_review_batches,
@@ -178,6 +186,134 @@ def _fail_korean_checkpoint_authority_operation(exc: ValueError) -> None:
 def _fail_korean_source_review_operation(exc: ValueError) -> None:
     typer.echo("korean_source_review_error=operation_failed")
     raise typer.Exit(code=1) from exc
+
+
+def _fail_korean_production_evidence_operation(exc: ValueError) -> None:
+    typer.echo("korean_production_evidence_error=operation_failed")
+    raise typer.Exit(code=1) from exc
+
+
+def _korean_production_sha256_file(path: Path) -> str:
+    digest = sha256()
+    with path.open("rb") as handle:
+        for chunk in iter(lambda: handle.read(1024 * 1024), b""):
+            digest.update(chunk)
+    return digest.hexdigest()
+
+
+def _read_korean_production_json_mapping(path: Path) -> dict[str, object]:
+    payload = json.loads(path.read_text(encoding="utf-8"))
+    if not isinstance(payload, dict):
+        raise ValueError("Korean production evidence input must be a JSON object")
+    return payload
+
+
+def _write_korean_production_json_atomic(path: Path, payload: dict[str, object]) -> None:
+    path.parent.mkdir(parents=True, exist_ok=True)
+    temp_path = path.with_name(f".{path.name}.tmp")
+    if temp_path.exists():
+        raise ValueError("Korean production evidence temporary output already exists")
+    try:
+        temp_path.write_text(
+            json.dumps(payload, ensure_ascii=False, indent=2, sort_keys=True) + "\n",
+            encoding="utf-8",
+        )
+        temp_path.replace(path)
+    except Exception:
+        if temp_path.exists():
+            temp_path.unlink()
+        raise
+
+
+def _write_korean_production_text_atomic(path: Path, payload: str) -> None:
+    path.parent.mkdir(parents=True, exist_ok=True)
+    temp_path = path.with_name(f".{path.name}.tmp")
+    if temp_path.exists():
+        raise ValueError("Korean production evidence temporary output already exists")
+    try:
+        temp_path.write_text(payload, encoding="utf-8")
+        temp_path.replace(path)
+    except Exception:
+        if temp_path.exists():
+            temp_path.unlink()
+        raise
+
+
+def _build_korean_production_evidence_authority_from_cli(
+    *,
+    job_id: str,
+    phase31_active_pointer_sha256: str,
+    phase31_active_pointer_content_sha256: str,
+    phase31_validation_receipt_sha256: str,
+    phase31_snapshot_manifest_sha256: str,
+    phase31_snapshot_root_sha256: str,
+    frequency_bundle_manifest_sha256: str,
+    frequency_bundle_content_sha256: str,
+    source_access_authority_sha256: str,
+    source_retrieval_sha256: str,
+    source_transformation_sha256: str,
+    source_build_result_sha256: str,
+    source_review_aggregate_sha256: str,
+    final_bundle_authority_sha256: str,
+    provider_policy_sha256: str,
+    provider_review_authority_sha256: str,
+    budget_authority_sha256: str,
+    retry_policy_sha256: str,
+    full_run_authority_sha256: str,
+    catalog_locator_sha256: str,
+    catalog_content_sha256: str,
+    profile_sample_authority_sha256: str,
+    heard_review_authority_sha256: str,
+    full_binding_receipt_sha256: str,
+) -> KoreanProductionEvidenceAuthority:
+    return KoreanProductionEvidenceAuthority(
+        job_id=job_id,
+        phase31_pointer_locator_sha256=phase31_active_pointer_sha256,
+        phase31_pointer_content_sha256=phase31_active_pointer_content_sha256,
+        phase31_validation_receipt_sha256=phase31_validation_receipt_sha256,
+        phase31_snapshot_manifest_sha256=phase31_snapshot_manifest_sha256,
+        phase31_snapshot_root_sha256=phase31_snapshot_root_sha256,
+        frequency_bundle_locator_sha256=frequency_bundle_manifest_sha256,
+        frequency_bundle_content_sha256=frequency_bundle_content_sha256,
+        source_access_authority_sha256=source_access_authority_sha256,
+        source_retrieval_sha256=source_retrieval_sha256,
+        source_transformation_sha256=source_transformation_sha256,
+        source_build_result_sha256=source_build_result_sha256,
+        source_review_aggregate_sha256=source_review_aggregate_sha256,
+        final_bundle_authority_sha256=final_bundle_authority_sha256,
+        provider_policy_sha256=provider_policy_sha256,
+        provider_review_authority_sha256=provider_review_authority_sha256,
+        budget_authority_sha256=budget_authority_sha256,
+        retry_policy_sha256=retry_policy_sha256,
+        full_run_authority_sha256=full_run_authority_sha256,
+        catalog_locator_sha256=catalog_locator_sha256,
+        catalog_content_sha256=catalog_content_sha256,
+        profile_sample_authority_sha256=profile_sample_authority_sha256,
+        heard_review_authority_sha256=heard_review_authority_sha256,
+        full_binding_receipt_sha256=full_binding_receipt_sha256,
+    )
+
+
+def _ensure_korean_production_outputs_distinct(
+    *,
+    outputs: tuple[Path, ...],
+    protected_inputs: dict[str, Path],
+) -> None:
+    input_paths = {path.resolve() for path in protected_inputs.values()}
+    output_paths = tuple(path.resolve() for path in outputs)
+    if len(set(output_paths)) != len(output_paths) or any(path in input_paths for path in output_paths):
+        raise ValueError("Korean production evidence outputs must be distinct from inputs and each other")
+
+
+def _hash_korean_production_inputs(protected_inputs: dict[str, Path]) -> dict[str, str]:
+    return {label: _korean_production_sha256_file(path) for label, path in protected_inputs.items()}
+
+
+def _read_korean_production_required_json_inputs(protected_inputs: dict[str, Path], *, final: bool) -> None:
+    for label in ("catalog_result", "voice_profile", "text_result", "audio_result"):
+        _read_korean_production_json_mapping(protected_inputs[label])
+    if final:
+        _read_korean_production_json_mapping(protected_inputs["generation_report_json"])
 
 
 def _inspect_fixed_korean_foundation_exports() -> _KoreanFoundationExportInspection:
@@ -1127,6 +1263,287 @@ def create_app(
         typer.echo(f"power_count={len(result.powers)}")
         typer.echo(f"binding_count={result.binding_count}")
         typer.echo(f"authority_sha256={result.authority_sha256}")
+
+    @cli.command("validate-korean-production-run-result")
+    def validate_korean_production_run_result_command(
+        database_url: Annotated[str, typer.Option("--database-url")],
+        job_id: Annotated[str, typer.Option("--job-id")],
+        phase31_active_pointer_sha256: Annotated[str, typer.Option("--phase31-active-pointer-sha256", callback=_validate_foundation_sha256)],
+        phase31_active_pointer_content_sha256: Annotated[str, typer.Option("--phase31-active-pointer-content-sha256", callback=_validate_foundation_sha256)],
+        phase31_validation_receipt_sha256: Annotated[str, typer.Option("--phase31-validation-receipt-sha256", callback=_validate_foundation_sha256)],
+        phase31_snapshot_manifest_sha256: Annotated[str, typer.Option("--phase31-snapshot-manifest-sha256", callback=_validate_foundation_sha256)],
+        phase31_snapshot_root_sha256: Annotated[str, typer.Option("--phase31-snapshot-root-sha256", callback=_validate_foundation_sha256)],
+        frequency_bundle_root: Annotated[Path, typer.Option("--frequency-bundle-root", exists=False, file_okay=False)],
+        frequency_bundle_manifest_sha256: Annotated[str, typer.Option("--frequency-bundle-manifest-sha256", callback=_validate_foundation_sha256)],
+        frequency_bundle_content_sha256: Annotated[str, typer.Option("--frequency-bundle-content-sha256", callback=_validate_foundation_sha256)],
+        source_access_authority_sha256: Annotated[str, typer.Option("--source-access-authority-sha256", callback=_validate_foundation_sha256)],
+        source_retrieval_sha256: Annotated[str, typer.Option("--source-retrieval-sha256", callback=_validate_foundation_sha256)],
+        source_transformation_sha256: Annotated[str, typer.Option("--source-transformation-sha256", callback=_validate_foundation_sha256)],
+        source_build_result_sha256: Annotated[str, typer.Option("--source-build-result-sha256", callback=_validate_foundation_sha256)],
+        source_review_aggregate_sha256: Annotated[str, typer.Option("--source-review-aggregate-sha256", callback=_validate_foundation_sha256)],
+        final_bundle_authority_sha256: Annotated[str, typer.Option("--final-bundle-authority-sha256", callback=_validate_foundation_sha256)],
+        provider_policy_sha256: Annotated[str, typer.Option("--provider-policy-sha256", callback=_validate_foundation_sha256)],
+        provider_review_authority_sha256: Annotated[str, typer.Option("--provider-review-authority-sha256", callback=_validate_foundation_sha256)],
+        budget_authority_sha256: Annotated[str, typer.Option("--budget-authority-sha256", callback=_validate_foundation_sha256)],
+        retry_policy_sha256: Annotated[str, typer.Option("--retry-policy-sha256", callback=_validate_foundation_sha256)],
+        full_run_authority_sha256: Annotated[str, typer.Option("--full-run-authority-sha256", callback=_validate_foundation_sha256)],
+        catalog_locator_sha256: Annotated[str, typer.Option("--catalog-locator-sha256", callback=_validate_foundation_sha256)],
+        catalog_content_sha256: Annotated[str, typer.Option("--catalog-content-sha256", callback=_validate_foundation_sha256)],
+        profile_sample_authority_sha256: Annotated[str, typer.Option("--profile-sample-authority-sha256", callback=_validate_foundation_sha256)],
+        heard_review_authority_sha256: Annotated[str, typer.Option("--heard-review-authority-sha256", callback=_validate_foundation_sha256)],
+        full_binding_receipt_sha256: Annotated[str, typer.Option("--full-binding-receipt-sha256", callback=_validate_foundation_sha256)],
+        binding_receipt_file: Annotated[Path, typer.Option("--binding-receipt-file", exists=True, dir_okay=False, readable=True)],
+        frequency_bundle_manifest_file: Annotated[Path, typer.Option("--frequency-bundle-manifest-file", exists=True, dir_okay=False, readable=True)],
+        source_access_authority_file: Annotated[Path, typer.Option("--source-access-authority-file", exists=True, dir_okay=False, readable=True)],
+        source_retrieval_authority_file: Annotated[Path, typer.Option("--source-retrieval-authority-file", exists=True, dir_okay=False, readable=True)],
+        source_transformation_authority_file: Annotated[Path, typer.Option("--source-transformation-authority-file", exists=True, dir_okay=False, readable=True)],
+        source_build_authority_file: Annotated[Path, typer.Option("--source-build-authority-file", exists=True, dir_okay=False, readable=True)],
+        source_review_aggregate_file: Annotated[Path, typer.Option("--source-review-aggregate-file", exists=True, dir_okay=False, readable=True)],
+        final_bundle_authority_file: Annotated[Path, typer.Option("--final-bundle-authority-file", exists=True, dir_okay=False, readable=True)],
+        provider_policy_file: Annotated[Path, typer.Option("--provider-policy-file", exists=True, dir_okay=False, readable=True)],
+        provider_review_authority_file: Annotated[Path, typer.Option("--provider-review-authority-file", exists=True, dir_okay=False, readable=True)],
+        budget_authority_file: Annotated[Path, typer.Option("--budget-authority-file", exists=True, dir_okay=False, readable=True)],
+        retry_policy_file: Annotated[Path, typer.Option("--retry-policy-file", exists=True, dir_okay=False, readable=True)],
+        full_run_authority_file: Annotated[Path, typer.Option("--full-run-authority-file", exists=True, dir_okay=False, readable=True)],
+        catalog_result_file: Annotated[Path, typer.Option("--catalog-result-file", exists=True, dir_okay=False, readable=True)],
+        voice_profile_file: Annotated[Path, typer.Option("--voice-profile-file", exists=True, dir_okay=False, readable=True)],
+        heard_review_authority_file: Annotated[Path, typer.Option("--heard-review-authority-file", exists=True, dir_okay=False, readable=True)],
+        full_binding_receipt_file: Annotated[Path, typer.Option("--full-binding-receipt-file", exists=True, dir_okay=False, readable=True)],
+        text_result_file: Annotated[Path, typer.Option("--text-result-file", exists=True, dir_okay=False, readable=True)],
+        audio_result_file: Annotated[Path, typer.Option("--audio-result-file", exists=True, dir_okay=False, readable=True)],
+        expected_item_count: Annotated[int, typer.Option("--expected-item-count", min=1)],
+        evidence_file: Annotated[Path, typer.Option("--evidence-file", exists=False, dir_okay=False, writable=True)],
+    ) -> None:
+        try:
+            if frequency_bundle_root.is_file():
+                raise ValueError("Korean production evidence bundle authority drift")
+            protected_inputs = {
+                "binding_receipt": binding_receipt_file,
+                "frequency_bundle_manifest": frequency_bundle_manifest_file,
+                "source_access_authority": source_access_authority_file,
+                "source_retrieval_authority": source_retrieval_authority_file,
+                "source_transformation_authority": source_transformation_authority_file,
+                "source_build_authority": source_build_authority_file,
+                "source_review_aggregate": source_review_aggregate_file,
+                "final_bundle_authority": final_bundle_authority_file,
+                "provider_policy": provider_policy_file,
+                "provider_review_authority": provider_review_authority_file,
+                "budget_authority": budget_authority_file,
+                "retry_policy": retry_policy_file,
+                "full_run_authority": full_run_authority_file,
+                "catalog_result": catalog_result_file,
+                "voice_profile": voice_profile_file,
+                "heard_review_authority": heard_review_authority_file,
+                "full_binding_receipt": full_binding_receipt_file,
+                "text_result": text_result_file,
+                "audio_result": audio_result_file,
+            }
+            _ensure_korean_production_outputs_distinct(outputs=(evidence_file,), protected_inputs=protected_inputs)
+            before_hashes = _hash_korean_production_inputs(protected_inputs)
+            _read_korean_production_required_json_inputs(protected_inputs, final=False)
+            authority = _build_korean_production_evidence_authority_from_cli(
+                job_id=job_id,
+                phase31_active_pointer_sha256=phase31_active_pointer_sha256,
+                phase31_active_pointer_content_sha256=phase31_active_pointer_content_sha256,
+                phase31_validation_receipt_sha256=phase31_validation_receipt_sha256,
+                phase31_snapshot_manifest_sha256=phase31_snapshot_manifest_sha256,
+                phase31_snapshot_root_sha256=phase31_snapshot_root_sha256,
+                frequency_bundle_manifest_sha256=frequency_bundle_manifest_sha256,
+                frequency_bundle_content_sha256=frequency_bundle_content_sha256,
+                source_access_authority_sha256=source_access_authority_sha256,
+                source_retrieval_sha256=source_retrieval_sha256,
+                source_transformation_sha256=source_transformation_sha256,
+                source_build_result_sha256=source_build_result_sha256,
+                source_review_aggregate_sha256=source_review_aggregate_sha256,
+                final_bundle_authority_sha256=final_bundle_authority_sha256,
+                provider_policy_sha256=provider_policy_sha256,
+                provider_review_authority_sha256=provider_review_authority_sha256,
+                budget_authority_sha256=budget_authority_sha256,
+                retry_policy_sha256=retry_policy_sha256,
+                full_run_authority_sha256=full_run_authority_sha256,
+                catalog_locator_sha256=catalog_locator_sha256,
+                catalog_content_sha256=catalog_content_sha256,
+                profile_sample_authority_sha256=profile_sample_authority_sha256,
+                heard_review_authority_sha256=heard_review_authority_sha256,
+                full_binding_receipt_sha256=full_binding_receipt_sha256,
+            )
+            rows = load_korean_production_evidence_rows(database_url=database_url, job_id=job_id)
+            after_hashes = _hash_korean_production_inputs(protected_inputs)
+            evidence = validate_korean_production_run_result(
+                authority=authority,
+                rows=rows,
+                expected_item_count=expected_item_count,
+                protected_hashes={label: (before_hashes[label], after_hashes[label]) for label in protected_inputs},
+                phase31_verifier=verify_active_korean_foundation_snapshot_provenance,
+            )
+            _write_korean_production_json_atomic(evidence_file, evidence.model_dump(mode="json"))
+        except (ValueError, TypeError) as exc:
+            _fail_korean_production_evidence_operation(exc)
+        typer.echo("korean_production_run_evidence_status=validated")
+        typer.echo(f"evidence_sha256={evidence.evidence_sha256}")
+        typer.echo(f"provider_call_count={evidence.provider_call_count}")
+
+    @cli.command("validate-korean-production-evidence")
+    def validate_korean_production_evidence_command(
+        database_url: Annotated[str, typer.Option("--database-url")],
+        job_id: Annotated[str, typer.Option("--job-id")],
+        phase31_active_pointer_sha256: Annotated[str, typer.Option("--phase31-active-pointer-sha256", callback=_validate_foundation_sha256)],
+        phase31_active_pointer_content_sha256: Annotated[str, typer.Option("--phase31-active-pointer-content-sha256", callback=_validate_foundation_sha256)],
+        phase31_validation_receipt_sha256: Annotated[str, typer.Option("--phase31-validation-receipt-sha256", callback=_validate_foundation_sha256)],
+        phase31_snapshot_manifest_sha256: Annotated[str, typer.Option("--phase31-snapshot-manifest-sha256", callback=_validate_foundation_sha256)],
+        phase31_snapshot_root_sha256: Annotated[str, typer.Option("--phase31-snapshot-root-sha256", callback=_validate_foundation_sha256)],
+        frequency_bundle_root: Annotated[Path, typer.Option("--frequency-bundle-root", exists=False, file_okay=False)],
+        frequency_bundle_manifest_sha256: Annotated[str, typer.Option("--frequency-bundle-manifest-sha256", callback=_validate_foundation_sha256)],
+        frequency_bundle_content_sha256: Annotated[str, typer.Option("--frequency-bundle-content-sha256", callback=_validate_foundation_sha256)],
+        source_access_authority_sha256: Annotated[str, typer.Option("--source-access-authority-sha256", callback=_validate_foundation_sha256)],
+        source_retrieval_sha256: Annotated[str, typer.Option("--source-retrieval-sha256", callback=_validate_foundation_sha256)],
+        source_transformation_sha256: Annotated[str, typer.Option("--source-transformation-sha256", callback=_validate_foundation_sha256)],
+        source_build_result_sha256: Annotated[str, typer.Option("--source-build-result-sha256", callback=_validate_foundation_sha256)],
+        source_review_aggregate_sha256: Annotated[str, typer.Option("--source-review-aggregate-sha256", callback=_validate_foundation_sha256)],
+        final_bundle_authority_sha256: Annotated[str, typer.Option("--final-bundle-authority-sha256", callback=_validate_foundation_sha256)],
+        provider_policy_sha256: Annotated[str, typer.Option("--provider-policy-sha256", callback=_validate_foundation_sha256)],
+        provider_review_authority_sha256: Annotated[str, typer.Option("--provider-review-authority-sha256", callback=_validate_foundation_sha256)],
+        budget_authority_sha256: Annotated[str, typer.Option("--budget-authority-sha256", callback=_validate_foundation_sha256)],
+        retry_policy_sha256: Annotated[str, typer.Option("--retry-policy-sha256", callback=_validate_foundation_sha256)],
+        full_run_authority_sha256: Annotated[str, typer.Option("--full-run-authority-sha256", callback=_validate_foundation_sha256)],
+        catalog_locator_sha256: Annotated[str, typer.Option("--catalog-locator-sha256", callback=_validate_foundation_sha256)],
+        catalog_content_sha256: Annotated[str, typer.Option("--catalog-content-sha256", callback=_validate_foundation_sha256)],
+        profile_sample_authority_sha256: Annotated[str, typer.Option("--profile-sample-authority-sha256", callback=_validate_foundation_sha256)],
+        heard_review_authority_sha256: Annotated[str, typer.Option("--heard-review-authority-sha256", callback=_validate_foundation_sha256)],
+        full_binding_receipt_sha256: Annotated[str, typer.Option("--full-binding-receipt-sha256", callback=_validate_foundation_sha256)],
+        binding_receipt_file: Annotated[Path, typer.Option("--binding-receipt-file", exists=True, dir_okay=False, readable=True)],
+        frequency_bundle_manifest_file: Annotated[Path, typer.Option("--frequency-bundle-manifest-file", exists=True, dir_okay=False, readable=True)],
+        source_access_authority_file: Annotated[Path, typer.Option("--source-access-authority-file", exists=True, dir_okay=False, readable=True)],
+        source_retrieval_authority_file: Annotated[Path, typer.Option("--source-retrieval-authority-file", exists=True, dir_okay=False, readable=True)],
+        source_transformation_authority_file: Annotated[Path, typer.Option("--source-transformation-authority-file", exists=True, dir_okay=False, readable=True)],
+        source_build_authority_file: Annotated[Path, typer.Option("--source-build-authority-file", exists=True, dir_okay=False, readable=True)],
+        source_review_aggregate_file: Annotated[Path, typer.Option("--source-review-aggregate-file", exists=True, dir_okay=False, readable=True)],
+        final_bundle_authority_file: Annotated[Path, typer.Option("--final-bundle-authority-file", exists=True, dir_okay=False, readable=True)],
+        provider_policy_file: Annotated[Path, typer.Option("--provider-policy-file", exists=True, dir_okay=False, readable=True)],
+        provider_review_authority_file: Annotated[Path, typer.Option("--provider-review-authority-file", exists=True, dir_okay=False, readable=True)],
+        budget_authority_file: Annotated[Path, typer.Option("--budget-authority-file", exists=True, dir_okay=False, readable=True)],
+        retry_policy_file: Annotated[Path, typer.Option("--retry-policy-file", exists=True, dir_okay=False, readable=True)],
+        full_run_authority_file: Annotated[Path, typer.Option("--full-run-authority-file", exists=True, dir_okay=False, readable=True)],
+        catalog_result_file: Annotated[Path, typer.Option("--catalog-result-file", exists=True, dir_okay=False, readable=True)],
+        voice_profile_file: Annotated[Path, typer.Option("--voice-profile-file", exists=True, dir_okay=False, readable=True)],
+        heard_review_authority_file: Annotated[Path, typer.Option("--heard-review-authority-file", exists=True, dir_okay=False, readable=True)],
+        full_binding_receipt_file: Annotated[Path, typer.Option("--full-binding-receipt-file", exists=True, dir_okay=False, readable=True)],
+        text_result_file: Annotated[Path, typer.Option("--text-result-file", exists=True, dir_okay=False, readable=True)],
+        audio_result_file: Annotated[Path, typer.Option("--audio-result-file", exists=True, dir_okay=False, readable=True)],
+        expected_item_count: Annotated[int, typer.Option("--expected-item-count", min=1)],
+        evidence_file: Annotated[Path, typer.Option("--evidence-file", exists=False, dir_okay=False, writable=True)],
+        content_promotion_authority_sha256: Annotated[str, typer.Option("--content-promotion-authority-sha256", callback=_validate_foundation_sha256)],
+        content_promotion_authority_file: Annotated[Path, typer.Option("--content-promotion-authority-file", exists=True, dir_okay=False, readable=True)],
+        text_review_aggregate_sha256: Annotated[str, typer.Option("--text-review-aggregate-sha256", callback=_validate_foundation_sha256)],
+        text_review_aggregate_file: Annotated[Path, typer.Option("--text-review-aggregate-file", exists=True, dir_okay=False, readable=True)],
+        text_review_application_sha256: Annotated[str, typer.Option("--text-review-application-sha256", callback=_validate_foundation_sha256)],
+        text_review_application_receipt_file: Annotated[Path, typer.Option("--text-review-application-receipt-file", exists=True, dir_okay=False, readable=True)],
+        audio_review_aggregate_sha256: Annotated[str, typer.Option("--audio-review-aggregate-sha256", callback=_validate_foundation_sha256)],
+        audio_review_aggregate_file: Annotated[Path, typer.Option("--audio-review-aggregate-file", exists=True, dir_okay=False, readable=True)],
+        audio_review_application_sha256: Annotated[str, typer.Option("--audio-review-application-sha256", callback=_validate_foundation_sha256)],
+        audio_review_application_receipt_file: Annotated[Path, typer.Option("--audio-review-application-receipt-file", exists=True, dir_okay=False, readable=True)],
+        apkg_file: Annotated[Path, typer.Option("--apkg-file", exists=True, dir_okay=False, readable=True)],
+        generation_report_json: Annotated[Path, typer.Option("--generation-report-json", exists=True, dir_okay=False, readable=True)],
+        generation_report_markdown: Annotated[Path, typer.Option("--generation-report-markdown", exists=True, dir_okay=False, readable=True)],
+        expected_word_assets: Annotated[int, typer.Option("--expected-word-assets", min=1)],
+        expected_sentence_assets: Annotated[int, typer.Option("--expected-sentence-assets", min=1)],
+        cards_per_level: Annotated[int, typer.Option("--cards-per-level", min=1)],
+        audit_json: Annotated[Path, typer.Option("--audit-json", exists=False, dir_okay=False, writable=True)],
+        audit_markdown: Annotated[Path, typer.Option("--audit-markdown", exists=False, dir_okay=False, writable=True)],
+    ) -> None:
+        try:
+            if frequency_bundle_root.is_file():
+                raise ValueError("Korean production evidence bundle authority drift")
+            protected_inputs = {
+                "binding_receipt": binding_receipt_file,
+                "frequency_bundle_manifest": frequency_bundle_manifest_file,
+                "source_access_authority": source_access_authority_file,
+                "source_retrieval_authority": source_retrieval_authority_file,
+                "source_transformation_authority": source_transformation_authority_file,
+                "source_build_authority": source_build_authority_file,
+                "source_review_aggregate": source_review_aggregate_file,
+                "final_bundle_authority": final_bundle_authority_file,
+                "provider_policy": provider_policy_file,
+                "provider_review_authority": provider_review_authority_file,
+                "budget_authority": budget_authority_file,
+                "retry_policy": retry_policy_file,
+                "full_run_authority": full_run_authority_file,
+                "catalog_result": catalog_result_file,
+                "voice_profile": voice_profile_file,
+                "heard_review_authority": heard_review_authority_file,
+                "full_binding_receipt": full_binding_receipt_file,
+                "text_result": text_result_file,
+                "audio_result": audio_result_file,
+                "content_promotion_authority": content_promotion_authority_file,
+                "text_review_aggregate": text_review_aggregate_file,
+                "text_review_application_receipt": text_review_application_receipt_file,
+                "audio_review_aggregate": audio_review_aggregate_file,
+                "audio_review_application_receipt": audio_review_application_receipt_file,
+                "apkg": apkg_file,
+                "generation_report_json": generation_report_json,
+                "generation_report_markdown": generation_report_markdown,
+            }
+            _ensure_korean_production_outputs_distinct(
+                outputs=(evidence_file, audit_json, audit_markdown),
+                protected_inputs=protected_inputs,
+            )
+            before_hashes = _hash_korean_production_inputs(protected_inputs)
+            _read_korean_production_required_json_inputs(protected_inputs, final=True)
+            authority = _build_korean_production_evidence_authority_from_cli(
+                job_id=job_id,
+                phase31_active_pointer_sha256=phase31_active_pointer_sha256,
+                phase31_active_pointer_content_sha256=phase31_active_pointer_content_sha256,
+                phase31_validation_receipt_sha256=phase31_validation_receipt_sha256,
+                phase31_snapshot_manifest_sha256=phase31_snapshot_manifest_sha256,
+                phase31_snapshot_root_sha256=phase31_snapshot_root_sha256,
+                frequency_bundle_manifest_sha256=frequency_bundle_manifest_sha256,
+                frequency_bundle_content_sha256=frequency_bundle_content_sha256,
+                source_access_authority_sha256=source_access_authority_sha256,
+                source_retrieval_sha256=source_retrieval_sha256,
+                source_transformation_sha256=source_transformation_sha256,
+                source_build_result_sha256=source_build_result_sha256,
+                source_review_aggregate_sha256=source_review_aggregate_sha256,
+                final_bundle_authority_sha256=final_bundle_authority_sha256,
+                provider_policy_sha256=provider_policy_sha256,
+                provider_review_authority_sha256=provider_review_authority_sha256,
+                budget_authority_sha256=budget_authority_sha256,
+                retry_policy_sha256=retry_policy_sha256,
+                full_run_authority_sha256=full_run_authority_sha256,
+                catalog_locator_sha256=catalog_locator_sha256,
+                catalog_content_sha256=catalog_content_sha256,
+                profile_sample_authority_sha256=profile_sample_authority_sha256,
+                heard_review_authority_sha256=heard_review_authority_sha256,
+                full_binding_receipt_sha256=full_binding_receipt_sha256,
+            )
+            rows = load_korean_production_evidence_rows(database_url=database_url, job_id=job_id)
+            after_hashes = _hash_korean_production_inputs(protected_inputs)
+            evidence = validate_korean_production_final_evidence(
+                authority=authority,
+                rows=rows,
+                expected_item_count=expected_item_count,
+                expected_word_assets=expected_word_assets,
+                expected_sentence_assets=expected_sentence_assets,
+                cards_per_level=cards_per_level,
+                content_promotion_authority_sha256=content_promotion_authority_sha256,
+                text_review_aggregate_sha256=text_review_aggregate_sha256,
+                text_review_application_sha256=text_review_application_sha256,
+                audio_review_aggregate_sha256=audio_review_aggregate_sha256,
+                audio_review_application_sha256=audio_review_application_sha256,
+                apkg_file=apkg_file,
+                generation_report_json=generation_report_json,
+                generation_report_markdown=generation_report_markdown,
+                protected_hashes={label: (before_hashes[label], after_hashes[label]) for label in protected_inputs},
+                phase31_verifier=verify_active_korean_foundation_snapshot_provenance,
+            )
+            audit_payload = build_korean_production_audit_payload(evidence)
+            _write_korean_production_json_atomic(evidence_file, evidence.model_dump(mode="json"))
+            _write_korean_production_json_atomic(audit_json, audit_payload)
+            _write_korean_production_text_atomic(audit_markdown, render_korean_production_audit_markdown(audit_payload))
+        except (ValueError, TypeError) as exc:
+            _fail_korean_production_evidence_operation(exc)
+        typer.echo("korean_production_final_evidence_status=validated")
+        typer.echo(f"evidence_sha256={evidence.evidence_sha256}")
+        typer.echo(f"provider_call_count={evidence.provider_call_count}")
 
     @cli.command("preview-kindle-highlights")
     def preview_kindle_highlights(
