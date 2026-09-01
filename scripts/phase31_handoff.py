@@ -528,7 +528,7 @@ def _validate_media_authority_payload(payload: dict[str, object]) -> None:
         or payload.get("kind") != "media-authority"
         or payload.get("actor_type") != "project_owner"
         or payload.get("agent_authored") is not False
-        or payload.get("consumed") is not False
+        or type(payload.get("consumed")) is not bool
     ):
         _raise(Phase31HandoffReasonCode.HANDOFF_INVALID)
     for field in ("rights_document_sha256", "item_set_sha256", "content_hash"):

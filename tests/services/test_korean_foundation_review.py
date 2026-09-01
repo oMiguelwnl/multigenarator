@@ -143,22 +143,22 @@ def test_review_and_media_default_to_exact_v2_bundle_with_all_gates_pending() ->
     bundle_root = Path(bundle.source_root)
     assert bundle.source_kind == "current-candidate"
     assert bundle.bundle_sha256 == (
-        "36c1442b161fb3d8529678099b4df1c93b43fb2456a24260ac2942787b7f44f0"
+        "e95c795f0e9653b67163345d8acf6d1e31228c544380e95db84342e7e1401357"
     )
     assert bundle.bundle_manifest_sha256 == (
-        "2390974b9f48534665d474b9fe18290e28edc361aa3cc119481db70e44acfd40"
+        "6852f7cc6eeedf2ec88f33ab8f027e76a72981a4179015b8aa40a0f3eb40a3ab"
     )
     assert bundle.member_file_sha256["korean-foundations-v2-curation.json"] == (
-        "faa233cdc67f99c28c3f203e1b206f4ad4f631bc34b8e2fbb970db336f1157db"
+        "695346c70e34e163e459e3f2e1c8156b39ed4f126c4803e98258d229a8164caf"
     )
     assert bundle.member_file_sha256["korean-foundations-v2-media.json"] == (
-        "e21c7a11006cf70a0559ec7fff7279b466097cf3bbc1fa092cee84e7b963e938"
+        "545bd060992e9a17d7a95a3397d774678c3cb3e3cddbe593e93c949f9b12326d"
     )
     assert _sha256_file(bundle_root / "korean-foundations-v2-curation.json") == (
-        "faa233cdc67f99c28c3f203e1b206f4ad4f631bc34b8e2fbb970db336f1157db"
+        "695346c70e34e163e459e3f2e1c8156b39ed4f126c4803e98258d229a8164caf"
     )
     assert _sha256_file(bundle_root / "korean-foundations-v2-media.json") == (
-        "e21c7a11006cf70a0559ec7fff7279b466097cf3bbc1fa092cee84e7b963e938"
+        "545bd060992e9a17d7a95a3397d774678c3cb3e3cddbe593e93c949f9b12326d"
     )
     assert _sha256_file(PHASE_ROOT / "31-CURRICULUM-REVIEW.md") == (
         "df52d78f2bcd3a89e9589ea68d645df02841a2f9017394d14c833cb7580b36cc"
@@ -177,7 +177,7 @@ def test_review_and_media_default_to_exact_v2_bundle_with_all_gates_pending() ->
         bundle.pronunciation.content_hash
     )
     assert curation.content_hash == (
-        "08874c6f4c64240d79cbdb982c1aa0d8a886749bc8100da41036b7c1b8ba9b22"
+        "d3744339e6bdf2217f99adead7cd997468fce76d713a195ff78a639c3ac7bdfe"
     )
     assert len(curation.records) == 139
     assert sum(record.family == "hangul" for record in curation.records) == 92
@@ -207,7 +207,7 @@ def test_review_and_media_default_to_exact_v2_bundle_with_all_gates_pending() ->
     assert media.hangul_source_pack_sha256 == bundle.hangul.content_hash
     assert media.pronunciation_source_pack_sha256 == bundle.pronunciation.content_hash
     assert media.content_hash == (
-        "8d860b5e41738d2322dc63eb220eb23de66f4b68b4ff1f9e3dd8979e90b5b55a"
+        "ad5ae28f96a75848f60555366748589e44c16f0e3dd07aa7e419230a2f8e3708"
     )
     assert len(media.slots) == 509
     assert sum(slot.family == "hangul" for slot in media.slots) == 368

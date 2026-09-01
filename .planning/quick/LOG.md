@@ -48,3 +48,4 @@
 | 055 | Promover o layout Q054 aprovado para o template normal de produção | 2026-08-18 | passed | [055-promote-q054-normal-template](./055-promote-q054-normal-template/) |
 | 057 | Adicionar skill OpenCode para recomendar o nível de raciocínio antes de tarefas e workflows GSDD | 2026-08-23 | passed | [057-add-gsdd-reasoning-level-advisor](./057-add-gsdd-reasoning-level-advisor/) |
 | 058 | Recover Phase 31 AI candidate-data lane evidence after lost temporary worktrees | 2026-08-30 | human_needed | [058-phase31-ai-data-lane-recovery](./058-phase31-ai-data-lane-recovery/) |
+| 059 | Implement real Azure Speech generation for Phase 31 Korean foundation media | 2026-09-01 | passed | [059-implement-phase31-azure-media-generation](./059-implement-phase31-azure-media-generation/) |

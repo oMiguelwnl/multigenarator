@@ -116,7 +116,7 @@ def _write_media_rights(
             "locale": "ko-KR",
             "voice_profile_id": "ko-KR-SunHiNeural",
             "voice_profile_version": "azure-docs-2026-08-13-ebc37366082bd4d002282e679e4fc07099083d5b",
-            "provider_attempt_ceiling": 72,
+            "provider_attempt_ceiling": 233,
             "budget_ceiling_amount": "5.00",
             "budget_ceiling_currency": "USD",
             "credential_boundary": "existing-environment-only-no-secrets-recorded",
@@ -212,7 +212,7 @@ def test_handoff_records_project_owner_media_authority_once(
     assert authority["item_set_sha256"] == rights["item_set"]["item_set_sha256"]
     assert authority["item_count"] == rights["item_set"]["required_slots"]
     assert authority["voice_profile_id"] == "ko-KR-SunHiNeural"
-    assert authority["provider_attempt_ceiling"] == 72
+    assert authority["provider_attempt_ceiling"] == 233
     assert authority["consumed"] is False
     assert api.get_media_authority() == rights_sha256
     api.verify_media_authority(
@@ -221,6 +221,33 @@ def test_handoff_records_project_owner_media_authority_once(
         require_voice_profile=True,
         require_provider_attempt_ceiling=True,
     )
+
+
+def test_media_authority_allows_consumed_state_except_unconsumed_gate(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    api = _handoff()
+    _install_root(api, monkeypatch, tmp_path)
+    rights_sha256, _ = _write_media_rights(tmp_path)
+    authority = api.record_media_authority(
+        f"authorize-media {rights_sha256}",
+        confirmation_method="opencode-user-message",
+        orchestration_timestamp="2026-08-28T00:00:00Z",
+    )
+    authority["consumed"] = True
+    authority["content_hash"] = _canonical_hash(authority)
+    authority_path = tmp_path / PHASE_RELPATH / "execution-handoffs" / "media-authority.json"
+    authority_path.write_text(
+        json.dumps(authority, ensure_ascii=False, sort_keys=True, separators=(",", ":"))
+        + "\n",
+        encoding="utf-8",
+    )
+
+    assert api.get_media_authority() == rights_sha256
+    api.verify_media_authority(require_project_owner=True)
+    with pytest.raises(api.Phase31HandoffError):
+        api.verify_media_authority(require_unconsumed=True)
 
 
 def test_media_authority_rejects_decline_stale_hash_and_replay(
