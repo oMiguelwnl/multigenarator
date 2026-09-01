@@ -134,6 +134,7 @@ def test_blocked_acoustic_aggregate_requires_exact_counts_and_hash() -> None:
                 "reason_code": "azure_speech_credentials_missing",
             }
         ],
+        "media_artifacts_sha256": None,
     }
     payload["aggregate_root"] = api.ai_acoustic_review_sha256(payload)
 
@@ -145,3 +146,32 @@ def test_blocked_acoustic_aggregate_requires_exact_counts_and_hash() -> None:
     changed["aggregate_root"] = api.ai_acoustic_review_sha256(changed)
     with pytest.raises(ValidationError):
         api.AIAcousticReviewAggregate.model_validate(changed)
+
+
+def test_passing_acoustic_aggregate_requires_artifact_binding() -> None:
+    api = _acoustic()
+    payload = {
+        "schema_version": 1,
+        "phase": "31-hangul-and-pronunciation-i-plus-1",
+        "status": "passing",
+        "media_rights_sha256": "a" * 64,
+        "media_authority_sha256": "b" * 64,
+        "item_set_sha256": "c" * 64,
+        "required_slots": 325,
+        "audio_subjects": 233,
+        "visual_subjects": 92,
+        "passing": 325,
+        "blocked": 0,
+        "blockers": [],
+        "media_artifacts_sha256": "d" * 64,
+    }
+    payload["aggregate_root"] = api.ai_acoustic_review_sha256(payload)
+
+    aggregate = api.AIAcousticReviewAggregate.model_validate(payload)
+    assert aggregate.status == "passing"
+
+    missing_artifacts = dict(payload)
+    missing_artifacts["media_artifacts_sha256"] = None
+    missing_artifacts["aggregate_root"] = api.ai_acoustic_review_sha256(missing_artifacts)
+    with pytest.raises(ValidationError):
+        api.AIAcousticReviewAggregate.model_validate(missing_artifacts)

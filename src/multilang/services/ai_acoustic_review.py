@@ -237,6 +237,8 @@ class AIAcousticBlocker(_FrozenAcousticModel):
     reason_code: Literal[
         "azure_speech_credentials_missing",
         "provider_execution_not_available",
+        "provider_attempt_ceiling_exceeded",
+        "provider_execution_failed",
         "acoustic_review_missing",
     ]
 
@@ -254,11 +256,20 @@ class AIAcousticReviewAggregate(_FrozenAcousticModel):
     passing: int = Field(ge=0)
     blocked: int = Field(ge=0)
     blockers: tuple[AIAcousticBlocker, ...]
+    media_artifacts_sha256: str | None = Field(default=None, min_length=64, max_length=64)
     aggregate_root: str = Field(min_length=64, max_length=64)
 
-    @field_validator("media_rights_sha256", "media_authority_sha256", "item_set_sha256", "aggregate_root")
+    @field_validator(
+        "media_rights_sha256",
+        "media_authority_sha256",
+        "item_set_sha256",
+        "media_artifacts_sha256",
+        "aggregate_root",
+    )
     @classmethod
-    def hashes_must_be_sha256(cls, value: str, info: object) -> str:
+    def hashes_must_be_sha256(cls, value: str | None, info: object) -> str | None:
+        if value is None:
+            return None
         return _sha256_text(value, field_name=getattr(info, "field_name", "hash"))
 
     @model_validator(mode="after")
@@ -269,8 +280,12 @@ class AIAcousticReviewAggregate(_FrozenAcousticModel):
             raise ValueError("aggregate totals do not cover required slots")
         if self.status == "passing" and (self.blocked or self.blockers):
             raise ValueError("passing aggregate cannot carry blockers")
+        if self.status == "passing" and self.media_artifacts_sha256 is None:
+            raise ValueError("passing aggregate requires generated artifact binding")
         if self.status == "blocked" and self.blocked <= 0:
             raise ValueError("blocked aggregate requires blockers")
+        if self.status == "blocked" and self.media_artifacts_sha256 is not None:
+            raise ValueError("blocked aggregate cannot claim generated artifact binding")
         if self.aggregate_root != ai_acoustic_review_sha256(self):
             raise ValueError("aggregate root does not match")
         return self

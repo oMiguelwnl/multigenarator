@@ -84,7 +84,10 @@ class _FakeSpeechSynthesizer:
 _FAKE_SPEECHSDK = SimpleNamespace(
     SpeechConfig=_FakeSpeechConfig,
     SpeechSynthesizer=_FakeSpeechSynthesizer,
-    SpeechSynthesisOutputFormat=SimpleNamespace(Audio24Khz48KBitRateMonoMp3="mp3-enum"),
+    SpeechSynthesisOutputFormat=SimpleNamespace(
+        Audio24Khz48KBitRateMonoMp3="mp3-enum",
+        Riff24Khz16BitMonoPcm="wav-enum",
+    ),
     ResultReason=SimpleNamespace(SynthesizingAudioCompleted="completed"),
     CancellationDetails=SimpleNamespace(
         from_result=lambda result: SimpleNamespace(
@@ -162,6 +165,25 @@ def test_azure_speech_adapter_requires_credentials_for_synthesis(tmp_path: Path)
             output_path=tmp_path / "audio.mp3",
             audio_format="audio-24khz-48kbitrate-mono-mp3",
         )
+
+
+def test_azure_speech_adapter_supports_phase31_wav_format(tmp_path: Path) -> None:
+    output_path = tmp_path / "audio" / "word.wav"
+    adapter = AzureSpeechAdapter(
+        Settings(azure_speech_key="key", azure_speech_region="eastus"),
+        speechsdk_module=_FAKE_SPEECHSDK,
+    )
+
+    adapter.synthesize(
+        ssml_text="안녕하세요",
+        voice_id="ko-KR-SunHiNeural",
+        locale="ko-KR",
+        output_path=output_path,
+        audio_format="pcm_s16le_wav",
+    )
+
+    assert _FakeSpeechSynthesizer.latest_config is not None
+    assert _FakeSpeechSynthesizer.latest_config.output_format == "wav-enum"
 
 
 def test_build_azure_ssml_preserves_safe_prosody_from_legacy_speak() -> None:

@@ -21,6 +21,7 @@ _VOICE_LIST_PATH = "/cognitiveservices/voices/list"
 _LEGACY_SPEAK_RE = re.compile(r"^<speak(?:\s[^>]*)?>(.*)</speak>$", re.DOTALL)
 _OUTPUT_FORMATS = {
     "audio-24khz-48kbitrate-mono-mp3": "Audio24Khz48KBitRateMonoMp3",
+    "pcm_s16le_wav": "Riff24Khz16BitMonoPcm",
 }
 
 
