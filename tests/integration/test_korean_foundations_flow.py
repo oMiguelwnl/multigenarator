@@ -48,7 +48,7 @@ LOCKED_EXPORT_NAMES = {
     "pronunciation-i-plus-1-tsv",
 }
 CURRENT_BUNDLE_SHA256 = (
-    "36c1442b161fb3d8529678099b4df1c93b43fb2456a24260ac2942787b7f44f0"
+    "e95c795f0e9653b67163345d8acf6d1e31228c544380e95db84342e7e1401357"
 )
 V2_CANDIDATE_FILENAMES = (
     "current-candidate.json",

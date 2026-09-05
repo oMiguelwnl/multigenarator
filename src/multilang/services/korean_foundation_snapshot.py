@@ -1323,13 +1323,25 @@ def _read_receipt_authority(
             )
             for filename in _REQUEST_FILENAMES
         )
+        current_ai_media_layout = evidence._is_current_ai_media_index(
+            validated.layout.index
+        )
+        review_evidence_relpaths = (
+            tuple(
+                member.relpath
+                for member in validated.layout.index.members
+                if member.role != "media"
+            )
+            if current_ai_media_layout
+            else _REVIEW_EVIDENCE_RELPATHS
+        )
         copy_members.extend(
             _SnapshotCopyMember(
                 role="review_evidence",
                 relpath=f"review/{relpath}",
                 content=members[relpath],
             )
-            for relpath in _REVIEW_EVIDENCE_RELPATHS
+            for relpath in review_evidence_relpaths
         )
         copy_members.extend(
             _SnapshotCopyMember(
@@ -1342,9 +1354,13 @@ def _read_receipt_authority(
             for member in validated.layout.index.members
             if member.role == "media"
         )
-        if len(copy_members) != 527 or sum(
+        expected_media_count = sum(
+            member.role == "media" for member in validated.layout.index.members
+        )
+        expected_member_count = 11 + len(review_evidence_relpaths) + expected_media_count
+        if len(copy_members) != expected_member_count or sum(
             member.role == "media" for member in copy_members
-        ) != 509:
+        ) != expected_media_count:
             _raise(KoreanFoundationSnapshotReasonCode.AUTHORITY_DRIFT)
         evidence._assert_state_unchanged(evidence_paths, validated)
     except KoreanFoundationSnapshotError:

@@ -24,7 +24,7 @@ from pydantic import ValidationError
 
 
 CURRENT_BUNDLE_SHA256 = (
-    "36c1442b161fb3d8529678099b4df1c93b43fb2456a24260ac2942787b7f44f0"
+    "e95c795f0e9653b67163345d8acf6d1e31228c544380e95db84342e7e1401357"
 )
 CURRENT_BUNDLE_RELPATH = f"candidate-bundles/{CURRENT_BUNDLE_SHA256}"
 V2_CANDIDATE_FILENAMES = (
@@ -37,22 +37,22 @@ V2_CANDIDATE_FILENAMES = (
 )
 EXPECTED_V2_CANDIDATE_SHA256 = {
     "current-candidate.json": (
-        "0fa9e0756ab59969dc55ab428544c18aad1d1d14631b0d2569a33823feb24518"
+        "225ff85c19346866640400765a3b33ac9d13e2e9a13ee67c6edb11455a6179e5"
     ),
     "bundle-manifest.json": (
-        "2390974b9f48534665d474b9fe18290e28edc361aa3cc119481db70e44acfd40"
+        "6852f7cc6eeedf2ec88f33ab8f027e76a72981a4179015b8aa40a0f3eb40a3ab"
     ),
     "hangul-v2.json": (
-        "63c36c50c0efa61f7ba76ebdf92ff174f79aadedb63b46d15da01599f2594f59"
+        "da12a49c5f42483eeeb6da4f251ea2eba3295afa7cf07c2c621e4dddfa5ff038"
     ),
     "pronunciation-i-plus-1-v2.json": (
-        "cdac65b7e3a9615e62f187dcf7c7f6c543a480710b618ce0c9eb580281cd955c"
+        "889acedc9de497cfa25d8699ac4d2434bd102653c31276874a8b4336fd15448e"
     ),
     "korean-foundations-v2-curation.json": (
-        "faa233cdc67f99c28c3f203e1b206f4ad4f631bc34b8e2fbb970db336f1157db"
+        "695346c70e34e163e459e3f2e1c8156b39ed4f126c4803e98258d229a8164caf"
     ),
     "korean-foundations-v2-media.json": (
-        "e21c7a11006cf70a0559ec7fff7279b466097cf3bbc1fa092cee84e7b963e938"
+        "545bd060992e9a17d7a95a3397d774678c3cb3e3cddbe593e93c949f9b12326d"
     ),
 }
 EXPECTED_V2_REQUEST_SHA256 = {
@@ -63,6 +63,9 @@ EXPECTED_V2_REQUEST_SHA256 = {
         "4e28149921c9602c78f1e15633923b55eaf572993fce506651d6d474acf73035"
     ),
 }
+CURRENT_AI_AGGREGATE_ROOT = (
+    "9abb3d6b950e34c010ea0ed380e995cf39d653e875f43c3a2bfdc78363993922"
+)
 
 
 def _snapshot() -> ModuleType:
@@ -1015,6 +1018,56 @@ def test_prepare_recovers_only_safe_stages_and_builds_exact_immutable_snapshot(
     assert not tuple(state.paths.snapshot_root.glob(".staging-*"))
     assert fsync_calls >= prepared.member_count + 1
     assert state.paths.active_pointer.exists() is False
+
+
+def test_current_ai_media_receipt_prepares_activates_and_exports_from_snapshot(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    helpers = _plan_31_08_fixture_helpers()
+    evidence_api = import_module("multilang.services.korean_foundation_evidence")
+    export_api = import_module("multilang.services.korean_foundation_export")
+    fixture = helpers._build_current_ai_media_fixture(tmp_path)
+    helpers._install_fixture_paths(evidence_api, monkeypatch, fixture)
+    api = _snapshot()
+    _install_snapshot_fixture_paths(api, monkeypatch, fixture.project_root)
+
+    inventory = evidence_api.inspect_fixed_korean_foundation_evidence_inbox()
+    receipt = evidence_api.validate_and_write_fixed_korean_foundation_validation_receipt(
+        confirmed_index_sha256=inventory.index_sha256
+    )
+    receipt_sha256 = sha256(fixture.receipt_path.read_bytes()).hexdigest()
+    prepared = api.prepare_korean_foundation_snapshot_from_receipt(
+        expected_receipt_sha256=receipt_sha256
+    )
+    activated = api.activate_prepared_korean_foundation_snapshot_from_receipt(
+        expected_receipt_sha256=receipt_sha256,
+        authorization_sha256=prepared.authorization_sha256,
+    )
+    resolved = api.resolve_active_korean_foundation_snapshot()
+
+    assert receipt.reviewer_evidence_sha256 == CURRENT_AI_AGGREGATE_ROOT
+    assert prepared.member_count == 372
+    assert prepared.media_member_count == 325
+    assert activated.activated is True
+    assert resolved.receipt_sha256 == receipt_sha256
+    assert (resolved.snapshot_root / "review" / "ai-review" / "aggregate.json").is_file()
+    assert (resolved.snapshot_root / "review" / "acoustic-review.json").is_file()
+    assert (resolved.snapshot_root / "review" / "media-rights.json").is_file()
+    assert (resolved.snapshot_root / "review" / "execution-handoffs" / "media-authority.json").is_file()
+
+    hangul = export_api._build_korean_foundation_export_bundle_from_snapshot(
+        resolved,
+        family=evidence_api.KoreanFoundationFamily.HANGUL,
+    )
+    pronunciation = export_api._build_korean_foundation_export_bundle_from_snapshot(
+        resolved,
+        family=evidence_api.KoreanFoundationFamily.PRONUNCIATION,
+    )
+    assert len(hangul.rows) == 92
+    assert len(hangul.media) == 184
+    assert len(pronunciation.rows) == 47
+    assert len(pronunciation.media) == 141
 
 
 def test_recovery_rejects_uncontained_same_named_snapshot_directory(

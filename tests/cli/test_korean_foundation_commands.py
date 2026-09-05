@@ -27,7 +27,7 @@ runner = CliRunner()
 HASHES = tuple(str(index) * 64 for index in range(1, 7))
 RECEIPT_SHA256, BUNDLE_SHA256, MANIFEST_SHA256, ROOT_SHA256, PRESTATE_SHA256, AUTHORIZATION_SHA256 = HASHES
 CURRENT_BUNDLE_SHA256 = (
-    "36c1442b161fb3d8529678099b4df1c93b43fb2456a24260ac2942787b7f44f0"
+    "e95c795f0e9653b67163345d8acf6d1e31228c544380e95db84342e7e1401357"
 )
 CURRENT_BUNDLE_RELPATH = Path("candidate-bundles") / CURRENT_BUNDLE_SHA256
 
@@ -678,7 +678,7 @@ def test_service_failures_are_content_free_and_unexpected_errors_are_not_swallow
     assert unhandled.output == ""
 
 
-def test_production_defaults_refuse_before_writes_without_candidate_or_runtime_fallback(
+def test_production_defaults_use_active_snapshot_without_candidate_or_runtime_fallback(
     tmp_path: Path,
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
@@ -711,27 +711,33 @@ def test_production_defaults_refuse_before_writes_without_candidate_or_runtime_f
         context.setattr(socket.socket, "connect", forbidden_construction)
 
         app = create_app()
+        result = runner.invoke(app, ["korean-foundations", "inspect-inbox"])
+        assert result.exit_code == 0
+        assert "inbox_status=complete_unvalidated" in result.output
+        assert "evidence_index_sha256=" in result.output
+        assert "declared_member_count=362" in result.output
+        assert str(Path.cwd()) not in result.output
+
         refusal_cases = (
-            (["inspect-inbox"], "inbox_incomplete"),
             (
                 [
                     "validate-and-write-receipt",
                     "--confirmed-index-sha256",
                     "0" * 64,
                 ],
-                "index_missing",
+                "index_hash_mismatch",
             ),
             (
                 ["check-receipt", "--expected-receipt-sha256", "0" * 64],
-                "receipt_missing",
+                "receipt_hash_mismatch",
             ),
             (
                 ["prepare-snapshot", "--expected-receipt-sha256", "0" * 64],
-                "receipt_missing",
+                "receipt_hash_mismatch",
             ),
             (
                 ["verify-prepared", "--expected-receipt-sha256", "0" * 64],
-                "receipt_missing",
+                "receipt_hash_mismatch",
             ),
             (
                 [
@@ -740,15 +746,13 @@ def test_production_defaults_refuse_before_writes_without_candidate_or_runtime_f
                     "0" * 64,
                     "--authorization-sha256",
                     "1" * 64,
-                ],
-                "receipt_missing",
+                    ],
+                "receipt_hash_mismatch",
             ),
             (
                 ["verify-active", "--expected-receipt-sha256", "0" * 64],
-                "receipt_missing",
+                "receipt_hash_mismatch",
             ),
-            (["check", "--family", "hangul"], "production_not_active"),
-            (["inspect-exports"], "production_not_active"),
         )
         for arguments, expected_reason in refusal_cases:
             result = runner.invoke(app, ["korean-foundations", *arguments])
@@ -756,30 +760,44 @@ def test_production_defaults_refuse_before_writes_without_candidate_or_runtime_f
             assert result.output == f"korean_foundations_error={expected_reason}\n"
             assert str(Path.cwd()) not in result.output
 
-        for family in ("hangul", "pronunciation"):
-            for format_name in ("apkg", "csv", "tsv"):
-                destination = tmp_path / (
-                    f"{family}.apkg" if format_name == "apkg" else f"{family}-{format_name}"
-                )
-                result = runner.invoke(
-                    app,
-                    [
-                        "korean-foundations",
-                        "export",
-                        "--family",
-                        family,
-                        "--format",
-                        format_name,
-                        "--output",
-                        str(destination),
-                    ],
-                )
-                assert result.exit_code == 1
-                assert result.output == (
-                    "korean_foundations_error=production_not_active\n"
-                )
-                assert not destination.exists()
-        assert list(tmp_path.iterdir()) == []
+        result = runner.invoke(app, ["korean-foundations", "check", "--family", "hangul"])
+        assert result.exit_code == 0
+        assert result.output.splitlines() == [
+            "family=hangul",
+            "readiness_status=ready",
+            "card_count=92",
+            "media_count=184",
+        ]
+
+        result = runner.invoke(app, ["korean-foundations", "inspect-exports"])
+        assert result.exit_code == 0
+        assert result.output.splitlines()[0] == "export_set_status=verified"
+        assert "artifact_count=6" in result.output
+
+        destination = tmp_path / "hangul-csv"
+        result = runner.invoke(
+            app,
+            [
+                "korean-foundations",
+                "export",
+                "--family",
+                "hangul",
+                "--format",
+                "csv",
+                "--output",
+                str(destination),
+            ],
+        )
+        assert result.exit_code == 0
+        assert result.output.splitlines() == [
+            "family=hangul",
+            "format=csv",
+            "export_status=written",
+            "card_count=92",
+            "media_count=184",
+        ]
+        assert destination.exists()
+        assert str(tmp_path) not in result.output
 
     assert _tree_digest(CANONICAL_STATE_PATHS) == before
 

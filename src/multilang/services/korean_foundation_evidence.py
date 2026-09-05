@@ -14,10 +14,24 @@ import stat
 import struct
 import tempfile
 from typing import Any, Callable, Final, Literal, Self
+import unicodedata
 import wave
 
 from pydantic import BaseModel, ConfigDict, Field, ValidationError, field_validator, model_validator
 
+from multilang.services.ai_acoustic_review import (
+    AIAcousticReviewAggregate,
+    ai_acoustic_review_sha256,
+)
+from multilang.services.ai_linguistic_review import (
+    AIReviewAggregate,
+    AIReviewAttempt,
+    AIReviewPolicy,
+    AIReviewSubject,
+    AIValidatorRun,
+    ai_review_content_hash,
+    build_ai_review_aggregate,
+)
 from multilang.services._korean_foundation_state_lock import (
     KOREAN_FOUNDATION_STATE_LOCK_VERSION,
     _korean_foundation_state_lock,
@@ -33,6 +47,8 @@ from multilang.services.korean_curriculum import (
 from multilang.services.korean_foundation_media import (
     KoreanFoundationMediaManifest,
     KoreanFoundationMediaSlot,
+    korean_foundation_media_manifest_sha256,
+    korean_foundation_media_metadata_sha256,
 )
 from multilang.services.korean_foundation_review import (
     KoreanFoundationCurationManifest,
@@ -89,6 +105,67 @@ _FIXED_MEMBER_ROLES: Final = (
     ("reviewers/portuguese.json", "reviewer"),
     ("reviewers/independent-native-speaker.json", "reviewer"),
 )
+_AI_REVIEW_ROOT_RELPATH: Final = "ai-review"
+_AI_ATTEMPTS_RELPATH: Final = "ai-review/attempts"
+_AI_FAILED_ATTEMPTS_RELPATH: Final = "ai-review/failed-attempts"
+_AI_PROJECTIONS_RELPATH: Final = "ai-review/projections"
+_AI_POLICY_RELPATH: Final = "ai-review/policy.json"
+_AI_SUBJECTS_RELPATH: Final = "ai-review/subjects.json"
+_AI_VALIDATORS_RELPATH: Final = "ai-review/validator-runs.json"
+_AI_AGGREGATE_RELPATH: Final = "ai-review/aggregate.json"
+_ACOUSTIC_REVIEW_RELPATH: Final = "acoustic-review.json"
+_MEDIA_RIGHTS_RELPATH: Final = "media-rights.json"
+_MEDIA_ARTIFACTS_RELPATH: Final = "media/artifacts.json"
+_MEDIA_AUTHORITY_RELPATH: Final = "execution-handoffs/media-authority.json"
+_CURRENT_LAYOUT_FIXED_MEMBER_ROLES: Final = (
+    (_AI_POLICY_RELPATH, "ai_review_policy"),
+    (_AI_SUBJECTS_RELPATH, "ai_review_subjects"),
+    (_AI_VALIDATORS_RELPATH, "ai_review_validators"),
+    (_AI_AGGREGATE_RELPATH, "ai_review_aggregate"),
+    (_ACOUSTIC_REVIEW_RELPATH, "acoustic_review"),
+    (_MEDIA_RIGHTS_RELPATH, "media_rights"),
+    (_MEDIA_AUTHORITY_RELPATH, "media_authority"),
+    (_MEDIA_ARTIFACTS_RELPATH, "media_artifacts"),
+)
+_CURRENT_LAYOUT_DIRECTORIES: Final = {
+    _AI_REVIEW_ROOT_RELPATH,
+    _AI_ATTEMPTS_RELPATH,
+    _AI_FAILED_ATTEMPTS_RELPATH,
+    _AI_PROJECTIONS_RELPATH,
+    "media",
+    "media/hangul",
+    "media/pronunciation",
+}
+_AI_ATTEMPT_COUNT: Final = 21
+_AI_PROJECTION_COUNT: Final = 7
+_CURRENT_REQUIRED_MEDIA_COUNT: Final = 325
+_CURRENT_AI_REVIEW_SOURCE_VERSION: Final = "phase31-ai-linguistic-review-v1"
+_CURRENT_MEDIA_SOURCE_VERSION: Final = "phase31-ai-acoustic-review-v1"
+_CURRENT_MEDIA_SOURCE_ID: Final = "phase31-ai-media-authority"
+_CURRENT_MEDIA_LICENSE_ID: Final = "phase31-project-owner-authorized-local-use"
+_CURRENT_AUDIO_SOURCE_ID: Final = "azure-speech-service"
+_CURRENT_VISUAL_SOURCE_ID: Final = "local-deterministic-project-authored"
+_CURRENT_VISUAL_SOURCE_VERSION: Final = "phase31-local-deterministic-visual-v1"
+_CURRENT_AUDIO_ATTRIBUTION: Final = (
+    "Project-owner authorized Azure Speech Service Korean TTS for Phase 31 local closure."
+)
+_CURRENT_VISUAL_ATTRIBUTION: Final = (
+    "Project-owner authorized deterministic project-authored visual media for Phase 31 local closure."
+)
+_SENTINEL_SHA256: Final = sha256(b"not_applicable").hexdigest()
+_HANGUL_AUDIO_TEXT_BY_DISPLAY: Final = {
+    "ㄳ": "ㄱ ㅅ",
+    "ㄵ": "ㄴ ㅈ",
+    "ㄶ": "ㄴ ㅎ",
+    "ㄺ": "ㄹ ㄱ",
+    "ㄻ": "ㄹ ㅁ",
+    "ㄼ": "ㄹ ㅂ",
+    "ㄽ": "ㄹ ㅅ",
+    "ㄾ": "ㄹ ㅌ",
+    "ㄿ": "ㄹ ㅍ",
+    "ㅀ": "ㄹ ㅎ",
+    "ㅄ": "ㅂ ㅅ",
+}
 _REVIEWER_ROLE_CONTRACT: Final = {
     "reviewers/korean-orthography.json": (
         "korean-orthography-reviewer",
@@ -285,6 +362,10 @@ def _canonical_sha256(value: object) -> str:
 
 def _json_file_bytes(value: object) -> bytes:
     return _canonical_bytes(value) + b"\n"
+
+
+def _text_sha256(value: str) -> str:
+    return sha256(unicodedata.normalize("NFC", value).encode("utf-8")).hexdigest()
 
 
 def _safe_relpath(value: str) -> str:
@@ -497,6 +578,16 @@ class KoreanFoundationEvidenceMember(_FrozenEvidenceModel):
         "audio_playback_review",
         "rights",
         "reviewer",
+        "ai_review_policy",
+        "ai_review_subjects",
+        "ai_review_validators",
+        "ai_review_aggregate",
+        "ai_review_attempt",
+        "ai_review_projection",
+        "acoustic_review",
+        "media_rights",
+        "media_authority",
+        "media_artifacts",
         "media",
     ]
     size_bytes: int = Field(ge=1, le=_MEDIA_MEMBER_MAX_BYTES)
@@ -1073,17 +1164,35 @@ def _parse_model(
         raise KoreanFoundationEvidenceError(reason_code) from exc
 
 
+def _is_external_evidence_member(relpath: str) -> bool:
+    return relpath == _MEDIA_AUTHORITY_RELPATH
+
+
+def _member_path(paths: _KoreanFoundationEvidencePaths, relpath: str) -> Path:
+    if _is_external_evidence_member(relpath):
+        return paths.phase_dir.joinpath(*PurePosixPath(relpath).parts)
+    return paths.inbox.joinpath(*PurePosixPath(relpath).parts)
+
+
 def _read_index(
     paths: _KoreanFoundationEvidencePaths,
     *,
     confirmed_index_sha256: str | None = None,
 ) -> tuple[KoreanFoundationEvidenceIndex, bytes, str]:
-    raw = _read_regular_file(
-        paths.index,
-        paths=paths,
-        maximum_bytes=_INDEX_MAX_BYTES,
-        missing_reason=KoreanFoundationEvidenceReasonCode.INDEX_MISSING,
-    )
+    try:
+        raw = _read_regular_file(
+            paths.index,
+            paths=paths,
+            maximum_bytes=_INDEX_MAX_BYTES,
+            missing_reason=KoreanFoundationEvidenceReasonCode.INDEX_MISSING,
+        )
+    except KoreanFoundationEvidenceError as exc:
+        if exc.reason_code is not KoreanFoundationEvidenceReasonCode.INDEX_MISSING:
+            raise
+        return _derive_current_ai_media_index(
+            paths,
+            confirmed_index_sha256=confirmed_index_sha256,
+        )
     actual_hash = sha256(raw).hexdigest()
     if confirmed_index_sha256 is not None and actual_hash != confirmed_index_sha256:
         _raise(KoreanFoundationEvidenceReasonCode.INDEX_HASH_MISMATCH)
@@ -1113,6 +1222,55 @@ def _read_index(
     return index, raw, actual_hash
 
 
+def _is_current_ai_media_index(index: KoreanFoundationEvidenceIndex) -> bool:
+    fixed_count = len(_CURRENT_LAYOUT_FIXED_MEMBER_ROLES)
+    return tuple(
+        (member.relpath, member.role) for member in index.members[:fixed_count]
+    ) == _CURRENT_LAYOUT_FIXED_MEMBER_ROLES
+
+
+def _validate_current_ai_media_index_contract(
+    index: KoreanFoundationEvidenceIndex,
+) -> None:
+    fixed_count = len(_CURRENT_LAYOUT_FIXED_MEMBER_ROLES)
+    tail = index.members[fixed_count:]
+    attempts = tuple(member for member in tail if member.role == "ai_review_attempt")
+    projections = tuple(member for member in tail if member.role == "ai_review_projection")
+    media = tuple(member for member in tail if member.role == "media")
+    if (
+        len(attempts) != _AI_ATTEMPT_COUNT
+        or len(projections) != _AI_PROJECTION_COUNT
+        or len(media) != _CURRENT_REQUIRED_MEDIA_COUNT
+        or len(tail) != len(attempts) + len(projections) + len(media)
+    ):
+        _raise(KoreanFoundationEvidenceReasonCode.INDEX_INVALID)
+    expected_attempts = tuple(
+        f"ai-review/attempts/batch-{batch:02d}-pass-{pass_number}.json"
+        for batch in range(1, 8)
+        for pass_number in range(1, 4)
+    )
+    if tuple(member.relpath for member in attempts) != expected_attempts:
+        _raise(KoreanFoundationEvidenceReasonCode.INDEX_INVALID)
+    expected_projections = tuple(
+        f"ai-review/projections/batch-{batch:02d}.json" for batch in range(1, 8)
+    )
+    if tuple(member.relpath for member in projections) != expected_projections:
+        _raise(KoreanFoundationEvidenceReasonCode.INDEX_INVALID)
+    basenames: list[str] = []
+    for member in media:
+        relpath = PurePosixPath(member.relpath)
+        if (
+            len(relpath.parts) != 3
+            or relpath.parts[0] != "media"
+            or relpath.parts[1] not in {"hangul", "pronunciation"}
+            or relpath.suffix.casefold() not in {".png", ".wav"}
+        ):
+            _raise(KoreanFoundationEvidenceReasonCode.UNSAFE_MEMBER)
+        basenames.append(relpath.name)
+    if len(basenames) != len(set(basenames)):
+        _raise(KoreanFoundationEvidenceReasonCode.INDEX_INVALID)
+
+
 def _validate_index_contract(index: KoreanFoundationEvidenceIndex) -> None:
     if index.index_version != _INDEX_VERSION:
         _raise(KoreanFoundationEvidenceReasonCode.INDEX_INVALID)
@@ -1124,6 +1282,9 @@ def _validate_index_contract(index: KoreanFoundationEvidenceIndex) -> None:
         _REQUEST_FILENAMES
     ):
         _raise(KoreanFoundationEvidenceReasonCode.INDEX_INVALID)
+    if _is_current_ai_media_index(index):
+        _validate_current_ai_media_index_contract(index)
+        return
     fixed_count = len(_FIXED_MEMBER_ROLES)
     fixed_rows = tuple(
         (member.relpath, member.role) for member in index.members[:fixed_count]
@@ -1185,11 +1346,23 @@ def _collect_inbox_tree(
 
 
 def _expected_inbox_files(index: KoreanFoundationEvidenceIndex) -> set[str]:
-    return {
+    files = {
         "README.md",
-        "evidence-index.json",
-        *(member.relpath for member in index.members),
+        *(
+            member.relpath
+            for member in index.members
+            if not _is_external_evidence_member(member.relpath)
+        ),
     }
+    if not _is_current_ai_media_index(index):
+        files.add("evidence-index.json")
+    return files
+
+
+def _expected_inbox_directories(index: KoreanFoundationEvidenceIndex) -> set[str]:
+    if _is_current_ai_media_index(index):
+        return set(_CURRENT_LAYOUT_DIRECTORIES)
+    return {"media", "reviewers"}
 
 
 def _validate_layout(
@@ -1204,11 +1377,12 @@ def _validate_layout(
     _validate_index_contract(index)
     actual_files, actual_directories = _collect_inbox_tree(paths)
     expected_files = _expected_inbox_files(index)
+    expected_directories = _expected_inbox_directories(index)
     if "validation-receipt.json" in actual_files:
         expected_files.add("validation-receipt.json")
-    if actual_directories - {"media", "reviewers"}:
+    if actual_directories - expected_directories:
         _raise(KoreanFoundationEvidenceReasonCode.UNEXPECTED_MEMBER)
-    if {"media", "reviewers"} - actual_directories:
+    if expected_directories - actual_directories:
         _raise(KoreanFoundationEvidenceReasonCode.MEMBER_MISSING)
     if actual_files - expected_files:
         _raise(KoreanFoundationEvidenceReasonCode.UNEXPECTED_MEMBER)
@@ -1229,7 +1403,7 @@ def _validate_layout(
         maximum_bytes = (
             _MEDIA_MEMBER_MAX_BYTES if member.role == "media" else _JSON_MEMBER_MAX_BYTES
         )
-        member_path = paths.inbox.joinpath(*PurePosixPath(member.relpath).parts)
+        member_path = _member_path(paths, member.relpath)
         raw = _read_regular_file(
             member_path,
             paths=paths,
@@ -1296,15 +1470,16 @@ def _inspect_inventory(paths: _KoreanFoundationEvidencePaths) -> KoreanFoundatio
     _validate_index_contract(index)
     actual_files, actual_directories = _collect_inbox_tree(paths)
     expected_files = _expected_inbox_files(index)
+    expected_directories = _expected_inbox_directories(index)
     if "validation-receipt.json" in actual_files:
         expected_files.add("validation-receipt.json")
     missing = tuple(sorted(expected_files - actual_files))
     unexpected = tuple(sorted(actual_files - expected_files))
     unexpected_directories = tuple(
-        sorted(actual_directories - {"media", "reviewers"})
+        sorted(actual_directories - expected_directories)
     )
     missing_directories = tuple(
-        sorted({"media", "reviewers"} - actual_directories)
+        sorted(expected_directories - actual_directories)
     )
     if missing or unexpected or unexpected_directories or missing_directories:
         return KoreanFoundationEvidenceInventory(
@@ -1388,6 +1563,252 @@ def _read_bound_candidate_file(
     if _has_archive_magic(raw) or sha256(raw).hexdigest() != binding.file_sha256:
         _raise(KoreanFoundationEvidenceReasonCode.SOURCE_BINDING_MISMATCH)
     return raw
+
+
+def _candidate_binding_payload(
+    filename: str,
+    payload: dict[str, Any],
+    raw: bytes,
+) -> dict[str, Any]:
+    if filename == _CURRENT_CANDIDATE_FILENAME:
+        return {
+            "filename": filename,
+            "bundle_sha256": payload["bundle_sha256"],
+            "bundle_relpath": payload["bundle_relpath"],
+            "bundle_manifest_sha256": payload["bundle_manifest_sha256"],
+            "file_sha256": sha256(raw).hexdigest(),
+        }
+    if filename == _BUNDLE_MANIFEST_FILENAME:
+        return {
+            "filename": filename,
+            "bundle_sha256": payload["bundle_sha256"],
+            "selected_draft_manifest_sha256": payload[
+                "selected_draft_manifest_sha256"
+            ],
+            "draft_validation_sha256": payload["draft_validation_sha256"],
+            "file_sha256": sha256(raw).hexdigest(),
+            "total_record_count": 139,
+            "media_slot_count": 509,
+        }
+
+    version_field = {
+        "hangul-v2.json": "source_pack_version",
+        "pronunciation-i-plus-1-v2.json": "source_pack_version",
+        "korean-foundations-v2-curation.json": "manifest_version",
+        "korean-foundations-v2-media.json": "manifest_version",
+    }[filename]
+    binding: dict[str, Any] = {
+        "filename": filename,
+        "version": payload[version_field],
+        "file_sha256": sha256(raw).hexdigest(),
+        "canonical_content_sha256": payload["content_hash"],
+    }
+    if filename == "hangul-v2.json":
+        binding["item_count"] = len(payload["entries"])
+    elif filename == "pronunciation-i-plus-1-v2.json":
+        binding["item_count"] = len(payload["entries"])
+    elif filename == "korean-foundations-v2-curation.json":
+        records = payload["records"]
+        binding["record_count"] = len(records)
+        binding["gate_count"] = sum(len(record["gates"]) for record in records)
+    else:
+        slots = payload["slots"]
+        binding["asset_count"] = len(slots)
+        binding["required_asset_count"] = sum(slot["required"] for slot in slots)
+    return binding
+
+
+def _current_candidate_bindings(
+    paths: _KoreanFoundationEvidencePaths,
+) -> tuple[KoreanFoundationEvidenceCandidateBinding, ...]:
+    current_raw = _read_regular_file(
+        paths.candidate_dir / _CURRENT_CANDIDATE_FILENAME,
+        paths=paths,
+        maximum_bytes=_CANDIDATE_MAX_BYTES,
+        missing_reason=KoreanFoundationEvidenceReasonCode.SOURCE_BINDING_MISMATCH,
+    )
+    current_pointer = _parse_json_object(
+        current_raw,
+        KoreanFoundationEvidenceReasonCode.SOURCE_BINDING_MISMATCH,
+    )
+    try:
+        bundle_relpath = _safe_relpath(str(current_pointer["bundle_relpath"]))
+        raw_by_filename = {_CURRENT_CANDIDATE_FILENAME: current_raw}
+        payload_by_filename = {_CURRENT_CANDIDATE_FILENAME: current_pointer}
+        for filename in (_BUNDLE_MANIFEST_FILENAME, *_CANDIDATE_MEMBER_FILENAMES):
+            raw = _read_regular_file(
+                _candidate_source_path(paths, filename, bundle_relpath=bundle_relpath),
+                paths=paths,
+                maximum_bytes=_CANDIDATE_MAX_BYTES,
+                missing_reason=(
+                    KoreanFoundationEvidenceReasonCode.SOURCE_BINDING_MISMATCH
+                ),
+            )
+            raw_by_filename[filename] = raw
+            payload_by_filename[filename] = _parse_json_object(
+                raw,
+                KoreanFoundationEvidenceReasonCode.SOURCE_BINDING_MISMATCH,
+            )
+        return tuple(
+            KoreanFoundationEvidenceCandidateBinding.model_validate(
+                _candidate_binding_payload(
+                    filename,
+                    payload_by_filename[filename],
+                    raw_by_filename[filename],
+                )
+            )
+            for filename in _CANDIDATE_FILENAMES
+        )
+    except (KeyError, TypeError, ValueError, ValidationError) as exc:
+        raise KoreanFoundationEvidenceError(
+            KoreanFoundationEvidenceReasonCode.SOURCE_BINDING_MISMATCH
+        ) from exc
+
+
+def _current_request_bindings(
+    paths: _KoreanFoundationEvidencePaths,
+) -> tuple[KoreanFoundationEvidenceRequestBinding, ...]:
+    request_paths = {
+        "31-CURRICULUM-REVIEW.md": paths.curriculum_request,
+        "31-AUDIO-PLAYBACK-REVIEW.md": paths.audio_request,
+    }
+    return tuple(
+        KoreanFoundationEvidenceRequestBinding(
+            filename=filename,
+            file_sha256=sha256(
+                _read_regular_file(
+                    request_paths[filename],
+                    paths=paths,
+                    maximum_bytes=_REQUEST_MAX_BYTES,
+                    missing_reason=(
+                        KoreanFoundationEvidenceReasonCode.SOURCE_BINDING_MISMATCH
+                    ),
+                )
+            ).hexdigest(),
+        )
+        for filename in _REQUEST_FILENAMES
+    )
+
+
+def _evidence_member_row(
+    paths: _KoreanFoundationEvidencePaths,
+    relpath: str,
+    role: str,
+) -> dict[str, Any]:
+    safe_relpath = _safe_relpath(relpath)
+    raw = _read_regular_file(
+        _member_path(paths, safe_relpath),
+        paths=paths,
+        maximum_bytes=(
+            _MEDIA_MEMBER_MAX_BYTES if role == "media" else _JSON_MEMBER_MAX_BYTES
+        ),
+        missing_reason=KoreanFoundationEvidenceReasonCode.MEMBER_MISSING,
+    )
+    if _has_archive_magic(raw):
+        _raise(KoreanFoundationEvidenceReasonCode.ARCHIVE_MEMBER)
+    return {
+        "relpath": safe_relpath,
+        "role": role,
+        "size_bytes": len(raw),
+        "sha256": sha256(raw).hexdigest(),
+    }
+
+
+def _derive_current_ai_media_index(
+    paths: _KoreanFoundationEvidencePaths,
+    *,
+    confirmed_index_sha256: str | None = None,
+) -> tuple[KoreanFoundationEvidenceIndex, bytes, str]:
+    actual_files, actual_directories = _collect_inbox_tree(paths)
+    required_signature = {
+        _AI_POLICY_RELPATH,
+        _AI_SUBJECTS_RELPATH,
+        _AI_VALIDATORS_RELPATH,
+        _AI_AGGREGATE_RELPATH,
+        _ACOUSTIC_REVIEW_RELPATH,
+        _MEDIA_RIGHTS_RELPATH,
+        _MEDIA_ARTIFACTS_RELPATH,
+    }
+    if not required_signature <= actual_files or not _CURRENT_LAYOUT_DIRECTORIES <= actual_directories:
+        _raise(KoreanFoundationEvidenceReasonCode.INDEX_MISSING)
+    artifacts = _parse_json_object(
+        _read_regular_file(
+            _member_path(paths, _MEDIA_ARTIFACTS_RELPATH),
+            paths=paths,
+            maximum_bytes=_JSON_MEMBER_MAX_BYTES,
+            missing_reason=KoreanFoundationEvidenceReasonCode.MEMBER_MISSING,
+        ),
+        KoreanFoundationEvidenceReasonCode.INDEX_INVALID,
+    )
+    artifact_rows = artifacts.get("artifacts")
+    if not isinstance(artifact_rows, list):
+        _raise(KoreanFoundationEvidenceReasonCode.INDEX_INVALID)
+
+    member_rows = [
+        _evidence_member_row(paths, relpath, role)
+        for relpath, role in _CURRENT_LAYOUT_FIXED_MEMBER_ROLES
+    ]
+    member_rows.extend(
+        _evidence_member_row(
+            paths,
+            f"ai-review/attempts/batch-{batch:02d}-pass-{pass_number}.json",
+            "ai_review_attempt",
+        )
+        for batch in range(1, 8)
+        for pass_number in range(1, 4)
+    )
+    member_rows.extend(
+        _evidence_member_row(
+            paths,
+            f"ai-review/projections/batch-{batch:02d}.json",
+            "ai_review_projection",
+        )
+        for batch in range(1, 8)
+    )
+    try:
+        media_relpaths = tuple(
+            _safe_relpath(str(row["repository_relpath"]))
+            for row in artifact_rows
+            if isinstance(row, dict)
+        )
+    except (KeyError, TypeError, ValueError) as exc:
+        raise KoreanFoundationEvidenceError(
+            KoreanFoundationEvidenceReasonCode.INDEX_INVALID
+        ) from exc
+    if len(media_relpaths) != _CURRENT_REQUIRED_MEDIA_COUNT:
+        _raise(KoreanFoundationEvidenceReasonCode.INDEX_INVALID)
+    member_rows.extend(
+        _evidence_member_row(paths, relpath, "media") for relpath in media_relpaths
+    )
+    payload: dict[str, Any] = {
+        "schema_version": 1,
+        "index_version": _INDEX_VERSION,
+        "layout_version": KOREAN_FOUNDATION_EVIDENCE_LAYOUT_VERSION,
+        "policy_version": KOREAN_FOUNDATION_EVIDENCE_POLICY_VERSION,
+        "candidate_bindings": [
+            binding.model_dump(mode="json", exclude_none=True)
+            for binding in _current_candidate_bindings(paths)
+        ],
+        "request_bindings": [
+            binding.model_dump(mode="json", exclude_none=True)
+            for binding in _current_request_bindings(paths)
+        ],
+        "members": member_rows,
+        "declared_members_sha256": _canonical_sha256(member_rows),
+    }
+    payload["index_payload_sha256"] = _canonical_sha256(payload)
+    try:
+        index = KoreanFoundationEvidenceIndex.model_validate(payload)
+    except ValidationError as exc:
+        raise KoreanFoundationEvidenceError(
+            KoreanFoundationEvidenceReasonCode.INDEX_INVALID
+        ) from exc
+    index_payload = index.model_dump(mode="json", exclude_none=True)
+    raw = _json_file_bytes(index_payload)
+    actual_hash = sha256(raw).hexdigest()
+    if confirmed_index_sha256 is not None and actual_hash != confirmed_index_sha256:
+        _raise(KoreanFoundationEvidenceReasonCode.INDEX_HASH_MISMATCH)
+    return index, raw, actual_hash
 
 
 def _assert_current_pointer_binding(
@@ -2163,6 +2584,668 @@ def _validate_media_evidence(
     return proposed, rights, playback
 
 
+def _source_evidence_sha256(
+    *,
+    index: KoreanFoundationEvidenceIndex,
+    candidate_raw: tuple[bytes, ...],
+    request_raw: tuple[bytes, ...],
+) -> str:
+    return _canonical_sha256(
+        [
+            *(
+                {
+                    "filename": binding.filename,
+                    "sha256": sha256(raw).hexdigest(),
+                    "canonical_content_sha256": binding.canonical_content_sha256,
+                }
+                for binding, raw in zip(
+                    index.candidate_bindings,
+                    candidate_raw,
+                    strict=True,
+                )
+            ),
+            *(
+                {
+                    "filename": binding.filename,
+                    "sha256": sha256(raw).hexdigest(),
+                }
+                for binding, raw in zip(
+                    index.request_bindings,
+                    request_raw,
+                    strict=True,
+                )
+            ),
+        ]
+    )
+
+
+def _current_json_member(
+    members: dict[str, bytes],
+    relpath: str,
+    reason_code: KoreanFoundationEvidenceReasonCode,
+) -> dict[str, Any]:
+    try:
+        return _parse_json_object(members[relpath], reason_code)
+    except KeyError as exc:
+        raise KoreanFoundationEvidenceError(reason_code) from exc
+
+
+def _load_current_ai_review(
+    layout: _LayoutAssembly,
+) -> tuple[AIReviewAggregate, dict[str, AIReviewSubject]]:
+    try:
+        policy = AIReviewPolicy.model_validate_json(layout.members[_AI_POLICY_RELPATH])
+        subjects_payload = _current_json_member(
+            layout.members,
+            _AI_SUBJECTS_RELPATH,
+            KoreanFoundationEvidenceReasonCode.REVIEW_INVALID,
+        )
+        validators_payload = _current_json_member(
+            layout.members,
+            _AI_VALIDATORS_RELPATH,
+            KoreanFoundationEvidenceReasonCode.REVIEW_INVALID,
+        )
+        subjects = tuple(
+            AIReviewSubject.model_validate(subject)
+            for subject in subjects_payload["subjects"]
+        )
+        validators = tuple(
+            AIValidatorRun.model_validate(run)
+            for run in validators_payload["validator_runs"]
+        )
+        attempts = tuple(
+            AIReviewAttempt.model_validate_json(layout.members[member.relpath])
+            for member in layout.index.members
+            if member.role == "ai_review_attempt"
+        )
+        aggregate = AIReviewAggregate.model_validate_json(
+            layout.members[_AI_AGGREGATE_RELPATH]
+        )
+    except (KeyError, TypeError, ValueError, ValidationError) as exc:
+        raise KoreanFoundationEvidenceError(
+            KoreanFoundationEvidenceReasonCode.REVIEW_INVALID
+        ) from exc
+
+    if (
+        subjects_payload.get("schema_version") != 1
+        or subjects_payload.get("subject_count") != len(subjects)
+        or subjects_payload.get("candidate_sha256") != aggregate.candidate_sha256
+        or validators_payload.get("schema_version") != 1
+        or validators_payload.get("validator_run_count") != len(validators)
+        or sha256(layout.members[_AI_VALIDATORS_RELPATH]).hexdigest()
+        != aggregate.validator_manifest_sha256
+        or aggregate.candidate_sha256
+        != _binding_by_filename(layout.index)[_CURRENT_CANDIDATE_FILENAME].bundle_sha256
+        or aggregate.total_subjects != 139
+        or aggregate.passing_subjects != 139
+        or aggregate.blocked_subjects != 0
+        or aggregate.status_counts
+        != {
+            "ai_review_passed": 139,
+            "ai_review_failed": 0,
+            "blocked_uncertainty": 0,
+            "blocked_disagreement": 0,
+            "stale": 0,
+        }
+        or any(decision.status != "ai_review_passed" for decision in aggregate.decisions)
+    ):
+        _raise(KoreanFoundationEvidenceReasonCode.REVIEW_INVALID)
+
+    try:
+        rebuilt = build_ai_review_aggregate(
+            policy=policy,
+            subjects=subjects,
+            validator_runs=validators,
+            attempts=attempts,
+            candidate_sha256=aggregate.candidate_sha256,
+            request_sha256=aggregate.request_sha256,
+            validator_manifest_sha256=aggregate.validator_manifest_sha256,
+            generated_at=aggregate.generated_at,
+        )
+    except (TypeError, ValueError, ValidationError) as exc:
+        raise KoreanFoundationEvidenceError(
+            KoreanFoundationEvidenceReasonCode.REVIEW_INVALID
+        ) from exc
+    if rebuilt != aggregate or aggregate.content_hash != ai_review_content_hash(aggregate):
+        _raise(KoreanFoundationEvidenceReasonCode.REVIEW_INVALID)
+
+    subjects_by_id = {subject.subject_id: subject for subject in subjects}
+    if len(subjects_by_id) != len(subjects):
+        _raise(KoreanFoundationEvidenceReasonCode.REVIEW_INVALID)
+    _validate_current_ai_projections(layout, subjects_by_id)
+    return aggregate, subjects_by_id
+
+
+def _validate_current_ai_projections(
+    layout: _LayoutAssembly,
+    subjects_by_id: dict[str, AIReviewSubject],
+) -> None:
+    seen: set[str] = set()
+    for batch in range(1, 8):
+        relpath = f"ai-review/projections/batch-{batch:02d}.json"
+        projection_payload = _current_json_member(
+            layout.members,
+            relpath,
+            KoreanFoundationEvidenceReasonCode.REVIEW_INVALID,
+        )
+        rows = projection_payload.get("subjects")
+        if (
+            projection_payload.get("schema_version") != 1
+            or projection_payload.get("batch_id") != f"batch-{batch:02d}"
+            or tuple(projection_payload.get("required_pass_ids", ()))
+            != ("pass-1", "pass-2", "pass-3")
+            or not isinstance(rows, list)
+            or not rows
+        ):
+            _raise(KoreanFoundationEvidenceReasonCode.REVIEW_INVALID)
+        for row in rows:
+            if not isinstance(row, dict):
+                _raise(KoreanFoundationEvidenceReasonCode.REVIEW_INVALID)
+            subject_id = row.get("subject_id")
+            if not isinstance(subject_id, str) or subject_id in seen:
+                _raise(KoreanFoundationEvidenceReasonCode.REVIEW_INVALID)
+            subject = subjects_by_id.get(subject_id)
+            if subject is None:
+                _raise(KoreanFoundationEvidenceReasonCode.REVIEW_INVALID)
+            if (
+                tuple(row.get("claim_ids", ())) != subject.claim_ids
+                or tuple(row.get("source_reference_ids", ()))
+                != subject.source_reference_ids
+                or _canonical_sha256(row.get("projection")) != subject.projection_sha256
+            ):
+                _raise(KoreanFoundationEvidenceReasonCode.REVIEW_INVALID)
+            seen.add(subject_id)
+    if seen != set(subjects_by_id):
+        _raise(KoreanFoundationEvidenceReasonCode.REVIEW_INVALID)
+
+
+def _derive_current_curation_manifest(
+    *,
+    candidate_curation: KoreanFoundationCurationManifest,
+    registry: KoreanConceptRegistry,
+    hangul: KoreanHangulSourcePack,
+    pronunciation: KoreanPronunciationSourcePack,
+    aggregate: AIReviewAggregate,
+    subjects_by_id: dict[str, AIReviewSubject],
+) -> KoreanFoundationCurationManifest:
+    decisions_by_id = {decision.subject_id: decision for decision in aggregate.decisions}
+    records: list[dict[str, Any]] = []
+    for record in candidate_curation.records:
+        subject = subjects_by_id.get(record.item_key)
+        decision = decisions_by_id.get(record.item_key)
+        if (
+            subject is None
+            or decision is None
+            or decision.status != "ai_review_passed"
+            or subject.source_pack_version != record.source_pack_version
+            or subject.source_content_sha256 != record.source_content_sha256
+            or decision.subject_content_sha256 != subject.content_hash
+        ):
+            _raise(KoreanFoundationEvidenceReasonCode.REVIEW_INVALID)
+        record_payload = record.model_dump(mode="json")
+        gate_rows: list[dict[str, Any]] = []
+        for gate in record.gates:
+            gate_payload = gate.model_dump(mode="json")
+            gate_payload.update(
+                {
+                    "status": "ai_review_passed",
+                    "reason_code": None,
+                    "reviewer_id": None,
+                    "reviewer_role": None,
+                    "reviewed_at": aggregate.generated_at,
+                    "source_pack_version": record.source_pack_version,
+                    "source_content_sha256": record.source_content_sha256,
+                    "reviewed_evidence_sha256": decision.content_hash,
+                }
+            )
+            gate_rows.append(gate_payload)
+        record_payload["gates"] = gate_rows
+        records.append(record_payload)
+    payload = candidate_curation.model_dump(mode="json")
+    payload["candidate_only"] = False
+    payload["records"] = records
+    payload.pop("content_hash", None)
+    payload["content_hash"] = _canonical_sha256(payload)
+    try:
+        manifest = KoreanFoundationCurationManifest.model_validate(payload)
+        validate_korean_foundation_curation(
+            manifest,
+            registry=registry,
+            hangul_pack=hangul,
+            pronunciation_pack=pronunciation,
+        )
+    except (ValidationError, TypeError, ValueError) as exc:
+        raise KoreanFoundationEvidenceError(
+            KoreanFoundationEvidenceReasonCode.REVIEW_INVALID
+        ) from exc
+    return manifest
+
+
+def _validated_current_json_content_hash(
+    payload: dict[str, Any],
+    *,
+    hash_field: str = "content_hash",
+    hash_payload: object | None = None,
+    reason_code: KoreanFoundationEvidenceReasonCode,
+) -> None:
+    declared = payload.get(hash_field)
+    if not isinstance(declared, str):
+        _raise(reason_code)
+    expected_payload = hash_payload
+    if expected_payload is None:
+        expected_payload = {key: value for key, value in payload.items() if key != hash_field}
+    if declared != _canonical_sha256(expected_payload):
+        _raise(reason_code)
+
+
+def _validate_current_media_authority(
+    *,
+    media_rights_sha256: str,
+    authority_sha256: str,
+    authority: dict[str, Any],
+) -> None:
+    _validated_current_json_content_hash(
+        authority,
+        reason_code=KoreanFoundationEvidenceReasonCode.RIGHTS_INVALID,
+    )
+    exact_response = authority.get("exact_supplied_response")
+    if (
+        authority.get("schema_version") != 1
+        or authority.get("handoff_version") != "phase31-handoff-v1"
+        or authority.get("kind") != "media-authority"
+        or authority.get("actor_type") != "project_owner"
+        or authority.get("agent_authored") is not False
+        or authority.get("consumed") is not True
+        or authority.get("rights_document_sha256") != media_rights_sha256
+        or exact_response != f"authorize-media {media_rights_sha256}"
+        or authority.get("supplied_response_sha256")
+        != sha256(str(exact_response).encode("utf-8")).hexdigest()
+        or authority.get("route") != "azure-speech-tts"
+        or authority.get("item_count") != _CURRENT_REQUIRED_MEDIA_COUNT
+        or authority.get("voice_profile_id") != "ko-KR-SunHiNeural"
+        or authority_sha256 != sha256(_json_file_bytes(authority)).hexdigest()
+    ):
+        _raise(KoreanFoundationEvidenceReasonCode.RIGHTS_INVALID)
+
+
+def _validate_current_media_rights(
+    *,
+    rights_sha256: str,
+    rights: dict[str, Any],
+    authority: dict[str, Any],
+    candidate_media: KoreanFoundationMediaManifest,
+) -> None:
+    _validated_current_json_content_hash(
+        rights,
+        reason_code=KoreanFoundationEvidenceReasonCode.RIGHTS_INVALID,
+    )
+    item_set = rights.get("item_set")
+    provider_scope = rights.get("provider_scope")
+    rights_scope = rights.get("rights_scope")
+    if not isinstance(item_set, dict) or not isinstance(provider_scope, dict) or not isinstance(rights_scope, dict):
+        _raise(KoreanFoundationEvidenceReasonCode.RIGHTS_INVALID)
+    if (
+        rights.get("schema_version") != 1
+        or rights.get("document_type") != "phase31-media-rights-request"
+        or rights.get("status") != "awaiting_project_owner_authorization"
+        or rights.get("authority_prompt") != "authorize-media {media-rights-file-sha256}"
+        or tuple(rights.get("blockers_until_authorized", ()))
+        != ("no-project-owner-media-authority-recorded",)
+        or item_set.get("all_slots") != len(candidate_media.slots)
+        or item_set.get("required_slots") != _CURRENT_REQUIRED_MEDIA_COUNT
+        or item_set.get("audio_subjects") != 233
+        or item_set.get("visual_subjects") != 92
+        or item_set.get("manifest_content_sha256") != candidate_media.content_hash
+        or provider_scope.get("provider_id") != _CURRENT_AUDIO_SOURCE_ID
+        or provider_scope.get("route") != authority.get("route")
+        or provider_scope.get("locale") != "ko-KR"
+        or provider_scope.get("voice_profile_id") != authority.get("voice_profile_id")
+        or provider_scope.get("voice_profile_version")
+        != authority.get("voice_profile_version")
+        or rights_scope.get("human_listening_claim") is not False
+        or rights_scope.get("third_party_media_reuse") is not False
+        or rights_scope.get("redistribution_disposition")
+        != "requires_project_owner_authorization"
+        or authority.get("rights_document_sha256") != rights_sha256
+    ):
+        _raise(KoreanFoundationEvidenceReasonCode.RIGHTS_INVALID)
+
+
+def _validate_current_acoustic_bindings(
+    *,
+    layout: _LayoutAssembly,
+    candidate_media: KoreanFoundationMediaManifest,
+) -> tuple[AIAcousticReviewAggregate, dict[str, Any], dict[str, Any], dict[str, Any]]:
+    rights = _current_json_member(
+        layout.members,
+        _MEDIA_RIGHTS_RELPATH,
+        KoreanFoundationEvidenceReasonCode.RIGHTS_INVALID,
+    )
+    authority = _current_json_member(
+        layout.members,
+        _MEDIA_AUTHORITY_RELPATH,
+        KoreanFoundationEvidenceReasonCode.RIGHTS_INVALID,
+    )
+    artifacts = _current_json_member(
+        layout.members,
+        _MEDIA_ARTIFACTS_RELPATH,
+        KoreanFoundationEvidenceReasonCode.MEDIA_INVALID,
+    )
+    rights_sha256 = sha256(layout.members[_MEDIA_RIGHTS_RELPATH]).hexdigest()
+    authority_sha256 = sha256(layout.members[_MEDIA_AUTHORITY_RELPATH]).hexdigest()
+    _validate_current_media_authority(
+        media_rights_sha256=rights_sha256,
+        authority_sha256=authority_sha256,
+        authority=authority,
+    )
+    _validate_current_media_rights(
+        rights_sha256=rights_sha256,
+        rights=rights,
+        authority=authority,
+        candidate_media=candidate_media,
+    )
+    artifact_rows = artifacts.get("artifacts")
+    if not isinstance(artifact_rows, list):
+        _raise(KoreanFoundationEvidenceReasonCode.MEDIA_INVALID)
+    _validated_current_json_content_hash(
+        artifacts,
+        hash_payload=artifact_rows,
+        reason_code=KoreanFoundationEvidenceReasonCode.MEDIA_INVALID,
+    )
+    try:
+        acoustic = AIAcousticReviewAggregate.model_validate_json(
+            layout.members[_ACOUSTIC_REVIEW_RELPATH]
+        )
+    except (ValidationError, TypeError, ValueError) as exc:
+        raise KoreanFoundationEvidenceError(
+            KoreanFoundationEvidenceReasonCode.MEDIA_INVALID
+        ) from exc
+    if (
+        acoustic.aggregate_root != ai_acoustic_review_sha256(acoustic)
+        or acoustic.media_rights_sha256 != rights_sha256
+        or acoustic.media_authority_sha256 != authority_sha256
+        or acoustic.media_artifacts_sha256 != artifacts.get("content_hash")
+        or acoustic.item_set_sha256 != rights.get("item_set", {}).get("item_set_sha256")
+        or acoustic.item_set_sha256 != artifacts.get("item_set_sha256")
+        or acoustic.status != "passing"
+        or acoustic.required_slots != _CURRENT_REQUIRED_MEDIA_COUNT
+        or acoustic.passing != _CURRENT_REQUIRED_MEDIA_COUNT
+        or acoustic.blocked != 0
+        or acoustic.audio_subjects != 233
+        or acoustic.visual_subjects != 92
+        or artifacts.get("media_rights_sha256") != rights_sha256
+        or artifacts.get("media_authority_sha256") != authority_sha256
+        or artifacts.get("required_slots") != _CURRENT_REQUIRED_MEDIA_COUNT
+        or artifacts.get("audio_subjects") != 233
+        or artifacts.get("visual_subjects") != 92
+    ):
+        _raise(KoreanFoundationEvidenceReasonCode.MEDIA_INVALID)
+    return acoustic, rights, authority, artifacts
+
+
+def _current_projection_text(value: object) -> str:
+    if not isinstance(value, str) or not value:
+        _raise(KoreanFoundationEvidenceReasonCode.MEDIA_INVALID)
+    normalized = unicodedata.normalize("NFC", value)
+    if normalized != value:
+        _raise(KoreanFoundationEvidenceReasonCode.MEDIA_INVALID)
+    return value
+
+
+def _current_display_text(
+    slot: KoreanFoundationMediaSlot,
+    subject: AIReviewSubject,
+) -> str:
+    projection = subject.projection
+    if slot.family is KoreanFoundationFamily.HANGUL:
+        mapping = projection.get("pedagogical_jamo_mapping")
+        if isinstance(mapping, dict) and mapping.get("display_glyph") is not None:
+            return _current_projection_text(mapping.get("display_glyph"))
+        return _current_projection_text(projection.get("canonical_jamo_or_block"))
+    if slot.media_kind == "letter_audio":
+        return _current_projection_text(projection.get("spellings"))
+    if slot.media_kind == "word_audio":
+        return _current_projection_text(projection.get("example_word"))
+    return _current_projection_text(projection.get("example_sentence"))
+
+
+def _current_spoken_text(
+    *,
+    slot: KoreanFoundationMediaSlot,
+    subject: AIReviewSubject,
+    artifact: dict[str, Any],
+    display_text: str,
+) -> str | None:
+    spoken_hash = artifact.get("spoken_text_sha256")
+    if slot.media_kind not in _AUDIO_KINDS:
+        if spoken_hash is not None:
+            _raise(KoreanFoundationEvidenceReasonCode.MEDIA_INVALID)
+        return None
+    if not isinstance(spoken_hash, str):
+        _raise(KoreanFoundationEvidenceReasonCode.MEDIA_INVALID)
+    projection = subject.projection
+    pronunciation = projection.get("pronunciation_evidence")
+    pronunciation_values: tuple[object, ...] = ()
+    if isinstance(pronunciation, dict):
+        pronunciation_values = (
+            pronunciation.get("surface_pronunciation"),
+            pronunciation.get("normative_pronunciation"),
+        )
+    candidates = (
+        _HANGUL_AUDIO_TEXT_BY_DISPLAY.get(display_text),
+        display_text,
+        projection.get("sound"),
+        *pronunciation_values,
+        projection.get("spellings"),
+        projection.get("example_word"),
+        projection.get("example_sentence"),
+    )
+    for candidate in candidates:
+        if isinstance(candidate, str) and _text_sha256(candidate) == spoken_hash:
+            return _current_projection_text(candidate)
+    _raise(KoreanFoundationEvidenceReasonCode.MEDIA_INVALID)
+
+
+def _artifact_by_required_slot(
+    *,
+    layout: _LayoutAssembly,
+    candidate_media: KoreanFoundationMediaManifest,
+    artifacts: dict[str, Any],
+) -> dict[str, dict[str, Any]]:
+    artifact_rows = artifacts.get("artifacts")
+    if not isinstance(artifact_rows, list):
+        _raise(KoreanFoundationEvidenceReasonCode.MEDIA_INVALID)
+    rows: dict[str, dict[str, Any]] = {}
+    required_slots = {slot.slot_id: slot for slot in candidate_media.slots if slot.required}
+    for row in artifact_rows:
+        if not isinstance(row, dict):
+            _raise(KoreanFoundationEvidenceReasonCode.MEDIA_INVALID)
+        slot_id = row.get("slot_id")
+        if not isinstance(slot_id, str) or slot_id in rows:
+            _raise(KoreanFoundationEvidenceReasonCode.MEDIA_INVALID)
+        slot = required_slots.get(slot_id)
+        if slot is None:
+            _raise(KoreanFoundationEvidenceReasonCode.MEDIA_INVALID)
+        relpath = row.get("repository_relpath")
+        if not isinstance(relpath, str) or _safe_relpath(relpath) != slot.storage_relpath:
+            _raise(KoreanFoundationEvidenceReasonCode.MEDIA_INVALID)
+        if (
+            row.get("sequence") != slot.sequence
+            or row.get("media_kind") != slot.media_kind
+            or row.get("source_content_sha256") != slot.source_content_sha256
+            or row.get("output_format") != slot.output_format
+        ):
+            _raise(KoreanFoundationEvidenceReasonCode.MEDIA_INVALID)
+        try:
+            content = layout.members[slot.storage_relpath]
+        except KeyError as exc:
+            raise KoreanFoundationEvidenceError(
+                KoreanFoundationEvidenceReasonCode.MEMBER_MISSING
+            ) from exc
+        if (
+            row.get("size_bytes") != len(content)
+            or row.get("artifact_sha256") != sha256(content).hexdigest()
+        ):
+            _raise(KoreanFoundationEvidenceReasonCode.MEDIA_HASH_MISMATCH)
+        rows[slot_id] = row
+    if set(rows) != set(required_slots):
+        _raise(KoreanFoundationEvidenceReasonCode.MEDIA_INVALID)
+    return rows
+
+
+def _derive_current_media_manifest(
+    *,
+    layout: _LayoutAssembly,
+    candidate_media: KoreanFoundationMediaManifest,
+    registry: KoreanConceptRegistry,
+    hangul: KoreanHangulSourcePack,
+    pronunciation: KoreanPronunciationSourcePack,
+    subjects_by_id: dict[str, AIReviewSubject],
+    authority: dict[str, Any],
+    artifacts: dict[str, Any],
+) -> KoreanFoundationMediaManifest:
+    rows = _validate_media_source_alignment(
+        candidate_media,
+        registry=registry,
+        hangul=hangul,
+        pronunciation=pronunciation,
+    )
+    if not candidate_media.candidate_only or any(
+        slot.status != "needs_review" for slot in candidate_media.slots
+    ):
+        _raise(KoreanFoundationEvidenceReasonCode.SOURCE_BINDING_MISMATCH)
+    artifacts_by_slot = _artifact_by_required_slot(
+        layout=layout,
+        candidate_media=candidate_media,
+        artifacts=artifacts,
+    )
+    slots: list[dict[str, Any]] = []
+    for slot, (entry, _source_slot, _sequence) in zip(
+        candidate_media.slots,
+        rows,
+        strict=True,
+    ):
+        payload = slot.model_dump(mode="json")
+        artifact = artifacts_by_slot.get(slot.slot_id)
+        if artifact is None:
+            slots.append(payload)
+            continue
+        subject = subjects_by_id.get(slot.item_key)
+        if subject is None:
+            _raise(KoreanFoundationEvidenceReasonCode.MEDIA_INVALID)
+        display_text = _current_display_text(slot, subject)
+        if display_text != _expected_display_text(slot, entry) and slot.family is KoreanFoundationFamily.HANGUL:
+            _raise(KoreanFoundationEvidenceReasonCode.MEDIA_INVALID)
+        if _text_sha256(display_text) != artifact.get("display_text_sha256"):
+            _raise(KoreanFoundationEvidenceReasonCode.MEDIA_INVALID)
+        spoken_text = _current_spoken_text(
+            slot=slot,
+            subject=subject,
+            artifact=artifact,
+            display_text=display_text,
+        )
+        text_nfc = unicodedata.normalize("NFC", spoken_text or display_text)
+        artifact_hash = artifact.get("artifact_sha256")
+        source_id = artifact.get("provider_id")
+        if not isinstance(artifact_hash, str) or not isinstance(source_id, str):
+            _raise(KoreanFoundationEvidenceReasonCode.MEDIA_INVALID)
+        provider_version = None
+        if slot.media_kind in _AUDIO_KINDS:
+            provider_version = authority.get("voice_profile_version")
+            if not isinstance(provider_version, str):
+                _raise(KoreanFoundationEvidenceReasonCode.MEDIA_INVALID)
+        attribution = (
+            _CURRENT_AUDIO_ATTRIBUTION
+            if slot.media_kind in _AUDIO_KINDS
+            else _CURRENT_VISUAL_ATTRIBUTION
+        )
+        payload.update(
+            {
+                "status": "approved",
+                "reason_code": None,
+                "source_id": source_id,
+                "source_version": _CURRENT_MEDIA_SOURCE_VERSION,
+                "attribution": attribution,
+                "license_id": _CURRENT_MEDIA_LICENSE_ID,
+                "redistribution_disposition": "approved",
+                "display_text": display_text,
+                "spoken_text": spoken_text,
+                "text_nfc": text_nfc,
+                "display_text_sha256": str(artifact["display_text_sha256"]),
+                "spoken_text_sha256": artifact.get("spoken_text_sha256"),
+                "text_nfc_sha256": _text_sha256(text_nfc),
+                "provider": source_id if slot.media_kind in _AUDIO_KINDS else None,
+                "provider_version": provider_version,
+                "voice_id": artifact.get("voice_profile_id"),
+                "locale": artifact.get("locale"),
+                "ssml_sha256": (
+                    _SENTINEL_SHA256 if slot.media_kind in _AUDIO_KINDS else None
+                ),
+                "prosody_sha256": (
+                    _SENTINEL_SHA256 if slot.media_kind in _AUDIO_KINDS else None
+                ),
+                "duration_ms": artifact.get("duration_ms"),
+                "artifact_sha256": artifact_hash,
+                "reviewed_artifact_sha256": artifact_hash,
+                "metadata_sha256": "0" * 64,
+                "reviewed_metadata_sha256": "0" * 64,
+                "review_receipts": [],
+            }
+        )
+        if slot.media_kind in _AUDIO_KINDS:
+            if (
+                payload["source_id"] != _CURRENT_AUDIO_SOURCE_ID
+                or payload["provider"] != _CURRENT_AUDIO_SOURCE_ID
+                or payload["voice_id"] != authority.get("voice_profile_id")
+                or payload["locale"] != "ko-KR"
+                or not isinstance(payload["duration_ms"], int)
+            ):
+                _raise(KoreanFoundationEvidenceReasonCode.MEDIA_INVALID)
+        elif (
+            payload["source_id"] != _CURRENT_VISUAL_SOURCE_ID
+            or payload["spoken_text"] is not None
+            or payload["spoken_text_sha256"] is not None
+            or payload["voice_id"] is not None
+            or payload["locale"] is not None
+            or payload["duration_ms"] is not None
+        ):
+            _raise(KoreanFoundationEvidenceReasonCode.MEDIA_INVALID)
+        metadata_sha256 = korean_foundation_media_metadata_sha256(payload)
+        payload["metadata_sha256"] = metadata_sha256
+        payload["reviewed_metadata_sha256"] = metadata_sha256
+        try:
+            approved_slot = KoreanFoundationMediaSlot.model_validate(payload)
+        except (ValidationError, TypeError, ValueError) as exc:
+            raise KoreanFoundationEvidenceError(
+                KoreanFoundationEvidenceReasonCode.MEDIA_INVALID
+            ) from exc
+        content = layout.members[approved_slot.storage_relpath]
+        _validate_media_header(approved_slot, content)
+        slots.append(approved_slot.model_dump(mode="json"))
+
+    manifest_payload = candidate_media.model_dump(mode="json")
+    manifest_payload["candidate_only"] = False
+    manifest_payload["slots"] = slots
+    manifest_payload.pop("content_hash", None)
+    manifest_payload["content_hash"] = korean_foundation_media_manifest_sha256(
+        manifest_payload
+    )
+    try:
+        manifest = KoreanFoundationMediaManifest.model_validate(manifest_payload)
+    except (ValidationError, TypeError, ValueError) as exc:
+        raise KoreanFoundationEvidenceError(
+            KoreanFoundationEvidenceReasonCode.MEDIA_INVALID
+        ) from exc
+    if (
+        sum(slot.required and slot.status == "approved" for slot in manifest.slots)
+        != _CURRENT_REQUIRED_MEDIA_COUNT
+        or sum((not slot.required) and slot.status == "needs_review" for slot in manifest.slots)
+        != 184
+    ):
+        _raise(KoreanFoundationEvidenceReasonCode.MEDIA_INVALID)
+    return manifest
+
+
 def _read_active_prestate(
     paths: _KoreanFoundationEvidencePaths,
 ) -> tuple[Literal["absent", "present"], str]:
@@ -2248,13 +3331,14 @@ def _capture_state_fingerprint(
             path=paths.index,
             paths=paths,
             maximum_bytes=_INDEX_MAX_BYTES,
+            optional=_is_current_ai_media_index(index),
         ),
     ]
     for member in index.members:
         rows.append(
             _fingerprint_file(
-                label=f"inbox/{member.relpath}",
-                path=paths.inbox.joinpath(*PurePosixPath(member.relpath).parts),
+                label=member.relpath,
+                path=_member_path(paths, member.relpath),
                 paths=paths,
                 maximum_bytes=(
                     _MEDIA_MEMBER_MAX_BYTES
@@ -2347,95 +3431,112 @@ def _validate_fixed_evidence(
         registry,
         hangul,
         pronunciation,
-        _candidate_curation,
+        candidate_curation,
         candidate_media,
         candidate_raw,
         request_raw,
     ) = _load_sources(paths, layout.index)
-    reviewers, reviewer_by_role = _load_reviewers(layout.members)
-    _validate_curation_and_curriculum(
-        members=layout.members,
-        registry=registry,
-        hangul=hangul,
-        pronunciation=pronunciation,
-        curriculum_request_raw=request_raw[0],
-        reviewer_by_role=reviewer_by_role,
-    )
-    media_manifest, _rights, _playback = _validate_media_evidence(
-        layout=layout,
-        candidate_media=candidate_media,
-        registry=registry,
-        hangul=hangul,
-        pronunciation=pronunciation,
-        audio_request_raw=request_raw[1],
-        reviewer_by_role=reviewer_by_role,
-    )
+    if _is_current_ai_media_index(layout.index):
+        ai_aggregate, subjects_by_id = _load_current_ai_review(layout)
+        curation_manifest = _derive_current_curation_manifest(
+            candidate_curation=candidate_curation,
+            registry=registry,
+            hangul=hangul,
+            pronunciation=pronunciation,
+            aggregate=ai_aggregate,
+            subjects_by_id=subjects_by_id,
+        )
+        acoustic_aggregate, _rights, authority, artifacts = (
+            _validate_current_acoustic_bindings(
+                layout=layout,
+                candidate_media=candidate_media,
+            )
+        )
+        media_manifest = _derive_current_media_manifest(
+            layout=layout,
+            candidate_media=candidate_media,
+            registry=registry,
+            hangul=hangul,
+            pronunciation=pronunciation,
+            subjects_by_id=subjects_by_id,
+            authority=authority,
+            artifacts=artifacts,
+        )
+        layout.members["proposed-curation.json"] = _json_file_bytes(curation_manifest)
+        layout.members["proposed-media.json"] = _json_file_bytes(media_manifest)
+        source_evidence_sha256 = _source_evidence_sha256(
+            index=layout.index,
+            candidate_raw=candidate_raw,
+            request_raw=request_raw,
+        )
+        reviewer_evidence_sha256 = ai_aggregate.aggregate_root
+        rights_evidence_sha256 = sha256(layout.members[_MEDIA_RIGHTS_RELPATH]).hexdigest()
+        media_evidence_sha256 = acoustic_aggregate.aggregate_root
+    else:
+        reviewers, reviewer_by_role = _load_reviewers(layout.members)
+        _validate_curation_and_curriculum(
+            members=layout.members,
+            registry=registry,
+            hangul=hangul,
+            pronunciation=pronunciation,
+            curriculum_request_raw=request_raw[0],
+            reviewer_by_role=reviewer_by_role,
+        )
+        media_manifest, _rights, _playback = _validate_media_evidence(
+            layout=layout,
+            candidate_media=candidate_media,
+            registry=registry,
+            hangul=hangul,
+            pronunciation=pronunciation,
+            audio_request_raw=request_raw[1],
+            reviewer_by_role=reviewer_by_role,
+        )
+        source_evidence_sha256 = _source_evidence_sha256(
+            index=layout.index,
+            candidate_raw=candidate_raw,
+            request_raw=request_raw,
+        )
+        reviewer_paths = (
+            "proposed-curation.json",
+            "curriculum-review.json",
+            *_REVIEWER_ROLE_CONTRACT,
+        )
+        reviewer_evidence_sha256 = _canonical_sha256(
+            [
+                {
+                    "relpath": relpath,
+                    "sha256": sha256(layout.members[relpath]).hexdigest(),
+                }
+                for relpath in reviewer_paths
+            ]
+        )
+        rights_evidence_sha256 = sha256(layout.members["rights.json"]).hexdigest()
+        media_evidence_sha256 = _canonical_sha256(
+            [
+                {
+                    "relpath": "proposed-media.json",
+                    "sha256": sha256(layout.members["proposed-media.json"]).hexdigest(),
+                },
+                {
+                    "relpath": "audio-playback-review.json",
+                    "sha256": sha256(
+                        layout.members["audio-playback-review.json"]
+                    ).hexdigest(),
+                },
+                *(
+                    {
+                        "relpath": f"media/{slot.basename}",
+                        "sha256": slot.artifact_sha256,
+                    }
+                    for slot in media_manifest.slots
+                ),
+            ]
+        )
     active_marker, active_hash = _read_active_prestate(paths)
-
-    source_evidence_sha256 = _canonical_sha256(
-        [
-            *(
-                {
-                    "filename": binding.filename,
-                    "sha256": sha256(raw).hexdigest(),
-                    "canonical_content_sha256": binding.canonical_content_sha256,
-                }
-                for binding, raw in zip(
-                    layout.index.candidate_bindings,
-                    candidate_raw,
-                    strict=True,
-                )
-            ),
-            *(
-                {
-                    "filename": binding.filename,
-                    "sha256": sha256(raw).hexdigest(),
-                }
-                for binding, raw in zip(
-                    layout.index.request_bindings,
-                    request_raw,
-                    strict=True,
-                )
-            ),
-        ]
-    )
-    reviewer_paths = (
-        "proposed-curation.json",
-        "curriculum-review.json",
-        *_REVIEWER_ROLE_CONTRACT,
-    )
-    reviewer_evidence_sha256 = _canonical_sha256(
-        [
-            {"relpath": relpath, "sha256": sha256(layout.members[relpath]).hexdigest()}
-            for relpath in reviewer_paths
-        ]
-    )
-    rights_evidence_sha256 = sha256(layout.members["rights.json"]).hexdigest()
-    media_evidence_sha256 = _canonical_sha256(
-        [
-            {
-                "relpath": "proposed-media.json",
-                "sha256": sha256(layout.members["proposed-media.json"]).hexdigest(),
-            },
-            {
-                "relpath": "audio-playback-review.json",
-                "sha256": sha256(
-                    layout.members["audio-playback-review.json"]
-                ).hexdigest(),
-            },
-            *(
-                {
-                    "relpath": f"media/{slot.basename}",
-                    "sha256": slot.artifact_sha256,
-                }
-                for slot in media_manifest.slots
-            ),
-        ]
-    )
     final_fingerprint = _capture_state_fingerprint(paths, layout.index)
     if final_fingerprint != initial_fingerprint:
         _raise(KoreanFoundationEvidenceReasonCode.BETWEEN_STAGE_DRIFT)
-    if len(reviewers) != 4:
+    if not _is_current_ai_media_index(layout.index) and len(reviewers) != 4:
         _raise(KoreanFoundationEvidenceReasonCode.REVIEWER_QUALIFICATION_INVALID)
     return _ValidatedEvidence(
         layout=layout,

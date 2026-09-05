@@ -496,8 +496,14 @@ def _review_subject_projection(subject: AIReviewSubject) -> dict[str, object]:
 
 
 def _projection_token_count(payload: object) -> int:
-    encoding = tiktoken.get_encoding("o200k_base")
-    return len(encoding.encode(_canonical_json_bytes(payload).decode("utf-8")))
+    canonical = _canonical_json_bytes(payload)
+    if os.environ.get("MULTILANG_FORBID_NETWORK") == "1":
+        return math.ceil(len(canonical) / 4)
+    try:
+        encoding = tiktoken.get_encoding("o200k_base")
+    except Exception:
+        return math.ceil(len(canonical) / 4)
+    return len(encoding.encode(canonical.decode("utf-8")))
 
 
 def _balanced_review_batches(

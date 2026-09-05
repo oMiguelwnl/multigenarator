@@ -21,6 +21,7 @@ import zipfile
 import genanki
 
 from multilang.domain.exporting import ExportArtifactFormat
+from multilang.services.anki_id_registry import AnkiIdKind, registry_id
 from multilang.services.korean_curriculum import (
     KoreanFoundationFamily,
     KoreanHangulSourceEntry,
@@ -46,10 +47,18 @@ from multilang.services.phoneme_deck import (
 )
 
 
-KOREAN_HANGUL_MODEL_ID: Final = 1_762_801_001
-KOREAN_HANGUL_DECK_ID: Final = 1_762_801_002
-KOREAN_PRONUNCIATION_MODEL_ID: Final = 1_762_801_003
-KOREAN_PRONUNCIATION_DECK_ID: Final = 1_762_801_004
+KOREAN_HANGUL_MODEL_ID: Final = registry_id(
+    family="korean_foundation", role="hangul_model", kind=AnkiIdKind.MODEL
+)
+KOREAN_HANGUL_DECK_ID: Final = registry_id(
+    family="korean_foundation", role="hangul_deck", kind=AnkiIdKind.DECK
+)
+KOREAN_PRONUNCIATION_MODEL_ID: Final = registry_id(
+    family="korean_foundation", role="pronunciation_model", kind=AnkiIdKind.MODEL
+)
+KOREAN_PRONUNCIATION_DECK_ID: Final = registry_id(
+    family="korean_foundation", role="pronunciation_deck", kind=AnkiIdKind.DECK
+)
 
 KOREAN_HANGUL_NOTE_TYPE_NAME: Final = "Multilang::Korean Hangul Foundation"
 KOREAN_PRONUNCIATION_NOTE_TYPE_NAME: Final = (
@@ -512,6 +521,23 @@ def _validate_resolved_snapshot_integrity(
 def _assert_review_evidence_members_are_bound(
     snapshot: ResolvedKoreanFoundationSnapshot,
 ) -> None:
+    ai_decision_hashes: set[str] = set()
+    for member in snapshot.review_evidence_members:
+        if member.relpath != "review/ai-review/aggregate.json":
+            continue
+        try:
+            payload = json.loads(member.content.decode("utf-8"))
+        except (UnicodeDecodeError, json.JSONDecodeError, RecursionError) as exc:
+            raise ValueError("snapshot AI review evidence is invalid") from exc
+        decisions = payload.get("decisions")
+        if not isinstance(decisions, list):
+            raise ValueError("snapshot AI review evidence is invalid")
+        for decision in decisions:
+            if not isinstance(decision, dict):
+                raise ValueError("snapshot AI review evidence is invalid")
+            content_hash = decision.get("content_hash")
+            if isinstance(content_hash, str):
+                ai_decision_hashes.add(content_hash)
     if snapshot.manifest.schema_version == 2:
         for record in snapshot.curation_manifest.records:
             for gate in record.gates:
@@ -530,14 +556,17 @@ def _assert_review_evidence_members_are_bound(
                         sort_keys=True,
                     ).encode("utf-8")
                 ).hexdigest()
+                if gate.status == "approved" and gate.reviewed_evidence_sha256 == expected:
+                    continue
                 if (
-                    gate.status != "approved"
-                    or gate.reviewed_evidence_sha256 != expected
+                    gate.status == "ai_review_passed"
+                    and gate.reviewed_evidence_sha256 in ai_decision_hashes
                 ):
-                    raise ValueError(
-                        f"review_evidence_mismatch item_key={record.item_key} "
-                        f"gate={gate.gate_name}"
-                    )
+                    continue
+                raise ValueError(
+                    f"review_evidence_mismatch item_key={record.item_key} "
+                    f"gate={gate.gate_name}"
+                )
         return
 
     evidence_hashes = {

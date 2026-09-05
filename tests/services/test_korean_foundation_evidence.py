@@ -12,6 +12,7 @@ import json
 import multiprocessing
 import os
 from pathlib import Path
+import shutil
 import stat
 import struct
 import time
@@ -33,7 +34,7 @@ PHASE_ROOT = (
 )
 CANONICAL_INBOX = PHASE_ROOT / "evidence-inbox"
 CURRENT_BUNDLE_SHA256 = (
-    "36c1442b161fb3d8529678099b4df1c93b43fb2456a24260ac2942787b7f44f0"
+    "e95c795f0e9653b67163345d8acf6d1e31228c544380e95db84342e7e1401357"
 )
 CURRENT_BUNDLE_RELPATH = f"candidate-bundles/{CURRENT_BUNDLE_SHA256}"
 REGISTRY_FILENAME = "korean-concepts-v1.json"
@@ -62,6 +63,18 @@ FIXED_EVIDENCE_RELPATHS = (
     "reviewers/independent-native-speaker.json",
 )
 REVIEWED_AT = "2026-08-05T00:00:00Z"
+CURRENT_AI_AGGREGATE_ROOT = (
+    "9abb3d6b950e34c010ea0ed380e995cf39d653e875f43c3a2bfdc78363993922"
+)
+CURRENT_ACOUSTIC_AGGREGATE_ROOT = (
+    "1618b67d251d13a29a1c9d27ce736c5f14a23be2fd8c679ae45739fae57a4c4d"
+)
+CURRENT_MEDIA_RIGHTS_SHA256 = (
+    "c00cc1d5b297bf15499a49318fcc31ab373e595167b01f7f72b47d0a6290a8c6"
+)
+CURRENT_MEDIA_AUTHORITY_SHA256 = (
+    "a9eb33b67ed869297b603cbe37a0faa689b2087b22d2b1bdf86dba23aaf1f2f5"
+)
 CURRICULUM_GATES = {
     "hangul": (
         "source_content",
@@ -117,22 +130,22 @@ AUDIO_KINDS = frozenset(
 )
 EXPECTED_CANDIDATE_SHA256 = {
     "current-candidate.json": (
-        "0fa9e0756ab59969dc55ab428544c18aad1d1d14631b0d2569a33823feb24518"
+        "225ff85c19346866640400765a3b33ac9d13e2e9a13ee67c6edb11455a6179e5"
     ),
     "bundle-manifest.json": (
-        "2390974b9f48534665d474b9fe18290e28edc361aa3cc119481db70e44acfd40"
+        "6852f7cc6eeedf2ec88f33ab8f027e76a72981a4179015b8aa40a0f3eb40a3ab"
     ),
     "hangul-v2.json": (
-        "63c36c50c0efa61f7ba76ebdf92ff174f79aadedb63b46d15da01599f2594f59"
+        "da12a49c5f42483eeeb6da4f251ea2eba3295afa7cf07c2c621e4dddfa5ff038"
     ),
     "pronunciation-i-plus-1-v2.json": (
-        "cdac65b7e3a9615e62f187dcf7c7f6c543a480710b618ce0c9eb580281cd955c"
+        "889acedc9de497cfa25d8699ac4d2434bd102653c31276874a8b4336fd15448e"
     ),
     "korean-foundations-v2-curation.json": (
-        "faa233cdc67f99c28c3f203e1b206f4ad4f631bc34b8e2fbb970db336f1157db"
+        "695346c70e34e163e459e3f2e1c8156b39ed4f126c4803e98258d229a8164caf"
     ),
     "korean-foundations-v2-media.json": (
-        "e21c7a11006cf70a0559ec7fff7279b466097cf3bbc1fa092cee84e7b963e938"
+        "545bd060992e9a17d7a95a3397d774678c3cb3e3cddbe593e93c949f9b12326d"
     ),
 }
 EXPECTED_REGISTRY_SHA256 = {
@@ -678,6 +691,15 @@ class EvidenceFixture:
     proposed_media: dict[str, Any]
 
 
+@dataclass(frozen=True)
+class CurrentAIMediaEvidenceFixture:
+    project_root: Path
+    inbox: Path
+    index_path: Path
+    receipt_path: Path
+    active_pointer: Path
+
+
 def _export_ready_candidates(
     candidates: dict[str, dict[str, Any]],
 ) -> dict[str, dict[str, Any]]:
@@ -855,6 +877,36 @@ def _build_complete_fixture(
     )
 
 
+def _build_current_ai_media_fixture(tmp_path: Path) -> CurrentAIMediaEvidenceFixture:
+    project_root = tmp_path / "fixture-only-current-ai-media-evidence"
+    candidate_root = project_root / "data" / "korean_foundations"
+    phase_root = (
+        project_root
+        / ".planning"
+        / "phases"
+        / "31-hangul-and-pronunciation-i-plus-1"
+    )
+    inbox = phase_root / "evidence-inbox"
+    shutil.copytree(PROJECT_ROOT / "data" / "korean_foundations", candidate_root)
+    shutil.copytree(CANONICAL_INBOX, inbox)
+    (inbox / "validation-receipt.json").unlink(missing_ok=True)
+    handoff_root = phase_root / "execution-handoffs"
+    handoff_root.mkdir(parents=True)
+    shutil.copy2(
+        PHASE_ROOT / "execution-handoffs" / "media-authority.json",
+        handoff_root / "media-authority.json",
+    )
+    for filename in REQUEST_FILENAMES:
+        shutil.copy2(PHASE_ROOT / filename, phase_root / filename)
+    return CurrentAIMediaEvidenceFixture(
+        project_root=project_root,
+        inbox=inbox,
+        index_path=inbox / "evidence-index.json",
+        receipt_path=inbox / "validation-receipt.json",
+        active_pointer=candidate_root / "active-foundations.json",
+    )
+
+
 def _install_fixture_paths(
     api: ModuleType,
     monkeypatch: pytest.MonkeyPatch,
@@ -939,7 +991,14 @@ def test_layout_constants_and_canonical_inbox_have_only_technical_readme() -> No
     assert api.KOREAN_FOUNDATION_EVIDENCE_POLICY_VERSION == (
         "phase31-korean-foundation-evidence-policy-v1"
     )
-    assert {path.name for path in CANONICAL_INBOX.iterdir()} == {"README.md"}
+    assert {path.name for path in CANONICAL_INBOX.iterdir()} == {
+        "README.md",
+        "acoustic-review.json",
+        "ai-review",
+        "media",
+        "media-rights.json",
+        "validation-receipt.json",
+    }
     readme = CANONICAL_INBOX.joinpath("README.md").read_text(encoding="utf-8")
     for relpath in (
         "evidence-index.json",
@@ -1079,10 +1138,10 @@ def test_evidence_contract_binds_exact_v2_candidate_and_request_hashes(
         "filename": "bundle-manifest.json",
         "bundle_sha256": CURRENT_BUNDLE_SHA256,
         "selected_draft_manifest_sha256": (
-            "8f053a815b4b18c9e8004d295849f562989410f05f4a1cc8725bc37f8c7f26b5"
+            "2cbab1150d862511a66c22a902737df1d65601a9f38351b0a97aecad852f7cf2"
         ),
         "draft_validation_sha256": (
-            "d254eac81d058ea6406d5d0d981480cce5d8968801116063d9835b1f7625bfe0"
+            "a300a5376119d3e2fb4a734390d61e2cf0c5f8db794f758c95ad4de64aa2fb78"
         ),
         "file_sha256": EXPECTED_CANDIDATE_SHA256["bundle-manifest.json"],
         "total_record_count": 139,
@@ -1162,6 +1221,108 @@ def test_evidence_contract_binds_exact_v2_candidate_and_request_hashes(
         assert case_fixture.receipt_path.exists() is False
         assert not tuple(case_fixture.inbox.glob(".validation-receipt.*.tmp"))
         assert _tree_bytes(case_fixture.project_root) == before
+
+
+def test_current_ai_media_inbox_derives_ai_passed_manifests_and_receipt(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    api = _evidence()
+    fixture = _build_current_ai_media_fixture(tmp_path)
+    assert fixture.index_path.exists() is False
+    _install_fixture_paths(api, monkeypatch, fixture)  # type: ignore[arg-type]
+
+    inventory = api.inspect_fixed_korean_foundation_evidence_inbox()
+
+    assert inventory.complete is True
+    assert inventory.declared_media_count == 325
+    assert inventory.missing_members == ()
+    assert inventory.unexpected_members == ()
+    assert inventory.index_sha256 is not None
+
+    receipt = api.validate_and_write_fixed_korean_foundation_validation_receipt(
+        confirmed_index_sha256=inventory.index_sha256
+    )
+
+    assert fixture.receipt_path.is_file()
+    assert fixture.index_path.exists() is False
+    assert receipt.reviewer_evidence_sha256 == CURRENT_AI_AGGREGATE_ROOT
+    assert receipt.rights_evidence_sha256 == CURRENT_MEDIA_RIGHTS_SHA256
+    assert receipt.media_evidence_sha256 == CURRENT_ACOUSTIC_AGGREGATE_ROOT
+
+    validated = api._validate_fixed_evidence(
+        api._FIXED_PATHS,
+        confirmed_index_sha256=inventory.index_sha256,
+    )
+    curation = api.KoreanFoundationCurationManifest.model_validate_json(
+        validated.layout.members["proposed-curation.json"]
+    )
+    media = api.KoreanFoundationMediaManifest.model_validate_json(
+        validated.layout.members["proposed-media.json"]
+    )
+    member_hashes = {
+        member.relpath: member.sha256 for member in validated.layout.index.members
+    }
+
+    assert curation.candidate_only is False
+    assert {
+        gate.status
+        for record in curation.records
+        for gate in record.gates
+    } == {"ai_review_passed"}
+    assert all(
+        gate.reviewer_id is None and gate.reviewer_role is None
+        for record in curation.records
+        for gate in record.gates
+    )
+    assert media.candidate_only is False
+    assert sum(slot.required and slot.status == "approved" for slot in media.slots) == 325
+    assert sum((not slot.required) and slot.status == "needs_review" for slot in media.slots) == 184
+    assert all(
+        slot.review_receipts == ()
+        for slot in media.slots
+        if slot.required and slot.status == "approved"
+    )
+    assert member_hashes["ai-review/aggregate.json"] == (
+        "3acfd8c27b05d6f4415d294617d251f985a84243faeee96c7d61dbc03e559a69"
+    )
+    assert member_hashes["media-rights.json"] == CURRENT_MEDIA_RIGHTS_SHA256
+    assert member_hashes["media/artifacts.json"] == (
+        "825e361707e56b77c2c1e26441751afcaa9b9573c3b1decb5eeb5601819a3254"
+    )
+    assert member_hashes["execution-handoffs/media-authority.json"] == (
+        CURRENT_MEDIA_AUTHORITY_SHA256
+    )
+
+
+def test_current_ai_media_artifact_metadata_corruption_fails_closed(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    from multilang.services.ai_acoustic_review import ai_acoustic_review_sha256
+
+    api = _evidence()
+    fixture = _build_current_ai_media_fixture(tmp_path)
+    artifacts_path = fixture.inbox / "media" / "artifacts.json"
+    artifacts = json.loads(artifacts_path.read_text(encoding="utf-8"))
+    artifacts["artifacts"][0].pop("provider_id")
+    artifacts["content_hash"] = api._canonical_sha256(artifacts["artifacts"])
+    artifacts_path.write_bytes(api._json_file_bytes(artifacts))
+
+    acoustic_path = fixture.inbox / "acoustic-review.json"
+    acoustic = json.loads(acoustic_path.read_text(encoding="utf-8"))
+    acoustic["media_artifacts_sha256"] = artifacts["content_hash"]
+    acoustic["aggregate_root"] = ai_acoustic_review_sha256(acoustic)
+    acoustic_path.write_bytes(api._json_file_bytes(acoustic))
+    _install_fixture_paths(api, monkeypatch, fixture)  # type: ignore[arg-type]
+
+    inventory = api.inspect_fixed_korean_foundation_evidence_inbox()
+    with pytest.raises(api.KoreanFoundationEvidenceError) as exc_info:
+        api.validate_and_write_fixed_korean_foundation_validation_receipt(
+            confirmed_index_sha256=inventory.index_sha256
+        )
+
+    assert exc_info.value.reason_code is api.KoreanFoundationEvidenceReasonCode.MEDIA_INVALID
 
 
 @pytest.mark.parametrize(
@@ -1720,7 +1881,24 @@ def test_canonical_candidates_requests_and_production_roots_remain_untouched() -
     for filename, expected_hash in EXPECTED_REQUEST_SHA256.items():
         path = PHASE_ROOT / filename
         assert _sha256_bytes(path.read_bytes()) == expected_hash
-    assert {path.name for path in CANONICAL_INBOX.iterdir()} == {"README.md"}
-    assert not (PROJECT_ROOT / "data/korean_foundations/active-foundations.json").exists()
-    assert not (PROJECT_ROOT / "data/korean_foundations/snapshots").exists()
+    assert {path.name for path in CANONICAL_INBOX.iterdir()} == {
+        "README.md",
+        "acoustic-review.json",
+        "ai-review",
+        "media",
+        "media-rights.json",
+        "validation-receipt.json",
+    }
+    receipt_path = CANONICAL_INBOX / "validation-receipt.json"
+    assert receipt_path.is_file()
+    active_path = PROJECT_ROOT / "data/korean_foundations/active-foundations.json"
+    assert active_path.is_file()
+    active_pointer = json.loads(active_path.read_text(encoding="utf-8"))
+    assert active_pointer["receipt_sha256"] == _sha256_bytes(receipt_path.read_bytes())
+    snapshot_root = PROJECT_ROOT / "data/korean_foundations" / active_pointer["snapshot_relpath"]
+    snapshot_manifest = snapshot_root / "snapshot-manifest.json"
+    assert snapshot_manifest.is_file()
+    assert active_pointer["snapshot_manifest_sha256"] == _sha256_bytes(
+        snapshot_manifest.read_bytes()
+    )
     assert not (PROJECT_ROOT / "exports/korean_foundations").exists()

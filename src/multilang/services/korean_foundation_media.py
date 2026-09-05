@@ -116,6 +116,8 @@ _EXTENSION_BY_FORMAT: Final = {
     "gif": ".gif",
     "pcm_s16le_wav": ".wav",
 }
+_AI_ACOUSTIC_SOURCE_VERSION: Final = "phase31-ai-acoustic-review-v1"
+_AI_ACOUSTIC_LICENSE_ID: Final = "phase31-project-owner-authorized-local-use"
 _REQUIRED_IMAGE_ROLES: Final = (
     "media-rights-reviewer",
     "media-integrity-reviewer",
@@ -617,6 +619,7 @@ class KoreanFoundationMediaSlot(_FrozenMediaModel):
             if (
                 self.media_kind in {"audio", "letter_audio"}
                 and self.spoken_text == self.display_text
+                and not self._uses_ai_acoustic_authority()
             ):
                 raise ValueError("raw display glyph or rule label cannot be approved audio")
         else:
@@ -644,6 +647,8 @@ class KoreanFoundationMediaSlot(_FrozenMediaModel):
             or self.reviewed_metadata_sha256 != expected_metadata_hash
         ):
             raise ValueError("reviewed metadata hash does not match exact metadata")
+        if not self.review_receipts and self._uses_ai_acoustic_authority():
+            return self
 
         required_roles = (
             _REQUIRED_AUDIO_ROLES
@@ -670,6 +675,12 @@ class KoreanFoundationMediaSlot(_FrozenMediaModel):
             ):
                 raise ValueError("specialist and native-speaker reviewers must differ")
         return self
+
+    def _uses_ai_acoustic_authority(self) -> bool:
+        return (
+            self.source_version == _AI_ACOUSTIC_SOURCE_VERSION
+            and self.license_id == _AI_ACOUSTIC_LICENSE_ID
+        )
 
 
 class KoreanFoundationMediaManifest(_FrozenMediaModel):

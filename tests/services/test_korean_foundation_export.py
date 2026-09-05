@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-import ast
 import csv
 from dataclasses import replace
 from hashlib import sha256
@@ -22,6 +21,12 @@ import zlib
 
 import pytest
 
+from multilang.services.anki_id_registry import (
+    ANKI_ID_REGISTRY,
+    AnkiIdKind,
+    registry_id,
+    validate_anki_id_registry,
+)
 from multilang.services.phoneme_deck import PHONEME_FIELD_NAMES
 
 
@@ -453,6 +458,34 @@ def _pronunciation_row(api: ModuleType) -> object:
     )
 
 
+def test_korean_foundation_ids_are_registry_backed_without_local_numeric_declarations() -> None:
+    api = _export()
+    source = Path("src/multilang/services/korean_foundation_export.py").read_text(encoding="utf-8")
+
+    assert api.KOREAN_HANGUL_MODEL_ID == registry_id(
+        family="korean_foundation", role="hangul_model", kind=AnkiIdKind.MODEL
+    )
+    assert api.KOREAN_HANGUL_DECK_ID == registry_id(
+        family="korean_foundation", role="hangul_deck", kind=AnkiIdKind.DECK
+    )
+    assert api.KOREAN_PRONUNCIATION_MODEL_ID == registry_id(
+        family="korean_foundation", role="pronunciation_model", kind=AnkiIdKind.MODEL
+    )
+    assert api.KOREAN_PRONUNCIATION_DECK_ID == registry_id(
+        family="korean_foundation", role="pronunciation_deck", kind=AnkiIdKind.DECK
+    )
+    assert api.KOREAN_HANGUL_MODEL_ID != registry_id(
+        family="korean_frequency", role="model", kind=AnkiIdKind.MODEL
+    )
+    assert api.KOREAN_HANGUL_DECK_ID != registry_id(
+        family="korean_frequency", role="parent_deck", kind=AnkiIdKind.DECK
+    )
+    assert "1_762_801_001" not in source
+    assert "1_762_801_002" not in source
+    assert "1_762_801_003" not in source
+    assert "1_762_801_004" not in source
+
+
 def test_fixed_ids_names_and_row_schemas_are_exact() -> None:
     api = _export()
 
@@ -779,32 +812,20 @@ def test_pending_or_false_i_plus_one_snapshot_fails_before_row_construction(
 
 def test_fixed_model_and_deck_ids_are_globally_unique() -> None:
     api = _export()
-    definitions: dict[int, list[str]] = {}
-    source_root = Path("src/multilang")
-    for path in source_root.rglob("*.py"):
-        tree = ast.parse(path.read_text(encoding="utf-8"), filename=str(path))
-        for node in ast.walk(tree):
-            if not isinstance(node, (ast.Assign, ast.AnnAssign)):
-                continue
-            targets = node.targets if isinstance(node, ast.Assign) else [node.target]
-            value = node.value
-            if not isinstance(value, ast.Constant) or not isinstance(value.value, int):
-                continue
-            for target in targets:
-                if not isinstance(target, ast.Name) or not target.id.endswith(
-                    ("MODEL_ID", "DECK_ID")
-                ):
-                    continue
-                definitions.setdefault(value.value, []).append(f"{path}:{target.id}")
 
     proposed = {
         api.KOREAN_HANGUL_MODEL_ID,
         api.KOREAN_HANGUL_DECK_ID,
         api.KOREAN_PRONUNCIATION_MODEL_ID,
         api.KOREAN_PRONUNCIATION_DECK_ID,
+        registry_id(family="korean_frequency", role="model", kind=AnkiIdKind.MODEL),
+        registry_id(family="korean_frequency", role="parent_deck", kind=AnkiIdKind.DECK),
+        registry_id(family="korean_frequency", role="level_1_deck", kind=AnkiIdKind.DECK),
+        registry_id(family="korean_frequency", role="level_2_deck", kind=AnkiIdKind.DECK),
+        registry_id(family="korean_frequency", role="level_3_deck", kind=AnkiIdKind.DECK),
     }
-    assert len(proposed) == 4
-    assert all(len(definitions[value]) == 1 for value in proposed)
+    assert len(proposed) == 9
+    validate_anki_id_registry(ANKI_ID_REGISTRY)
 
 
 def _expected_family_contract(api: ModuleType, family: object) -> tuple[object, ...]:
