@@ -43,7 +43,7 @@ Archives:
 - [x] **Phase 30: Korean Contracts and Morphology** — [KMODE-01, KMODE-02, KNLP-01, KNLP-02]
 - [x] **Phase 31: Hangul and Pronunciation i+1** — [KHAN-01, KHAN-02, KPRO-01, KPRO-02]
 - [-] **Phase 32: Frequency, Portuguese Text, and Audio** — [KFREQ-01, KFREQ-02, KFREQ-03, KTXT-01, KAUD-01, GLEX-01, GLEX-02, GMOR-01, GTXT-01, GPRO-01, GAUD-01]
-- [ ] **Phase 33: Grammar and Personal Sources** — [KGRAM-01, KGRAM-02, KPERS-01, KPERS-02, GJOB-01, GREV-01]
+- [-] **Phase 33: Grammar and Personal Sources** — [KGRAM-01, KGRAM-02, KPERS-01, KPERS-02, GJOB-01, GREV-01]
 - [ ] **Phase 34: Export, Review, and Evidence** — [KEXP-01, KEXP-02, KQA-01, KQA-02, GEXP-01, GOPS-01, GEVAL-01]
 
 ### Phase 30: Korean Contracts and Morphology
@@ -96,7 +96,7 @@ Archives:
 **Stop/Replan Conditions**: Stop only the consuming lane before provider or production work if transformation/local-use rights or bounded provider authority are absent. When local use is approved but redistribution is denied, continue only in private/ignored storage. AI linguistic review follows the global policy and does not require a human checkpoint. Also stop on live `wordfreq` fallback, identity/matcher replacement, private-data leakage, absent budgets, AI-review disagreement, or unsafe Azure evidence.
 
 ### Phase 33: Grammar and Personal Sources
-**Status**: [ ] Not started
+**Status**: [-] In progress
 **Goal**: Users receive an i+1 Particles & Endings curriculum and morphology-aware Korean cards from personal word lists and reading highlights.
 **Depends on**: Phase 30 for independent grammar/personal-source and job/review infrastructure; production joins consume the exact Phase 31/32 contracts they actually use.
 **Requirements**: KGRAM-01, KGRAM-02, KPERS-01, KPERS-02, GJOB-01, GREV-01

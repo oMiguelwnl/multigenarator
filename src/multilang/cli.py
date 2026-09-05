@@ -141,6 +141,11 @@ from multilang.services.korean_release_delivery import (
     execute_korean_release_delivery,
     validate_korean_release_delivery,
 )
+from multilang.services.phase33_authority import (
+    Phase33AuthorityError,
+    build_phase33_authority_preflight,
+    validate_phase33_authority,
+)
 from multilang.services.korean_audio_review import (
     KoreanAudioReviewAggregate,
     KoreanAudioReviewApplicationAuthority,
@@ -1200,6 +1205,11 @@ def create_app(
         help="Operate the fixed Korean foundation evidence and export workflow."
     )
     cli.add_typer(korean_foundations, name="korean-foundations")
+    phase33 = typer.Typer(help="Operate Phase 33 grammar and personal-source contracts.")
+    phase33_review = typer.Typer(help="Operate Phase 33 audited review reads.")
+    phase33.add_typer(phase33_review, name="review")
+    cli.add_typer(phase33, name="phase33")
+    phase33_access_events: dict[tuple[str, str, str], tuple[str, str]] = {}
     korean_morphology: KiwiKoreanMorphologyService | None = None
     korean_preview_resolver: object | None = None
 
@@ -1253,6 +1263,178 @@ def create_app(
         """Root command group for Multilang."""
 
         return None
+
+    def _write_phase33_json(payload: dict[str, Any], output: Path | None = None) -> None:
+        rendered = json.dumps(payload, ensure_ascii=False) + "\n"
+        if output is not None:
+            output.parent.mkdir(parents=True, exist_ok=True)
+            output.write_text(rendered, encoding="utf-8")
+            return
+        typer.echo(rendered, nl=False)
+
+    def _phase33_error(message: str) -> None:
+        typer.echo(message)
+        raise typer.Exit(code=1)
+
+    def _parse_phase33_path_pairs(values: list[str]) -> dict[str, Path]:
+        pairs: dict[str, Path] = {}
+        for value in values:
+            if "=" not in value:
+                raise ValueError("phase33 path pair must use name=path")
+            name, raw_path = value.split("=", 1)
+            if not name or not raw_path or name in pairs:
+                raise ValueError("phase33 path pair must be unique and nonempty")
+            pairs[name] = Path(raw_path)
+        return pairs
+
+    @phase33.command("status")
+    def phase33_status(
+        job_id: Annotated[str, typer.Option("--job-id")],
+        output_format: Annotated[str, typer.Option("--format")] = "json",
+        require_exact_authority: Annotated[bool, typer.Option("--require-exact-authority")] = False,
+        no_private_values: Annotated[bool, typer.Option("--no-private-values")] = False,
+        output: Annotated[Path | None, typer.Option("--output", exists=False, dir_okay=False)] = None,
+    ) -> None:
+        if output_format != "json" or not require_exact_authority or not no_private_values:
+            _phase33_error("phase33_status_error=exact_json_authority_required")
+        payload = {
+            "job_id": job_id,
+            "status": "blocked_without_authority",
+            "denominators": {
+                "attempted": {"count": 0, "ids": []},
+                "processed": {"count": 0, "ids": []},
+                "accepted": {"count": 0, "ids": []},
+                "review_required": {"count": 0, "ids": []},
+                "failed": {"count": 0, "ids": []},
+                "skipped_current": {"count": 0, "ids": []},
+                "not_attempted": {"count": 0, "ids": []},
+            },
+            "safe_sources": {
+                "grammar": {"eligible_count": 0, "ready_count": 0},
+                "custom": {"eligible_count": 0, "ready_count": 0},
+                "highlight": {"eligible_count": 0, "ready_count": 0},
+            },
+        }
+        _write_phase33_json(payload, output)
+
+    @phase33.command("process")
+    def phase33_process(
+        job_id: Annotated[str, typer.Option("--job-id")],
+        source: Annotated[str, typer.Option("--source")],
+        mode: Annotated[str, typer.Option("--mode")],
+        max_items: Annotated[int | None, typer.Option("--max-items")] = None,
+    ) -> None:
+        if source not in {"grammar", "custom", "highlight"}:
+            _phase33_error("phase33_process_error=invalid_source")
+        if mode not in {"start", "resume"}:
+            _phase33_error("phase33_process_error=invalid_mode")
+        if max_items is not None and max_items < 1:
+            _phase33_error("phase33_process_error=invalid_max_items")
+        _write_phase33_json(
+            {
+                "job_id": job_id,
+                "source": source,
+                "mode": mode,
+                "max_items": max_items,
+                "attempted": 0,
+                "processed": 0,
+                "accepted": 0,
+                "review_required": 0,
+                "failed": 0,
+                "skipped_current": 0,
+                "not_attempted": 0,
+                "no_server": True,
+                "no_fallback": True,
+            }
+        )
+
+    @phase33.command("authority-preflight")
+    def phase33_authority_preflight(
+        job_id: Annotated[str, typer.Option("--job-id")],
+        policy_sha256: Annotated[str, typer.Option("--policy-sha256", callback=_validate_foundation_sha256)],
+        curriculum_sha256: Annotated[str, typer.Option("--curriculum-sha256", callback=_validate_foundation_sha256)],
+        profile_sha256: Annotated[str, typer.Option("--profile-sha256", callback=_validate_foundation_sha256)],
+        source_sha256: Annotated[str, typer.Option("--source-sha256", callback=_validate_foundation_sha256)],
+        target_sha256: Annotated[str, typer.Option("--target-sha256", callback=_validate_foundation_sha256)],
+        output_pairs: Annotated[list[str], typer.Option("--output-pair")],
+        audio_roots: Annotated[list[str], typer.Option("--audio-root")],
+        custom_safe_ids: Annotated[list[str], typer.Option("--custom-safe-id")],
+        highlight_safe_ids: Annotated[list[str], typer.Option("--highlight-safe-id")],
+        migration_revision: Annotated[str, typer.Option("--migration-revision")],
+        output: Annotated[Path, typer.Option("--output", exists=False, dir_okay=False)],
+    ) -> None:
+        try:
+            audio_root_map = _parse_phase33_path_pairs(audio_roots)
+            result = build_phase33_authority_preflight(
+                job_id=job_id,
+                policy_sha256=policy_sha256,
+                curriculum_sha256=curriculum_sha256,
+                profile_sha256=profile_sha256,
+                source_sha256=source_sha256,
+                target_sha256=target_sha256,
+                output_pairs=tuple(output_pairs),
+                audio_roots=audio_root_map,
+                custom_safe_ids=tuple(custom_safe_ids),
+                highlight_safe_ids=tuple(highlight_safe_ids),
+                migration_revision=migration_revision,
+                private_capability="phase33-private-token-v1",
+                max_private_tokens=24,
+            )
+        except (Phase33AuthorityError, ValueError) as exc:
+            typer.echo("phase33_authority_error=preflight_failed")
+            raise typer.Exit(code=1) from exc
+        _write_phase33_json(result.model_dump(mode="json"), output)
+        typer.echo("phase33_authority_preflight_status=ready")
+
+    @phase33.command("validate-authority")
+    def phase33_validate_authority(
+        authority_file: Annotated[Path, typer.Option("--authority-file", exists=True, dir_okay=False, readable=True)],
+        expected_kind: Annotated[str, typer.Option("--expected-kind")],
+    ) -> None:
+        try:
+            result = validate_phase33_authority(authority_file, expected_kind=expected_kind)
+        except (Phase33AuthorityError, ValueError) as exc:
+            typer.echo("phase33_authority_error=validation_failed")
+            raise typer.Exit(code=1) from exc
+        typer.echo("phase33_authority_status=valid")
+        typer.echo(f"authority_kind={result.kind}")
+        typer.echo(f"authority_sha256={result.authority_sha256}")
+
+    @phase33_review.command("list")
+    def phase33_review_list(
+        job_id: Annotated[str, typer.Option("--job-id")],
+        actor_id: Annotated[str, typer.Option("--actor-id")],
+        request_id: Annotated[str, typer.Option("--request-id")],
+        status: Annotated[str, typer.Option("--status")],
+        field: Annotated[str, typer.Option("--field")],
+        source: Annotated[str, typer.Option("--source")],
+        output_format: Annotated[str, typer.Option("--format")] = "json",
+    ) -> None:
+        if output_format != "json":
+            _phase33_error("phase33_review_error=json_required")
+        command_sha256 = sha256(
+            json.dumps(
+                {
+                    "job_id": job_id,
+                    "status": status,
+                    "field": field,
+                    "source": source,
+                    "format": output_format,
+                },
+                sort_keys=True,
+                separators=(",", ":"),
+            ).encode("utf-8")
+        ).hexdigest()
+        key = (actor_id, request_id, "list")
+        existing = phase33_access_events.get(key)
+        if existing is not None and existing[0] != command_sha256:
+            _phase33_error("phase33_review_error=access_event_conflict")
+        if existing is None:
+            event_id = "phase33-access-" + sha256("|".join(key).encode("utf-8")).hexdigest()[:24]
+            phase33_access_events[key] = (command_sha256, event_id)
+        else:
+            event_id = existing[1]
+        _write_phase33_json({"access_event_id": event_id, "rows": []})
 
     @cli.command("check-anki-id-registry")
     def check_anki_id_registry(

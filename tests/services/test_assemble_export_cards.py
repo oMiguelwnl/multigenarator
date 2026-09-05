@@ -47,7 +47,9 @@ from multilang.domain.exporting import (
     ExportCardIdentity,
     ExportCardRow,
     export_field_names_for_rows,
+    export_field_names_for_language_and_source,
 )
+from multilang.domain.source_profiles import get_source_profile
 from multilang.services.assemble_export_cards import AssembleExportCardsError, AssembleExportCardsService
 from multilang.services.mandarin_orthography import MandarinOrthography, MandarinOrthographyError
 
@@ -140,6 +142,47 @@ def make_asset(*, item_key: str, asset_kind: AudioAssetKind, storage_path: str) 
     )
 
 
+def test_phase33_grammar_layout_uses_normal_fields_without_public_source_mode() -> None:
+    with pytest.raises(ValueError):
+        get_source_profile("korean-grammar")
+
+    field_names = export_field_names_for_language_and_source(
+        language=SupportedLanguage.KO,
+        source_type="korean-grammar",
+    )
+
+    assert field_names == FREQUENCY_EXPORT_CARD_FIELD_NAMES
+
+    row = ExportCardRow(
+        identity=ExportCardIdentity(
+            language=SupportedLanguage.KO,
+            source_type="korean-grammar",
+            job_id="job-phase33",
+            item_key="grammar-g001",
+            lemma_key="ko-grammar:g001",
+            sort_index=1,
+        ),
+        word="은/는",
+        front_of_card="은/는",
+        ipa="[eun/neun]",
+        definitions="particle: topic marker",
+        example_sentence="저는 학생이에요.",
+        translation="Eu sou estudante.",
+        word_audio="[sound:g001-word.mp3]",
+        sentence_audio="[sound:g001-sentence.mp3]",
+    )
+
+    assert row.ordered_field_mapping(field_names=field_names) == {
+        "SortIndex": 1,
+        "word": "은/는",
+        "IPA": "[eun/neun]",
+        "Definitions": "particle: topic marker",
+        "Example Sentence": "저는 학생이에요.",
+        "Translation": "Eu sou estudante.",
+        "word_audio": "[sound:g001-word.mp3]",
+        "sentence_audio": "[sound:g001-sentence.mp3]",
+        "Image": "",
+    }
 def make_korean_asset(
     *,
     item_key: str,
