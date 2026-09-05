@@ -12,7 +12,7 @@
 
 ## Current Focus
 
-Run Phase 31 foundations, Phase 32 offline frequency infrastructure, and Phase 33 independent job/review scaffolding as parallel lanes where write ownership is disjoint; join exact AI-reviewed, rights-cleared artifacts before production generation and final Phase 34 closure.
+Continue Phase 32 offline frequency infrastructure and reconcile Phase 33 independent job/review scaffolding while preserving the completed exact Phase 31 foundations bundle as the downstream Korean foundation dependency; join exact AI-reviewed, rights-cleared artifacts before production generation and final Phase 34 closure.
 
 ## Archived Phases
 
@@ -41,7 +41,7 @@ Archives:
 ### Phase Overview
 
 - [x] **Phase 30: Korean Contracts and Morphology** — [KMODE-01, KMODE-02, KNLP-01, KNLP-02]
-- [-] **Phase 31: Hangul and Pronunciation i+1** — [KHAN-01, KHAN-02, KPRO-01, KPRO-02]
+- [x] **Phase 31: Hangul and Pronunciation i+1** — [KHAN-01, KHAN-02, KPRO-01, KPRO-02]
 - [-] **Phase 32: Frequency, Portuguese Text, and Audio** — [KFREQ-01, KFREQ-02, KFREQ-03, KTXT-01, KAUD-01, GLEX-01, GLEX-02, GMOR-01, GTXT-01, GPRO-01, GAUD-01]
 - [ ] **Phase 33: Grammar and Personal Sources** — [KGRAM-01, KGRAM-02, KPERS-01, KPERS-02, GJOB-01, GREV-01]
 - [ ] **Phase 34: Export, Review, and Evidence** — [KEXP-01, KEXP-02, KQA-01, KQA-02, GEXP-01, GOPS-01, GEVAL-01]
@@ -61,7 +61,7 @@ Archives:
 **Stop/Replan Conditions**: Reopen only if verified Korean identity, persistence, morphology, privacy, or existing-mode contracts regress; shared hardening must not replace the verified Korean matcher or migration.
 
 ### Phase 31: Hangul and Pronunciation i+1
-**Status**: [-] In progress
+**Status**: [x] Complete
 **Goal**: Users receive reviewed Hangul and Korean pronunciation foundation decks with explicit curriculum-i+1 sequencing.
 **Depends on**: Phase 30
 **Requirements**: KHAN-01, KHAN-02, KPRO-01, KPRO-02
@@ -73,8 +73,8 @@ Archives:
 5. Jamo and phonological-rule audio cannot become ready through raw-glyph TTS or provider success; deterministic integrity and the versioned AI linguistic/acoustic review policy must pass.
 **Out of Scope**: Korean 3000-card frequency content, unapproved live synthesis, automatic specialist approval, and unrelated template redesign.
 **Stop/Replan Conditions**: Stop the affected lane on AI-review disagreement/uncertainty, failed deterministic validation, missing media rights/provider authority, exact-byte drift, or canonical snapshot failure. Do not block unrelated offline lanes. Instrumented Anki Desktop/mobile import, rendering, and playback acceptance remains a Phase 34 gate.
-**Remaining Plans**: Historical 31-26 through 31-28 are superseded. Plan 31-29 records the clean common runtime/baseline; then run 31-30 AI linguistic evidence and 31-31 media/rights/acoustic evidence in parallel; 31-32 joins exact outputs, activates locally, and creates six local exports.
-**Planning Readiness**: Plans 31-29 through 31-32 passed fresh-context plan checking on 2026-08-27 with no remaining findings.
+**Completion Evidence**: Plan 31-32 joined the AI linguistic and media/acoustic lanes, activated bundle `b8704d2bbcc390a2cd4ee9b1119928e83c9a75aaa3cf82da98bf2474c8e7c516`, verified receipt `8c2e9108e51c23f26ae29635105bbf3e3017b64284d835c73c2718aa03019705`, committed all 325 snapshot media files, and inspected six local exports. Phase 34 still owns instrumented Anki Desktop/mobile import, rendering, and playback acceptance.
+**Planning Readiness**: Plans 31-29 through 31-32 passed fresh-context plan checking on 2026-08-27 and Phase 31 verification passed on 2026-09-05.
 
 ### Phase 32: Frequency, Portuguese Text, and Audio
 **Status**: [-] In progress

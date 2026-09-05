@@ -15,14 +15,14 @@ Generate reliable, high-quality Anki cards for real vocabulary the learner needs
 ## Current State
 
 - **Milestone:** v3.0 Korean Learning System and Shared Generation Hardening - IN PROGRESS
-- **Phases:** 30-34 (1 of 5 complete)
+- **Phases:** 30-34 (2 of 5 complete)
 - **Last completed milestone:** v2.1 Latin Google TTS Finalization
-- **Active Phase:** Phase 31 - Hangul and Pronunciation i+1 and Phase 32 - Frequency, Portuguese Text, and Audio remain parallel in-progress lanes; Phase 31 Plan 31-30 AI linguistic evidence is complete, while media, activation, and production joins remain blocked.
-- **Last Completed:** Plan 31-30 - verified policy-bound AI linguistic review evidence for all 139 exact v2 Korean foundation records with 21 completed invocations, 139 passing subjects, 0 blocked subjects, and zero repository provider/API spend on 2026-09-01.
+- **Active Phase:** Phase 32 - Frequency, Portuguese Text, and Audio remains in progress; Phase 31 - Hangul and Pronunciation i+1 is complete and verified, while Phase 33 local work remains unreconciled in the dirty worktree.
+- **Last Completed:** Phase 31 verification - locally active Korean foundations bundle `b8704d2bbcc390a2cd4ee9b1119928e83c9a75aaa3cf82da98bf2474c8e7c516` passed receipt, snapshot, Hangul, pronunciation, export, committed-media, and remote-delivery checks on 2026-09-05.
 - **Decisions:** Keep Korean foundation production defaults bound to one atomic `current-candidate` bundle while preserving immutable explicit v1 history; adopt `.planning/AI-LINGUISTIC-REVIEW-POLICY.md` for every language; AI review is explicit, hash-bound, multi-pass, and never impersonates a human; human linguistic review is optional rather than blocking; Korean frequency final export requires explicit persisted level and exact reviewed text/word-audio/sentence-audio evidence, never rank or item-key inference; synthetic smoke and exact-scale gates are non-production evidence with explicit claim limits; provider/catalog pilot and production evidence validation are read-only, row-derived, hash/count-only, and cannot grant route/profile/audio/review/content-promotion/release authority; legal rights, provider spend, private-content processing, source transformation, production database mutation, and publication authority remain separate; execute disjoint plans as a dependency DAG in isolated parallel lanes.
 - **Reconciliation:** Preserve the verified Korean Phase 30 implementation and distribute the restored shared-hardening requirements across Phases 32-34 rather than overlaying the alternate local Phase 30 implementation.
-- **Blockers:** Human linguistic availability is no longer a blocker. Remaining Phase 31 blockers are exact media creation/integrity, applicable rights/provider authority consumption, canonical snapshot activation, and exports. Phase 32 production source transformation, provider use, Azure catalog/synthesis, asset commit, and publication remain blocked until their exact checkpoint authority exists. The real shared `.venv` remains `venv_unsafe` and must not be silently repaired.
-- **Next:** Continue Phase 31 Plan 31-31 media validation before attempting Plan 31-32 activation/export; continue Phase 32 offline lanes that do not consume the inactive Phase 31 output or require live/provider authority.
+- **Blockers:** No Phase 31 blockers remain inside its local-closure claim boundary. Phase 32 source retrieval remains blocked until Plan 32-18 can prove pre-source full-suite readiness; current preflight records shared `.venv` fingerprint drift/unsafe status (`current c59fa62c6fc469aa896cbc68f2df79c46d0120b072f5bbf41b1e726ef3092526`, expected `d6a8151e363a1c511d3a614082c2be646b6f24ef1a2211c4dffece73c57ffbf6`). Production source transformation, provider use, Azure catalog/synthesis, asset commit, publication, and Phase 34 observed Anki evidence remain blocked until their exact checkpoint authority exists.
+- **Next:** Resolve Plan 32-18 shared `.venv` identity/invariance through an explicit recovery authority or rebaseline decision, rerun the pre-source full-suite gate before any NIKL source retrieval, and separately reconcile the dirty Phase 32/33 worktree changes.
 
 ## Validated Capabilities
 
@@ -45,13 +45,13 @@ Generate reliable, high-quality Anki cards for real vocabulary the learner needs
 
 ### Hangul Foundations
 
-- [ ] **[KHAN-01]**: User receives a Hangul foundations deck covering modern jamo, syllable-block construction, stroke order, mnemonics, and reviewed audio through a Korean note type derived from the existing kana layout. [Done-When: the curated inventory exports with unique model/deck IDs, Korean fonts, complete required media, and no Japanese-specific field or label leakage.]
-- [ ] **[KHAN-02]**: User receives Hangul cards in curriculum i+1 order after an explicit bootstrap. [Done-When: each note stores prerequisite, observed, and target concept IDs and introduces exactly one new orthographic concept while preserving NFC output.]
+- [x] **[KHAN-01]**: User receives a Hangul foundations deck covering modern jamo, syllable-block construction, stroke order, mnemonics, and reviewed audio through a Korean note type derived from the existing kana layout. [Done-When: the curated inventory exports with unique model/deck IDs, Korean fonts, complete required media, and no Japanese-specific field or label leakage.]
+- [x] **[KHAN-02]**: User receives Hangul cards in curriculum i+1 order after an explicit bootstrap. [Done-When: each note stores prerequisite, observed, and target concept IDs and introduces exactly one new orthographic concept while preserving NFC output.]
 
 ### Pronunciation
 
-- [ ] **[KPRO-01]**: User receives a Korean pronunciation deck using the existing phoneme template fields for spelling, sound, short audio, example word, word audio/translation, example sentence, and sentence audio/translation. [Done-When: a Korean-specific note type reuses the shared HTML/CSS contract and all fields and media survive APKG, CSV, and TSV export.]
-- [ ] **[KPRO-02]**: User receives a strict curriculum i+1 pronunciation sequence covering onset contrasts, batchim, liaison, tensification, nasalization, aspiration, palatalization, complex codas, contractions, and connected speech. [Done-When: every card has exactly one new phonological concept, all other active rules are prerequisites, and false i+1 labeling blocks approval.]
+- [x] **[KPRO-01]**: User receives a Korean pronunciation deck using the existing phoneme template fields for spelling, sound, short audio, example word, word audio/translation, example sentence, and sentence audio/translation. [Done-When: a Korean-specific note type reuses the shared HTML/CSS contract and all fields and media survive APKG, CSV, and TSV export.]
+- [x] **[KPRO-02]**: User receives a strict curriculum i+1 pronunciation sequence covering onset contrasts, batchim, liaison, tensification, nasalization, aspiration, palatalization, complex codas, contractions, and connected speech. [Done-When: every card has exactly one new phonological concept, all other active rules are prerequisites, and false i+1 labeling blocks approval.]
 
 ### Frequency, Text, And Audio
 
