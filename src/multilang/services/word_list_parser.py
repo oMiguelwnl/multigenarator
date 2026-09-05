@@ -9,6 +9,9 @@ import unicodedata
 
 from pydantic import BaseModel, Field
 
+from multilang.domain.korean import canonicalize_korean
+from multilang.domain.personal_sources import PersonalSourceRow
+
 
 class WordListWarning(BaseModel):
     """Structured parse warning for non-fatal input issues."""
@@ -31,6 +34,13 @@ class ParsedWordList(BaseModel):
     """Parsed word-list payload plus deterministic warnings."""
 
     items: list[ParsedWordListItem] = Field(default_factory=list)
+    warnings: list[WordListWarning] = Field(default_factory=list)
+
+
+class ParsedKoreanOrderedWordList(BaseModel):
+    """Korean opt-in ordered ledger preserving every nonblank row."""
+
+    rows: list[PersonalSourceRow] = Field(default_factory=list)
     warnings: list[WordListWarning] = Field(default_factory=list)
 
 
@@ -205,11 +215,71 @@ def parse_word_list(path: str | Path) -> ParsedWordList:
     return ParsedWordList(items=items, warnings=warnings)
 
 
+def parse_korean_ordered_word_list(path: str | Path) -> ParsedKoreanOrderedWordList:
+    """Parse Korean custom input without dropping ordered duplicate rows."""
+
+    word_list_path = Path(path)
+    try:
+        raw_text = word_list_path.read_text(encoding="utf-8")
+    except UnicodeDecodeError as exc:
+        raise ValueError(f"word list must be UTF-8 plain text: {word_list_path}") from exc
+
+    rows: list[PersonalSourceRow] = []
+    warnings: list[WordListWarning] = []
+    first_position_by_key: dict[str, int] = {}
+    input_position = 0
+
+    for line_number, raw_line in enumerate(raw_text.splitlines(), start=1):
+        submitted_forms = split_loose_word_list_line(raw_line)
+        if not submitted_forms:
+            warnings.append(
+                WordListWarning(
+                    code="blank_line",
+                    line_number=line_number,
+                    detail="blank line ignored during word-list parsing",
+                )
+            )
+            continue
+
+        for submitted_form in submitted_forms:
+            display_form = canonicalize_korean(submitted_form.strip())
+            duplicate_key = normalize_word_list_key(display_form)
+            input_position += 1
+            duplicate_of_position = first_position_by_key.get(duplicate_key)
+            if duplicate_of_position is None:
+                first_position_by_key[duplicate_key] = input_position
+            else:
+                warnings.append(
+                    WordListWarning(
+                        code="duplicate_item",
+                        line_number=line_number,
+                        detail=(
+                            "duplicate normalized item already seen at input "
+                            f"position {duplicate_of_position}"
+                        ),
+                    )
+                )
+            rows.append(
+                PersonalSourceRow(
+                    input_position=input_position,
+                    line_number=line_number,
+                    submitted_form=submitted_form,
+                    display_form=display_form,
+                    normalized_duplicate_key=duplicate_key,
+                    duplicate_of_position=duplicate_of_position,
+                )
+            )
+
+    return ParsedKoreanOrderedWordList(rows=rows, warnings=warnings)
+
+
 __all__ = [
+    "ParsedKoreanOrderedWordList",
     "ParsedWordList",
     "ParsedWordListItem",
     "WordListWarning",
     "normalize_word_list_key",
+    "parse_korean_ordered_word_list",
     "parse_word_list",
     "split_dense_word_list_line",
     "split_loose_word_list_line",

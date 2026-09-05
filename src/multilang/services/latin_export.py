@@ -14,6 +14,7 @@ from typing import Callable
 import genanki
 
 from multilang.domain.exporting import ExportArtifactFormat, LATIN_EXPORT_CARD_FIELD_NAMES
+from multilang.services.anki_id_registry import AnkiIdKind, registry_id
 from multilang.services.card_template_loader import load_card_template
 from multilang.services.latin_audio import (
     LatinAudioManifest,
@@ -35,8 +36,8 @@ from multilang.services.latin_translation_quality import (
 LATIN_EXPORT_FIELD_NAMES = LATIN_EXPORT_CARD_FIELD_NAMES
 LATIN_NOTE_TYPE_NAME = "Multilang::Classical Latin MVP"
 LATIN_DECK_NAME = "Multilang::Classical Latin::MVP 50"
-LATIN_MODEL_ID = 1_602_300_701
-LATIN_DECK_ID = 1_602_300_702
+LATIN_MODEL_ID = registry_id(family="latin", role="mvp_model", kind=AnkiIdKind.MODEL)
+LATIN_DECK_ID = registry_id(family="latin", role="mvp_deck", kind=AnkiIdKind.DECK)
 _SOUND_TAG_RE = re.compile(r"^\[sound:(?P<name>[^\]]+)\]$")
 
 

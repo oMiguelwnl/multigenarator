@@ -7,6 +7,7 @@ import unicodedata
 from multilang.domain.korean import (
     KoreanAnalysisAlternative,
     KoreanAnalyzerFingerprint,
+    KoreanLexicalIdentity,
     KoreanMorphemeEvidence,
     KoreanMorphologyResult,
     KoreanMorphologyStatus,
@@ -17,7 +18,12 @@ from multilang.domain.korean import (
 )
 from multilang.domain.jobs import SupportedLanguage
 from multilang.domain.highlights import HighlightCandidate
-from multilang.domain.lexicon import GroundingStatus, LexicalCardCandidate, LexicalProvenance
+from multilang.domain.lexicon import (
+    GroundingStatus,
+    KoreanFrequencyLexicalEvidence,
+    LexicalCardCandidate,
+    LexicalProvenance,
+)
 from multilang.services.lexical_lookup import LexicalRecord
 from multilang.services.lexical_grounding import LexicalGroundingService
 from multilang.services.korean_morphology import KiwiKoreanMorphologyService
@@ -1834,6 +1840,68 @@ def test_korean_frequency_grounding_uses_source_selector_and_never_seed_fallback
     assert blocked.grounding_status is GroundingStatus.BACKFILL_REQUIRED
     assert blocked.korean_identity is None
     assert blocked.warning_detail == "source_record_missing"
+
+
+def test_korean_frequency_consensus_candidate_with_frozen_evidence_is_not_reanalyzed_or_rewritten() -> None:
+    fingerprint = _korean_fingerprint()
+    identity = KoreanLexicalIdentity(
+        submitted_form="학교",
+        canonical_nfc="학교",
+        lemma="학교",
+        part_of_speech="NNG",
+        sense_id="nikl:1",
+        register="standard",
+        morpheme_signature=(KoreanSignatureItem(form="학교", pos="NNG"),),
+        analyzer_fingerprint=fingerprint,
+        status="resolved",
+    )
+    evidence = KoreanFrequencyLexicalEvidence(
+        source_id="nikl-korean-learners-vocabulary",
+        source_version="2003-06-04.revised-2019-05-30",
+        source_rank=7,
+        final_rank=1,
+        level=1,
+        part_of_speech="NNG",
+        sense_id="nikl:1",
+        grounding_confidence="source-backed",
+        license_decision="approved-local-use",
+        curation_decision="accepted",
+        bundle_sha256="a" * 64,
+        source_sha256="b" * 64,
+        source_review_receipt_sha256="c" * 64,
+        source_review_aggregate_sha256="d" * 64,
+        analyzer_fingerprint=fingerprint,
+    )
+    candidate = LexicalCardCandidate(
+        submitted_form="학교",
+        display_form="학교",
+        lemma="학교",
+        lemma_key=identity.lexical_key,
+        frequency_rank=1,
+        frequency_level=1,
+        definition_language="pt",
+        translation_target_language="pt",
+        grounding_status=GroundingStatus.GROUNDED,
+        provenance=LexicalProvenance(source="korean-frequency-bundle"),
+        korean_identity=identity,
+        korean_frequency_evidence=evidence,
+    )
+    morphology = _FakeKoreanMorphology({}, fingerprint=fingerprint)
+    service = LexicalGroundingService(
+        lookup=_KoreanInventoryLookup(()),
+        korean_morphology=morphology,
+        allow_frequency_seed_fallback=True,
+    )
+
+    grounded = service.ground_frequency_candidate(
+        language=SupportedLanguage.KO,
+        candidate=candidate,
+    )
+
+    assert grounded == candidate
+    assert grounded.korean_identity == identity
+    assert grounded.korean_frequency_evidence == evidence
+    assert morphology.calls == []
 
 
 def test_korean_highlight_text_resolves_each_eojeol_from_one_local_analysis() -> None:

@@ -163,8 +163,9 @@ def _extract_korean_highlight_candidates(
             )
             rejected_token_count += 1
             continue
+        analysis_text = unicodedata.normalize("NFC", highlight.text)
         try:
-            raw_lexemes = tuple(resolver.resolve_korean_highlight_text(highlight.text))
+            raw_lexemes = tuple(resolver.resolve_korean_highlight_text(analysis_text))
         except Exception:
             errors.append(
                 HighlightExtractionError(
@@ -189,8 +190,11 @@ def _extract_korean_highlight_candidates(
         for lexeme in raw_lexemes:
             identity = getattr(lexeme, "identity", None)
             word_position = getattr(lexeme, "word_position", None)
-            if not isinstance(identity, KoreanLexicalIdentity) or not isinstance(
-                word_position, int
+            if (
+                not isinstance(identity, KoreanLexicalIdentity)
+                or isinstance(word_position, bool)
+                or not isinstance(word_position, int)
+                or word_position < 0
             ):
                 malformed = True
                 break

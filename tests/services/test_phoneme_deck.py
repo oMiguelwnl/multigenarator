@@ -84,6 +84,14 @@ def test_neutral_model_preserves_shared_template_and_appends_font_css() -> None:
     assert model.css == f"{shared.css}\n\n{KOREAN_FONT_CSS}"
 
 
+def test_neutral_model_rejects_unregistered_raw_model_id() -> None:
+    with pytest.raises(ValueError, match="unregistered model Anki ID"):
+        build_phoneme_model(
+            model_id=9_999_999_999,
+            note_type_name="Multilang::Unregistered Phoneme",
+        )
+
+
 def test_neutral_model_without_additional_css_preserves_base_css_bytes() -> None:
     shared = build_russian_phoneme_model()
 

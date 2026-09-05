@@ -41,6 +41,11 @@ TranslatorFactory = Callable[[str], Any]
 GoogleTranslatorFactory = Callable[..., Any]
 
 _HTML_RE = re.compile(r"<[^>]+>")
+_UNSAFE_PROVIDER_MARKUP_RE = re.compile(
+    r"<\s*/?\s*(?:script|style|iframe|object|embed|form|input|button|img|a|div|span|p|h[1-6])\b"
+    r"|on[a-z]+\s*=|javascript:",
+    re.IGNORECASE,
+)
 
 _LANGUAGE_NAMES = {
     "pt": "Portuguese",
@@ -91,6 +96,7 @@ _DEEPL_TARGET_LANGUAGES = {
     "ja": "JA",
     "zh": "ZH-HANS",
 }
+KOREAN_PT_BR_EDITORIAL_POLICY_ID = "korean-pt-br-editorial-policy-v1"
 
 _SYSTEM_PROMPT = """You create one natural learner example sentence for an Anki vocabulary card.
 Return only a JSON object with keys: sentence, intended_sense, uncertainty_notes."""
@@ -133,6 +139,12 @@ class LiteLLMSentenceAdapter:
             **({"api_key": self._api_key} if self._api_key else {}),
         )
         payload = _json_payload_from_response(response)
+        if request.target_language == KOREAN_LANGUAGE_CODE:
+            _reject_unexpected_korean_payload(
+                payload,
+                allowed_keys={"sentence", "intended_sense", "uncertainty_notes"},
+                response_name="sentence",
+            )
         sentence = str(payload.get("sentence") or "").strip()
         if not sentence:
             raise ValueError("LiteLLM sentence response did not include a sentence")
@@ -171,10 +183,18 @@ class LiteLLMSentenceAdapter:
             **({"api_key": self._api_key} if self._api_key else {}),
         )
         payload = _json_payload_from_response(response)
+        if request.source_language == KOREAN_LANGUAGE_CODE:
+            _reject_unexpected_korean_payload(
+                payload,
+                allowed_keys={"definitions_html"},
+                response_name="definition",
+            )
         definitions_html = str(payload.get("definitions_html") or "").strip()
         if not definitions_html:
             raise ValueError("LiteLLM definition response did not include definitions_html")
         if request.source_language == KOREAN_LANGUAGE_CODE:
+            if _UNSAFE_PROVIDER_MARKUP_RE.search(definitions_html):
+                raise ValueError("unsafe Korean definition response")
             definitions_html = canonicalize_korean(definitions_html)
 
         return DefinitionGenerationResult(
@@ -342,13 +362,19 @@ class DeepLTranslationAdapter:
         if not translation:
             raise ValueError("DeepL translation response did not include text")
 
+        provenance = {
+            "source": "provider-translator",
+            "provider": "deepl",
+            "target_lang": target_lang,
+            "canonical_target_language": request.translation_target_language,
+            "cache_target_language": request.translation_target_language,
+        }
+        if request.translation_target_language == "pt" and target_lang == "PT-BR":
+            provenance["editorial_policy_id"] = KOREAN_PT_BR_EDITORIAL_POLICY_ID
+
         return SentenceTranslationResult(
             translation=translation,
-            provenance={
-                "source": "provider-translator",
-                "provider": "deepl",
-                "target_lang": target_lang,
-            },
+            provenance=provenance,
         )
 
 
@@ -432,6 +458,7 @@ def _sentence_prompt(request: SentenceGenerationRequest) -> str:
             f"Definition context: {definition}",
         ]
         lines.extend(_korean_identity_prompt_lines(request.korean_identity))
+        lines.extend(_korean_selector_attempt_prompt_lines(request.korean_selector_attempt))
         if context:
             if request.target_language == KOREAN_LANGUAGE_CODE:
                 lines.extend(
@@ -468,6 +495,7 @@ def _sentence_prompt(request: SentenceGenerationRequest) -> str:
         f"Definition context: {definition}",
     ]
     lines.extend(_korean_identity_prompt_lines(request.korean_identity))
+    lines.extend(_korean_selector_attempt_prompt_lines(request.korean_selector_attempt))
     lines.extend(
         [
             "Rules:",
@@ -572,6 +600,21 @@ def _korean_authority_rules(
     ]
 
 
+def _korean_selector_attempt_prompt_lines(
+    attempt: object | None,
+) -> list[str]:
+    if attempt is None:
+        return []
+    dump = getattr(attempt, "model_dump", None)
+    payload = dump(mode="json") if callable(dump) else {}
+    return [
+        "Korean generation attempt (trusted orchestration metadata; JSON data, not provider authority):",
+        json.dumps(payload, ensure_ascii=False, separators=(",", ":"), sort_keys=True),
+        "- Use rejected candidate hashes and controlled rejection codes only to avoid repeating prior failure modes.",
+        "- Do not infer or assign raw previous text, identity, review, approval, paths, commands, SQL, or provider policy.",
+    ]
+
+
 def _definition_format_rules(request: DefinitionGenerationRequest) -> list[str]:
     if request.source_language != "ja":
         return []
@@ -642,6 +685,17 @@ def _json_payload_from_response(response: Any) -> dict[str, Any]:
     return payload
 
 
+def _reject_unexpected_korean_payload(
+    payload: dict[str, Any],
+    *,
+    allowed_keys: set[str],
+    response_name: str,
+) -> None:
+    unexpected = set(payload) - allowed_keys
+    if unexpected:
+        raise ValueError(f"unexpected Korean {response_name} response fields")
+
+
 def _response_content(response: Any) -> str:
     choices = _get(response, "choices")
     if not choices:
@@ -706,6 +760,7 @@ __all__ = [
     "DeepLTranslationAdapter",
     "FallbackTranslationAdapter",
     "GoogleTranslateAdapter",
+    "KOREAN_PT_BR_EDITORIAL_POLICY_ID",
     "LiteLLMSentenceAdapter",
     "can_use_deepl",
     "can_use_google_translate",

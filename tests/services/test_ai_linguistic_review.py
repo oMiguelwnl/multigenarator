@@ -467,6 +467,32 @@ def test_fixed_projection_balances_all_subjects_below_the_input_token_ceiling() 
         )
 
 
+def test_projection_token_count_falls_back_without_tiktoken_network(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    path = Path("scripts/review_korean_foundations_ai.py")
+    spec = util.spec_from_file_location("_review_korean_foundations_ai_test", path)
+    assert spec is not None and spec.loader is not None
+    module = util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+
+    calls: list[str] = []
+
+    def blocked_encoding(name: str) -> object:
+        calls.append(name)
+        raise AssertionError("network blocked")
+
+    monkeypatch.setenv("MULTILANG_FORBID_NETWORK", "1")
+    monkeypatch.setattr(module.tiktoken, "get_encoding", blocked_encoding)
+
+    payload = {"korean": "한국어", "claims": ["bounded", "offline"]}
+
+    assert module._projection_token_count(payload) == module.math.ceil(
+        len(module._canonical_json_bytes(payload)) / 4
+    )
+    assert calls == []
+
+
 def test_failed_attempt_ledger_preserves_raw_bytes_and_marks_two_attempts_exhausted(
     tmp_path: Path,
 ) -> None:

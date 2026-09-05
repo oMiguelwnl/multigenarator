@@ -9,7 +9,7 @@ import json
 from pathlib import Path
 import sqlite3
 from tempfile import TemporaryDirectory
-from typing import Mapping
+from typing import Iterable, Mapping
 import zipfile
 
 from pydantic import BaseModel, ConfigDict, Field, field_validator
@@ -33,15 +33,20 @@ from multilang.domain.korean import KOREAN_PROVIDER_LOCALE
 from multilang.domain.jobs import SupportedLanguage
 from multilang.domain.text_quality import ReviewStatus, ValidationStatus
 from multilang.repositories.provider_call_log_repository import summarize_provider_call_records
+from multilang.services.anki_id_registry import AnkiIdKind, registry_id
 from multilang.services.korean_foundation_snapshot import verify_active_korean_foundation_snapshot_provenance
 
 
 _HEX = frozenset("0123456789abcdef")
 _EXPECTED_LEVELS = (1, 2, 3)
 _AUDIO_SYNTHESIS_OPERATIONS = frozenset({"audio_synthesis", "word_audio", "sentence_audio", "synthesize_audio"})
-_KOREAN_FREQUENCY_MODEL_ID = 1_762_801_101
-_KOREAN_FREQUENCY_PARENT_DECK_ID = 1_762_801_102
-_KOREAN_FREQUENCY_LEVEL_DECK_IDS = {1: 1_762_801_103, 2: 1_762_801_104, 3: 1_762_801_105}
+_KOREAN_FREQUENCY_MODEL_ID = registry_id(family="korean_frequency", role="model", kind=AnkiIdKind.MODEL)
+_KOREAN_FREQUENCY_PARENT_DECK_ID = registry_id(family="korean_frequency", role="parent_deck", kind=AnkiIdKind.DECK)
+_KOREAN_FREQUENCY_LEVEL_DECK_IDS = {
+    1: registry_id(family="korean_frequency", role="level_1_deck", kind=AnkiIdKind.DECK),
+    2: registry_id(family="korean_frequency", role="level_2_deck", kind=AnkiIdKind.DECK),
+    3: registry_id(family="korean_frequency", role="level_3_deck", kind=AnkiIdKind.DECK),
+}
 
 
 def _sha256_identifier(value: str, *, field_name: str) -> str:
@@ -173,6 +178,27 @@ class KoreanProductionEvidence(_FrozenModel):
     text_review_application_sha256: str | None = Field(default=None, min_length=64, max_length=64)
     audio_review_aggregate_sha256: str | None = Field(default=None, min_length=64, max_length=64)
     audio_review_application_sha256: str | None = Field(default=None, min_length=64, max_length=64)
+    grants_review_application_authority: bool = False
+    grants_content_promotion_authority: bool = False
+    grants_release_authority: bool = False
+
+
+class KoreanProductionReviewAggregate(_FrozenModel):
+    mode: str = "review_aggregate"
+    job_id: str = Field(min_length=1, max_length=128)
+    aggregate_sha256: str = Field(min_length=64, max_length=64)
+    expected_item_count: int = Field(ge=0)
+    receipt_file_count: int = Field(ge=0)
+    text_receipt_count: int = Field(ge=0)
+    word_integrity_receipt_count: int = Field(ge=0)
+    sentence_integrity_receipt_count: int = Field(ge=0)
+    heard_word_sample_count: int = Field(ge=0)
+    heard_sentence_sample_count: int = Field(ge=0)
+    risk_case_count: int = Field(ge=0)
+    risk_case_receipt_count: int = Field(ge=0)
+    receipt_sha256s: tuple[str, ...]
+    coverage_roots: dict[str, str]
+    authority: dict[str, str]
     grants_review_application_authority: bool = False
     grants_content_promotion_authority: bool = False
     grants_release_authority: bool = False
@@ -480,6 +506,227 @@ def render_korean_production_audit_markdown(payload: Mapping[str, object]) -> st
         f"apkg_card_count={final.get('apkg_card_count')}\n"
         f"apkg_media_count={final.get('apkg_media_count')}\n"
     )
+
+
+_REVIEW_COVERAGE_KINDS = frozenset(
+    {
+        "text",
+        "word_integrity",
+        "sentence_integrity",
+        "heard_word",
+        "heard_sentence",
+        "risk",
+    }
+)
+_REVIEW_AUDIO_KINDS = frozenset({"word_integrity", "sentence_integrity"})
+_REVIEW_BANNED_KEYS = frozenset(
+    {
+        "example_sentence",
+        "translation_text",
+        "display_text",
+        "tts_text",
+        "ssml_text",
+        "notes",
+        "review_notes",
+        "path",
+        "storage_path",
+        "private_path",
+    }
+)
+
+
+def korean_production_review_identity_hash(
+    coverage_kind: str,
+    *,
+    job_id: str,
+    item_key: str,
+    request_sha256: str | None = None,
+    artifact_sha256: str | None = None,
+) -> str:
+    if coverage_kind not in _REVIEW_COVERAGE_KINDS:
+        raise ValueError("Korean production review aggregate coverage kind drift")
+    payload: dict[str, object] = {"coverage_kind": coverage_kind, "job_id": job_id, "item_key": item_key}
+    if coverage_kind in _REVIEW_AUDIO_KINDS:
+        if request_sha256 is None or artifact_sha256 is None:
+            raise ValueError("Korean production review aggregate audio identity drift")
+        payload["request_sha256"] = _sha256_identifier(request_sha256, field_name="request_sha256")
+        payload["artifact_sha256"] = _sha256_identifier(artifact_sha256, field_name="artifact_sha256")
+    return _canonical_sha256(payload)
+
+
+def validate_korean_production_review_batches(
+    *,
+    authority: KoreanProductionEvidenceAuthority,
+    rows: KoreanProductionEvidenceRows,
+    receipt_files: Iterable[Path],
+    expected_item_count: int,
+    expected_heard_sample_count: int = 300,
+) -> KoreanProductionReviewAggregate:
+    if expected_item_count <= 0 or expected_heard_sample_count < 0:
+        raise ValueError("Korean production review aggregate expected count drift")
+    text_expected, risk_expected = _expected_text_review_hashes(rows, authority=authority, expected_item_count=expected_item_count)
+    word_expected, sentence_expected = _expected_audio_review_hashes(rows, authority=authority, expected_item_count=expected_item_count)
+    coverage: dict[str, set[str]] = {kind: set() for kind in _REVIEW_COVERAGE_KINDS}
+    receipt_sha256s: list[str] = []
+    receipt_count = 0
+    for receipt_file in receipt_files:
+        receipt_count += 1
+        receipt = _load_review_receipt(receipt_file, authority=authority)
+        kind = str(receipt["coverage_kind"])
+        identities = tuple(str(value) for value in receipt["identity_hashes"])
+        if len(identities) > 100:
+            raise ValueError("Korean production review aggregate batch size drift")
+        if len(set(identities)) != len(identities) or coverage[kind].intersection(identities):
+            raise ValueError("Korean production review aggregate overlap drift")
+        coverage[kind].update(identities)
+        receipt_sha256s.append(_sha256_file(receipt_file))
+    expected_sets = {
+        "text": text_expected,
+        "word_integrity": word_expected,
+        "sentence_integrity": sentence_expected,
+        "risk": risk_expected,
+    }
+    for kind, expected in expected_sets.items():
+        if coverage[kind] != expected:
+            raise ValueError("Korean production review aggregate coverage gap")
+    if not coverage["heard_word"].issubset(word_expected) or len(coverage["heard_word"]) < expected_heard_sample_count:
+        raise ValueError("Korean production review aggregate heard word coverage gap")
+    if not coverage["heard_sentence"].issubset(sentence_expected) or len(coverage["heard_sentence"]) < expected_heard_sample_count:
+        raise ValueError("Korean production review aggregate heard sentence coverage gap")
+    payload = {
+        "mode": "review_aggregate",
+        "job_id": authority.job_id,
+        "expected_item_count": expected_item_count,
+        "receipt_file_count": receipt_count,
+        "text_receipt_count": len(coverage["text"]),
+        "word_integrity_receipt_count": len(coverage["word_integrity"]),
+        "sentence_integrity_receipt_count": len(coverage["sentence_integrity"]),
+        "heard_word_sample_count": len(coverage["heard_word"]),
+        "heard_sentence_sample_count": len(coverage["heard_sentence"]),
+        "risk_case_count": len(risk_expected),
+        "risk_case_receipt_count": len(coverage["risk"]),
+        "receipt_sha256s": tuple(sorted(receipt_sha256s)),
+        "coverage_roots": {kind: _canonical_sha256(sorted(values)) for kind, values in sorted(coverage.items())},
+        "authority": _review_aggregate_authority_payload(authority),
+        "grants_review_application_authority": False,
+        "grants_content_promotion_authority": False,
+        "grants_release_authority": False,
+    }
+    return KoreanProductionReviewAggregate(**payload, aggregate_sha256=_canonical_sha256(payload))
+
+
+def _expected_text_review_hashes(
+    rows: KoreanProductionEvidenceRows,
+    *,
+    authority: KoreanProductionEvidenceAuthority,
+    expected_item_count: int,
+) -> tuple[set[str], set[str]]:
+    if len(rows.text_records) != expected_item_count:
+        raise ValueError("Korean production review aggregate text denominator drift")
+    expected: set[str] = set()
+    risk: set[str] = set()
+    for record in rows.text_records:
+        if getattr(record, "job_id", None) != authority.job_id:
+            raise ValueError("Korean production review aggregate text job drift")
+        if getattr(record, "validation_status", None) != ValidationStatus.PASSED.value:
+            raise ValueError("Korean production review aggregate text validation drift")
+        if getattr(record, "review_status", None) != ReviewStatus.ACCEPTED.value:
+            raise ValueError("Korean production review aggregate text review drift")
+        item_key = str(getattr(record, "item_key", ""))
+        identity_hash = korean_production_review_identity_hash("text", job_id=authority.job_id, item_key=item_key)
+        expected.add(identity_hash)
+        if int(getattr(record, "repair_attempt_count", 0) or 0) > 0 or getattr(record, "validation_flags", None):
+            risk.add(identity_hash)
+    if len(expected) != expected_item_count:
+        raise ValueError("Korean production review aggregate text identity drift")
+    return expected, risk
+
+
+def _expected_audio_review_hashes(
+    rows: KoreanProductionEvidenceRows,
+    *,
+    authority: KoreanProductionEvidenceAuthority,
+    expected_item_count: int,
+) -> tuple[set[str], set[str]]:
+    if len(rows.audio_assets) != expected_item_count * 2:
+        raise ValueError("Korean production review aggregate audio denominator drift")
+    expected: dict[str, set[str]] = {"word": set(), "sentence": set()}
+    for asset in rows.audio_assets:
+        if getattr(asset, "job_id", None) != authority.job_id:
+            raise ValueError("Korean production review aggregate audio job drift")
+        if getattr(asset, "status", None) != AudioSynthesisStatus.SYNTHESIZED.value:
+            raise ValueError("Korean production review aggregate audio synthesis drift")
+        if getattr(asset, "audio_review_status", None) != AudioReviewStatus.APPROVED.value:
+            raise ValueError("Korean production review aggregate audio review drift")
+        kind = str(getattr(asset, "asset_kind", ""))
+        if kind not in expected:
+            raise ValueError("Korean production review aggregate audio kind drift")
+        request_sha256 = _sha256_identifier(str(getattr(asset, "synthesis_request_sha256", "")), field_name="synthesis_request_sha256")
+        artifact_sha256 = _sha256_identifier(str(getattr(asset, "artifact_sha256", "")), field_name="artifact_sha256")
+        if int(getattr(asset, "byte_size", 0) or 0) <= 0:
+            raise ValueError("Korean production review aggregate audio byte drift")
+        expected[kind].add(
+            korean_production_review_identity_hash(
+                f"{kind}_integrity",
+                job_id=authority.job_id,
+                item_key=str(getattr(asset, "item_key", "")),
+                request_sha256=request_sha256,
+                artifact_sha256=artifact_sha256,
+            )
+        )
+    if len(expected["word"]) != expected_item_count or len(expected["sentence"]) != expected_item_count:
+        raise ValueError("Korean production review aggregate audio identity drift")
+    return expected["word"], expected["sentence"]
+
+
+def _load_review_receipt(path: Path, *, authority: KoreanProductionEvidenceAuthority) -> Mapping[str, object]:
+    try:
+        payload = json.loads(path.read_text(encoding="utf-8"))
+    except (OSError, json.JSONDecodeError) as exc:
+        raise ValueError("Korean production review aggregate receipt read failed") from exc
+    if not isinstance(payload, Mapping):
+        raise ValueError("Korean production review aggregate receipt structure drift")
+    _assert_review_receipt_content_free(payload)
+    if payload.get("kind") != "korean-production-review-receipt-batch":
+        raise ValueError("Korean production review aggregate receipt kind drift")
+    if payload.get("job_id") != authority.job_id:
+        raise ValueError("Korean production review aggregate receipt job drift")
+    coverage_kind = str(payload.get("coverage_kind", ""))
+    if coverage_kind not in _REVIEW_COVERAGE_KINDS:
+        raise ValueError("Korean production review aggregate coverage kind drift")
+    if not str(payload.get("reviewer_role", "")) or payload.get("decision") != "approved":
+        raise ValueError("Korean production review aggregate reviewer role drift")
+    receipt_authority = _mapping(payload.get("authority"))
+    if receipt_authority != _review_aggregate_authority_payload(authority):
+        raise ValueError("Korean production review aggregate authority drift")
+    identities = payload.get("identity_hashes")
+    if not isinstance(identities, list) or not identities:
+        raise ValueError("Korean production review aggregate identity drift")
+    for identity_hash in identities:
+        _sha256_identifier(str(identity_hash), field_name="identity_hash")
+    return {"coverage_kind": coverage_kind, "identity_hashes": identities}
+
+
+def _assert_review_receipt_content_free(value: object) -> None:
+    if isinstance(value, Mapping):
+        for key, child in value.items():
+            if str(key) in _REVIEW_BANNED_KEYS:
+                raise ValueError("Korean production review aggregate private content drift")
+            _assert_review_receipt_content_free(child)
+    elif isinstance(value, list):
+        for child in value:
+            _assert_review_receipt_content_free(child)
+    elif isinstance(value, str) and ("LEAK" in value or "private/audio" in value):
+        raise ValueError("Korean production review aggregate private content drift")
+
+
+def _review_aggregate_authority_payload(authority: KoreanProductionEvidenceAuthority) -> dict[str, str]:
+    return {
+        "full_binding_receipt_sha256": authority.full_binding_receipt_sha256,
+        "frequency_bundle_content_sha256": authority.frequency_bundle_content_sha256,
+        "profile_sample_authority_sha256": authority.profile_sample_authority_sha256,
+        "heard_review_authority_sha256": authority.heard_review_authority_sha256,
+    }
 
 
 def _validate_protected_hashes(protected_hashes: Mapping[str, tuple[str, str]]) -> None:
@@ -1071,11 +1318,14 @@ def _authority_hash_payload(authority: KoreanProductionEvidenceAuthority) -> dic
 
 __all__ = [
     "build_korean_production_audit_payload",
+    "korean_production_review_identity_hash",
     "KoreanProductionEvidence",
     "KoreanProductionEvidenceAuthority",
     "KoreanProductionEvidenceRows",
+    "KoreanProductionReviewAggregate",
     "load_korean_production_evidence_rows",
     "render_korean_production_audit_markdown",
+    "validate_korean_production_review_batches",
     "validate_korean_production_final_evidence",
     "validate_korean_production_run_result",
 ]

@@ -49,6 +49,16 @@ class NormalizedTtsInput(BaseModel):
     ssml_text: str | None = None
     text_hash: str | None = None
     ssml_hash: str | None = None
+    synthesis_request_sha256: str | None = Field(default=None, min_length=64, max_length=64)
+
+    @field_validator("synthesis_request_sha256")
+    @classmethod
+    def request_hash_must_be_sha256(cls, value: str | None) -> str | None:
+        if value is None:
+            return value
+        if len(value) != 64 or any(character not in "0123456789abcdef" for character in value):
+            raise ValueError("synthesis_request_sha256 must be lowercase SHA-256")
+        return value
 
     @model_validator(mode="after")
     def populate_hashes(self) -> "NormalizedTtsInput":

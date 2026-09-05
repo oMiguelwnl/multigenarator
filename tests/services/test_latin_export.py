@@ -8,8 +8,10 @@ import pytest
 from pathlib import Path
 
 from multilang.domain.exporting import ExportArtifactFormat
+from multilang.services.anki_id_registry import AnkiIdKind, registry_id
 from multilang.services.latin_audio import load_latin_audio_manifest
 from multilang.services.latin_export import (
+    LATIN_DECK_ID,
     LATIN_DECK_NAME,
     LATIN_EXPORT_FIELD_NAMES,
     LATIN_MODEL_ID,
@@ -22,6 +24,15 @@ from multilang.services.latin_export import (
     write_latin_tabular_export,
 )
 from multilang.services.latin_review import load_latin_curated_records
+
+
+def test_latin_export_ids_are_registry_backed_without_local_numeric_declarations() -> None:
+    source = Path("src/multilang/services/latin_export.py").read_text(encoding="utf-8")
+
+    assert LATIN_MODEL_ID == registry_id(family="latin", role="mvp_model", kind=AnkiIdKind.MODEL)
+    assert LATIN_DECK_ID == registry_id(family="latin", role="mvp_deck", kind=AnkiIdKind.DECK)
+    assert "1_602_300_701" not in source
+    assert "1_602_300_702" not in source
 
 
 def test_latin_export_field_order_excludes_removed_fields_and_classe() -> None:

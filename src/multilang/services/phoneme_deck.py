@@ -8,6 +8,8 @@ import re
 
 import genanki
 
+from multilang.services.anki_id_registry import AnkiIdKind, require_registered_anki_id
+
 
 PHONEME_FIELD_NAMES = (
     "Spellings",
@@ -71,8 +73,9 @@ def build_phoneme_model(
     css = template["css"]
     if additional_css:
         css = f"{css}\n\n{additional_css}"
+    registered_model_id = require_registered_anki_id(model_id, kind=AnkiIdKind.MODEL)
     return genanki.Model(
-        model_id,
+        registered_model_id,
         note_type_name,
         fields=[{"name": field_name} for field_name in PHONEME_FIELD_NAMES],
         templates=[

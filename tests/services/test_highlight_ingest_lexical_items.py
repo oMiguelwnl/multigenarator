@@ -337,12 +337,15 @@ def test_korean_highlight_ingestion_persists_exact_identity_without_reanalysis(
     assert result.blocked_candidates == 0
     assert morphology.calls == ["공부하다", "물", "학교", private_sentence]
 
-    private_records = HighlightImportRepository(session).list_private_records(
-        result.report.job_id
+    highlight_repo = HighlightImportRepository(session)
+    safe_inventory = highlight_repo.list_korean_safe_inventory(result.report.job_id)
+    private_revision = highlight_repo.load_private_excerpt_revision(
+        result.report.job_id,
+        safe_inventory.rows[0].excerpt_revision_id,
     )
-    assert private_records[0].normalized_text == private_sentence
-    assert not hasattr(private_records[0], "source_path")
-    assert export_path.name not in str(private_records[0].__dict__)
+    assert private_revision is not None
+    assert private_revision.normalized_text == private_sentence
+    assert export_path.name not in str(safe_inventory.model_dump())
 
     session.expire_all()
     persisted = LexicalRepository(session).list_candidates(result.report.job_id)
@@ -418,10 +421,14 @@ def test_unresolved_korean_highlight_is_blocked_but_private_record_stays_private
     assert result.blocked_candidates == 1
     assert result.planned_cards == 0
     assert LexicalRepository(session).list_candidates(result.report.job_id) == []
-    private_records = HighlightImportRepository(session).list_private_records(
-        result.report.job_id
+    highlight_repo = HighlightImportRepository(session)
+    safe_inventory = highlight_repo.list_korean_safe_inventory(result.report.job_id)
+    private_revision = highlight_repo.load_private_excerpt_revision(
+        result.report.job_id,
+        safe_inventory.rows[0].excerpt_revision_id,
     )
-    assert private_records[0].normalized_text == private_sentence
+    assert private_revision is not None
+    assert private_revision.normalized_text == private_sentence
     manifest = HighlightImportRepository(session).get_manifest(result.report.job_id)
     assert manifest is not None
     manifest_dump = manifest.model_dump_json()

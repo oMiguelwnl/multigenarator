@@ -19,12 +19,13 @@ import re
 
 import genanki
 
+from multilang.services.anki_id_registry import AnkiIdKind, registry_id
 from multilang.services.azure_speech_adapter import AzureSpeechAdapter
 from multilang.services.japanese_romaji import romanize_japanese
 from multilang.settings import Settings
 
-JAPANESE_MODEL_ID = 1_762_800_701
-JAPANESE_DECK_ID = 1_762_800_702
+JAPANESE_MODEL_ID = registry_id(family="japanese_frequency", role="model", kind=AnkiIdKind.MODEL)
+JAPANESE_DECK_ID = registry_id(family="japanese_frequency", role="deck", kind=AnkiIdKind.DECK)
 JAPANESE_NOTE_TYPE_NAME = "Multilang::Japanese Card"
 DEFAULT_JAPANESE_DECK_NAME = "Multilang Japanese::Frequency"
 JAPANESE_VOICE_ID = "ja-JP-NanamiNeural"

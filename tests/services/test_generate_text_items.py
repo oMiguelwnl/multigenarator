@@ -29,11 +29,13 @@ from multilang.domain.text_quality import (
 from multilang.services.generate_text_items import GenerateTextItemsService
 from multilang.services.language_identifier import LanguageDetectionResult
 from multilang.services.text_generation import (
+    DefinitionGenerationResult,
     GeneratedSentence,
     GeneratedTextBundle,
     GeneratedTranslation,
     SentenceGenerationFallback,
     SentenceGenerationResult,
+    SentenceTranslationResult,
 )
 from multilang.services.text_validation import TextValidationResult, TextValidationService
 
@@ -135,6 +137,7 @@ class FakeTextRepository:
     existing_sentences: list[str] = field(default_factory=list)
     missing_only_calls: list[bool] = field(default_factory=list)
     claim_calls: list[dict[str, object]] = field(default_factory=list)
+    records: dict[tuple[str, str], object] = field(default_factory=dict)
 
     def list_generation_candidates(self, job_id: str, *, missing_only: bool = False) -> list[object]:
         self.missing_only_calls.append(missing_only)
@@ -156,8 +159,12 @@ class FakeTextRepository:
     ) -> list[str]:
         return list(self.existing_sentences)
 
+    def get_text_record(self, job_id: str, item_key: str) -> object | None:
+        return self.records.get((job_id, item_key))
+
     def upsert_text_record(self, record: object) -> object:
         self.saved_records.append(record)
+        self.records[(record.job_id, record.item_key)] = record
         return record
 
 
@@ -186,9 +193,18 @@ class FakeGenerationService:
         source_type: str | None = None,
         highlight_context: str | None = None,
         rate_limiter: object | None = None,
+        job_id: str | None = None,
+        korean_selector_attempt: object | None = None,
     ) -> GeneratedTextBundle:
         self.calls.append((candidate, deck_language))
-        self.request_metadata.append({"source_type": source_type, "highlight_context": highlight_context})
+        self.request_metadata.append(
+            {
+                "source_type": source_type,
+                "highlight_context": highlight_context,
+                "job_id": job_id,
+                "korean_selector_attempt": korean_selector_attempt,
+            }
+        )
         return self.bundles.pop(0)
 
     def generate_bundle_from_fallback(
@@ -200,6 +216,7 @@ class FakeGenerationService:
         source_type: str | None = None,
         highlight_context: str | None = None,
         rate_limiter: object | None = None,
+        job_id: str | None = None,
     ) -> GeneratedTextBundle:
         self.fallback_calls.append((candidate, deck_language, fallback))
         self.request_metadata.append({"source_type": source_type, "highlight_context": highlight_context})
@@ -355,6 +372,255 @@ class PersistedCandidate:
     item_key: str
     candidate: LexicalCardCandidate
     source_type: str = "word-list"
+
+
+@dataclass
+class RecordingFieldTextService:
+    calls: list[tuple[str, object]] = field(default_factory=list)
+
+    def generate_definition(self, request: object) -> DefinitionGenerationResult:
+        self.calls.append(("definition", request))
+        return DefinitionGenerationResult(
+            definitions_html="to wash carefully",
+            provenance={"provider": "field-text", "route": "definition"},
+        )
+
+    def generate_sentence(self, request: object) -> SentenceGenerationResult:
+        self.calls.append(("sentence", request))
+        return SentenceGenerationResult(
+            sentence="I wash the cup at home.",
+            intended_sense="habit",
+            provenance={"provider": "field-text", "route": "sentence"},
+        )
+
+
+@dataclass
+class RecordingTranslationAdapter:
+    calls: list[object] = field(default_factory=list)
+
+    def translate_sentence(self, request: object) -> SentenceTranslationResult:
+        self.calls.append(request)
+        return SentenceTranslationResult(
+            translation="Eu lavo a xicara em casa.",
+            provenance={"provider": "field-translation"},
+        )
+
+
+@dataclass
+class RecordingAudioPort:
+    label: str
+    events: list[str]
+    calls: list[object] = field(default_factory=list)
+
+    def synthesize(self, request: object) -> object:
+        self.events.append(f"{self.label}:call")
+        self.calls.append(request)
+        return SimpleNamespace(artifact_sha256="f" * 64, storage_path=getattr(request, "final_path"))
+
+
+@dataclass
+class RecordingFieldReviewRepository:
+    events: list[str] = field(default_factory=list)
+    candidate_revisions: list[dict[str, object]] = field(default_factory=list)
+    audio_reservations: list[dict[str, object]] = field(default_factory=list)
+
+    def create_candidate_revision(self, **kwargs: object) -> object:
+        self.events.append(f"revision:{kwargs['field_name']}")
+        self.candidate_revisions.append(kwargs)
+        return SimpleNamespace(
+            revision=SimpleNamespace(
+                revision_id=f"rev-{kwargs['field_name']}-{len(self.candidate_revisions)}",
+                value_sha256=kwargs["value_sha256"],
+            ),
+            pointer_version=int(kwargs["expected_pointer_version"]) + 1,
+            pointer_status="needs_review",
+            replayed=False,
+        )
+
+    def reserve_audio_publication(self, **kwargs: object) -> object:
+        self.events.append(f"reserve:{kwargs['field_name']}")
+        self.audio_reservations.append(kwargs)
+        return SimpleNamespace(
+            reservation_id=f"res-{kwargs['field_name']}-{len(self.audio_reservations)}",
+            final_path=kwargs["final_path"],
+            state="reserved",
+            version=0,
+        )
+
+
+class PoisonPort:
+    def __getattr__(self, name: str) -> object:
+        raise AssertionError(f"unexpected fallback call to {name}")
+
+
+def build_field_dispatch_service(
+    *,
+    text_service: object | None = None,
+    translation_adapter: object | None = None,
+    word_audio_port: object | None = None,
+    sentence_audio_port: object | None = None,
+    review_repository: RecordingFieldReviewRepository | None = None,
+) -> tuple[GenerateTextItemsService, RecordingFieldReviewRepository]:
+    review_repository = review_repository or RecordingFieldReviewRepository()
+    service = GenerateTextItemsService(
+        job_repository=FakeJobRepository(),
+        lexical_repository=None,
+        text_repository=FakeTextRepository(candidates=[]),
+        text_generation_service=text_service or RecordingFieldTextService(),
+        text_validation_service=FakeValidationService(results=[]),
+        tatoeba_sentence_source=FakeTatoebaSentenceSource(fallback=None),
+        review_repository=review_repository,
+        translation_adapter=translation_adapter,
+        word_audio_port=word_audio_port,
+        sentence_audio_port=sentence_audio_port,
+    )
+    return service, review_repository
+
+
+def test_definition_text_dispatch_sentence_microexample_text_dispatch_and_unknown_field_no_fallback() -> None:
+    text_service = RecordingFieldTextService()
+    service, review_repository = build_field_dispatch_service(
+        text_service=text_service,
+        translation_adapter=PoisonPort(),
+        word_audio_port=PoisonPort(),
+        sentence_audio_port=PoisonPort(),
+    )
+    candidate = make_candidate()
+
+    definition = service.regenerate_field(
+        job_id="job-1",
+        item_id="item-1",
+        field_name="definition",
+        candidate=candidate,
+        deck_language=SupportedLanguage.EN,
+        request_id="def-1",
+        expected_pointer_version=0,
+    )
+    sentence = service.regenerate_field(
+        job_id="job-1",
+        item_id="item-1",
+        field_name="sentence",
+        candidate=candidate,
+        deck_language=SupportedLanguage.EN,
+        request_id="sent-1",
+        expected_pointer_version=0,
+    )
+    microexample = service.regenerate_field(
+        job_id="job-1",
+        item_id="item-1",
+        field_name="microexample",
+        candidate=candidate,
+        deck_language=SupportedLanguage.EN,
+        request_id="micro-1",
+        expected_pointer_version=0,
+    )
+
+    assert [call[0] for call in text_service.calls] == ["definition", "sentence", "sentence"]
+    assert [row["field_name"] for row in review_repository.candidate_revisions] == [
+        "definition",
+        "sentence",
+        "microexample",
+    ]
+    assert definition.field_name == "definition"
+    assert sentence.field_name == "sentence"
+    assert microexample.field_name == "microexample"
+    assert {result.pointer_status for result in (definition, sentence, microexample)} == {"needs_review"}
+
+    before = list(text_service.calls)
+    with pytest.raises(ValueError):
+        service.regenerate_field(
+            job_id="job-1",
+            item_id="item-1",
+            field_name="grammar",
+            candidate=candidate,
+            deck_language=SupportedLanguage.EN,
+            request_id="unknown-1",
+            expected_pointer_version=0,
+        )
+    assert text_service.calls == before
+    assert len(review_repository.candidate_revisions) == 3
+
+
+def test_translation_adapter_dispatch_uses_exact_translation_adapter_without_text_fallback() -> None:
+    text_service = PoisonPort()
+    translation_adapter = RecordingTranslationAdapter()
+    service, review_repository = build_field_dispatch_service(
+        text_service=text_service,
+        translation_adapter=translation_adapter,
+        word_audio_port=PoisonPort(),
+        sentence_audio_port=PoisonPort(),
+    )
+
+    result = service.regenerate_field(
+        job_id="job-1",
+        item_id="item-1",
+        field_name="translation",
+        candidate=make_candidate(),
+        deck_language=SupportedLanguage.EN,
+        request_id="translation-1",
+        expected_pointer_version=0,
+        sentence_text="I wash the cup at home.",
+        intended_sense="habit",
+    )
+
+    assert len(translation_adapter.calls) == 1
+    assert getattr(translation_adapter.calls[0], "sentence") == "I wash the cup at home."
+    assert getattr(translation_adapter.calls[0], "translation_target_language") == "pt"
+    assert result.field_name == "translation"
+    assert review_repository.candidate_revisions[0]["field_name"] == "translation"
+
+
+def test_word_audio_port_dispatch_and_sentence_audio_port_dispatch_audio_reservation_before_call() -> None:
+    events: list[str] = []
+    word_audio = RecordingAudioPort(label="word", events=events)
+    sentence_audio = RecordingAudioPort(label="sentence", events=events)
+    review_repository = RecordingFieldReviewRepository(events=events)
+    service, review_repository = build_field_dispatch_service(
+        text_service=PoisonPort(),
+        translation_adapter=PoisonPort(),
+        word_audio_port=word_audio,
+        sentence_audio_port=sentence_audio,
+        review_repository=review_repository,
+    )
+    candidate = make_candidate()
+
+    word_result = service.regenerate_field(
+        job_id="job-1",
+        item_id="item-1",
+        field_name="word_audio",
+        candidate=candidate,
+        deck_language=SupportedLanguage.EN,
+        request_id="word-audio-1",
+        expected_pointer_version=2,
+        field_revision_id="rev-word-audio-1",
+        field_revision_value_sha256="a" * 64,
+        authority_sha256="b" * 64,
+        root_prestate_sha256="c" * 64,
+    )
+    sentence_result = service.regenerate_field(
+        job_id="job-1",
+        item_id="item-1",
+        field_name="sentence_audio",
+        candidate=candidate,
+        deck_language=SupportedLanguage.EN,
+        request_id="sentence-audio-1",
+        expected_pointer_version=3,
+        sentence_text="I wash the cup at home.",
+        field_revision_id="rev-sentence-audio-1",
+        field_revision_value_sha256="d" * 64,
+        authority_sha256="b" * 64,
+        root_prestate_sha256="c" * 64,
+    )
+
+    assert events == ["reserve:word_audio", "word:call", "reserve:sentence_audio", "sentence:call"]
+    assert getattr(word_audio.calls[0], "text") == candidate.display_form
+    assert getattr(sentence_audio.calls[0], "text") == "I wash the cup at home."
+    assert [row["field_name"] for row in review_repository.audio_reservations] == [
+        "word_audio",
+        "sentence_audio",
+    ]
+    assert word_result.audio_reservation_id == "res-word_audio-1"
+    assert sentence_result.audio_reservation_id == "res-sentence_audio-2"
 
 
 def test_generate_text_items_limits_eligible_candidates_after_missing_only_selection() -> None:
@@ -1317,6 +1583,11 @@ def test_korean_generation_restores_one_identity_for_retry_and_never_calls_tatoe
                 translation="Hoje eu comi uma refeição quente em casa.",
                 sentence_language="ko",
             ),
+            make_bundle(
+                sentence="오늘 집에서 밥을 천천히 먹었어요.",
+                translation="Hoje eu comi arroz devagar em casa.",
+                sentence_language="ko",
+            ),
         ]
     )
     matcher = FakeKoreanMatcher(fingerprint=fingerprint, status=match_status)
@@ -1340,7 +1611,7 @@ def test_korean_generation_restores_one_identity_for_retry_and_never_calls_tatoe
 
     assert result.accepted_items == 0
     assert result.review_required_items == 1
-    assert len(generation.calls) == 2
+    assert len(generation.calls) == 3
     restored_candidate = generation.calls[0][0]
     restored_identity = restored_candidate.korean_identity
     assert isinstance(restored_identity, KoreanLexicalIdentity)
@@ -1350,10 +1621,12 @@ def test_korean_generation_restores_one_identity_for_retry_and_never_calls_tatoe
     assert [call[0].korean_identity for call in generation.calls] == [
         restored_identity,
         restored_identity,
+        restored_identity,
     ]
-    assert len(validation.calls) == 2
+    assert len(validation.calls) == 3
     assert all(call["korean_identity"] is restored_identity for call in validation.calls)
     assert [target for _sentence, target in matcher.calls] == [
+        restored_identity,
         restored_identity,
         restored_identity,
     ]
@@ -1374,3 +1647,72 @@ def test_korean_generation_restores_one_identity_for_retry_and_never_calls_tatoe
     assert persisted_identity.lemma not in morphology_flags[0].detail
     assert persisted_identity.sense_id not in morphology_flags[0].detail
     assert saved.example_sentence not in morphology_flags[0].detail
+
+
+def test_korean_generation_persists_hash_only_two_plus_one_selector_history() -> None:
+    fingerprint = make_korean_fingerprint()
+    persisted_identity = make_korean_identity(fingerprint=fingerprint)
+    repository = FakeTextRepository(
+        candidates=[make_persisted_korean_candidate(persisted_identity)]
+    )
+    bad_template = "먹다 예문입니다."
+    bad_translation = "Hoje eu eat school."
+    generation = FakeGenerationService(
+        bundles=[
+            make_bundle(sentence=bad_template, translation="comer", sentence_language="ko"),
+            make_bundle(sentence="오늘 밥을 먹습니다.", translation=bad_translation, sentence_language="ko"),
+            make_bundle(
+                sentence="오늘 집에서 밥을 먹어요.",
+                translation="Hoje eu como arroz em casa.",
+                sentence_language="ko",
+            ),
+        ]
+    )
+    validation = FakeValidationService(
+        results=[
+            make_validation_result(
+                status=ValidationStatus.FAILED,
+                label=ConfidenceLabel.LOW,
+                score=0.2,
+                flags=[ValidationFlag(code=ValidationFlagCode.BANNED_PATTERN, detail="template")],
+            ),
+            make_validation_result(
+                status=ValidationStatus.FAILED,
+                label=ConfidenceLabel.LOW,
+                score=0.3,
+                flags=[ValidationFlag(code=ValidationFlagCode.TRANSLATION_MISMATCH, detail="translation")],
+            ),
+            make_validation_result(status=ValidationStatus.PASSED, label=ConfidenceLabel.HIGH, score=0.94),
+        ]
+    )
+    tatoeba = FakeTatoebaSentenceSource(fallback=None)
+
+    service = GenerateTextItemsService(
+        job_repository=FakeJobRepository(),
+        lexical_repository=None,
+        text_repository=repository,
+        text_generation_service=generation,
+        text_validation_service=validation,
+        tatoeba_sentence_source=tatoeba,
+    )
+
+    result = service.execute(job_id="job-ko", deck_language=SupportedLanguage.KO)
+
+    assert result.processed_items == 1
+    assert len(generation.calls) == 3
+    assert [metadata["korean_selector_attempt"].stage for metadata in generation.request_metadata] == [
+        "initial",
+        "initial",
+        "repair",
+    ]
+    saved = repository.saved_records[0]
+    history = saved.sentence_provenance.metadata["korean_selector_history"]
+    assert history["initial_candidate_count"] == 2
+    assert history["repair_attempt_count"] == 1
+    assert [attempt["stage"] for attempt in history["attempts"]] == ["initial", "initial", "repair"]
+    assert history["attempts"][0]["rejection_codes"] == ["banned_pattern"]
+    assert history["attempts"][1]["rejection_codes"] == ["translation_mismatch"]
+    assert bad_template not in str(history)
+    assert bad_translation not in str(history)
+    assert saved.repair_attempt_count == 1
+    assert tatoeba.calls == []

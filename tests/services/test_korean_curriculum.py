@@ -617,19 +617,19 @@ def test_curriculum_defaults_to_atomic_v2_candidate_bundle() -> None:
     assert bundle.source_kind == "current-candidate"
     assert bundle.source_root == (
         "data/korean_foundations/candidate-bundles/"
-        "36c1442b161fb3d8529678099b4df1c93b43fb2456a24260ac2942787b7f44f0"
+        "e95c795f0e9653b67163345d8acf6d1e31228c544380e95db84342e7e1401357"
     )
     assert bundle.bundle_sha256 == (
-        "36c1442b161fb3d8529678099b4df1c93b43fb2456a24260ac2942787b7f44f0"
+        "e95c795f0e9653b67163345d8acf6d1e31228c544380e95db84342e7e1401357"
     )
     assert bundle.bundle_manifest_sha256 == (
-        "2390974b9f48534665d474b9fe18290e28edc361aa3cc119481db70e44acfd40"
+        "6852f7cc6eeedf2ec88f33ab8f027e76a72981a4179015b8aa40a0f3eb40a3ab"
     )
     assert bundle.member_file_sha256 == {
-        "hangul-v2.json": "63c36c50c0efa61f7ba76ebdf92ff174f79aadedb63b46d15da01599f2594f59",
-        "pronunciation-i-plus-1-v2.json": "cdac65b7e3a9615e62f187dcf7c7f6c543a480710b618ce0c9eb580281cd955c",
-        "korean-foundations-v2-curation.json": "faa233cdc67f99c28c3f203e1b206f4ad4f631bc34b8e2fbb970db336f1157db",
-        "korean-foundations-v2-media.json": "e21c7a11006cf70a0559ec7fff7279b466097cf3bbc1fa092cee84e7b963e938",
+        "hangul-v2.json": "da12a49c5f42483eeeb6da4f251ea2eba3295afa7cf07c2c621e4dddfa5ff038",
+        "pronunciation-i-plus-1-v2.json": "889acedc9de497cfa25d8699ac4d2434bd102653c31276874a8b4336fd15448e",
+        "korean-foundations-v2-curation.json": "695346c70e34e163e459e3f2e1c8156b39ed4f126c4803e98258d229a8164caf",
+        "korean-foundations-v2-media.json": "545bd060992e9a17d7a95a3397d774678c3cb3e3cddbe593e93c949f9b12326d",
     }
     assert registry == bundle.registry
     assert hangul == bundle.hangul
@@ -2102,7 +2102,10 @@ def test_pronunciation_p0_p7_keeps_rich_evidence_nine_fields_and_all_human_media
             unicodedata.normalize("NFC", entry.sentence_translation)
             == entry.sentence_translation
         )
-        assert entry.pronunciation_evidence.ipa is None
+        if entry.pronunciation_evidence.ipa is not None:
+            assert unicodedata.normalize("NFC", entry.pronunciation_evidence.ipa) == entry.pronunciation_evidence.ipa
+            assert entry.pronunciation_evidence.ipa.startswith("/")
+            assert entry.pronunciation_evidence.ipa.endswith("/")
         assert entry.pronunciation_evidence.review_status.value == "needs_review"
         assert entry.register_context
         assert {source.source_id for source in entry.provenance} == {
@@ -2362,7 +2365,7 @@ def test_pronunciation_p11_p13_keep_unavailable_specialist_auditory_portuguese_a
     p11 = _entries_for_stage(pack, "P11")
     p12 = _entries_for_stage(pack, "P12")
     p13 = _entries_for_stage(pack, "P13")
-    unresolved = (*p11, *p12, *p13)
+    review_pending = (*p11, *p12, *p13)
 
     assert len(p11) == 1
     assert p11[0].register_context == "optional-colloquial-needs-review"
@@ -2378,20 +2381,22 @@ def test_pronunciation_p11_p13_keep_unavailable_specialist_auditory_portuguese_a
     assert len(p13) == 1
     assert p13[0].register_context == "ordering-atomization-needs-review"
     assert p13[0].example_word == "읽는"
-    assert p13[0].pronunciation_evidence.normative_pronunciation == "needs_review"
+    assert p13[0].pronunciation_evidence.normative_pronunciation == "[잉는]"
     assert {
         _concept_id("P2", "unreleased-coda"),
         _concept_id("P5", "nasalization-velar"),
         _concept_id("P9", "complex-coda-before-consonant"),
     } <= set(p13[0].active_rule_ids)
 
-    for entry in unresolved:
-        assert entry.sound == "needs_review"
-        assert entry.word_translation == "needs_review"
-        assert entry.example_sentence == "needs_review"
-        assert entry.sentence_translation == "needs_review"
-        assert entry.pronunciation_evidence.surface_pronunciation == "needs_review"
-        assert entry.pronunciation_evidence.ipa is None
+    for entry in review_pending:
+        assert entry.sound != "needs_review"
+        assert entry.word_translation != "needs_review"
+        assert entry.example_sentence != "needs_review"
+        assert entry.sentence_translation != "needs_review"
+        assert entry.pronunciation_evidence.surface_pronunciation != "needs_review"
+        if entry.pronunciation_evidence.ipa is not None:
+            assert entry.pronunciation_evidence.ipa.startswith("/")
+            assert entry.pronunciation_evidence.ipa.endswith("/")
         assert entry.pronunciation_evidence.review_status.value == "needs_review"
         assert {review.status for review in entry.pending_reviews} == {
             "needs_review"

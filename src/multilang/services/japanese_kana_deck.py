@@ -23,9 +23,11 @@ import zipfile
 import genanki
 import zstandard
 
-KANA_MODEL_ID = 1_762_800_801
-KANA_HIRAGANA_DECK_ID = 1_762_800_802
-KANA_KATAKANA_DECK_ID = 1_762_800_803
+from multilang.services.anki_id_registry import AnkiIdKind, registry_id
+
+KANA_MODEL_ID = registry_id(family="japanese_kana", role="model", kind=AnkiIdKind.MODEL)
+KANA_HIRAGANA_DECK_ID = registry_id(family="japanese_kana", role="hiragana_deck", kind=AnkiIdKind.DECK)
+KANA_KATAKANA_DECK_ID = registry_id(family="japanese_kana", role="katakana_deck", kind=AnkiIdKind.DECK)
 KANA_NOTE_TYPE_NAME = "Multilang::Japanese Kana"
 DEFAULT_KANA_DECK_NAME = "Multilang Japanese::Kana"
 HIRAGANA_DECK_NAME = f"{DEFAULT_KANA_DECK_NAME}::Hiragana"

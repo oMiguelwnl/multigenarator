@@ -13,7 +13,11 @@ from typer.testing import CliRunner
 
 import multilang.cli as cli_module
 from multilang.cli import create_app
-from multilang.services.korean_production_evidence import KoreanProductionEvidence
+from multilang.services.korean_production_evidence import (
+    KoreanProductionEvidence,
+    KoreanProductionEvidenceAuthority,
+    KoreanProductionReviewAggregate,
+)
 
 
 runner = CliRunner()
@@ -292,6 +296,57 @@ def _evidence(mode: str) -> KoreanProductionEvidence:
     )
 
 
+def _authority_payload() -> dict[str, str]:
+    return {
+        "job_id": "job-ko-production",
+        "phase31_pointer_locator_sha256": HASHES["phase31_pointer"],
+        "phase31_pointer_content_sha256": HASHES["phase31_pointer_content"],
+        "phase31_validation_receipt_sha256": HASHES["phase31_validation"],
+        "phase31_snapshot_manifest_sha256": HASHES["phase31_manifest"],
+        "phase31_snapshot_root_sha256": HASHES["phase31_root"],
+        "frequency_bundle_locator_sha256": HASHES["frequency_manifest"],
+        "frequency_bundle_content_sha256": HASHES["frequency_content"],
+        "source_access_authority_sha256": HASHES["source_access"],
+        "source_retrieval_sha256": HASHES["source_retrieval"],
+        "source_transformation_sha256": HASHES["source_transformation"],
+        "source_build_result_sha256": HASHES["source_build"],
+        "source_review_aggregate_sha256": HASHES["source_review"],
+        "final_bundle_authority_sha256": HASHES["final_bundle"],
+        "provider_policy_sha256": HASHES["provider_policy"],
+        "provider_review_authority_sha256": HASHES["provider_review"],
+        "budget_authority_sha256": HASHES["budget"],
+        "retry_policy_sha256": HASHES["retry"],
+        "full_run_authority_sha256": HASHES["full_run"],
+        "catalog_locator_sha256": HASHES["catalog_locator"],
+        "catalog_content_sha256": HASHES["catalog_content"],
+        "profile_sample_authority_sha256": HASHES["profile"],
+        "heard_review_authority_sha256": HASHES["heard"],
+        "full_binding_receipt_sha256": HASHES["full_binding"],
+    }
+
+
+def _review_aggregate() -> KoreanProductionReviewAggregate:
+    return KoreanProductionReviewAggregate(
+        job_id="job-ko-production",
+        aggregate_sha256=_hash("review-aggregate"),
+        expected_item_count=3000,
+        receipt_file_count=1,
+        text_receipt_count=3000,
+        word_integrity_receipt_count=3000,
+        sentence_integrity_receipt_count=3000,
+        heard_word_sample_count=300,
+        heard_sentence_sample_count=300,
+        risk_case_count=0,
+        risk_case_receipt_count=0,
+        receipt_sha256s=(_hash("receipt"),),
+        coverage_roots={"text": _hash("text-root")},
+        authority={"full_binding_receipt_sha256": HASHES["full_binding"]},
+        grants_review_application_authority=False,
+        grants_content_promotion_authority=False,
+        grants_release_authority=False,
+    )
+
+
 def test_production_evidence_commands_expose_required_flags_and_no_provider_defaults() -> None:
     run_options = set(_options("validate-korean-production-run-result"))
     final_options = set(_options("validate-korean-production-evidence"))
@@ -411,6 +466,57 @@ def test_validate_korean_production_run_result_cli_writes_hash_only_output_read_
     assert payload["provider_call_count"] == 4
     assert "LEAK-CONTENT" not in evidence_file.read_text(encoding="utf-8")
     assert "korean_production_run_evidence_status=validated" in result.output
+
+
+def test_validate_korean_production_review_batches_cli_writes_content_free_aggregate(tmp_path: Path, monkeypatch) -> None:
+    authority_file = _write_json(tmp_path / "authority.json", _authority_payload())
+    receipt_dir = tmp_path / "receipts"
+    _write_json(receipt_dir / "receipt.json", {"kind": "fixture"})
+    aggregate_file = tmp_path / "aggregate.json"
+    calls: list[tuple[str, dict[str, Any]]] = []
+
+    monkeypatch.setattr(
+        cli_module,
+        "load_korean_production_evidence_rows",
+        lambda **kwargs: calls.append(("load", kwargs)) or object(),
+        raising=False,
+    )
+    monkeypatch.setattr(
+        cli_module,
+        "validate_korean_production_review_batches",
+        lambda **kwargs: calls.append(("aggregate", kwargs)) or _review_aggregate(),
+        raising=False,
+    )
+
+    result = runner.invoke(
+        create_app(),
+        [
+            "validate-korean-production-review-batches",
+            "--database-url",
+            "sqlite+pysqlite:///fixture.db",
+            "--job-id",
+            "job-ko-production",
+            "--authority-file",
+            str(authority_file),
+            "--receipt-dir",
+            str(receipt_dir),
+            "--expected-item-count",
+            "3000",
+            "--expected-heard-sample-count",
+            "300",
+            "--aggregate-file",
+            str(aggregate_file),
+        ],
+    )
+
+    assert result.exit_code == 0, result.output
+    assert [name for name, _ in calls] == ["load", "aggregate"]
+    assert isinstance(calls[1][1]["authority"], KoreanProductionEvidenceAuthority)
+    assert calls[1][1]["receipt_files"] == [receipt_dir / "receipt.json"]
+    assert "korean_production_review_aggregate_status=validated" in result.output
+    payload = json.loads(aggregate_file.read_text(encoding="utf-8"))
+    assert payload["mode"] == "review_aggregate"
+    assert "LEAK" not in aggregate_file.read_text(encoding="utf-8")
 
 
 def test_validate_korean_production_evidence_cli_writes_final_result_evidence_and_audits(tmp_path: Path, monkeypatch) -> None:

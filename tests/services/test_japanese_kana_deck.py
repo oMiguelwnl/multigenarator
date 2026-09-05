@@ -9,8 +9,12 @@ from pathlib import Path
 import genanki
 import zstandard
 
+from multilang.services.anki_id_registry import AnkiIdKind, registry_id
 from multilang.services.japanese_kana_deck import (
+    KANA_HIRAGANA_DECK_ID,
+    KANA_KATAKANA_DECK_ID,
     KANA_FIELD_NAMES,
+    KANA_MODEL_ID,
     KANA_NOTE_TYPE_NAME,
     KanaCard,
     build_kana_model,
@@ -19,6 +23,23 @@ from multilang.services.japanese_kana_deck import (
     export_kana_deck,
     import_kana_cards_from_apkg,
 )
+
+
+def test_japanese_kana_ids_are_registry_backed_without_local_numeric_declarations() -> None:
+    source = Path("src/multilang/services/japanese_kana_deck.py").read_text(encoding="utf-8")
+
+    assert KANA_MODEL_ID == registry_id(
+        family="japanese_kana", role="model", kind=AnkiIdKind.MODEL
+    )
+    assert KANA_HIRAGANA_DECK_ID == registry_id(
+        family="japanese_kana", role="hiragana_deck", kind=AnkiIdKind.DECK
+    )
+    assert KANA_KATAKANA_DECK_ID == registry_id(
+        family="japanese_kana", role="katakana_deck", kind=AnkiIdKind.DECK
+    )
+    assert "1_762_800_801" not in source
+    assert "1_762_800_802" not in source
+    assert "1_762_800_803" not in source
 
 # Source field layout mirrors Jo Mako-style kana note types (both scripts on
 # every note). Only used to build a synthetic fixture package for the tests.

@@ -17,6 +17,7 @@ from multilang.domain.lexicon import (
 )
 from multilang.domain.text_quality import (
     ConfidenceLabel,
+    KoreanAdaptiveIPlusOneEvidence,
     ReviewStatus,
     TextGenerationStatus,
     TextProvenance,
@@ -28,6 +29,12 @@ from multilang.domain.text_quality import (
 from multilang.repositories.job_repository import JobRepository
 from multilang.repositories.lexical_repository import LexicalRepository
 from multilang.repositories.text_repository import TextRepository
+
+
+def _hash(seed: str) -> str:
+    from multilang.domain.korean import raw_bytes_sha256
+
+    return raw_bytes_sha256(seed.encode("utf-8"))
 
 
 def build_repositories() -> tuple[TextRepository, LexicalRepository, JobRepository, Session]:
@@ -314,3 +321,60 @@ def test_list_generation_candidates_and_round_trip_structured_fields() -> None:
     assert [candidate.item_key for candidate in missing_only_candidates] == ["line-4"]
     assert candidates[0].lemma == review.lemma
     assert missing_only_candidates[0].lemma == missing_text.lemma
+
+
+def test_adaptive_prefix_evidence_round_trips_with_sorted_known_ids_and_score_components() -> None:
+    repository, lexical_repository, job_repository, session = build_repositories()
+    job = job_repository.create_job(
+        request=make_request().model_copy(update={"language": SupportedLanguage.KO, "source_type": "frequency", "level": 1}),
+        run_key="run-ko-prefix",
+        source_fingerprint="korean-fixture",
+        total_items=1,
+    )
+    lexical = seed_lexical_candidate(
+        lexical_repository,
+        session,
+        job_id=job.id,
+        run_key=job.run_key,
+        item_key="level-1-rank-0002",
+        lemma="학교",
+    )
+    adaptive = KoreanAdaptiveIPlusOneEvidence(
+        known_prefix_sha256=_hash("prefix"),
+        known_concept_ids=("lexicon:ko:aaa", "orthography:hangul"),
+        known_concept_count=2,
+        phase31_pointer_locator_sha256=_hash("pointer-locator"),
+        phase31_pointer_content_sha256=_hash("pointer-content"),
+        phase31_validation_receipt_sha256=_hash("receipt"),
+        phase31_snapshot_manifest_sha256=_hash("snapshot-manifest"),
+        phase31_snapshot_root_sha256=_hash("snapshot-root"),
+        frequency_bundle_locator_sha256=_hash("frequency-locator"),
+        frequency_bundle_content_sha256=_hash("frequency-content"),
+        candidate_sha256=_hash("candidate"),
+        selected_ordinal=1,
+        hard_gate_codes=(),
+        score_components={"incidental_concept_count": 1.0, "known_concept_count": 2.0},
+        policy_version="korean-adaptive-text-quality-v1",
+        target_concept_id="lexicon:ko:bbb",
+        observed_concept_ids=("grammar:topic", "lexicon:ko:bbb", "orthography:hangul"),
+        incidental_concept_ids=("grammar:topic",),
+        scorer_version="adaptive-i-plus-one-v1",
+    )
+
+    repository.upsert_text_record(
+        make_record(
+            lexical_candidate_id=lexical.id,
+            job_id=job.id,
+            item_key="level-1-rank-0002",
+            review_status=ReviewStatus.REVIEW_REQUIRED,
+            adaptive_i_plus_one_evidence=adaptive,
+        )
+    )
+    session.expire_all()
+
+    restored = repository.get_text_record(job.id, "level-1-rank-0002")
+
+    assert restored is not None
+    assert restored.adaptive_i_plus_one_evidence == adaptive
+    assert restored.adaptive_i_plus_one_evidence.known_concept_count == 2
+    assert restored.adaptive_i_plus_one_evidence.score_components["incidental_concept_count"] == 1.0

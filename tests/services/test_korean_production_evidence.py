@@ -29,9 +29,12 @@ from multilang.domain.exporting import FREQUENCY_EXPORT_CARD_FIELD_NAMES, Export
 from multilang.domain.jobs import SupportedLanguage
 from multilang.services.korean_production_evidence import (
     KoreanProductionEvidenceAuthority,
+    KoreanProductionEvidenceRows,
     build_korean_production_audit_payload,
+    korean_production_review_identity_hash,
     load_korean_production_evidence_rows,
     render_korean_production_audit_markdown,
+    validate_korean_production_review_batches,
     validate_korean_production_final_evidence,
     validate_korean_production_run_result,
 )
@@ -771,3 +774,146 @@ def test_final_evidence_one_fact_mutations_fail_read_only_for_review_apkg_and_re
             phase31_verifier=lambda **_: _phase31_report(authority),
         )
     assert _table_counts(database_url) == before_counts
+
+
+def _simple_review_rows(authority: KoreanProductionEvidenceAuthority, *, count: int = 3) -> KoreanProductionEvidenceRows:
+    text_records = []
+    audio_assets = []
+    for rank in range(1, count + 1):
+        item_key = f"ko-production-{rank:04d}"
+        text_records.append(
+            SimpleNamespace(
+                job_id=authority.job_id,
+                item_key=item_key,
+                validation_status="passed",
+                review_status="accepted",
+                repair_attempt_count=1 if rank == 1 else 0,
+                validation_flags=["risk"] if rank == 2 else [],
+                text_review_receipt_sha256=HASHES_FOR_FINAL["text_review_application"],
+            )
+        )
+        for kind in ("word", "sentence"):
+            audio_assets.append(
+                SimpleNamespace(
+                    job_id=authority.job_id,
+                    item_key=item_key,
+                    asset_kind=kind,
+                    status="synthesized",
+                    audio_review_status="approved",
+                    synthesis_request_sha256=_hash(f"{kind}-request-{rank}"),
+                    artifact_sha256=_hash(f"{kind}-artifact-{rank}"),
+                    byte_size=2048,
+                    audio_review_receipt_sha256=HASHES_FOR_FINAL["audio_review_application"],
+                    heard_review_receipt_sha256=authority.heard_review_authority_sha256,
+                )
+            )
+    return KoreanProductionEvidenceRows(
+        job=SimpleNamespace(id=authority.job_id),
+        lexical_candidates=(),
+        text_records=tuple(text_records),
+        audio_assets=tuple(audio_assets),
+        provider_call_records=(),
+        card_exports=(),
+        deck_exports=(),
+    )
+
+
+def _write_review_receipt(
+    directory: Path,
+    name: str,
+    *,
+    authority: KoreanProductionEvidenceAuthority,
+    coverage_kind: str,
+    identity_hashes: list[str],
+    reviewer_role: str = "qualified-reviewer",
+) -> Path:
+    directory.mkdir(parents=True, exist_ok=True)
+    payload = {
+        "kind": "korean-production-review-receipt-batch",
+        "job_id": authority.job_id,
+        "coverage_kind": coverage_kind,
+        "reviewer_role": reviewer_role,
+        "decision": "approved",
+        "authority": {
+            "full_binding_receipt_sha256": authority.full_binding_receipt_sha256,
+            "frequency_bundle_content_sha256": authority.frequency_bundle_content_sha256,
+            "profile_sample_authority_sha256": authority.profile_sample_authority_sha256,
+            "heard_review_authority_sha256": authority.heard_review_authority_sha256,
+        },
+        "identity_hashes": identity_hashes,
+    }
+    path = directory / name
+    path.write_text(json.dumps(payload, ensure_ascii=False, sort_keys=True), encoding="utf-8")
+    return path
+
+
+def test_review_aggregate_recomputes_complete_bounded_receipts_read_only_and_content_free(tmp_path: Path) -> None:
+    authority = _authority()
+    rows = _simple_review_rows(authority)
+    receipt_dir = tmp_path / "receipts"
+    text_hashes = [
+        korean_production_review_identity_hash("text", job_id=authority.job_id, item_key=f"ko-production-{rank:04d}")
+        for rank in range(1, 4)
+    ]
+    word_hashes = [
+        korean_production_review_identity_hash(
+            "word_integrity",
+            job_id=authority.job_id,
+            item_key=f"ko-production-{rank:04d}",
+            request_sha256=_hash(f"word-request-{rank}"),
+            artifact_sha256=_hash(f"word-artifact-{rank}"),
+        )
+        for rank in range(1, 4)
+    ]
+    sentence_hashes = [
+        korean_production_review_identity_hash(
+            "sentence_integrity",
+            job_id=authority.job_id,
+            item_key=f"ko-production-{rank:04d}",
+            request_sha256=_hash(f"sentence-request-{rank}"),
+            artifact_sha256=_hash(f"sentence-artifact-{rank}"),
+        )
+        for rank in range(1, 4)
+    ]
+    receipt_files = [
+        _write_review_receipt(receipt_dir, "text.json", authority=authority, coverage_kind="text", identity_hashes=text_hashes),
+        _write_review_receipt(receipt_dir, "word.json", authority=authority, coverage_kind="word_integrity", identity_hashes=word_hashes),
+        _write_review_receipt(receipt_dir, "sentence.json", authority=authority, coverage_kind="sentence_integrity", identity_hashes=sentence_hashes),
+        _write_review_receipt(receipt_dir, "heard-word.json", authority=authority, coverage_kind="heard_word", identity_hashes=word_hashes[:1]),
+        _write_review_receipt(receipt_dir, "heard-sentence.json", authority=authority, coverage_kind="heard_sentence", identity_hashes=sentence_hashes[:1]),
+        _write_review_receipt(receipt_dir, "risk.json", authority=authority, coverage_kind="risk", identity_hashes=text_hashes[:2]),
+    ]
+
+    aggregate = validate_korean_production_review_batches(
+        authority=authority,
+        rows=rows,
+        receipt_files=receipt_files,
+        expected_item_count=3,
+        expected_heard_sample_count=1,
+    )
+
+    assert aggregate.text_receipt_count == 3
+    assert aggregate.word_integrity_receipt_count == 3
+    assert aggregate.sentence_integrity_receipt_count == 3
+    assert aggregate.heard_word_sample_count == 1
+    assert aggregate.risk_case_count == 2
+    assert aggregate.grants_review_application_authority is False
+    dumped = aggregate.model_dump_json()
+    assert "LEAK" not in dumped
+    assert "private/audio" not in dumped
+
+    duplicate = _write_review_receipt(
+        tmp_path / "bad",
+        "duplicate.json",
+        authority=authority,
+        coverage_kind="text",
+        identity_hashes=[text_hashes[0], text_hashes[0]],
+    )
+    with pytest.raises(ValueError, match="overlap"):
+        validate_korean_production_review_batches(
+            authority=authority,
+            rows=rows,
+            receipt_files=[duplicate],
+            expected_item_count=3,
+            expected_heard_sample_count=1,
+        )

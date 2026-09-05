@@ -713,6 +713,12 @@ class LexicalGroundingService:
         rate_limiter: RateLimiter | None = None,
     ) -> LexicalCardCandidate:
         if language is SupportedLanguage.KO:
+            if (
+                candidate.grounding_status is GroundingStatus.GROUNDED
+                and candidate.korean_identity is not None
+                and candidate.korean_frequency_evidence is not None
+            ):
+                return candidate
             binding = self.resolve_korean_source_identity(
                 surface_form=candidate.display_form,
                 submitted_form=candidate.submitted_form,

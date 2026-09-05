@@ -9,10 +9,34 @@ from types import SimpleNamespace
 
 import pytest
 
-from multilang.domain.audio import AudioAssetKind, AudioAssetRecord, AudioFormat, AudioProvenance, AudioProvider, AudioSynthesisStatus, NormalizedTtsInput
+from multilang.domain.audio import (
+    AudioAssetKind,
+    AudioAssetRecord,
+    AudioFormat,
+    AudioProvenance,
+    AudioProvider,
+    AudioReviewStatus,
+    AudioSynthesisStatus,
+    NormalizedTtsInput,
+)
 from multilang.domain.jobs import SupportedLanguage
-from multilang.domain.lexicon import DefinitionRecord, GroundingStatus, LexicalCardCandidate, LexicalProvenance
-from multilang.domain.text_quality import ConfidenceLabel, ReviewStatus, TextGenerationStatus, TextProvenance, TextQualityRecord, ValidationStatus
+from multilang.domain.korean import KoreanAnalyzerFingerprint, KoreanLexicalIdentity, KoreanSignatureItem
+from multilang.domain.lexicon import (
+    DefinitionRecord,
+    GroundingStatus,
+    KoreanFrequencyLexicalEvidence,
+    LexicalCardCandidate,
+    LexicalProvenance,
+)
+from multilang.domain.text_quality import (
+    ConfidenceLabel,
+    KoreanAdaptiveIPlusOneEvidence,
+    ReviewStatus,
+    TextGenerationStatus,
+    TextProvenance,
+    TextQualityRecord,
+    ValidationStatus,
+)
 from multilang.domain.exporting import (
     FREQUENCY_EXPORT_CARD_FIELD_NAMES,
     HIGHLIGHT_EXPORT_CARD_FIELD_NAMES,
@@ -26,6 +50,14 @@ from multilang.domain.exporting import (
 )
 from multilang.services.assemble_export_cards import AssembleExportCardsError, AssembleExportCardsService
 from multilang.services.mandarin_orthography import MandarinOrthography, MandarinOrthographyError
+
+
+_HASH_A = "a" * 64
+_HASH_B = "b" * 64
+_HASH_C = "c" * 64
+_HASH_D = "d" * 64
+_HASH_E = "e" * 64
+_HASH_F = "f" * 64
 
 
 def make_text_record(
@@ -105,6 +137,149 @@ def make_asset(*, item_key: str, asset_kind: AudioAssetKind, storage_path: str) 
             duration_ms=800,
             status=AudioSynthesisStatus.SYNTHESIZED,
         ),
+    )
+
+
+def make_korean_asset(
+    *,
+    item_key: str,
+    asset_kind: AudioAssetKind,
+    display_text: str,
+    storage_path: str,
+    artifact_sha256: str,
+    approved: bool = True,
+) -> AudioAssetRecord:
+    normalized = NormalizedTtsInput(
+        display_text=display_text,
+        tts_text=display_text,
+        ssml_text=f"<speak version=\"1.0\">{display_text}</speak>",
+        synthesis_request_sha256=_HASH_D,
+    )
+    review_status = AudioReviewStatus.APPROVED if approved else AudioReviewStatus.SYNTHESIZED_PENDING
+    return AudioAssetRecord(
+        job_id="job-1",
+        item_key=item_key,
+        asset_kind=asset_kind,
+        display_text=display_text,
+        normalized_input=normalized,
+        provenance=AudioProvenance(
+            provider=AudioProvider.AZURE,
+            voice_id="ko-KR-SunHiNeural",
+            locale="ko-KR",
+            format=AudioFormat.AUDIO_24KHZ_48KBITRATE_MONO_MP3,
+            text_hash=normalized.text_hash or "",
+            ssml_hash=normalized.ssml_hash or "",
+            storage_path=storage_path,
+            byte_size=4096,
+            duration_ms=900,
+            status=AudioSynthesisStatus.SYNTHESIZED,
+            fallback_used=False,
+            provider_sdk_version="1.49.1",
+            voice_profile_sha256=_HASH_A,
+            catalog_receipt_sha256=_HASH_B,
+            synthesis_request_sha256=_HASH_D,
+            artifact_sha256=artifact_sha256,
+            audio_review_status=review_status,
+            audio_review_receipt_sha256=_HASH_E if approved else None,
+            heard_review_receipt_sha256=_HASH_F if approved else None,
+        ),
+    )
+
+
+def make_korean_fingerprint() -> KoreanAnalyzerFingerprint:
+    return KoreanAnalyzerFingerprint(
+        analyzer_name="kiwi",
+        analyzer_package_version="0.23.2",
+        model_package_version="0.23.0",
+        model_type="cong",
+        enabled_dialects="standard",
+        num_workers=1,
+        integrate_allomorph=True,
+        top_n=2,
+        split_complex=False,
+        compatible_jamo=False,
+        normalize_coda=False,
+        z_coda=False,
+        typos=None,
+        oov_handling="chr",
+        policy_version="kiwi-top2-consensus-v1",
+    )
+
+
+def make_korean_candidate(*, rank: int = 1001, level: int = 2, bundle_sha256: str = _HASH_A) -> LexicalCardCandidate:
+    fingerprint = make_korean_fingerprint()
+    identity = KoreanLexicalIdentity(
+        submitted_form="학교",
+        canonical_nfc="학교",
+        lemma="학교",
+        part_of_speech="NNG",
+        sense_id="nikl:1001",
+        register="standard",
+        morpheme_signature=(KoreanSignatureItem(form="학교", pos="NNG"),),
+        analyzer_fingerprint=fingerprint,
+        status="resolved",
+    )
+    evidence = KoreanFrequencyLexicalEvidence(
+        source_id="nikl-korean-learners-vocabulary",
+        source_version="2003-06-04.revised-2019-05-30",
+        source_rank=rank + 10,
+        final_rank=rank,
+        level=level,
+        part_of_speech="NNG",
+        sense_id="nikl:1001",
+        grounding_confidence="reviewed-source-backed",
+        license_decision="approved-local-use",
+        curation_decision="accepted",
+        bundle_sha256=bundle_sha256,
+        source_sha256=_HASH_B,
+        source_review_receipt_sha256=_HASH_C,
+        source_review_aggregate_sha256=_HASH_D,
+        analyzer_fingerprint=fingerprint,
+    )
+    return LexicalCardCandidate(
+        submitted_form="학교",
+        display_form="학교",
+        lemma="학교",
+        lemma_key=identity.lexical_key,
+        frequency_rank=rank,
+        frequency_level=level,
+        definitions_html="substantivo: escola",
+        definition_language="pt",
+        ipa="/hak̚.k͈jo/",
+        spoken_form="학교",
+        translation_target_language="pt",
+        grounding_status=GroundingStatus.GROUNDED,
+        provenance=LexicalProvenance(source="korean-frequency-bundle"),
+        korean_identity=identity,
+        korean_frequency_evidence=evidence,
+    )
+
+
+def make_korean_text_record(
+    *,
+    item_key: str = "학교",
+    text_review_receipt_sha256: str | None = _HASH_C,
+    bundle_sha256: str = _HASH_A,
+) -> TextQualityRecord:
+    return make_text_record(
+        item_key=item_key,
+        example_sentence="학교에 가요.",
+        translation_text="Eu vou para a escola.",
+    ).model_copy(
+        update={
+            "adaptive_i_plus_one_evidence": KoreanAdaptiveIPlusOneEvidence(
+                known_prefix_sha256=_HASH_A,
+                known_concept_ids=("ko:foundation",),
+                known_concept_count=1,
+                frequency_bundle_content_sha256=bundle_sha256,
+                candidate_sha256=_HASH_B,
+                selected_ordinal=1,
+                target_concept_id="ko:lexeme:school",
+                observed_concept_ids=("ko:foundation", "ko:lexeme:school"),
+                scorer_version="adaptive-i-plus-one-v1",
+            ),
+            "text_review_receipt_sha256": text_review_receipt_sha256,
+        }
     )
 
 
@@ -274,6 +449,117 @@ def test_assemble_mandarin_wraps_orthography_errors_with_item_context() -> None:
 
     with pytest.raises(AssembleExportCardsError, match="中國.*Traditional primary text"):
         service.execute(job_id="job-1", deck_language=SupportedLanguage.ZH)
+
+
+def test_assemble_korean_frequency_rows_require_reviewed_manifest_text_audio_and_preserve_identity() -> None:
+    candidate = make_korean_candidate(rank=1001, level=2)
+    text_record = make_korean_text_record()
+    service, repository = build_service(
+        accepted_records=[text_record],
+        candidates={"학교": candidate},
+        assets={
+            ("학교", AudioAssetKind.WORD.value): make_korean_asset(
+                item_key="학교",
+                asset_kind=AudioAssetKind.WORD,
+                display_text="학교",
+                storage_path="audio/ko-school-word.mp3",
+                artifact_sha256=_HASH_E,
+            ),
+            ("학교", AudioAssetKind.SENTENCE.value): make_korean_asset(
+                item_key="학교",
+                asset_kind=AudioAssetKind.SENTENCE,
+                display_text="학교에 가요.",
+                storage_path="audio/ko-school-sentence.mp3",
+                artifact_sha256=_HASH_F,
+            ),
+        },
+    )
+
+    row = service.execute(job_id="job-1", deck_language=SupportedLanguage.KO).cards[0]
+    changed_internal = row.model_copy(
+        update={
+            "text_review_receipt_sha256": _HASH_D,
+            "word_audio_artifact_sha256": _HASH_A,
+            "sentence_audio_artifact_sha256": _HASH_B,
+            "export_gate_receipt_sha256": _HASH_E,
+        }
+    )
+
+    assert row.sort_index == 1001
+    assert row.frequency_level == 2
+    assert row.frequency_bundle_sha256 == _HASH_A
+    assert row.text_review_receipt_sha256 == _HASH_C
+    assert row.word_audio_artifact_sha256 == _HASH_E
+    assert row.sentence_audio_artifact_sha256 == _HASH_F
+    assert len(row.export_gate_receipt_sha256 or "") == 64
+    assert tuple(row.ordered_field_mapping()) == FREQUENCY_EXPORT_CARD_FIELD_NAMES
+    assert row.ordered_field_mapping()["Image"] == ""
+    assert changed_internal.note_guid == row.note_guid
+    assert repository.saved_rows == [row]
+
+
+@pytest.mark.parametrize(
+    ("text_record", "word_asset", "message"),
+    [
+        (
+            make_korean_text_record(text_review_receipt_sha256=None),
+            make_korean_asset(
+                item_key="학교",
+                asset_kind=AudioAssetKind.WORD,
+                display_text="학교",
+                storage_path="audio/ko-school-word.mp3",
+                artifact_sha256=_HASH_E,
+            ),
+            "text review receipt",
+        ),
+        (
+            make_korean_text_record(bundle_sha256=_HASH_B),
+            make_korean_asset(
+                item_key="학교",
+                asset_kind=AudioAssetKind.WORD,
+                display_text="학교",
+                storage_path="audio/ko-school-word.mp3",
+                artifact_sha256=_HASH_E,
+            ),
+            "frequency bundle",
+        ),
+        (
+            make_korean_text_record(),
+            make_korean_asset(
+                item_key="학교",
+                asset_kind=AudioAssetKind.WORD,
+                display_text="학교",
+                storage_path="audio/ko-school-word.mp3",
+                artifact_sha256=_HASH_E,
+                approved=False,
+            ),
+            "reviewed non-fallback word audio",
+        ),
+    ],
+)
+def test_assemble_korean_frequency_rejects_stale_or_unreviewed_final_evidence(
+    text_record: TextQualityRecord,
+    word_asset: AudioAssetRecord,
+    message: str,
+) -> None:
+    service, repository = build_service(
+        accepted_records=[text_record],
+        candidates={"학교": make_korean_candidate(rank=1001, level=2)},
+        assets={
+            ("학교", AudioAssetKind.WORD.value): word_asset,
+            ("학교", AudioAssetKind.SENTENCE.value): make_korean_asset(
+                item_key="학교",
+                asset_kind=AudioAssetKind.SENTENCE,
+                display_text="학교에 가요.",
+                storage_path="audio/ko-school-sentence.mp3",
+                artifact_sha256=_HASH_F,
+            ),
+        },
+    )
+
+    with pytest.raises(AssembleExportCardsError, match=message):
+        service.execute(job_id="job-1", deck_language=SupportedLanguage.KO)
+    assert repository.saved_rows == []
 
 
 def test_assemble_mandarin_rejects_invalid_pinyin_before_persisting_snapshot() -> None:

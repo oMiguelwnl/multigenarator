@@ -4,9 +4,22 @@ from __future__ import annotations
 
 import pytest
 
-from multilang.domain.jobs import SupportedLanguage
-from multilang.domain.korean import KoreanMorphologyStatus
-from multilang.runtime import _default_deck_name, build_runtime_service
+from multilang.domain.jobs import GenerationRequest, SupportedLanguage
+from multilang.domain.korean import (
+    KoreanAnalyzerFingerprint,
+    KoreanFrequencyJobAuthority,
+    KoreanFrequencyEntry,
+    KoreanLexicalIdentity,
+    KoreanMorphologyStatus,
+    KoreanSignatureItem,
+    raw_bytes_sha256,
+)
+from multilang.runtime import (
+    KoreanFrequencyTextRuntimeAuthority,
+    _default_deck_name,
+    build_korean_frequency_text_runtime_service,
+    build_runtime_service,
+)
 from multilang.services.audio_synthesis import AudioSynthesisResponse
 from multilang.services.fallback_audio_adapter import FallbackAudioAdapter
 from multilang.services.korean_morphology import KiwiKoreanMorphologyService
@@ -42,6 +55,87 @@ class FakeGoogleTranslateSpeechAdapter(FakeElevenLabsSpeechAdapter):
     instances = []
 
 
+def _hash(seed: str) -> str:
+    return raw_bytes_sha256(seed.encode("utf-8"))
+
+
+def _korean_runtime_authority() -> KoreanFrequencyJobAuthority:
+    return KoreanFrequencyJobAuthority(
+        stage="full",
+        phase31_pointer_locator_sha256=_hash("phase31-pointer-locator"),
+        phase31_pointer_content_sha256=_hash("phase31-pointer-content"),
+        phase31_validation_receipt_sha256=_hash("phase31-receipt"),
+        phase31_snapshot_manifest_sha256=_hash("phase31-snapshot-manifest"),
+        phase31_snapshot_root_sha256=_hash("phase31-snapshot-root"),
+        frequency_bundle_locator_sha256=_hash("frequency-bundle-locator"),
+        frequency_bundle_content_sha256=_hash("frequency-bundle-content"),
+        source_retrieval_sha256=_hash("source-retrieval"),
+        source_build_result_sha256=_hash("source-build-result"),
+        source_review_aggregate_sha256=_hash("source-review-aggregate"),
+        provider_policy_sha256=_hash("provider-policy"),
+        pilot_authority_sha256=_hash("pilot-authority"),
+        catalog_locator_sha256=_hash("catalog-locator"),
+        catalog_content_sha256=_hash("catalog-content"),
+        profile_sample_authority_sha256=_hash("profile-sample"),
+        provider_review_authority_sha256=_hash("provider-review"),
+        heard_review_authority_sha256=_hash("heard-review"),
+    )
+
+
+def _korean_fingerprint() -> KoreanAnalyzerFingerprint:
+    return KoreanAnalyzerFingerprint(
+        analyzer_name="kiwi",
+        analyzer_package_version="0.23.2",
+        model_package_version="0.23.0",
+        model_type="cong",
+        enabled_dialects="standard",
+        num_workers=1,
+        integrate_allomorph=True,
+        top_n=2,
+        split_complex=False,
+        compatible_jamo=False,
+        normalize_coda=False,
+        z_coda=False,
+        typos=None,
+        oov_handling="chr",
+        policy_version="kiwi-top2-consensus-v1",
+    )
+
+
+def _korean_frequency_entry(rank: int) -> KoreanFrequencyEntry:
+    lemma = f"어휘{rank}"
+    fingerprint = _korean_fingerprint()
+    identity = KoreanLexicalIdentity(
+        submitted_form=lemma,
+        canonical_nfc=lemma,
+        lemma=lemma,
+        part_of_speech="NNG",
+        sense_id=f"nikl:{rank}",
+        register="standard",
+        morpheme_signature=(KoreanSignatureItem(form=lemma, pos="NNG"),),
+        analyzer_fingerprint=fingerprint,
+        status="resolved",
+    )
+    return KoreanFrequencyEntry(
+        language="ko",
+        version="fixture-v1",
+        level=((rank - 1) // 1000) + 1,
+        final_rank=rank,
+        source_rank=rank,
+        source_provenance="nikl-korean-learners-vocabulary",
+        source_version="2003-06-04.revised-2019-05-30",
+        license_decision="approved-local-use",
+        storage_disposition="synthetic-test-only",
+        curation_decision="accepted",
+        curation_flags=("source_rank_preserved",),
+        grounding_confidence="source-backed",
+        bundle_sha256=_hash("bundle"),
+        retrieval_sha256=_hash("retrieval"),
+        analyzer_fingerprint=fingerprint,
+        lexical_identity=identity,
+    )
+
+
 def test_local_runtime_uses_curated_smoke_sentence_and_translation_for_lantern() -> None:
     sentence_adapter = LocalSentenceAdapter()
     translation_adapter = LocalTranslationAdapter()
@@ -65,6 +159,95 @@ def test_local_runtime_uses_curated_smoke_sentence_and_translation_for_lantern()
     assert sentence.sentence == "She hung the lantern beside the cabin door."
     assert translation.translation == "Ela pendurou a lanterna ao lado da porta da cabana."
     assert sentence.provenance["template_kind"] == "curated:lantern"
+
+
+def test_korean_frequency_text_runtime_verifies_phase31_before_loading_and_building(tmp_path) -> None:
+    authority = _korean_runtime_authority()
+    order: list[str] = []
+
+    def verifier(*, expected_receipt_sha256: str) -> object:
+        order.append("verify_active")
+        assert expected_receipt_sha256 == authority.phase31_validation_receipt_sha256
+        return type(
+            "Report",
+            (),
+            {
+                "receipt_sha256": authority.phase31_validation_receipt_sha256,
+                "snapshot_manifest_sha256": authority.phase31_snapshot_manifest_sha256,
+                "snapshot_root_sha256": authority.phase31_snapshot_root_sha256,
+            },
+        )()
+
+    def entry_loader(**kwargs: object) -> tuple[KoreanFrequencyEntry, ...]:
+        order.append("load_entries")
+        assert kwargs["job_id"] == "job-ko"
+        assert kwargs["authority"] == authority
+        assert kwargs["binding_receipt_sha256"] == authority.source_review_aggregate_sha256
+        return ()
+
+    def runtime_builder(**kwargs: object) -> object:
+        order.append("build_runtime")
+        assert order == ["verify_active", "load_entries", "build_runtime"]
+        assert kwargs["korean_final_frequency_entries"] == ()
+        assert kwargs["korean_source_review_aggregate_sha256"] == authority.source_review_aggregate_sha256
+        return object()
+
+    result = build_korean_frequency_text_runtime_service(
+        settings=Settings(_env_file=None, database_url=f"sqlite+pysqlite:///{tmp_path / 'runtime.db'}"),
+        runtime_authority=KoreanFrequencyTextRuntimeAuthority(
+            job_id="job-ko",
+            bundle_root=tmp_path / "bundle",
+            binding_receipt_sha256=authority.source_review_aggregate_sha256 or "",
+            authority=authority,
+        ),
+        phase31_provenance_verifier=verifier,
+        entry_loader=entry_loader,
+        runtime_builder=runtime_builder,
+    )
+
+    assert result is not None
+    assert order == ["verify_active", "load_entries", "build_runtime"]
+
+
+def test_korean_frequency_text_runtime_blocks_phase31_drift_before_loading_entries(tmp_path) -> None:
+    authority = _korean_runtime_authority()
+    order: list[str] = []
+
+    def verifier(*, expected_receipt_sha256: str) -> object:
+        order.append("verify_active")
+        return type(
+            "Report",
+            (),
+            {
+                "receipt_sha256": authority.phase31_validation_receipt_sha256,
+                "snapshot_manifest_sha256": "0" * 64,
+                "snapshot_root_sha256": authority.phase31_snapshot_root_sha256,
+            },
+        )()
+
+    def entry_loader(**kwargs: object) -> tuple[KoreanFrequencyEntry, ...]:
+        order.append("load_entries")
+        return ()
+
+    def runtime_builder(**kwargs: object) -> object:
+        order.append("build_runtime")
+        return object()
+
+    with pytest.raises(ValueError, match="Phase 31 active authority drift"):
+        build_korean_frequency_text_runtime_service(
+            settings=Settings(_env_file=None, database_url=f"sqlite+pysqlite:///{tmp_path / 'runtime.db'}"),
+            runtime_authority=KoreanFrequencyTextRuntimeAuthority(
+                job_id="job-ko",
+                bundle_root=tmp_path / "bundle",
+                binding_receipt_sha256=authority.source_review_aggregate_sha256 or "",
+                authority=authority,
+            ),
+            phase31_provenance_verifier=verifier,
+            entry_loader=entry_loader,
+            runtime_builder=runtime_builder,
+        )
+
+    assert order == ["verify_active"]
 
 
 def test_runtime_fails_loudly_when_litellm_is_configured_without_credentials(tmp_path) -> None:
@@ -312,6 +495,47 @@ def test_unavailable_korean_factory_does_not_block_non_korean_runtime_startup(
     assert korean_result.status == "unavailable"
     assert analyzer_factory_calls == 1
     assert _default_deck_name(SupportedLanguage.EN) == "Multilang English"
+
+
+def test_korean_frequency_runtime_uses_explicit_final_entries_without_wordfreq_or_settings(
+    tmp_path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    import multilang.services.frequency_decks as frequency_decks
+
+    def forbidden_iter_wordlist(language: str):
+        raise AssertionError("Korean final runtime must not discover authority from wordfreq")
+
+    monkeypatch.setattr(frequency_decks, "iter_wordlist", forbidden_iter_wordlist)
+
+    service = build_runtime_service(
+        Settings(
+            _env_file=None,
+            database_url=f"sqlite+pysqlite:///{tmp_path / 'runtime.db'}",
+            text_generation_provider="local",
+            translation_provider="local",
+            frequency_assets_dir=tmp_path / "mutable-settings-assets",
+        ),
+        korean_final_frequency_entries=(_korean_frequency_entry(1),),
+        korean_source_review_receipt_sha256=_hash("source-review-receipt"),
+        korean_source_review_aggregate_sha256=_hash("source-review-aggregate"),
+    )
+
+    result = service.execute(
+        GenerationRequest(
+            language=SupportedLanguage.KO,
+            source_type="frequency",
+            level=1,
+            cards_per_level=1,
+        )
+    )
+
+    [candidate] = service.lexical_repo.list_candidates(result.report.job_id)
+    assert result.grounded_candidates == 1
+    assert result.level_counts == {1: 1, 2: 0, 3: 0}
+    assert candidate.korean_identity is not None
+    assert candidate.korean_identity.lexical_key.startswith("ko:")
+    assert candidate.provenance.source == "korean-frequency-bundle"
 
 
 def test_runtime_has_korean_display_name() -> None:

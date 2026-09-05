@@ -14,6 +14,7 @@ from pathlib import Path
 import pytest
 
 from multilang.domain.exporting import (
+    FREQUENCY_EXPORT_CARD_FIELD_NAMES,
     JAPANESE_EXPORT_CARD_FIELD_NAMES,
     MANDARIN_EXPORT_CARD_FIELD_NAMES,
     ExportArtifactFormat,
@@ -22,6 +23,7 @@ from multilang.domain.exporting import (
 )
 from multilang.domain.jobs import SupportedLanguage
 from multilang.services import card_template_loader
+from multilang.services.anki_id_registry import AnkiIdKind, registry_id
 from multilang.services.export_anki_package import (
     DECK_ID,
     HIGHLIGHT_MODEL_ID,
@@ -38,6 +40,21 @@ from multilang.services.export_anki_package import (
 )
 from multilang.services.japanese_frequency_deck import JAPANESE_MODEL_ID, JAPANESE_NOTE_TYPE_NAME
 from multilang.services.export_tabular_bundle import write_export_tabular_bundle
+
+
+def test_core_export_ids_are_registry_backed_without_local_numeric_declarations() -> None:
+    source = Path("src/multilang/services/export_anki_package.py").read_text(encoding="utf-8")
+
+    assert MODEL_ID == registry_id(family="core", role="frequency_model", kind=AnkiIdKind.MODEL)
+    assert DECK_ID == registry_id(family="core", role="export_deck", kind=AnkiIdKind.DECK)
+    assert MANUAL_MODEL_ID == registry_id(family="core", role="manual_model", kind=AnkiIdKind.MODEL)
+    assert HIGHLIGHT_MODEL_ID == registry_id(family="core", role="highlight_model", kind=AnkiIdKind.MODEL)
+    assert MANDARIN_MODEL_ID == registry_id(family="mandarin", role="card_model", kind=AnkiIdKind.MODEL)
+    assert "1_602_300_501" not in source
+    assert "1_602_300_502" not in source
+    assert "1_602_300_503" not in source
+    assert "1_602_300_504" not in source
+    assert "1_762_800_901" not in source
 
 
 def write_media_file(path: Path, payload: bytes = b"ID3-audio") -> Path:
@@ -107,6 +124,45 @@ def make_mandarin_row(*, source_type: str = "frequency") -> ExportCardRow:
         mandarin_sentence_pinyin="wǒ qù yín háng。",
         mandarin_sentence_traditional="我去銀行。",
     )
+
+
+def make_korean_row(*, item_key: str, sort_index: int, frequency_level: int | None) -> ExportCardRow:
+    return ExportCardRow(
+        identity=ExportCardIdentity(
+            language=SupportedLanguage.KO,
+            source_type="frequency",
+            job_id="job-ko",
+            item_key=item_key,
+            lemma_key=f"ko:{item_key}",
+            sort_index=sort_index,
+        ),
+        sort_index=sort_index,
+        frequency_level=frequency_level,
+        frequency_bundle_sha256="a" * 64,
+        export_gate_receipt_sha256="b" * 64,
+        text_review_receipt_sha256="c" * 64,
+        word_audio_artifact_sha256="d" * 64,
+        sentence_audio_artifact_sha256="e" * 64,
+        word=item_key,
+        front_of_card=item_key,
+        ipa=f"/{item_key}/",
+        definitions="substantivo: fixture",
+        example_sentence=f"{item_key}을 봐요.",
+        translation="Eu vejo o item.",
+        word_audio=f"[sound:{item_key}-word.mp3]",
+        sentence_audio=f"[sound:{item_key}-sentence.mp3]",
+    )
+
+
+def korean_media_index(tmp_path: Path, rows: list[ExportCardRow]) -> dict[str, Path]:
+    media: dict[str, Path] = {}
+    for row in rows:
+        media[row.word_audio] = write_media_file(tmp_path / "audio" / f"{row.identity.item_key}-word.mp3", b"ID3-word")
+        media[row.sentence_audio] = write_media_file(
+            tmp_path / "audio" / f"{row.identity.item_key}-sentence.mp3",
+            b"ID3-sentence",
+        )
+    return media
 
 
 @pytest.mark.parametrize("source_type", ["frequency", "word-list"])
@@ -398,6 +454,94 @@ def test_build_multilang_note_maps_japanese_frequency_fields() -> None:
         "[sound:gakkou-sentence.mp3]",
         "",
     ]
+
+
+def test_export_korean_frequency_package_has_registered_parent_and_three_child_decks(
+    tmp_path: Path,
+) -> None:
+    rows = [
+        make_korean_row(item_key="어휘1", sort_index=1, frequency_level=1),
+        make_korean_row(item_key="어휘2", sort_index=1001, frequency_level=2),
+        make_korean_row(item_key="어휘3", sort_index=2001, frequency_level=3),
+    ]
+    output_path = tmp_path / "korean-frequency.apkg"
+    parent_deck_id = registry_id(family="korean_frequency", role="parent_deck", kind=AnkiIdKind.DECK)
+    level_deck_ids = {
+        1: registry_id(family="korean_frequency", role="level_1_deck", kind=AnkiIdKind.DECK),
+        2: registry_id(family="korean_frequency", role="level_2_deck", kind=AnkiIdKind.DECK),
+        3: registry_id(family="korean_frequency", role="level_3_deck", kind=AnkiIdKind.DECK),
+    }
+    model_id = registry_id(family="korean_frequency", role="model", kind=AnkiIdKind.MODEL)
+
+    result = export_anki_package(
+        rows=rows,
+        media_index=korean_media_index(tmp_path, rows),
+        output_path=output_path,
+        deck_name="Multilang Korean::Frequency",
+        cards_per_level=1,
+        expected_items=3,
+    )
+
+    assert result.output_path == output_path
+    assert result.card_count == 3
+    with zipfile.ZipFile(output_path) as archive:
+        media_manifest = json.loads(archive.read("media").decode("utf-8"))
+        assert sorted(media_manifest.values()) == sorted(
+            [
+                "어휘1-word.mp3",
+                "어휘1-sentence.mp3",
+                "어휘2-word.mp3",
+                "어휘2-sentence.mp3",
+                "어휘3-word.mp3",
+                "어휘3-sentence.mp3",
+            ]
+        )
+        collection_path = tmp_path / "korean-collection.anki2"
+        collection_path.write_bytes(archive.read("collection.anki2"))
+    with sqlite3.connect(collection_path) as connection:
+        models = json.loads(connection.execute("select models from col").fetchone()[0])
+        decks = json.loads(connection.execute("select decks from col").fetchone()[0])
+        routed_cards = connection.execute(
+            "select cards.did, notes.guid, notes.flds, notes.tags "
+            "from cards join notes on notes.id = cards.nid order by notes.sfld"
+        ).fetchall()
+
+    assert decks[str(parent_deck_id)]["name"] == "Multilang Korean::Frequency"
+    assert decks[str(level_deck_ids[1])]["name"] == "Multilang Korean::Frequency::Level 1"
+    assert decks[str(level_deck_ids[2])]["name"] == "Multilang Korean::Frequency::Level 2"
+    assert decks[str(level_deck_ids[3])]["name"] == "Multilang Korean::Frequency::Level 3"
+    assert models[str(model_id)]["name"] == "Multilang::Card"
+    assert tuple(field["name"] for field in models[str(model_id)]["flds"]) == FREQUENCY_EXPORT_CARD_FIELD_NAMES
+    assert [card[0] for card in routed_cards] == [level_deck_ids[1], level_deck_ids[2], level_deck_ids[3]]
+    assert {card[1] for card in routed_cards} == {row.note_guid for row in rows}
+    assert all("a" * 64 not in card[2] for card in routed_cards)
+    assert " level_1 " in routed_cards[0][3]
+    assert " rank_0001 " in routed_cards[0][3]
+    assert " level_2 " in routed_cards[1][3]
+    assert " rank_1001 " in routed_cards[1][3]
+    assert " level_3 " in routed_cards[2][3]
+    assert " rank_2001 " in routed_cards[2][3]
+
+
+def test_export_korean_frequency_package_rejects_inferred_levels_before_replacing_existing_file(
+    tmp_path: Path,
+) -> None:
+    row = make_korean_row(item_key="어휘1", sort_index=1, frequency_level=None)
+    output_path = tmp_path / "korean-frequency.apkg"
+    output_path.write_bytes(b"sentinel")
+
+    with pytest.raises(ExportAnkiPackageError, match="explicit frequency level"):
+        export_anki_package(
+            rows=[row],
+            media_index=korean_media_index(tmp_path, [row]),
+            output_path=output_path,
+            deck_name="Multilang Korean::Frequency",
+            cards_per_level=1,
+            expected_items=1,
+        )
+
+    assert output_path.read_bytes() == b"sentinel"
+    assert not any(path.name.endswith(".tmp") for path in tmp_path.iterdir())
 
 
 def test_japanese_frequency_template_and_apkg_are_back_only_with_romaji(tmp_path: Path) -> None:

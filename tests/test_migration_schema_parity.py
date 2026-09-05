@@ -27,6 +27,7 @@ from multilang.db import models as _models  # noqa: F401
 _PROJECT_ROOT = Path(__file__).resolve().parents[1]
 _KOREAN_IDENTITY_REVISION = "20260804_17"
 _FREQUENCY_TEXT_AUDIO_REVISION = "20260821_18"
+_GRAMMAR_PERSONAL_REVISION = "20260828_19"
 
 _FREQUENCY_TEXT_AUDIO_COLUMNS = {
     "generation_jobs": {
@@ -174,10 +175,10 @@ def test_card_exports_mandarin_columns_are_migrated(tmp_path: Path) -> None:
     } <= columns
 
 
-def test_frequency_text_audio_revision_is_the_sole_linear_head() -> None:
+def test_grammar_personal_revision_is_the_sole_linear_head() -> None:
     heads = ScriptDirectory.from_config(_alembic_config("sqlite://")).get_heads()
 
-    assert heads == [_FREQUENCY_TEXT_AUDIO_REVISION]
+    assert heads == [_GRAMMAR_PERSONAL_REVISION]
 
 
 def test_frequency_text_audio_schema_has_expected_evidence_columns_without_sensitive_names() -> None:

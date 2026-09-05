@@ -7,7 +7,13 @@ from dataclasses import dataclass
 from io import StringIO
 from pathlib import Path
 
-from multilang.domain.exporting import ExportArtifactFormat, ExportCardRow, export_field_names_for_rows
+from multilang.domain.exporting import (
+    ExportArtifactFormat,
+    ExportCardRow,
+    export_field_names_for_rows,
+    validate_korean_frequency_export_rows,
+)
+from multilang.domain.jobs import SupportedLanguage
 
 
 @dataclass(frozen=True)
@@ -23,9 +29,19 @@ def write_export_tabular_bundle(
     output_dir: Path,
     deck_name: str,
     note_type_name: str,
+    cards_per_level: int = 1000,
+    expected_items: int | None = None,
 ) -> ExportTabularBundleResult:
     if export_format not in {ExportArtifactFormat.CSV, ExportArtifactFormat.TSV}:
         raise ValueError(f"unsupported tabular export format: {export_format.value}")
+    if _is_korean_frequency_export(rows):
+        gate_result = validate_korean_frequency_export_rows(
+            rows,
+            cards_per_level=cards_per_level,
+            expected_items=expected_items,
+        )
+        if not gate_result.passed:
+            raise ValueError(f"Korean frequency export gate failed: {gate_result.message()}")
 
     output_dir.mkdir(parents=True, exist_ok=True)
     sorted_rows = sorted(rows, key=lambda row: (row.sort_index or 0, row.identity.item_key))
@@ -58,6 +74,13 @@ def _serialize_field(value: object) -> str:
     if value is None:
         return ""
     return str(value).replace("\r\n", "<br>").replace("\n", "<br>").replace("\r", "<br>")
+
+
+def _is_korean_frequency_export(rows: list[ExportCardRow]) -> bool:
+    return bool(rows) and all(
+        row.identity.language is SupportedLanguage.KO and row.identity.source_type == "frequency"
+        for row in rows
+    )
 
 
 __all__ = ["ExportTabularBundleResult", "write_export_tabular_bundle"]

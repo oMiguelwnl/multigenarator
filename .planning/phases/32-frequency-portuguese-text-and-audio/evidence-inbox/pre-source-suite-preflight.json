@@ -1,0 +1,81 @@
+{
+  "configured_database_files": [],
+  "credential_name_count": 0,
+  "credential_names_sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+  "current_shared_venv_hash": "c59fa62c6fc469aa896cbc68f2df79c46d0120b072f5bbf41b1e726ef3092526",
+  "environment_descriptor": "repo-local uv virtualenv; no shared .venv repair",
+  "environment_path": ".planning/.local/phase32-py312",
+  "environment_receipt_sha256": "cc039851d275e95ac073ec7efbda4ea9dffc89323e5ff1a0cad27dce7d42d188",
+  "expected_shared_venv_hash": "c59fa62c6fc469aa896cbc68f2df79c46d0120b072f5bbf41b1e726ef3092526",
+  "generated_at": "2026-09-04T12:05:11Z",
+  "legacy_receipt_shared_venv_hash": "d6a8151e363a1c511d3a614082c2be646b6f24ef1a2211c4dffece73c57ffbf6",
+  "lock_check_passed": true,
+  "mode": "pre-source-suite-preflight",
+  "network_attempt_count": 0,
+  "protected_roots": {
+    ".multilang/phase32": {
+      "file_count": 0,
+      "status": "absent",
+      "tree_sha256": "83cd5ea51289729819743f276a2d0db7cdd7dbc85d8123a4f7a8f0a4374c93c9"
+    },
+    ".multilang/phase32/audio-pilot": {
+      "file_count": 0,
+      "status": "absent",
+      "tree_sha256": "295838cf1b712ccbddcba594ea7cd052fe5ff4821bd0d61089b4baee65a4db47"
+    },
+    ".multilang/phase32/bundles": {
+      "file_count": 0,
+      "status": "absent",
+      "tree_sha256": "2a22c5cc1b48f9529e32d7f4d80fe0e43e8112d1e58d779bd71e7c79455545c5"
+    },
+    ".multilang/phase32/release": {
+      "file_count": 0,
+      "status": "absent",
+      "tree_sha256": "7d78207923ade4fcc419c22808d3c1d59216dc548f99fcdf75eb5014a72bbc08"
+    },
+    ".multilang/phase32/release-staging": {
+      "file_count": 0,
+      "status": "absent",
+      "tree_sha256": "49abbbc73f411c48f16f9f409c4619e80d15cc5b0f724d3b09bd3e5464647a23"
+    },
+    ".multilang/phase32/source-quarantine": {
+      "file_count": 0,
+      "status": "absent",
+      "tree_sha256": "f5b97a6a46fa03b00e8ec369c1d862c97ca525997cc50496093919f2a2ecf230"
+    },
+    ".planning/phases/31-hangul-and-pronunciation-i-plus-1": {
+      "file_count": 448,
+      "status": "present",
+      "tree_sha256": "d93c3805c23d282790e8bb953084f8f243a0fd7dcf35f96a36d95c4e76b387a5"
+    },
+    "assets/frequency": {
+      "file_count": 45,
+      "status": "present",
+      "tree_sha256": "4d23d3b380914f9d2b738ff94d112ceafbf85fd0b7f2589c3021db0c3d41d4d7"
+    },
+    "assets/frequency/ko": {
+      "file_count": 0,
+      "status": "absent",
+      "tree_sha256": "a47ec81432274e09cd89c1cd8604fcfd2043d0221c1921ee091eda6ebadf5eb8"
+    }
+  },
+  "protected_writes_performed": false,
+  "provider_attempt_count": 0,
+  "pyproject_sha256": "a5058d5b2847b85c9caac7de46bf286fe456970cf899e5b1b9841a3cf49a3dcd",
+  "python_minor": "3.12",
+  "python_version": "3.12.3",
+  "previous_blocker": "shared_venv_unsafe",
+  "previous_blocker_detail": "venv_unsafe",
+  "rebaseline_authority_file": ".planning/phases/32-frequency-portuguese-text-and-audio/evidence-inbox/pre-source-venv-rebaseline-authorization.md",
+  "rebaseline_authority_sha256": "07728b6256f653e79b0ffb797524981917dc41afcc7ccf64f9ab704da46979fa",
+  "rebaseline_decision": "authorize-non-mutating-current-venv-rebaseline",
+  "script_sha256": "faf51031627b3d6cb061270808c8e0e3c47164cfff0e36f3397516d6ec30b111",
+  "shared_venv_file_count": 24984,
+  "shared_venv_link_count": 4,
+  "shared_venv_rebaselined": true,
+  "shared_venv_status": "unsafe",
+  "shared_venv_unchanged": true,
+  "status": "ready",
+  "sync_frozen": true,
+  "uv_lock_sha256": "5bd00b7864f0e64ff10327a8cfa93001878693576180e9e8b29b7e73d0bfcdcc"
+}

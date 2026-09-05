@@ -87,6 +87,9 @@ class ExportRepository:
             "output_path": artifact.output_path,
             "card_count": artifact.card_count,
             "status": artifact.status.value,
+            "frequency_bundle_sha256": artifact.frequency_bundle_sha256,
+            "export_manifest_sha256": artifact.export_manifest_sha256,
+            "export_gate_receipt_sha256": artifact.export_gate_receipt_sha256,
         }
 
         if row is None:
@@ -123,6 +126,9 @@ class ExportRepository:
             "lemma_key": record.identity.lemma_key,
             "note_guid": build_export_note_guid(record.identity),
             "sort_index": record.sort_index,
+            "frequency_level": record.frequency_level,
+            "frequency_bundle_sha256": record.frequency_bundle_sha256,
+            "export_gate_receipt_sha256": record.export_gate_receipt_sha256,
             "word": record.word,
             "front_of_card": record.front_of_card,
             "ipa": record.ipa,
@@ -155,6 +161,9 @@ class ExportRepository:
             ),
             note_guid=row.note_guid,
             sort_index=row.sort_index,
+            frequency_level=row.frequency_level,
+            frequency_bundle_sha256=row.frequency_bundle_sha256,
+            export_gate_receipt_sha256=row.export_gate_receipt_sha256,
             word=row.word,
             front_of_card=row.front_of_card,
             ipa=row.ipa,
@@ -183,6 +192,9 @@ class ExportRepository:
             output_path=row.output_path,
             card_count=row.card_count,
             status=ExportArtifactStatus(row.status),
+            frequency_bundle_sha256=row.frequency_bundle_sha256,
+            export_manifest_sha256=row.export_manifest_sha256,
+            export_gate_receipt_sha256=row.export_gate_receipt_sha256,
         )
 
 

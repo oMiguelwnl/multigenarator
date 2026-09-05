@@ -19,10 +19,14 @@ from multilang.domain.korean import (
     KOREAN_FREQUENCY_SOURCE_ID,
     KoreanFrequencyBuildResult,
     KoreanFrequencyBundleManifest,
+    KoreanFrequencyEntry,
+    KoreanFrequencyJobAuthority,
     KoreanFrequencyRetrievalResult,
     canonical_json_sha256,
     raw_bytes_sha256,
+    validate_korean_frequency_accounting,
 )
+from multilang.services.authority_locator import canonical_authority_locator_sha256
 
 _MAX_LANDING_BYTES = 2_000_000
 _MAX_SOURCE_BYTES = 20_000_000
@@ -269,6 +273,110 @@ def validate_korean_source_build_result(
     return result
 
 
+def load_korean_final_frequency_entries(
+    *,
+    job_id: str,
+    bundle_root: Path,
+    binding_receipt_sha256: str,
+    authority: KoreanFrequencyJobAuthority,
+    repo_root: Path | None = None,
+) -> tuple[KoreanFrequencyEntry, ...]:
+    """Load final Korean entries only after rehashing the bound authority."""
+
+    if not str(job_id or "").strip():
+        raise ValueError("Korean frequency runtime requires job_id")
+    if not isinstance(authority, KoreanFrequencyJobAuthority):
+        authority = KoreanFrequencyJobAuthority.model_validate(authority)
+    root = Path(bundle_root)
+    manifest_path = _safe_bundle_child(root, _BUNDLE_MANIFEST_PATH)
+    result_path = _safe_bundle_child(root, _BUILD_RESULT_PATH)
+    build_result_bytes = result_path.read_bytes()
+    build_result = validate_korean_source_build_result(result_path, bundle_dir=root)
+    manifest = _load_json_model(
+        manifest_path,
+        KoreanFrequencyBundleManifest,
+        error="bundle manifest is invalid",
+    )
+    assert isinstance(manifest, KoreanFrequencyBundleManifest)
+    _verify_korean_runtime_authority(
+        authority=authority,
+        manifest_path=manifest_path,
+        manifest=manifest,
+        build_result=build_result,
+        build_result_sha256=raw_bytes_sha256(build_result_bytes),
+        binding_receipt_sha256=binding_receipt_sha256,
+        repo_root=repo_root,
+    )
+    inventory_member = next(
+        (member for member in manifest.members if member.kind == "curated-inventory"),
+        None,
+    )
+    if inventory_member is None:
+        raise ValueError("Korean frequency runtime authority drift")
+    entries = _load_korean_inventory_entries(_safe_bundle_child(root, inventory_member.relative_path))
+    level_counts = validate_korean_frequency_accounting(
+        entries,
+        source_candidate_count=manifest.entry_count + manifest.rejection_count,
+        rejection_count=manifest.rejection_count,
+    )
+    if level_counts != manifest.level_counts:
+        raise ValueError("Korean frequency runtime authority drift")
+    if any(entry.retrieval_sha256 != build_result.source_bytes_sha256 for entry in entries):
+        raise ValueError("Korean frequency runtime authority drift")
+    if any(entry.bundle_sha256 != build_result.source_bytes_sha256 for entry in entries):
+        raise ValueError("Korean frequency runtime authority drift")
+    return entries
+
+
+def _verify_korean_runtime_authority(
+    *,
+    authority: KoreanFrequencyJobAuthority,
+    manifest_path: Path,
+    manifest: KoreanFrequencyBundleManifest,
+    build_result: KoreanFrequencyBuildResult,
+    build_result_sha256: str,
+    binding_receipt_sha256: str,
+    repo_root: Path | None,
+) -> None:
+    expected = {
+        "frequency_bundle_locator_sha256": canonical_authority_locator_sha256(
+            manifest_path,
+            repo_root=repo_root,
+        ),
+        "frequency_bundle_content_sha256": manifest.bundle_sha256,
+        "source_retrieval_sha256": build_result.retrieval_sha256,
+        "source_build_result_sha256": build_result_sha256,
+        "source_review_aggregate_sha256": binding_receipt_sha256,
+    }
+    for field, value in expected.items():
+        if getattr(authority, field) != value:
+            raise ValueError("Korean frequency runtime authority drift")
+
+
+def _load_korean_inventory_entries(path: Path) -> tuple[KoreanFrequencyEntry, ...]:
+    payload = path.read_bytes()
+    if not payload.endswith(b"\n"):
+        raise ValueError("Korean frequency runtime authority drift")
+    entries: list[KoreanFrequencyEntry] = []
+    for line in payload.splitlines():
+        if not line:
+            continue
+        try:
+            entries.append(KoreanFrequencyEntry.model_validate_json(line.decode("utf-8")))
+        except (UnicodeDecodeError, ValueError) as exc:
+            raise ValueError("Korean frequency runtime authority drift") from exc
+    return tuple(entries)
+
+
+def project_korean_match_status(status: object) -> str:
+    value = getattr(status, "value", status)
+    if value == "matched":
+        return "match"
+    if value == "mismatch":
+        return "mismatch"
+    return "inconclusive"
+
+
 class KoreanFrequencySourceRetriever:
     """Bounded official-source retriever with injectable transport for tests."""
 
@@ -323,6 +431,8 @@ class KoreanFrequencySourceRetriever:
 __all__ = [
     "KoreanFrequencySourceRetriever",
     "resolve_nikl_frequency_attachment_url",
+    "load_korean_final_frequency_entries",
+    "project_korean_match_status",
     "validate_korean_source_build_result",
     "validate_korean_source_retrieval_result",
 ]

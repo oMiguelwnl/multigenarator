@@ -3,13 +3,14 @@
 from __future__ import annotations
 
 from collections.abc import Callable
+from hashlib import sha256
 import re
 from dataclasses import dataclass, field
 from time import monotonic
 from typing import Any, Protocol
 
 from multilang.domain.jobs import JobStage, SupportedLanguage
-from multilang.domain.korean import KoreanLexicalIdentity
+from multilang.domain.korean import KoreanLexicalIdentity, canonical_json_sha256
 from multilang.domain.lexicon import GroundingStatus, LexicalCardCandidate, LexicalProvenance
 from multilang.domain.source_profiles import get_source_profile
 from multilang.security.redaction import redact_sensitive_text
@@ -24,11 +25,21 @@ from multilang.domain.text_quality import (
     ValidationStatus,
 )
 from multilang.services.text_generation import (
+    DefinitionGenerationRequest,
+    DefinitionGenerationResult,
     GeneratedSentence,
     GeneratedTextBundle,
     SentenceGenerationFallback,
+    SentenceGenerationRequest,
     SentenceGenerationResult,
+    SentenceTranslationRequest,
+    SentenceTranslationResult,
     TextGenerationService,
+)
+from multilang.services.korean_text_generation import (
+    KoreanTextGenerationSelector,
+    korean_selector_history_from_record,
+    with_korean_selector_history,
 )
 from multilang.services.rate_limit import RateLimiter
 from multilang.services.text_validation import TextValidationResult, TextValidationService
@@ -61,6 +72,30 @@ class GenerateTextItemsResult:
     processed_item_keys: list[str] = field(default_factory=list)
 
 
+@dataclass(frozen=True, slots=True)
+class RegenerateAudioRequest:
+    job_id: str
+    item_id: str
+    field_name: str
+    text: str
+    deck_language: SupportedLanguage
+    field_revision_id: str
+    request_sha256: str
+    final_path: str
+    reservation_id: str
+
+
+@dataclass(frozen=True, slots=True)
+class RegenerateFieldResult:
+    field_name: str
+    value_sha256: str
+    revision_id: str | None = None
+    pointer_version: int | None = None
+    pointer_status: str | None = None
+    audio_reservation_id: str | None = None
+    final_path: str | None = None
+
+
 @dataclass(slots=True)
 class GenerateTextProgress:
     processed_this_run: int
@@ -90,6 +125,10 @@ class GenerateTextItemsService:
         tatoeba_sentence_source: TatoebaSentenceSource,
         highlight_import_repository: Any | None = None,
         latin_card_service: Any | None = None,
+        review_repository: Any | None = None,
+        translation_adapter: Any | None = None,
+        word_audio_port: Any | None = None,
+        sentence_audio_port: Any | None = None,
     ) -> None:
         self.job_repository = job_repository
         self.lexical_repository = lexical_repository
@@ -99,6 +138,331 @@ class GenerateTextItemsService:
         self.tatoeba_sentence_source = tatoeba_sentence_source
         self.highlight_import_repository = highlight_import_repository
         self.latin_card_service = latin_card_service  # for dynamic la using the structured model
+        self.review_repository = review_repository
+        self.translation_adapter = translation_adapter
+        self.word_audio_port = word_audio_port
+        self.sentence_audio_port = sentence_audio_port
+
+    def regenerate_field(
+        self,
+        *,
+        job_id: str,
+        item_id: str,
+        field_name: str,
+        candidate: LexicalCardCandidate,
+        deck_language: SupportedLanguage,
+        request_id: str,
+        expected_pointer_version: int,
+        actor_id: str = "phase33-generator",
+        generator_id: str = "phase33-generator",
+        generator_version: str = "1",
+        source_type: str | None = None,
+        highlight_context: str | None = None,
+        sentence_text: str | None = None,
+        intended_sense: str | None = None,
+        field_revision_id: str | None = None,
+        field_revision_value_sha256: str | None = None,
+        authority_sha256: str | None = None,
+        root_prestate_sha256: str | None = None,
+        audio_format: str = "mp3",
+    ) -> RegenerateFieldResult:
+        if field_name not in {"definition", "sentence", "microexample", "translation", "word_audio", "sentence_audio"}:
+            raise ValueError("unsupported regenerable field")
+        if self.review_repository is None:
+            raise ValueError("review repository is required for field regeneration")
+
+        candidate = LexicalCardCandidate.model_validate(candidate)
+        if field_name == "definition":
+            return self._regenerate_definition_field(
+                job_id=job_id,
+                item_id=item_id,
+                field_name=field_name,
+                candidate=candidate,
+                deck_language=deck_language,
+                request_id=request_id,
+                expected_pointer_version=expected_pointer_version,
+                actor_id=actor_id,
+                generator_id=generator_id,
+                generator_version=generator_version,
+            )
+        if field_name in {"sentence", "microexample"}:
+            return self._regenerate_sentence_field(
+                job_id=job_id,
+                item_id=item_id,
+                field_name=field_name,
+                candidate=candidate,
+                deck_language=deck_language,
+                request_id=request_id,
+                expected_pointer_version=expected_pointer_version,
+                actor_id=actor_id,
+                generator_id=generator_id,
+                generator_version=generator_version,
+                source_type=source_type,
+                highlight_context=highlight_context,
+            )
+        if field_name == "translation":
+            return self._regenerate_translation_field(
+                job_id=job_id,
+                item_id=item_id,
+                field_name=field_name,
+                candidate=candidate,
+                request_id=request_id,
+                expected_pointer_version=expected_pointer_version,
+                actor_id=actor_id,
+                generator_id=generator_id,
+                generator_version=generator_version,
+                sentence_text=sentence_text,
+                intended_sense=intended_sense,
+            )
+        return self._regenerate_audio_field(
+            job_id=job_id,
+            item_id=item_id,
+            field_name=field_name,
+            candidate=candidate,
+            deck_language=deck_language,
+            request_id=request_id,
+            expected_pointer_version=expected_pointer_version,
+            field_revision_id=field_revision_id,
+            field_revision_value_sha256=field_revision_value_sha256,
+            authority_sha256=authority_sha256,
+            root_prestate_sha256=root_prestate_sha256,
+            sentence_text=sentence_text,
+            audio_format=audio_format,
+        )
+
+    def _regenerate_definition_field(
+        self,
+        *,
+        job_id: str,
+        item_id: str,
+        field_name: str,
+        candidate: LexicalCardCandidate,
+        deck_language: SupportedLanguage,
+        request_id: str,
+        expected_pointer_version: int,
+        actor_id: str,
+        generator_id: str,
+        generator_version: str,
+    ) -> RegenerateFieldResult:
+        generate_definition = getattr(self.text_generation_service, "generate_definition", None)
+        if not callable(generate_definition):
+            raise ValueError("definition text generator is required")
+        request = DefinitionGenerationRequest(
+            display_form=candidate.display_form,
+            lemma=candidate.lemma,
+            source_language=deck_language.value,
+            target_language=candidate.definition_language,
+            part_of_speech=(candidate.korean_identity.part_of_speech if candidate.korean_identity else None),
+            korean_identity=candidate.korean_identity,
+        )
+        generated = DefinitionGenerationResult.model_validate(generate_definition(request))
+        return self._append_field_revision(
+            actor_id=actor_id,
+            request_id=request_id,
+            job_id=job_id,
+            item_id=item_id,
+            field_name=field_name,
+            value=generated.definitions_html,
+            generator_id=generator_id,
+            generator_version=generator_version,
+            route_id=_route_id(generated.provenance, default="definition"),
+            expected_pointer_version=expected_pointer_version,
+        )
+
+    def _regenerate_sentence_field(
+        self,
+        *,
+        job_id: str,
+        item_id: str,
+        field_name: str,
+        candidate: LexicalCardCandidate,
+        deck_language: SupportedLanguage,
+        request_id: str,
+        expected_pointer_version: int,
+        actor_id: str,
+        generator_id: str,
+        generator_version: str,
+        source_type: str | None,
+        highlight_context: str | None,
+    ) -> RegenerateFieldResult:
+        generate_sentence = getattr(self.text_generation_service, "generate_sentence", None)
+        if not callable(generate_sentence):
+            raise ValueError("sentence text generator is required")
+        request = SentenceGenerationRequest.from_candidate(
+            candidate=candidate,
+            deck_language=deck_language,
+            source_type=source_type,
+            highlight_context=highlight_context,
+        )
+        generated = SentenceGenerationResult.model_validate(generate_sentence(request))
+        return self._append_field_revision(
+            actor_id=actor_id,
+            request_id=request_id,
+            job_id=job_id,
+            item_id=item_id,
+            field_name=field_name,
+            value=generated.sentence,
+            generator_id=generator_id,
+            generator_version=generator_version,
+            route_id=_route_id(generated.provenance, default=field_name),
+            expected_pointer_version=expected_pointer_version,
+        )
+
+    def _regenerate_translation_field(
+        self,
+        *,
+        job_id: str,
+        item_id: str,
+        field_name: str,
+        candidate: LexicalCardCandidate,
+        request_id: str,
+        expected_pointer_version: int,
+        actor_id: str,
+        generator_id: str,
+        generator_version: str,
+        sentence_text: str | None,
+        intended_sense: str | None,
+    ) -> RegenerateFieldResult:
+        if not sentence_text:
+            raise ValueError("sentence_text is required for translation regeneration")
+        if self.translation_adapter is None:
+            raise ValueError("translation adapter is required")
+        translate_sentence = getattr(self.translation_adapter, "translate_sentence", None)
+        if not callable(translate_sentence):
+            raise ValueError("translation adapter is invalid")
+        request = SentenceTranslationRequest(
+            sentence=sentence_text,
+            translation_target_language=candidate.translation_target_language,
+            intended_sense=intended_sense,
+        )
+        generated = SentenceTranslationResult.model_validate(translate_sentence(request))
+        return self._append_field_revision(
+            actor_id=actor_id,
+            request_id=request_id,
+            job_id=job_id,
+            item_id=item_id,
+            field_name=field_name,
+            value=generated.translation,
+            generator_id=generator_id,
+            generator_version=generator_version,
+            route_id=_route_id(generated.provenance, default="translation"),
+            expected_pointer_version=expected_pointer_version,
+        )
+
+    def _regenerate_audio_field(
+        self,
+        *,
+        job_id: str,
+        item_id: str,
+        field_name: str,
+        candidate: LexicalCardCandidate,
+        deck_language: SupportedLanguage,
+        request_id: str,
+        expected_pointer_version: int,
+        field_revision_id: str | None,
+        field_revision_value_sha256: str | None,
+        authority_sha256: str | None,
+        root_prestate_sha256: str | None,
+        sentence_text: str | None,
+        audio_format: str,
+    ) -> RegenerateFieldResult:
+        port = self.word_audio_port if field_name == "word_audio" else self.sentence_audio_port
+        if port is None:
+            raise ValueError("audio port is required")
+        synthesize = getattr(port, "synthesize", None)
+        if not callable(synthesize):
+            raise ValueError("audio port is invalid")
+        if not field_revision_id or not field_revision_value_sha256 or not authority_sha256 or not root_prestate_sha256:
+            raise ValueError("audio regeneration requires exact revision, authority, and root hashes")
+        text = candidate.spoken_form or candidate.display_form
+        if field_name == "sentence_audio":
+            if not sentence_text:
+                raise ValueError("sentence_text is required for sentence audio regeneration")
+            text = sentence_text
+        request_sha256 = _stable_sha256(
+            {
+                "job_id": job_id,
+                "item_id": item_id,
+                "field_name": field_name,
+                "field_revision_id": field_revision_id,
+                "field_revision_value_sha256": field_revision_value_sha256,
+                "text_sha256": _text_sha256(text),
+                "deck_language": deck_language.value,
+                "request_id": request_id,
+            }
+        )
+        final_path = _audio_final_path(
+            field_name=field_name,
+            item_id=item_id,
+            field_revision_id=field_revision_id,
+            request_sha256=request_sha256,
+            audio_format=audio_format,
+        )
+        reservation = self.review_repository.reserve_audio_publication(
+            job_id=job_id,
+            item_id=item_id,
+            field_name=field_name,
+            field_revision_id=field_revision_id,
+            request_sha256=request_sha256,
+            final_path=final_path,
+            authority_sha256=authority_sha256,
+            root_prestate_sha256=root_prestate_sha256,
+            expected_pointer_version=expected_pointer_version,
+        )
+        audio_request = RegenerateAudioRequest(
+            job_id=job_id,
+            item_id=item_id,
+            field_name=field_name,
+            text=text,
+            deck_language=deck_language,
+            field_revision_id=field_revision_id,
+            request_sha256=request_sha256,
+            final_path=str(getattr(reservation, "final_path")),
+            reservation_id=str(getattr(reservation, "reservation_id")),
+        )
+        synthesize(audio_request)
+        return RegenerateFieldResult(
+            field_name=field_name,
+            value_sha256=field_revision_value_sha256,
+            audio_reservation_id=str(getattr(reservation, "reservation_id")),
+            final_path=str(getattr(reservation, "final_path")),
+        )
+
+    def _append_field_revision(
+        self,
+        *,
+        actor_id: str,
+        request_id: str,
+        job_id: str,
+        item_id: str,
+        field_name: str,
+        value: str,
+        generator_id: str,
+        generator_version: str,
+        route_id: str | None,
+        expected_pointer_version: int,
+    ) -> RegenerateFieldResult:
+        value_sha256 = _text_sha256(value)
+        mutation = self.review_repository.create_candidate_revision(
+            actor_id=actor_id,
+            request_id=request_id,
+            job_id=job_id,
+            item_id=item_id,
+            field_name=field_name,
+            value_sha256=value_sha256,
+            generator_id=generator_id,
+            generator_version=generator_version,
+            route_id=route_id,
+            expected_pointer_version=expected_pointer_version,
+        )
+        revision = getattr(mutation, "revision")
+        return RegenerateFieldResult(
+            field_name=field_name,
+            value_sha256=str(getattr(revision, "value_sha256")),
+            revision_id=str(getattr(revision, "revision_id")),
+            pointer_version=int(getattr(mutation, "pointer_version")),
+            pointer_status=str(getattr(mutation, "pointer_status")),
+        )
 
     def execute(
         self,
@@ -184,13 +548,41 @@ class GenerateTextItemsService:
                 candidate=lexical_candidate,
             )
 
-            generated_bundle = self.text_generation_service.generate_bundle(
-                candidate=lexical_candidate,
-                deck_language=deck_language,
-                source_type=source_type,
-                highlight_context=highlight_context,
-                rate_limiter=rate_limiter,
-            )
+            korean_selection = None
+            if deck_language is SupportedLanguage.KO:
+                existing_record = self._get_existing_text_record(job_id, item_key)
+                existing_history = korean_selector_history_from_record(existing_record)
+                selector = KoreanTextGenerationSelector(
+                    text_generation_service=self.text_generation_service,
+                    validate_bundle=self._validate_bundle,
+                )
+                korean_selection = selector.select(
+                    candidate=lexical_candidate,
+                    deck_language=deck_language,
+                    source_type=source_type,
+                    highlight_context=highlight_context,
+                    seen_sentences=seen_sentences,
+                    job_id=job_id,
+                    item_key=item_key,
+                    rate_limiter=rate_limiter,
+                    remaining_repair_budget=max(0, 1 - (existing_history.repair_attempt_count if existing_history else 0)),
+                    existing_history=existing_history,
+                )
+                generated_bundle = korean_selection.bundle
+                validation = korean_selection.validation
+                generation_status = korean_selection.generation_status
+                repair_attempt_count = korean_selection.repair_attempt_count
+            else:
+                generated_bundle = self.text_generation_service.generate_bundle(
+                    candidate=lexical_candidate,
+                    deck_language=deck_language,
+                    source_type=source_type,
+                    highlight_context=highlight_context,
+                    rate_limiter=rate_limiter,
+                )
+                validation = None
+                generation_status = TextGenerationStatus.GENERATED
+                repair_attempt_count = 0
 
             # Use pre-generated high-quality Latin card (with correct gramatica + sentence) when available.
             # This is the main way to get low-error Latin output.
@@ -234,17 +626,16 @@ class GenerateTextItemsService:
                         generated_bundle.translation = new_translation
                 except Exception:
                     pass
-            validation = self._validate_bundle(
-                bundle=generated_bundle,
-                candidate=lexical_candidate,
-                seen_sentences=seen_sentences,
-                source_type=source_type,
-                deck_language=deck_language,
-            )
-            generation_status = TextGenerationStatus.GENERATED
-            repair_attempt_count = 0
+            if validation is None:
+                validation = self._validate_bundle(
+                    bundle=generated_bundle,
+                    candidate=lexical_candidate,
+                    seen_sentences=seen_sentences,
+                    source_type=source_type,
+                    deck_language=deck_language,
+                )
 
-            if validation.validation_status is ValidationStatus.FAILED:
+            if deck_language is not SupportedLanguage.KO and validation.validation_status is ValidationStatus.FAILED:
                 generation_status = TextGenerationStatus.REPAIRED
                 generated_bundle, validation, repair_attempt_count = self._attempt_repair_chain(
                     candidate=lexical_candidate,
@@ -266,6 +657,8 @@ class GenerateTextItemsService:
                 generation_status=generation_status,
                 repair_attempt_count=repair_attempt_count,
             )
+            if korean_selection is not None:
+                record = with_korean_selector_history(record, korean_selection.history)
             self.text_repository.upsert_text_record(record)
             normalized_sentence = self._normalize_sentence_text(record.example_sentence)
             if normalized_sentence:
@@ -532,6 +925,12 @@ class GenerateTextItemsService:
             lemma=candidate.lemma,
         )
 
+    def _get_existing_text_record(self, job_id: str, item_key: str) -> object | None:
+        getter = getattr(self.text_repository, "get_text_record", None)
+        if not callable(getter):
+            return None
+        return getter(job_id, item_key)
+
 
 def _provenance_note_value(notes: list[str], key: str) -> str | None:
     prefix = f"{key}="
@@ -610,9 +1009,46 @@ def _is_generic_local_provenance(provenance: object) -> bool:
     return not template_kind.startswith("curated:")
 
 
+def _route_id(provenance: dict[str, Any], *, default: str) -> str | None:
+    route = provenance.get("route") or provenance.get("route_id") or provenance.get("provider") or default
+    route_id = str(route).strip()
+    return route_id or None
+
+
+def _text_sha256(value: str) -> str:
+    return sha256(value.encode("utf-8")).hexdigest()
+
+
+def _stable_sha256(payload: dict[str, object]) -> str:
+    return canonical_json_sha256(payload)
+
+
+def _audio_final_path(
+    *,
+    field_name: str,
+    item_id: str,
+    field_revision_id: str,
+    request_sha256: str,
+    audio_format: str,
+) -> str:
+    safe_field = _safe_path_part(field_name)
+    safe_item = _safe_path_part(item_id)
+    safe_revision = _safe_path_part(field_revision_id)
+    safe_extension = _safe_path_part(audio_format).lstrip(".") or "mp3"
+    return f"{safe_field}/{safe_item}/{safe_revision}/{request_sha256}.{safe_extension}"
+
+
+def _safe_path_part(value: str) -> str:
+    cleaned = "".join(character if character.isalnum() or character in "._-" else "-" for character in value)
+    cleaned = cleaned.strip(".-_")
+    return cleaned[:160] or "item"
+
+
 __all__ = [
     "GenerateTextItemsResult",
     "GenerateTextItemsService",
     "GenerateTextProgress",
     "GenerateTextProgressCallback",
+    "RegenerateAudioRequest",
+    "RegenerateFieldResult",
 ]

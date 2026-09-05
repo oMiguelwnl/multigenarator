@@ -12,8 +12,15 @@ import unicodedata
 
 from wordfreq import iter_wordlist
 
-from multilang.domain.lexicon import GroundingStatus, LexicalCardCandidate, LexicalProvenance, policy_for_language
 from multilang.domain.jobs import SupportedLanguage
+from multilang.domain.korean import KoreanFrequencyEntry
+from multilang.domain.lexicon import (
+    GroundingStatus,
+    KoreanFrequencyLexicalEvidence,
+    LexicalCardCandidate,
+    LexicalProvenance,
+    policy_for_language,
+)
 from multilang.services.mandarin_orthography import (
     MandarinOrthographyError,
     script_counts,
@@ -359,6 +366,54 @@ def _build_asset_candidate(language: SupportedLanguage, entry: CuratedFrequencyE
     )
 
 
+def _build_korean_final_candidate(
+    entry: KoreanFrequencyEntry,
+    *,
+    source_review_receipt_sha256: str,
+    source_review_aggregate_sha256: str,
+) -> LexicalCardCandidate:
+    policy = policy_for_language(SupportedLanguage.KO)
+    identity = entry.lexical_identity
+    evidence = KoreanFrequencyLexicalEvidence(
+        source_id=entry.source_provenance,
+        source_version=entry.source_version,
+        source_rank=entry.source_rank,
+        final_rank=entry.final_rank,
+        level=entry.level,
+        part_of_speech=identity.part_of_speech,
+        sense_id=identity.sense_id,
+        grounding_confidence=entry.grounding_confidence,
+        license_decision=entry.license_decision,
+        curation_decision=entry.curation_decision,
+        bundle_sha256=entry.bundle_sha256,
+        source_sha256=entry.retrieval_sha256,
+        source_review_receipt_sha256=source_review_receipt_sha256,
+        source_review_aggregate_sha256=source_review_aggregate_sha256,
+        analyzer_fingerprint=entry.analyzer_fingerprint,
+    )
+    return LexicalCardCandidate(
+        submitted_form=identity.submitted_form or identity.canonical_nfc,
+        display_form=identity.canonical_nfc,
+        lemma=identity.lemma,
+        lemma_key=identity.lexical_key,
+        frequency_rank=entry.final_rank,
+        frequency_level=entry.level,
+        definition_language=policy.definition_language,
+        translation_target_language=policy.translation_target_language,
+        grounding_status=GroundingStatus.GROUNDED,
+        provenance=LexicalProvenance(
+            source="korean-frequency-bundle",
+            notes=[
+                f"version={entry.version}",
+                f"source_rank={entry.source_rank}",
+                f"curation_decision={entry.curation_decision}",
+            ],
+        ),
+        korean_identity=identity,
+        korean_frequency_evidence=evidence,
+    )
+
+
 def build_frequency_level(
     language: SupportedLanguage,
     *,
@@ -369,11 +424,33 @@ def build_frequency_level(
     assets_dir: Path | str = Path("assets/frequency"),
     version: str = "v1",
     allow_frequency_seed_fallback: bool = False,
+    korean_final_entries: Iterable[KoreanFrequencyEntry] | None = None,
+    source_review_receipt_sha256: str | None = None,
+    source_review_aggregate_sha256: str | None = None,
 ) -> list[LexicalCardCandidate]:
     """Build one frequency level using explicit windows plus bounded backfill."""
 
     if level not in LEVEL_WINDOWS:
         raise ValueError(f"unsupported frequency level: {level}")
+
+    if language is SupportedLanguage.KO:
+        if korean_final_entries is None:
+            raise ValueError("Korean final frequency requires explicit frozen Korean final entries")
+        if source_review_receipt_sha256 is None or source_review_aggregate_sha256 is None:
+            raise ValueError("Korean final frequency requires source review receipts")
+        seen_lemmas = {lemma.casefold() for lemma in (rejected_lemmas or set())}
+        candidates = [
+            _build_korean_final_candidate(
+                entry,
+                source_review_receipt_sha256=source_review_receipt_sha256,
+                source_review_aggregate_sha256=source_review_aggregate_sha256,
+            )
+            for entry in korean_final_entries
+            if entry.level == level and entry.lexical_identity.lexical_key.casefold() not in seen_lemmas
+        ]
+        if len(candidates) != required_count_per_level:
+            raise ValueError(f"Korean final level {level} did not provide {required_count_per_level} usable candidates")
+        return candidates
 
     if not allow_frequency_seed_fallback:
         entries = load_curated_frequency_entries(language, version=version, assets_dir=assets_dir)
@@ -449,9 +526,14 @@ def build_frequency_deck(
     assets_dir: Path | str = Path("assets/frequency"),
     version: str = "v1",
     allow_frequency_seed_fallback: bool = False,
+    korean_final_entries: Iterable[KoreanFrequencyEntry] | None = None,
+    source_review_receipt_sha256: str | None = None,
+    source_review_aggregate_sha256: str | None = None,
 ) -> dict[int, list[LexicalCardCandidate]]:
     """Build the deterministic three-level frequency deck."""
 
+    if language is SupportedLanguage.KO and korean_final_entries is not None:
+        korean_final_entries = tuple(korean_final_entries)
     rejected_lemmas_by_level = rejected_lemmas_by_level or {}
     deck: dict[int, list[LexicalCardCandidate]] = {}
     selected_lemmas: set[str] = set()
@@ -466,6 +548,9 @@ def build_frequency_deck(
             assets_dir=assets_dir,
             version=version,
             allow_frequency_seed_fallback=allow_frequency_seed_fallback,
+            korean_final_entries=korean_final_entries,
+            source_review_receipt_sha256=source_review_receipt_sha256,
+            source_review_aggregate_sha256=source_review_aggregate_sha256,
         )
         deck[level] = candidates
         selected_lemmas.update(candidate.lemma_key.casefold() for candidate in candidates)

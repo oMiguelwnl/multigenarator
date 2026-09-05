@@ -12,8 +12,8 @@ from pydantic import ValidationError
 
 from multilang.services.korean_curriculum import (
     korean_canonical_json_sha256,
-    load_korean_hangul_source_pack,
-    load_korean_pronunciation_source_pack,
+    load_korean_v1_hangul_source_pack,
+    load_korean_v1_pronunciation_source_pack,
 )
 
 
@@ -41,10 +41,10 @@ def _content_hash(payload: dict[str, object]) -> str:
 
 def _source_payload(family: str) -> dict[str, object]:
     if family == "hangul":
-        pack = load_korean_hangul_source_pack()
+        pack = load_korean_v1_hangul_source_pack()
         source = HANGUL_SOURCE
     else:
-        pack = load_korean_pronunciation_source_pack()
+        pack = load_korean_v1_pronunciation_source_pack()
         source = PRONUNCIATION_SOURCE
     return {
         "family": family,
@@ -65,9 +65,9 @@ def _batch_payload(batch_id: str) -> dict[str, object]:
     stages = BATCH_STAGES[batch_id]
     family = "hangul" if batch_id.startswith("hangul-") else "pronunciation"
     pack = (
-        load_korean_hangul_source_pack()
+        load_korean_v1_hangul_source_pack()
         if family == "hangul"
-        else load_korean_pronunciation_source_pack()
+        else load_korean_v1_pronunciation_source_pack()
     )
     records: list[dict[str, object]] = []
     for entry in pack.entries:
@@ -236,7 +236,7 @@ def test_source_reference_is_exact_frozen_and_forbids_authority() -> None:
         "multilang.services.korean_foundation_ai_curation"
     )
     model_type = module.KoreanFoundationDraftSourceReference
-    pack = load_korean_hangul_source_pack()
+    pack = load_korean_v1_hangul_source_pack()
     payload = {
         "family": "hangul",
         "source_file_name": "hangul-v1.json",

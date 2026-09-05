@@ -24,6 +24,7 @@ from multilang.domain.text_quality import (
     ValidationStatus,
 )
 from multilang.services.language_identifier import CorpusLanguageIdentifier, LanguageIdentifier
+from multilang.services.korean_frequency import project_korean_match_status
 from multilang.services.mandarin_orthography import (
     MandarinOrthographyError,
     script_counts,
@@ -671,6 +672,8 @@ def detect_language_mismatch(
             canonical_text = canonicalize_korean(value)
         except KoreanTextError:
             return f"text does not look like language {expected_language}: invalid Korean text"
+        if canonical_text != value:
+            return f"text does not look like language {expected_language}: non-canonical Korean text"
         if _korean_script_ratio(canonical_text) < 0.55:
             return f"text does not look like language {expected_language}"
         return None
@@ -1006,7 +1009,10 @@ def _append_korean_morphology_mismatch(
     status: str,
     reason: str | None = None,
 ) -> None:
-    controlled_detail = f"Korean morphology verification failed (status={status}"
+    controlled_detail = (
+        f"Korean morphology verification failed (status={status}; "
+        f"projection={project_korean_match_status(status)}"
+    )
     if reason is not None:
         controlled_detail += f"; reason={reason}"
     controlled_detail += ")"

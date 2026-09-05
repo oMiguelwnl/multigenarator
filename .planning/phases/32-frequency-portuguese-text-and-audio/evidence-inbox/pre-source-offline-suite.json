@@ -1,0 +1,27 @@
+{
+  "credential_name_count": 0,
+  "dependencies_unchanged": true,
+  "mode": "full",
+  "network_attempt_count": 8,
+  "protected_roots_unchanged": true,
+  "provider_attempt_count": 0,
+  "pytest_argv": [
+    "uv",
+    "run",
+    "--project",
+    "/home/miguel/Programming/Multilang",
+    "--frozen",
+    "--no-sync",
+    "pytest",
+    "/home/miguel/Programming/Multilang/tests"
+  ],
+  "pytest_returncode": null,
+  "pytest_scope": "tests",
+  "recursive_suite_invoked": false,
+  "shared_venv_unchanged": true,
+  "shell": false,
+  "status": "timed_out",
+  "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+  "stdout_sha256": "076c31599ef28847cf7774885f6db74d40cf953ac80e53b313951a89aa025079",
+  "timeout_seconds": 3600
+}

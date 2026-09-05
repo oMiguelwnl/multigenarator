@@ -8,7 +8,7 @@
 
 ## Scope Truth
 
-- `33-APPROACH.md` is the authoritative Phase 33 input. There is no Phase 33 `CONTEXT.md` or `RESEARCH.md` yet.
+- `.planning/research/33-RESEARCH.md` exists and supplies research constraints; `33-APPROACH.md` remains the locked authoritative Phase 33 decision source. There is no Phase 33 `CONTEXT.md` yet.
 - Grammar imports the exact active, approved Phase 31 foundation snapshot once and adds a grammar-owned learner-visible lexical bootstrap. It does not mutate Phase 31, require Frequency Level 1, or operate as a standalone curriculum.
 - Custom input retains every nonblank row and its immutable position. The first exact normalized occurrence is card-bearing; later exact duplicates remain visible `duplicate_of` outcomes. Distinct submitted forms remain distinct items even when they resolve to one lemma/POS/sense.
 - Personal-source prerequisite decisions are explicit `bridge`, `defer`, or `needs_review`. No bridge is inserted automatically, and there is no adaptive queue.
@@ -18,6 +18,27 @@
 - Phase 33 is CLI-first. Do not add FastAPI, a dashboard, authentication, remote callbacks, publication commands, provider-selection switches, or private-content remote management.
 - Production provider calls, private uploads, source/media acquisition, production DB mutation, asset commit, publication, and distribution remain unauthorized. Automated tests use synthetic offline fixtures.
 - Final APKG/CSV/TSV closure and observed Anki behavior remain Phase 34. Phase 33 preserves existing layouts, field order, note identities, GUID formulas, and blank `Image`.
+
+## Execution Readiness After Final Checker Revision
+
+- Executing Phase 33 now can run only the upstream-independent offline scaffolding wave: `33-01`, `33-02`, `33-03`, revised offline `33-04`, `33-05`, and `33-06`. These plans must not dereference missing Phase 31/32 summaries.
+- Revised `33-04` owns only private-processing domain contracts and the offline broker over injected fake callbacks. Shared `src/multilang/services/text_generation.py` wiring moved to `33-18`, which depends on `32-07-SUMMARY.md` and `33-04-SUMMARY.md`.
+- Full Phase 33 completion still waits for exact upstream summaries/artifacts: `31-30`, `31-31`, `31-32`, `32-07`, `32-08`, `32-16`, `32-30`, the settled Phase 32 Alembic head, and Plan 12 authority evidence.
+- Plans modifying shared Phase 32 surfaces or consuming production artifacts are intentionally outside the initial executable wave and include blocked-on-upstream gates; do not skip or weaken those true dependencies.
+
+| Wave | Plans | Execution status |
+|---|---|---|
+| 1 | `33-01`, `33-02`, `33-03`, `33-04`, `33-05`, `33-06` | Executable now; offline scaffolding only. |
+| 2 | `33-07`, `33-18` | Gated: `33-07` waits for settled shared schema/head coordination; `33-18` waits for `32-07-SUMMARY.md`. |
+| 3 | `33-08`, `33-09` | Waits for Wave 2 schema/repository prerequisites. |
+| 4 | `33-10` | Waits for `32-03`, `32-07`, `33-08`, `33-09`, and `33-18`. |
+| 5 | `33-11` | Waits for missing `31-32`, `32-16`, and `33-10`. |
+| 6 | `33-12` | Waits for missing `32-30` and `33-11`; checkpoint:user authority only. |
+| 7 | `33-13` | Waits for missing `31-30`, `31-32`, `32-07`, and Plan 12 authority summary. |
+| 8 | `33-14` | Waits for missing `31-31`, `32-08`, `32-30`, plus `33-11` and `33-13`. |
+| 9 | `33-15` | Waits for `33-07`, `33-12`, and `33-14` production gates. |
+| 10 | `33-16` | Waits for missing `32-30`, Plan 12 authority, and `33-15`. |
+| 11 | `33-17` | Waits for `33-15` and `33-16`; final read-only closure only. |
 
 ## File Classification
 
@@ -736,7 +757,7 @@ The worktree was already dirty before this map. Do not reset, rebase, overwrite,
 | Lane | Safe Initial Ownership | Deferred Coordinator Join |
 |---|---|---|
 | A — grammar contracts | new `domain/korean_grammar.py`, `services/korean_grammar.py`, synthetic fixtures, focused tests | `domain/korean.py`, real grammar data, active Phase 31/32 hash join, export readiness |
-| B — personal sources/privacy | new `domain/personal_sources.py`, `korean_personal_sources.py`, private-context service, focused tests | parser/fingerprint changes, highlight/text-generation wiring, CLI |
+| B — personal sources/privacy | new `domain/personal_sources.py`, `korean_personal_sources.py`, private-context contracts/broker, focused tests | parser/fingerprint changes, highlight persistence, blocked `text_generation.py` wiring in Plan 18 after `32-07-SUMMARY.md`, CLI |
 | C — revision/review | new `domain/revisions.py`, `revision_repository.py`, `field_review.py`, focused tests | ORM tables, Alembic, text/audio compatibility, CLI |
 | D — job outcomes | new outcome contracts and focused service tests where possible | dirty `job_repository.py`, `db/models.py`, migration, aggregate/report wiring |
 | E — integration join | no early shared-file edits | after Phase 32 head/contracts settle: migration, models, CLI, exporting/assembly, full regressions |

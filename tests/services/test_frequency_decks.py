@@ -6,7 +6,70 @@ import csv
 from dataclasses import replace
 
 from multilang.domain.jobs import SupportedLanguage
+from multilang.domain.korean import (
+    KoreanAnalyzerFingerprint,
+    KoreanFrequencyEntry,
+    KoreanLexicalIdentity,
+    KoreanSignatureItem,
+)
 from multilang.settings import APPROVED_FREQUENCY_ASSET_LANGUAGES
+
+
+_HASH_A = "a" * 64
+_HASH_B = "b" * 64
+
+
+def _korean_fingerprint() -> KoreanAnalyzerFingerprint:
+    return KoreanAnalyzerFingerprint(
+        analyzer_name="kiwi",
+        analyzer_package_version="0.23.2",
+        model_package_version="0.23.0",
+        model_type="cong",
+        enabled_dialects="standard",
+        num_workers=1,
+        integrate_allomorph=True,
+        top_n=2,
+        split_complex=False,
+        compatible_jamo=False,
+        normalize_coda=False,
+        z_coda=False,
+        typos=None,
+        oov_handling="chr",
+        policy_version="kiwi-top2-consensus-v1",
+    )
+
+
+def _korean_frequency_entry(rank: int) -> KoreanFrequencyEntry:
+    lemma = f"어휘{rank}"
+    identity = KoreanLexicalIdentity(
+        submitted_form=lemma,
+        canonical_nfc=lemma,
+        lemma=lemma,
+        part_of_speech="NNG",
+        sense_id=f"nikl:{rank}",
+        register="standard",
+        morpheme_signature=(KoreanSignatureItem(form=lemma, pos="NNG"),),
+        analyzer_fingerprint=_korean_fingerprint(),
+        status="resolved",
+    )
+    return KoreanFrequencyEntry(
+        language="ko",
+        version="fixture-v1",
+        level=((rank - 1) // 1000) + 1,
+        final_rank=rank,
+        source_rank=rank + 10,
+        source_provenance="nikl-korean-learners-vocabulary",
+        source_version="2003-06-04.revised-2019-05-30",
+        license_decision="approved-local-use",
+        storage_disposition="private-local-only",
+        curation_decision="accepted",
+        curation_flags=("source_rank_preserved",),
+        grounding_confidence="source-backed",
+        bundle_sha256=_HASH_A,
+        retrieval_sha256=_HASH_B,
+        analyzer_fingerprint=_korean_fingerprint(),
+        lexical_identity=identity,
+    )
 
 
 def test_iterator_rejects_noise_tokens(monkeypatch) -> None:
@@ -246,6 +309,54 @@ def test_build_frequency_level_backfills_rejected_candidates(monkeypatch) -> Non
         "word-2010",
     ]
     assert all(candidate.frequency_level == 3 for candidate in level)
+
+
+def test_korean_build_frequency_level_requires_explicit_final_entries_and_never_wordfreq(monkeypatch) -> None:
+    from multilang.services import frequency_decks
+
+    def forbidden_iter_wordlist(language: str):
+        raise AssertionError("Korean final frequency must not call live wordfreq")
+
+    monkeypatch.setattr(frequency_decks, "iter_wordlist", forbidden_iter_wordlist)
+
+    try:
+        frequency_decks.build_frequency_level(
+            SupportedLanguage.KO,
+            level=1,
+            required_count_per_level=1,
+            allow_frequency_seed_fallback=True,
+        )
+    except ValueError as exc:
+        assert "explicit frozen Korean final entries" in str(exc)
+    else:  # pragma: no cover - assertion clarity
+        raise AssertionError("expected Korean frozen-entry authority failure")
+
+
+def test_korean_build_frequency_level_projects_final_entries_to_persisted_candidate_evidence() -> None:
+    from multilang.services import frequency_decks
+
+    candidates = frequency_decks.build_frequency_level(
+        SupportedLanguage.KO,
+        level=1,
+        required_count_per_level=1,
+        korean_final_entries=(_korean_frequency_entry(1),),
+        source_review_receipt_sha256=_HASH_A,
+        source_review_aggregate_sha256=_HASH_B,
+    )
+
+    candidate = candidates[0]
+    assert candidate.grounding_status.value == "grounded"
+    assert candidate.frequency_rank == 1
+    assert candidate.frequency_level == 1
+    assert candidate.lemma == "어휘1"
+    assert candidate.lemma_key == candidate.korean_identity.lexical_key
+    assert candidate.definition_language == "pt"
+    assert candidate.translation_target_language == "pt"
+    assert candidate.provenance.source == "korean-frequency-bundle"
+    assert candidate.korean_frequency_evidence is not None
+    assert candidate.korean_frequency_evidence.source_rank == 11
+    assert candidate.korean_frequency_evidence.source_review_receipt_sha256 == _HASH_A
+    assert candidate.korean_frequency_evidence.source_review_aggregate_sha256 == _HASH_B
 
 
 def test_build_frequency_level_skips_repeated_tokens_within_level(monkeypatch) -> None:

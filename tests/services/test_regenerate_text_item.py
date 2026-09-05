@@ -28,6 +28,7 @@ from multilang.domain.text_quality import (
     ValidationStatus,
 )
 from multilang.services.regenerate_text_item import RegenerateTextItemService
+from multilang.services.korean_text_generation import KOREAN_TEXT_GENERATION_SELECTOR_VERSION
 from multilang.services.language_identifier import LanguageDetectionResult
 from multilang.services.text_generation import GeneratedSentence, GeneratedTextBundle, GeneratedTranslation
 from multilang.services.text_validation import TextValidationResult, TextValidationService
@@ -166,14 +167,28 @@ class FakeJobRepository:
 class FakeGenerationService:
     bundles: list[GeneratedTextBundle]
     calls: list[tuple[LexicalCardCandidate, SupportedLanguage]] = field(default_factory=list)
+    request_metadata: list[dict[str, object]] = field(default_factory=list)
 
     def generate_bundle(
         self,
         *,
         candidate: LexicalCardCandidate,
         deck_language: SupportedLanguage,
+        source_type: str | None = None,
+        highlight_context: str | None = None,
+        rate_limiter: object | None = None,
+        job_id: str | None = None,
+        korean_selector_attempt: object | None = None,
     ) -> GeneratedTextBundle:
         self.calls.append((candidate, deck_language))
+        self.request_metadata.append(
+            {
+                "source_type": source_type,
+                "highlight_context": highlight_context,
+                "job_id": job_id,
+                "korean_selector_attempt": korean_selector_attempt,
+            }
+        )
         return self.bundles.pop(0)
 
 
@@ -528,6 +543,11 @@ def test_korean_regeneration_passes_persisted_identity_on_both_attempts_and_stay
                 translation="Hoje eu comi uma refeição quente em casa.",
                 sentence_language="ko",
             ),
+            make_bundle(
+                sentence="오늘 집에서 밥을 천천히 먹었어요.",
+                translation="Hoje eu comi arroz devagar em casa.",
+                sentence_language="ko",
+            ),
         ]
     )
     matcher = FakeKoreanMatcher(
@@ -559,7 +579,7 @@ def test_korean_regeneration_passes_persisted_identity_on_both_attempts_and_stay
         deck_language=SupportedLanguage.KO,
     )
 
-    assert len(generation.calls) == 2
+    assert len(generation.calls) == 3
     restored_candidate = generation.calls[0][0]
     restored_identity = restored_candidate.korean_identity
     assert isinstance(restored_identity, KoreanLexicalIdentity)
@@ -569,13 +589,15 @@ def test_korean_regeneration_passes_persisted_identity_on_both_attempts_and_stay
     assert [call[0].korean_identity for call in generation.calls] == [
         restored_identity,
         restored_identity,
+        restored_identity,
     ]
-    assert len(validation.calls) == 2
+    assert len(validation.calls) == 3
     assert all(call["korean_identity"] is restored_identity for call in validation.calls)
     if failure_kind == "drift":
         assert matcher.calls == []
     else:
         assert [target for _sentence, target in matcher.calls] == [
+            restored_identity,
             restored_identity,
             restored_identity,
         ]
@@ -603,3 +625,85 @@ def test_korean_regeneration_passes_persisted_identity_on_both_attempts_and_stay
     assert job_repository.successes == [
         ("job-1", persisted_candidate.item_key, JobStage.GENERATE_TEXT)
     ]
+
+
+def test_korean_regeneration_consumes_only_unused_repair_from_persisted_selector_history() -> None:
+    fingerprint = make_korean_fingerprint()
+    persisted_identity = make_korean_identity(fingerprint=fingerprint)
+    persisted_candidate = make_persisted_korean_candidate(persisted_identity)
+    initial_history = {
+        "selector_version": KOREAN_TEXT_GENERATION_SELECTOR_VERSION,
+        "initial_candidate_count": 2,
+        "repair_attempt_count": 0,
+        "attempts": [
+            {
+                "stage": "initial",
+                "ordinal": 1,
+                "candidate_sha256": "a" * 64,
+                "validation_status": "failed",
+                "rejection_codes": ["banned_pattern"],
+            },
+            {
+                "stage": "initial",
+                "ordinal": 2,
+                "candidate_sha256": "b" * 64,
+                "validation_status": "failed",
+                "rejection_codes": ["translation_mismatch"],
+            },
+        ],
+    }
+    existing_record = make_record(item_key=persisted_candidate.item_key).model_copy(
+        update={
+            "repair_attempt_count": 0,
+            "sentence_provenance": TextProvenance(
+                source="generator",
+                provider="fake-gen",
+                metadata={"korean_selector_history": initial_history},
+            ),
+        }
+    )
+    lexical_repository = FakeLexicalRepository(
+        candidates={("job-1", persisted_candidate.item_key): persisted_candidate}
+    )
+    text_repository = FakeTextRepository(
+        records={("job-1", persisted_candidate.item_key): existing_record}
+    )
+    generation = FakeGenerationService(
+        bundles=[
+            make_bundle(
+                sentence="오늘 집에서 밥을 먹어요.",
+                translation="Hoje eu como arroz em casa.",
+                sentence_language="ko",
+            )
+        ]
+    )
+    validation = FakeValidationService(
+        results=[
+            make_validation_result(status=ValidationStatus.PASSED, label=ConfidenceLabel.HIGH, score=0.94)
+        ]
+    )
+    service = RegenerateTextItemService(
+        job_repository=FakeJobRepository(),
+        lexical_repository=lexical_repository,
+        text_repository=text_repository,
+        text_generation_service=generation,
+        text_validation_service=validation,
+    )
+
+    regenerated = service.execute(
+        job_id="job-1",
+        item_key=persisted_candidate.item_key,
+        deck_language=SupportedLanguage.KO,
+    )
+
+    assert len(generation.calls) == 1
+    attempt = generation.request_metadata[0]["korean_selector_attempt"]
+    assert attempt.stage == "repair"
+    assert attempt.ordinal == 3
+    assert attempt.rejected_candidate_sha256s == ("a" * 64, "b" * 64)
+    assert attempt.rejection_codes == ("banned_pattern", "translation_mismatch")
+    history = regenerated.sentence_provenance.metadata["korean_selector_history"]
+    assert history["initial_candidate_count"] == 2
+    assert history["repair_attempt_count"] == 1
+    assert [entry["stage"] for entry in history["attempts"]] == ["initial", "initial", "repair"]
+    assert regenerated.repair_attempt_count == 1

@@ -11,11 +11,18 @@ from multilang.domain.exporting import (
     ExportArtifactFormat,
     ExportCardIdentity,
     ExportCardRow,
+    FREQUENCY_EXPORT_CARD_FIELD_NAMES,
     HIGHLIGHT_EXPORT_CARD_FIELD_NAMES,
     MANDARIN_EXPORT_CARD_FIELD_NAMES,
 )
 from multilang.domain.jobs import SupportedLanguage
 from multilang.services.export_tabular_bundle import write_export_tabular_bundle
+
+
+_HASH_A = "a" * 64
+_HASH_B = "b" * 64
+_HASH_C = "c" * 64
+_HASH_D = "d" * 64
 
 
 def make_row(
@@ -70,6 +77,34 @@ def make_mandarin_row(*, source_type: str) -> ExportCardRow:
     )
 
 
+def make_korean_row(*, item_key: str, sort_index: int, frequency_level: int | None) -> ExportCardRow:
+    return ExportCardRow(
+        identity=ExportCardIdentity(
+            language=SupportedLanguage.KO,
+            source_type="frequency",
+            job_id="job-ko",
+            item_key=item_key,
+            lemma_key=f"ko:{item_key}",
+            sort_index=sort_index,
+        ),
+        sort_index=sort_index,
+        frequency_level=frequency_level,
+        frequency_bundle_sha256=_HASH_A,
+        export_gate_receipt_sha256=_HASH_B,
+        text_review_receipt_sha256=_HASH_C,
+        word_audio_artifact_sha256=_HASH_D,
+        sentence_audio_artifact_sha256=_HASH_D,
+        word=item_key,
+        front_of_card=item_key,
+        ipa=f"/{item_key}/",
+        definitions="substantivo: fixture",
+        example_sentence=f"{item_key}을 봐요.",
+        translation="Eu vejo o item.",
+        word_audio=f"[sound:{item_key}-word.mp3]",
+        sentence_audio=f"[sound:{item_key}-sentence.mp3]",
+    )
+
+
 @pytest.mark.parametrize("source_type", ["frequency", "word-list"])
 @pytest.mark.parametrize("export_format", [ExportArtifactFormat.CSV, ExportArtifactFormat.TSV])
 def test_mandarin_tabular_exports_exact_utf8_contract(
@@ -111,6 +146,53 @@ def test_mandarin_tabular_exports_exact_utf8_contract(
         "[sound:zh-sentence.mp3]",
         "",
     ]
+
+
+def test_korean_frequency_tabular_export_requires_exact_explicit_level_counts_without_internal_columns(
+    tmp_path: Path,
+) -> None:
+    rows = [
+        make_korean_row(item_key="어휘1", sort_index=1, frequency_level=1),
+        make_korean_row(item_key="어휘2", sort_index=1001, frequency_level=2),
+        make_korean_row(item_key="어휘3", sort_index=2001, frequency_level=3),
+    ]
+
+    result = write_export_tabular_bundle(
+        rows=rows,
+        export_format=ExportArtifactFormat.CSV,
+        output_dir=tmp_path,
+        deck_name="Multilang Korean::Frequency",
+        note_type_name="Multilang::Card",
+        cards_per_level=1,
+        expected_items=3,
+    )
+    content = result.output_path.read_text(encoding="utf-8")
+    lines = content.splitlines()
+
+    assert lines[4] == "#columns:" + ",".join(FREQUENCY_EXPORT_CARD_FIELD_NAMES)
+    assert "frequency_bundle_sha256" not in content
+    assert _HASH_A not in content
+    assert result.card_count == 3
+
+
+def test_korean_frequency_tabular_export_rejects_partial_or_inferred_levels_before_writing(
+    tmp_path: Path,
+) -> None:
+    output_path = tmp_path / "multilang-export.csv"
+    output_path.write_text("sentinel", encoding="utf-8")
+
+    with pytest.raises(ValueError, match="explicit frequency level"):
+        write_export_tabular_bundle(
+            rows=[make_korean_row(item_key="어휘1", sort_index=1, frequency_level=None)],
+            export_format=ExportArtifactFormat.CSV,
+            output_dir=tmp_path,
+            deck_name="Multilang Korean::Frequency",
+            note_type_name="Multilang::Card",
+            cards_per_level=1,
+            expected_items=1,
+        )
+
+    assert output_path.read_text(encoding="utf-8") == "sentinel"
 
 
 def test_write_export_tabular_bundle_writes_tsv_with_anki_headers(tmp_path: Path) -> None:

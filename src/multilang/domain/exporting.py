@@ -123,6 +123,12 @@ class ExportCardRow(BaseModel):
     identity: ExportCardIdentity
     note_guid: str | None = None
     sort_index: int | None = Field(default=None, alias="SortIndex")
+    frequency_level: int | None = Field(default=None, ge=1, le=3)
+    frequency_bundle_sha256: str | None = Field(default=None, min_length=64, max_length=64)
+    export_gate_receipt_sha256: str | None = Field(default=None, min_length=64, max_length=64)
+    text_review_receipt_sha256: str | None = Field(default=None, min_length=64, max_length=64)
+    word_audio_artifact_sha256: str | None = Field(default=None, min_length=64, max_length=64)
+    sentence_audio_artifact_sha256: str | None = Field(default=None, min_length=64, max_length=64)
     word: str = Field(min_length=1, alias="word")
     front_of_card: str = Field(min_length=1, alias="Front of Card")
     ipa: str | None = Field(default=None, alias="IPA")
@@ -342,6 +348,9 @@ class ExportDeckArtifact(BaseModel):
     output_path: str = Field(min_length=1)
     card_count: int = Field(ge=0)
     status: ExportArtifactStatus
+    frequency_bundle_sha256: str | None = Field(default=None, min_length=64, max_length=64)
+    export_manifest_sha256: str | None = Field(default=None, min_length=64, max_length=64)
+    export_gate_receipt_sha256: str | None = Field(default=None, min_length=64, max_length=64)
 
 
 FREQUENCY_LEVELS = (1, 2, 3)
@@ -381,38 +390,52 @@ def evaluate_export_quality_gate(
     non_synthesized_audio_count: int = 0,
     fallback_audio_count: int = 0,
     allow_partial: bool = False,
+    cards_per_level: int = FREQUENCY_CARDS_PER_LEVEL,
+    expected_items: int | None = None,
 ) -> ExportQualityGateResult:
     """Fail-closed export gate for final frequency decks."""
 
-    level_counts = _frequency_level_counts(rows)
-    issues: list[ExportQualityIssue] = []
-    warnings: list[ExportQualityIssue] = []
+    if _is_korean_frequency_rows(rows=rows, source_type=source_type):
+        korean_result = validate_korean_frequency_export_rows(
+            rows,
+            cards_per_level=cards_per_level,
+            expected_items=expected_items,
+        )
+        level_counts = korean_result.level_counts
+        issues = list(korean_result.issues)
+        warnings: list[ExportQualityIssue] = []
+    else:
+        level_counts = _frequency_level_counts(rows)
+        issues = []
+        warnings = []
+    effective_allow_partial = allow_partial and not _is_korean_frequency_rows(rows=rows, source_type=source_type)
 
     if source_type == "frequency":
-        total_missing = max(0, FREQUENCY_TOTAL_CARDS - len(rows))
+        target_total = expected_items or cards_per_level * len(FREQUENCY_LEVELS)
+        total_missing = max(0, target_total - len(rows))
         count_messages: list[str] = []
-        if len(rows) != FREQUENCY_TOTAL_CARDS:
-            count_messages.append(f"frequency deck has {len(rows)}/{FREQUENCY_TOTAL_CARDS} cards")
+        if len(rows) != target_total:
+            count_messages.append(f"frequency deck has {len(rows)}/{target_total} cards")
             if total_missing:
                 count_messages.append(f"total missing {total_missing} cards")
         for level in FREQUENCY_LEVELS:
             count = level_counts.get(level, 0)
-            if count != FREQUENCY_CARDS_PER_LEVEL:
-                missing = max(0, FREQUENCY_CARDS_PER_LEVEL - count)
+            if count != cards_per_level:
+                missing = max(0, cards_per_level - count)
                 if missing:
                     count_messages.append(f"level_{level} missing {missing} cards")
                 else:
-                    count_messages.append(f"level_{level} has {count}/{FREQUENCY_CARDS_PER_LEVEL} cards")
+                    count_messages.append(f"level_{level} has {count}/{cards_per_level} cards")
         if count_messages:
             issue = ExportQualityIssue(code="incomplete_frequency_deck", message=", ".join(count_messages))
-            (warnings if allow_partial else issues).append(issue)
+            (warnings if effective_allow_partial else issues).append(issue)
 
     if review_required_count:
         issue = ExportQualityIssue(
             code="review_required_text",
             message=f"review_required text records: {review_required_count}",
         )
-        (warnings if allow_partial else issues).append(issue)
+        (warnings if effective_allow_partial else issues).append(issue)
 
     if invalid_translation_count:
         issues.append(
@@ -435,7 +458,7 @@ def evaluate_export_quality_gate(
             code="fallback_audio",
             message=f"audio assets generated with fallback voices/providers: {fallback_audio_count}",
         )
-        (warnings if allow_partial else issues).append(issue)
+        (warnings if effective_allow_partial else issues).append(issue)
 
     return ExportQualityGateResult(
         passed=not issues,
@@ -457,6 +480,8 @@ def _frequency_level_counts(rows: list[ExportCardRow]) -> dict[int, int]:
 
 
 def _level_for_row(row: ExportCardRow) -> int | None:
+    if row.frequency_level is not None:
+        return row.frequency_level
     match = _LEVEL_ITEM_KEY_RE.search(row.identity.item_key)
     if match is not None:
         return int(match.group("level"))
@@ -464,6 +489,126 @@ def _level_for_row(row: ExportCardRow) -> int | None:
     if 1 <= sort_index <= FREQUENCY_TOTAL_CARDS:
         return ((sort_index - 1) // FREQUENCY_CARDS_PER_LEVEL) + 1
     return None
+
+
+def validate_korean_frequency_export_rows(
+    rows: list[ExportCardRow],
+    *,
+    cards_per_level: int = FREQUENCY_CARDS_PER_LEVEL,
+    expected_items: int | None = None,
+) -> ExportQualityGateResult:
+    """Validate final Korean frequency rows without inferring levels from rank or item keys."""
+
+    target_total = expected_items or cards_per_level * len(FREQUENCY_LEVELS)
+    issues: list[ExportQualityIssue] = []
+    level_counts: Counter[int] = Counter()
+    bundles: set[str] = set()
+    ranks: set[int] = set()
+    guids: set[str] = set()
+    lemma_keys: set[str] = set()
+
+    if len(rows) != target_total:
+        issues.append(
+            ExportQualityIssue(
+                code="incomplete_korean_frequency_export",
+                message=f"Korean final export requires {target_total} rows, found {len(rows)}",
+            )
+        )
+
+    for row in rows:
+        if row.identity.language is not SupportedLanguage.KO or row.identity.source_type != "frequency":
+            issues.append(
+                ExportQualityIssue(
+                    code="mixed_korean_frequency_rows",
+                    message="Korean final export requires only Korean frequency rows",
+                )
+            )
+            continue
+        if row.frequency_level is None:
+            issues.append(
+                ExportQualityIssue(
+                    code="missing_explicit_frequency_level",
+                    message="Korean final export requires explicit frequency level for every row",
+                )
+            )
+        else:
+            level_counts[row.frequency_level] += 1
+        for field_name in (
+            "frequency_bundle_sha256",
+            "export_gate_receipt_sha256",
+            "text_review_receipt_sha256",
+            "word_audio_artifact_sha256",
+            "sentence_audio_artifact_sha256",
+        ):
+            if getattr(row, field_name) is None:
+                issues.append(
+                    ExportQualityIssue(
+                        code=f"missing_{field_name}",
+                        message=f"Korean final export requires {field_name} for every row",
+                    )
+                )
+        if row.frequency_bundle_sha256 is not None:
+            bundles.add(row.frequency_bundle_sha256)
+        rank = row.sort_index or row.identity.sort_index
+        if rank in ranks:
+            issues.append(
+                ExportQualityIssue(
+                    code="duplicate_korean_frequency_rank",
+                    message=f"Korean final export has duplicate rank {rank}",
+                )
+            )
+        ranks.add(rank)
+        if row.note_guid in guids:
+            issues.append(
+                ExportQualityIssue(
+                    code="duplicate_korean_note_guid",
+                    message="Korean final export has duplicate note GUIDs",
+                )
+            )
+        guids.add(row.note_guid or "")
+        normalized_lemma_key = row.identity.lemma_key.casefold()
+        if normalized_lemma_key in lemma_keys:
+            issues.append(
+                ExportQualityIssue(
+                    code="duplicate_korean_lemma_key",
+                    message=f"Korean final export has duplicate lemma key {row.identity.lemma_key}",
+                )
+            )
+        lemma_keys.add(normalized_lemma_key)
+
+    if len(bundles) > 1:
+        issues.append(
+            ExportQualityIssue(
+                code="mixed_korean_frequency_bundle",
+                message="Korean final export requires one immutable frequency bundle",
+            )
+        )
+    for level in FREQUENCY_LEVELS:
+        count = level_counts.get(level, 0)
+        if count != cards_per_level:
+            issues.append(
+                ExportQualityIssue(
+                    code="korean_frequency_level_count",
+                    message=f"Korean final export level_{level} has {count}/{cards_per_level} rows",
+                )
+            )
+
+    normalized_counts = {level: level_counts.get(level, 0) for level in FREQUENCY_LEVELS}
+    return ExportQualityGateResult(
+        passed=not issues,
+        partial=False,
+        card_count=len(rows),
+        level_counts=normalized_counts,
+        issues=issues,
+        warnings=[],
+    )
+
+
+def _is_korean_frequency_rows(*, rows: list[ExportCardRow], source_type: str) -> bool:
+    return source_type == "frequency" and bool(rows) and all(
+        row.identity.language is SupportedLanguage.KO and row.identity.source_type == "frequency"
+        for row in rows
+    )
 
 
 __all__ = [
@@ -486,4 +631,5 @@ __all__ = [
     "export_field_names_for_rows",
     "export_field_names_for_language_and_source",
     "export_field_names_for_source_type",
+    "validate_korean_frequency_export_rows",
 ]

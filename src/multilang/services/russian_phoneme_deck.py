@@ -9,6 +9,7 @@ from datetime import datetime
 
 import genanki
 
+from multilang.services.anki_id_registry import AnkiIdKind, registry_id
 from multilang.services.azure_speech_adapter import AzureSpeechAdapter
 import multilang.services.phoneme_deck as _phoneme_deck
 from multilang.services.phoneme_deck import (
@@ -21,16 +22,16 @@ from multilang.services.phoneme_deck import (
 )
 from multilang.settings import Settings
 
-PHONEME_MODEL_ID = 1_602_300_601
-PHONEME_DECK_ID = 1_602_300_602
+PHONEME_MODEL_ID = registry_id(family="phoneme", role="russian_model", kind=AnkiIdKind.MODEL)
+PHONEME_DECK_ID = registry_id(family="phoneme", role="russian_deck", kind=AnkiIdKind.DECK)
 PHONEME_NOTE_TYPE_NAME = "Multilang::Russian Phoneme"
 DEFAULT_RUSSIAN_PHONEME_DECK_NAME = "Multilang Russian::Intro Phonemes"
-POLISH_PHONEME_MODEL_ID = 1_602_300_603
-POLISH_PHONEME_DECK_ID = 1_602_300_604
+POLISH_PHONEME_MODEL_ID = registry_id(family="phoneme", role="polish_model", kind=AnkiIdKind.MODEL)
+POLISH_PHONEME_DECK_ID = registry_id(family="phoneme", role="polish_deck", kind=AnkiIdKind.DECK)
 POLISH_PHONEME_NOTE_TYPE_NAME = "Multilang::Polish Phoneme"
 DEFAULT_POLISH_PHONEME_DECK_NAME = "Multilang Polish::Intro Phonemes"
-GREEK_PHONEME_MODEL_ID = 1_602_300_605
-GREEK_PHONEME_DECK_ID = 1_602_300_606
+GREEK_PHONEME_MODEL_ID = registry_id(family="phoneme", role="greek_model", kind=AnkiIdKind.MODEL)
+GREEK_PHONEME_DECK_ID = registry_id(family="phoneme", role="greek_deck", kind=AnkiIdKind.DECK)
 GREEK_PHONEME_NOTE_TYPE_NAME = "Multilang::Greek Phoneme"
 DEFAULT_GREEK_PHONEME_DECK_NAME = "Multilang Greek::Intro Phonemes"
 GREEK_PHONEME_VOICE_ID = "el-GR-AthinaNeural"

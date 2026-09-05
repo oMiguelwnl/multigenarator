@@ -735,6 +735,51 @@ def test_korean_non_matched_statuses_fail_with_content_free_morphology_detail(
     assert identity.sense_id not in morphology_flags[0].detail
 
 
+@pytest.mark.parametrize(
+    ("status", "projection"),
+    [
+        (KoreanMatchStatus.MISMATCH, "mismatch"),
+        (KoreanMatchStatus.AMBIGUOUS, "inconclusive"),
+        (KoreanMatchStatus.OOV, "inconclusive"),
+        (KoreanMatchStatus.UNAVAILABLE, "inconclusive"),
+        (KoreanMatchStatus.INVALID, "inconclusive"),
+    ],
+)
+def test_korean_selected_kiwi_mismatch_and_inconclusive_projection_is_explicit(
+    status: KoreanMatchStatus,
+    projection: str,
+) -> None:
+    fingerprint = build_korean_fingerprint()
+    identity = build_korean_identity(fingerprint=fingerprint)
+    matcher = FakeKoreanMatcher(
+        fingerprint=fingerprint,
+        result=build_korean_match_result(status, fingerprint=fingerprint),
+    )
+
+    result = TextValidationService(korean_matcher=matcher).validate(
+        sentence=build_sentence(
+            text="저는 오늘 집에서 맛있는 밥을 먹었어요.",
+            target_language="ko",
+        ),
+        translation=build_translation(text="translation omitted"),
+        display_form="먹다",
+        lemma="먹다",
+        definitions_html="comer",
+        korean_identity=identity,
+        require_translation=False,
+    )
+
+    morphology_detail = next(
+        flag.detail
+        for flag in result.validation_flags
+        if flag.code is ValidationFlagCode.MORPHOLOGY_MISMATCH
+    )
+    assert result.validation_status is ValidationStatus.FAILED
+    assert f"projection={projection}" in morphology_detail
+    assert "저는" not in morphology_detail
+    assert identity.sense_id not in morphology_detail
+
+
 @pytest.mark.parametrize("identity_kind", ["missing", "malformed"])
 def test_korean_missing_or_malformed_identity_fails_before_matcher(
     identity_kind: str,
@@ -878,4 +923,18 @@ def test_korean_language_check_rejects_forbidden_or_non_korean_text_without_echo
     )
 
     assert detail is not None
+    assert unsafe_text not in detail
+
+
+def test_korean_language_check_rejects_non_nfc_hangul_without_echo() -> None:
+    unsafe_text = "학교에서 밥을 먹었어요."
+
+    detail = detect_language_mismatch(
+        unsafe_text,
+        expected_language="ko",
+        language_identifier=ForbiddenLanguageIdentifier(),
+    )
+
+    assert detail is not None
+    assert "non-canonical" in detail
     assert unsafe_text not in detail

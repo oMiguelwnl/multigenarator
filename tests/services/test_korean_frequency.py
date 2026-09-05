@@ -432,3 +432,60 @@ def test_inactive_exact_existing_build_validation_is_read_only(tmp_path: Path) -
 
     assert result.grants_runtime_activation is False
     assert before == {path.name: path.stat().st_mtime_ns for path in bundle_dir.iterdir()}
+
+
+def test_final_runtime_loader_rehashes_locator_content_and_rejects_binding_drift(
+    tmp_path: Path,
+) -> None:
+    from multilang.domain.korean import KoreanFrequencyJobAuthority, raw_bytes_sha256
+    from multilang.services.authority_locator import canonical_authority_locator_sha256
+    from multilang.services.korean_frequency import load_korean_final_frequency_entries
+
+    bundle_dir, result_file = _write_minimal_valid_build_tree(tmp_path)
+    build_result_hash = raw_bytes_sha256(result_file.read_bytes())
+    build_result = json.loads(result_file.read_text(encoding="utf-8"))
+    manifest_path = bundle_dir / "manifest.json"
+    manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
+    binding_receipt = _HASH_D
+    authority = KoreanFrequencyJobAuthority(
+        stage="pilot_base",
+        phase31_pointer_locator_sha256=_HASH_A,
+        phase31_pointer_content_sha256=_HASH_B,
+        phase31_validation_receipt_sha256=_HASH_C,
+        phase31_snapshot_manifest_sha256=_HASH_D,
+        phase31_snapshot_root_sha256=_HASH_E,
+        frequency_bundle_locator_sha256=canonical_authority_locator_sha256(
+            manifest_path,
+            repo_root=tmp_path,
+        ),
+        frequency_bundle_content_sha256=manifest["bundle_sha256"],
+        source_retrieval_sha256=build_result["retrieval_sha256"],
+        source_build_result_sha256=build_result_hash,
+        source_review_aggregate_sha256=binding_receipt,
+        provider_policy_sha256=_HASH_F,
+        pilot_authority_sha256=_HASH_1,
+    )
+
+    entries = load_korean_final_frequency_entries(
+        job_id="job-final-runtime",
+        bundle_root=bundle_dir,
+        binding_receipt_sha256=binding_receipt,
+        authority=authority,
+        repo_root=tmp_path,
+    )
+
+    assert len(entries) == 3000
+    assert entries[0].final_rank == 1
+    assert entries[-1].final_rank == 3000
+
+    drifted = authority.model_copy(
+        update={"frequency_bundle_content_sha256": _HASH_2}
+    )
+    with pytest.raises(ValueError, match="Korean frequency runtime authority drift"):
+        load_korean_final_frequency_entries(
+            job_id="job-final-runtime",
+            bundle_root=bundle_dir,
+            binding_receipt_sha256=binding_receipt,
+            authority=drifted,
+            repo_root=tmp_path,
+        )

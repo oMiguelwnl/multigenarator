@@ -21,6 +21,8 @@ KOREAN_LANGUAGE_CODE: Final = "ko"
 KOREAN_PROVIDER_LOCALE: Final = "ko-KR"
 KOREAN_LANGUAGE_VARIANT: Final = "modern-standard-seoul"
 KOREAN_MORPHOLOGY_POLICY_VERSION: Final = "kiwi-top2-consensus-v1"
+KOREAN_LEXICON_CONCEPT_PREFIX: Final = "lexicon:"
+KOREAN_TEXT_QUALITY_POLICY_VERSION: Final = "korean-adaptive-text-quality-v1"
 KOREAN_FOUNDATION_DEFAULT_SOURCE: Final = "current-candidate"
 KOREAN_FOUNDATION_HISTORY_SOURCE: Final = "v1-history"
 KOREAN_FREQUENCY_EXPECTED_SOURCE_COUNT: Final = 5965
@@ -832,6 +834,13 @@ class KoreanLexicalIdentity(_FrozenContract):
         return self.usage_register
 
 
+def korean_lexical_concept_id(identity: KoreanLexicalIdentity) -> str:
+    """Project one resolved Korean lexical identity into the concept namespace."""
+
+    resolved = KoreanLexicalIdentity.model_validate(identity.model_dump(mode="python"))
+    return f"{KOREAN_LEXICON_CONCEPT_PREFIX}{resolved.lexical_key}"
+
+
 class KoreanMatchResult(_FrozenContract):
     """Explicit consensus outcome for a sentence and resolved target identity."""
 
@@ -1265,8 +1274,10 @@ __all__ = [
     "KOREAN_FREQUENCY_SOURCE_ID",
     "KOREAN_LANGUAGE_VARIANT",
     "KOREAN_LEXICAL_POS_TAGS",
+    "KOREAN_LEXICON_CONCEPT_PREFIX",
     "KOREAN_MORPHOLOGY_POLICY_VERSION",
     "KOREAN_PROVIDER_LOCALE",
+    "KOREAN_TEXT_QUALITY_POLICY_VERSION",
     "KoreanAnalysisAlternative",
     "KoreanAnalyzerFingerprint",
     "KoreanConcept",
@@ -1296,6 +1307,7 @@ __all__ = [
     "canonical_json_sha256",
     "compose_modern_hangul",
     "decompose_modern_hangul",
+    "korean_lexical_concept_id",
     "korean_lexical_key",
     "normalize_korean_pos",
     "raw_bytes_sha256",

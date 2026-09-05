@@ -11,6 +11,7 @@ from pathlib import Path
 
 import multilang.services.phoneme_deck as neutral_phoneme_deck
 import multilang.services.russian_phoneme_deck as russian_phoneme_deck
+from multilang.services.anki_id_registry import AnkiIdKind, registry_id
 from multilang.services.russian_phoneme_deck import (
     GREEK_PHONEME_CARDS,
     PHONEME_FIELD_NAMES,
@@ -109,6 +110,35 @@ _EXPECTED_TEMPLATE_HASHES = {
     "afmt": "c80d95d48c63660edf9e3691588c68af0218a6d45497a07c27f53efd6783eb39",
     "css": "788a67fec92ef52853cc4ee88ed06868fe840e80fa7922601cab185f98f13b75",
 }
+
+
+def test_language_phoneme_ids_are_registry_backed_without_local_numeric_declarations() -> None:
+    source = Path("src/multilang/services/russian_phoneme_deck.py").read_text(encoding="utf-8")
+
+    assert russian_phoneme_deck.PHONEME_MODEL_ID == registry_id(
+        family="phoneme", role="russian_model", kind=AnkiIdKind.MODEL
+    )
+    assert russian_phoneme_deck.PHONEME_DECK_ID == registry_id(
+        family="phoneme", role="russian_deck", kind=AnkiIdKind.DECK
+    )
+    assert russian_phoneme_deck.POLISH_PHONEME_MODEL_ID == registry_id(
+        family="phoneme", role="polish_model", kind=AnkiIdKind.MODEL
+    )
+    assert russian_phoneme_deck.POLISH_PHONEME_DECK_ID == registry_id(
+        family="phoneme", role="polish_deck", kind=AnkiIdKind.DECK
+    )
+    assert russian_phoneme_deck.GREEK_PHONEME_MODEL_ID == registry_id(
+        family="phoneme", role="greek_model", kind=AnkiIdKind.MODEL
+    )
+    assert russian_phoneme_deck.GREEK_PHONEME_DECK_ID == registry_id(
+        family="phoneme", role="greek_deck", kind=AnkiIdKind.DECK
+    )
+    assert "1_602_300_601" not in source
+    assert "1_602_300_602" not in source
+    assert "1_602_300_603" not in source
+    assert "1_602_300_604" not in source
+    assert "1_602_300_605" not in source
+    assert "1_602_300_606" not in source
 
 
 class NoOpAzureSpeechAdapter:

@@ -7,6 +7,10 @@ from hashlib import sha256
 import unicodedata
 
 from multilang.domain.jobs import GenerationRequest
+from multilang.domain.personal_sources import PersonalSourceRow
+
+
+_KOREAN_ORDERED_SOURCE_FINGERPRINT_VERSION = "korean-ordered-source-v1"
 
 
 def normalize_requested_item_keys(requested_item_keys: Iterable[str]) -> list[str]:
@@ -36,6 +40,32 @@ def build_input_fingerprint(
     normalized = normalize_requested_item_keys(requested_item_keys)
     digest = sha256("\n".join(normalized).encode("utf-8")).hexdigest()
     return f"items:{digest}"
+
+
+def _length_frame(value: str) -> str:
+    return f"{len(value.encode('utf-8'))}:{value}"
+
+
+def build_korean_ordered_source_fingerprint(rows: Iterable[PersonalSourceRow]) -> str:
+    """Hash Korean custom-list order, positions, and retained repeats."""
+
+    frames = [_KOREAN_ORDERED_SOURCE_FINGERPRINT_VERSION]
+    for row in rows:
+        duplicate_of = (
+            "" if row.duplicate_of_position is None else str(row.duplicate_of_position)
+        )
+        frames.append(
+            "|".join(
+                (
+                    f"position={row.input_position}",
+                    f"duplicate_of={duplicate_of}",
+                    f"display={_length_frame(row.display_form)}",
+                    f"duplicate_key={_length_frame(row.normalized_duplicate_key)}",
+                )
+            )
+        )
+    digest = sha256("\n".join(frames).encode("utf-8")).hexdigest()
+    return f"{_KOREAN_ORDERED_SOURCE_FINGERPRINT_VERSION}:{digest}"
 
 
 def build_run_key(

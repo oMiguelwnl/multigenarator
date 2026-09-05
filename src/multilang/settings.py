@@ -90,6 +90,8 @@ class Settings(BaseSettings):
     provider_retry_jitter_ratio: float = 0.1
     provider_circuit_failure_threshold: int = 3
     provider_circuit_cooldown_seconds: float = 60.0
+    korean_provider_policy_version: str = "korean-provider-policy-v1"
+    korean_provider_max_attempts: int = Field(default=1, ge=1, le=5)
     lexicon_data_dir: Path = Path(".multilang/lexicon")
     text_generation_provider: TextGenerationProvider = "litellm"
     text_generation_model: str = "openai/gpt-4o-mini"

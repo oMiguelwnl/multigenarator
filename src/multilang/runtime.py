@@ -2,10 +2,12 @@
 
 from __future__ import annotations
 
-from collections.abc import Callable
+from collections.abc import Callable, Iterable
 from dataclasses import dataclass
+from hashlib import sha256
 from html import unescape
 from pathlib import Path
+from tempfile import TemporaryDirectory
 
 from sqlalchemy import create_engine
 from sqlalchemy.orm import Session
@@ -28,6 +30,8 @@ from multilang.domain.exporting import (
     export_field_names_for_language_and_source,
 )
 from multilang.domain.jobs import JobStage, JobStatus
+from multilang.domain.korean import KoreanFrequencyEntry, KoreanFrequencyJobAuthority
+from multilang.domain.lexicon import GroundingStatus, LexicalCardCandidate
 from multilang.services.azure_speech_adapter import AzureSpeechAdapter
 from multilang.services.elevenlabs_speech_adapter import ElevenLabsSpeechAdapter
 from multilang.services.fallback_audio_adapter import FallbackAudioAdapter
@@ -36,15 +40,19 @@ from multilang.services.audio_synthesis import (
     AudioSynthesisAdapter,
     AudioSynthesisService,
 )
+from multilang.services.anki_id_registry import assert_anki_id_registry_clean
 from multilang.services.assemble_export_cards import AssembleExportCardsService
 from multilang.services.audio_integrity import assert_word_audio_matches_word
 from multilang.services.export_anki_package import MANDARIN_NOTE_TYPE_NAME, export_anki_package
 from multilang.services.export_tabular_bundle import ExportTabularBundleResult, write_export_tabular_bundle
+from multilang.services.frequency_decks import build_frequency_level
 from multilang.services.generate_job import GenerateJobService
 from multilang.services.generate_audio_items import GenerateAudioItemsService
 from multilang.services.generate_text_items import GenerateTextItemsService, GenerateTextProgress
 from multilang.services.ingest_lexical_items import IngestLexicalItemsService
 from multilang.services.korean_morphology import KiwiKoreanMorphologyService
+from multilang.services.korean_frequency import load_korean_final_frequency_entries
+from multilang.services.korean_foundation_snapshot import verify_active_korean_foundation_snapshot_provenance
 from multilang.services.lexical_lookup import LexicalLookup
 from multilang.services.lexical_grounding import LexicalGroundingService
 from multilang.services.rate_limit import RateLimiter
@@ -61,7 +69,11 @@ from multilang.services.provider_text_adapters import (
     can_use_google_translate,
     can_use_litellm,
 )
-from multilang.services.generation_report import write_generation_report
+from multilang.services.generation_report import (
+    build_korean_frequency_export_evidence,
+    write_generation_report,
+    write_korean_frequency_generation_report,
+)
 from multilang.services.provider_pronunciation_adapters import LiteLLMPronunciationAdapter
 from multilang.services.provider_retry import ProviderCircuitBreaker
 from multilang.services.regenerate_text_item import RegenerateTextItemService
@@ -124,6 +136,130 @@ class RuntimeExportResult:
     partial: bool = False
 
 
+@dataclass(frozen=True, slots=True)
+class KoreanFrequencyTextRuntimeAuthority:
+    """Explicit authority tuple required before Korean final text runtime construction."""
+
+    job_id: str
+    bundle_root: Path
+    binding_receipt_sha256: str
+    authority: KoreanFrequencyJobAuthority
+
+
+@dataclass(frozen=True, slots=True)
+class KoreanFrequencySyntheticExportContract:
+    """Count contract for synthetic Korean APKG gates, not production evidence."""
+
+    cards_per_level: int
+    exact_scale: bool = False
+
+    @property
+    def level_counts(self) -> dict[int, int]:
+        return {level: self.cards_per_level for level in (1, 2, 3)}
+
+    @property
+    def expected_items(self) -> int:
+        return self.cards_per_level * 3
+
+    @property
+    def expected_word_assets(self) -> int:
+        return self.expected_items
+
+    @property
+    def expected_sentence_assets(self) -> int:
+        return self.expected_items
+
+    @property
+    def expected_media_files(self) -> int:
+        return self.expected_word_assets + self.expected_sentence_assets
+
+    @property
+    def exact_scale_evidence(self) -> bool:
+        return self.exact_scale
+
+    @property
+    def production_count_evidence(self) -> bool:
+        return False
+
+    @property
+    def claim_limit(self) -> str:
+        return "synthetic-exact-scale-only" if self.exact_scale else "fast-representative-only"
+
+
+def build_korean_frequency_synthetic_export_contract(
+    *,
+    cards_per_level: int,
+    exact_scale: bool,
+) -> KoreanFrequencySyntheticExportContract:
+    if cards_per_level < 1:
+        raise ValueError("Korean synthetic export contract requires a positive level size")
+    if exact_scale and cards_per_level != 1000:
+        raise ValueError("Korean exact-scale synthetic export contract requires 1000 cards per level")
+    return KoreanFrequencySyntheticExportContract(cards_per_level=cards_per_level, exact_scale=exact_scale)
+
+
+@dataclass(frozen=True, slots=True)
+class KoreanFrequencySyntheticManifestItem:
+    level: int
+    ordinal: int
+    rank: int
+    item_key: str
+    lemma_key: str
+    word_audio_name: str
+    sentence_audio_name: str
+
+
+@dataclass(frozen=True, slots=True)
+class KoreanFrequencySyntheticManifestShape:
+    contract: KoreanFrequencySyntheticExportContract
+    items: tuple[KoreanFrequencySyntheticManifestItem, ...]
+    blocked_mutation_fields: tuple[str, ...]
+
+    @property
+    def level_counts(self) -> dict[int, int]:
+        return self.contract.level_counts
+
+
+def build_korean_frequency_synthetic_manifest_shape(
+    *,
+    cards_per_level: int,
+) -> KoreanFrequencySyntheticManifestShape:
+    contract = build_korean_frequency_synthetic_export_contract(
+        cards_per_level=cards_per_level,
+        exact_scale=True,
+    )
+    items: list[KoreanFrequencySyntheticManifestItem] = []
+    for level in (1, 2, 3):
+        for ordinal in range(1, cards_per_level + 1):
+            rank = ((level - 1) * cards_per_level) + ordinal
+            item_key = f"synthetic-ko-exact-{rank:04d}"
+            items.append(
+                KoreanFrequencySyntheticManifestItem(
+                    level=level,
+                    ordinal=ordinal,
+                    rank=rank,
+                    item_key=item_key,
+                    lemma_key=f"ko:synthetic:exact:{rank:04d}",
+                    word_audio_name=f"{item_key}-word.mp3",
+                    sentence_audio_name=f"{item_key}-sentence.mp3",
+                )
+            )
+    return KoreanFrequencySyntheticManifestShape(
+        contract=contract,
+        items=tuple(items),
+        blocked_mutation_fields=(
+            "frequency_level",
+            "frequency_bundle_sha256",
+            "export_gate_receipt_sha256",
+            "text_review_receipt_sha256",
+            "word_audio_artifact_sha256",
+            "sentence_audio_artifact_sha256",
+            "word_audio",
+            "sentence_audio",
+        ),
+    )
+
+
 class RuntimeGenerateService(IngestLexicalItemsService):
     """Repository-backed shipped runtime that composes lexical and Phase 3 text work."""
 
@@ -140,6 +276,9 @@ class RuntimeGenerateService(IngestLexicalItemsService):
         generate_audio_items_service: GenerateAudioItemsService,
         assemble_export_cards_service: AssembleExportCardsService,
         runtime_settings: Settings,
+        korean_final_frequency_entries: Iterable[KoreanFrequencyEntry] | None = None,
+        korean_source_review_receipt_sha256: str | None = None,
+        korean_source_review_aggregate_sha256: str | None = None,
         **kwargs: object,
     ) -> None:
         super().__init__(**kwargs)
@@ -153,6 +292,60 @@ class RuntimeGenerateService(IngestLexicalItemsService):
         self.generate_audio_items_service = generate_audio_items_service
         self.assemble_export_cards_service = assemble_export_cards_service
         self.settings = runtime_settings
+        self._korean_final_frequency_entries = (
+            tuple(korean_final_frequency_entries)
+            if korean_final_frequency_entries is not None
+            else None
+        )
+        self._korean_source_review_receipt_sha256 = korean_source_review_receipt_sha256
+        self._korean_source_review_aggregate_sha256 = korean_source_review_aggregate_sha256
+
+    def _build_grounded_frequency_level(
+        self,
+        *,
+        language: SupportedLanguage,
+        level: int,
+        required_count_per_level: int = 1000,
+        initially_rejected_lemmas: set[str] | None = None,
+        rate_limiter: RateLimiter | None = None,
+    ) -> tuple[list[LexicalCardCandidate], int]:
+        if language is not SupportedLanguage.KO:
+            return super()._build_grounded_frequency_level(
+                language=language,
+                level=level,
+                required_count_per_level=required_count_per_level,
+                initially_rejected_lemmas=initially_rejected_lemmas,
+                rate_limiter=rate_limiter,
+            )
+        if self._korean_final_frequency_entries is None:
+            raise ValueError("Korean final frequency runtime requires explicit final entries")
+        if (
+            self._korean_source_review_receipt_sha256 is None
+            or self._korean_source_review_aggregate_sha256 is None
+        ):
+            raise ValueError("Korean final frequency runtime requires source review receipts")
+
+        rejected_lemmas = {lemma.casefold() for lemma in (initially_rejected_lemmas or set())}
+        candidates = build_frequency_level(
+            language,
+            level=level,
+            required_count_per_level=required_count_per_level,
+            rejected_lemmas=rejected_lemmas,
+            korean_final_entries=self._korean_final_frequency_entries,
+            source_review_receipt_sha256=self._korean_source_review_receipt_sha256,
+            source_review_aggregate_sha256=self._korean_source_review_aggregate_sha256,
+        )
+        grounded_candidates: list[LexicalCardCandidate] = []
+        for candidate in candidates:
+            grounded_candidate = self.grounding_service.ground_frequency_candidate(
+                language=language,
+                candidate=candidate,
+                rate_limiter=rate_limiter,
+            )
+            if grounded_candidate.grounding_status is not GroundingStatus.GROUNDED:
+                raise ValueError("unable to ground Korean final frequency candidate")
+            grounded_candidates.append(grounded_candidate)
+        return grounded_candidates, 0
 
     def generate_text(
         self,
@@ -259,6 +452,7 @@ class RuntimeGenerateService(IngestLexicalItemsService):
         refresh_snapshots: bool = False,
         allow_partial: bool = False,
     ) -> RuntimeExportResult:
+        assert_anki_id_registry_clean(production_roots=True)
         job = self.job_service.repository.get_job(job_id)
         if job is None:
             raise ValueError(f"unknown job_id: {job_id}")
@@ -361,6 +555,148 @@ class RuntimeGenerateService(IngestLexicalItemsService):
             partial=gate_result.partial,
         )
 
+    def export_korean_frequency_apkg(
+        self,
+        *,
+        job_id: str,
+        binding_receipt_file: Path,
+        bundle_root: Path,
+        manifest_file: Path,
+        output_path: Path,
+        generation_report_json_path: Path,
+        generation_report_markdown_path: Path,
+        cards_per_level: int,
+        expected_items: int,
+        expected_word_assets: int,
+        expected_sentence_assets: int,
+        no_partial: bool,
+    ) -> RuntimeExportResult:
+        assert_anki_id_registry_clean(production_roots=True)
+        if not no_partial:
+            raise ValueError("Korean frequency export requires --no-partial")
+        _validate_korean_frequency_export_inputs(
+            database_url=self.settings.database_url,
+            binding_receipt_file=binding_receipt_file,
+            bundle_root=bundle_root,
+            manifest_file=manifest_file,
+            output_path=output_path,
+            generation_report_json_path=generation_report_json_path,
+            generation_report_markdown_path=generation_report_markdown_path,
+            cards_per_level=cards_per_level,
+            expected_items=expected_items,
+            expected_word_assets=expected_word_assets,
+            expected_sentence_assets=expected_sentence_assets,
+        )
+        job = self.job_service.repository.get_job(job_id)
+        if job is None:
+            raise ValueError(f"unknown job_id: {job_id}")
+        if job.language != SupportedLanguage.KO.value or job.source_type != "frequency":
+            raise ValueError("job is not a Korean frequency job")
+
+        rows = self.assemble_export_cards_service.execute(
+            job_id=job_id,
+            deck_language=SupportedLanguage.KO,
+        ).cards
+        text_records = self.text_repository.list_records_for_job(job_id)
+        audio_assets = self.audio_repository.list_assets_for_job(job_id)
+        missing_audio_count, non_synthesized_audio_count, fallback_audio_count = _audio_gate_counts(rows, audio_assets)
+        gate_result = evaluate_export_quality_gate(
+            source_type="frequency",
+            rows=rows,
+            review_required_count=sum(1 for record in text_records if record.review_status.value == "review_required"),
+            invalid_translation_count=sum(
+                1
+                for record in text_records
+                if record.review_status.value == "accepted" and looks_like_invalid_translation(record.translation_text or "")
+            ),
+            missing_audio_count=missing_audio_count,
+            non_synthesized_audio_count=non_synthesized_audio_count,
+            fallback_audio_count=fallback_audio_count,
+            allow_partial=False,
+            cards_per_level=cards_per_level,
+            expected_items=expected_items,
+        )
+        if not gate_result.passed:
+            raise ValueError(f"export quality gate failed: {gate_result.message()}")
+        _require_korean_frequency_audio_counts(
+            audio_assets,
+            expected_word_assets=expected_word_assets,
+            expected_sentence_assets=expected_sentence_assets,
+        )
+
+        media_index = self._build_media_index(rows)
+        binding_receipt_sha256 = _sha256_file(binding_receipt_file)
+        manifest_sha256 = _sha256_file(manifest_file)
+        resolved_deck_name = _sanitize_deck_name("Multilang Korean::Frequency")
+        output_path.parent.mkdir(parents=True, exist_ok=True)
+        generation_report_json_path.parent.mkdir(parents=True, exist_ok=True)
+        generation_report_markdown_path.parent.mkdir(parents=True, exist_ok=True)
+        with TemporaryDirectory(prefix="multilang-ko-export-") as directory:
+            stage_root = Path(directory)
+            staged_apkg = stage_root / output_path.name
+            staged_json = stage_root / generation_report_json_path.name
+            staged_markdown = stage_root / generation_report_markdown_path.name
+            export_anki_package(
+                rows=rows,
+                media_index=media_index,
+                output_path=staged_apkg,
+                deck_name=resolved_deck_name,
+                cards_per_level=cards_per_level,
+                expected_items=expected_items,
+            )
+            apkg_sha256 = _sha256_file(staged_apkg)
+            evidence = build_korean_frequency_export_evidence(
+                job=job,
+                rows=rows,
+                text_records=text_records,
+                audio_assets=audio_assets,
+                provider_call_records=self.provider_call_log_repository.list_for_job(job_id),
+                apkg_sha256=apkg_sha256,
+                binding_receipt_sha256=binding_receipt_sha256,
+                manifest_sha256=manifest_sha256,
+                cards_per_level=cards_per_level,
+                expected_items=expected_items,
+                expected_word_assets=expected_word_assets,
+                expected_sentence_assets=expected_sentence_assets,
+            )
+            write_korean_frequency_generation_report(
+                evidence,
+                json_path=staged_json,
+                markdown_path=staged_markdown,
+            )
+            _replace_staged_outputs(
+                (staged_apkg, output_path),
+                (staged_json, generation_report_json_path),
+                (staged_markdown, generation_report_markdown_path),
+            )
+
+        artifact = self.export_repository.upsert_deck_export(
+            ExportDeckArtifact(
+                job_id=job_id,
+                export_format=ExportArtifactFormat.APKG,
+                deck_name=resolved_deck_name,
+                output_path=str(output_path),
+                card_count=len(rows),
+                status=ExportArtifactStatus.COMPLETED,
+                frequency_bundle_sha256=rows[0].frequency_bundle_sha256 if rows else None,
+                export_manifest_sha256=manifest_sha256,
+                export_gate_receipt_sha256=rows[0].export_gate_receipt_sha256 if rows else None,
+            )
+        )
+        self.job_service.repository.update_job_status(
+            job_id,
+            status=JobStatus.COMPLETED,
+            current_stage=JobStage.EXPORT,
+            failed_items=0,
+        )
+        return RuntimeExportResult(
+            output_path=Path(artifact.output_path),
+            card_count=artifact.card_count,
+            report_json_path=generation_report_json_path,
+            report_markdown_path=generation_report_markdown_path,
+            partial=False,
+        )
+
     def _build_media_index(self, rows: list[object]) -> dict[str, Path]:
         media_index: dict[str, Path] = {}
         asset_index = self._preload_audio_assets(rows)
@@ -434,6 +770,105 @@ def _validate_media_reference(*, sound_tag: str, media_path: Path) -> None:
         raise ValueError(f"media basename mismatch for {media_path.name}")
     if not media_path.exists():
         raise ValueError(f"missing media file for {media_path.name}")
+
+
+def _sha256_file(path: Path) -> str:
+    digest = sha256()
+    with path.open("rb") as handle:
+        for chunk in iter(lambda: handle.read(1024 * 1024), b""):
+            digest.update(chunk)
+    return digest.hexdigest()
+
+
+def _validate_korean_frequency_export_inputs(
+    *,
+    database_url: str,
+    binding_receipt_file: Path,
+    bundle_root: Path,
+    manifest_file: Path,
+    output_path: Path,
+    generation_report_json_path: Path,
+    generation_report_markdown_path: Path,
+    cards_per_level: int,
+    expected_items: int,
+    expected_word_assets: int,
+    expected_sentence_assets: int,
+) -> None:
+    if database_url.strip() != database_url or not database_url.strip():
+        raise ValueError("database URL is required")
+    for label, path in {
+        "binding receipt": binding_receipt_file,
+        "manifest file": manifest_file,
+    }.items():
+        if not path.is_file():
+            raise ValueError(f"Korean frequency export requires explicit {label}")
+    if not bundle_root.is_dir():
+        raise ValueError("Korean frequency export requires explicit bundle root")
+    if cards_per_level < 1 or expected_items < 1:
+        raise ValueError("Korean frequency export counts must be positive")
+    if expected_items != cards_per_level * 3:
+        raise ValueError("Korean frequency export expected_items must equal three exact levels")
+    if expected_word_assets != expected_items or expected_sentence_assets != expected_items:
+        raise ValueError("Korean frequency export expected audio counts must match expected_items")
+    outputs = (output_path, generation_report_json_path, generation_report_markdown_path)
+    if any(path.is_dir() for path in outputs):
+        raise ValueError("Korean frequency export output paths must be files")
+    resolved_outputs = {path.resolve() for path in outputs}
+    if len(resolved_outputs) != len(outputs):
+        raise ValueError("Korean frequency export output paths must be distinct")
+
+
+def _require_korean_frequency_audio_counts(
+    audio_assets: list[object],
+    *,
+    expected_word_assets: int,
+    expected_sentence_assets: int,
+) -> None:
+    counts = {AudioAssetKind.WORD.value: 0, AudioAssetKind.SENTENCE.value: 0}
+    for asset in audio_assets:
+        kind = getattr(getattr(asset, "asset_kind", ""), "value", getattr(asset, "asset_kind", ""))
+        if kind in counts and getattr(asset, "ready_for_korean_final_export", False):
+            counts[str(kind)] += 1
+    if counts[AudioAssetKind.WORD.value] != expected_word_assets:
+        raise ValueError(
+            f"Korean frequency export approved word audio count {counts[AudioAssetKind.WORD.value]}/{expected_word_assets}"
+        )
+    if counts[AudioAssetKind.SENTENCE.value] != expected_sentence_assets:
+        raise ValueError(
+            "Korean frequency export approved sentence audio count "
+            f"{counts[AudioAssetKind.SENTENCE.value]}/{expected_sentence_assets}"
+        )
+
+
+def _replace_staged_outputs(*pairs: tuple[Path, Path]) -> None:
+    backups: list[tuple[Path | None, Path]] = []
+    written: list[Path] = []
+    try:
+        for staged, destination in pairs:
+            if not staged.is_file():
+                raise ValueError(f"missing staged output: {staged.name}")
+            backup = None
+            if destination.exists():
+                backup = destination.with_name(
+                    f".{destination.name}.multilang-backup-{sha256(str(destination.resolve()).encode('utf-8')).hexdigest()[:12]}"
+                )
+                if backup.exists():
+                    raise ValueError(f"existing backup blocks atomic replace: {backup}")
+                destination.replace(backup)
+            staged.replace(destination)
+            backups.append((backup, destination))
+            written.append(destination)
+    except Exception:
+        for destination in reversed(written):
+            if destination.exists():
+                destination.unlink()
+        for backup, destination in reversed(backups):
+            if backup is not None and backup.exists():
+                backup.replace(destination)
+        raise
+    for backup, _destination in backups:
+        if backup is not None and backup.exists():
+            backup.unlink()
 
 
 def _audio_gate_counts(rows: list[object], audio_assets: list[object]) -> tuple[int, int, int]:
@@ -525,6 +960,9 @@ def build_runtime_service(
     *,
     audio_adapter: AudioSynthesisAdapter | None = None,
     korean_morphology_service: KiwiKoreanMorphologyService | None = None,
+    korean_final_frequency_entries: Iterable[KoreanFrequencyEntry] | None = None,
+    korean_source_review_receipt_sha256: str | None = None,
+    korean_source_review_aggregate_sha256: str | None = None,
 ) -> IngestLexicalItemsService:
     """Construct the repository-backed orchestration service from runtime settings."""
 
@@ -639,6 +1077,54 @@ def build_runtime_service(
             export_repository=export_repository,
         ),
         runtime_settings=runtime_settings,
+        korean_final_frequency_entries=korean_final_frequency_entries,
+        korean_source_review_receipt_sha256=korean_source_review_receipt_sha256,
+        korean_source_review_aggregate_sha256=korean_source_review_aggregate_sha256,
+    )
+
+
+def build_korean_frequency_text_runtime_service(
+    *,
+    settings: Settings,
+    runtime_authority: KoreanFrequencyTextRuntimeAuthority,
+    korean_morphology_service: KiwiKoreanMorphologyService | None = None,
+    phase31_provenance_verifier: Callable[..., object] = verify_active_korean_foundation_snapshot_provenance,
+    entry_loader: Callable[..., tuple[KoreanFrequencyEntry, ...]] = load_korean_final_frequency_entries,
+    runtime_builder: Callable[..., object] = build_runtime_service,
+) -> object:
+    """Revalidate Phase 31 and bundle authority immediately before runtime adapters."""
+
+    authority = runtime_authority.authority
+    if authority.stage not in {"pilot_base", "pilot_audio", "full"}:
+        raise ValueError("Korean frequency text authority stage is invalid")
+    if runtime_authority.binding_receipt_sha256 != authority.source_review_aggregate_sha256:
+        raise ValueError("Korean frequency binding receipt drift")
+
+    report = phase31_provenance_verifier(
+        expected_receipt_sha256=authority.phase31_validation_receipt_sha256,
+    )
+    expected_report_hashes = {
+        "receipt_sha256": authority.phase31_validation_receipt_sha256,
+        "snapshot_manifest_sha256": authority.phase31_snapshot_manifest_sha256,
+        "snapshot_root_sha256": authority.phase31_snapshot_root_sha256,
+    }
+    for field, expected in expected_report_hashes.items():
+        if getattr(report, field, None) != expected:
+            raise ValueError("Phase 31 active authority drift")
+
+    entries = entry_loader(
+        job_id=runtime_authority.job_id,
+        bundle_root=runtime_authority.bundle_root,
+        binding_receipt_sha256=runtime_authority.binding_receipt_sha256,
+        authority=authority,
+        repo_root=Path.cwd(),
+    )
+    return runtime_builder(
+        settings=settings,
+        korean_morphology_service=korean_morphology_service,
+        korean_final_frequency_entries=entries,
+        korean_source_review_receipt_sha256=runtime_authority.binding_receipt_sha256,
+        korean_source_review_aggregate_sha256=authority.source_review_aggregate_sha256,
     )
 
 

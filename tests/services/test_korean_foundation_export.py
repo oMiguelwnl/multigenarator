@@ -747,8 +747,22 @@ def test_guid_ignores_mutable_copy_template_and_media_filename_changes() -> None
     ).guid == pronunciation_guid
 
 
-def test_production_builder_has_no_source_override_and_missing_pointer_refuses() -> None:
+def test_production_builder_has_no_source_override_and_missing_pointer_refuses(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
     api = _export()
+    snapshot_api = import_module("multilang.services.korean_foundation_snapshot")
+
+    def missing_active_snapshot() -> object:
+        raise snapshot_api.KoreanFoundationSnapshotError(
+            snapshot_api.KoreanFoundationSnapshotReasonCode.PRODUCTION_NOT_ACTIVE
+        )
+
+    monkeypatch.setattr(
+        api,
+        "resolve_active_korean_foundation_snapshot",
+        missing_active_snapshot,
+    )
 
     assert tuple(
         inspect.signature(api.build_korean_foundation_export_bundle).parameters
@@ -761,7 +775,6 @@ def test_production_builder_has_no_source_override_and_missing_pointer_refuses()
             api.build_korean_foundation_export_bundle
         ).parameters
 
-    snapshot_api = import_module("multilang.services.korean_foundation_snapshot")
     for family in api.KoreanFoundationFamily:
         with pytest.raises(snapshot_api.KoreanFoundationSnapshotError) as exc_info:
             api.build_korean_foundation_export_bundle(family=family)
@@ -1081,9 +1094,21 @@ def test_missing_active_production_pointer_refuses_all_six_without_output(
     family_name: str,
     format_name: str,
     tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     api = _export()
     snapshot_api = import_module("multilang.services.korean_foundation_snapshot")
+
+    def missing_active_snapshot() -> object:
+        raise snapshot_api.KoreanFoundationSnapshotError(
+            snapshot_api.KoreanFoundationSnapshotReasonCode.PRODUCTION_NOT_ACTIVE
+        )
+
+    monkeypatch.setattr(
+        api,
+        "resolve_active_korean_foundation_snapshot",
+        missing_active_snapshot,
+    )
     destination = tmp_path / (
         f"{family_name}.apkg" if format_name == "apkg" else family_name
     )

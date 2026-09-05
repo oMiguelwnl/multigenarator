@@ -5,6 +5,11 @@ from __future__ import annotations
 from multilang.domain.jobs import JobStage, SupportedLanguage
 from multilang.domain.text_quality import ReviewStatus, TextGenerationStatus, TextQualityRecord, ValidationStatus
 from multilang.services.generate_text_items import GenerateTextItemsService
+from multilang.services.korean_text_generation import (
+    KoreanTextGenerationSelector,
+    korean_selector_history_from_record,
+    with_korean_selector_history,
+)
 from multilang.services.text_generation import GeneratedTextBundle
 from multilang.services.text_validation import TextValidationResult
 
@@ -47,22 +52,29 @@ class RegenerateTextItemService:
         seen_sentences = GenerateTextItemsService._normalize_sentences(
             self.text_repository.list_example_sentences_for_job(job_id, exclude_item_key=item_key)
         )
-        generated_bundle = self.text_generation_service.generate_bundle(
-            candidate=candidate,
-            deck_language=deck_language,
-        )
-        validation = self._validate_bundle(
-            bundle=generated_bundle,
-            candidate=candidate,
-            seen_sentences=seen_sentences,
-            source_type=source_type,
-        )
-        generation_status = TextGenerationStatus.GENERATED
-        repair_attempt_count = 0
-
-        if validation.validation_status is ValidationStatus.FAILED:
-            repair_attempt_count = 1
-            generation_status = TextGenerationStatus.REPAIRED
+        korean_selection = None
+        if deck_language is SupportedLanguage.KO:
+            existing_history = korean_selector_history_from_record(existing_record)
+            selector = KoreanTextGenerationSelector(
+                text_generation_service=self.text_generation_service,
+                validate_bundle=self._validate_bundle,
+            )
+            korean_selection = selector.select(
+                candidate=candidate,
+                deck_language=deck_language,
+                source_type=source_type,
+                highlight_context=None,
+                seen_sentences=seen_sentences,
+                job_id=job_id,
+                item_key=item_key,
+                remaining_repair_budget=max(0, 1 - (existing_history.repair_attempt_count if existing_history else 0)),
+                existing_history=existing_history,
+            )
+            generated_bundle = korean_selection.bundle
+            validation = korean_selection.validation
+            generation_status = korean_selection.generation_status
+            repair_attempt_count = korean_selection.repair_attempt_count
+        else:
             generated_bundle = self.text_generation_service.generate_bundle(
                 candidate=candidate,
                 deck_language=deck_language,
@@ -73,6 +85,22 @@ class RegenerateTextItemService:
                 seen_sentences=seen_sentences,
                 source_type=source_type,
             )
+            generation_status = TextGenerationStatus.GENERATED
+            repair_attempt_count = 0
+
+            if validation.validation_status is ValidationStatus.FAILED:
+                repair_attempt_count = 1
+                generation_status = TextGenerationStatus.REPAIRED
+                generated_bundle = self.text_generation_service.generate_bundle(
+                    candidate=candidate,
+                    deck_language=deck_language,
+                )
+                validation = self._validate_bundle(
+                    bundle=generated_bundle,
+                    candidate=candidate,
+                    seen_sentences=seen_sentences,
+                    source_type=source_type,
+                )
 
         regenerated_record = self._build_record(
             existing_record=existing_record,
@@ -81,6 +109,8 @@ class RegenerateTextItemService:
             generation_status=generation_status,
             repair_attempt_count=repair_attempt_count,
         )
+        if korean_selection is not None:
+            regenerated_record = with_korean_selector_history(regenerated_record, korean_selection.history)
         saved_record = self.text_repository.upsert_text_record(regenerated_record)
         self.job_repository.record_item_success(
             job_id,
@@ -96,6 +126,7 @@ class RegenerateTextItemService:
         candidate: object,
         seen_sentences: set[str] | None = None,
         source_type: str | None = None,
+        deck_language: SupportedLanguage | None = None,
     ) -> TextValidationResult:
         return self.text_validation_service.validate(
             sentence=bundle.sentence,

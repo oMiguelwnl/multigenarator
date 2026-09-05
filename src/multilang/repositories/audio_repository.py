@@ -145,6 +145,7 @@ class AudioRepository:
                 AudioAssetModel.format == format.value,
                 AudioAssetModel.status == AudioSynthesisStatus.SYNTHESIZED.value,
                 AudioAssetModel.byte_size > 0,
+                AudioAssetModel.fallback_used.is_(False),
             )
             .order_by(AudioAssetModel.created_at.asc())
         )

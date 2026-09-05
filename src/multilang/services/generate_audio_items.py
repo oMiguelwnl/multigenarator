@@ -9,6 +9,7 @@ from multilang.domain.audio import AudioAssetKind, AudioAssetRecord, AudioSynthe
 from multilang.domain.exporting import export_field_names_for_language_and_source
 from multilang.domain.jobs import JobStage, SupportedLanguage
 from multilang.services.audio_integrity import word_audio_matches_word
+from multilang.services.korean_audio import korean_audio_asset_reusable
 
 
 @dataclass(slots=True)
@@ -150,6 +151,8 @@ def _candidate_source_type(candidate: object) -> str:
 
 
 def _can_reuse_asset(prepared_asset: AudioAssetRecord, reusable: AudioAssetRecord) -> bool:
+    if prepared_asset.provenance.locale == "ko-KR" or reusable.provenance.locale == "ko-KR":
+        return korean_audio_asset_reusable(prepared_asset, reusable)
     if prepared_asset.asset_kind is not AudioAssetKind.WORD:
         return True
     return word_audio_matches_word(reusable, prepared_asset.display_text)

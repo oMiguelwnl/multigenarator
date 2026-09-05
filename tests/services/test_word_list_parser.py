@@ -7,7 +7,10 @@ import unicodedata
 
 import pytest
 
-from multilang.services.word_list_parser import parse_word_list
+from multilang.services.word_list_parser import (
+    parse_korean_ordered_word_list,
+    parse_word_list,
+)
 
 
 def _write_text(path: Path, content: str, *, encoding: str = "utf-8") -> Path:
@@ -148,3 +151,79 @@ def test_parse_word_list_converges_nfd_and_nfc_without_losing_submitted_evidence
         ("duplicate_item", 2),
     ]
     assert "line 1" in result.warnings[0].detail
+
+
+def test_parse_word_list_existing_language_duplicate_omission_stays_default(
+    tmp_path: Path,
+) -> None:
+    word_list = _write_text(
+        tmp_path / "words.txt",
+        " Alpha \nalpha\nBeta\n",
+    )
+
+    result = parse_word_list(word_list)
+
+    assert [item.display_form for item in result.items] == ["Alpha", "Beta"]
+    assert [item.item_key for item in result.items] == ["alpha", "beta"]
+    assert [(warning.code, warning.line_number) for warning in result.warnings] == [
+        ("duplicate_item", 2),
+    ]
+
+
+def test_parse_korean_ordered_word_list_persists_positions_and_duplicates(
+    tmp_path: Path,
+) -> None:
+    word_list = _write_text(
+        tmp_path / "korean-words.txt",
+        "  학교  \n먹다, 자다\n\n학교\n",
+    )
+
+    result = parse_korean_ordered_word_list(word_list)
+
+    assert [
+        (
+            row.input_position,
+            row.line_number,
+            row.submitted_form,
+            row.display_form,
+            row.normalized_duplicate_key,
+            row.duplicate_of_position,
+            row.disposition,
+        )
+        for row in result.rows
+    ] == [
+        (1, 1, "  학교  ", "학교", "학교", None, "card_bearing"),
+        (2, 2, "먹다", "먹다", "먹다", None, "card_bearing"),
+        (3, 2, "자다", "자다", "자다", None, "card_bearing"),
+        (4, 4, "학교", "학교", "학교", 1, "duplicate"),
+    ]
+    assert [(warning.code, warning.line_number) for warning in result.warnings] == [
+        ("blank_line", 3),
+        ("duplicate_item", 4),
+    ]
+
+
+def test_parse_korean_ordered_word_list_uses_nfc_without_hiding_exact_duplicates(
+    tmp_path: Path,
+) -> None:
+    nfc = "학교"
+    nfd = unicodedata.normalize("NFD", nfc)
+    word_list = _write_text(
+        tmp_path / "korean-words.txt",
+        f"{nfd}\n{nfc}\n",
+    )
+
+    result = parse_korean_ordered_word_list(word_list)
+
+    assert [row.submitted_form for row in result.rows] == [nfd, nfc]
+    assert [row.display_form for row in result.rows] == [nfc, nfc]
+    assert [row.duplicate_of_position for row in result.rows] == [None, 1]
+
+
+def test_parse_korean_ordered_word_list_rejects_compatibility_hangul(
+    tmp_path: Path,
+) -> None:
+    word_list = _write_text(tmp_path / "korean-words.txt", "ㄱ\n")
+
+    with pytest.raises(ValueError, match="compatibility Hangul"):
+        parse_korean_ordered_word_list(word_list)

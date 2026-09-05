@@ -10,6 +10,7 @@ from pathlib import Path
 
 import pytest
 
+from multilang.services.anki_id_registry import AnkiIdKind, registry_id
 from multilang.services.japanese_frequency_deck import (
     JAPANESE_DECK_ID,
     JAPANESE_FIELD_NAMES,
@@ -21,6 +22,19 @@ from multilang.services.japanese_frequency_deck import (
     build_japanese_note,
     export_japanese_frequency_deck,
 )
+
+
+def test_japanese_frequency_ids_are_registry_backed_without_local_numeric_declarations() -> None:
+    source = Path("src/multilang/services/japanese_frequency_deck.py").read_text(encoding="utf-8")
+
+    assert JAPANESE_MODEL_ID == registry_id(
+        family="japanese_frequency", role="model", kind=AnkiIdKind.MODEL
+    )
+    assert JAPANESE_DECK_ID == registry_id(
+        family="japanese_frequency", role="deck", kind=AnkiIdKind.DECK
+    )
+    assert "1_762_800_701" not in source
+    assert "1_762_800_702" not in source
 
 
 class NoOpAzureSpeechAdapter:

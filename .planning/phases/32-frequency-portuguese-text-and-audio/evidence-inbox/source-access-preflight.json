@@ -1,0 +1,27 @@
+{
+  "command_inventory": [
+    "multilang validate-korean-checkpoint-authority",
+    "multilang retrieve-korean-frequency-source",
+    "scripts/run_phase32_isolated_suite.py --mode dependency-only"
+  ],
+  "credential_name_count": 0,
+  "generated_at": "2026-09-03T11:52:46Z",
+  "lock_check_passed": true,
+  "mode": "source-access-preflight",
+  "network_attempt_count": 0,
+  "provider_attempt_count": 0,
+  "protected_inputs": {
+    ".planning/AI-LINGUISTIC-REVIEW-POLICY.md": "0641fa4da53a5adf6f63ccca515ce3795ea967a97c4b8db27cbcd61b6b4e2432",
+    ".planning/phases/32-frequency-portuguese-text-and-audio/32-FREQUENCY-SOURCE-DECISION.md": "077f18ee4a32dbac816d237b5d312926bd155297da4e681486353f149cf364dd",
+    "pyproject.toml": "a5058d5b2847b85c9caac7de46bf286fe456970cf899e5b1b9841a3cf49a3dcd",
+    "scripts/run_phase32_isolated_suite.py": "a9c2d9509b085f319f3dcca6ce0421a6025fdbd1078ebe832ee8088206ac251e",
+    "uv.lock": "5bd00b7864f0e64ff10327a8cfa93001878693576180e9e8b29b7e73d0bfcdcc"
+  },
+  "protected_inputs_unchanged": true,
+  "python_minor": "3.12",
+  "python_version": "3.12.3",
+  "shared_venv_unchanged": true,
+  "source_access_granted": false,
+  "source_decision_sha256": "077f18ee4a32dbac816d237b5d312926bd155297da4e681486353f149cf364dd",
+  "status": "passed"
+}

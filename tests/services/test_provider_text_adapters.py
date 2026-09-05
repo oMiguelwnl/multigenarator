@@ -320,12 +320,6 @@ def test_korean_sentence_and_definition_prompts_use_complete_trusted_identity() 
                 "sentence": "배우가 와요.",
                 "intended_sense": "attacker-authored-sense",
                 "uncertainty_notes": [],
-                "lemma": "공격자",
-                "part_of_speech": "VV",
-                "sense_id": "attacker",
-                "morpheme_signature": [{"form": "공격", "pos": "VV"}],
-                "analyzer_fingerprint": {"policy_version": "attacker"},
-                "approval_status": "approved",
             },
             calls,
         ),
@@ -370,9 +364,6 @@ def test_korean_sentence_and_definition_prompts_use_complete_trusted_identity() 
         completion_func=_completion_payload(
             {
                 "definitions_html": "noun: ator",
-                "part_of_speech": "VV",
-                "sense_id": "attacker",
-                "approval_status": "approved",
             },
             calls,
         ),
@@ -604,6 +595,55 @@ def test_korean_provider_results_are_nfc_and_forbidden_output_is_content_free() 
     assert "비밀" not in str(exc_info.value)
 
 
+def test_korean_provider_output_rejects_extra_identity_authority_and_unsafe_html() -> None:
+    identity = _korean_identity()
+    extra_sentence_adapter = LiteLLMSentenceAdapter(
+        _provider_settings(),
+        completion_func=_completion_payload(
+            {
+                "sentence": "배우가 와요.",
+                "intended_sense": identity.sense_id,
+                "uncertainty_notes": [],
+                "approval_status": "approved",
+                "lemma": "공격자",
+            },
+            [],
+        ),
+    )
+
+    with pytest.raises(ValueError, match="unexpected Korean sentence response fields"):
+        extra_sentence_adapter.generate_sentence(
+            SentenceGenerationRequest(
+                display_form="배우",
+                lemma="배우",
+                target_language="ko",
+                translation_target_language="pt",
+                korean_identity=identity,
+            )
+        )
+
+    unsafe_definition_adapter = LiteLLMSentenceAdapter(
+        _provider_settings(),
+        completion_func=_completion_payload(
+            {
+                "definitions_html": "noun: ator<script>alert('x')</script>",
+            },
+            [],
+        ),
+    )
+    with pytest.raises(ValueError, match="unsafe Korean definition response"):
+        unsafe_definition_adapter.generate_definition(
+            DefinitionGenerationRequest(
+                display_form="배우",
+                lemma="배우",
+                source_language="ko",
+                target_language="pt",
+                part_of_speech="NNG",
+                korean_identity=identity,
+            )
+        )
+
+
 def test_korean_requests_require_persisted_identity() -> None:
     with pytest.raises(ValueError, match="requires a persisted Korean identity"):
         SentenceGenerationRequest(
@@ -690,6 +730,41 @@ def test_deepl_translation_adapter_maps_target_language() -> None:
     assert translator.calls == [{"sentence": "Я живу в Москве.", "target_lang": "EN-US"}]
 
 
+def test_deepl_korean_PT_BR_policy_keeps_canonical_pt_cache_identity() -> None:
+    from multilang.services.provider_text_adapters import KOREAN_PT_BR_EDITORIAL_POLICY_ID
+
+    class FakeResult:
+        text = "Eu vou para a escola."
+
+    class FakeTranslator:
+        def __init__(self) -> None:
+            self.calls: list[dict[str, str]] = []
+
+        def translate_text(self, sentence: str, *, target_lang: str) -> FakeResult:
+            self.calls.append({"sentence": sentence, "target_lang": target_lang})
+            return FakeResult()
+
+    translator = FakeTranslator()
+    adapter = DeepLTranslationAdapter(
+        Settings(_env_file=None, deepl_api_key="deepl-key"),
+        translator_factory=lambda api_key: translator,
+    )
+
+    result = adapter.translate_sentence(
+        SentenceTranslationRequest(
+            sentence="저는 오늘 학교에 가요.",
+            translation_target_language="pt",
+        )
+    )
+
+    assert result.translation == "Eu vou para a escola."
+    assert translator.calls == [{"sentence": "저는 오늘 학교에 가요.", "target_lang": "PT-BR"}]
+    assert result.provenance["target_lang"] == "PT-BR"
+    assert result.provenance["canonical_target_language"] == "pt"
+    assert result.provenance["cache_target_language"] == "pt"
+    assert result.provenance["editorial_policy_id"] == KOREAN_PT_BR_EDITORIAL_POLICY_ID
+
+
 def test_google_translate_adapter_uses_target_language() -> None:
     class FakeTranslator:
         def __init__(self, *, source: str, target: str) -> None:
@@ -771,7 +846,17 @@ def test_provider_detection_requires_configured_keys() -> None:
     assert can_use_deepl(provider_settings) is True
 
 
-def test_deepl_runtime_adapter_does_not_silently_wrap_google_fallback() -> None:
+def test_deepl_runtime_adapter_does_not_silently_wrap_google_fallback(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    import multilang.services.provider_text_adapters as adapters_module
+
+    monkeypatch.setattr(
+        adapters_module,
+        "_deepl_translator",
+        lambda _api_key: object(),
+    )
+
     adapter = _build_translation_adapter(Settings(_env_file=None, translation_provider="deepl", deepl_api_key="deepl-key"))
 
     assert isinstance(adapter, DeepLTranslationAdapter)

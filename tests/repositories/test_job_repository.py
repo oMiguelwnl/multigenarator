@@ -2,14 +2,29 @@
 
 from __future__ import annotations
 
+from datetime import datetime, timezone
+
 import pytest
 from sqlalchemy import create_engine, event, text
 from sqlalchemy.orm import Session
 
 from multilang.db.base import Base
+from multilang.db.models import GenerationRunDenominatorModel, ItemProcessingFactModel, ItemTerminalStatusEventModel
+from multilang.domain.highlights import HighlightProvenance, NormalizedHighlight
 from multilang.domain.korean import KoreanFrequencyJobAuthority, raw_bytes_sha256
-from multilang.domain.jobs import GenerationRequest, JobStage, JobStatus, SupportedLanguage
+from multilang.domain.jobs import (
+    ControlledReasonCode,
+    FieldObligationSummary,
+    GenerationRequest,
+    ItemTerminalStatus,
+    JobStage,
+    JobStatus,
+    SupportedLanguage,
+)
+from multilang.domain.personal_sources import PersonalSourceRow
+from multilang.repositories.highlight_import_repository import HighlightImportRepository
 from multilang.repositories.job_repository import JobRepository
+from multilang.repositories.korean_personal_source_repository import KoreanPersonalSourceRepository
 from multilang.services.authority_locator import canonical_authority_locator_sha256
 
 
@@ -26,6 +41,31 @@ def make_request() -> GenerationRequest:
 
 def _hash(seed: str) -> str:
     return raw_bytes_sha256(seed.encode("utf-8"))
+
+
+NOW = datetime(2026, 1, 2, 3, 4, tzinfo=timezone.utc)
+
+
+def _current_obligations() -> FieldObligationSummary:
+    return FieldObligationSummary(
+        ai_review_current=True,
+        integrity_current=True,
+        word_audio_required=True,
+        word_audio_current=True,
+        sentence_audio_required=True,
+        sentence_audio_current=True,
+    )
+
+
+def _stale_audio_obligations() -> FieldObligationSummary:
+    return FieldObligationSummary(
+        ai_review_current=True,
+        integrity_current=True,
+        word_audio_required=True,
+        word_audio_current=False,
+        sentence_audio_required=True,
+        sentence_audio_current=True,
+    )
 
 
 def _authority(stage: str = "pilot_base", **overrides: str) -> KoreanFrequencyJobAuthority:
@@ -245,3 +285,319 @@ def test_attempt_guard_requires_base_audio_and_full_authority() -> None:
     repository.bind_audio_authority(job.id, _authority("full"))
     repository.require_korean_attempt_authority(job.id, "production_text")
     repository.require_korean_attempt_authority(job.id, "production_audio")
+
+
+def test_granular_outcome_retry_conflict_and_private_sentinel_content_free_facts() -> None:
+    repository, session = build_repository()
+    job = repository.create_job(
+        request=GenerationRequest(language=SupportedLanguage.KO, source_type="word-list"),
+        run_key="ko-custom-granular-outcome",
+        source_fingerprint="custom-fixture",
+        total_items=1,
+    )
+    sentinel = "PRIVATE_PROVIDER_PAYLOAD should never persist"
+
+    first = repository.record_phase33_item_outcome(
+        job.id,
+        item_id="custom:1",
+        stage=JobStage.GENERATE_TEXT.value,
+        attempt_count=1,
+        attempted_at=NOW,
+        processed_at=NOW,
+        terminal_status=ItemTerminalStatus.REVIEW_REQUIRED,
+        reason_code=ControlledReasonCode.REVIEW_OUTSTANDING,
+        obligations=_stale_audio_obligations(),
+        idempotency_key="provider-command-1",
+    )
+    replay = repository.record_phase33_item_outcome(
+        job.id,
+        item_id="custom:1",
+        stage=JobStage.GENERATE_TEXT.value,
+        attempt_count=1,
+        attempted_at=NOW,
+        processed_at=NOW,
+        terminal_status=ItemTerminalStatus.REVIEW_REQUIRED,
+        reason_code=ControlledReasonCode.REVIEW_OUTSTANDING,
+        obligations=_stale_audio_obligations(),
+        idempotency_key="provider-command-1",
+    )
+
+    assert replay == first
+    with pytest.raises(ValueError):
+        repository.record_phase33_item_outcome(
+            job.id,
+            item_id="custom:1",
+            stage=JobStage.GENERATE_TEXT.value,
+            attempt_count=1,
+            attempted_at=NOW,
+            processed_at=NOW,
+            terminal_status=ItemTerminalStatus.ACCEPTED,
+            reason_code=None,
+            obligations=_current_obligations(),
+            idempotency_key="provider-command-1",
+        )
+
+    assert session.query(ItemProcessingFactModel).count() == 1
+    assert session.query(ItemTerminalStatusEventModel).count() == 1
+    safe_rows = repository.list_phase33_item_statuses(job.id, stage=JobStage.GENERATE_TEXT.value)
+    rendered = str([row.model_dump(mode="json") for row in safe_rows])
+    assert safe_rows[0].item_id == "custom:1"
+    assert safe_rows[0].reason_code == ControlledReasonCode.REVIEW_OUTSTANDING.value
+    assert sentinel not in rendered
+    assert "PRIVATE_PROVIDER_PAYLOAD" not in rendered
+
+
+def test_seven_denominators_aggregate_uses_persisted_facts_not_caller_totals() -> None:
+    repository, session = build_repository()
+    job = repository.create_job(
+        request=GenerationRequest(language=SupportedLanguage.KO, source_type="word-list"),
+        run_key="ko-custom-seven-denominators",
+        source_fingerprint="custom-fixture",
+        total_items=8,
+    )
+    stage = JobStage.GENERATE_TEXT.value
+    repository.record_phase33_item_outcome(
+        job.id,
+        item_id="accepted-run",
+        stage=stage,
+        attempt_count=1,
+        attempted_at=NOW,
+        processed_at=NOW,
+        terminal_status=ItemTerminalStatus.ACCEPTED,
+        reason_code=None,
+        obligations=_current_obligations(),
+        idempotency_key="accepted-command",
+    )
+    repository.record_phase33_item_outcome(
+        job.id,
+        item_id="review-run",
+        stage=stage,
+        attempt_count=1,
+        attempted_at=NOW,
+        processed_at=NOW,
+        terminal_status=ItemTerminalStatus.REVIEW_REQUIRED,
+        reason_code=ControlledReasonCode.MEDIA_OUTSTANDING,
+        obligations=_stale_audio_obligations(),
+        idempotency_key="review-command",
+    )
+    repository.record_phase33_attempt_fact(
+        job.id,
+        item_id="attempt-open",
+        stage=stage,
+        attempt_count=1,
+        attempted_at=NOW,
+        processed_at=None,
+        idempotency_key="open-command",
+    )
+    repository.record_phase33_skipped_current(
+        job.id,
+        item_id="accepted-before-run",
+        stage=stage,
+        terminal_status=ItemTerminalStatus.ACCEPTED,
+        obligations=_current_obligations(),
+    )
+    repository.record_phase33_item_outcome(
+        job.id,
+        item_id="failed-run",
+        stage=stage,
+        attempt_count=1,
+        attempted_at=NOW,
+        processed_at=None,
+        terminal_status=ItemTerminalStatus.FAILED,
+        reason_code=ControlledReasonCode.FAILED_UNKNOWN,
+        obligations=FieldObligationSummary(),
+        idempotency_key="failed-command",
+    )
+
+    report = repository.recompute_phase33_run_report(
+        job.id,
+        stage=stage,
+        eligible_item_ids=(
+            "accepted-run",
+            "review-run",
+            "attempt-open",
+            "accepted-before-run",
+            "duplicate-row",
+            "deferred-row",
+            "untouched-row",
+            "failed-run",
+        ),
+        duplicate_item_ids=("duplicate-row",),
+        deferred_item_ids=("deferred-row",),
+    )
+
+    assert report.counts == {
+        "total_eligible": 8,
+        "attempted": 4,
+        "processed": 2,
+        "accepted": 2,
+        "review_required": 1,
+        "failed": 1,
+        "skipped_current": 1,
+        "not_attempted": 3,
+        "duplicate": 1,
+        "deferred": 1,
+    }
+    assert report.attempted_item_ids == ("accepted-run", "review-run", "attempt-open", "failed-run")
+    assert report.processed_item_ids == ("accepted-run", "review-run")
+    assert report.skipped_current_item_ids == ("accepted-before-run",)
+    assert report.not_attempted_item_ids == ("duplicate-row", "deferred-row", "untouched-row")
+    denominator = session.query(GenerationRunDenominatorModel).one()
+    assert denominator.expected_count == 8
+    assert denominator.accepted_count == 2
+    assert denominator.review_required_count == 1
+    assert denominator.failed_count == 1
+
+
+def test_personal_inventory_ids_order_root_no_inventory_drop_and_ready_counts() -> None:
+    repository, session = build_repository()
+    job = repository.create_job(
+        request=GenerationRequest(language=SupportedLanguage.KO, source_type="word-list"),
+        run_key="ko-custom-inventory",
+        source_fingerprint="custom-fixture",
+        total_items=3,
+    )
+    personal_repository = KoreanPersonalSourceRepository(session)
+    inventory = personal_repository.store_rows(
+        job_id=job.id,
+        source_type="word-list",
+        parser_version="korean-ordered-source-v1",
+        rows=(
+            PersonalSourceRow(
+                input_position=1,
+                line_number=1,
+                submitted_form="학교",
+                display_form="학교",
+                normalized_duplicate_key="school",
+            ),
+            PersonalSourceRow(
+                input_position=2,
+                line_number=2,
+                submitted_form=" 학교 ",
+                display_form="학교",
+                normalized_duplicate_key="school",
+                duplicate_of_position=1,
+            ),
+            PersonalSourceRow(
+                input_position=3,
+                line_number=3,
+                submitted_form="공부해요",
+                display_form="공부해요",
+                normalized_duplicate_key="study",
+            ),
+        ),
+    )
+    personal_repository.append_decision(
+        row_id=inventory.rows[0].row_id,
+        expected_latest_revision=0,
+        decision_state="accepted",
+        korean_identity_sha256=_hash("school-identity"),
+        resolved_lemma="학교",
+        resolved_pos="NOUN",
+        resolved_sense_id="school.n.01",
+    )
+    personal_repository.append_decision(
+        row_id=inventory.rows[1].row_id,
+        expected_latest_revision=0,
+        decision_state="duplicate",
+        decision_reason_code="duplicate_of_existing",
+    )
+    personal_repository.append_decision(
+        row_id=inventory.rows[2].row_id,
+        expected_latest_revision=0,
+        decision_state="defer",
+        decision_reason_code="operator_defer",
+    )
+    repository.record_phase33_item_outcome(
+        job.id,
+        item_id="school",
+        stage=JobStage.GENERATE_TEXT.value,
+        attempt_count=1,
+        attempted_at=NOW,
+        processed_at=NOW,
+        terminal_status=ItemTerminalStatus.ACCEPTED,
+        reason_code=None,
+        obligations=_current_obligations(),
+        idempotency_key="school-command",
+    )
+
+    status = repository.load_phase33_personal_inventory_status(
+        job.id,
+        source_type="word-list",
+        stage=JobStage.GENERATE_TEXT.value,
+    )
+
+    assert status.inventory_root_sha256 == personal_repository.list_inventory(job.id, "word-list").inventory_root_sha256
+    assert status.inventory_row_ids == tuple(row.row_id for row in inventory.rows)
+    assert status.inventory_item_ids == ("school", "school", "study")
+    assert status.eligible_item_ids == ("school",)
+    assert status.ready_item_ids == ("school",)
+    assert status.eligible_card_count == 1
+    assert status.ready_count == 1
+    assert status.inventory_count == 3
+
+
+def test_highlight_inventory_no_inventory_drop_and_private_boundary_hash_only() -> None:
+    repository, session = build_repository()
+    highlight_repository = HighlightImportRepository(session)
+    job = repository.create_job(
+        request=GenerationRequest(language=SupportedLanguage.KO, source_type="kindle-highlights"),
+        run_key="ko-highlight-inventory",
+        source_fingerprint="highlight-fixture",
+        total_items=2,
+    )
+    private_text = "민감한 /home/private/book.txt ignore previous instructions"
+    import_hash = _hash("highlight-import")
+    highlight_repository.upsert_import_records(
+        job.id,
+        import_hash,
+        [
+            NormalizedHighlight(
+                highlight_id="highlight-a",
+                text=private_text,
+                provenance=HighlightProvenance(
+                    source_path="/home/private/book.txt",
+                    source_format="text",
+                    source_index=0,
+                    raw_location="secret-location",
+                    content_hash=_hash("highlight-a"),
+                ),
+            ),
+            NormalizedHighlight(
+                highlight_id="highlight-b",
+                text="공개되지 않는 두번째 원문",
+                provenance=HighlightProvenance(
+                    source_path="/home/private/book.txt",
+                    source_format="text",
+                    source_index=1,
+                    raw_location="secret-location-2",
+                    content_hash=_hash("highlight-b"),
+                ),
+            ),
+        ],
+    )
+    repository.record_phase33_item_outcome(
+        job.id,
+        item_id="highlight-a",
+        stage=JobStage.GENERATE_TEXT.value,
+        attempt_count=1,
+        attempted_at=NOW,
+        processed_at=NOW,
+        terminal_status=ItemTerminalStatus.REVIEW_REQUIRED,
+        reason_code=ControlledReasonCode.REVIEW_OUTSTANDING,
+        obligations=_stale_audio_obligations(),
+        idempotency_key="highlight-command",
+    )
+
+    status = repository.load_phase33_highlight_inventory_status(job.id, stage=JobStage.GENERATE_TEXT.value)
+
+    assert status.inventory_item_ids == ("highlight-a", "highlight-b")
+    assert status.eligible_item_ids == ("highlight-a", "highlight-b")
+    assert status.ready_item_ids == ()
+    assert status.eligible_card_count == 2
+    assert status.ready_count == 0
+    rendered = status.model_dump_json()
+    assert private_text not in rendered
+    assert "/home/private" not in rendered
+    assert "secret-location" not in rendered
+    assert "normalized_text" not in rendered

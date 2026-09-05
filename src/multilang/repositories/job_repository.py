@@ -3,20 +3,36 @@
 from __future__ import annotations
 
 from collections.abc import Iterable
+from datetime import datetime
 from uuid import uuid4
 
+from pydantic import BaseModel, ConfigDict, Field
 from sqlalchemy import func, select
+from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
-from multilang.db.models import GenerationItem, GenerationJob, ProviderCallLogModel
-from multilang.domain.korean import KoreanFrequencyJobAuthority
+from multilang.db.models import (
+    GenerationItem,
+    GenerationJob,
+    GenerationRunDenominatorModel,
+    ItemProcessingFactModel,
+    ItemTerminalStatusEventModel,
+    ProviderCallLogModel,
+)
+from multilang.domain.korean import KoreanFrequencyJobAuthority, canonical_json_sha256
 from multilang.domain.jobs import (
+    ControlledReasonCode,
+    FieldObligationSummary,
     GenerationRequest,
+    ItemRunReport,
+    ItemTerminalStatus,
     JobProgressSnapshot,
     JobStage,
     JobStatus,
     ResumeDiagnostic,
 )
+from multilang.repositories.highlight_import_repository import HighlightImportRepository
+from multilang.repositories.korean_personal_source_repository import KoreanPersonalSourceRepository
 
 
 _KOREAN_OPERATION_STAGE: dict[str, str] = {
@@ -28,6 +44,53 @@ _KOREAN_OPERATION_STAGE: dict[str, str] = {
     "production_export": "full",
 }
 _KOREAN_STAGE_ORDER = {"pilot_base": 1, "pilot_audio": 2, "full": 3}
+
+
+class Phase33ProcessingFactRecord(BaseModel):
+    """Content-free processing fact for one item/stage attempt."""
+
+    model_config = ConfigDict(extra="forbid", frozen=True)
+
+    item_id: str
+    stage: str
+    attempt_count: int = Field(ge=0)
+    attempted_at: datetime | None = None
+    processed_at: datetime | None = None
+    fact_sha256: str
+
+
+class Phase33ItemStatusRecord(BaseModel):
+    """Content-free current terminal status projection for one item/stage."""
+
+    model_config = ConfigDict(extra="forbid", frozen=True)
+
+    item_id: str
+    stage: str
+    terminal_status: str
+    reason_code: str | None = None
+    attempt_count: int = Field(ge=0)
+    attempted_at: datetime | None = None
+    processed_at: datetime | None = None
+    fact_sha256: str | None = None
+    event_sha256: str
+
+
+class Phase33InventoryStatus(BaseModel):
+    """Safe inventory/status projection that keeps source inventory separate from readiness."""
+
+    model_config = ConfigDict(extra="forbid", frozen=True)
+
+    job_id: str
+    source_type: str
+    stage: str
+    inventory_root_sha256: str
+    inventory_count: int = Field(ge=0)
+    eligible_card_count: int = Field(ge=0)
+    ready_count: int = Field(ge=0)
+    inventory_row_ids: tuple[str, ...] = ()
+    inventory_item_ids: tuple[str, ...]
+    eligible_item_ids: tuple[str, ...]
+    ready_item_ids: tuple[str, ...]
 
 
 class JobRepository:
@@ -120,6 +183,271 @@ class JobRepository:
                 select(func.count(ProviderCallLogModel.id)).where(ProviderCallLogModel.job_id == job_id)
             )
             or 0
+        )
+
+    def record_phase33_attempt_fact(
+        self,
+        job_id: str,
+        *,
+        item_id: str,
+        stage: str,
+        attempt_count: int,
+        attempted_at: datetime | None,
+        processed_at: datetime | None,
+        idempotency_key: str,
+    ) -> Phase33ProcessingFactRecord:
+        """Persist one immutable attempt/processed fact without private payloads."""
+        self._require_job(job_id)
+        fact, created = self._prepare_phase33_attempt_fact(
+            job_id=job_id,
+            item_id=item_id,
+            stage=stage,
+            attempt_count=attempt_count,
+            attempted_at=attempted_at,
+            processed_at=processed_at,
+            idempotency_key=idempotency_key,
+        )
+        if created:
+            try:
+                self.session.commit()
+            except IntegrityError as exc:
+                self.session.rollback()
+                replay = self._phase33_attempt_fact(job_id, item_id, stage, attempt_count)
+                if replay is not None and replay.fact_sha256 == fact.fact_sha256:
+                    return _phase33_fact_record(replay)
+                raise ValueError("phase33 processing fact conflict") from exc
+        return _phase33_fact_record(fact)
+
+    def record_phase33_item_outcome(
+        self,
+        job_id: str,
+        *,
+        item_id: str,
+        stage: str,
+        attempt_count: int,
+        attempted_at: datetime | None,
+        processed_at: datetime | None,
+        terminal_status: ItemTerminalStatus | str,
+        reason_code: ControlledReasonCode | str | None,
+        obligations: FieldObligationSummary,
+        idempotency_key: str,
+    ) -> Phase33ItemStatusRecord:
+        """Persist one item-local outcome as separate attempt and terminal-status facts."""
+        self._require_job(job_id)
+        fact, fact_created = self._prepare_phase33_attempt_fact(
+            job_id=job_id,
+            item_id=item_id,
+            stage=stage,
+            attempt_count=attempt_count,
+            attempted_at=attempted_at,
+            processed_at=processed_at,
+            idempotency_key=idempotency_key,
+        )
+        event, event_created = self._prepare_phase33_terminal_event(
+            job_id=job_id,
+            item_id=item_id,
+            stage=stage,
+            terminal_status=_terminal_status_value(terminal_status),
+            reason_code=_reason_code_value(reason_code),
+            obligations=obligations,
+            idempotency_key=idempotency_key,
+        )
+        if fact_created or event_created:
+            try:
+                self.session.commit()
+            except IntegrityError as exc:
+                self.session.rollback()
+                replay_fact = self._phase33_attempt_fact(job_id, item_id, stage, attempt_count)
+                replay_event = self._phase33_terminal_event(job_id, item_id, stage)
+                if (
+                    replay_fact is not None
+                    and replay_event is not None
+                    and replay_fact.fact_sha256 == fact.fact_sha256
+                    and replay_event.event_sha256 == event.event_sha256
+                ):
+                    return _phase33_status_record(replay_event, replay_fact)
+                raise ValueError("phase33 item outcome conflict") from exc
+        return _phase33_status_record(event, fact)
+
+    def record_phase33_skipped_current(
+        self,
+        job_id: str,
+        *,
+        item_id: str,
+        stage: str,
+        terminal_status: ItemTerminalStatus | str,
+        obligations: FieldObligationSummary,
+    ) -> Phase33ItemStatusRecord:
+        """Record a current prior outcome skipped during this run."""
+        return self.record_phase33_item_outcome(
+            job_id,
+            item_id=item_id,
+            stage=stage,
+            attempt_count=0,
+            attempted_at=None,
+            processed_at=None,
+            terminal_status=terminal_status,
+            reason_code=None,
+            obligations=obligations,
+            idempotency_key="skipped-current",
+        )
+
+    def list_phase33_item_statuses(self, job_id: str, *, stage: str) -> tuple[Phase33ItemStatusRecord, ...]:
+        self._require_job(job_id)
+        events = self.session.scalars(
+            select(ItemTerminalStatusEventModel)
+            .where(
+                ItemTerminalStatusEventModel.job_id == job_id,
+                ItemTerminalStatusEventModel.stage == stage,
+            )
+            .order_by(ItemTerminalStatusEventModel.item_id.asc())
+        )
+        return tuple(
+            _phase33_status_record(event, self._latest_phase33_attempt_fact(job_id, event.item_id, stage))
+            for event in events
+        )
+
+    def list_phase33_processing_facts(self, job_id: str, *, stage: str) -> tuple[Phase33ProcessingFactRecord, ...]:
+        self._require_job(job_id)
+        rows = self.session.scalars(
+            select(ItemProcessingFactModel)
+            .where(
+                ItemProcessingFactModel.job_id == job_id,
+                ItemProcessingFactModel.stage == stage,
+            )
+            .order_by(ItemProcessingFactModel.item_id.asc(), ItemProcessingFactModel.attempt_count.asc())
+        )
+        return tuple(_phase33_fact_record(row) for row in rows)
+
+    def recompute_phase33_run_report(
+        self,
+        job_id: str,
+        *,
+        stage: str,
+        eligible_item_ids: tuple[str, ...],
+        duplicate_item_ids: tuple[str, ...] = (),
+        deferred_item_ids: tuple[str, ...] = (),
+    ) -> ItemRunReport:
+        """Recompute the seven-count report from persisted item facts and statuses."""
+        self._require_job(job_id)
+        facts_by_item = self._phase33_facts_by_item(job_id, stage)
+        status_by_item = self._phase33_status_by_item(job_id, stage)
+
+        attempted_ids = tuple(
+            item_id
+            for item_id in eligible_item_ids
+            if any(fact.attempt_count > 0 for fact in facts_by_item.get(item_id, ()))
+        )
+        attempted_set = set(attempted_ids)
+        skipped_ids = tuple(
+            item_id
+            for item_id in eligible_item_ids
+            if item_id not in attempted_set
+            and any(fact.attempt_count == 0 for fact in facts_by_item.get(item_id, ()))
+        )
+        skipped_set = set(skipped_ids)
+        processed_ids = tuple(
+            item_id
+            for item_id in attempted_ids
+            if any(fact.attempt_count > 0 and fact.processed_at is not None for fact in facts_by_item.get(item_id, ()))
+        )
+        not_attempted_ids = tuple(
+            item_id
+            for item_id in eligible_item_ids
+            if item_id not in attempted_set and item_id not in skipped_set
+        )
+        accepted_ids = _eligible_ids_with_status(
+            eligible_item_ids,
+            status_by_item,
+            ItemTerminalStatus.ACCEPTED.value,
+        )
+        review_required_ids = _eligible_ids_with_status(
+            eligible_item_ids,
+            status_by_item,
+            ItemTerminalStatus.REVIEW_REQUIRED.value,
+        )
+        failed_ids = _eligible_ids_with_status(
+            eligible_item_ids,
+            status_by_item,
+            ItemTerminalStatus.FAILED.value,
+        )
+        field_obligations = {
+            item_id: _obligations_for_status(status_by_item[item_id])
+            for item_id in (*accepted_ids, *review_required_ids)
+            if item_id in status_by_item
+        }
+        report = ItemRunReport(
+            eligible_item_ids=eligible_item_ids,
+            attempted_item_ids=attempted_ids,
+            processed_item_ids=processed_ids,
+            skipped_current_item_ids=skipped_ids,
+            not_attempted_item_ids=not_attempted_ids,
+            accepted_item_ids=accepted_ids,
+            review_required_item_ids=review_required_ids,
+            failed_item_ids=failed_ids,
+            duplicate_item_ids=duplicate_item_ids,
+            deferred_item_ids=deferred_item_ids,
+            field_obligations=field_obligations,
+        )
+        self._record_phase33_denominator(job_id, stage, report)
+        return report
+
+    def load_phase33_personal_inventory_status(
+        self,
+        job_id: str,
+        *,
+        source_type: str,
+        stage: str,
+    ) -> Phase33InventoryStatus:
+        inventory = KoreanPersonalSourceRepository(self.session).list_inventory(job_id, source_type)
+        status_by_item = self._phase33_status_by_item(job_id, stage)
+        eligible_item_ids = tuple(
+            row.item_key
+            for row in inventory.rows
+            if row.duplicate_of_position is None
+            and row.latest_decision is not None
+            and row.latest_decision.decision_state in {"accepted", "bridge"}
+        )
+        ready_item_ids = tuple(
+            item_id
+            for item_id in eligible_item_ids
+            if status_by_item.get(item_id) == ItemTerminalStatus.ACCEPTED.value
+        )
+        return Phase33InventoryStatus(
+            job_id=job_id,
+            source_type=source_type,
+            stage=stage,
+            inventory_root_sha256=inventory.inventory_root_sha256,
+            inventory_count=len(inventory.rows),
+            eligible_card_count=len(eligible_item_ids),
+            ready_count=len(ready_item_ids),
+            inventory_row_ids=tuple(row.row_id for row in inventory.rows),
+            inventory_item_ids=tuple(row.item_key for row in inventory.rows),
+            eligible_item_ids=eligible_item_ids,
+            ready_item_ids=ready_item_ids,
+        )
+
+    def load_phase33_highlight_inventory_status(self, job_id: str, *, stage: str) -> Phase33InventoryStatus:
+        inventory = HighlightImportRepository(self.session).list_korean_safe_inventory(job_id)
+        status_by_item = self._phase33_status_by_item(job_id, stage)
+        eligible_item_ids = tuple(row.candidate_id for row in inventory.rows)
+        ready_item_ids = tuple(
+            item_id
+            for item_id in eligible_item_ids
+            if status_by_item.get(item_id) == ItemTerminalStatus.ACCEPTED.value
+        )
+        return Phase33InventoryStatus(
+            job_id=job_id,
+            source_type="kindle-highlights",
+            stage=stage,
+            inventory_root_sha256=inventory.inventory_root_sha256,
+            inventory_count=inventory.candidate_count,
+            eligible_card_count=len(eligible_item_ids),
+            ready_count=len(ready_item_ids),
+            inventory_row_ids=tuple(row.excerpt_revision_id for row in inventory.rows),
+            inventory_item_ids=eligible_item_ids,
+            eligible_item_ids=eligible_item_ids,
+            ready_item_ids=ready_item_ids,
         )
 
     def list_completed_item_keys(self, run_key: str) -> set[str]:
@@ -354,6 +682,223 @@ class JobRepository:
         self.session.refresh(job)
         return self._snapshot(job)
 
+    def _prepare_phase33_attempt_fact(
+        self,
+        *,
+        job_id: str,
+        item_id: str,
+        stage: str,
+        attempt_count: int,
+        attempted_at: datetime | None,
+        processed_at: datetime | None,
+        idempotency_key: str,
+    ) -> tuple[ItemProcessingFactModel, bool]:
+        if attempt_count < 0:
+            raise ValueError("attempt_count must be non-negative")
+        if attempt_count == 0 and (attempted_at is not None or processed_at is not None):
+            raise ValueError("skipped-current facts cannot carry attempt timestamps")
+        if attempt_count > 0 and attempted_at is None:
+            raise ValueError("attempted facts require attempted_at")
+        if attempted_at is not None and processed_at is not None and processed_at < attempted_at:
+            raise ValueError("processed_at cannot be before attempted_at")
+        payload = _phase33_fact_payload(
+            job_id=job_id,
+            item_id=item_id,
+            stage=stage,
+            attempt_count=attempt_count,
+            attempted_at=attempted_at,
+            processed_at=processed_at,
+            idempotency_key=idempotency_key,
+        )
+        fact_sha256 = canonical_json_sha256(payload)
+        existing = self._phase33_attempt_fact(job_id, item_id, stage, attempt_count)
+        if existing is not None:
+            if existing.fact_sha256 != fact_sha256:
+                raise ValueError("phase33 processing fact conflict")
+            return existing, False
+        fact = ItemProcessingFactModel(
+            id=str(uuid4()),
+            job_id=job_id,
+            item_id=item_id,
+            stage=stage,
+            attempt_count=attempt_count,
+            attempted_at=attempted_at,
+            processed_at=processed_at,
+            fact_sha256=fact_sha256,
+        )
+        self.session.add(fact)
+        return fact, True
+
+    def _prepare_phase33_terminal_event(
+        self,
+        *,
+        job_id: str,
+        item_id: str,
+        stage: str,
+        terminal_status: str,
+        reason_code: str | None,
+        obligations: FieldObligationSummary,
+        idempotency_key: str,
+    ) -> tuple[ItemTerminalStatusEventModel, bool]:
+        if terminal_status not in {
+            ItemTerminalStatus.ACCEPTED.value,
+            ItemTerminalStatus.REVIEW_REQUIRED.value,
+            ItemTerminalStatus.FAILED.value,
+        }:
+            raise ValueError("phase33 terminal status must be accepted, review_required, or failed")
+        if terminal_status == ItemTerminalStatus.ACCEPTED.value and not obligations.all_required_current:
+            raise ValueError("accepted phase33 outcomes require current obligations")
+        payload = _phase33_event_payload(
+            job_id=job_id,
+            item_id=item_id,
+            stage=stage,
+            terminal_status=terminal_status,
+            reason_code=reason_code,
+            obligations=obligations,
+            idempotency_key=idempotency_key,
+        )
+        event_sha256 = canonical_json_sha256(payload)
+        existing = self._phase33_terminal_event(job_id, item_id, stage)
+        if existing is not None:
+            if existing.event_sha256 != event_sha256:
+                raise ValueError("phase33 terminal status conflict")
+            return existing, False
+        event = ItemTerminalStatusEventModel(
+            id=str(uuid4()),
+            job_id=job_id,
+            item_id=item_id,
+            stage=stage,
+            terminal_status=terminal_status,
+            reason_code=reason_code,
+            event_sha256=event_sha256,
+        )
+        self.session.add(event)
+        return event, True
+
+    def _phase33_attempt_fact(
+        self,
+        job_id: str,
+        item_id: str,
+        stage: str,
+        attempt_count: int,
+    ) -> ItemProcessingFactModel | None:
+        return self.session.scalar(
+            select(ItemProcessingFactModel).where(
+                ItemProcessingFactModel.job_id == job_id,
+                ItemProcessingFactModel.item_id == item_id,
+                ItemProcessingFactModel.stage == stage,
+                ItemProcessingFactModel.attempt_count == attempt_count,
+            )
+        )
+
+    def _latest_phase33_attempt_fact(
+        self,
+        job_id: str,
+        item_id: str,
+        stage: str,
+    ) -> ItemProcessingFactModel | None:
+        return self.session.scalar(
+            select(ItemProcessingFactModel)
+            .where(
+                ItemProcessingFactModel.job_id == job_id,
+                ItemProcessingFactModel.item_id == item_id,
+                ItemProcessingFactModel.stage == stage,
+            )
+            .order_by(ItemProcessingFactModel.attempt_count.desc(), ItemProcessingFactModel.created_at.desc())
+            .limit(1)
+        )
+
+    def _phase33_terminal_event(
+        self,
+        job_id: str,
+        item_id: str,
+        stage: str,
+    ) -> ItemTerminalStatusEventModel | None:
+        return self.session.scalar(
+            select(ItemTerminalStatusEventModel).where(
+                ItemTerminalStatusEventModel.job_id == job_id,
+                ItemTerminalStatusEventModel.item_id == item_id,
+                ItemTerminalStatusEventModel.stage == stage,
+            )
+        )
+
+    def _phase33_facts_by_item(
+        self,
+        job_id: str,
+        stage: str,
+    ) -> dict[str, tuple[ItemProcessingFactModel, ...]]:
+        rows = self.session.scalars(
+            select(ItemProcessingFactModel)
+            .where(
+                ItemProcessingFactModel.job_id == job_id,
+                ItemProcessingFactModel.stage == stage,
+            )
+            .order_by(ItemProcessingFactModel.item_id.asc(), ItemProcessingFactModel.attempt_count.asc())
+        )
+        facts: dict[str, list[ItemProcessingFactModel]] = {}
+        for row in rows:
+            facts.setdefault(row.item_id, []).append(row)
+        return {item_id: tuple(item_facts) for item_id, item_facts in facts.items()}
+
+    def _phase33_status_by_item(self, job_id: str, stage: str) -> dict[str, str]:
+        rows = self.session.scalars(
+            select(ItemTerminalStatusEventModel).where(
+                ItemTerminalStatusEventModel.job_id == job_id,
+                ItemTerminalStatusEventModel.stage == stage,
+            )
+        )
+        return {row.item_id: row.terminal_status for row in rows}
+
+    def _record_phase33_denominator(self, job_id: str, stage: str, report: ItemRunReport) -> None:
+        payload = {
+            "job_id": job_id,
+            "stage": stage,
+            "expected_count": report.total_eligible,
+            "accepted_count": report.accepted,
+            "review_required_count": report.review_required,
+            "failed_count": report.failed,
+            "eligible_item_ids": report.eligible_item_ids,
+            "accepted_item_ids": report.accepted_item_ids,
+            "review_required_item_ids": report.review_required_item_ids,
+            "failed_item_ids": report.failed_item_ids,
+        }
+        denominator_sha256 = canonical_json_sha256(payload)
+        existing = self.session.scalar(
+            select(GenerationRunDenominatorModel).where(
+                GenerationRunDenominatorModel.job_id == job_id,
+                GenerationRunDenominatorModel.stage == stage,
+            )
+        )
+        if existing is not None:
+            if existing.denominator_sha256 != denominator_sha256:
+                raise ValueError("phase33 denominator conflict")
+            return
+        self.session.add(
+            GenerationRunDenominatorModel(
+                id=str(uuid4()),
+                job_id=job_id,
+                stage=stage,
+                expected_count=report.total_eligible,
+                accepted_count=report.accepted,
+                review_required_count=report.review_required,
+                failed_count=report.failed,
+                denominator_sha256=denominator_sha256,
+            )
+        )
+        try:
+            self.session.commit()
+        except IntegrityError as exc:
+            self.session.rollback()
+            replay = self.session.scalar(
+                select(GenerationRunDenominatorModel).where(
+                    GenerationRunDenominatorModel.job_id == job_id,
+                    GenerationRunDenominatorModel.stage == stage,
+                )
+            )
+            if replay is not None and replay.denominator_sha256 == denominator_sha256:
+                return
+            raise ValueError("phase33 denominator conflict") from exc
+
     def _bind_korean_authority(
         self,
         job_id: str,
@@ -476,3 +1021,112 @@ class JobRepository:
             retrying_items=job.retrying_items,
             skipped_duplicates=job.skipped_duplicates,
         )
+
+
+def _phase33_fact_payload(
+    *,
+    job_id: str,
+    item_id: str,
+    stage: str,
+    attempt_count: int,
+    attempted_at: datetime | None,
+    processed_at: datetime | None,
+    idempotency_key: str,
+) -> dict[str, object]:
+    return {
+        "kind": "phase33_processing_fact",
+        "job_id": job_id,
+        "item_id": item_id,
+        "stage": stage,
+        "attempt_count": attempt_count,
+        "attempted_at": _datetime_json(attempted_at),
+        "processed_at": _datetime_json(processed_at),
+        "idempotency_key_sha256": canonical_json_sha256({"idempotency_key": idempotency_key}),
+    }
+
+
+def _phase33_event_payload(
+    *,
+    job_id: str,
+    item_id: str,
+    stage: str,
+    terminal_status: str,
+    reason_code: str | None,
+    obligations: FieldObligationSummary,
+    idempotency_key: str,
+) -> dict[str, object]:
+    return {
+        "kind": "phase33_terminal_status_event",
+        "job_id": job_id,
+        "item_id": item_id,
+        "stage": stage,
+        "terminal_status": terminal_status,
+        "reason_code": reason_code,
+        "obligations": obligations.model_dump(mode="json"),
+        "idempotency_key_sha256": canonical_json_sha256({"idempotency_key": idempotency_key}),
+    }
+
+
+def _phase33_fact_record(row: ItemProcessingFactModel) -> Phase33ProcessingFactRecord:
+    return Phase33ProcessingFactRecord(
+        item_id=row.item_id,
+        stage=row.stage,
+        attempt_count=row.attempt_count,
+        attempted_at=row.attempted_at,
+        processed_at=row.processed_at,
+        fact_sha256=row.fact_sha256,
+    )
+
+
+def _phase33_status_record(
+    event: ItemTerminalStatusEventModel,
+    fact: ItemProcessingFactModel | None,
+) -> Phase33ItemStatusRecord:
+    return Phase33ItemStatusRecord(
+        item_id=event.item_id,
+        stage=event.stage,
+        terminal_status=event.terminal_status,
+        reason_code=event.reason_code,
+        attempt_count=fact.attempt_count if fact is not None else 0,
+        attempted_at=fact.attempted_at if fact is not None else None,
+        processed_at=fact.processed_at if fact is not None else None,
+        fact_sha256=fact.fact_sha256 if fact is not None else None,
+        event_sha256=event.event_sha256,
+    )
+
+
+def _eligible_ids_with_status(
+    eligible_item_ids: tuple[str, ...],
+    status_by_item: dict[str, str],
+    status: str,
+) -> tuple[str, ...]:
+    return tuple(item_id for item_id in eligible_item_ids if status_by_item.get(item_id) == status)
+
+
+def _obligations_for_status(status: str) -> FieldObligationSummary:
+    if status == ItemTerminalStatus.ACCEPTED.value:
+        return FieldObligationSummary(
+            ai_review_current=True,
+            integrity_current=True,
+            word_audio_required=True,
+            word_audio_current=True,
+            sentence_audio_required=True,
+            sentence_audio_current=True,
+        )
+    return FieldObligationSummary()
+
+
+def _terminal_status_value(value: ItemTerminalStatus | str) -> str:
+    return value.value if isinstance(value, ItemTerminalStatus) else value
+
+
+def _reason_code_value(value: ControlledReasonCode | str | None) -> str | None:
+    if value is None:
+        return None
+    return value.value if isinstance(value, ControlledReasonCode) else value
+
+
+def _datetime_json(value: datetime | None) -> str | None:
+    if value is None:
+        return None
+    return value.isoformat()
