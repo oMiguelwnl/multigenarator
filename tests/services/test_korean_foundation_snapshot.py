@@ -57,10 +57,10 @@ EXPECTED_V2_CANDIDATE_SHA256 = {
 }
 EXPECTED_V2_REQUEST_SHA256 = {
     "31-CURRICULUM-REVIEW.md": (
-        "df52d78f2bcd3a89e9589ea68d645df02841a2f9017394d14c833cb7580b36cc"
+        "bd3b29fde3cb360564c47efab3a0063512f015bc100acd6789756ff1db0c0ddd"
     ),
     "31-AUDIO-PLAYBACK-REVIEW.md": (
-        "4e28149921c9602c78f1e15633923b55eaf572993fce506651d6d474acf73035"
+        "2ed5f47d8952569774f28fdf886a75fa4588312839845cbff8ed8da828e5f029"
     ),
 }
 CURRENT_AI_AGGREGATE_ROOT = (
@@ -454,7 +454,7 @@ def test_missing_active_pointer_fails_before_any_candidate_fallback(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     api = _snapshot()
-    monkeypatch.setattr(api, "_PROJECT_ROOT", tmp_path)
+    _install_snapshot_fixture_paths(api, monkeypatch, tmp_path)
 
     with pytest.raises(api.KoreanFoundationSnapshotError) as exc_info:
         api.resolve_active_korean_foundation_snapshot()
@@ -1809,8 +1809,16 @@ def test_active_provenance_rejects_pointer_drift_during_final_snapshot_reread(
         )
 
 
-def test_repository_has_no_active_pointer_or_committed_snapshot_tree() -> None:
+def test_repository_active_pointer_references_committed_snapshot_tree() -> None:
     api = _snapshot()
 
-    assert not api.ACTIVE_KOREAN_FOUNDATIONS_POINTER_PATH.exists()
-    assert not api.KOREAN_FOUNDATION_SNAPSHOT_ROOT.exists()
+    pointer_path = api.ACTIVE_KOREAN_FOUNDATIONS_POINTER_PATH
+    snapshot_root = api.KOREAN_FOUNDATION_SNAPSHOT_ROOT
+    assert pointer_path.is_file()
+    assert snapshot_root.is_dir()
+    pointer = json.loads(pointer_path.read_text(encoding="utf-8"))
+    assert pointer["schema_version"] == 2
+    snapshot_relpath = Path(pointer["snapshot_relpath"])
+    assert snapshot_relpath.parts[:1] == ("snapshots",)
+    assert ".." not in snapshot_relpath.parts
+    assert (Path("data/korean_foundations") / snapshot_relpath).is_dir()

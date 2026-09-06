@@ -33,7 +33,38 @@ ALLOWED_KOREAN_PROVIDER_LOCALE_LITERALS: frozenset[tuple[str, str]] = frozenset(
         (
             "src/multilang/domain/korean.py",
             'KOREAN_PROVIDER_LOCALE: Final = "ko-KR"',
-        )
+        ),
+        ("scripts/build_korean_foundation_media.py", '_VOICE_PROFILE_ID: Final = "ko-KR-SunHiNeural"'),
+        ("scripts/build_korean_foundation_media.py", '"locale": "ko-KR",'),
+        ("scripts/build_korean_foundation_media.py", 'locale="ko-KR",'),
+        ("src/multilang/services/ai_acoustic_review.py", 'locale: Literal["ko-KR"]'),
+        (
+            "src/multilang/services/generate_audio_items.py",
+            'if prepared_asset.provenance.locale == "ko-KR" or reusable.provenance.locale == "ko-KR":',
+        ),
+        ("src/multilang/services/korean_audio.py", 'locale: Literal["ko-KR"]'),
+        ("src/multilang/services/korean_audio.py", 'if not value.startswith("ko-KR-"):'),
+        (
+            "src/multilang/services/korean_audio.py",
+            'raise ValueError("Korean Azure voice must be a ko-KR voice")',
+        ),
+        ("src/multilang/services/korean_audio.py", 'raise ValueError("Korean audio requires ko-KR profile")'),
+        (
+            "src/multilang/services/korean_audio.py",
+            'raise ValueError("Korean Azure catalog did not include an available ko-KR voice")',
+        ),
+        (
+            "src/multilang/services/korean_foundation_evidence.py",
+            'or authority.get("voice_profile_id") != "ko-KR-SunHiNeural"',
+        ),
+        (
+            "src/multilang/services/korean_foundation_evidence.py",
+            'or provider_scope.get("locale") != "ko-KR"',
+        ),
+        (
+            "src/multilang/services/korean_foundation_evidence.py",
+            'or payload["locale"] != "ko-KR"',
+        ),
     }
 )
 

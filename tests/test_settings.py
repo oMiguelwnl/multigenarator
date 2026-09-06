@@ -86,6 +86,25 @@ def test_settings_load_local_dotenv_file(tmp_path: Path, monkeypatch) -> None:
     assert settings.default_retry_attempts == 7
 
 
+def test_settings_ignore_dotenv_when_provider_or_network_forbidden(
+    tmp_path: Path,
+    monkeypatch,
+) -> None:
+    dotenv_file = tmp_path / ".env"
+    dotenv_file.write_text(
+        "MULTILANG_AZURE_SPEECH_KEY=dotenv-secret\n"
+        "MULTILANG_AZURE_SPEECH_REGION=dotenv-region\n",
+        encoding="utf-8",
+    )
+    monkeypatch.chdir(tmp_path)
+    monkeypatch.setenv("MULTILANG_FORBID_PROVIDERS", "1")
+
+    settings = Settings()
+
+    assert settings.azure_speech_key is None
+    assert settings.azure_speech_region is None
+
+
 def test_webdav_settings_default_to_unconfigured() -> None:
     settings = Settings(_env_file=None)
 

@@ -161,10 +161,10 @@ def test_review_and_media_default_to_exact_v2_bundle_with_all_gates_pending() ->
         "545bd060992e9a17d7a95a3397d774678c3cb3e3cddbe593e93c949f9b12326d"
     )
     assert _sha256_file(PHASE_ROOT / "31-CURRICULUM-REVIEW.md") == (
-        "df52d78f2bcd3a89e9589ea68d645df02841a2f9017394d14c833cb7580b36cc"
+        "bd3b29fde3cb360564c47efab3a0063512f015bc100acd6789756ff1db0c0ddd"
     )
     assert _sha256_file(PHASE_ROOT / "31-AUDIO-PLAYBACK-REVIEW.md") == (
-        "4e28149921c9602c78f1e15633923b55eaf572993fce506651d6d474acf73035"
+        "2ed5f47d8952569774f28fdf886a75fa4588312839845cbff8ed8da828e5f029"
     )
 
     assert curation.manifest_version == "korean-foundations-v2-curation"

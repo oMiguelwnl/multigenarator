@@ -324,7 +324,7 @@ def test_media_public_contract_has_no_path_or_url_production_inputs() -> None:
         assert forbidden not in source
 
 
-def test_committed_media_candidate_has_every_slot_pending_inactive_and_byte_free() -> None:
+def test_committed_media_candidate_has_every_slot_pending_candidate_only_and_byte_free() -> None:
     api = _media()
     curriculum = _curriculum()
     manifest = api.load_pending_korean_foundation_media_manifest()
@@ -366,7 +366,6 @@ def test_committed_media_candidate_has_every_slot_pending_inactive_and_byte_free
 
     media_root = Path("data/korean_foundations/media")
     assert not media_root.exists()
-    assert not Path("data/korean_foundations/active-foundations.json").exists()
 
 
 def test_pending_candidate_is_readable_but_can_never_satisfy_readiness(
@@ -731,7 +730,7 @@ def test_fixture_validation_does_not_mutate_candidates_pointer_or_call_resolver(
     before_history = history_path.read_bytes()
     before_curation = curation_path.read_bytes()
     pointer = Path("data/korean_foundations/active-foundations.json")
-    assert not pointer.exists()
+    before_pointer = pointer.read_bytes() if pointer.exists() else None
     calls = 0
 
     def forbidden_resolver() -> object:
@@ -747,7 +746,10 @@ def test_fixture_validation_does_not_mutate_candidates_pointer_or_call_resolver(
     assert candidate_path.read_bytes() == before_candidate
     assert history_path.read_bytes() == before_history
     assert curation_path.read_bytes() == before_curation
-    assert not pointer.exists()
+    if before_pointer is None:
+        assert not pointer.exists()
+    else:
+        assert pointer.read_bytes() == before_pointer
 
 
 def test_active_media_entrypoints_resolve_exactly_once_each(

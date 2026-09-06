@@ -1,5 +1,6 @@
 """Runtime settings for Multilang."""
 
+import os
 from pathlib import Path
 from typing import Literal
 
@@ -137,3 +138,11 @@ class Settings(BaseSettings):
     supported_languages: list[SupportedLanguageCode] = Field(
         default_factory=lambda: list(DEFAULT_SUPPORTED_LANGUAGES)
     )
+
+    def __init__(self, **values: object) -> None:
+        if (
+            os.environ.get("MULTILANG_FORBID_PROVIDERS") == "1"
+            or os.environ.get("MULTILANG_FORBID_NETWORK") == "1"
+        ):
+            values.setdefault("_env_file", None)
+        super().__init__(**values)

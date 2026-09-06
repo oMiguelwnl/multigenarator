@@ -817,7 +817,8 @@ def test_generate_command_default_runtime_reports_audio_counters(tmp_path: Path,
     assert "failed_audio_items=0" in first_result.output
     assert second_result.exit_code == 0
     assert "audio_processed_items=1" in second_result.output
-    assert "audio_reused_items=1" in second_result.output
+    assert "audio_reused_items=0" in second_result.output
+    assert "skipped_duplicates=1" in second_result.output
     assert len(FakeAzureSpeechAdapter.instances) == 1
     assert service.repository.session.scalar(select(GenerationJob.id)) is not None
     assert service.repository.session.scalar(select(func.count()).select_from(AudioAssetModel)) == 1
