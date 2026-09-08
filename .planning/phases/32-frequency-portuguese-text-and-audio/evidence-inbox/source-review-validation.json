@@ -1,0 +1,15 @@
+{
+  "accepted_count": 3000,
+  "aggregate_file_sha256": "a4654937079ed7e4ef618cb1b276e93254f1ae8c34ae5dcd1bd4234a6253af57",
+  "aggregate_sha256": "24fb03999ea744be64c445bb9de704e40c29ad24ee4120e430a110fcfa0fa35a",
+  "batch_root_sha256": "91ec1fd958bcf0b54a01061c112cb3e43608ce4bc7967f0afddeb763248fada2",
+  "consensus_file_sha256": "7a263fec6200f44d0f9ac3211fac931f94f6ca05f4d5df5ea3522eead8f7d19e",
+  "decision_root_sha256": "dfdb177261413f4f9b7089ff4eb25243e40b94be1cd88c57752794c9ede3c8ae",
+  "max_batch_size": 100,
+  "receipt_count": 60,
+  "receipt_root_sha256": "9c9ad40e841e06ae7f7a60ee5055d156a7fb5deac0f4476b769e001e65b2a9c9",
+  "rejected_count": 2965,
+  "schema_version": "korean-source-review-validation-v1",
+  "status": "service_written",
+  "total_dispositions": 5965
+}

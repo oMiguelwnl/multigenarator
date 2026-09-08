@@ -1,0 +1,21 @@
+{
+  "accepted_count": 3000,
+  "active": false,
+  "active_frequency_pointer_present": false,
+  "bundle_sha256": "d235d962f706ce95822b00ec4dc65d4fa55b96b4e28238720adf0df5cf86582a",
+  "grants_runtime_activation": false,
+  "inventory_sha256": "209a98c134bc9c65ecca459dc71cc9065ee8b1e24700071573b09deea028ab3a",
+  "level_counts": {
+    "1": 1000,
+    "2": 1000,
+    "3": 1000
+  },
+  "production_asset_path_present": false,
+  "rejection_count": 2965,
+  "rejection_sha256": "a636fce80c3f786796915e73253a72dbe00ebde76db2119721b61218b43b1a1d",
+  "report_sha256": "938894ddd3949c3a9e000643d1618e6aecd34ffe4581d43cb5adb2591ee58e35",
+  "retrieval_sha256": "3b49681f05d6a7490c13da2a2847e433effdf65da409fd295792d6ee33685064",
+  "schema_version": "korean-source-build-validation-v1",
+  "source_bytes_sha256": "3b49681f05d6a7490c13da2a2847e433effdf65da409fd295792d6ee33685064",
+  "status": "valid"
+}

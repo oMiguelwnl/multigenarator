@@ -1,0 +1,811 @@
+{
+  "batch_id": "batch-4101",
+  "build_result_sha256": "b6beb6d5e49a8616d77a8a7515cdcc07cdfbd017eae564297a5c2f6614d15b6c",
+  "bundle_sha256": "d235d962f706ce95822b00ec4dc65d4fa55b96b4e28238720adf0df5cf86582a",
+  "decisions": [
+    {
+      "disposition": "rejected",
+      "risk_codes": [
+        "source-disposition-review"
+      ],
+      "source_rank": 4101,
+      "subject_sha256": "3679cb5d29c20369bb3e3aa9fe6fca47683129fdbf608d7713cb2733d24b0e6a"
+    },
+    {
+      "disposition": "rejected",
+      "risk_codes": [
+        "source-disposition-review"
+      ],
+      "source_rank": 4102,
+      "subject_sha256": "f3d7378cc05c5a6c5f8b5af460ce8bf6d40e7b76398900b53338d49258353ca3"
+    },
+    {
+      "disposition": "rejected",
+      "risk_codes": [
+        "source-disposition-review"
+      ],
+      "source_rank": 4103,
+      "subject_sha256": "1890e18ab93b5a9d8b8b6e727f85d75c43e44da9a51e922a560f81d2f358ef3a"
+    },
+    {
+      "disposition": "rejected",
+      "risk_codes": [
+        "source-disposition-review"
+      ],
+      "source_rank": 4104,
+      "subject_sha256": "7b93c6e36a55836edba5f0b1ae4504c7e171e2f00fe15cc8cd4c7a5130904382"
+    },
+    {
+      "disposition": "rejected",
+      "risk_codes": [
+        "source-disposition-review"
+      ],
+      "source_rank": 4105,
+      "subject_sha256": "c881a59ac774f79734fca841a433d64d4c9a19aa0f7c73d40bf11b6e348bab29"
+    },
+    {
+      "disposition": "rejected",
+      "risk_codes": [
+        "source-disposition-review"
+      ],
+      "source_rank": 4106,
+      "subject_sha256": "68e4c6982900c4d79b9b96b064d8a3857ff5db538c5156b0e11d77e4f12357f4"
+    },
+    {
+      "disposition": "rejected",
+      "risk_codes": [
+        "source-disposition-review"
+      ],
+      "source_rank": 4107,
+      "subject_sha256": "f3ce95f24b53aff6130d973bcdf8d264758480d41f9e191236a69ca1620f4053"
+    },
+    {
+      "disposition": "rejected",
+      "risk_codes": [
+        "source-disposition-review"
+      ],
+      "source_rank": 4108,
+      "subject_sha256": "346844b757542d6032a545267da28a98625f45b81555b08918bdd333fb106f62"
+    },
+    {
+      "disposition": "rejected",
+      "risk_codes": [
+        "source-disposition-review"
+      ],
+      "source_rank": 4109,
+      "subject_sha256": "253d1510caf5362045ce50b1bdc33758fc4b3fd6ddc552d8dc0619784bd9c7d1"
+    },
+    {
+      "disposition": "rejected",
+      "risk_codes": [
+        "source-disposition-review"
+      ],
+      "source_rank": 4110,
+      "subject_sha256": "f2ac621505b9a16cfdcffe074945c58ffa53288d31c5e2de2dfd6480bd73cf89"
+    },
+    {
+      "disposition": "rejected",
+      "risk_codes": [
+        "source-disposition-review"
+      ],
+      "source_rank": 4111,
+      "subject_sha256": "33bbf6ef8ab2932a6cd7484b66a030b0b494170b0f7eb9b32fc7d0a6d9e20c98"
+    },
+    {
+      "disposition": "rejected",
+      "risk_codes": [
+        "source-disposition-review"
+      ],
+      "source_rank": 4112,
+      "subject_sha256": "563dc6128b3ae4c69cdc56ef6b0eb9ca3d82854684d66f23534c830a10aaa090"
+    },
+    {
+      "disposition": "rejected",
+      "risk_codes": [
+        "source-disposition-review"
+      ],
+      "source_rank": 4113,
+      "subject_sha256": "ca524e3be5cd63982bd3fb72e6a1db1b897257bc0560ee27cf7304a99ea0942a"
+    },
+    {
+      "disposition": "rejected",
+      "risk_codes": [
+        "source-disposition-review"
+      ],
+      "source_rank": 4114,
+      "subject_sha256": "7e7fd59a5a975022aed7e668f9607fae589c8bb18d719e9a032228b803c1817b"
+    },
+    {
+      "disposition": "rejected",
+      "risk_codes": [
+        "source-disposition-review"
+      ],
+      "source_rank": 4115,
+      "subject_sha256": "302bae1279382d2bbaa71334c8a2417c3a7ec2f84fe8ae8e18b03627804659d8"
+    },
+    {
+      "disposition": "rejected",
+      "risk_codes": [
+        "source-disposition-review"
+      ],
+      "source_rank": 4116,
+      "subject_sha256": "34c696dca4c299cd9c384c9b395a0f63a52c3fee6f55c7e710a24c2eed0dcf3f"
+    },
+    {
+      "disposition": "rejected",
+      "risk_codes": [
+        "source-disposition-review"
+      ],
+      "source_rank": 4117,
+      "subject_sha256": "2c849007ec0abc36fc81df2e1b80a9d470628e7d69ccb0b887efde9fff00a5c9"
+    },
+    {
+      "disposition": "rejected",
+      "risk_codes": [
+        "source-disposition-review"
+      ],
+      "source_rank": 4118,
+      "subject_sha256": "e5f384ba1d9d92faeaa9b9ea5755814f07fccf467de0184b5ea4c9e08f0a3f4b"
+    },
+    {
+      "disposition": "rejected",
+      "risk_codes": [
+        "source-disposition-review"
+      ],
+      "source_rank": 4119,
+      "subject_sha256": "56f2a16263b76a111bea5efeacb9e555e6a29c69716f6710f67ea405d6313059"
+    },
+    {
+      "disposition": "rejected",
+      "risk_codes": [
+        "source-disposition-review"
+      ],
+      "source_rank": 4120,
+      "subject_sha256": "de6c7f858f78969c32ec885efbb56751330b90a02058d359ccc9dcaf08631ef3"
+    },
+    {
+      "disposition": "rejected",
+      "risk_codes": [
+        "source-disposition-review"
+      ],
+      "source_rank": 4121,
+      "subject_sha256": "19da65ccb700cd4d5cf405e4177363ad3b199a2853d0e642c3609fbeecfd91a2"
+    },
+    {
+      "disposition": "rejected",
+      "risk_codes": [
+        "source-disposition-review"
+      ],
+      "source_rank": 4122,
+      "subject_sha256": "4783612a627065544e6f71150482aeff458e24e55ec19e506c5e28c67ca27695"
+    },
+    {
+      "disposition": "rejected",
+      "risk_codes": [
+        "source-disposition-review"
+      ],
+      "source_rank": 4123,
+      "subject_sha256": "540e7f4c51873fb27f2a299df7c782cfdfbe67a8d7e267ec2abe61193e647d19"
+    },
+    {
+      "disposition": "rejected",
+      "risk_codes": [
+        "source-disposition-review"
+      ],
+      "source_rank": 4124,
+      "subject_sha256": "f4256a1434d9f9b5d3f76ac2d179f469f5e2cfb9fe94f4338303892f6411eb0e"
+    },
+    {
+      "disposition": "rejected",
+      "risk_codes": [
+        "source-disposition-review"
+      ],
+      "source_rank": 4125,
+      "subject_sha256": "3c06c157c3702e72b6c6254cb4f61be60b2172a860da19a6d239d6bb5f82355a"
+    },
+    {
+      "disposition": "rejected",
+      "risk_codes": [
+        "source-disposition-review"
+      ],
+      "source_rank": 4126,
+      "subject_sha256": "fef346f14d3b54daea05a631c700d3cf7f6229f306fc2c30853c98319ce3792f"
+    },
+    {
+      "disposition": "rejected",
+      "risk_codes": [
+        "source-disposition-review"
+      ],
+      "source_rank": 4127,
+      "subject_sha256": "df103bea7fc47ef38ffc67df4b49843fb151ba23173afff869e46da68a21a589"
+    },
+    {
+      "disposition": "rejected",
+      "risk_codes": [
+        "source-disposition-review"
+      ],
+      "source_rank": 4128,
+      "subject_sha256": "b632bf71b467e42f1f1042d9ee87e21225f37c1fe858d7c86d0154edae84ff07"
+    },
+    {
+      "disposition": "rejected",
+      "risk_codes": [
+        "source-disposition-review"
+      ],
+      "source_rank": 4129,
+      "subject_sha256": "71dcc84614df83d82b841e34bed9cd26a8bdde00b76536c9f8124b503f669670"
+    },
+    {
+      "disposition": "rejected",
+      "risk_codes": [
+        "source-disposition-review"
+      ],
+      "source_rank": 4130,
+      "subject_sha256": "8ccfeb4ba665917849ed93d35ca22a1a598566162740515c460d1401c8afa29f"
+    },
+    {
+      "disposition": "rejected",
+      "risk_codes": [
+        "source-disposition-review"
+      ],
+      "source_rank": 4131,
+      "subject_sha256": "9e92821e6ad3aab6f977ccc68f14439a1fc607854b9011cc1ff9afe42376c8b1"
+    },
+    {
+      "disposition": "rejected",
+      "risk_codes": [
+        "source-disposition-review"
+      ],
+      "source_rank": 4132,
+      "subject_sha256": "32f3fb341267b1183caf0eb59828560227e55d1f82a18bc1ffec574302a1acc1"
+    },
+    {
+      "disposition": "rejected",
+      "risk_codes": [
+        "source-disposition-review"
+      ],
+      "source_rank": 4133,
+      "subject_sha256": "8571c88a68817dfb0c464792c92b59c1015cf6f0682b4de119d642f00cdf1ca3"
+    },
+    {
+      "disposition": "rejected",
+      "risk_codes": [
+        "source-disposition-review"
+      ],
+      "source_rank": 4134,
+      "subject_sha256": "b97d27f097a8b4a033bb65a101f6dd7abd69ea7d19b743276dbd7b3a57f57516"
+    },
+    {
+      "disposition": "rejected",
+      "risk_codes": [
+        "source-disposition-review"
+      ],
+      "source_rank": 4135,
+      "subject_sha256": "ffe0179e59e74069bc543c388e07f753f5ea85a963a6fa4ee640f72a85a6728b"
+    },
+    {
+      "disposition": "rejected",
+      "risk_codes": [
+        "source-disposition-review"
+      ],
+      "source_rank": 4136,
+      "subject_sha256": "2c7d5a32132e2df1ca20ede909c4aade7e193b06e8b7e4d1044b91abbc8d2030"
+    },
+    {
+      "disposition": "rejected",
+      "risk_codes": [
+        "source-disposition-review"
+      ],
+      "source_rank": 4137,
+      "subject_sha256": "f62e6dea9fb1ed189f34d153843e60e5360b8dbc9967196fe816fa8bd3874311"
+    },
+    {
+      "disposition": "rejected",
+      "risk_codes": [
+        "source-disposition-review"
+      ],
+      "source_rank": 4138,
+      "subject_sha256": "5c04fc855a7f1bcfe59956ac0ca829dbf95e2abdd8f3dd39f8a29c6fbff2899e"
+    },
+    {
+      "disposition": "rejected",
+      "risk_codes": [
+        "source-disposition-review"
+      ],
+      "source_rank": 4139,
+      "subject_sha256": "dfb860dccee47a11f9f33d6cc84f7ada76365c323c83db8b3933e90397712b27"
+    },
+    {
+      "disposition": "rejected",
+      "risk_codes": [
+        "source-disposition-review"
+      ],
+      "source_rank": 4140,
+      "subject_sha256": "0c7e555e5bbb56af5183794bb51f19b4f4d936788e5f224e4c73fd4e111891af"
+    },
+    {
+      "disposition": "rejected",
+      "risk_codes": [
+        "source-disposition-review"
+      ],
+      "source_rank": 4141,
+      "subject_sha256": "e59a80c9f412dc4f964cfff41313f7c1fa33f07c785bbb1425df11e1e34c85e3"
+    },
+    {
+      "disposition": "rejected",
+      "risk_codes": [
+        "source-disposition-review"
+      ],
+      "source_rank": 4142,
+      "subject_sha256": "8ffd8d366533677570dbf1b27b7c82a9cfab71c1e14e055523269412ad45fe37"
+    },
+    {
+      "disposition": "rejected",
+      "risk_codes": [
+        "source-disposition-review"
+      ],
+      "source_rank": 4143,
+      "subject_sha256": "04a2b13fc658248521621304a07ac9bef1fbc08b682edf74cbc864e76d3dbfc0"
+    },
+    {
+      "disposition": "rejected",
+      "risk_codes": [
+        "source-disposition-review"
+      ],
+      "source_rank": 4144,
+      "subject_sha256": "b20dee7b8952cfb0ef12a22100b2951ecd1655f5d83984f0fb3d898b645e9fc4"
+    },
+    {
+      "disposition": "rejected",
+      "risk_codes": [
+        "source-disposition-review"
+      ],
+      "source_rank": 4145,
+      "subject_sha256": "56a0fd1527d122372c76bee47958411144ac8a365e6d9bb4dc8a7069f35bbca9"
+    },
+    {
+      "disposition": "rejected",
+      "risk_codes": [
+        "source-disposition-review"
+      ],
+      "source_rank": 4146,
+      "subject_sha256": "f78af582eb345e601f0022d9b9b2f8115a72e3efa860660bd92bacbfde579a76"
+    },
+    {
+      "disposition": "rejected",
+      "risk_codes": [
+        "source-disposition-review"
+      ],
+      "source_rank": 4147,
+      "subject_sha256": "e7e979e20973e1799874f7131d23997658c3a82b6c9ab3b35c78785b30c2a3fc"
+    },
+    {
+      "disposition": "rejected",
+      "risk_codes": [
+        "source-disposition-review"
+      ],
+      "source_rank": 4148,
+      "subject_sha256": "536166a4964fdd524d1052bc82ebd64d6e8f76c2e67e505d3bebc7cfb1564f79"
+    },
+    {
+      "disposition": "rejected",
+      "risk_codes": [
+        "source-disposition-review"
+      ],
+      "source_rank": 4149,
+      "subject_sha256": "4627e182f17ab09b7be86718a4b5c927b118dda42dc74509ee3df6a6cbe37bef"
+    },
+    {
+      "disposition": "rejected",
+      "risk_codes": [
+        "source-disposition-review"
+      ],
+      "source_rank": 4150,
+      "subject_sha256": "b777551e63fa0b480f0cb87477cef93dbaae3f37cb8df9b3b3e586cbb299c91b"
+    },
+    {
+      "disposition": "rejected",
+      "risk_codes": [
+        "source-disposition-review"
+      ],
+      "source_rank": 4151,
+      "subject_sha256": "e70154b48da05e4aa9a0f6f25ba350800ecefdcdb403b1366e0bbf0ec06dbd72"
+    },
+    {
+      "disposition": "rejected",
+      "risk_codes": [
+        "source-disposition-review"
+      ],
+      "source_rank": 4152,
+      "subject_sha256": "cbbf0d3b2c09caee2c79e1d2b6d8f5a643431fe4df31cc6fdeb6d3f25c0d1dd3"
+    },
+    {
+      "disposition": "rejected",
+      "risk_codes": [
+        "source-disposition-review"
+      ],
+      "source_rank": 4153,
+      "subject_sha256": "76fb7386695c11c16072bbd6fd3fa14e60ec36816035f8335655a9281d3e52ad"
+    },
+    {
+      "disposition": "rejected",
+      "risk_codes": [
+        "source-disposition-review"
+      ],
+      "source_rank": 4154,
+      "subject_sha256": "76fb7386695c11c16072bbd6fd3fa14e60ec36816035f8335655a9281d3e52ad"
+    },
+    {
+      "disposition": "rejected",
+      "risk_codes": [
+        "source-disposition-review"
+      ],
+      "source_rank": 4155,
+      "subject_sha256": "2be18ec567b0073f4c4c6175cf2a955040c42a78e974bf963bd1f5325359cf26"
+    },
+    {
+      "disposition": "rejected",
+      "risk_codes": [
+        "source-disposition-review"
+      ],
+      "source_rank": 4156,
+      "subject_sha256": "e0467e9722369588cdac37fac6d4ccd88002a16e1264fe928d30b67215604402"
+    },
+    {
+      "disposition": "rejected",
+      "risk_codes": [
+        "source-disposition-review"
+      ],
+      "source_rank": 4157,
+      "subject_sha256": "f3924f5b556fdc4f03254f034993ec8f707aca73280e33b1085bf0624a9966b5"
+    },
+    {
+      "disposition": "rejected",
+      "risk_codes": [
+        "source-disposition-review"
+      ],
+      "source_rank": 4158,
+      "subject_sha256": "e02a144352bf28dea0bcae9012b1e11b024e85c4b764e9c9de44dd2e592e0d8b"
+    },
+    {
+      "disposition": "rejected",
+      "risk_codes": [
+        "source-disposition-review"
+      ],
+      "source_rank": 4159,
+      "subject_sha256": "ce4d2c87fb6e69714a02e6e0177b7986a352642d5338006a76c57046f20cf481"
+    },
+    {
+      "disposition": "rejected",
+      "risk_codes": [
+        "source-disposition-review"
+      ],
+      "source_rank": 4160,
+      "subject_sha256": "0d4c2f5c594697c0158b41bc385f87c9c8b49d9639289da88d1bf8e276321982"
+    },
+    {
+      "disposition": "rejected",
+      "risk_codes": [
+        "source-disposition-review"
+      ],
+      "source_rank": 4161,
+      "subject_sha256": "ad00de300e224d5760d1fd391fa1e160830647dbc826fc85c9c95a9aeaeb02ba"
+    },
+    {
+      "disposition": "rejected",
+      "risk_codes": [
+        "source-disposition-review"
+      ],
+      "source_rank": 4162,
+      "subject_sha256": "721c48341a2ad3f5071511de0ab32740f69264964dd2117f26d1491a321872ba"
+    },
+    {
+      "disposition": "rejected",
+      "risk_codes": [
+        "source-disposition-review"
+      ],
+      "source_rank": 4163,
+      "subject_sha256": "2f67250a9109d8e5ef9c21001a90cb0f98a67ee43c2ac51913a0890d4a769176"
+    },
+    {
+      "disposition": "rejected",
+      "risk_codes": [
+        "source-disposition-review"
+      ],
+      "source_rank": 4164,
+      "subject_sha256": "18a7d10b67fed919f919bcc214b9100665012e13caaf6c0c2b427ff2036bf611"
+    },
+    {
+      "disposition": "rejected",
+      "risk_codes": [
+        "source-disposition-review"
+      ],
+      "source_rank": 4165,
+      "subject_sha256": "1499ab07755c3b0915b94b04a42dec6dc5aeb64e04f31ea764e833a8cb22a12a"
+    },
+    {
+      "disposition": "rejected",
+      "risk_codes": [
+        "source-disposition-review"
+      ],
+      "source_rank": 4166,
+      "subject_sha256": "7e469017ddd90ce8f4a03e0455ff0e88bee82b761a29614195264b8e53510031"
+    },
+    {
+      "disposition": "rejected",
+      "risk_codes": [
+        "source-disposition-review"
+      ],
+      "source_rank": 4167,
+      "subject_sha256": "63682c5f07c4cd97532531aee399ae6b212c0ab4e20ebd6da23c5d615ade3379"
+    },
+    {
+      "disposition": "rejected",
+      "risk_codes": [
+        "source-disposition-review"
+      ],
+      "source_rank": 4168,
+      "subject_sha256": "319cafddfdcadbd3c11972f4522008cfb884ff93f384b7feef8b29de371f29f9"
+    },
+    {
+      "disposition": "rejected",
+      "risk_codes": [
+        "source-disposition-review"
+      ],
+      "source_rank": 4169,
+      "subject_sha256": "4e66ed5afa52a38a125e6cff0cef98214bc9ce8414c4c9eae168cc94d3fca724"
+    },
+    {
+      "disposition": "rejected",
+      "risk_codes": [
+        "source-disposition-review"
+      ],
+      "source_rank": 4170,
+      "subject_sha256": "06bbf73ae733aa3fab1c1d7445e8c098dc0fd5b6c1ae6469df918fe93ad69081"
+    },
+    {
+      "disposition": "rejected",
+      "risk_codes": [
+        "source-disposition-review"
+      ],
+      "source_rank": 4171,
+      "subject_sha256": "d47f2b93b27e999d9b44541d1ea84bef4679b1de85004a009e80e97a70f5d93e"
+    },
+    {
+      "disposition": "rejected",
+      "risk_codes": [
+        "source-disposition-review"
+      ],
+      "source_rank": 4172,
+      "subject_sha256": "c44ea24fc6d19cd74d9cc06335bde57b284c1f81f7c7f27ce2026ad59222f4ef"
+    },
+    {
+      "disposition": "rejected",
+      "risk_codes": [
+        "source-disposition-review"
+      ],
+      "source_rank": 4173,
+      "subject_sha256": "735e1451cd1f7dfab12251177d2ec3a54e4279cd4ed7ce1b597da4e342fdcdfa"
+    },
+    {
+      "disposition": "rejected",
+      "risk_codes": [
+        "source-disposition-review"
+      ],
+      "source_rank": 4174,
+      "subject_sha256": "8fc6dbaf3ce681929d48b88b3befbe89686d7d2fdb6a9b54da6d75ff7143b888"
+    },
+    {
+      "disposition": "rejected",
+      "risk_codes": [
+        "source-disposition-review"
+      ],
+      "source_rank": 4175,
+      "subject_sha256": "ad7663d86b423ddc3a397e2f139474b9f594ab5b5a03067f8d58a3d2d6abd1f1"
+    },
+    {
+      "disposition": "rejected",
+      "risk_codes": [
+        "source-disposition-review"
+      ],
+      "source_rank": 4176,
+      "subject_sha256": "e8ed6805480435b31a8f6b5dc0ed3dbec315730f81241f1e29b1666f2be627f3"
+    },
+    {
+      "disposition": "rejected",
+      "risk_codes": [
+        "source-disposition-review"
+      ],
+      "source_rank": 4177,
+      "subject_sha256": "a4745d6e9003363c7e839937228c36d80e367a9ff500a906a7780ace9320b0fa"
+    },
+    {
+      "disposition": "rejected",
+      "risk_codes": [
+        "source-disposition-review"
+      ],
+      "source_rank": 4178,
+      "subject_sha256": "c9b1a1a9e19df113d18ff9b13fa5a65a6cb3168d06b2cfa55e1d94eb9ef179a5"
+    },
+    {
+      "disposition": "rejected",
+      "risk_codes": [
+        "source-disposition-review"
+      ],
+      "source_rank": 4179,
+      "subject_sha256": "efca96bb334769cfb6774a444ad71e5e0a5ea05c72e40c3fe52a9cc9800e6dc4"
+    },
+    {
+      "disposition": "rejected",
+      "risk_codes": [
+        "source-disposition-review"
+      ],
+      "source_rank": 4180,
+      "subject_sha256": "6d270e76fd91b9dfc77fcb9a6f5601ea61ca74046f8914bcb74fcb83c74426ab"
+    },
+    {
+      "disposition": "rejected",
+      "risk_codes": [
+        "source-disposition-review"
+      ],
+      "source_rank": 4181,
+      "subject_sha256": "830957305d658943281255b9d78a19e5b2c53da204c0c7f227952387d92b7c07"
+    },
+    {
+      "disposition": "rejected",
+      "risk_codes": [
+        "source-disposition-review"
+      ],
+      "source_rank": 4182,
+      "subject_sha256": "cd50cc8b622724b698b40e232608892ec487cc8ae23469c40179f79a8262f486"
+    },
+    {
+      "disposition": "rejected",
+      "risk_codes": [
+        "source-disposition-review"
+      ],
+      "source_rank": 4183,
+      "subject_sha256": "b68626d37c7c1b111087cf2cc1052c9febe4eaed34c7af0d4be062a6f2a2d9ed"
+    },
+    {
+      "disposition": "rejected",
+      "risk_codes": [
+        "source-disposition-review"
+      ],
+      "source_rank": 4184,
+      "subject_sha256": "26d2c0b21519ee4cae9697a0067fb2be3727c48692598f8116a2fb0b7336f120"
+    },
+    {
+      "disposition": "rejected",
+      "risk_codes": [
+        "source-disposition-review"
+      ],
+      "source_rank": 4185,
+      "subject_sha256": "65ef5c08cbd24167cc5bb096c51eef703c838202b87d0985f8516707f13beadf"
+    },
+    {
+      "disposition": "rejected",
+      "risk_codes": [
+        "source-disposition-review"
+      ],
+      "source_rank": 4186,
+      "subject_sha256": "7bdc2bbb80cfbf347aef7594bd7a8673b741308bf014c54d5dce5335af792049"
+    },
+    {
+      "disposition": "rejected",
+      "risk_codes": [
+        "source-disposition-review"
+      ],
+      "source_rank": 4187,
+      "subject_sha256": "16673e931e1465c54d5d268381e053b4f3ea70e4be1b8175ec11b9850a1e72f5"
+    },
+    {
+      "disposition": "rejected",
+      "risk_codes": [
+        "source-disposition-review"
+      ],
+      "source_rank": 4188,
+      "subject_sha256": "97cf8e4385cdcc1406c0cd0b88488b627a4c5032f7e5a31e10631b2174229fbe"
+    },
+    {
+      "disposition": "rejected",
+      "risk_codes": [
+        "source-disposition-review"
+      ],
+      "source_rank": 4189,
+      "subject_sha256": "da0213355bad2ca39f9ee5b322803ef32ac8470596e8ea3cf89d89ad43deca35"
+    },
+    {
+      "disposition": "rejected",
+      "risk_codes": [
+        "source-disposition-review"
+      ],
+      "source_rank": 4190,
+      "subject_sha256": "43d1d832728342758ca62bc748bda29d3c6905138113e48cdcebc09652d75896"
+    },
+    {
+      "disposition": "rejected",
+      "risk_codes": [
+        "source-disposition-review"
+      ],
+      "source_rank": 4191,
+      "subject_sha256": "f9a8d58f9fb8dc38c0c97158fa74ddcc289f86152934d47011f8f8136dc712d3"
+    },
+    {
+      "disposition": "rejected",
+      "risk_codes": [
+        "source-disposition-review"
+      ],
+      "source_rank": 4192,
+      "subject_sha256": "71a83796859df6e781e2c59b2650b30be37a3a14516a60bcd5df42bc50438332"
+    },
+    {
+      "disposition": "rejected",
+      "risk_codes": [
+        "source-disposition-review"
+      ],
+      "source_rank": 4193,
+      "subject_sha256": "fcac58187243534b5213d0774ecd8c3a24d2f595253e156b20cf1dfefb5906c0"
+    },
+    {
+      "disposition": "rejected",
+      "risk_codes": [
+        "source-disposition-review"
+      ],
+      "source_rank": 4194,
+      "subject_sha256": "9dbfa34f6897fba10ad761c65ee65ad9f2e2690ba93c2150b04e76403dcadcd8"
+    },
+    {
+      "disposition": "rejected",
+      "risk_codes": [
+        "source-disposition-review"
+      ],
+      "source_rank": 4195,
+      "subject_sha256": "20a193c0c575efb9aa0a4bfea2466a1f03e81fadfcfa789bacafc46369d4d462"
+    },
+    {
+      "disposition": "rejected",
+      "risk_codes": [
+        "source-disposition-review"
+      ],
+      "source_rank": 4196,
+      "subject_sha256": "2da3695b91eb9cbd58d776182c2501d8c7883532be1bce9bc900bdeeb353cc32"
+    },
+    {
+      "disposition": "rejected",
+      "risk_codes": [
+        "source-disposition-review"
+      ],
+      "source_rank": 4197,
+      "subject_sha256": "1a1c65a480a760539785e287a8f0e0b6c2a41aa2082fa2e7e9b2be6c033a69ad"
+    },
+    {
+      "disposition": "rejected",
+      "risk_codes": [
+        "source-disposition-review"
+      ],
+      "source_rank": 4198,
+      "subject_sha256": "12e3fe8ff00f1d759d601b1d93dc6122c886b8868fd948d73224cbcb4598c7ea"
+    },
+    {
+      "disposition": "rejected",
+      "risk_codes": [
+        "source-disposition-review"
+      ],
+      "source_rank": 4199,
+      "subject_sha256": "61d5c0f0fef18581a7a1505744741317b116990274f0844cfb168ff0655ecf3a"
+    },
+    {
+      "disposition": "rejected",
+      "risk_codes": [
+        "source-disposition-review"
+      ],
+      "source_rank": 4200,
+      "subject_sha256": "ff081a93e9ee949b462e0e74485823063d94eeee820ce3d4db547c89a9068ec6"
+    }
+  ],
+  "policy_id": "multilang-ai-linguistic-review-v1",
+  "reviewer_class": "ai_policy_source_review",
+  "reviewer_role": "source-curation",
+  "schema_version": "korean-source-review-batch-v1"
+}

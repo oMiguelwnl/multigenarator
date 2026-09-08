@@ -7,7 +7,7 @@ from hashlib import sha256
 import json
 from typing import Any, Final, Literal, Self
 import unicodedata
-from urllib.parse import urlparse
+from urllib.parse import parse_qs, urlparse
 
 from pydantic import (
     BaseModel,
@@ -208,8 +208,12 @@ def _require_official_korean_url(value: str, *, field_name: str, landing: bool) 
         raise ValueError(f"{field_name} must use the official Korean source host")
     if landing and normalized != KOREAN_FREQUENCY_LANDING_URL:
         raise ValueError("landing URL must match the approved NIKL page")
-    if not landing and not parsed.path.startswith("/front/etcData/"):
-        raise ValueError("attachment URL must be derived from the approved NIKL response")
+    if not landing:
+        if parsed.path != "/common/download.do":
+            raise ValueError("attachment URL must be derived from the approved NIKL response")
+        query = parse_qs(parsed.query, keep_blank_values=True)
+        if query.get("file_path") != ["etcData"] or query.get("o_file_name") != [KOREAN_FREQUENCY_EXPECTED_FILENAME]:
+            raise ValueError("attachment URL must be derived from the approved NIKL response")
     return normalized
 
 
@@ -884,7 +888,7 @@ class KoreanFrequencyRetrievalResult(_FrozenContract):
     source_bytes_sha256: str = Field(min_length=64, max_length=64)
     source_byte_count: int = Field(gt=0, le=20_000_000)
     retrieved_at: str = Field(min_length=1, max_length=64)
-    text_encoding: Literal["utf-8"]
+    text_encoding: Literal["utf-8", "cp949"]
     schema_version: Literal["nikl-frequency-retrieval-v1"]
 
     @field_validator("landing_url")

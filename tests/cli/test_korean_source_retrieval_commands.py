@@ -14,6 +14,11 @@ from multilang.cli import create_app
 runner = CliRunner()
 
 _HASH = "a" * 64
+_CURRENT_ATTACHMENT_URL = (
+    "https://www.korean.go.kr/common/download.do?file_path=etcData&"
+    "c_file_name=b73a8438-4713-4436-8481-ec26fd0dce2a_0.txt&"
+    "o_file_name=%ED%95%9C%EA%B5%AD%EC%96%B4%20%ED%95%99%EC%8A%B5%EC%9A%A9%20%EC%96%B4%ED%9C%98%20%EB%AA%A9%EB%A1%9D.txt"
+)
 
 
 def test_resolver_command_emits_content_free_retrieval_result(tmp_path: Path, monkeypatch) -> None:
@@ -30,7 +35,7 @@ def test_resolver_command_emits_content_free_retrieval_result(tmp_path: Path, mo
                 landing_url="https://www.korean.go.kr/front/etcData/etcDataView.do?mn_id=46&etc_seq=70",
                 accepted_filename="한국어 학습용 어휘 목록.txt",
                 landing_sha256=_HASH,
-                attachment_url="https://www.korean.go.kr/front/etcData/etcDataFileDownload.do?etc_seq=70&file_seq=1",
+                attachment_url=_CURRENT_ATTACHMENT_URL,
                 attachment_sha256="b" * 64,
                 source_bytes_sha256="c" * 64,
                 source_byte_count=100,
@@ -63,6 +68,7 @@ def test_validate_retrieval_result_command_is_read_only(tmp_path: Path) -> None:
 
     result_path = tmp_path / "retrieval-result.json"
     source_path = tmp_path / "source.txt"
+    validation_path = tmp_path / "validation.json"
     source_bytes = "1\t학교\tNNG\tplace of learning\n".encode("utf-8")
     source_path.write_bytes(source_bytes)
     result = KoreanFrequencyRetrievalResult(
@@ -70,7 +76,7 @@ def test_validate_retrieval_result_command_is_read_only(tmp_path: Path) -> None:
         landing_url="https://www.korean.go.kr/front/etcData/etcDataView.do?mn_id=46&etc_seq=70",
         accepted_filename="한국어 학습용 어휘 목록.txt",
         landing_sha256=_HASH,
-        attachment_url="https://www.korean.go.kr/front/etcData/etcDataFileDownload.do?etc_seq=70&file_seq=1",
+        attachment_url=_CURRENT_ATTACHMENT_URL,
         attachment_sha256="b" * 64,
         source_bytes_sha256=raw_bytes_sha256(source_bytes),
         source_byte_count=len(source_bytes),
@@ -89,6 +95,8 @@ def test_validate_retrieval_result_command_is_read_only(tmp_path: Path) -> None:
             str(result_path),
             "--source-file",
             str(source_path),
+            "--output",
+            str(validation_path),
         ],
     )
 
@@ -98,8 +106,16 @@ def test_validate_retrieval_result_command_is_read_only(tmp_path: Path) -> None:
         "source_id=nikl-korean-learners-vocabulary",
         "accepted_filename=한국어 학습용 어휘 목록.txt",
         f"source_byte_count={len(source_bytes)}",
+        "validation_result_written=true",
     ]
     assert before == {path.name: path.stat().st_mtime_ns for path in (result_path, source_path)}
+    payload = json.loads(validation_path.read_text(encoding="utf-8"))
+    assert payload["status"] == "valid"
+    assert payload["schema_version"] == "korean-source-retrieval-validation-v1"
+    assert payload["source_bytes_sha256"] == raw_bytes_sha256(source_bytes)
+    assert payload["text_encoding"] == "utf-8"
+    assert payload["grants_transform_power"] is False
+    assert "https://" not in json.dumps(payload)
 
 
 def test_retrieval_command_failures_are_content_free(tmp_path: Path, monkeypatch) -> None:

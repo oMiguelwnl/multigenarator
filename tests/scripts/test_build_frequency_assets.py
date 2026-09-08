@@ -22,6 +22,11 @@ from multilang.domain.korean import (
 
 _LANDING_HASH = "a" * 64
 _ATTACHMENT_HASH = "b" * 64
+_CURRENT_ATTACHMENT_URL = (
+    "https://www.korean.go.kr/common/download.do?file_path=etcData&"
+    "c_file_name=b73a8438-4713-4436-8481-ec26fd0dce2a_0.txt&"
+    "o_file_name=%ED%95%9C%EA%B5%AD%EC%96%B4%20%ED%95%99%EC%8A%B5%EC%9A%A9%20%EC%96%B4%ED%9C%98%20%EB%AA%A9%EB%A1%9D.txt"
+)
 _BUNDLE_VERSION = "fixture-v1"
 
 
@@ -92,7 +97,7 @@ def _fixture_inputs(tmp_path: Path) -> dict[str, Any]:
         landing_url="https://www.korean.go.kr/front/etcData/etcDataView.do?mn_id=46&etc_seq=70",
         accepted_filename="한국어 학습용 어휘 목록.txt",
         landing_sha256=_LANDING_HASH,
-        attachment_url="https://www.korean.go.kr/front/etcData/etcDataFileDownload.do?etc_seq=70&file_seq=1",
+        attachment_url=_CURRENT_ATTACHMENT_URL,
         attachment_sha256=_ATTACHMENT_HASH,
         source_bytes_sha256=source_hash,
         source_byte_count=len(source_bytes),
@@ -170,6 +175,67 @@ def test_staging_fsync_atomic_rename_creates_inactive_bundle(tmp_path: Path) -> 
     assert (bundle_dir / "curated-inventory.jsonl").is_file()
     assert not list(target_root.glob(".staging-*"))
     assert fsync_calls
+
+
+def test_korean_builder_counts_cp949_source_snapshot_entries_after_header(tmp_path: Path) -> None:
+    source_file = tmp_path / "source-with-header.txt"
+    source_text = "순위\t단어\t품사\t풀이\t등급\n" + "".join(
+        f"{rank}\t어휘{rank}\t명\tfixture gloss\tA\n" for rank in range(1, 5966)
+    )
+    source_bytes = source_text.encode("cp949")
+    source_file.write_bytes(source_bytes)
+    source_hash = raw_bytes_sha256(source_bytes)
+    retrieval_file = tmp_path / "retrieval-result-with-header.json"
+    retrieval_file.write_text(
+        KoreanFrequencyRetrievalResult(
+            source_id="nikl-korean-learners-vocabulary",
+            landing_url="https://www.korean.go.kr/front/etcData/etcDataView.do?mn_id=46&etc_seq=70",
+            accepted_filename="한국어 학습용 어휘 목록.txt",
+            landing_sha256=_LANDING_HASH,
+            attachment_url=_CURRENT_ATTACHMENT_URL,
+            attachment_sha256=_ATTACHMENT_HASH,
+            source_bytes_sha256=source_hash,
+            source_byte_count=len(source_bytes),
+            retrieved_at="2026-08-28T00:00:00Z",
+            text_encoding="cp949",
+            schema_version="nikl-frequency-retrieval-v1",
+        ).model_dump_json(),
+        encoding="utf-8",
+    )
+    policy_file = tmp_path / "policy-with-header.json"
+    policy_file.write_text(
+        KoreanFrequencyBuildPolicy(
+            source_id="nikl-korean-learners-vocabulary",
+            source_version="2003-06-04.revised-2019-05-30",
+            allowed_use="local-generation",
+            redistribution="approved-repository",
+            attribution_required=True,
+            storage_disposition="repository-redistributable",
+            retrieval_sha256=source_hash,
+            source_bytes_sha256=source_hash,
+            analyzer_fingerprint=_fingerprint(),
+        ).model_dump_json(),
+        encoding="utf-8",
+    )
+    result = _build(
+        tmp_path,
+        retrieval_result_file=retrieval_file,
+        source_file=source_file,
+        policy_file=policy_file,
+        inventory_rows=[_entry(rank, source_hash) for rank in range(1, 3001)],
+        rejection_rows=[
+            {
+                "source_rank": rank,
+                "source_form_sha256": raw_bytes_sha256(f"어휘{rank}".encode("utf-8")),
+                "reason_code": "modernity_review_required",
+            }
+            for rank in range(3001, 5966)
+        ],
+        target_root=tmp_path / "bundles-with-header",
+    )
+
+    assert result.accepted_count == 3000
+    assert result.rejection_count == 2965
 
 
 def test_interruption_rolls_back_owned_staging_and_preserves_neighbors(

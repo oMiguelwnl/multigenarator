@@ -123,6 +123,7 @@ def test_remediation_power_requires_dependent_audio_bindings_and_no_new_request(
 
 def test_cli_validation_emits_only_safe_hash_and_power_counts(tmp_path: Path) -> None:
     authority_file = _write_authority(tmp_path, _source_authority(tmp_path))
+    output = tmp_path / "authority-validation.json"
 
     result = runner.invoke(
         create_app(),
@@ -132,6 +133,8 @@ def test_cli_validation_emits_only_safe_hash_and_power_counts(tmp_path: Path) ->
             str(authority_file),
             "--expected-kind",
             "source-access",
+            "--output",
+            str(output),
         ],
     )
 
@@ -142,8 +145,17 @@ def test_cli_validation_emits_only_safe_hash_and_power_counts(tmp_path: Path) ->
         "power_count=1",
         "binding_count=1",
         f"authority_sha256={raw_bytes_sha256(authority_file.read_bytes())}",
+        "authority_validation_written=true",
     ]
     assert str(tmp_path) not in result.output
+    payload = json.loads(output.read_text(encoding="utf-8"))
+    assert payload == {
+        "authority_kind": "source-access",
+        "authority_sha256": raw_bytes_sha256(authority_file.read_bytes()),
+        "binding_count": 1,
+        "power_count": 1,
+        "status": "valid",
+    }
 
 
 def test_cli_validation_failures_are_private_data_free(tmp_path: Path) -> None:

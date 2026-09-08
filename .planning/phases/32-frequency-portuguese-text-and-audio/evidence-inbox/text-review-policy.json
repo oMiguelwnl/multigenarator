@@ -1,0 +1,40 @@
+{
+  "ai_review_policy_id": "korean-frequency-ai-review-v1",
+  "approved_credential_aliases": {
+    "definition": "MULTILANG_OPENAI_API_KEY",
+    "judge": "MULTILANG_OPENAI_API_KEY",
+    "repair": "MULTILANG_OPENAI_API_KEY",
+    "sentence_generation": "MULTILANG_OPENAI_API_KEY",
+    "translation": "MULTILANG_DEEPL_API_KEY"
+  },
+  "audio_synthesis_allowed": false,
+  "canonical_project_language": "pt",
+  "catalog_identity": "ko-KR-voice-catalog",
+  "catalog_route_authority": "offline_policy_contract_only",
+  "controlled_review_statuses": [
+    "accepted",
+    "needs_review",
+    "rejected"
+  ],
+  "controlled_validation_statuses": [
+    "passed",
+    "repair_required",
+    "failed"
+  ],
+  "default_register": "haeyo",
+  "fallback_policy": "none",
+  "final_cross_provider_fallback": false,
+  "initial_candidate_count": 2,
+  "judge_enabled": true,
+  "korean_variant": "modern-standard-seoul",
+  "max_repair_count": 1,
+  "morphology_aware_identity_required": true,
+  "nfc_normalization_required": true,
+  "provider_translation_target": "PT-BR",
+  "repair_cache_distinct": true,
+  "schema_version": "korean-text-review-policy-v1",
+  "source_language": "ko-KR",
+  "target_matching_policy": "fail_closed_morphology_aware",
+  "tatoeba_automatic_final_fallback": false,
+  "word_audio_allowed": false
+}

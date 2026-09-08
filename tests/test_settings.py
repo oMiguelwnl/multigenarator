@@ -49,6 +49,14 @@ def test_settings_accept_canonical_korean_and_reject_provider_locale() -> None:
         Settings(_env_file=None, supported_languages=["ko-KR"])
 
 
+def test_supported_languages_accept_bracketed_env_list(monkeypatch) -> None:
+    monkeypatch.setenv("MULTILANG_SUPPORTED_LANGUAGES", "[pt,ko]")
+
+    settings = Settings(_env_file=None)
+
+    assert settings.supported_languages == ["pt", "ko"]
+
+
 def test_approved_frequency_assets_remain_separate_from_selectable_languages() -> None:
     approved_languages = getattr(
         settings_module,

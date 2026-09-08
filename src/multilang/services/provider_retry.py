@@ -36,6 +36,11 @@ class ProviderRetryContext:
     voice_id: str | None = None
     job_id: str | None = None
     item_key: str | None = None
+    prompt_hash: str | None = None
+    route_policy_sha256: str | None = None
+    budget_snapshot_sha256: str | None = None
+    cache_key_sha256: str | None = None
+    response_schema_sha256: str | None = None
 
     @property
     def circuit_key(self) -> str:
@@ -250,6 +255,11 @@ def _log_retry_event(
             status=status,
             error_code=error_code,
             error_summary=error_summary,
+            prompt_hash=context.prompt_hash,
+            route_policy_sha256=context.route_policy_sha256,
+            budget_snapshot_sha256=context.budget_snapshot_sha256,
+            cache_key_sha256=context.cache_key_sha256,
+            response_schema_sha256=context.response_schema_sha256,
         )
     )
 

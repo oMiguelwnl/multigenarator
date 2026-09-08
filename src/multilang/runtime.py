@@ -31,6 +31,7 @@ from multilang.domain.exporting import (
 )
 from multilang.domain.jobs import JobStage, JobStatus
 from multilang.domain.korean import KoreanFrequencyEntry, KoreanFrequencyJobAuthority
+from multilang.domain.korean_provider import KoreanProviderPolicy
 from multilang.domain.lexicon import GroundingStatus, LexicalCardCandidate
 from multilang.services.azure_speech_adapter import AzureSpeechAdapter
 from multilang.services.elevenlabs_speech_adapter import ElevenLabsSpeechAdapter
@@ -963,6 +964,7 @@ def build_runtime_service(
     korean_final_frequency_entries: Iterable[KoreanFrequencyEntry] | None = None,
     korean_source_review_receipt_sha256: str | None = None,
     korean_source_review_aggregate_sha256: str | None = None,
+    korean_provider_policy: KoreanProviderPolicy | None = None,
 ) -> IngestLexicalItemsService:
     """Construct the repository-backed orchestration service from runtime settings."""
 
@@ -996,6 +998,7 @@ def build_runtime_service(
         retry_base_delay_seconds=runtime_settings.provider_retry_base_delay_seconds,
         retry_max_delay_seconds=runtime_settings.provider_retry_max_delay_seconds,
         retry_jitter_ratio=runtime_settings.provider_retry_jitter_ratio,
+        korean_provider_policy=korean_provider_policy,
     )
 
     # Latin structured generation service (uses the model for gramatica, definition etc. in dynamic flow)
@@ -1091,6 +1094,7 @@ def build_korean_frequency_text_runtime_service(
     phase31_provenance_verifier: Callable[..., object] = verify_active_korean_foundation_snapshot_provenance,
     entry_loader: Callable[..., tuple[KoreanFrequencyEntry, ...]] = load_korean_final_frequency_entries,
     runtime_builder: Callable[..., object] = build_runtime_service,
+    korean_provider_policy: KoreanProviderPolicy | None = None,
 ) -> object:
     """Revalidate Phase 31 and bundle authority immediately before runtime adapters."""
 
@@ -1099,6 +1103,8 @@ def build_korean_frequency_text_runtime_service(
         raise ValueError("Korean frequency text authority stage is invalid")
     if runtime_authority.binding_receipt_sha256 != authority.source_review_aggregate_sha256:
         raise ValueError("Korean frequency binding receipt drift")
+    if korean_provider_policy is not None and korean_provider_policy.policy_sha256 != authority.provider_policy_sha256:
+        raise ValueError("Korean frequency provider policy drift")
 
     report = phase31_provenance_verifier(
         expected_receipt_sha256=authority.phase31_validation_receipt_sha256,
@@ -1125,6 +1131,7 @@ def build_korean_frequency_text_runtime_service(
         korean_final_frequency_entries=entries,
         korean_source_review_receipt_sha256=runtime_authority.binding_receipt_sha256,
         korean_source_review_aggregate_sha256=authority.source_review_aggregate_sha256,
+        korean_provider_policy=korean_provider_policy,
     )
 
 

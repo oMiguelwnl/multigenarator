@@ -49,6 +49,7 @@ class LexicalRepository:
                 item_key=item_key,
                 lemma_key=str(payload["lemma_key"]),
                 display_form=str(payload["display_form"]),
+                allow_display_duplicate=candidate.korean_identity is not None,
             )
         row = self.session.scalar(
             select(LexicalCandidate).where(
@@ -145,7 +146,11 @@ class LexicalRepository:
         candidate_rows: list[tuple[str, str, LexicalCardCandidate]],
     ) -> None:
         lemma_counts = Counter(candidate.lemma_key.casefold() for _, _, candidate in candidate_rows)
-        display_counts = Counter(candidate.display_form.casefold() for _, _, candidate in candidate_rows)
+        display_counts = Counter(
+            candidate.display_form.casefold()
+            for _, _, candidate in candidate_rows
+            if candidate.korean_identity is None
+        )
         if duplicates := [key for key, count in lemma_counts.items() if count > 1]:
             raise ValueError(f"duplicate frequency lemma_key values before persistence: {duplicates[:5]}")
         if duplicates := [key for key, count in display_counts.items() if count > 1]:
@@ -158,6 +163,7 @@ class LexicalRepository:
                 item_key=item_key,
                 lemma_key=candidate.lemma_key,
                 display_form=candidate.display_form,
+                allow_display_duplicate=candidate.korean_identity is not None,
                 excluded_item_keys=item_keys,
             )
 
@@ -168,18 +174,19 @@ class LexicalRepository:
         item_key: str,
         lemma_key: str,
         display_form: str,
+        allow_display_duplicate: bool = False,
         excluded_item_keys: set[str] | None = None,
     ) -> None:
         excluded = excluded_item_keys or {item_key}
+        duplicate_conditions = [func.lower(LexicalCandidate.lemma_key) == lemma_key.casefold()]
+        if not allow_display_duplicate:
+            duplicate_conditions.append(func.lower(LexicalCandidate.display_form) == display_form.casefold())
         existing = self.session.scalars(
             select(LexicalCandidate).where(
                 LexicalCandidate.job_id == job_id,
                 LexicalCandidate.source_type == "frequency",
                 LexicalCandidate.item_key.not_in(excluded),
-                or_(
-                    func.lower(LexicalCandidate.lemma_key) == lemma_key.casefold(),
-                    func.lower(LexicalCandidate.display_form) == display_form.casefold(),
-                ),
+                or_(*duplicate_conditions),
             )
         ).first()
         if existing is not None:

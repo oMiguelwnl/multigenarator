@@ -93,6 +93,12 @@ def _text_result() -> dict[str, object]:
         "processed_items": 3,
         "accepted_items": 2,
         "review_required_items": 1,
+        "max_items": 3,
+        "max_concurrency": 1,
+        "max_attempts": 2,
+        "cost_ceiling_usd": "1.00",
+        "fallback_policy": "none",
+        "production_database_used": False,
         "example_sentence": "안녕하세요 should not appear in output",
     }
 
@@ -104,6 +110,9 @@ def _catalog_result() -> dict[str, object]:
         "catalog_content_sha256": HASHES[13],
         "provider_policy_sha256": HASHES[10],
         "pilot_authority_sha256": HASHES[11],
+        "voice_count": 2,
+        "catalog_query_count": 1,
+        "synthesis_attempt_count": 0,
         "voices": [
             {"voice_id": "ko-KR-SunHiNeural", "locale": "ko-KR"},
             {"voice_id": "ko-KR-InJoonNeural", "locale": "ko-KR"},
@@ -142,6 +151,7 @@ def test_provider_catalog_result_validator_reconciles_phase31_and_denominators_w
     assert evidence.expected_item_count == 3
     assert evidence.text_processed_items == 3
     assert evidence.catalog_voice_count == 2
+    assert evidence.catalog_locale == "ko-KR"
     assert evidence.provider_call_count == 4
     assert evidence.provider_attempt_count == 3
     assert evidence.retry_attempt_count == 1
@@ -153,8 +163,23 @@ def test_provider_catalog_result_validator_reconciles_phase31_and_denominators_w
     assert evidence.cost_denominator_count == 3
     assert evidence.missing_cost_denominator_count == 1
     assert evidence.latency_ms_total == 360
+    assert evidence.protected_input_count == 1
+    assert evidence.protected_input_drift_count == 0
+    assert evidence.required_telemetry_hash_count == 16
+    assert evidence.missing_required_telemetry_hash_count == 0
+    assert evidence.max_items == 3
+    assert evidence.max_concurrency == 1
+    assert evidence.max_attempts == 2
+    assert evidence.cost_ceiling_usd == "1.00"
+    assert evidence.fallback_policy == "none"
+    assert evidence.production_database_used is False
     assert not evidence.grants_route_authority
     assert not evidence.grants_voice_profile_authority
+    assert not evidence.grants_audio_authority
+    assert not evidence.grants_review_authority
+    assert not evidence.grants_release_authority
+    assert not evidence.grants_publication_authority
+    assert not evidence.grants_delivery_authority
     serialized = evidence.model_dump_json()
     assert "sample-1" not in serialized
     assert "안녕하세요" not in serialized

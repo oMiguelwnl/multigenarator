@@ -1,0 +1,20 @@
+{
+  "accepted_items": 3,
+  "audio_synthesis_enabled": false,
+  "authority_stage": "pilot_base",
+  "binding_receipt_sha256": "24fb03999ea744be64c445bb9de704e40c29ad24ee4120e430a110fcfa0fa35a",
+  "cost_ceiling_usd": "1.00",
+  "failed_audio_items": 0,
+  "fallback_audio_items": 0,
+  "fallback_policy": "none",
+  "job_id": "phase32-live-text-catalog-pilot",
+  "max_attempts": 2,
+  "max_concurrency": 1,
+  "max_items": 10,
+  "pilot_authority_sha256": "db2b2c1bff644ccf2e90bf59ab00d5c4a88c009d1c03bc8e8fbf8146e9be2ced",
+  "processed_items": 10,
+  "production_database_used": false,
+  "provider_policy_sha256": "6174ebd73b7e2963285bb2e44205dde10ef9d3917e50c90850b483b3c8a6fc79",
+  "review_required_items": 7,
+  "schema_version": "korean-frequency-text-result-v1"
+}

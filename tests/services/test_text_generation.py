@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from datetime import UTC, datetime, timedelta
+from hashlib import sha256
 from types import SimpleNamespace
 import unicodedata
 
@@ -20,6 +21,12 @@ from multilang.domain.lexicon import (
     GroundingStatus,
     LexicalCardCandidate,
     LexicalProvenance,
+)
+from multilang.domain.korean_provider import (
+    KoreanProviderBudget,
+    KoreanProviderPolicy,
+    KoreanProviderRoute,
+    KoreanProviderTask,
 )
 from multilang.domain.private_processing import (
     PrivateDisclosureState,
@@ -136,6 +143,38 @@ def build_korean_candidate(
         provenance=LexicalProvenance(source="reviewed_test_fixture"),
         korean_identity=resolved_identity,
     )
+
+
+def build_korean_provider_policy() -> KoreanProviderPolicy:
+    budget = KoreanProviderBudget(
+        max_attempts=2,
+        max_input_tokens=4096,
+        max_output_tokens=1024,
+        max_total_tokens=5120,
+        max_estimated_cost_usd=1.0,
+        max_latency_ms=60000,
+        timeout_seconds=60.0,
+        max_batch_items=10,
+        max_concurrency=1,
+    )
+    routes = []
+    for task in KoreanProviderTask:
+        provider = "disabled" if task in {KoreanProviderTask.WORD_AUDIO, KoreanProviderTask.SENTENCE_AUDIO} else "openai"
+        if task is KoreanProviderTask.TRANSLATION:
+            provider = "deepl"
+        if task is KoreanProviderTask.CATALOG:
+            provider = "azure-speech"
+        routes.append(
+            KoreanProviderRoute(
+                task=task,
+                provider=provider,
+                model=None if provider == "disabled" else f"{task.value}-model",
+                budget=budget,
+                cache_namespace=f"test-{task.value}",
+                response_schema_sha256=sha256(f"schema:{task.value}".encode("utf-8")).hexdigest(),
+            )
+        )
+    return KoreanProviderPolicy(routes=tuple(routes))
 
 
 def test_sentence_generation_request_uses_grounded_lexical_context() -> None:
@@ -304,6 +343,19 @@ class KoreanSentenceAdapter(SentenceGenerationAdapter):
 
     def generate_sentence(self, request: SentenceGenerationRequest) -> SentenceGenerationResult:
         self.requests.append(request)
+        return SentenceGenerationResult(
+            sentence=self.sentence,
+            intended_sense="source-backed test sense",
+            uncertainty_notes=[],
+            provenance={"provider": self.provider, "model": self.model},
+        )
+
+
+class FlakyKoreanSentenceAdapter(KoreanSentenceAdapter):
+    def generate_sentence(self, request: SentenceGenerationRequest) -> SentenceGenerationResult:
+        self.requests.append(request)
+        if len(self.requests) == 1:
+            raise TimeoutError("timeout api_key=secret raw prompt text")
         return SentenceGenerationResult(
             sentence=self.sentence,
             intended_sense="source-backed test sense",
@@ -1082,3 +1134,36 @@ def test_text_generation_service_logs_successful_retry_attempt_count() -> None:
 
     sentence_records = [record for record in logger.records if record.operation == "sentence"]
     assert [(record.status, record.attempt) for record in sentence_records] == [("failure", 1), ("success", 2)]
+
+
+def test_korean_provider_policy_populates_route_budget_cache_and_schema_hashes_on_all_attempts() -> None:
+    logger = RecordingProviderCallLogger()
+    policy = build_korean_provider_policy()
+    service = TextGenerationService(
+        sentence_adapter=FlakyKoreanSentenceAdapter("배우가 무대에 와요."),
+        translation_adapter=FakeTranslationAdapter(),
+        provider_call_logger=logger,
+        retry_attempts=2,
+        retry_base_delay_seconds=0,
+        korean_provider_policy=policy,
+    )
+
+    service.generate_bundle(candidate=build_korean_candidate(), deck_language=SupportedLanguage.KO, job_id="job-ko")
+
+    assert [record.operation for record in logger.records] == [
+        "sentence_generation",
+        "sentence_generation",
+        "translation",
+    ]
+    for record in logger.records:
+        route = policy.route_for(KoreanProviderTask(record.operation))
+        expected_cache_key = route.cache_key_sha256(
+            item_sha256=sha256(str(record.item_key or "").encode("utf-8")).hexdigest(),
+            input_sha256=record.prompt_hash,
+        )
+        assert record.route_policy_sha256 == route.route_policy_sha256
+        assert record.budget_snapshot_sha256 == route.budget_snapshot_sha256
+        assert record.cache_key_sha256 == expected_cache_key
+        assert record.response_schema_sha256 == route.response_schema_sha256
+        assert not hasattr(record, "prompt")
+        assert "secret" not in str(record.error_summary)

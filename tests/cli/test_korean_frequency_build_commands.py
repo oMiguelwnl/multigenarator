@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import importlib.util
+import json
 from pathlib import Path
 
 from typer.testing import CliRunner
@@ -35,6 +36,7 @@ def _build_tree(tmp_path: Path) -> tuple[Path, Path]:
 
 def test_build_result_cli_emits_safe_output_without_private_paths(tmp_path: Path) -> None:
     bundle_dir, result_file = _build_tree(tmp_path)
+    output = tmp_path / "source-build-validation.json"
 
     result = runner.invoke(
         create_app(),
@@ -44,6 +46,8 @@ def test_build_result_cli_emits_safe_output_without_private_paths(tmp_path: Path
             str(result_file),
             "--bundle-dir",
             str(bundle_dir),
+            "--output",
+            str(output),
         ],
     )
 
@@ -55,7 +59,15 @@ def test_build_result_cli_emits_safe_output_without_private_paths(tmp_path: Path
         "rejection_count=2965",
     ]
     assert any(line.startswith("bundle_sha256=") for line in lines)
+    assert lines[-1] == "build_validation_written=true"
     assert str(tmp_path) not in result.output
+    payload = json.loads(output.read_text(encoding="utf-8"))
+    assert payload["status"] == "valid"
+    assert payload["schema_version"] == "korean-source-build-validation-v1"
+    assert payload["accepted_count"] == 3000
+    assert payload["rejection_count"] == 2965
+    assert payload["active"] is False
+    assert "bundle_dir" not in payload
 
 
 def test_build_result_cli_failure_is_privacy_safe(tmp_path: Path) -> None:

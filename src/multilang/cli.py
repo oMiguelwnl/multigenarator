@@ -7,6 +7,7 @@ from dataclasses import dataclass
 from hashlib import sha256
 import json
 from pathlib import Path
+import subprocess
 from typing import Annotated, Any
 
 import typer
@@ -18,6 +19,7 @@ from multilang.db.models import GenerationJob
 from multilang.db.provisioning import ensure_database_schema
 from multilang.domain.audio import AudioAssetRecord
 from multilang.domain.korean import KoreanFrequencyJobAuthority
+from multilang.domain.korean_provider import KoreanProviderPolicy, KoreanProviderTask
 from multilang.domain.jobs import (
     GenerationRequest,
     JobProgressSnapshot,
@@ -31,6 +33,7 @@ from multilang.domain.deck_audit import audit_deck_package
 from multilang.domain.webdav import WebDAVError, WebDAVFailureCode, WebDAVFetchResult, WebDAVRemoteCandidate
 from multilang.progress import ProgressRenderer
 from multilang.repositories.audio_repository import AudioRepository
+from multilang.repositories.lexical_repository import LexicalRepository
 from multilang.repositories.provider_call_log_repository import ProviderCallLogRepository
 from multilang.repositories.text_repository import TextRepository
 from multilang.runtime import (
@@ -101,14 +104,22 @@ from multilang.services.korean_foundation_snapshot import (
     verify_active_korean_foundation_snapshot_provenance,
     verify_prepared_korean_foundation_snapshot,
 )
+from multilang.services.korean_foundation_snapshot_fallback import (
+    verify_active_korean_foundation_snapshot_provenance_with_approved_fallback,
+)
 from multilang.services.korean_checkpoint_authority import validate_korean_checkpoint_authority
 from multilang.services.korean_frequency import (
     KoreanFrequencySourceRetriever,
+    load_korean_final_frequency_entries,
     validate_korean_source_build_result,
     validate_korean_source_retrieval_result,
 )
+from multilang.services.azure_speech_adapter import AzureSpeechAdapter
+from multilang.services.frequency_decks import build_frequency_level
 from multilang.services.korean_audio import (
     KoreanAudioAuthority,
+    build_korean_voice_profile_from_authority,
+    capture_korean_azure_catalog_pilot,
     synthesize_korean_frequency_audio,
 )
 from multilang.services.korean_audio_pilot_evidence import (
@@ -218,6 +229,12 @@ def _validate_optional_sha256(value: str | None) -> str | None:
     if value is None:
         return None
     return _validate_foundation_sha256(value)
+
+
+def _validate_korean_frequency_authority_stage(value: str) -> str:
+    if value not in {"pilot_base", "pilot_audio", "full"}:
+        raise typer.BadParameter("pilot_base, pilot_audio, or full")
+    return value
 
 
 def _foundation_receipt_sha256(receipt: object) -> str:
@@ -362,6 +379,20 @@ def _read_json_mapping(path: Path) -> dict[str, object]:
     return payload
 
 
+def _read_korean_provider_policy(path: Path) -> KoreanProviderPolicy:
+    try:
+        return KoreanProviderPolicy.model_validate_json(path.read_text(encoding="utf-8"))
+    except ValueError as exc:
+        raise ValueError("Korean provider policy file is invalid") from exc
+
+
+def _catalog_result_hash(catalog_result: dict[str, object], field_name: str) -> str:
+    value = catalog_result.get(field_name)
+    if not isinstance(value, str):
+        raise ValueError("Korean provider/catalog pilot catalog hash is missing")
+    return _validate_foundation_sha256(value)
+
+
 def _list_provider_call_rows_read_only(*, database_url: str, job_id: str) -> list[object]:
     url = make_url(database_url)
     if url.drivername.startswith("sqlite") and url.database not in {None, "", ":memory:"}:
@@ -393,6 +424,178 @@ def _write_json_atomic(path: Path, payload: dict[str, object]) -> None:
         if temp_path.exists():
             temp_path.unlink()
         raise
+
+
+def _read_markdown_json_mapping(path: Path) -> dict[str, object]:
+    body = path.read_text(encoding="utf-8")
+    fence_start = body.find("```json")
+    if fence_start < 0:
+        raise ValueError("Korean voice profile authority JSON block is missing")
+    json_start = body.find("\n", fence_start)
+    if json_start < 0:
+        raise ValueError("Korean voice profile authority JSON block is invalid")
+    fence_end = body.find("```", json_start + 1)
+    if fence_end < 0:
+        raise ValueError("Korean voice profile authority JSON block is invalid")
+    payload = json.loads(body[json_start:fence_end].strip())
+    if not isinstance(payload, dict):
+        raise ValueError("Korean voice profile authority must be a JSON object")
+    return payload
+
+
+def _ensure_korean_voice_profile_outputs_distinct(
+    *,
+    outputs: tuple[Path, ...],
+    protected_inputs: dict[str, Path],
+) -> None:
+    input_paths = {path.resolve() for path in protected_inputs.values()}
+    output_paths = tuple(path.resolve() for path in outputs)
+    if len(set(output_paths)) != len(output_paths) or any(path in input_paths for path in output_paths):
+        raise ValueError("Korean voice profile outputs must be distinct from inputs and each other")
+
+
+def setup_korean_frequency_live_pilot_candidates(
+    *,
+    database_url: str,
+    job_id: str,
+    authority: KoreanFrequencyJobAuthority,
+    frequency_bundle_root: Path,
+    binding_receipt_sha256: str,
+    provider_policy: KoreanProviderPolicy,
+    max_items: int,
+) -> dict[str, object]:
+    """Prepare the local live Korean text/catalog pilot denominator."""
+
+    if authority.stage != "pilot_base":
+        raise ValueError("Korean live pilot candidate setup requires pilot_base authority")
+    if max_items != 10:
+        raise ValueError("Korean live pilot candidate setup requires exactly 10 items")
+    if provider_policy.policy_sha256 != authority.provider_policy_sha256:
+        raise ValueError("Korean live pilot provider policy drift")
+    route = provider_policy.route_for(KoreanProviderTask.SENTENCE_GENERATION)
+    route.assert_within_budget(
+        input_tokens=0,
+        output_tokens=0,
+        estimated_cost_usd=0.0,
+        latency_ms=0,
+        batch_items=max_items,
+        concurrency=1,
+        timeout_seconds=route.budget.timeout_seconds,
+    )
+    if provider_policy.fallback_policy != "none":
+        raise ValueError("Korean live pilot fallback policy drift")
+
+    database_relative_path = _sqlite_database_relative_path(database_url)
+    if _git_check_ignore(database_relative_path) != "passed":
+        raise ValueError("Korean live pilot database must be gitignored")
+    _verify_korean_frequency_phase31_authority(authority)
+    runtime_authority = _runtime_authority_from_cli(
+        database_url=database_url,
+        job_id=job_id,
+        frequency_bundle_root=frequency_bundle_root,
+        binding_receipt_sha256=binding_receipt_sha256,
+        authority=authority,
+    )
+    entries = load_korean_final_frequency_entries(
+        job_id=job_id,
+        bundle_root=frequency_bundle_root,
+        binding_receipt_sha256=binding_receipt_sha256,
+        authority=authority,
+        repo_root=Path.cwd(),
+    )
+    candidates = build_frequency_level(
+        SupportedLanguage.KO,
+        level=1,
+        required_count_per_level=1000,
+        korean_final_entries=entries,
+        source_review_receipt_sha256=runtime_authority.binding_receipt_sha256,
+        source_review_aggregate_sha256=authority.source_review_aggregate_sha256,
+    )[:max_items]
+    if len(candidates) != max_items:
+        raise ValueError("Korean live pilot candidate denominator mismatch")
+
+    engine = create_engine(database_url)
+    ensure_database_schema(engine, database_url)
+    session = Session(engine)
+    try:
+        job_repository = JobRepository(session)
+        lexical_repository = LexicalRepository(session)
+        _ensure_korean_frequency_job(job_repository, job_id=job_id, authority=authority)
+        job_repository.bind_execution_authority(job_id, authority)
+        item_rows = []
+        item_keys = []
+        for position, candidate in enumerate(candidates, start=1):
+            item_key = f"level-1-rank-{position:04d}"
+            item_rows.append((item_key, candidate.lemma_key, candidate))
+            item_keys.append(item_key)
+        lexical_repository.upsert_candidates(
+            job_id=job_id,
+            run_key=f"ko-frequency-{job_id}",
+            source_type="frequency",
+            candidates=item_rows,
+        )
+        job_repository.record_item_successes(job_id, item_keys=item_keys, completed_stage=JobStage.INGEST)
+        job_repository.advance_job_to_stage(job_id, JobStage.GENERATE_TEXT)
+        ingested_item_count = len(lexical_repository.list_candidates(job_id))
+        provider_attempt_count = job_repository.count_provider_attempts(job_id)
+    finally:
+        session.close()
+        engine.dispose()
+
+    return {
+        "schema_version": "korean-live-pilot-candidate-setup-v1",
+        "job_id": job_id,
+        "database_kind": "local_ignored_sqlite",
+        "database_relative_path": database_relative_path,
+        "database_gitignore_check": "passed",
+        "authority_stage": authority.stage,
+        "candidate_count": len(candidates),
+        "ingested_item_count": ingested_item_count,
+        "provider_attempt_count": provider_attempt_count,
+        "audio_synthesis_enabled": False,
+        "max_items": max_items,
+        "max_concurrency": route.budget.max_concurrency,
+        "max_attempts": route.budget.max_attempts,
+        "cost_ceiling_usd": f"{route.budget.max_estimated_cost_usd:.2f}",
+        "fallback_policy": provider_policy.fallback_policy,
+        "production_database_used": False,
+        "provider_policy_sha256": authority.provider_policy_sha256,
+        "pilot_authority_sha256": authority.pilot_authority_sha256,
+        "final_frequency_bundle_sha256": authority.frequency_bundle_content_sha256,
+    }
+
+
+def _sqlite_database_relative_path(database_url: str) -> str:
+    url = make_url(database_url)
+    if not url.drivername.startswith("sqlite") or url.database in {None, "", ":memory:"}:
+        raise ValueError("Korean live pilot requires a local SQLite database")
+    database_path = Path(str(url.database))
+    if database_path.is_absolute():
+        try:
+            database_path = database_path.resolve().relative_to(Path.cwd().resolve())
+        except ValueError as exc:
+            raise ValueError("Korean live pilot database must be inside the workspace") from exc
+    if any(part in {"", ".", ".."} for part in database_path.parts):
+        raise ValueError("Korean live pilot database path is invalid")
+    return database_path.as_posix()
+
+
+def _git_check_ignore(relative_path: str) -> str:
+    result = subprocess.run(
+        ["git", "check-ignore", "--quiet", "--", relative_path],
+        cwd=Path.cwd(),
+        check=False,
+        stdout=subprocess.DEVNULL,
+        stderr=subprocess.DEVNULL,
+    )
+    return "passed" if result.returncode == 0 else "failed"
+
+
+def _default_azure_catalog_endpoint(settings: Settings) -> str:
+    region = (settings.azure_speech_region or "").strip()
+    if not region:
+        raise ValueError("Azure Speech region is required for Korean catalog capture")
+    return f"https://{region}.tts.speech.microsoft.com/cognitiveservices/voices/list"
 
 
 def _build_korean_frequency_job_authority(
@@ -534,7 +737,7 @@ def _write_text_atomic(path: Path, payload: str) -> None:
 
 
 def _verify_korean_frequency_phase31_authority(authority: KoreanFrequencyJobAuthority) -> None:
-    report = verify_active_korean_foundation_snapshot_provenance(
+    report = verify_active_korean_foundation_snapshot_provenance_with_approved_fallback(
         expected_receipt_sha256=authority.phase31_validation_receipt_sha256,
     )
     expected = {
@@ -636,6 +839,45 @@ def _runtime_authority_from_cli(
         binding_receipt_sha256=binding_receipt_sha256,
         authority=authority,
     )
+
+
+def _korean_frequency_text_result_payload(
+    *,
+    job_id: str,
+    authority: KoreanFrequencyJobAuthority,
+    binding_receipt_sha256: str,
+    synthesize_audio: bool,
+    text_result: Any,
+    max_items: int | None = None,
+    korean_provider_policy: KoreanProviderPolicy | None = None,
+) -> dict[str, object]:
+    payload: dict[str, object] = {
+        "schema_version": "korean-frequency-text-result-v1",
+        "job_id": job_id,
+        "authority_stage": authority.stage,
+        "binding_receipt_sha256": binding_receipt_sha256,
+        "provider_policy_sha256": authority.provider_policy_sha256,
+        "pilot_authority_sha256": authority.pilot_authority_sha256,
+        "processed_items": text_result.processed_items,
+        "accepted_items": text_result.accepted_items,
+        "review_required_items": text_result.review_required_items,
+        "audio_synthesis_enabled": synthesize_audio,
+        "fallback_audio_items": text_result.fallback_audio_items,
+        "failed_audio_items": text_result.failed_audio_items,
+    }
+    if korean_provider_policy is not None:
+        route = korean_provider_policy.route_for(KoreanProviderTask.SENTENCE_GENERATION)
+        payload.update(
+            {
+                "max_items": max_items,
+                "max_concurrency": route.budget.max_concurrency,
+                "max_attempts": route.budget.max_attempts,
+                "cost_ceiling_usd": f"{route.budget.max_estimated_cost_usd:.2f}",
+                "fallback_policy": korean_provider_policy.fallback_policy,
+                "production_database_used": False,
+            }
+        )
+    return payload
 
 
 def _build_korean_audio_authority_from_cli(
@@ -1714,15 +1956,49 @@ def create_app(
             Path | None,
             typer.Option("--source-file", exists=True, dir_okay=False, readable=True),
         ] = None,
+        output: Annotated[
+            Path | None,
+            typer.Option("--output", dir_okay=False, writable=True),
+        ] = None,
     ) -> None:
         try:
             result = validate_korean_source_retrieval_result(result_file, source_file=source_file)
+            if output is not None:
+                source_file_sha256 = _sha256_file(source_file) if source_file is not None else None
+                _write_json_atomic(
+                    output,
+                    {
+                        "schema_version": "korean-source-retrieval-validation-v1",
+                        "status": "valid",
+                        "source_id": result.source_id,
+                        "accepted_filename": result.accepted_filename,
+                        "landing_locator_sha256": sha256(result.landing_url.encode("utf-8")).hexdigest(),
+                        "attachment_locator_sha256": sha256(result.attachment_url.encode("utf-8")).hexdigest(),
+                        "retrieval_result_sha256": _sha256_file(result_file),
+                        "source_file_sha256": source_file_sha256,
+                        "source_bytes_sha256": result.source_bytes_sha256,
+                        "attachment_sha256": result.attachment_sha256,
+                        "source_byte_count": result.source_byte_count,
+                        "text_encoding": result.text_encoding,
+                        "grants_transform_power": result.grants_transform_power,
+                        "production_asset_path_present": Path("assets/frequency/ko").exists(),
+                        "active_frequency_pointer_present": any(
+                            path.exists()
+                            for path in (
+                                Path("assets/frequency/ko/active-frequency.json"),
+                                Path("data/korean_frequency/active-frequency.json"),
+                            )
+                        ),
+                    },
+                )
         except ValueError as exc:
             _fail_korean_frequency_source_operation(exc)
         typer.echo("retrieval_result_status=valid")
         typer.echo(f"source_id={result.source_id}")
         typer.echo(f"accepted_filename={result.accepted_filename}")
         typer.echo(f"source_byte_count={result.source_byte_count}")
+        if output is not None:
+            typer.echo("validation_result_written=true")
 
     @cli.command("validate-korean-source-build-result")
     def validate_korean_source_build_result_command(
@@ -1734,18 +2010,51 @@ def create_app(
             Path | None,
             typer.Option("--bundle-dir", exists=False, file_okay=False, readable=True),
         ] = None,
+        output: Annotated[
+            Path | None,
+            typer.Option("--output", dir_okay=False, writable=True),
+        ] = None,
     ) -> None:
         try:
             result = validate_korean_source_build_result(
                 result_file,
                 bundle_dir=bundle_dir,
             )
+            if output is not None:
+                _write_json_atomic(
+                    output,
+                    {
+                        "schema_version": "korean-source-build-validation-v1",
+                        "status": "valid",
+                        "accepted_count": result.accepted_count,
+                        "rejection_count": result.rejection_count,
+                        "level_counts": {str(key): value for key, value in result.level_counts.items()},
+                        "inventory_sha256": result.inventory_sha256,
+                        "rejection_sha256": result.rejection_sha256,
+                        "report_sha256": result.report_sha256,
+                        "bundle_sha256": result.bundle_sha256,
+                        "source_bytes_sha256": result.source_bytes_sha256,
+                        "retrieval_sha256": result.retrieval_sha256,
+                        "active": result.active,
+                        "grants_runtime_activation": result.grants_runtime_activation,
+                        "production_asset_path_present": Path("assets/frequency/ko").exists(),
+                        "active_frequency_pointer_present": any(
+                            path.exists()
+                            for path in (
+                                Path("assets/frequency/ko/active-frequency.json"),
+                                Path("data/korean_frequency/active-frequency.json"),
+                            )
+                        ),
+                    },
+                )
         except ValueError as exc:
             _fail_korean_frequency_source_operation(exc)
         typer.echo("build_result_status=valid")
         typer.echo(f"accepted_count={result.accepted_count}")
         typer.echo(f"rejection_count={result.rejection_count}")
         typer.echo(f"bundle_sha256={result.bundle_sha256}")
+        if output is not None:
+            typer.echo("build_validation_written=true")
 
     @cli.command("import-korean-bundle-review-batch")
     def import_korean_bundle_review_batch_command(
@@ -1822,9 +2131,24 @@ def create_app(
             str,
             typer.Option("--expected-kind", help="Expected fixed authority kind."),
         ],
+        output: Annotated[
+            Path | None,
+            typer.Option("--output", dir_okay=False, writable=True),
+        ] = None,
     ) -> None:
         try:
             result = validate_korean_checkpoint_authority(authority_file, expected_kind=expected_kind)
+            if output is not None:
+                _write_json_atomic(
+                    output,
+                    {
+                        "authority_kind": result.kind,
+                        "authority_sha256": result.authority_sha256,
+                        "binding_count": result.binding_count,
+                        "power_count": len(result.powers),
+                        "status": "valid",
+                    },
+                )
         except ValueError as exc:
             _fail_korean_checkpoint_authority_operation(exc)
         typer.echo("authority_status=valid")
@@ -1832,6 +2156,8 @@ def create_app(
         typer.echo(f"power_count={len(result.powers)}")
         typer.echo(f"binding_count={result.binding_count}")
         typer.echo(f"authority_sha256={result.authority_sha256}")
+        if output is not None:
+            typer.echo("authority_validation_written=true")
 
     @cli.command("prepare-korean-frequency-job")
     def prepare_korean_frequency_job(
@@ -1893,10 +2219,16 @@ def create_app(
             str,
             typer.Option("--binding-receipt-sha256", callback=_validate_foundation_sha256),
         ],
+        authority_stage: Annotated[
+            str,
+            typer.Option("--authority-stage", callback=_validate_korean_frequency_authority_stage),
+        ] = "pilot_base",
     ) -> None:
         try:
+            if authority_stage != "pilot_base":
+                raise ValueError("Korean frequency job preparation is limited to pilot_base authority")
             authority = _build_korean_frequency_job_authority(
-                stage="pilot_base",
+                stage=authority_stage,
                 phase31_active_pointer_sha256=phase31_active_pointer_sha256,
                 phase31_active_pointer_content_sha256=phase31_active_pointer_content_sha256,
                 phase31_validation_receipt_sha256=phase31_validation_receipt_sha256,
@@ -1929,6 +2261,113 @@ def create_app(
         typer.echo(f"job_id={job_id}")
         typer.echo(f"authority_stage={bound.stage}")
         typer.echo(f"binding_receipt_sha256={binding_receipt_sha256}")
+
+    @cli.command("setup-korean-frequency-live-pilot-candidates")
+    def setup_korean_frequency_live_pilot_candidates_command(
+        database_url: Annotated[str, typer.Option("--database-url")],
+        job_id: Annotated[str, typer.Option("--job-id")],
+        phase31_active_pointer_sha256: Annotated[
+            str,
+            typer.Option("--phase31-active-pointer-sha256", callback=_validate_foundation_sha256),
+        ],
+        phase31_active_pointer_content_sha256: Annotated[
+            str,
+            typer.Option("--phase31-active-pointer-content-sha256", callback=_validate_foundation_sha256),
+        ],
+        phase31_validation_receipt_sha256: Annotated[
+            str,
+            typer.Option("--phase31-validation-receipt-sha256", callback=_validate_foundation_sha256),
+        ],
+        phase31_snapshot_manifest_sha256: Annotated[
+            str,
+            typer.Option("--phase31-snapshot-manifest-sha256", callback=_validate_foundation_sha256),
+        ],
+        phase31_snapshot_root_sha256: Annotated[
+            str,
+            typer.Option("--phase31-snapshot-root-sha256", callback=_validate_foundation_sha256),
+        ],
+        frequency_bundle_root: Annotated[
+            Path,
+            typer.Option("--frequency-bundle-root", exists=False, file_okay=False),
+        ],
+        frequency_bundle_manifest_sha256: Annotated[
+            str,
+            typer.Option("--frequency-bundle-manifest-sha256", callback=_validate_foundation_sha256),
+        ],
+        frequency_bundle_content_sha256: Annotated[
+            str,
+            typer.Option("--frequency-bundle-content-sha256", callback=_validate_foundation_sha256),
+        ],
+        source_retrieval_sha256: Annotated[
+            str,
+            typer.Option("--source-retrieval-sha256", callback=_validate_foundation_sha256),
+        ],
+        source_build_result_sha256: Annotated[
+            str,
+            typer.Option("--source-build-result-sha256", callback=_validate_foundation_sha256),
+        ],
+        source_review_aggregate_sha256: Annotated[
+            str,
+            typer.Option("--source-review-aggregate-sha256", callback=_validate_foundation_sha256),
+        ],
+        provider_policy_sha256: Annotated[
+            str,
+            typer.Option("--provider-policy-sha256", callback=_validate_foundation_sha256),
+        ],
+        pilot_authority_sha256: Annotated[
+            str,
+            typer.Option("--pilot-authority-sha256", callback=_validate_foundation_sha256),
+        ],
+        binding_receipt_sha256: Annotated[
+            str,
+            typer.Option("--binding-receipt-sha256", callback=_validate_foundation_sha256),
+        ],
+        provider_policy_file: Annotated[
+            Path,
+            typer.Option("--provider-policy-file", exists=True, dir_okay=False, readable=True),
+        ],
+        authority_stage: Annotated[
+            str,
+            typer.Option("--authority-stage", callback=_validate_korean_frequency_authority_stage),
+        ] = "pilot_base",
+        max_items: Annotated[int, typer.Option("--max-items", min=1)] = 10,
+        setup_result_file: Annotated[
+            Path,
+            typer.Option("--setup-result-file", exists=False, dir_okay=False, writable=True),
+        ] = Path("korean-live-pilot-candidate-setup.json"),
+    ) -> None:
+        try:
+            authority = _build_korean_frequency_job_authority(
+                stage=authority_stage,
+                phase31_active_pointer_sha256=phase31_active_pointer_sha256,
+                phase31_active_pointer_content_sha256=phase31_active_pointer_content_sha256,
+                phase31_validation_receipt_sha256=phase31_validation_receipt_sha256,
+                phase31_snapshot_manifest_sha256=phase31_snapshot_manifest_sha256,
+                phase31_snapshot_root_sha256=phase31_snapshot_root_sha256,
+                frequency_bundle_manifest_sha256=frequency_bundle_manifest_sha256,
+                frequency_bundle_content_sha256=frequency_bundle_content_sha256,
+                source_retrieval_sha256=source_retrieval_sha256,
+                source_build_result_sha256=source_build_result_sha256,
+                source_review_aggregate_sha256=source_review_aggregate_sha256,
+                provider_policy_sha256=provider_policy_sha256,
+                pilot_authority_sha256=pilot_authority_sha256,
+            )
+            payload = setup_korean_frequency_live_pilot_candidates(
+                database_url=database_url,
+                job_id=job_id,
+                authority=authority,
+                frequency_bundle_root=frequency_bundle_root,
+                binding_receipt_sha256=binding_receipt_sha256,
+                provider_policy=_read_korean_provider_policy(provider_policy_file),
+                max_items=max_items,
+            )
+            _write_json_atomic(setup_result_file, payload)
+        except ValueError as exc:
+            _fail_korean_frequency_text_operation(exc)
+        typer.echo("korean_live_pilot_candidate_setup_status=prepared")
+        typer.echo(f"job_id={job_id}")
+        typer.echo(f"candidate_count={payload['candidate_count']}")
+        typer.echo("setup_result_written=true")
 
     @cli.command("bind-korean-frequency-audio-authority")
     def bind_korean_frequency_audio_authority(
@@ -2113,29 +2552,33 @@ def create_app(
             typer.Option("--binding-receipt-sha256", callback=_validate_foundation_sha256),
         ],
         catalog_locator_sha256: Annotated[
-            str,
-            typer.Option("--catalog-locator-sha256", callback=_validate_foundation_sha256),
-        ],
+            str | None,
+            typer.Option("--catalog-locator-sha256", callback=_validate_optional_sha256),
+        ] = None,
         catalog_content_sha256: Annotated[
-            str,
-            typer.Option("--catalog-content-sha256", callback=_validate_foundation_sha256),
-        ],
+            str | None,
+            typer.Option("--catalog-content-sha256", callback=_validate_optional_sha256),
+        ] = None,
         profile_sample_authority_sha256: Annotated[
-            str,
-            typer.Option("--profile-sample-authority-sha256", callback=_validate_foundation_sha256),
-        ],
+            str | None,
+            typer.Option("--profile-sample-authority-sha256", callback=_validate_optional_sha256),
+        ] = None,
         provider_review_authority_sha256: Annotated[
-            str,
-            typer.Option("--provider-review-authority-sha256", callback=_validate_foundation_sha256),
-        ],
+            str | None,
+            typer.Option("--provider-review-authority-sha256", callback=_validate_optional_sha256),
+        ] = None,
         heard_review_authority_sha256: Annotated[
+            str | None,
+            typer.Option("--heard-review-authority-sha256", callback=_validate_optional_sha256),
+        ] = None,
+        authority_stage: Annotated[
             str,
-            typer.Option("--heard-review-authority-sha256", callback=_validate_foundation_sha256),
-        ],
+            typer.Option("--authority-stage", callback=_validate_korean_frequency_authority_stage),
+        ] = "full",
     ) -> None:
         try:
             authority = _build_korean_frequency_job_authority(
-                stage="full",
+                stage=authority_stage,
                 phase31_active_pointer_sha256=phase31_active_pointer_sha256,
                 phase31_active_pointer_content_sha256=phase31_active_pointer_content_sha256,
                 phase31_validation_receipt_sha256=phase31_validation_receipt_sha256,
@@ -2235,25 +2678,29 @@ def create_app(
             typer.Option("--binding-receipt-sha256", callback=_validate_foundation_sha256),
         ],
         catalog_locator_sha256: Annotated[
-            str,
-            typer.Option("--catalog-locator-sha256", callback=_validate_foundation_sha256),
-        ],
+            str | None,
+            typer.Option("--catalog-locator-sha256", callback=_validate_optional_sha256),
+        ] = None,
         catalog_content_sha256: Annotated[
-            str,
-            typer.Option("--catalog-content-sha256", callback=_validate_foundation_sha256),
-        ],
+            str | None,
+            typer.Option("--catalog-content-sha256", callback=_validate_optional_sha256),
+        ] = None,
         profile_sample_authority_sha256: Annotated[
-            str,
-            typer.Option("--profile-sample-authority-sha256", callback=_validate_foundation_sha256),
-        ],
+            str | None,
+            typer.Option("--profile-sample-authority-sha256", callback=_validate_optional_sha256),
+        ] = None,
         provider_review_authority_sha256: Annotated[
-            str,
-            typer.Option("--provider-review-authority-sha256", callback=_validate_foundation_sha256),
-        ],
+            str | None,
+            typer.Option("--provider-review-authority-sha256", callback=_validate_optional_sha256),
+        ] = None,
         heard_review_authority_sha256: Annotated[
+            str | None,
+            typer.Option("--heard-review-authority-sha256", callback=_validate_optional_sha256),
+        ] = None,
+        authority_stage: Annotated[
             str,
-            typer.Option("--heard-review-authority-sha256", callback=_validate_foundation_sha256),
-        ],
+            typer.Option("--authority-stage", callback=_validate_korean_frequency_authority_stage),
+        ] = "full",
         max_items: Annotated[
             int | None,
             typer.Option("--max-items", min=1),
@@ -2266,10 +2713,20 @@ def create_app(
             bool,
             typer.Option("--synthesize-audio/--no-synthesize-audio"),
         ] = True,
+        text_result_file: Annotated[
+            Path | None,
+            typer.Option("--text-result-file", exists=False, dir_okay=False, writable=True),
+        ] = None,
+        provider_policy_file: Annotated[
+            Path | None,
+            typer.Option("--provider-policy-file", exists=True, dir_okay=False, readable=True),
+        ] = None,
     ) -> None:
         try:
+            if authority_stage == "pilot_base" and synthesize_audio:
+                raise ValueError("Korean pilot_base text generation cannot synthesize audio")
             authority = _build_korean_frequency_job_authority(
-                stage="full",
+                stage=authority_stage,
                 phase31_active_pointer_sha256=phase31_active_pointer_sha256,
                 phase31_active_pointer_content_sha256=phase31_active_pointer_content_sha256,
                 phase31_validation_receipt_sha256=phase31_validation_receipt_sha256,
@@ -2295,9 +2752,14 @@ def create_app(
                 binding_receipt_sha256=binding_receipt_sha256,
                 authority=authority,
             )
+            provider_policy = _read_korean_provider_policy(provider_policy_file) if provider_policy_file is not None else None
             runtime_service = build_korean_frequency_text_runtime_service(
                 settings=Settings(_env_file=None, database_url=database_url),
                 runtime_authority=runtime_authority,
+                phase31_provenance_verifier=(
+                    verify_active_korean_foundation_snapshot_provenance_with_approved_fallback
+                ),
+                korean_provider_policy=provider_policy,
             )
             text_result = runtime_service.generate_text(
                 job_id=job_id,
@@ -2307,6 +2769,19 @@ def create_app(
                 progress_callback=_print_generate_text_progress,
                 synthesize_audio=synthesize_audio,
             )
+            if text_result_file is not None:
+                _write_json_atomic(
+                    text_result_file,
+                    _korean_frequency_text_result_payload(
+                        job_id=job_id,
+                        authority=authority,
+                        binding_receipt_sha256=binding_receipt_sha256,
+                        synthesize_audio=synthesize_audio,
+                        text_result=text_result,
+                        max_items=max_items,
+                        korean_provider_policy=provider_policy,
+                    ),
+                )
         except ValueError as exc:
             _fail_korean_frequency_text_operation(exc)
         typer.echo("korean_frequency_text_status=generated")
@@ -2317,6 +2792,8 @@ def create_app(
         typer.echo(f"audio_reused_items={text_result.audio_reused_items}")
         typer.echo(f"fallback_audio_items={text_result.fallback_audio_items}")
         typer.echo(f"failed_audio_items={text_result.failed_audio_items}")
+        if text_result_file is not None:
+            typer.echo("text_result_written=true")
 
     @cli.command("import-korean-production-text-review-batch")
     def import_korean_production_text_review_batch_command(
@@ -2392,34 +2869,127 @@ def create_app(
         provider_policy_sha256: Annotated[str, typer.Option("--provider-policy-sha256", callback=_validate_foundation_sha256)],
         pilot_authority_sha256: Annotated[str, typer.Option("--pilot-authority-sha256", callback=_validate_foundation_sha256)],
         binding_receipt_sha256: Annotated[str, typer.Option("--binding-receipt-sha256", callback=_validate_foundation_sha256)],
-        catalog_locator_sha256: Annotated[str, typer.Option("--catalog-locator-sha256", callback=_validate_foundation_sha256)],
-        catalog_content_sha256: Annotated[str, typer.Option("--catalog-content-sha256", callback=_validate_foundation_sha256)],
-        profile_sample_authority_sha256: Annotated[str, typer.Option("--profile-sample-authority-sha256", callback=_validate_foundation_sha256)],
-        provider_review_authority_sha256: Annotated[str, typer.Option("--provider-review-authority-sha256", callback=_validate_foundation_sha256)],
-        heard_review_authority_sha256: Annotated[str, typer.Option("--heard-review-authority-sha256", callback=_validate_foundation_sha256)],
-        endpoint_url: Annotated[str, typer.Option("--endpoint-url")],
+        provider_policy_file: Annotated[Path, typer.Option("--provider-policy-file", exists=True, dir_okay=False, readable=True)],
         catalog_result_file: Annotated[Path, typer.Option("--catalog-result-file", exists=False, dir_okay=False)],
+        catalog_locator_sha256: Annotated[
+            str | None,
+            typer.Option("--catalog-locator-sha256", callback=_validate_optional_sha256),
+        ] = None,
+        catalog_content_sha256: Annotated[
+            str | None,
+            typer.Option("--catalog-content-sha256", callback=_validate_optional_sha256),
+        ] = None,
+        profile_sample_authority_sha256: Annotated[
+            str | None,
+            typer.Option("--profile-sample-authority-sha256", callback=_validate_optional_sha256),
+        ] = None,
+        provider_review_authority_sha256: Annotated[
+            str | None,
+            typer.Option("--provider-review-authority-sha256", callback=_validate_optional_sha256),
+        ] = None,
+        heard_review_authority_sha256: Annotated[
+            str | None,
+            typer.Option("--heard-review-authority-sha256", callback=_validate_optional_sha256),
+        ] = None,
+        endpoint_url: Annotated[str | None, typer.Option("--endpoint-url")] = None,
     ) -> None:
         try:
-            _build_korean_audio_authority_from_cli(
-                job_id=job_id,
+            if frequency_bundle_root.is_file() or catalog_result_file.is_dir():
+                raise ValueError("Korean Azure catalog authority drift")
+            authority = _build_korean_frequency_job_authority(
+                stage="pilot_base",
+                phase31_active_pointer_sha256=phase31_active_pointer_sha256,
+                phase31_active_pointer_content_sha256=phase31_active_pointer_content_sha256,
                 phase31_validation_receipt_sha256=phase31_validation_receipt_sha256,
                 phase31_snapshot_manifest_sha256=phase31_snapshot_manifest_sha256,
                 phase31_snapshot_root_sha256=phase31_snapshot_root_sha256,
+                frequency_bundle_manifest_sha256=frequency_bundle_manifest_sha256,
+                frequency_bundle_content_sha256=frequency_bundle_content_sha256,
+                source_retrieval_sha256=source_retrieval_sha256,
+                source_build_result_sha256=source_build_result_sha256,
+                source_review_aggregate_sha256=source_review_aggregate_sha256,
+                provider_policy_sha256=provider_policy_sha256,
+                pilot_authority_sha256=pilot_authority_sha256,
+            )
+            _runtime_authority_from_cli(
+                database_url=database_url,
+                job_id=job_id,
+                frequency_bundle_root=frequency_bundle_root,
                 binding_receipt_sha256=binding_receipt_sha256,
+                authority=authority,
+            )
+            settings_obj = Settings(_env_file=None, database_url=database_url)
+            resolved_endpoint = endpoint_url or _default_azure_catalog_endpoint(settings_obj)
+            engine = create_engine(database_url)
+            ensure_database_schema(engine, database_url)
+            session = Session(engine)
+            try:
+                payload = capture_korean_azure_catalog_pilot(
+                    job_id=job_id,
+                    authority=authority,
+                    provider_policy=_read_korean_provider_policy(provider_policy_file),
+                    endpoint_url=resolved_endpoint,
+                    provider_call_logger=ProviderCallLogRepository(session),
+                    phase31_verifier=verify_active_korean_foundation_snapshot_provenance_with_approved_fallback,
+                    catalog_fetcher=AzureSpeechAdapter(settings_obj).fetch_voice_inventory,
+                )
+            finally:
+                session.close()
+                engine.dispose()
+            _write_json_atomic(catalog_result_file, payload)
+        except (RuntimeError, ValueError) as exc:
+            if not isinstance(exc, ValueError):
+                exc = ValueError(str(exc))
+            _fail_korean_frequency_text_operation(exc)
+        typer.echo("korean_azure_catalog_status=captured")
+        typer.echo(f"job_id={job_id}")
+        typer.echo(f"catalog_voice_count={payload['voice_count']}")
+
+    @cli.command("bind-korean-azure-voice-profile")
+    def bind_korean_azure_voice_profile_command(
+        job_id: Annotated[str, typer.Option("--job-id")],
+        provider_policy_sha256: Annotated[str, typer.Option("--provider-policy-sha256", callback=_validate_foundation_sha256)],
+        pilot_authority_sha256: Annotated[str, typer.Option("--pilot-authority-sha256", callback=_validate_foundation_sha256)],
+        catalog_locator_sha256: Annotated[str, typer.Option("--catalog-locator-sha256", callback=_validate_foundation_sha256)],
+        catalog_content_sha256: Annotated[str, typer.Option("--catalog-content-sha256", callback=_validate_foundation_sha256)],
+        catalog_result_file: Annotated[Path, typer.Option("--catalog-result-file", exists=True, dir_okay=False, readable=True)],
+        profile_authority_file: Annotated[Path, typer.Option("--profile-authority-file", exists=True, dir_okay=False, readable=True)],
+        voice_profile_file: Annotated[Path, typer.Option("--voice-profile-file", exists=False, dir_okay=False, writable=True)],
+        evidence_file: Annotated[Path, typer.Option("--evidence-file", exists=False, dir_okay=False, writable=True)],
+    ) -> None:
+        try:
+            protected_inputs = {
+                "catalog_result": catalog_result_file,
+                "profile_authority": profile_authority_file,
+            }
+            _ensure_korean_voice_profile_outputs_distinct(
+                outputs=(voice_profile_file, evidence_file),
+                protected_inputs=protected_inputs,
+            )
+            before_hashes = {label: _sha256_file(path) for label, path in protected_inputs.items()}
+            catalog_result = _read_json_mapping(catalog_result_file)
+            profile_authority = _read_markdown_json_mapping(profile_authority_file)
+            profile, evidence = build_korean_voice_profile_from_authority(
+                catalog_result=catalog_result,
+                profile_authority=profile_authority,
+                job_id=job_id,
                 provider_policy_sha256=provider_policy_sha256,
                 pilot_authority_sha256=pilot_authority_sha256,
                 catalog_locator_sha256=catalog_locator_sha256,
                 catalog_content_sha256=catalog_content_sha256,
-                profile_sample_authority_sha256=profile_sample_authority_sha256,
+                catalog_result_file_sha256=before_hashes["catalog_result"],
+                profile_authority_sha256=before_hashes["profile_authority"],
             )
-            if not database_url or not endpoint_url or catalog_result_file.is_dir():
-                raise ValueError("Korean Azure catalog authority drift")
-        except ValueError as exc:
+            after_hashes = {label: _sha256_file(path) for label, path in protected_inputs.items()}
+            if after_hashes != before_hashes:
+                raise ValueError("Korean voice profile protected input drift")
+            _write_json_atomic(voice_profile_file, profile.model_dump(mode="json"))
+            _write_json_atomic(evidence_file, evidence.model_dump(mode="json"))
+        except (ValueError, TypeError) as exc:
             _fail_korean_frequency_text_operation(exc)
-        typer.echo("korean_azure_catalog_status=ready_for_authorized_capture")
-        typer.echo(f"job_id={job_id}")
-        typer.echo(f"catalog_result_file={catalog_result_file}")
+        typer.echo("korean_voice_profile_status=bound")
+        typer.echo(f"profile_sha256={profile.profile_sha256}")
+        typer.echo(f"evidence_sha256={evidence.evidence_sha256}")
 
     @cli.command("validate-korean-provider-catalog-pilot-result")
     def validate_korean_provider_catalog_pilot_result_command(
@@ -2439,11 +3009,6 @@ def create_app(
         provider_policy_sha256: Annotated[str, typer.Option("--provider-policy-sha256", callback=_validate_foundation_sha256)],
         pilot_authority_sha256: Annotated[str, typer.Option("--pilot-authority-sha256", callback=_validate_foundation_sha256)],
         binding_receipt_sha256: Annotated[str, typer.Option("--binding-receipt-sha256", callback=_validate_foundation_sha256)],
-        catalog_locator_sha256: Annotated[str, typer.Option("--catalog-locator-sha256", callback=_validate_foundation_sha256)],
-        catalog_content_sha256: Annotated[str, typer.Option("--catalog-content-sha256", callback=_validate_foundation_sha256)],
-        profile_sample_authority_sha256: Annotated[str, typer.Option("--profile-sample-authority-sha256", callback=_validate_foundation_sha256)],
-        provider_review_authority_sha256: Annotated[str, typer.Option("--provider-review-authority-sha256", callback=_validate_foundation_sha256)],
-        heard_review_authority_sha256: Annotated[str, typer.Option("--heard-review-authority-sha256", callback=_validate_foundation_sha256)],
         final_authority_sha256: Annotated[str, typer.Option("--final-authority-sha256", callback=_validate_foundation_sha256)],
         binding_receipt_file: Annotated[Path, typer.Option("--binding-receipt-file", exists=True, dir_okay=False, readable=True)],
         frequency_bundle_manifest_file: Annotated[Path, typer.Option("--frequency-bundle-manifest-file", exists=True, dir_okay=False, readable=True)],
@@ -2457,11 +3022,31 @@ def create_app(
         catalog_result_file: Annotated[Path, typer.Option("--catalog-result-file", exists=True, dir_okay=False, readable=True)],
         expected_item_count: Annotated[int, typer.Option("--expected-item-count", min=1)],
         evidence_file: Annotated[Path, typer.Option("--evidence-file", exists=False, dir_okay=False, writable=True)],
+        profile_sample_authority_sha256: Annotated[
+            str | None,
+            typer.Option("--profile-sample-authority-sha256", callback=_validate_optional_sha256),
+        ] = None,
+        catalog_locator_sha256: Annotated[
+            str | None,
+            typer.Option("--catalog-locator-sha256", callback=_validate_optional_sha256),
+        ] = None,
+        catalog_content_sha256: Annotated[
+            str | None,
+            typer.Option("--catalog-content-sha256", callback=_validate_optional_sha256),
+        ] = None,
+        provider_review_authority_sha256: Annotated[
+            str | None,
+            typer.Option("--provider-review-authority-sha256", callback=_validate_optional_sha256),
+        ] = None,
+        heard_review_authority_sha256: Annotated[
+            str | None,
+            typer.Option("--heard-review-authority-sha256", callback=_validate_optional_sha256),
+        ] = None,
     ) -> None:
         try:
-            if frequency_bundle_root.is_file() or not profile_sample_authority_sha256:
+            if frequency_bundle_root.is_file():
                 raise ValueError("Korean provider/catalog pilot bundle authority drift")
-            if not provider_review_authority_sha256 or not heard_review_authority_sha256:
+            if not provider_review_authority_sha256:
                 raise ValueError("Korean provider/catalog pilot review authority drift")
             protected_inputs = {
                 "binding_receipt": binding_receipt_file,
@@ -2478,6 +3063,14 @@ def create_app(
             if evidence_file.resolve() in {path.resolve() for path in protected_inputs.values()}:
                 raise ValueError("Korean provider/catalog pilot evidence output must be distinct from inputs")
             before_hashes = {label: _sha256_file(path) for label, path in protected_inputs.items()}
+            text_result = _read_json_mapping(text_result_file)
+            catalog_result = _read_json_mapping(catalog_result_file)
+            derived_catalog_locator_sha256 = _catalog_result_hash(catalog_result, "catalog_locator_sha256")
+            derived_catalog_content_sha256 = _catalog_result_hash(catalog_result, "catalog_content_sha256")
+            if catalog_locator_sha256 is not None and catalog_locator_sha256 != derived_catalog_locator_sha256:
+                raise ValueError("Korean provider/catalog pilot catalog locator drift")
+            if catalog_content_sha256 is not None and catalog_content_sha256 != derived_catalog_content_sha256:
+                raise ValueError("Korean provider/catalog pilot catalog content drift")
             authority = KoreanProviderCatalogPilotAuthority(
                 job_id=job_id,
                 phase31_pointer_locator_sha256=phase31_active_pointer_sha256,
@@ -2493,12 +3086,10 @@ def create_app(
                 provider_policy_sha256=provider_policy_sha256,
                 pilot_authority_sha256=pilot_authority_sha256,
                 binding_receipt_sha256=binding_receipt_sha256,
-                catalog_locator_sha256=catalog_locator_sha256,
-                catalog_content_sha256=catalog_content_sha256,
+                catalog_locator_sha256=derived_catalog_locator_sha256,
+                catalog_content_sha256=derived_catalog_content_sha256,
                 final_authority_sha256=final_authority_sha256,
             )
-            text_result = _read_json_mapping(text_result_file)
-            catalog_result = _read_json_mapping(catalog_result_file)
             provider_call_rows = _list_provider_call_rows_read_only(database_url=database_url, job_id=job_id)
             after_hashes = {label: _sha256_file(path) for label, path in protected_inputs.items()}
             evidence = validate_korean_provider_catalog_pilot_result(
@@ -2508,7 +3099,7 @@ def create_app(
                 catalog_result=catalog_result,
                 expected_item_count=expected_item_count,
                 protected_hashes={label: (before_hashes[label], after_hashes[label]) for label in protected_inputs},
-                phase31_verifier=verify_active_korean_foundation_snapshot_provenance,
+                phase31_verifier=verify_active_korean_foundation_snapshot_provenance_with_approved_fallback,
             )
             _write_korean_production_json_atomic(evidence_file, evidence.model_dump(mode="json"))
         except (ValueError, TypeError) as exc:

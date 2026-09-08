@@ -1,0 +1,167 @@
+{
+  "authority_scope": "offline_policy_contract_only",
+  "fallback_policy": "none",
+  "policy_version": "korean-provider-policy-v1",
+  "routes": [
+    {
+      "budget": {
+        "max_attempts": 2,
+        "max_batch_items": 10,
+        "max_concurrency": 1,
+        "max_estimated_cost_usd": 1.0,
+        "max_input_tokens": 4096,
+        "max_latency_ms": 60000,
+        "max_output_tokens": 1024,
+        "max_total_tokens": 5120,
+        "timeout_seconds": 60.0
+      },
+      "cache_namespace": "korean-frequency-definition",
+      "fallback_policy": "none",
+      "model": "gpt-4.1-mini",
+      "policy_version": "korean-provider-policy-v1",
+      "provider": "openai",
+      "response_schema_sha256": "f5e0b7a8dbea8c7f2dd85c6374d413a1021c8ae7fa863552664892991203559c",
+      "task": "definition"
+    },
+    {
+      "budget": {
+        "max_attempts": 2,
+        "max_batch_items": 10,
+        "max_concurrency": 1,
+        "max_estimated_cost_usd": 1.0,
+        "max_input_tokens": 4096,
+        "max_latency_ms": 60000,
+        "max_output_tokens": 1024,
+        "max_total_tokens": 5120,
+        "timeout_seconds": 60.0
+      },
+      "cache_namespace": "korean-frequency-sentence-generation",
+      "fallback_policy": "none",
+      "model": "gpt-4.1-mini",
+      "policy_version": "korean-provider-policy-v1",
+      "provider": "openai",
+      "response_schema_sha256": "1dee297ad211d2ba8fad94ffb9917b47d7f4ddaba2432bd5c668583ae9b793b8",
+      "task": "sentence_generation"
+    },
+    {
+      "budget": {
+        "max_attempts": 2,
+        "max_batch_items": 10,
+        "max_concurrency": 1,
+        "max_estimated_cost_usd": 1.0,
+        "max_input_tokens": 4096,
+        "max_latency_ms": 60000,
+        "max_output_tokens": 1024,
+        "max_total_tokens": 5120,
+        "timeout_seconds": 60.0
+      },
+      "cache_namespace": "korean-frequency-repair",
+      "fallback_policy": "none",
+      "model": "gpt-4.1-mini",
+      "policy_version": "korean-provider-policy-v1",
+      "provider": "openai",
+      "response_schema_sha256": "c92a692d4dc4cdd61826685d6eaf330c4f857ac4e8a2f61d7e45d3ce359042f8",
+      "task": "repair"
+    },
+    {
+      "budget": {
+        "max_attempts": 2,
+        "max_batch_items": 10,
+        "max_concurrency": 1,
+        "max_estimated_cost_usd": 1.0,
+        "max_input_tokens": 4096,
+        "max_latency_ms": 60000,
+        "max_output_tokens": 1024,
+        "max_total_tokens": 5120,
+        "timeout_seconds": 60.0
+      },
+      "cache_namespace": "korean-frequency-translation-pt-br",
+      "fallback_policy": "none",
+      "model": "deepl-api-PT-BR",
+      "policy_version": "korean-provider-policy-v1",
+      "provider": "deepl",
+      "response_schema_sha256": "bada20d7c9bcf13d2a0b78d84da900bf090a83a3ab70aee44973cc6e634c75ef",
+      "task": "translation"
+    },
+    {
+      "budget": {
+        "max_attempts": 2,
+        "max_batch_items": 10,
+        "max_concurrency": 1,
+        "max_estimated_cost_usd": 1.0,
+        "max_input_tokens": 4096,
+        "max_latency_ms": 60000,
+        "max_output_tokens": 1024,
+        "max_total_tokens": 5120,
+        "timeout_seconds": 60.0
+      },
+      "cache_namespace": "korean-frequency-judge",
+      "fallback_policy": "none",
+      "model": "gpt-4.1-mini",
+      "policy_version": "korean-provider-policy-v1",
+      "provider": "openai",
+      "response_schema_sha256": "9f7fd779ef95a2f3beb60a7c4f3292dc21710a1cd553cca6cb8377271b3c3ddd",
+      "task": "judge"
+    },
+    {
+      "budget": {
+        "max_attempts": 2,
+        "max_batch_items": 10,
+        "max_concurrency": 1,
+        "max_estimated_cost_usd": 1.0,
+        "max_input_tokens": 4096,
+        "max_latency_ms": 60000,
+        "max_output_tokens": 1024,
+        "max_total_tokens": 5120,
+        "timeout_seconds": 60.0
+      },
+      "cache_namespace": "korean-frequency-azure-catalog",
+      "fallback_policy": "none",
+      "model": "ko-KR-voice-catalog",
+      "policy_version": "korean-provider-policy-v1",
+      "provider": "azure-speech",
+      "response_schema_sha256": "e68769da25749e500d2c7dd3b6209392f211de7bb513f2d728a72b75a67b8127",
+      "task": "catalog"
+    },
+    {
+      "budget": {
+        "max_attempts": 2,
+        "max_batch_items": 10,
+        "max_concurrency": 1,
+        "max_estimated_cost_usd": 1.0,
+        "max_input_tokens": 4096,
+        "max_latency_ms": 60000,
+        "max_output_tokens": 1024,
+        "max_total_tokens": 5120,
+        "timeout_seconds": 60.0
+      },
+      "cache_namespace": "korean-frequency-word-audio-disabled",
+      "fallback_policy": "none",
+      "model": null,
+      "policy_version": "korean-provider-policy-v1",
+      "provider": "disabled",
+      "response_schema_sha256": "e9aa0664b4581b3b2783362d9f9899ad598c15436634d5f63a8c8b39f785b2a4",
+      "task": "word_audio"
+    },
+    {
+      "budget": {
+        "max_attempts": 2,
+        "max_batch_items": 10,
+        "max_concurrency": 1,
+        "max_estimated_cost_usd": 1.0,
+        "max_input_tokens": 4096,
+        "max_latency_ms": 60000,
+        "max_output_tokens": 1024,
+        "max_total_tokens": 5120,
+        "timeout_seconds": 60.0
+      },
+      "cache_namespace": "korean-frequency-sentence-audio-disabled",
+      "fallback_policy": "none",
+      "model": null,
+      "policy_version": "korean-provider-policy-v1",
+      "provider": "disabled",
+      "response_schema_sha256": "8797d65d7a9abbdf19dbbb27b63ccd498a77e4c0d073bc456b3c12b40637b82b",
+      "task": "sentence_audio"
+    }
+  ]
+}

@@ -79,15 +79,23 @@ def make_candidate(
     )
 
 
-def make_korean_candidate(*, include_frequency_evidence: bool = False) -> LexicalCardCandidate:
+def make_korean_candidate(
+    *,
+    include_frequency_evidence: bool = False,
+    form: str = "학교",
+    part_of_speech: str = "NNG",
+    sense_id: str = "fixture-school-1",
+    source_rank: int = 23,
+    final_rank: int = 17,
+) -> LexicalCardCandidate:
     identity = KoreanLexicalIdentity(
-        submitted_form="학교",
-        canonical_nfc="학교",
-        lemma="학교",
-        part_of_speech="NNG",
-        sense_id="fixture-school-1",
+        submitted_form=form,
+        canonical_nfc=form,
+        lemma=form,
+        part_of_speech=part_of_speech,
+        sense_id=sense_id,
         register="neutral",
-        morpheme_signature=(KoreanSignatureItem(form="학교", pos="NNG"),),
+        morpheme_signature=(KoreanSignatureItem(form=form, pos=part_of_speech),),
         analyzer_fingerprint=KoreanAnalyzerFingerprint(
             analyzer_name="kiwi",
             analyzer_package_version="0.23.2",
@@ -110,8 +118,8 @@ def make_korean_candidate(*, include_frequency_evidence: bool = False) -> Lexica
     evidence = KoreanFrequencyLexicalEvidence(
         source_id="nikl-korean-learners-vocabulary",
         source_version="fixture-v1",
-        source_rank=23,
-        final_rank=17,
+        source_rank=source_rank,
+        final_rank=final_rank,
         level=1,
         part_of_speech=identity.part_of_speech,
         sense_id=identity.sense_id,
@@ -125,11 +133,11 @@ def make_korean_candidate(*, include_frequency_evidence: bool = False) -> Lexica
         analyzer_fingerprint=identity.analyzer_fingerprint,
     )
     return LexicalCardCandidate(
-        submitted_form="학교",
-        display_form="학교",
+        submitted_form=form,
+        display_form=form,
         lemma=identity.lemma,
         lemma_key=identity.lexical_key,
-        frequency_rank=17,
+        frequency_rank=final_rank,
         frequency_level=1,
         definitions_html="escola",
         definition_language="pt",
@@ -279,6 +287,47 @@ def test_frequency_upsert_candidates_rejects_duplicates_before_persistence() -> 
         assert "duplicate frequency lemma_key" in str(exc)
     else:  # pragma: no cover - assertion clarity
         raise AssertionError("expected duplicate frequency candidate validation failure")
+
+
+def test_korean_frequency_upsert_candidates_accepts_same_surface_distinct_identity() -> None:
+    repository, job_repository, _ = build_repositories()
+    job = job_repository.create_job(
+        request=make_request(source_type="frequency", language=SupportedLanguage.KO),
+        run_key="run-ko-frequency",
+        source_fingerprint="freq-ko",
+        total_items=2,
+    )
+    first = make_korean_candidate(
+        include_frequency_evidence=True,
+        form="surface",
+        part_of_speech="NNG",
+        sense_id="fixture-surface-noun",
+        source_rank=1,
+        final_rank=1,
+    )
+    second = make_korean_candidate(
+        include_frequency_evidence=True,
+        form="surface",
+        part_of_speech="MAG",
+        sense_id="fixture-surface-adverb",
+        source_rank=2,
+        final_rank=2,
+    )
+
+    repository.upsert_candidates(
+        job_id=job.id,
+        run_key=job.run_key,
+        source_type="frequency",
+        candidates=[
+            ("level-1-rank-0001", first.lemma_key, first),
+            ("level-1-rank-0002", second.lemma_key, second),
+        ],
+    )
+
+    candidates = repository.list_candidates(job.id)
+    assert len(candidates) == 2
+    assert candidates[0].display_form == candidates[1].display_form
+    assert candidates[0].lemma_key != candidates[1].lemma_key
 
 
 def test_frequency_upsert_candidate_rejects_existing_duplicate_across_levels() -> None:

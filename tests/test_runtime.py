@@ -23,6 +23,7 @@ from multilang.runtime import (
 from multilang.services.audio_synthesis import AudioSynthesisResponse
 from multilang.services.fallback_audio_adapter import FallbackAudioAdapter
 from multilang.services.korean_morphology import KiwiKoreanMorphologyService
+from multilang.services.korean_foundation_snapshot_fallback import KoreanFoundationApprovedFallback
 from multilang.services.library_pronunciation_adapters import (
     FallbackPronunciationAdapter,
     LibraryPronunciationAdapter,
@@ -248,6 +249,59 @@ def test_korean_frequency_text_runtime_blocks_phase31_drift_before_loading_entri
         )
 
     assert order == ["verify_active"]
+
+
+def test_korean_frequency_text_runtime_accepts_injected_phase31_fallback_verifier(tmp_path) -> None:
+    authority = _korean_runtime_authority()
+    order: list[str] = []
+    fallback = KoreanFoundationApprovedFallback(
+        active_pointer_sha256=_hash("active-pointer"),
+        bundle_sha256=_hash("bundle"),
+        receipt_sha256=authority.phase31_validation_receipt_sha256 or "",
+        snapshot_manifest_sha256=authority.phase31_snapshot_manifest_sha256 or "",
+        snapshot_root_sha256=authority.phase31_snapshot_root_sha256 or "",
+        summary_sha256=_hash("summary"),
+        verification_report_sha256=_hash("verification"),
+        confirmed_index_sha256=_hash("index"),
+    )
+
+    def fallback_verifier(*, expected_receipt_sha256: str) -> object:
+        order.append("verify_active")
+        assert expected_receipt_sha256 == fallback.receipt_sha256
+        return type(
+            "Report",
+            (),
+            {
+                "receipt_sha256": fallback.receipt_sha256,
+                "snapshot_manifest_sha256": fallback.snapshot_manifest_sha256,
+                "snapshot_root_sha256": fallback.snapshot_root_sha256,
+            },
+        )()
+
+    def entry_loader(**kwargs: object) -> tuple[KoreanFrequencyEntry, ...]:
+        order.append("load_entries")
+        assert kwargs["authority"] == authority
+        return ()
+
+    def runtime_builder(**kwargs: object) -> object:
+        order.append("build_runtime")
+        return object()
+
+    result = build_korean_frequency_text_runtime_service(
+        settings=Settings(_env_file=None, database_url=f"sqlite+pysqlite:///{tmp_path / 'runtime.db'}"),
+        runtime_authority=KoreanFrequencyTextRuntimeAuthority(
+            job_id="job-ko",
+            bundle_root=tmp_path / "bundle",
+            binding_receipt_sha256=authority.source_review_aggregate_sha256 or "",
+            authority=authority,
+        ),
+        phase31_provenance_verifier=fallback_verifier,
+        entry_loader=entry_loader,
+        runtime_builder=runtime_builder,
+    )
+
+    assert result is not None
+    assert order == ["verify_active", "load_entries", "build_runtime"]
 
 
 def test_runtime_fails_loudly_when_litellm_is_configured_without_credentials(tmp_path) -> None:

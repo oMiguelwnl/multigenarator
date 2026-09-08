@@ -17,6 +17,11 @@ _HASH_E = "e" * 64
 _HASH_F = "f" * 64
 _HASH_1 = "1" * 64
 _HASH_2 = "2" * 64
+_CURRENT_ATTACHMENT_URL = (
+    "https://www.korean.go.kr/common/download.do?file_path=etcData&"
+    "c_file_name=b73a8438-4713-4436-8481-ec26fd0dce2a_0.txt&"
+    "o_file_name=%ED%95%9C%EA%B5%AD%EC%96%B4%20%ED%95%99%EC%8A%B5%EC%9A%A9%20%EC%96%B4%ED%9C%98%20%EB%AA%A9%EB%A1%9D.txt"
+)
 
 
 def _fingerprint():
@@ -100,7 +105,7 @@ def test_retrieval_contract_separates_landing_attachment_and_source_bytes() -> N
         landing_url="https://www.korean.go.kr/front/etcData/etcDataView.do?mn_id=46&etc_seq=70",
         accepted_filename="한국어 학습용 어휘 목록.txt",
         landing_sha256=_HASH_A,
-        attachment_url="https://www.korean.go.kr/front/etcData/etcDataFileDownload.do?etc_seq=70&file_seq=1",
+        attachment_url=_CURRENT_ATTACHMENT_URL,
         attachment_sha256=_HASH_B,
         source_bytes_sha256=_HASH_C,
         source_byte_count=12345,
@@ -277,25 +282,26 @@ def test_resolver_derives_exact_attachment_from_official_landing_response() -> N
 
     html = """
     <html><body>
-      <a href="/front/etcData/etcDataFileDownload.do?etc_seq=70&file_seq=1">한국어 학습용 어휘 목록.txt</a>
+      <a href="/common/download.do?file_path=etcData&amp;c_file_name=b73a8438-4713-4436-8481-ec26fd0dce2a_0.txt&amp;o_file_name=한국어%20학습용%20어휘%20목록.txt">한국어 학습용 어휘 목록.txt</a>
     </body></html>
     """.encode()
 
     result = resolve_nikl_frequency_attachment_url(html)
 
-    assert result == "https://www.korean.go.kr/front/etcData/etcDataFileDownload.do?etc_seq=70&file_seq=1"
+    assert result == _CURRENT_ATTACHMENT_URL
 
 
 def test_attachment_resolution_rejects_ambiguous_or_unofficial_targets() -> None:
     from multilang.services.korean_frequency import resolve_nikl_frequency_attachment_url
 
     ambiguous = b"""
-    <a href="/front/etcData/etcDataFileDownload.do?etc_seq=70&file_seq=1">\xed\x95\x9c\xea\xb5\xad\xec\x96\xb4 \xed\x95\x99\xec\x8a\xb5\xec\x9a\xa9 \xec\x96\xb4\xed\x9c\x98 \xeb\xaa\xa9\xeb\xa1\x9d.txt</a>
-    <a href="/front/etcData/etcDataFileDownload.do?etc_seq=70&file_seq=2">\xed\x95\x9c\xea\xb5\xad\xec\x96\xb4 \xed\x95\x99\xec\x8a\xb5\xec\x9a\xa9 \xec\x96\xb4\xed\x9c\x98 \xeb\xaa\xa9\xeb\xa1\x9d.txt</a>
+    <a href="/common/download.do?file_path=etcData&c_file_name=b73a8438-4713-4436-8481-ec26fd0dce2a_0.txt&o_file_name=%ED%95%9C%EA%B5%AD%EC%96%B4%20%ED%95%99%EC%8A%B5%EC%9A%A9%20%EC%96%B4%ED%9C%98%20%EB%AA%A9%EB%A1%9D.txt">\xed\x95\x9c\xea\xb5\xad\xec\x96\xb4 \xed\x95\x99\xec\x8a\xb5\xec\x9a\xa9 \xec\x96\xb4\xed\x9c\x98 \xeb\xaa\xa9\xeb\xa1\x9d.txt</a>
+    <a href="/common/download.do?file_path=etcData&c_file_name=b73a8438-4713-4436-8481-ec26fd0dce2a_1.txt&o_file_name=%ED%95%9C%EA%B5%AD%EC%96%B4%20%ED%95%99%EC%8A%B5%EC%9A%A9%20%EC%96%B4%ED%9C%98%20%EB%AA%A9%EB%A1%9D.txt">\xed\x95\x9c\xea\xb5\xad\xec\x96\xb4 \xed\x95\x99\xec\x8a\xb5\xec\x9a\xa9 \xec\x96\xb4\xed\x9c\x98 \xeb\xaa\xa9\xeb\xa1\x9d.txt</a>
     """
     unofficial = b"<a href='https://evil.example/download.txt'>\xed\x95\x9c\xea\xb5\xad\xec\x96\xb4 \xed\x95\x99\xec\x8a\xb5\xec\x9a\xa9 \xec\x96\xb4\xed\x9c\x98 \xeb\xaa\xa9\xeb\xa1\x9d.txt</a>"
+    wrong_name = "<a href='/common/download.do?file_path=etcData&c_file_name=b73a8438-4713-4436-8481-ec26fd0dce2a_0.txt&o_file_name=other.txt'>한국어 학습용 어휘 목록.txt</a>".encode()
 
-    for html in (ambiguous, unofficial):
+    for html in (ambiguous, unofficial, wrong_name):
         with pytest.raises(ValueError):
             resolve_nikl_frequency_attachment_url(html)
 
@@ -303,7 +309,7 @@ def test_attachment_resolution_rejects_ambiguous_or_unofficial_targets() -> None
 def test_bounded_retrieval_installs_valid_txt_and_result_after_validation(tmp_path: Path) -> None:
     from multilang.services.korean_frequency import KoreanFrequencySourceRetriever
 
-    landing = b"<a href='/front/etcData/etcDataFileDownload.do?etc_seq=70&file_seq=1'>\xed\x95\x9c\xea\xb5\xad\xec\x96\xb4 \xed\x95\x99\xec\x8a\xb5\xec\x9a\xa9 \xec\x96\xb4\xed\x9c\x98 \xeb\xaa\xa9\xeb\xa1\x9d.txt</a>"
+    landing = f"<a href='{_CURRENT_ATTACHMENT_URL}'>한국어 학습용 어휘 목록.txt</a>".encode()
     source = "1\t학교\tNNG\tplace of learning\n2\t가다\tVV\tto go\n".encode("utf-8")
     calls: list[str] = []
 
@@ -316,7 +322,7 @@ def test_bounded_retrieval_installs_valid_txt_and_result_after_validation(tmp_pa
             source,
             headers={
                 "Content-Type": "text/plain; charset=utf-8",
-                "Content-Disposition": "attachment; filename*=UTF-8''%ED%95%9C%EA%B5%AD%EC%96%B4%20%ED%95%99%EC%8A%B5%EC%9A%A9%20%EC%96%B4%ED%9C%98%20%EB%AA%A9%EB%A1%9D.txt",
+                "Content-Disposition": "attachment; filename=%ED%95%9C%EA%B5%AD%EC%96%B4%20%ED%95%99%EC%8A%B5%EC%9A%A9%20%EC%96%B4%ED%9C%98%20%EB%AA%A9%EB%A1%9D.txt;",
             },
             url=url,
         )
@@ -325,11 +331,77 @@ def test_bounded_retrieval_installs_valid_txt_and_result_after_validation(tmp_pa
 
     assert calls == [
         "https://www.korean.go.kr/front/etcData/etcDataView.do?mn_id=46&etc_seq=70",
-        "https://www.korean.go.kr/front/etcData/etcDataFileDownload.do?etc_seq=70&file_seq=1",
+        _CURRENT_ATTACHMENT_URL,
     ]
     assert result.source_byte_count == len(source)
     assert result_path.name == "retrieval-result.json"
-    assert (tmp_path / "source.txt").read_bytes() == source
+    assert (tmp_path / "한국어 학습용 어휘 목록.txt").read_bytes() == source
+    assert not (tmp_path / "source.txt").exists()
+
+
+def test_bounded_retrieval_preserves_cp949_source_bytes(tmp_path: Path) -> None:
+    from multilang.services.korean_frequency import KoreanFrequencySourceRetriever, validate_korean_source_retrieval_result
+
+    landing = f"<a href='{_CURRENT_ATTACHMENT_URL}'>한국어 학습용 어휘 목록.txt</a>".encode()
+    source = "1195\t가각\t명사\t거리의 모퉁이\n".encode("cp949")
+
+    def fake_urlopen(request: object, timeout: int):
+        url = getattr(request, "full_url", str(request))
+        if "etcDataView" in url:
+            return _FakeResponse(landing, headers={"Content-Type": "text/html; charset=utf-8"}, url=url)
+        return _FakeResponse(
+            source,
+            headers={
+                "Content-Type": "text/plain;charset=utf-8",
+                "Content-Disposition": "attachment; filename=%ED%95%9C%EA%B5%AD%EC%96%B4%20%ED%95%99%EC%8A%B5%EC%9A%A9%20%EC%96%B4%ED%9C%98%20%EB%AA%A9%EB%A1%9D.txt;",
+            },
+            url=url,
+        )
+
+    result, result_path = KoreanFrequencySourceRetriever(urlopen=fake_urlopen).retrieve_to_directory(tmp_path)
+    source_path = tmp_path / "한국어 학습용 어휘 목록.txt"
+
+    assert source_path.read_bytes() == source
+    assert result.text_encoding == "cp949"
+    assert validate_korean_source_retrieval_result(result_path, source_file=source_path) == result
+
+
+@pytest.mark.parametrize("redirect_stage", ["landing", "attachment"])
+def test_bounded_retrieval_rejects_redirected_responses(tmp_path: Path, redirect_stage: str) -> None:
+    from multilang.services.korean_frequency import KoreanFrequencySourceRetriever
+
+    landing = f"<a href='{_CURRENT_ATTACHMENT_URL}'>한국어 학습용 어휘 목록.txt</a>".encode()
+    source = "1\t학교\tNNG\tplace of learning\n".encode("utf-8")
+
+    def fake_urlopen(request: object, timeout: int):
+        url = getattr(request, "full_url", str(request))
+        if "etcDataView" in url:
+            final_url = "https://evil.example/landing" if redirect_stage == "landing" else url
+            return _FakeResponse(landing, url=final_url)
+        final_url = "https://evil.example/source.txt" if redirect_stage == "attachment" else url
+        return _FakeResponse(source, headers={"Content-Type": "text/plain; charset=utf-8"}, url=final_url)
+
+    with pytest.raises(ValueError, match="redirect"):
+        KoreanFrequencySourceRetriever(urlopen=fake_urlopen).retrieve_to_directory(tmp_path)
+
+    assert list(tmp_path.iterdir()) == []
+
+
+def test_bounded_retrieval_rejects_private_dns_resolution(tmp_path: Path) -> None:
+    from multilang.services.korean_frequency import KoreanFrequencySourceRetriever
+
+    def fake_urlopen(request: object, timeout: int):
+        raise AssertionError("transport must not run after private DNS resolution")
+
+    def fake_resolver(host: str, port: int, **_kwargs: object):
+        assert host == "www.korean.go.kr"
+        assert port == 443
+        return [(None, None, None, "", ("127.0.0.1", port))]
+
+    with pytest.raises(ValueError, match="public DNS"):
+        KoreanFrequencySourceRetriever(urlopen=fake_urlopen, resolver=fake_resolver).retrieve_to_directory(tmp_path)
+
+    assert list(tmp_path.iterdir()) == []
 
 
 def test_bounded_retrieval_cleans_only_quarantine_temp_on_attachment_failure(tmp_path: Path) -> None:
@@ -337,7 +409,7 @@ def test_bounded_retrieval_cleans_only_quarantine_temp_on_attachment_failure(tmp
 
     keep = tmp_path / "keep.txt"
     keep.write_text("keep", encoding="utf-8")
-    landing = b"<a href='/front/etcData/etcDataFileDownload.do?etc_seq=70&file_seq=1'>\xed\x95\x9c\xea\xb5\xad\xec\x96\xb4 \xed\x95\x99\xec\x8a\xb5\xec\x9a\xa9 \xec\x96\xb4\xed\x9c\x98 \xeb\xaa\xa9\xeb\xa1\x9d.txt</a>"
+    landing = f"<a href='{_CURRENT_ATTACHMENT_URL}'>한국어 학습용 어휘 목록.txt</a>".encode()
 
     def fake_urlopen(request: object, timeout: int):
         url = getattr(request, "full_url", str(request))
@@ -365,7 +437,7 @@ def test_retrieval_result_validation_recomputes_source_bytes_read_only(tmp_path:
         landing_url="https://www.korean.go.kr/front/etcData/etcDataView.do?mn_id=46&etc_seq=70",
         accepted_filename="한국어 학습용 어휘 목록.txt",
         landing_sha256=_HASH_A,
-        attachment_url="https://www.korean.go.kr/front/etcData/etcDataFileDownload.do?etc_seq=70&file_seq=1",
+        attachment_url=_CURRENT_ATTACHMENT_URL,
         attachment_sha256=_HASH_B,
         source_bytes_sha256=raw_bytes_sha256(source),
         source_byte_count=len(source),
@@ -437,13 +509,12 @@ def test_inactive_exact_existing_build_validation_is_read_only(tmp_path: Path) -
 def test_final_runtime_loader_rehashes_locator_content_and_rejects_binding_drift(
     tmp_path: Path,
 ) -> None:
-    from multilang.domain.korean import KoreanFrequencyJobAuthority, raw_bytes_sha256
-    from multilang.services.authority_locator import canonical_authority_locator_sha256
+    from multilang.domain.korean import KoreanFrequencyBuildResult, KoreanFrequencyJobAuthority, raw_bytes_sha256
     from multilang.services.korean_frequency import load_korean_final_frequency_entries
 
     bundle_dir, result_file = _write_minimal_valid_build_tree(tmp_path)
-    build_result_hash = raw_bytes_sha256(result_file.read_bytes())
-    build_result = json.loads(result_file.read_text(encoding="utf-8"))
+    build_result = KoreanFrequencyBuildResult.model_validate_json(result_file.read_text(encoding="utf-8"))
+    build_result_hash = raw_bytes_sha256(build_result.model_dump_json().encode("utf-8"))
     manifest_path = bundle_dir / "manifest.json"
     manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
     binding_receipt = _HASH_D
@@ -454,12 +525,9 @@ def test_final_runtime_loader_rehashes_locator_content_and_rejects_binding_drift
         phase31_validation_receipt_sha256=_HASH_C,
         phase31_snapshot_manifest_sha256=_HASH_D,
         phase31_snapshot_root_sha256=_HASH_E,
-        frequency_bundle_locator_sha256=canonical_authority_locator_sha256(
-            manifest_path,
-            repo_root=tmp_path,
-        ),
+        frequency_bundle_locator_sha256=raw_bytes_sha256(manifest_path.read_bytes()),
         frequency_bundle_content_sha256=manifest["bundle_sha256"],
-        source_retrieval_sha256=build_result["retrieval_sha256"],
+        source_retrieval_sha256=build_result.retrieval_sha256,
         source_build_result_sha256=build_result_hash,
         source_review_aggregate_sha256=binding_receipt,
         provider_policy_sha256=_HASH_F,
@@ -489,3 +557,47 @@ def test_final_runtime_loader_rehashes_locator_content_and_rejects_binding_drift
             authority=drifted,
             repo_root=tmp_path,
         )
+
+
+def test_final_runtime_loader_uses_validated_build_result_authority_not_bundle_format(
+    tmp_path: Path,
+) -> None:
+    from multilang.domain.korean import KoreanFrequencyBuildResult, KoreanFrequencyJobAuthority, raw_bytes_sha256
+    from multilang.services.korean_frequency import load_korean_final_frequency_entries
+
+    bundle_dir, result_file = _write_minimal_valid_build_tree(tmp_path)
+    build_result = KoreanFrequencyBuildResult.model_validate_json(result_file.read_text(encoding="utf-8"))
+    source_build_result_hash = raw_bytes_sha256(build_result.model_dump_json().encode("utf-8"))
+    result_file.write_text(
+        json.dumps(json.loads(result_file.read_text(encoding="utf-8")), ensure_ascii=False, sort_keys=True, separators=(",", ":")),
+        encoding="utf-8",
+    )
+    assert raw_bytes_sha256(result_file.read_bytes()) != source_build_result_hash
+    manifest_path = bundle_dir / "manifest.json"
+    manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
+    binding_receipt = _HASH_D
+    authority = KoreanFrequencyJobAuthority(
+        stage="pilot_base",
+        phase31_pointer_locator_sha256=_HASH_A,
+        phase31_pointer_content_sha256=_HASH_B,
+        phase31_validation_receipt_sha256=_HASH_C,
+        phase31_snapshot_manifest_sha256=_HASH_D,
+        phase31_snapshot_root_sha256=_HASH_E,
+        frequency_bundle_locator_sha256=raw_bytes_sha256(manifest_path.read_bytes()),
+        frequency_bundle_content_sha256=manifest["bundle_sha256"],
+        source_retrieval_sha256=build_result.retrieval_sha256,
+        source_build_result_sha256=source_build_result_hash,
+        source_review_aggregate_sha256=binding_receipt,
+        provider_policy_sha256=_HASH_F,
+        pilot_authority_sha256=_HASH_1,
+    )
+
+    entries = load_korean_final_frequency_entries(
+        job_id="job-final-runtime",
+        bundle_root=bundle_dir,
+        binding_receipt_sha256=binding_receipt,
+        authority=authority,
+        repo_root=tmp_path,
+    )
+
+    assert len(entries) == 3000

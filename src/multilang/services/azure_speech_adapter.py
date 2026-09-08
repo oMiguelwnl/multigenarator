@@ -53,8 +53,21 @@ class AzureSpeechAdapter:
         if not self.settings.azure_speech_key or not self.settings.azure_speech_region:
             return set()
 
+        payload = self.fetch_voice_inventory()
+
+        self._cached_voice_ids = {
+            item["ShortName"]
+            for item in payload
+            if isinstance(item, dict) and isinstance(item.get("ShortName"), str)
+        }
+        return set(self._cached_voice_ids)
+
+    def fetch_voice_inventory(self, endpoint_url: str | None = None) -> list[dict[str, Any]]:
+        """Fetch Azure voice inventory metadata without synthesizing audio."""
+
+        self._require_credentials()
         request = Request(
-            self._voice_inventory_url,
+            endpoint_url or self._voice_inventory_url,
             headers={
                 "Ocp-Apim-Subscription-Key": self.settings.azure_speech_key,
                 "Accept": "application/json",
@@ -63,13 +76,9 @@ class AzureSpeechAdapter:
         )
         with self._urlopen(request, timeout=10) as response:
             payload = json.loads(response.read().decode("utf-8"))
-
-        self._cached_voice_ids = {
-            item["ShortName"]
-            for item in payload
-            if isinstance(item, dict) and isinstance(item.get("ShortName"), str)
-        }
-        return set(self._cached_voice_ids)
+        if not isinstance(payload, list):
+            raise AzureSpeechAdapterError("Azure Speech voice inventory payload is invalid")
+        return [item for item in payload if isinstance(item, dict)]
 
     def synthesize(
         self,

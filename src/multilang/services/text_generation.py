@@ -18,6 +18,7 @@ from multilang.domain.private_processing import (
 from multilang.domain.text_quality import TextProvenance
 from multilang.domain.jobs import SupportedLanguage
 from multilang.domain.lexicon import GroundingStatus, LexicalCardCandidate
+from multilang.domain.korean_provider import KoreanProviderPolicy, KoreanProviderRoute, KoreanProviderTask
 from multilang.security.redaction import redact_sensitive_text
 from multilang.services.private_context import (
     PrivateContextBroker,
@@ -297,6 +298,7 @@ class TextGenerationService:
         retry_jitter_ratio: float = 0.0,
         prompt_version: str = "text-generation-v1",
         private_context_broker_factory: PrivateContextBrokerFactory | None = None,
+        korean_provider_policy: KoreanProviderPolicy | None = None,
     ) -> None:
         self._sentence_adapter = sentence_adapter
         self._translation_adapter = translation_adapter
@@ -309,6 +311,7 @@ class TextGenerationService:
         self._retry_jitter_ratio = retry_jitter_ratio
         self._prompt_version = prompt_version
         self._private_context_broker_factory = private_context_broker_factory
+        self._korean_provider_policy = korean_provider_policy
 
     def generate_bundle(
         self,
@@ -427,7 +430,12 @@ class TextGenerationService:
         )
         if rate_limiter is not None:
             rate_limiter.wait()
-        translation_result = self._translate_sentence(request, job_id=job_id, item_key=item_key)
+        translation_result = self._translate_sentence(
+            request,
+            job_id=job_id,
+            item_key=item_key,
+            korean_policy_task=(KoreanProviderTask.TRANSLATION if deck_language is SupportedLanguage.KO else None),
+        )
         return GeneratedTranslation(
             text=translation_result.translation,
             target_language=translation_target_language,
@@ -460,7 +468,12 @@ class TextGenerationService:
         else:
             if rate_limiter is not None:
                 rate_limiter.wait()
-            translation_result = self._translate_sentence(translation_request, job_id=job_id, item_key=candidate.lemma_key)
+            translation_result = self._translate_sentence(
+                translation_request,
+                job_id=job_id,
+                item_key=candidate.lemma_key,
+                korean_policy_task=(KoreanProviderTask.TRANSLATION if deck_language is SupportedLanguage.KO else None),
+            )
 
         return GeneratedTextBundle(
             sentence=GeneratedSentence(
@@ -499,6 +512,11 @@ class TextGenerationService:
             request_payload=request.model_dump(mode="json"),
             job_id=job_id,
             item_key=item_key,
+            korean_policy_task=(
+                KoreanProviderTask.SENTENCE_GENERATION
+                if request.target_language == SupportedLanguage.KO.value
+                else None
+            ),
         )
         if request.target_language == SupportedLanguage.KO.value:
             result = _canonicalize_korean_sentence_result(
@@ -670,7 +688,14 @@ class TextGenerationService:
         )
         return result
 
-    def _translate_sentence(self, request: SentenceTranslationRequest, *, job_id: str | None = None, item_key: str | None = None) -> SentenceTranslationResult:
+    def _translate_sentence(
+        self,
+        request: SentenceTranslationRequest,
+        *,
+        job_id: str | None = None,
+        item_key: str | None = None,
+        korean_policy_task: KoreanProviderTask | None = None,
+    ) -> SentenceTranslationResult:
         key = _cache_key_for_request("translation", request, adapter=self._translation_adapter, prompt_version=self._prompt_version)
         if self._provider_cache is not None:
             cached = self._provider_cache.get(key)
@@ -683,6 +708,7 @@ class TextGenerationService:
             request_payload=request.model_dump(mode="json"),
             job_id=job_id,
             item_key=item_key,
+            korean_policy_task=korean_policy_task,
         )
         if self._provider_cache is not None:
             self._provider_cache.put(key, result.model_dump(mode="json"), metadata={"provider": key.provider, "model": key.model})
@@ -697,11 +723,15 @@ class TextGenerationService:
         request_payload: object,
         job_id: str | None,
         item_key: str | None,
+        korean_policy_task: KoreanProviderTask | None = None,
     ) -> Any:
         started = perf_counter()
         prompt_hash = _safe_hash(request_payload)
         provider = str(getattr(adapter, "provider", adapter.__class__.__name__))
         model = getattr(adapter, "model", getattr(adapter, "_model", None))
+        route = self._korean_route_for(korean_policy_task)
+        telemetry = _korean_policy_telemetry(route, item_key=item_key, prompt_hash=prompt_hash)
+        logged_operation = korean_policy_task.value if route is not None and korean_policy_task is not None else operation
         try:
             success_attempt = 1
 
@@ -711,14 +741,16 @@ class TextGenerationService:
 
             retry_context = ProviderRetryContext(
                 provider=provider,
-                operation=operation,
+                operation=logged_operation,
                 model=str(model) if model else None,
                 job_id=job_id,
                 item_key=item_key,
+                prompt_hash=prompt_hash,
+                **telemetry,
             )
             result = retry_provider_call(
                 operation_func,
-                attempts=self._retry_attempts,
+                attempts=_retry_attempts_for_route(self._retry_attempts, route),
                 base_delay_seconds=self._retry_base_delay_seconds,
                 max_delay_seconds=self._retry_max_delay_seconds,
                 jitter_ratio=self._retry_jitter_ratio,
@@ -729,7 +761,7 @@ class TextGenerationService:
             )
         except Exception as exc:
             self._log_provider_call(
-                operation=operation,
+                operation=logged_operation,
                 provider=provider,
                 model=str(model) if model else None,
                 job_id=job_id,
@@ -739,11 +771,12 @@ class TextGenerationService:
                 error_code=type(exc).__name__,
                 error_summary=str(exc),
                 prompt_hash=prompt_hash,
+                **telemetry,
             )
             raise
         provenance = getattr(result, "provenance", {}) or {}
         self._log_provider_call(
-            operation=operation,
+            operation=logged_operation,
             provider=str(provenance.get("provider") or provider),
             model=str(provenance.get("model") or model) if (provenance.get("model") or model) else None,
             job_id=job_id,
@@ -758,6 +791,7 @@ class TextGenerationService:
             output_tokens=provenance.get("output_tokens"),
             total_tokens=provenance.get("total_tokens"),
             estimated_cost=provenance.get("estimated_cost"),
+            **telemetry,
         )
         return result
 
@@ -766,6 +800,14 @@ class TextGenerationService:
             return
         self._provider_call_logger.insert(ProviderCallLogCreate(**kwargs))
 
+    def _korean_route_for(self, task: KoreanProviderTask | None) -> KoreanProviderRoute | None:
+        if task is None or self._korean_provider_policy is None:
+            return None
+        route = self._korean_provider_policy.route_for(task)
+        if not route.enabled:
+            raise ValueError("Korean provider route is disabled")
+        return route
+
 
 def _safe_hash(payload: object) -> str:
     return sha256(repr(payload).encode("utf-8")).hexdigest()
@@ -773,6 +815,32 @@ def _safe_hash(payload: object) -> str:
 
 def _elapsed_ms(started: float) -> int:
     return max(0, int((perf_counter() - started) * 1000))
+
+
+def _korean_policy_telemetry(
+    route: KoreanProviderRoute | None,
+    *,
+    item_key: str | None,
+    prompt_hash: str,
+) -> dict[str, str]:
+    if route is None:
+        return {}
+    return {
+        "route_policy_sha256": route.route_policy_sha256,
+        "budget_snapshot_sha256": route.budget_snapshot_sha256,
+        "cache_key_sha256": route.cache_key_sha256(
+            item_sha256=sha256(str(item_key or "").encode("utf-8")).hexdigest(),
+            input_sha256=prompt_hash,
+        ),
+        "response_schema_sha256": route.response_schema_sha256,
+    }
+
+
+def _retry_attempts_for_route(configured_attempts: int, route: KoreanProviderRoute | None) -> int:
+    attempts = max(1, configured_attempts)
+    if route is None:
+        return attempts
+    return min(attempts, route.budget.max_attempts)
 
 
 def _requires_korean_private_context(

@@ -1,0 +1,22 @@
+{
+  "blocked_reason": "non_alembic_application_schema_present",
+  "created_at_utc": "2026-09-07T23:37:18Z",
+  "current_revision": null,
+  "expected_head": "20260828_19",
+  "manual_sql_used": false,
+  "migration_rehearsal_completed": false,
+  "phase32_columns_present": false,
+  "phase33_head_acknowledged": true,
+  "post_migration_validation_ran": false,
+  "production_ready": false,
+  "raw_secret_persisted": false,
+  "runtime_provisioning_revision_after": null,
+  "runtime_provisioning_revision_before": null,
+  "runtime_provisioning_row_count_delta": 0,
+  "schema_poststate_sha256": null,
+  "sole_head": "20260828_19",
+  "status": "not_run_preflight_blocked",
+  "target_alias": "env-multilang-database-url-disposable-test",
+  "target_matches_preflight": null,
+  "unexpected_row_mutation_count": 0
+}

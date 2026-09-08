@@ -1,0 +1,17 @@
+{
+  "accepted_filename": "한국어 학습용 어휘 목록.txt",
+  "active_frequency_pointer_present": false,
+  "attachment_locator_sha256": "90af3112152fda395d2ca39c447362b9f672f16c677fbeda84be16316f031800",
+  "attachment_sha256": "3b49681f05d6a7490c13da2a2847e433effdf65da409fd295792d6ee33685064",
+  "grants_transform_power": false,
+  "landing_locator_sha256": "7ecab20bd7277ab04c541ebae288dfae21907badf0453870f14e54092f62a4cf",
+  "production_asset_path_present": false,
+  "retrieval_result_sha256": "b5f6f1ccc02589be846e05c32d9b6f883616088ac03191cabe113a6b464bdf58",
+  "schema_version": "korean-source-retrieval-validation-v1",
+  "source_byte_count": 132254,
+  "source_bytes_sha256": "3b49681f05d6a7490c13da2a2847e433effdf65da409fd295792d6ee33685064",
+  "source_file_sha256": "3b49681f05d6a7490c13da2a2847e433effdf65da409fd295792d6ee33685064",
+  "source_id": "nikl-korean-learners-vocabulary",
+  "status": "valid",
+  "text_encoding": "cp949"
+}

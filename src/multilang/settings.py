@@ -2,10 +2,10 @@
 
 import os
 from pathlib import Path
-from typing import Literal
+from typing import Annotated, Literal
 
-from pydantic import AliasChoices, Field
-from pydantic_settings import BaseSettings, SettingsConfigDict
+from pydantic import AliasChoices, Field, field_validator
+from pydantic_settings import BaseSettings, NoDecode, SettingsConfigDict
 
 from multilang.services.audio_voice_registry import VOICE_REGISTRY_VERSION
 
@@ -135,9 +135,21 @@ class Settings(BaseSettings):
     webdav_cache_dir: Path = Path(".multilang/highlights/cache")
     audio_voice_registry_version: str = VOICE_REGISTRY_VERSION
     tatoeba_enabled: bool = True
-    supported_languages: list[SupportedLanguageCode] = Field(
+    supported_languages: Annotated[list[SupportedLanguageCode], NoDecode] = Field(
         default_factory=lambda: list(DEFAULT_SUPPORTED_LANGUAGES)
     )
+
+    @field_validator("supported_languages", mode="before")
+    @classmethod
+    def parse_supported_languages(cls, value: object) -> object:
+        if not isinstance(value, str):
+            return value
+        normalized = value.strip()
+        if not normalized:
+            return []
+        if normalized.startswith("[") and normalized.endswith("]"):
+            normalized = normalized[1:-1]
+        return [item.strip().strip('"').strip("'") for item in normalized.split(",") if item.strip()]
 
     def __init__(self, **values: object) -> None:
         if (

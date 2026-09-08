@@ -1,0 +1,21 @@
+{
+  "audio_synthesis_enabled": false,
+  "authority_stage": "pilot_base",
+  "candidate_count": 10,
+  "cost_ceiling_usd": "1.00",
+  "database_gitignore_check": "passed",
+  "database_kind": "local_ignored_sqlite",
+  "database_relative_path": ".multilang/phase32/pilot/pilot-live-text-catalog.sqlite3",
+  "fallback_policy": "none",
+  "final_frequency_bundle_sha256": "d235d962f706ce95822b00ec4dc65d4fa55b96b4e28238720adf0df5cf86582a",
+  "ingested_item_count": 10,
+  "job_id": "phase32-live-text-catalog-pilot",
+  "max_attempts": 2,
+  "max_concurrency": 1,
+  "max_items": 10,
+  "pilot_authority_sha256": "db2b2c1bff644ccf2e90bf59ab00d5c4a88c009d1c03bc8e8fbf8146e9be2ced",
+  "production_database_used": false,
+  "provider_attempt_count": 0,
+  "provider_policy_sha256": "6174ebd73b7e2963285bb2e44205dde10ef9d3917e50c90850b483b3c8a6fc79",
+  "schema_version": "korean-live-pilot-candidate-setup-v1"
+}

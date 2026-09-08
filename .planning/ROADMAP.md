@@ -12,7 +12,7 @@
 
 ## Current Focus
 
-Continue Phase 32 offline frequency infrastructure and reconcile Phase 33 independent job/review scaffolding while preserving the completed exact Phase 31 foundations bundle as the downstream Korean foundation dependency; join exact AI-reviewed, rights-cleared artifacts before production generation and final Phase 34 closure.
+Continue Phase 32 after bounded live text/catalog pilot evidence while preserving the completed exact Phase 31 foundations bundle as the downstream Korean foundation dependency; next joins must add production DB, voice-profile/audio, review/remediation, export, release, and delivery evidence before final Phase 34 closure. Reconcile Phase 33 independent job/review scaffolding without treating Phase 32 pilot evidence as production approval.
 
 ## Archived Phases
 
@@ -94,6 +94,7 @@ Archives:
 10. Word and sentence audio preserve exact-text/provider/voice/fallback evidence, and failed or unapproved fallback assets cannot advance success.
 **Out of Scope**: Field-level review commands, production worker rollout, APKG-history adaptation, v4 form cards, and unapproved lexical/provider assets.
 **Stop/Replan Conditions**: Stop only the consuming lane before provider or production work if transformation/local-use rights or bounded provider authority are absent. When local use is approved but redistribution is denied, continue only in private/ignored storage. AI linguistic review follows the global policy and does not require a human checkpoint. Also stop on live `wordfreq` fallback, identity/matcher replacement, private-data leakage, absent budgets, AI-review disagreement, or unsafe Azure evidence.
+**Progress Evidence**: Plan 32-46 executed a non-closing local ignored SQLite live text/catalog pilot for 10 Korean final-bundle candidates. It validated 10 processed text items, 3 accepted text items, 7 review-required text items, 16 live Azure `ko-KR` catalog voices, zero synthesis attempts, zero fallback attempts, protected-input invariance, and no downstream route/profile/audio/review/release/publication/delivery grants. Production DB migration, voice-profile selection, word/sentence audio, production-scale generation, reviews, remediation, export, release, and learner delivery remain open.
 
 ### Phase 33: Grammar and Personal Sources
 **Status**: [-] In progress

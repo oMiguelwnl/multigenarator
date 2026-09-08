@@ -1,0 +1,77 @@
+{
+  "schema_version": "korean-source-review-preflight-v1",
+  "status": "ready_for_review",
+  "source_id": "nikl-korean-learners-vocabulary",
+  "bundle_version": "multilang-korean-frequency-v1",
+  "bundle_sha256": "d235d962f706ce95822b00ec4dc65d4fa55b96b4e28238720adf0df5cf86582a",
+  "inventory_sha256": "209a98c134bc9c65ecca459dc71cc9065ee8b1e24700071573b09deea028ab3a",
+  "rejection_sha256": "a636fce80c3f786796915e73253a72dbe00ebde76db2119721b61218b43b1a1d",
+  "report_sha256": "938894ddd3949c3a9e000643d1618e6aecd34ffe4581d43cb5adb2591ee58e35",
+  "source_bytes_sha256": "3b49681f05d6a7490c13da2a2847e433effdf65da409fd295792d6ee33685064",
+  "source_disposition_count": 5965,
+  "accepted_count": 3000,
+  "rejected_count": 2965,
+  "level_counts": {
+    "1": 1000,
+    "2": 1000,
+    "3": 1000
+  },
+  "risk_class_counts": {
+    "candidate_unreviewed": 3000,
+    "modernity_review_required": 3000,
+    "unsupported_pos": 14,
+    "beyond_target_count": 2951,
+    "sensitive_or_obsolete_review_required": 3000,
+    "proper_name_review_required": 3000,
+    "script_review_required": 5965,
+    "function_morpheme_review_required": 5965,
+    "homograph_review_required": 3000,
+    "analyzer_identity_review_required": 3000,
+    "license_attribution_review_required": 5965
+  },
+  "review_contract": {
+    "role_registry_schema": "korean-source-review-role-registry-v1",
+    "progress_schema": "korean-source-review-progress-v1",
+    "input_manifest_schema": "korean-source-review-input-manifest-v1",
+    "allowed_role_codes": [
+      "source-reviewer",
+      "modernity-reviewer",
+      "identity-reviewer",
+      "license-reviewer"
+    ],
+    "allowed_qualification_classes": [
+      "korean-linguistic-review",
+      "lexicographic-source-review",
+      "rights-attribution-review"
+    ],
+    "allowed_decision_classes": [
+      "approve-source-disposition",
+      "reject-source-disposition",
+      "require-remediation",
+      "defer-ambiguous"
+    ],
+    "max_batch_items": 100,
+    "max_session_decisions": 100,
+    "cas_fields": [
+      "bundle_sha256",
+      "role_registry_sha256",
+      "input_manifest_sha256",
+      "progress_generation"
+    ],
+    "resume_command": "continue-review",
+    "reauthorization_required_when_hashes_unchanged": false
+  },
+  "max_batch_items": 100,
+  "max_session_decisions": 100,
+  "bundle_unchanged": true,
+  "source_rows_emitted": false,
+  "korean_text_emitted": false,
+  "glosses_emitted": false,
+  "reviewer_notes_emitted": false,
+  "pii_emitted": false,
+  "absolute_paths_emitted": false,
+  "provider_attempt_count": 0,
+  "database_mutation_count": 0,
+  "pointer_activation_count": 0,
+  "claim_limit": "Hash/count-only source-review preflight; no review receipt, aggregate approval, import, activation, provider call, database mutation, commit, export, publication, or learner-ready claim exists."
+}

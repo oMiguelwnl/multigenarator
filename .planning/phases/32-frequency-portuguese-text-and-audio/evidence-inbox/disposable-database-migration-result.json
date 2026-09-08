@@ -1,0 +1,19 @@
+{
+  "after_revision": null,
+  "alembic_upgrade_head_ran": false,
+  "audio_synthesis_count_delta": 0,
+  "before_revision": null,
+  "blocked_reason": "non_alembic_application_schema_present",
+  "created_at_utc": "2026-09-07T23:37:18Z",
+  "expected_head": "20260828_19",
+  "export_count_delta": 0,
+  "generated_content_row_delta": 0,
+  "manual_sql_used": false,
+  "migration_rehearsal_completed": false,
+  "pre_migration_guard_status": "not_run_preflight_blocked",
+  "production_authority": false,
+  "provider_call_count_delta": 0,
+  "raw_secret_persisted": false,
+  "status": "blocked_not_run",
+  "target_alias": "env-multilang-database-url-disposable-test"
+}

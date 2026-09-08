@@ -1,0 +1,96 @@
+{
+  "binding_receipt_sha256": "24fb03999ea744be64c445bb9de704e40c29ad24ee4120e430a110fcfa0fa35a",
+  "catalog_content_sha256": "f0e081489197d3ec0acbc40c03c6cccacf2e90f7c1070d2588a3585c7e238e7f",
+  "catalog_locale": "ko-KR",
+  "catalog_locator_sha256": "11a249b96ea150d7745dffd9ad4d9f816b34c27445a0963321500269f2de29f6",
+  "catalog_query_count": 1,
+  "job_id": "phase32-live-text-catalog-pilot",
+  "pilot_authority_sha256": "db2b2c1bff644ccf2e90bf59ab00d5c4a88c009d1c03bc8e8fbf8146e9be2ced",
+  "production_database_used": false,
+  "provider_policy_sha256": "6174ebd73b7e2963285bb2e44205dde10ef9d3917e50c90850b483b3c8a6fc79",
+  "schema_version": "korean-azure-catalog-pilot-result-v1",
+  "synthesis_attempt_count": 0,
+  "voice_count": 16,
+  "voices": [
+    {
+      "locale": "ko-KR",
+      "region": "eastus",
+      "voice_id": "ko-KR-SunHi:DragonHDLatestNeural"
+    },
+    {
+      "locale": "ko-KR",
+      "region": "eastus",
+      "voice_id": "ko-KR-Hyunsu:DragonHDLatestNeural"
+    },
+    {
+      "locale": "ko-KR",
+      "region": "eastus",
+      "voice_id": "ko-KR-SunHiNeural"
+    },
+    {
+      "locale": "ko-KR",
+      "region": "eastus",
+      "voice_id": "ko-KR-InJoonNeural"
+    },
+    {
+      "locale": "ko-KR",
+      "region": "eastus",
+      "voice_id": "ko-KR-HyunsuMultilingualNeural"
+    },
+    {
+      "locale": "ko-KR",
+      "region": "eastus",
+      "voice_id": "ko-KR-BongJinNeural"
+    },
+    {
+      "locale": "ko-KR",
+      "region": "eastus",
+      "voice_id": "ko-KR-GookMinNeural"
+    },
+    {
+      "locale": "ko-KR",
+      "region": "eastus",
+      "voice_id": "ko-KR-HyunsuNeural"
+    },
+    {
+      "locale": "ko-KR",
+      "region": "eastus",
+      "voice_id": "ko-KR-JiMinNeural"
+    },
+    {
+      "locale": "ko-KR",
+      "region": "eastus",
+      "voice_id": "ko-KR-SeoHyeonNeural"
+    },
+    {
+      "locale": "ko-KR",
+      "region": "eastus",
+      "voice_id": "ko-KR-SoonBokNeural"
+    },
+    {
+      "locale": "ko-KR",
+      "region": "eastus",
+      "voice_id": "ko-KR-YuJinNeural"
+    },
+    {
+      "locale": "ko-KR",
+      "region": "eastus",
+      "voice_id": "ko-KR-Haena:MAI-Voice-2-Flash"
+    },
+    {
+      "locale": "ko-KR",
+      "region": "eastus",
+      "voice_id": "ko-KR-Junho:MAI-Voice-2-Flash"
+    },
+    {
+      "locale": "ko-KR",
+      "region": "eastus",
+      "voice_id": "ko-KR-Haena:MAI-Voice-2"
+    },
+    {
+      "locale": "ko-KR",
+      "region": "eastus",
+      "voice_id": "ko-KR-Junho:MAI-Voice-2"
+    }
+  ]
+}

@@ -15,6 +15,12 @@ from multilang.services.korean_foundation_snapshot import verify_active_korean_f
 
 _HEX = frozenset("0123456789abcdef")
 _SYNTHESIS_OPERATIONS = frozenset({"word_audio", "sentence_audio", "synthesize_audio", "audio_synthesis"})
+_REQUIRED_TELEMETRY_HASH_FIELDS = (
+    "route_policy_sha256",
+    "budget_snapshot_sha256",
+    "cache_key_sha256",
+    "response_schema_sha256",
+)
 
 
 def _sha256_identifier(value: str, *, field_name: str) -> str:
@@ -89,6 +95,7 @@ class KoreanProviderCatalogPilotEvidence(_FrozenModel):
     text_accepted_items: int = Field(ge=0)
     text_review_required_items: int = Field(ge=0)
     catalog_voice_count: int = Field(ge=0)
+    catalog_locale: str = Field(min_length=1, max_length=16)
     provider_call_count: int = Field(ge=0)
     provider_attempt_count: int = Field(ge=0)
     retry_attempt_count: int = Field(ge=0)
@@ -101,6 +108,16 @@ class KoreanProviderCatalogPilotEvidence(_FrozenModel):
     cost_denominator_count: int = Field(ge=0)
     missing_cost_denominator_count: int = Field(ge=0)
     latency_ms_total: int = Field(ge=0)
+    protected_input_count: int = Field(ge=0)
+    protected_input_drift_count: int = Field(ge=0)
+    required_telemetry_hash_count: int = Field(ge=0)
+    missing_required_telemetry_hash_count: int = Field(ge=0)
+    max_items: int = Field(ge=0)
+    max_concurrency: int = Field(ge=0)
+    max_attempts: int = Field(ge=0)
+    cost_ceiling_usd: str = Field(min_length=1, max_length=32)
+    fallback_policy: str = Field(min_length=1, max_length=32)
+    production_database_used: bool
     provider_policy_sha256: str = Field(min_length=64, max_length=64)
     pilot_authority_sha256: str = Field(min_length=64, max_length=64)
     catalog_locator_sha256: str = Field(min_length=64, max_length=64)
@@ -108,6 +125,11 @@ class KoreanProviderCatalogPilotEvidence(_FrozenModel):
     provider_summaries: tuple[dict[str, object], ...]
     grants_route_authority: bool = False
     grants_voice_profile_authority: bool = False
+    grants_audio_authority: bool = False
+    grants_review_authority: bool = False
+    grants_release_authority: bool = False
+    grants_publication_authority: bool = False
+    grants_delivery_authority: bool = False
 
 
 def validate_korean_provider_catalog_pilot_result(
@@ -178,11 +200,26 @@ def validate_korean_provider_catalog_pilot_result(
     missing_cost_denominator_count = sum(1 for record in provider_call_records if getattr(record, "estimated_cost", None) is None)
     latency_ms_total = sum(int(getattr(record, "latency_ms", 0) or 0) for record in provider_call_records)
     provider_summaries = tuple(summarize_provider_call_records(provider_call_records))
+    required_telemetry_hash_count = len(provider_call_records) * len(_REQUIRED_TELEMETRY_HASH_FIELDS)
+    missing_required_telemetry_hash_count = sum(
+        1
+        for record in provider_call_records
+        for field in _REQUIRED_TELEMETRY_HASH_FIELDS
+        if not getattr(record, field, None)
+    )
 
     text_processed_items = _int_result_value(text_result, "processed_items")
     text_accepted_items = _int_result_value(text_result, "accepted_items")
     text_review_required_items = _int_result_value(text_result, "review_required_items")
-    catalog_voice_count = len(tuple(catalog_result.get("voices", ())))
+    voices = tuple(catalog_result.get("voices", ()))
+    catalog_voice_count = len(voices)
+    catalog_locale = _catalog_locale(voices)
+    max_items = _optional_int_result_value(text_result, "max_items", default=expected_item_count)
+    max_concurrency = _optional_int_result_value(text_result, "max_concurrency", default=1)
+    max_attempts = _optional_int_result_value(text_result, "max_attempts", default=0)
+    cost_ceiling_usd = _optional_str_result_value(text_result, "cost_ceiling_usd", default="0.00")
+    fallback_policy = _optional_str_result_value(text_result, "fallback_policy", default="none")
+    production_database_used = bool(text_result.get("production_database_used", False))
     payload = {
         "job_id": authority.job_id,
         "expected_item_count": expected_item_count,
@@ -190,6 +227,7 @@ def validate_korean_provider_catalog_pilot_result(
         "text_accepted_items": text_accepted_items,
         "text_review_required_items": text_review_required_items,
         "catalog_voice_count": catalog_voice_count,
+        "catalog_locale": catalog_locale,
         "provider_call_count": len(provider_call_records),
         "provider_attempt_count": provider_attempt_count,
         "retry_attempt_count": retry_attempt_count,
@@ -197,6 +235,16 @@ def validate_korean_provider_catalog_pilot_result(
         "missing_token_denominator_count": missing_token_denominator_count,
         "missing_cost_denominator_count": missing_cost_denominator_count,
         "latency_ms_total": latency_ms_total,
+        "protected_input_count": len(protected_hashes),
+        "protected_input_drift_count": 0,
+        "required_telemetry_hash_count": required_telemetry_hash_count,
+        "missing_required_telemetry_hash_count": missing_required_telemetry_hash_count,
+        "max_items": max_items,
+        "max_concurrency": max_concurrency,
+        "max_attempts": max_attempts,
+        "cost_ceiling_usd": cost_ceiling_usd,
+        "fallback_policy": fallback_policy,
+        "production_database_used": production_database_used,
         "provider_policy_sha256": authority.provider_policy_sha256,
         "pilot_authority_sha256": authority.pilot_authority_sha256,
         "catalog_locator_sha256": authority.catalog_locator_sha256,
@@ -213,6 +261,11 @@ def validate_korean_provider_catalog_pilot_result(
         cost_denominator_count=len(provider_call_records) - missing_cost_denominator_count,
         grants_route_authority=False,
         grants_voice_profile_authority=False,
+        grants_audio_authority=False,
+        grants_review_authority=False,
+        grants_release_authority=False,
+        grants_publication_authority=False,
+        grants_delivery_authority=False,
     )
 
 
@@ -260,12 +313,7 @@ def _validate_provider_rows(records: list[object], *, authority: KoreanProviderC
     for record in records:
         if getattr(record, "job_id", None) != authority.job_id:
             raise ValueError("Korean provider/catalog pilot contains wrong job")
-        for field_name in (
-            "route_policy_sha256",
-            "budget_snapshot_sha256",
-            "cache_key_sha256",
-            "response_schema_sha256",
-        ):
+        for field_name in _REQUIRED_TELEMETRY_HASH_FIELDS:
             value = getattr(record, field_name, None)
             if value is None:
                 raise ValueError(f"Korean provider/catalog pilot missing {field_name}")
@@ -277,6 +325,31 @@ def _int_result_value(result: Mapping[str, object], field_name: str) -> int:
     if not isinstance(value, int) or value < 0:
         raise ValueError(f"Korean provider/catalog pilot {field_name} is invalid")
     return value
+
+
+def _optional_int_result_value(result: Mapping[str, object], field_name: str, *, default: int) -> int:
+    value = result.get(field_name, default)
+    if not isinstance(value, int) or value < 0:
+        raise ValueError(f"Korean provider/catalog pilot {field_name} is invalid")
+    return value
+
+
+def _optional_str_result_value(result: Mapping[str, object], field_name: str, *, default: str) -> str:
+    value = result.get(field_name, default)
+    if not isinstance(value, str) or not value.strip():
+        raise ValueError(f"Korean provider/catalog pilot {field_name} is invalid")
+    return value
+
+
+def _catalog_locale(voices: tuple[object, ...]) -> str:
+    locales = {
+        voice.get("locale")
+        for voice in voices
+        if isinstance(voice, Mapping)
+    }
+    if locales != {KOREAN_PROVIDER_LOCALE}:
+        raise ValueError("Korean provider/catalog pilot catalog locale drift")
+    return KOREAN_PROVIDER_LOCALE
 
 
 __all__ = [

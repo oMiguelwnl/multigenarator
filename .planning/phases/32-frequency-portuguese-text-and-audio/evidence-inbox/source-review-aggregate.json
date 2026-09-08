@@ -1,0 +1,9 @@
+{
+  "accepted_count": 3000,
+  "aggregate_sha256": "24fb03999ea744be64c445bb9de704e40c29ad24ee4120e430a110fcfa0fa35a",
+  "max_batch_size": 100,
+  "receipt_count": 60,
+  "rejected_count": 2965,
+  "status": "complete",
+  "total_dispositions": 5965
+}
