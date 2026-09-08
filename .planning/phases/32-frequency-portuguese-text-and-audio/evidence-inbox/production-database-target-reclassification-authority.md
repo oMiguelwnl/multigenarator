@@ -1,0 +1,40 @@
+# Production Database Target Reclassification Authority
+
+schema_version=phase32-production-database-target-reclassification-authority-v1
+target_reclassification_approved=true
+approval_source=current_session_user_selection_2
+prior_disposable_test_classification_acknowledged=true
+prior_disposable_reset_acknowledged=true
+prior_disposable_locator_sha256=19871fdb496eed265952e0358b94fa795d1b74c37d89a674b0189ee1381f32b6
+prior_disposable_preflight_status=blocked_non_alembic_application_schema_present
+prior_disposable_reset_plan=32-48
+prior_disposable_reset_destroyed_rows=268
+production_database_connection_allowed=true
+alembic_upgrade_head_allowed=true
+expected_alembic_head=20260828_19
+pilot_base_job_binding_allowed=true
+job_id=phase32-prod-freq-pilot-base
+authority_stage=pilot_base
+destructive_reset_authorized=false
+database_drop_allowed=false
+role_drop_allowed=false
+schema_drop_allowed=false
+manual_sql_migration_allowed=false
+candidate_ingestion_allowed=false
+provider_call_allowed=false
+azure_call_allowed=false
+audio_synthesis_allowed=false
+review_application_allowed=false
+export_allowed=false
+release_allowed=false
+publication_allowed=false
+delivery_allowed=false
+git_action_allowed=false
+phase32_closure_allowed=false
+raw_secret_persistence_allowed=false
+raw_locator_printing_allowed=false
+raw_locator_component_persistence_allowed=false
+
+## Scope
+
+This authority reclassifies the current `.env` database target for the narrow Plan 32-53 production DB gate only. It permits secret-safe connection, non-destructive Alembic `upgrade head`, and one idempotent Korean frequency `pilot_base` job authority binding. It does not retroactively convert prior disposable/test evidence into production readiness and does not authorize any generated learner content, provider spend, Azure synthesis, review promotion, export, release, publication, delivery, Git action, or Phase 32 closure.

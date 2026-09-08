@@ -1,0 +1,20 @@
+{
+  "alembic_migration_attempted": false,
+  "audio_synthesis_attempt_count": 0,
+  "azure_call_count": 0,
+  "database_connection_attempted": false,
+  "database_url_env_present": false,
+  "delivery_action_count": 0,
+  "export_count": 0,
+  "job_binding_attempted": false,
+  "phase32_closure_attempted": false,
+  "provider_call_count": 0,
+  "publication_action_count": 0,
+  "raw_secret_persisted": false,
+  "raw_secret_read": false,
+  "release_action_count": 0,
+  "review_application_count": 0,
+  "schema_version": "phase32-production-database-locator-gate-v1",
+  "status": "blocked_missing_database_url",
+  "target_source": "process_env:MULTILANG_DATABASE_URL"
+}
