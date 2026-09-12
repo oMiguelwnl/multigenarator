@@ -4,7 +4,7 @@ import os
 from pathlib import Path
 from typing import Annotated, Literal
 
-from pydantic import AliasChoices, Field, field_validator
+from pydantic import AliasChoices, Field, SecretStr, field_validator
 from pydantic_settings import BaseSettings, NoDecode, SettingsConfigDict
 
 from multilang.services.audio_voice_registry import VOICE_REGISTRY_VERSION
@@ -83,6 +83,22 @@ class Settings(BaseSettings):
     )
 
     database_url: str = "postgresql+psycopg://postgres:postgres@localhost:5432/multilang"
+    roadmap_4_enabled: bool = Field(
+        default=False,
+        validation_alias=AliasChoices("MULTILANG_ROADMAP_4_ENABLED", "ROADMAP_4_ENABLED"),
+    )
+    native_api_credentials: SecretStr = SecretStr("{}")
+    native_api_requests_per_minute: int = Field(default=60, ge=1, le=10000)
+    native_api_max_body_bytes: int = Field(default=1048576, ge=1024, le=16777216)
+    native_worker_lease_seconds: int = Field(default=120, ge=10, le=3600)
+    native_worker_poll_seconds: float = Field(default=1.0, ge=0.1, le=60)
+    native_task_max_attempts: int = Field(default=3, ge=1, le=10)
+    native_telemetry_enabled: bool = False
+    native_provider_calls_enabled: bool = False
+    native_audio_model_version: str = "azure-speech-sdk-1"
+    native_evidence_dir: Path = Path(".multilang/evidence")
+    native_evidence_signing_key: SecretStr | None = None
+    native_max_provider_items: int = Field(default=100, ge=1, le=10000)
     default_retry_attempts: int = 2
     frequency_assets_dir: Path = Path("assets/frequency")
     frequency_list_version: str = "v1"

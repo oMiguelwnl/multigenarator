@@ -4585,6 +4585,8 @@ def create_app(
         typer.echo(f"hiragana_count={result.hiragana_count}")
         typer.echo(f"katakana_count={result.katakana_count}")
 
+    from multilang.native_cli import create_native_app
+    cli.add_typer(create_native_app(), name="native")
     return cli
 
 
