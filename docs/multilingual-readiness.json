@@ -1,0 +1,3201 @@
+{
+  "schema_version": 1,
+  "observed_on": "2026-09-12",
+  "scope": "local source/model preparation and structural diagnostic; no production approval",
+  "catalog_file_sha256": "aa858ced5433b1bb99a04e26751efb159156325ae94889f8c4dc5f32f7b39e85",
+  "totals": {
+    "languages": 22,
+    "available_models": 22,
+    "prepared_shards": 24,
+    "lexical_candidates": 260439,
+    "dictionary_inflection_candidates": 71940,
+    "diagnostic_sentences": 4400,
+    "cross_shard_duplicates_removed": 0,
+    "approved_core_identities": 0,
+    "provider_calls_executed": 0
+  },
+  "languages": [
+    {
+      "language": "pt",
+      "name": "Portuguese",
+      "model": {
+        "language": "pt",
+        "backend": "stanza",
+        "available": true,
+        "package_version": "1.14.0",
+        "manifest_sha256": "241f47298aaf4f91dbb33c3886deb39d2140d67c721085b6b130a2a0e4127c95",
+        "qualified": false
+      },
+      "lexical_candidates": 11320,
+      "dictionary_inflection_candidates": 4501,
+      "unresolved_pos_candidates": 139,
+      "distinct_preserved_lemmas": 6115,
+      "cross_shard_duplicates_removed": 0,
+      "shards": [
+        {
+          "shard": "all",
+          "seed_words": 6000,
+          "path": ".multilang/verification/real-languages/prepared/pt/all",
+          "manifest_file_sha256": "e51da6de77cad09b96273c309d14f461f86fd183941a3b1ddfcdab7314646877",
+          "manifest": {
+            "approved_important_form_count": 0,
+            "blockers": [
+              "unresolved_part_of_speech",
+              "independent_sense_review",
+              "source_redistribution_review",
+              "language_evaluation",
+              "balanced_frequency_corpora",
+              "important_form_policy",
+              "reviewed_content_and_audio",
+              "anki_client_acceptance"
+            ],
+            "candidate_filter": {
+              "policy": "nfc-casefold-selection-only-v1",
+              "sha256": "d3e0874466a75edce94613283f04e5f498f31f8b862a28fdc65792eb926fc269"
+            },
+            "corpus": {
+              "canonical_ranking_input": false,
+              "document_count": 1,
+              "sentence_count": 1167,
+              "sha256": "9a824650b7a02cf411f6e09b39e8fb423c85e1a5fb3a55b87e7f4c0c2ea5b3bb",
+              "split": "test",
+              "token_count": 27604,
+              "unaligned_token_count": 4030
+            },
+            "dictionary_format": "wiktextract",
+            "dictionary_sha256": "a71bc171d61eda9eb24fa942bfbc323b007133eecbfd307d074400027a638ed3",
+            "distinct_word_count": 6115,
+            "duplicate_records_removed": 1,
+            "files": {
+              "candidates.jsonl": "9d2b1731104da215ac29436f920518693d4e39fbe9a75101cde9647b2ab025c6",
+              "corpus-observed-counts.json": "a5eb2c6b81298c24edb5974c0b8a05a6750dbf5562379b15108a3c39fd624bea",
+              "reference-corpus.jsonl": "c96caa338f85a6c3cde2f271f3f2756d2a999e0a34eaa70e978f28c658d96c4b",
+              "review.jsonl": "c472c158910f17c9c89f9b486cf78846b61d1c718f9d976c472e2c3e51f19c24",
+              "sources.json": "fb43f1cb37a8a56c4c12ecae5568b9a03cf4562ebe0bd1a99224aab6fdfb5771"
+            },
+            "glosses_sha256": null,
+            "inflection_candidate_count": 4501,
+            "language": "pt",
+            "lexical_candidate_count": 11320,
+            "preparation_sha256": "aeb7bd409312a1502d05c28029735a0424cdcd299072e04e95ef6067ff9f9a5f",
+            "production_eligible": false,
+            "resolved_identity_count": 0,
+            "schema_version": 1,
+            "source_catalog_sha256": "97fcfba8d1004484bdf554ddf79b8fd71691ef4fb22aca5a1b102d14b9f76faf",
+            "status": "candidate_only",
+            "target_core_identity_count": 3000,
+            "unresolved_pos_count": 139,
+            "workload": {
+              "approved_core_cards": 0,
+              "cost_estimate_available": false,
+              "headword_target": 3000,
+              "important_form_cards": null,
+              "provider_calls_executed": 0
+            }
+          }
+        }
+      ],
+      "evaluation_path": ".multilang/verification/real-languages/evaluations-v2/pt-88d67bbe12ad",
+      "evaluation_manifest_file_sha256": "39b958bae17fdc22cdcb2d52523a1f893babda5722b21e9729d535f2fd476056",
+      "evaluation": {
+        "schema_version": 1,
+        "evaluator_version": "2",
+        "language": "pt",
+        "corpus_sha256": "9a824650b7a02cf411f6e09b39e8fb423c85e1a5fb3a55b87e7f4c0c2ea5b3bb",
+        "corpus_split": "test",
+        "source_catalog_sha256": "97fcfba8d1004484bdf554ddf79b8fd71691ef4fb22aca5a1b102d14b9f76faf",
+        "source_sentence_count": 1167,
+        "sample_sentence_count": 200,
+        "sample_policy": "smallest-source-bound-sentence-sha256-v1",
+        "model_fingerprints": [
+          "9ca44d68ece1021fa8f122931d9146c547613318e65a4c0c97fc5553769d05b6"
+        ],
+        "analysis_statuses": {
+          "inconclusive": 147,
+          "complete": 53
+        },
+        "counts": {
+          "gold_tokens": 4816,
+          "unaligned_gold_tokens": 750,
+          "aligned_gold_tokens": 4066,
+          "predicted_tokens": 745,
+          "exact_span_matches": 744,
+          "lemma_eligible_tokens": 4064,
+          "lemma_correct": 732,
+          "pos_eligible_tokens": 4066,
+          "pos_correct": 712,
+          "features_eligible_tokens": 2675,
+          "features_correct": 429,
+          "false_complete_sentences": 23
+        },
+        "metrics": {
+          "exact_span_precision": 0.9986577181208054,
+          "exact_span_recall": 0.18298081652729956,
+          "lemma_accuracy": 0.18011811023622049,
+          "pos_accuracy": 0.1751106738809641,
+          "annotated_features_accuracy": 0.16037383177570094
+        },
+        "false_complete_sentence_count": 23,
+        "target_false_accept_rate": null,
+        "qualification": false,
+        "independent_review": null,
+        "canonical_ranking_input": false,
+        "limitations": [
+          "source_annotations_not_fully_human_verified",
+          "model_pretraining_overlap_not_established",
+          "sense_matching_not_evaluated",
+          "grammar_strict_i_plus_one_not_evaluated",
+          "audio_and_clients_not_evaluated"
+        ],
+        "observations_sha256": "abe43b0c6f6f21c444069cc32ee77f338da513adfd05697504678656bbb37789",
+        "evaluation_sha256": "3ba581896484de49094f481e386f173c8683735521413506347f4a9c62943930"
+      },
+      "approved_core_identities": 0,
+      "approved_important_forms": 0,
+      "production_eligible": false
+    },
+    {
+      "language": "es",
+      "name": "Spanish",
+      "model": {
+        "language": "es",
+        "backend": "stanza",
+        "available": true,
+        "package_version": "1.14.0",
+        "manifest_sha256": "6828a80d04ce54eb37d5aec1ff7fb5614d7827b01e9a185d9b08a36152299f7d",
+        "qualified": false
+      },
+      "lexical_candidates": 11157,
+      "dictionary_inflection_candidates": 5026,
+      "unresolved_pos_candidates": 61,
+      "distinct_preserved_lemmas": 6272,
+      "cross_shard_duplicates_removed": 0,
+      "shards": [
+        {
+          "shard": "all",
+          "seed_words": 6000,
+          "path": ".multilang/verification/real-languages/prepared/es/all",
+          "manifest_file_sha256": "c8c85f340c4ba65747326fe7f5875ddb4f5deb757c62b228f355747dc9341193",
+          "manifest": {
+            "approved_important_form_count": 0,
+            "blockers": [
+              "unresolved_part_of_speech",
+              "independent_sense_review",
+              "source_redistribution_review",
+              "language_evaluation",
+              "balanced_frequency_corpora",
+              "important_form_policy",
+              "reviewed_content_and_audio",
+              "anki_client_acceptance"
+            ],
+            "candidate_filter": {
+              "policy": "nfc-casefold-selection-only-v1",
+              "sha256": "a03985157a1ecda6b5151e173791ab716b0dcd2b953dc5f0e357cd36837632d4"
+            },
+            "corpus": {
+              "canonical_ranking_input": false,
+              "document_count": 168,
+              "sentence_count": 1721,
+              "sha256": "2a24316503a56e171f07b38cf2ec13c22e3b62a337c6dbf2d9d1a54ada2b012b",
+              "split": "test",
+              "token_count": 53622,
+              "unaligned_token_count": 2334
+            },
+            "dictionary_format": "wiktextract",
+            "dictionary_sha256": "e1549532bf82321ab4b752ae0298d37d9cd49f0e405394ae5e1a37fe4d6df87c",
+            "distinct_word_count": 6272,
+            "duplicate_records_removed": 0,
+            "files": {
+              "candidates.jsonl": "5ca79e4757745215db17e094f5208f9355a335726e97f5099aa014561104a465",
+              "corpus-observed-counts.json": "694dc157abb54be55fa0dfba9a1f94d6932597ee5dfeba1effbc83a0b8a61c0d",
+              "reference-corpus.jsonl": "6da001a70b1a4090b7ca39f73d45a86480fcadf028a39f8457e424fdda24904a",
+              "review.jsonl": "fb26c5ff112cb52928bcb18b1c1040c34c306b77c5b4ab6a7faa0bb56791af5c",
+              "sources.json": "c5dafc13dad88e4e9298ed99ad257007885d8bbd1a53e93142af67615f8061f4"
+            },
+            "glosses_sha256": null,
+            "inflection_candidate_count": 5026,
+            "language": "es",
+            "lexical_candidate_count": 11157,
+            "preparation_sha256": "77e4d2ff407808809d9c624a63ee74c8a6536fa56fb2a987455b0b086c4ef17a",
+            "production_eligible": false,
+            "resolved_identity_count": 0,
+            "schema_version": 1,
+            "source_catalog_sha256": "364ee023268cca61b30f14b187da641d1ea08f58b55b46e35120d46ab0e2a0f4",
+            "status": "candidate_only",
+            "target_core_identity_count": 3000,
+            "unresolved_pos_count": 61,
+            "workload": {
+              "approved_core_cards": 0,
+              "cost_estimate_available": false,
+              "headword_target": 3000,
+              "important_form_cards": null,
+              "provider_calls_executed": 0
+            }
+          }
+        }
+      ],
+      "evaluation_path": ".multilang/verification/real-languages/evaluations-v2/es-ef2e74850b1a",
+      "evaluation_manifest_file_sha256": "a90e5e2632d3b8b3a790c6236e8621c0ba0b47da847dcac82365daee4e46bc03",
+      "evaluation": {
+        "schema_version": 1,
+        "evaluator_version": "2",
+        "language": "es",
+        "corpus_sha256": "2a24316503a56e171f07b38cf2ec13c22e3b62a337c6dbf2d9d1a54ada2b012b",
+        "corpus_split": "test",
+        "source_catalog_sha256": "364ee023268cca61b30f14b187da641d1ea08f58b55b46e35120d46ab0e2a0f4",
+        "source_sentence_count": 1721,
+        "sample_sentence_count": 200,
+        "sample_policy": "smallest-source-bound-sentence-sha256-v1",
+        "model_fingerprints": [
+          "c0434679d3dd408baecdd56d9aed03b1edcbbb519df8b8fd0c080c41a294aca5"
+        ],
+        "analysis_statuses": {
+          "complete": 113,
+          "inconclusive": 87
+        },
+        "counts": {
+          "gold_tokens": 6074,
+          "unaligned_gold_tokens": 270,
+          "aligned_gold_tokens": 5804,
+          "predicted_tokens": 2550,
+          "exact_span_matches": 2550,
+          "lemma_eligible_tokens": 5804,
+          "lemma_correct": 2472,
+          "pos_eligible_tokens": 5804,
+          "pos_correct": 2517,
+          "features_eligible_tokens": 4028,
+          "features_correct": 1787,
+          "false_complete_sentences": 62
+        },
+        "metrics": {
+          "exact_span_precision": 1.0,
+          "exact_span_recall": 0.4393521709166092,
+          "lemma_accuracy": 0.4259131633356306,
+          "pos_accuracy": 0.43366643694004137,
+          "annotated_features_accuracy": 0.44364448857994043
+        },
+        "false_complete_sentence_count": 62,
+        "target_false_accept_rate": null,
+        "qualification": false,
+        "independent_review": null,
+        "canonical_ranking_input": false,
+        "limitations": [
+          "source_annotations_not_fully_human_verified",
+          "model_pretraining_overlap_not_established",
+          "sense_matching_not_evaluated",
+          "grammar_strict_i_plus_one_not_evaluated",
+          "audio_and_clients_not_evaluated"
+        ],
+        "observations_sha256": "dae308db743e0a9e3256a9611cd1b9f9c669c03f778657a25461c65c39966de3",
+        "evaluation_sha256": "d3d300dad3e5485efc6bbbc2887ced856b2a32835836a756e42f94c3423a79ec"
+      },
+      "approved_core_identities": 0,
+      "approved_important_forms": 0,
+      "production_eligible": false
+    },
+    {
+      "language": "en",
+      "name": "English",
+      "model": {
+        "language": "en",
+        "backend": "stanza",
+        "available": true,
+        "package_version": "1.14.0",
+        "manifest_sha256": "5aa89d263d3201f0364458e8982a97bc4b8b7e3fd9cd0881272248da3b75a9ca",
+        "qualified": false
+      },
+      "lexical_candidates": 62053,
+      "dictionary_inflection_candidates": 2919,
+      "unresolved_pos_candidates": 212,
+      "distinct_preserved_lemmas": 8423,
+      "cross_shard_duplicates_removed": 0,
+      "shards": [
+        {
+          "shard": "all",
+          "seed_words": 6000,
+          "path": ".multilang/verification/real-languages/prepared/en/all",
+          "manifest_file_sha256": "48ff49a8dd2f0522c56599de67ab65bcf769d0d7c7c3e4cc366333e81c830ff8",
+          "manifest": {
+            "approved_important_form_count": 0,
+            "blockers": [
+              "unresolved_part_of_speech",
+              "independent_sense_review",
+              "source_redistribution_review",
+              "language_evaluation",
+              "balanced_frequency_corpora",
+              "important_form_policy",
+              "reviewed_content_and_audio",
+              "anki_client_acceptance"
+            ],
+            "candidate_filter": {
+              "policy": "nfc-casefold-selection-only-v1",
+              "sha256": "d6a0a880ca867ecd7a19b1065f98609cde26e839a380b8bc25efd0df7c3a1fe9"
+            },
+            "corpus": {
+              "canonical_ranking_input": false,
+              "document_count": 316,
+              "sentence_count": 2077,
+              "sha256": "e266e515a0a7547657ed3d90d9ba46487d6bd251f27ad4269d4e8a427c8555cd",
+              "split": "test",
+              "token_count": 25094,
+              "unaligned_token_count": 708
+            },
+            "dictionary_format": "wiktextract",
+            "dictionary_sha256": "9958306b3f39fb09aa09753075a33898a4b8b932ab5d666df2e73bd50a213caf",
+            "distinct_word_count": 8423,
+            "duplicate_records_removed": 0,
+            "files": {
+              "candidates.jsonl": "764bbf678d46ba90a7bdb260b733933617f7ad5c9d4281cb99ce46a2b8dece99",
+              "corpus-observed-counts.json": "9afc09ccb1f41985bbe52b795b28919a0593edf3a3caeae61e0649c3617d62b7",
+              "reference-corpus.jsonl": "a4afcd43458f71fd87a0a213c6962845e41420ea932938eac3dd5e51c97de46e",
+              "review.jsonl": "08e1f974df24ea70bf9d1d42296ac0579888694a9a612c6cff40261017533ed5",
+              "sources.json": "689258697d52c0cd65403b31b65d96cb2d4dc40d8da10691c105d5b11340f642"
+            },
+            "glosses_sha256": null,
+            "inflection_candidate_count": 2919,
+            "language": "en",
+            "lexical_candidate_count": 62053,
+            "preparation_sha256": "2e8d8698d5c7683bbb441bdcd1d86d61d83ac6fbc9eb7feb2f920729122faeb0",
+            "production_eligible": false,
+            "resolved_identity_count": 0,
+            "schema_version": 1,
+            "source_catalog_sha256": "83273e7f80880b3a37e0316b4294cef5f634a0de8b1f3edbe08e8692c3abfb6a",
+            "status": "candidate_only",
+            "target_core_identity_count": 3000,
+            "unresolved_pos_count": 212,
+            "workload": {
+              "approved_core_cards": 0,
+              "cost_estimate_available": false,
+              "headword_target": 3000,
+              "important_form_cards": null,
+              "provider_calls_executed": 0
+            }
+          }
+        }
+      ],
+      "evaluation_path": ".multilang/verification/real-languages/evaluations-v2/en-815cb6b9ed7c",
+      "evaluation_manifest_file_sha256": "1329789dcfd7c2e5fe05b9e98e00cc813ba0576c462310301a788513d564db47",
+      "evaluation": {
+        "schema_version": 1,
+        "evaluator_version": "2",
+        "language": "en",
+        "corpus_sha256": "e266e515a0a7547657ed3d90d9ba46487d6bd251f27ad4269d4e8a427c8555cd",
+        "corpus_split": "test",
+        "source_catalog_sha256": "83273e7f80880b3a37e0316b4294cef5f634a0de8b1f3edbe08e8692c3abfb6a",
+        "source_sentence_count": 2077,
+        "sample_sentence_count": 200,
+        "sample_policy": "smallest-source-bound-sentence-sha256-v1",
+        "model_fingerprints": [
+          "ddce9b1bf83277613c876bb859d5c3ac2a7ea35e9d9603e5942129ea4dea05dc"
+        ],
+        "analysis_statuses": {
+          "complete": 164,
+          "inconclusive": 36
+        },
+        "counts": {
+          "gold_tokens": 2600,
+          "unaligned_gold_tokens": 82,
+          "aligned_gold_tokens": 2518,
+          "predicted_tokens": 1906,
+          "exact_span_matches": 1890,
+          "lemma_eligible_tokens": 2515,
+          "lemma_correct": 1830,
+          "pos_eligible_tokens": 2518,
+          "pos_correct": 1810,
+          "features_eligible_tokens": 1728,
+          "features_correct": 1230,
+          "false_complete_sentences": 89
+        },
+        "metrics": {
+          "exact_span_precision": 0.9916054564533053,
+          "exact_span_recall": 0.7505957108816521,
+          "lemma_accuracy": 0.7276341948310139,
+          "pos_accuracy": 0.7188244638602065,
+          "annotated_features_accuracy": 0.7118055555555556
+        },
+        "false_complete_sentence_count": 89,
+        "target_false_accept_rate": null,
+        "qualification": false,
+        "independent_review": null,
+        "canonical_ranking_input": false,
+        "limitations": [
+          "source_annotations_not_fully_human_verified",
+          "model_pretraining_overlap_not_established",
+          "sense_matching_not_evaluated",
+          "grammar_strict_i_plus_one_not_evaluated",
+          "audio_and_clients_not_evaluated"
+        ],
+        "observations_sha256": "b89167566ba6fabb22b9c1577688ca1dbc36f917d42ef3a3443ef64b4b8b9258",
+        "evaluation_sha256": "64193c2c5d80c2333e7e37b1e9eb6466b3bc68498769c99e17cb8bde8a48610e"
+      },
+      "approved_core_identities": 0,
+      "approved_important_forms": 0,
+      "production_eligible": false
+    },
+    {
+      "language": "fr",
+      "name": "French",
+      "model": {
+        "language": "fr",
+        "backend": "stanza",
+        "available": true,
+        "package_version": "1.14.0",
+        "manifest_sha256": "7de03a91eda561ca80355eeb18aa5e777b7126f5e1160087c06935330bcb430a",
+        "qualified": false
+      },
+      "lexical_candidates": 10461,
+      "dictionary_inflection_candidates": 3715,
+      "unresolved_pos_candidates": 67,
+      "distinct_preserved_lemmas": 6242,
+      "cross_shard_duplicates_removed": 0,
+      "shards": [
+        {
+          "shard": "all",
+          "seed_words": 6000,
+          "path": ".multilang/verification/real-languages/prepared/fr/all",
+          "manifest_file_sha256": "8cdc1dbf3499ca44002a83e0c4870bdc5f01f7962a76fb70d9871c03547f9af0",
+          "manifest": {
+            "approved_important_form_count": 0,
+            "blockers": [
+              "unresolved_part_of_speech",
+              "independent_sense_review",
+              "source_redistribution_review",
+              "language_evaluation",
+              "balanced_frequency_corpora",
+              "important_form_policy",
+              "reviewed_content_and_audio",
+              "anki_client_acceptance"
+            ],
+            "candidate_filter": {
+              "policy": "nfc-casefold-selection-only-v1",
+              "sha256": "6aa5590caf13234d316fc2424ffe7eb25aa0abbeed62bf173443a040b12210c4"
+            },
+            "corpus": {
+              "canonical_ranking_input": false,
+              "document_count": 1,
+              "sentence_count": 416,
+              "sha256": "5d1743c7a9ce2908943d4a430ed9a77755e2a8d7e32d42ee0f1d6a0b528f0be8",
+              "split": "test",
+              "token_count": 10018,
+              "unaligned_token_count": 560
+            },
+            "dictionary_format": "wiktextract",
+            "dictionary_sha256": "6d443a9f4c8a78f3ae2d5841eccb0abdd238d09de244079e31c20f8c8fa53edb",
+            "distinct_word_count": 6242,
+            "duplicate_records_removed": 0,
+            "files": {
+              "candidates.jsonl": "ede71d7aabdf1babe343f1407d4f83e35df4d1dd0d1d7e149e13b36d85a6f24e",
+              "corpus-observed-counts.json": "a98bd3ddf6af2d6306cb8806c23a84249c4bf4e4f2299f80648836f35db506ae",
+              "reference-corpus.jsonl": "41d32a61f4d9bbd0516aa5ec8a564de432db32b04fcaa096c2c160b558de65b4",
+              "review.jsonl": "af0b1464c03c5bd158adcbab45b6e70cd10ef8ff53ec90b50a147e1b94572a77",
+              "sources.json": "660d99d6c88bb54b23e3a81525d0a934c51f67b23f83ac8870e0b82fb23464cb"
+            },
+            "glosses_sha256": null,
+            "inflection_candidate_count": 3715,
+            "language": "fr",
+            "lexical_candidate_count": 10461,
+            "preparation_sha256": "8de1867390cccaaa52fd37cb38fda5a4940bc233977682da4bd86b20ca9d242f",
+            "production_eligible": false,
+            "resolved_identity_count": 0,
+            "schema_version": 1,
+            "source_catalog_sha256": "91a80dcd34361a60a42b27ceabd8d08b5a8f725739cf70ff8736b050c2774d79",
+            "status": "candidate_only",
+            "target_core_identity_count": 3000,
+            "unresolved_pos_count": 67,
+            "workload": {
+              "approved_core_cards": 0,
+              "cost_estimate_available": false,
+              "headword_target": 3000,
+              "important_form_cards": null,
+              "provider_calls_executed": 0
+            }
+          }
+        }
+      ],
+      "evaluation_path": ".multilang/verification/real-languages/evaluations-v2/fr-118da2a8640c",
+      "evaluation_manifest_file_sha256": "8a1d4bf50e41c6b3feb3fc680bc92d59f9f6f2263e124cb3a3ddc86ae3f2b2aa",
+      "evaluation": {
+        "schema_version": 1,
+        "evaluator_version": "2",
+        "language": "fr",
+        "corpus_sha256": "5d1743c7a9ce2908943d4a430ed9a77755e2a8d7e32d42ee0f1d6a0b528f0be8",
+        "corpus_split": "test",
+        "source_catalog_sha256": "91a80dcd34361a60a42b27ceabd8d08b5a8f725739cf70ff8736b050c2774d79",
+        "source_sentence_count": 416,
+        "sample_sentence_count": 200,
+        "sample_policy": "smallest-source-bound-sentence-sha256-v1",
+        "model_fingerprints": [
+          "c437ca3e68329c2ebfcd2068c6a94cf94a823aab5bf93ff119f3cdff67188061"
+        ],
+        "analysis_statuses": {
+          "inconclusive": 94,
+          "complete": 106
+        },
+        "counts": {
+          "gold_tokens": 5029,
+          "unaligned_gold_tokens": 298,
+          "aligned_gold_tokens": 4731,
+          "predicted_tokens": 2225,
+          "exact_span_matches": 2225,
+          "lemma_eligible_tokens": 4729,
+          "lemma_correct": 2204,
+          "pos_eligible_tokens": 4731,
+          "pos_correct": 2178,
+          "features_eligible_tokens": 3024,
+          "features_correct": 1342,
+          "false_complete_sentences": 63
+        },
+        "metrics": {
+          "exact_span_precision": 1.0,
+          "exact_span_recall": 0.4703022616782921,
+          "lemma_accuracy": 0.4660604779023049,
+          "pos_accuracy": 0.4603677869372226,
+          "annotated_features_accuracy": 0.4437830687830688
+        },
+        "false_complete_sentence_count": 63,
+        "target_false_accept_rate": null,
+        "qualification": false,
+        "independent_review": null,
+        "canonical_ranking_input": false,
+        "limitations": [
+          "source_annotations_not_fully_human_verified",
+          "model_pretraining_overlap_not_established",
+          "sense_matching_not_evaluated",
+          "grammar_strict_i_plus_one_not_evaluated",
+          "audio_and_clients_not_evaluated"
+        ],
+        "observations_sha256": "2e47f9a8ed7ede3fa93f5f557b3bd1e62f3ff425e356d8412d96f2becc6b5123",
+        "evaluation_sha256": "639347d85b51b2d147a08c762343fbc2e2271e3503d3364b448ab0459c5d282c"
+      },
+      "approved_core_identities": 0,
+      "approved_important_forms": 0,
+      "production_eligible": false
+    },
+    {
+      "language": "de",
+      "name": "German",
+      "model": {
+        "language": "de",
+        "backend": "stanza",
+        "available": true,
+        "package_version": "1.14.0",
+        "manifest_sha256": "8303325a91e342a33d3e35a9b1421df7d6e71fac95a05a2a1aa5e48a0103d7a7",
+        "qualified": false
+      },
+      "lexical_candidates": 10863,
+      "dictionary_inflection_candidates": 7277,
+      "unresolved_pos_candidates": 81,
+      "distinct_preserved_lemmas": 7239,
+      "cross_shard_duplicates_removed": 0,
+      "shards": [
+        {
+          "shard": "all",
+          "seed_words": 6000,
+          "path": ".multilang/verification/real-languages/prepared/de/all",
+          "manifest_file_sha256": "f916b4ebe4664c159464b42aaaf01d753ee9c5e5cb3ad0ffe5c6b8467c6fa893",
+          "manifest": {
+            "approved_important_form_count": 0,
+            "blockers": [
+              "unresolved_part_of_speech",
+              "independent_sense_review",
+              "source_redistribution_review",
+              "language_evaluation",
+              "balanced_frequency_corpora",
+              "important_form_policy",
+              "reviewed_content_and_audio",
+              "anki_client_acceptance"
+            ],
+            "candidate_filter": {
+              "policy": "nfc-casefold-selection-only-v1",
+              "sha256": "d5d5aaabcc95d60e505ca00c76472106dfd169c562612e2e4c616fe58fb19f8d"
+            },
+            "corpus": {
+              "canonical_ranking_input": false,
+              "document_count": 1,
+              "sentence_count": 977,
+              "sha256": "bceb8e867ba3ee7f1449d44fb31538d63a514f07e6763e7d9a5ffe794407bed4",
+              "split": "test",
+              "token_count": 16499,
+              "unaligned_token_count": 548
+            },
+            "dictionary_format": "wiktextract",
+            "dictionary_sha256": "45a1f079b56c07faa29f99ab77776e6c296ca5e9446420d04bec8d03fbd2c3e4",
+            "distinct_word_count": 7239,
+            "duplicate_records_removed": 0,
+            "files": {
+              "candidates.jsonl": "eef0ef4b9a0684679e1fb6845dfea2d5f9f1f977f6591912190001d1aee741fc",
+              "corpus-observed-counts.json": "6c0805b154a2c77a697b9e83d7b811ee2d5b32648748baca6016263f4ea9e4cb",
+              "reference-corpus.jsonl": "3e0f84cb88b8aa17fb724bc0421e1dcf1dbb8ada87687cf6857a6648f591f26c",
+              "review.jsonl": "3d31030abd3b7ca78bf6314f32d9c116850af42e5a7d53d356bdd85d07c22628",
+              "sources.json": "791e8e90235e29eb0317502aa97227cd895c7bba70fef19d312ae0a75e7598be"
+            },
+            "glosses_sha256": null,
+            "inflection_candidate_count": 7277,
+            "language": "de",
+            "lexical_candidate_count": 10863,
+            "preparation_sha256": "5cc0c7a88ef43bf20d17a4c9545e7424162742a93d9219a1da02d11e30538d43",
+            "production_eligible": false,
+            "resolved_identity_count": 0,
+            "schema_version": 1,
+            "source_catalog_sha256": "c0eadefecc225c82733bd56882c84fe21cc8fd32a0bc2000591716c4e84c9771",
+            "status": "candidate_only",
+            "target_core_identity_count": 3000,
+            "unresolved_pos_count": 81,
+            "workload": {
+              "approved_core_cards": 0,
+              "cost_estimate_available": false,
+              "headword_target": 3000,
+              "important_form_cards": null,
+              "provider_calls_executed": 0
+            }
+          }
+        }
+      ],
+      "evaluation_path": ".multilang/verification/real-languages/evaluations-v2/de-53957ae8ccb3",
+      "evaluation_manifest_file_sha256": "3e9703e09dfca83df25e9daa90059925711f6d2f2fb808b4559e2789a13d742c",
+      "evaluation": {
+        "schema_version": 1,
+        "evaluator_version": "2",
+        "language": "de",
+        "corpus_sha256": "bceb8e867ba3ee7f1449d44fb31538d63a514f07e6763e7d9a5ffe794407bed4",
+        "corpus_split": "test",
+        "source_catalog_sha256": "c0eadefecc225c82733bd56882c84fe21cc8fd32a0bc2000591716c4e84c9771",
+        "source_sentence_count": 977,
+        "sample_sentence_count": 200,
+        "sample_policy": "smallest-source-bound-sentence-sha256-v1",
+        "model_fingerprints": [
+          "b9ab496e75cac0e08d62180c48caf6de15afc1340ce8d22e6241d3bec6a4510e"
+        ],
+        "analysis_statuses": {
+          "complete": 149,
+          "inconclusive": 51
+        },
+        "counts": {
+          "gold_tokens": 3339,
+          "unaligned_gold_tokens": 106,
+          "aligned_gold_tokens": 3233,
+          "predicted_tokens": 2312,
+          "exact_span_matches": 2307,
+          "lemma_eligible_tokens": 3233,
+          "lemma_correct": 2248,
+          "pos_eligible_tokens": 3233,
+          "pos_correct": 2216,
+          "features_eligible_tokens": 2097,
+          "features_correct": 1285,
+          "false_complete_sentences": 107
+        },
+        "metrics": {
+          "exact_span_precision": 0.9978373702422145,
+          "exact_span_recall": 0.713578719455614,
+          "lemma_accuracy": 0.6953294154036499,
+          "pos_accuracy": 0.6854314877822456,
+          "annotated_features_accuracy": 0.6127801621363853
+        },
+        "false_complete_sentence_count": 107,
+        "target_false_accept_rate": null,
+        "qualification": false,
+        "independent_review": null,
+        "canonical_ranking_input": false,
+        "limitations": [
+          "source_annotations_not_fully_human_verified",
+          "model_pretraining_overlap_not_established",
+          "sense_matching_not_evaluated",
+          "grammar_strict_i_plus_one_not_evaluated",
+          "audio_and_clients_not_evaluated"
+        ],
+        "observations_sha256": "f722eb7d7eca89bb1ea8a6bb954711d957f1cc9855e0556e5267a4672bd38f74",
+        "evaluation_sha256": "c144aae39615419f1c62e583e75db83e8c67fb02d92895570fdd19f9caf2955d"
+      },
+      "approved_core_identities": 0,
+      "approved_important_forms": 0,
+      "production_eligible": false
+    },
+    {
+      "language": "it",
+      "name": "Italian",
+      "model": {
+        "language": "it",
+        "backend": "stanza",
+        "available": true,
+        "package_version": "1.14.0",
+        "manifest_sha256": "8a08cc0931fc276184beff4faeb2bedf9bc7d347f6b0ae94143be0a4114f81ee",
+        "qualified": false
+      },
+      "lexical_candidates": 11081,
+      "dictionary_inflection_candidates": 5029,
+      "unresolved_pos_candidates": 106,
+      "distinct_preserved_lemmas": 6288,
+      "cross_shard_duplicates_removed": 0,
+      "shards": [
+        {
+          "shard": "all",
+          "seed_words": 6000,
+          "path": ".multilang/verification/real-languages/prepared/it/all",
+          "manifest_file_sha256": "9d34bbfd4cead2afae9ddfd2c4b6def7f288253fba73a239be23272797f732d7",
+          "manifest": {
+            "approved_important_form_count": 0,
+            "blockers": [
+              "unresolved_part_of_speech",
+              "independent_sense_review",
+              "source_redistribution_review",
+              "language_evaluation",
+              "balanced_frequency_corpora",
+              "important_form_policy",
+              "reviewed_content_and_audio",
+              "anki_client_acceptance"
+            ],
+            "candidate_filter": {
+              "policy": "nfc-casefold-selection-only-v1",
+              "sha256": "510d67d525ea194b7e38373a4a31f7a42c1c04f805b9bcf2e6c28ea697ee67a6"
+            },
+            "corpus": {
+              "canonical_ranking_input": false,
+              "document_count": 1,
+              "sentence_count": 482,
+              "sha256": "ddec3b61bcf8eebac21eb2d2fef2f0a6be01fae264d6cd85b5099d49bf200cb2",
+              "split": "test",
+              "token_count": 10417,
+              "unaligned_token_count": 1473
+            },
+            "dictionary_format": "wiktextract",
+            "dictionary_sha256": "1412ae156b196e75bfdcb54057241ae437dcf2da5e4222be12fe77da132898b3",
+            "distinct_word_count": 6288,
+            "duplicate_records_removed": 1,
+            "files": {
+              "candidates.jsonl": "5a82b56b54f56d10657384f3e50218f27313c508b5d230d753d9dd7584d6f95f",
+              "corpus-observed-counts.json": "943e8f879a59e79e611ea01176a2db79dcb9cf525305436f401d075e4a04ecdf",
+              "reference-corpus.jsonl": "69fe8fd71f99b65b0390ce515b1261a410d68f52d55990f5f2b8f0f1b94069d1",
+              "review.jsonl": "c647fff3e21f68c926df6039c630e2382f1d8d617790a57e7474028156f24942",
+              "sources.json": "89ea4a8e92c8f1a39727c1724069320123d4df854a3c7ee37c44645e2f1b44aa"
+            },
+            "glosses_sha256": null,
+            "inflection_candidate_count": 5029,
+            "language": "it",
+            "lexical_candidate_count": 11081,
+            "preparation_sha256": "f69fd987c5beab184cedba442fed0ddd5ae8c0bb98898ee0903eca2496026ef2",
+            "production_eligible": false,
+            "resolved_identity_count": 0,
+            "schema_version": 1,
+            "source_catalog_sha256": "55a8c2a09e33bbeea2b660203d46307c68621a9df052cb7fa12bd6e5212f6940",
+            "status": "candidate_only",
+            "target_core_identity_count": 3000,
+            "unresolved_pos_count": 106,
+            "workload": {
+              "approved_core_cards": 0,
+              "cost_estimate_available": false,
+              "headword_target": 3000,
+              "important_form_cards": null,
+              "provider_calls_executed": 0
+            }
+          }
+        }
+      ],
+      "evaluation_path": ".multilang/verification/real-languages/evaluations-v2/it-d5188ae563d6",
+      "evaluation_manifest_file_sha256": "72c588f16d176b106e34e79cc040eb0304e6de767e8977ff050a330f0500ca3b",
+      "evaluation": {
+        "schema_version": 1,
+        "evaluator_version": "2",
+        "language": "it",
+        "corpus_sha256": "ddec3b61bcf8eebac21eb2d2fef2f0a6be01fae264d6cd85b5099d49bf200cb2",
+        "corpus_split": "test",
+        "source_catalog_sha256": "55a8c2a09e33bbeea2b660203d46307c68621a9df052cb7fa12bd6e5212f6940",
+        "source_sentence_count": 482,
+        "sample_sentence_count": 200,
+        "sample_policy": "smallest-source-bound-sentence-sha256-v1",
+        "model_fingerprints": [
+          "5093a3c0d3fc6800b190d373759274762264bc4a2c80242893ea7eabc8c1e6c9"
+        ],
+        "analysis_statuses": {
+          "inconclusive": 129,
+          "complete": 71
+        },
+        "counts": {
+          "gold_tokens": 4208,
+          "unaligned_gold_tokens": 601,
+          "aligned_gold_tokens": 3607,
+          "predicted_tokens": 928,
+          "exact_span_matches": 925,
+          "lemma_eligible_tokens": 3607,
+          "lemma_correct": 902,
+          "pos_eligible_tokens": 3607,
+          "pos_correct": 899,
+          "features_eligible_tokens": 2252,
+          "features_correct": 511,
+          "false_complete_sentences": 26
+        },
+        "metrics": {
+          "exact_span_precision": 0.9967672413793104,
+          "exact_span_recall": 0.2564457998336568,
+          "lemma_accuracy": 0.25006930967563074,
+          "pos_accuracy": 0.2492375935680621,
+          "annotated_features_accuracy": 0.22690941385435168
+        },
+        "false_complete_sentence_count": 26,
+        "target_false_accept_rate": null,
+        "qualification": false,
+        "independent_review": null,
+        "canonical_ranking_input": false,
+        "limitations": [
+          "source_annotations_not_fully_human_verified",
+          "model_pretraining_overlap_not_established",
+          "sense_matching_not_evaluated",
+          "grammar_strict_i_plus_one_not_evaluated",
+          "audio_and_clients_not_evaluated"
+        ],
+        "observations_sha256": "07efa84bc5627e0a8960ef898d6183d556de1a2532e08e17148eb35497b08800",
+        "evaluation_sha256": "252106c91a5e0a30e4f29d6a52e5ac4c62cf405a085e142358638dca4c23ae0a"
+      },
+      "approved_core_identities": 0,
+      "approved_important_forms": 0,
+      "production_eligible": false
+    },
+    {
+      "language": "pl",
+      "name": "Polish",
+      "model": {
+        "language": "pl",
+        "backend": "stanza",
+        "available": true,
+        "package_version": "1.14.0",
+        "manifest_sha256": "2225809a618db3e44dc2fd6d808aae92ceceb54c01eb3ade1bdc8f60dc45c761",
+        "qualified": false
+      },
+      "lexical_candidates": 10203,
+      "dictionary_inflection_candidates": 4658,
+      "unresolved_pos_candidates": 46,
+      "distinct_preserved_lemmas": 4969,
+      "cross_shard_duplicates_removed": 0,
+      "shards": [
+        {
+          "shard": "all",
+          "seed_words": 6000,
+          "path": ".multilang/verification/real-languages/prepared/pl/all",
+          "manifest_file_sha256": "3cb7b636456393adb6cc79f9cbd12ead4f0282582782938339f5306e24c5a768",
+          "manifest": {
+            "approved_important_form_count": 0,
+            "blockers": [
+              "unresolved_part_of_speech",
+              "independent_sense_review",
+              "source_redistribution_review",
+              "language_evaluation",
+              "balanced_frequency_corpora",
+              "important_form_policy",
+              "reviewed_content_and_audio",
+              "anki_client_acceptance"
+            ],
+            "candidate_filter": {
+              "policy": "nfc-casefold-selection-only-v1",
+              "sha256": "ec4bc803f3f6a39253c28ce82f12331e3a5a5a3a0b383a675b28a493f38ea069"
+            },
+            "corpus": {
+              "canonical_ranking_input": false,
+              "document_count": 1,
+              "sentence_count": 2215,
+              "sha256": "43156d0d6c9a00690ad6dd1d6e4fb9582b1f34ceb6a03a9fb82a1187f2ca0486",
+              "split": "test",
+              "token_count": 33616,
+              "unaligned_token_count": 515
+            },
+            "dictionary_format": "wiktextract",
+            "dictionary_sha256": "d645f20f8a27757e94a8c06ba0856d3368aadd0aea6d21f3bea4f20aab8cf3b6",
+            "distinct_word_count": 4969,
+            "duplicate_records_removed": 0,
+            "files": {
+              "candidates.jsonl": "a86a13d001f2575dcd647462a1a291c7fcfc24d91bcf77a50d3b0907dcc7d0bf",
+              "corpus-observed-counts.json": "5ee427aef5a101c8ffec2621dc56ad3866fab91dfaade48d4533e807ae015a85",
+              "reference-corpus.jsonl": "bdea0944d31f734d676d3d0d66ad4ac8aca989e2e78546b4e9f5f962d54a5e92",
+              "review.jsonl": "70bdc41829893b5e0c24102615d2131ce08bf428581cb054805c37890d607aee",
+              "sources.json": "9e2dcd46ce09076ec2e44d656bdeb104af661c21502bb97afd3ad2383b8010c3"
+            },
+            "glosses_sha256": null,
+            "inflection_candidate_count": 4658,
+            "language": "pl",
+            "lexical_candidate_count": 10203,
+            "preparation_sha256": "a5ac01e7ad53061bd358c1ffcc099ccf24653110e32783cb2238f072a302d7fa",
+            "production_eligible": false,
+            "resolved_identity_count": 0,
+            "schema_version": 1,
+            "source_catalog_sha256": "f1dbcdc34149551715b12d5099cc74e4d58d74ebe2d91a4bdc5855c48b19db28",
+            "status": "candidate_only",
+            "target_core_identity_count": 3000,
+            "unresolved_pos_count": 46,
+            "workload": {
+              "approved_core_cards": 0,
+              "cost_estimate_available": false,
+              "headword_target": 3000,
+              "important_form_cards": null,
+              "provider_calls_executed": 0
+            }
+          }
+        }
+      ],
+      "evaluation_path": ".multilang/verification/real-languages/evaluations-v2/pl-393ee184a356",
+      "evaluation_manifest_file_sha256": "fb2092da97f7ba8e3073f93635a5bea662ae3743d7b9aa3d8340bc91bbfe5279",
+      "evaluation": {
+        "schema_version": 1,
+        "evaluator_version": "2",
+        "language": "pl",
+        "corpus_sha256": "43156d0d6c9a00690ad6dd1d6e4fb9582b1f34ceb6a03a9fb82a1187f2ca0486",
+        "corpus_split": "test",
+        "source_catalog_sha256": "f1dbcdc34149551715b12d5099cc74e4d58d74ebe2d91a4bdc5855c48b19db28",
+        "source_sentence_count": 2215,
+        "sample_sentence_count": 200,
+        "sample_policy": "smallest-source-bound-sentence-sha256-v1",
+        "model_fingerprints": [
+          "c55b545b14930d76e2a28ac9a3fa933804b965fd34b0b769129e5f5ac9b8f55a"
+        ],
+        "analysis_statuses": {
+          "complete": 171,
+          "inconclusive": 29
+        },
+        "counts": {
+          "gold_tokens": 3104,
+          "unaligned_gold_tokens": 47,
+          "aligned_gold_tokens": 3057,
+          "predicted_tokens": 2781,
+          "exact_span_matches": 2777,
+          "lemma_eligible_tokens": 3057,
+          "lemma_correct": 2708,
+          "pos_eligible_tokens": 3057,
+          "pos_correct": 2719,
+          "features_eligible_tokens": 2845,
+          "features_correct": 2427,
+          "false_complete_sentences": 101
+        },
+        "metrics": {
+          "exact_span_precision": 0.998561668464581,
+          "exact_span_recall": 0.9084069349035002,
+          "lemma_accuracy": 0.8858357867190055,
+          "pos_accuracy": 0.8894340857049395,
+          "annotated_features_accuracy": 0.8530755711775044
+        },
+        "false_complete_sentence_count": 101,
+        "target_false_accept_rate": null,
+        "qualification": false,
+        "independent_review": null,
+        "canonical_ranking_input": false,
+        "limitations": [
+          "source_annotations_not_fully_human_verified",
+          "model_pretraining_overlap_not_established",
+          "sense_matching_not_evaluated",
+          "grammar_strict_i_plus_one_not_evaluated",
+          "audio_and_clients_not_evaluated"
+        ],
+        "observations_sha256": "82fdece55d43204c3c9d46e475c89306afab7971116cfed05c1501ea5fef3e8a",
+        "evaluation_sha256": "9f4e0f70a9d205033e755c769c1f75e59354bc33a2cdc614fc9b27afd0a7f873"
+      },
+      "approved_core_identities": 0,
+      "approved_important_forms": 0,
+      "production_eligible": false
+    },
+    {
+      "language": "tr",
+      "name": "Turkish",
+      "model": {
+        "language": "tr",
+        "backend": "stanza",
+        "available": true,
+        "package_version": "1.14.0",
+        "manifest_sha256": "5d2ca95dcb18cc7c45b9107ddf4685964038cb658c428d608a841c3436158ede",
+        "qualified": false
+      },
+      "lexical_candidates": 6501,
+      "dictionary_inflection_candidates": 1658,
+      "unresolved_pos_candidates": 63,
+      "distinct_preserved_lemmas": 3989,
+      "cross_shard_duplicates_removed": 0,
+      "shards": [
+        {
+          "shard": "all",
+          "seed_words": 6000,
+          "path": ".multilang/verification/real-languages/prepared/tr/all",
+          "manifest_file_sha256": "9d5279d445adc55d6e81c5d2b78919b433acb331850fea5480b84a201d0ee991",
+          "manifest": {
+            "approved_important_form_count": 0,
+            "blockers": [
+              "unresolved_part_of_speech",
+              "independent_sense_review",
+              "source_redistribution_review",
+              "language_evaluation",
+              "balanced_frequency_corpora",
+              "important_form_policy",
+              "reviewed_content_and_audio",
+              "anki_client_acceptance"
+            ],
+            "candidate_filter": {
+              "policy": "nfc-casefold-selection-only-v1",
+              "sha256": "f690725829c32a49944472e575f48b29430cd628c506b85150c3f19a84df134c"
+            },
+            "corpus": {
+              "canonical_ranking_input": false,
+              "document_count": 47,
+              "sentence_count": 1100,
+              "sha256": "fc9269bd598489b942a025b678779557266ce0c054a843e47c7db386d76d6459",
+              "split": "test",
+              "token_count": 10032,
+              "unaligned_token_count": 560
+            },
+            "dictionary_format": "wiktextract",
+            "dictionary_sha256": "660eff770dbfd1795b076c82f548b07bca7b4c51e33fcf25ce5b140a64ad2804",
+            "distinct_word_count": 3989,
+            "duplicate_records_removed": 0,
+            "files": {
+              "candidates.jsonl": "0743dccea7df8fbfc0c3d7fa4a1febd893cd72c77e0ad79968c0fcadf465dde1",
+              "corpus-observed-counts.json": "1681f88bfcc1dc1780395a03ccdf21d522882aadca8a72ac5264aa190669d28f",
+              "reference-corpus.jsonl": "44d85d2f2b155c0e8f3769678790b3e315e6d1c0a0e96f9a288857fa57d28f93",
+              "review.jsonl": "e5d0cc03d03a394a3f8ccb6740235527602feb4ddbab1981609dc16d7149b0b0",
+              "sources.json": "512d0e91291f686db286487c49bb0075a688bf5b086d72b24e1018fafcfb37a1"
+            },
+            "glosses_sha256": null,
+            "inflection_candidate_count": 1658,
+            "language": "tr",
+            "lexical_candidate_count": 6501,
+            "preparation_sha256": "41326e7e84121959b282849aa1ee01f2d1a93adec0c063399e753db1781bced2",
+            "production_eligible": false,
+            "resolved_identity_count": 0,
+            "schema_version": 1,
+            "source_catalog_sha256": "c4720e2358cb1ef5f2c32ee5767423d2704c6052c8d26fc1556c04c3eac72a52",
+            "status": "candidate_only",
+            "target_core_identity_count": 3000,
+            "unresolved_pos_count": 63,
+            "workload": {
+              "approved_core_cards": 0,
+              "cost_estimate_available": false,
+              "headword_target": 3000,
+              "important_form_cards": null,
+              "provider_calls_executed": 0
+            }
+          }
+        }
+      ],
+      "evaluation_path": ".multilang/verification/real-languages/evaluations-v2/tr-339569121303",
+      "evaluation_manifest_file_sha256": "97dd8300f3c5db5090123a3e97d4e7fe275a1877b6862491fb0d41693347c4a5",
+      "evaluation": {
+        "schema_version": 1,
+        "evaluator_version": "2",
+        "language": "tr",
+        "corpus_sha256": "fc9269bd598489b942a025b678779557266ce0c054a843e47c7db386d76d6459",
+        "corpus_split": "test",
+        "source_catalog_sha256": "c4720e2358cb1ef5f2c32ee5767423d2704c6052c8d26fc1556c04c3eac72a52",
+        "source_sentence_count": 1100,
+        "sample_sentence_count": 200,
+        "sample_policy": "smallest-source-bound-sentence-sha256-v1",
+        "model_fingerprints": [
+          "bbedf9011aac11c01f0485b89076ae02470f7cb0f5a8c68ee248c9e9e7d2269b"
+        ],
+        "analysis_statuses": {
+          "complete": 173,
+          "inconclusive": 27
+        },
+        "counts": {
+          "gold_tokens": 1787,
+          "unaligned_gold_tokens": 104,
+          "aligned_gold_tokens": 1683,
+          "predicted_tokens": 1409,
+          "exact_span_matches": 1387,
+          "lemma_eligible_tokens": 1683,
+          "lemma_correct": 1338,
+          "pos_eligible_tokens": 1683,
+          "pos_correct": 1316,
+          "features_eligible_tokens": 987,
+          "features_correct": 732,
+          "false_complete_sentences": 107
+        },
+        "metrics": {
+          "exact_span_precision": 0.9843860894251242,
+          "exact_span_recall": 0.8241235888294712,
+          "lemma_accuracy": 0.7950089126559715,
+          "pos_accuracy": 0.7819370172311348,
+          "annotated_features_accuracy": 0.7416413373860182
+        },
+        "false_complete_sentence_count": 107,
+        "target_false_accept_rate": null,
+        "qualification": false,
+        "independent_review": null,
+        "canonical_ranking_input": false,
+        "limitations": [
+          "source_annotations_not_fully_human_verified",
+          "model_pretraining_overlap_not_established",
+          "sense_matching_not_evaluated",
+          "grammar_strict_i_plus_one_not_evaluated",
+          "audio_and_clients_not_evaluated"
+        ],
+        "observations_sha256": "510d804d96c980ade062e242bafbba08a1b85415ce3c52b0bb67c3377016b52a",
+        "evaluation_sha256": "ab6f5270b34bd99ae9f2bd015027c079366eff617727b8a2e65c05cf7298d360"
+      },
+      "approved_core_identities": 0,
+      "approved_important_forms": 0,
+      "production_eligible": false
+    },
+    {
+      "language": "ro",
+      "name": "Romanian",
+      "model": {
+        "language": "ro",
+        "backend": "stanza",
+        "available": true,
+        "package_version": "1.14.0",
+        "manifest_sha256": "d576e345443d08e67d6be43b88e5f7104a5f3ca2151bacf40f36c34d2a131a26",
+        "qualified": false
+      },
+      "lexical_candidates": 5363,
+      "dictionary_inflection_candidates": 1948,
+      "unresolved_pos_candidates": 53,
+      "distinct_preserved_lemmas": 4065,
+      "cross_shard_duplicates_removed": 0,
+      "shards": [
+        {
+          "shard": "all",
+          "seed_words": 6000,
+          "path": ".multilang/verification/real-languages/prepared/ro/all",
+          "manifest_file_sha256": "37839de137f000a9d964011d60d5c5fee6ae733fc74136a5be54273b2c744f36",
+          "manifest": {
+            "approved_important_form_count": 0,
+            "blockers": [
+              "unresolved_part_of_speech",
+              "independent_sense_review",
+              "source_redistribution_review",
+              "language_evaluation",
+              "balanced_frequency_corpora",
+              "important_form_policy",
+              "reviewed_content_and_audio",
+              "anki_client_acceptance"
+            ],
+            "candidate_filter": {
+              "policy": "nfc-casefold-selection-only-v1",
+              "sha256": "32bce8dda3aae074d9fbbdb384f75c64bc24086b7fde8d92375b7360ce553734"
+            },
+            "corpus": {
+              "canonical_ranking_input": false,
+              "document_count": 44,
+              "sentence_count": 729,
+              "sha256": "9084ce9ae5f43d25ff39e66f42f3d2e41e85030891beccb1eb70fed444fbe3f4",
+              "split": "test",
+              "token_count": 16324,
+              "unaligned_token_count": 0
+            },
+            "dictionary_format": "wiktextract",
+            "dictionary_sha256": "25e687dddca569da21df2bf30bbcc8b65e49432a96bd266ac5dc29005b33296a",
+            "distinct_word_count": 4065,
+            "duplicate_records_removed": 0,
+            "files": {
+              "candidates.jsonl": "0c7cb20d2ecc2bf8d96e629a0eab55c65d74e07bb747256c01af7c8c457c7f68",
+              "corpus-observed-counts.json": "f76ce40fdb71e7e9504d6c328188ff0a03ae6c447947f146b1dddb7412a3f0e6",
+              "reference-corpus.jsonl": "07aaef23f9485e98de9f05b3f72e122fa6e9a5f883fa37728f500eb5c5c03302",
+              "review.jsonl": "8265211fff02d0b99adf7b9df36e751f97f3e6ab24f827d1f42be6cc302a5dc2",
+              "sources.json": "e48768eecd94e7309021be411567c566cf638057d81fa692af5dc5a9171bf65f"
+            },
+            "glosses_sha256": null,
+            "inflection_candidate_count": 1948,
+            "language": "ro",
+            "lexical_candidate_count": 5363,
+            "preparation_sha256": "8c49901e4b2a47136895aa49d75c5fbb0b444b4ce042be5f9958dc237709bd03",
+            "production_eligible": false,
+            "resolved_identity_count": 0,
+            "schema_version": 1,
+            "source_catalog_sha256": "68f23bd6f7d1161237ce0ec4245791a1d29ac016e8bb376408faba7ed94dda98",
+            "status": "candidate_only",
+            "target_core_identity_count": 3000,
+            "unresolved_pos_count": 53,
+            "workload": {
+              "approved_core_cards": 0,
+              "cost_estimate_available": false,
+              "headword_target": 3000,
+              "important_form_cards": null,
+              "provider_calls_executed": 0
+            }
+          }
+        }
+      ],
+      "evaluation_path": ".multilang/verification/real-languages/evaluations-v2/ro-c4855e5ab94f",
+      "evaluation_manifest_file_sha256": "d863316b88b5fcffaf9b5a42068020b475b27cac7f23a3f54dd80656038cbd2e",
+      "evaluation": {
+        "schema_version": 1,
+        "evaluator_version": "2",
+        "language": "ro",
+        "corpus_sha256": "9084ce9ae5f43d25ff39e66f42f3d2e41e85030891beccb1eb70fed444fbe3f4",
+        "corpus_split": "test",
+        "source_catalog_sha256": "68f23bd6f7d1161237ce0ec4245791a1d29ac016e8bb376408faba7ed94dda98",
+        "source_sentence_count": 729,
+        "sample_sentence_count": 200,
+        "sample_policy": "smallest-source-bound-sentence-sha256-v1",
+        "model_fingerprints": [
+          "3b1d920e99da7a6d95cba8fec982ca51b0ec0c9dd4ad3bc501a2891819f806b3"
+        ],
+        "analysis_statuses": {
+          "complete": 200
+        },
+        "counts": {
+          "gold_tokens": 4471,
+          "unaligned_gold_tokens": 0,
+          "aligned_gold_tokens": 4471,
+          "predicted_tokens": 4472,
+          "exact_span_matches": 4461,
+          "lemma_eligible_tokens": 4469,
+          "lemma_correct": 4375,
+          "pos_eligible_tokens": 4471,
+          "pos_correct": 4371,
+          "features_eligible_tokens": 3758,
+          "features_correct": 3659,
+          "false_complete_sentences": 97
+        },
+        "metrics": {
+          "exact_span_precision": 0.9975402504472272,
+          "exact_span_recall": 0.9977633639006933,
+          "lemma_accuracy": 0.9789662116804654,
+          "pos_accuracy": 0.9776336390069336,
+          "annotated_features_accuracy": 0.9736562001064396
+        },
+        "false_complete_sentence_count": 97,
+        "target_false_accept_rate": null,
+        "qualification": false,
+        "independent_review": null,
+        "canonical_ranking_input": false,
+        "limitations": [
+          "source_annotations_not_fully_human_verified",
+          "model_pretraining_overlap_not_established",
+          "sense_matching_not_evaluated",
+          "grammar_strict_i_plus_one_not_evaluated",
+          "audio_and_clients_not_evaluated"
+        ],
+        "observations_sha256": "bed039a60b6887b579bf5b70fc0b32caa6187b7ea1c9d3152ab6d99b4002ff3d",
+        "evaluation_sha256": "37180b371e3ac0ed29cc858234dc3b437e0b9f5d45f7116954f9de6ecc89616b"
+      },
+      "approved_core_identities": 0,
+      "approved_important_forms": 0,
+      "production_eligible": false
+    },
+    {
+      "language": "ru",
+      "name": "Russian",
+      "model": {
+        "language": "ru",
+        "backend": "stanza",
+        "available": true,
+        "package_version": "1.14.0",
+        "manifest_sha256": "16ca924051f2633e867eaf64a7f4fe13d40ce0a05fecd66b8bb5514e5b1d4feb",
+        "qualified": false
+      },
+      "lexical_candidates": 5647,
+      "dictionary_inflection_candidates": 5150,
+      "unresolved_pos_candidates": 67,
+      "distinct_preserved_lemmas": 5494,
+      "cross_shard_duplicates_removed": 0,
+      "shards": [
+        {
+          "shard": "all",
+          "seed_words": 6000,
+          "path": ".multilang/verification/real-languages/prepared/ru/all",
+          "manifest_file_sha256": "07a76b422cf54451f4815aa54cb5d99cdb9ea780ba965e06d639dcf510a026c2",
+          "manifest": {
+            "approved_important_form_count": 0,
+            "blockers": [
+              "unresolved_part_of_speech",
+              "independent_sense_review",
+              "source_redistribution_review",
+              "language_evaluation",
+              "balanced_frequency_corpora",
+              "important_form_policy",
+              "reviewed_content_and_audio",
+              "anki_client_acceptance"
+            ],
+            "candidate_filter": {
+              "policy": "nfc-casefold-selection-only-v1",
+              "sha256": "252a926afda7210913a8df32fa802ad80781c372511fec850ea66b8011fa73bd"
+            },
+            "corpus": {
+              "canonical_ranking_input": false,
+              "document_count": 11,
+              "sentence_count": 8800,
+              "sha256": "2fbeff3006a99ac5e36d74443e7fe66073a7f5d09aa2473bf1d5f3260144324b",
+              "split": "test",
+              "token_count": 157706,
+              "unaligned_token_count": 0
+            },
+            "dictionary_format": "wiktextract",
+            "dictionary_sha256": "a9f7884a71f0355e8a73bfb77dc980c5e9376370130ffec4f771be5a16e2de31",
+            "distinct_word_count": 5494,
+            "duplicate_records_removed": 0,
+            "files": {
+              "candidates.jsonl": "812fa3fe424e64a14673ffeb8b988ad637f9effe123e6542391f581c278b644f",
+              "corpus-observed-counts.json": "f540b51f96bc84e63ec677dd4c719528b9f37a574ef263fced09df8126c7f2e6",
+              "reference-corpus.jsonl": "f86893db1a5fa298d3a5496b94c898cfb750e0ce46e6a0744642454a7923d60d",
+              "review.jsonl": "52564e35dbf49e35404ef355032315033da92459850f79c5e5dce51102b684ee",
+              "sources.json": "ff1bbc8811e98acba1b7785a40517ba98a59b97ff889fc4bded126c042ac74a7"
+            },
+            "glosses_sha256": null,
+            "inflection_candidate_count": 5150,
+            "language": "ru",
+            "lexical_candidate_count": 5647,
+            "preparation_sha256": "0c592755a2299f74fba58fc9f13e3c406fa7dfd2d829d6341c4f3a0aab10e2ca",
+            "production_eligible": false,
+            "resolved_identity_count": 0,
+            "schema_version": 1,
+            "source_catalog_sha256": "7cd8f2426266d74275718fb6b029b1774b9b9043c63ddd44674d7314c395a037",
+            "status": "candidate_only",
+            "target_core_identity_count": 3000,
+            "unresolved_pos_count": 67,
+            "workload": {
+              "approved_core_cards": 0,
+              "cost_estimate_available": false,
+              "headword_target": 3000,
+              "important_form_cards": null,
+              "provider_calls_executed": 0
+            }
+          }
+        }
+      ],
+      "evaluation_path": ".multilang/verification/real-languages/evaluations-v2/ru-ab9e97252924",
+      "evaluation_manifest_file_sha256": "de9e0a06212ae86ca559c688cf246ced70fd3dd2f6b8dc15fbaad7e21acdd8b3",
+      "evaluation": {
+        "schema_version": 1,
+        "evaluator_version": "2",
+        "language": "ru",
+        "corpus_sha256": "2fbeff3006a99ac5e36d74443e7fe66073a7f5d09aa2473bf1d5f3260144324b",
+        "corpus_split": "test",
+        "source_catalog_sha256": "7cd8f2426266d74275718fb6b029b1774b9b9043c63ddd44674d7314c395a037",
+        "source_sentence_count": 8800,
+        "sample_sentence_count": 200,
+        "sample_policy": "smallest-source-bound-sentence-sha256-v1",
+        "model_fingerprints": [
+          "e254aacbd3ecf15a0ef3c33f569e36104a1d740863617d911292abfa0e318847"
+        ],
+        "analysis_statuses": {
+          "complete": 200
+        },
+        "counts": {
+          "gold_tokens": 3695,
+          "unaligned_gold_tokens": 0,
+          "aligned_gold_tokens": 3695,
+          "predicted_tokens": 3700,
+          "exact_span_matches": 3687,
+          "lemma_eligible_tokens": 3695,
+          "lemma_correct": 3572,
+          "pos_eligible_tokens": 3695,
+          "pos_correct": 3552,
+          "features_eligible_tokens": 2342,
+          "features_correct": 1851,
+          "false_complete_sentences": 157
+        },
+        "metrics": {
+          "exact_span_precision": 0.9964864864864865,
+          "exact_span_recall": 0.9978349120433018,
+          "lemma_accuracy": 0.9667117726657646,
+          "pos_accuracy": 0.961299052774019,
+          "annotated_features_accuracy": 0.7903501280956448
+        },
+        "false_complete_sentence_count": 157,
+        "target_false_accept_rate": null,
+        "qualification": false,
+        "independent_review": null,
+        "canonical_ranking_input": false,
+        "limitations": [
+          "source_annotations_not_fully_human_verified",
+          "model_pretraining_overlap_not_established",
+          "sense_matching_not_evaluated",
+          "grammar_strict_i_plus_one_not_evaluated",
+          "audio_and_clients_not_evaluated"
+        ],
+        "observations_sha256": "b31c0710fbd3c981fdb29d5f21aecb0782d2ad3ed7da68548c03d25c21809e74",
+        "evaluation_sha256": "367cd081ff3f28192dab7bfdd403ad5df5160ead973b50c7f20a29895d179a6b"
+      },
+      "approved_core_identities": 0,
+      "approved_important_forms": 0,
+      "production_eligible": false
+    },
+    {
+      "language": "nl",
+      "name": "Dutch",
+      "model": {
+        "language": "nl",
+        "backend": "stanza",
+        "available": true,
+        "package_version": "1.14.0",
+        "manifest_sha256": "656293209019ce7a077642b507b2551f5bf1a37bf1953fbadaed5a633a8e3487",
+        "qualified": false
+      },
+      "lexical_candidates": 9172,
+      "dictionary_inflection_candidates": 5187,
+      "unresolved_pos_candidates": 68,
+      "distinct_preserved_lemmas": 5845,
+      "cross_shard_duplicates_removed": 0,
+      "shards": [
+        {
+          "shard": "all",
+          "seed_words": 6000,
+          "path": ".multilang/verification/real-languages/prepared/nl/all",
+          "manifest_file_sha256": "943ce87528727a02a7b7d910e684a580e990ba48c8ddae78a17e374d36e97900",
+          "manifest": {
+            "approved_important_form_count": 0,
+            "blockers": [
+              "unresolved_part_of_speech",
+              "independent_sense_review",
+              "source_redistribution_review",
+              "language_evaluation",
+              "balanced_frequency_corpora",
+              "important_form_policy",
+              "reviewed_content_and_audio",
+              "anki_client_acceptance"
+            ],
+            "candidate_filter": {
+              "policy": "nfc-casefold-selection-only-v1",
+              "sha256": "871f847b522dca9dccccfd3b64d7624bfebf1dc886dd2a55cf821adc12f7e32b"
+            },
+            "corpus": {
+              "canonical_ranking_input": false,
+              "document_count": 1,
+              "sentence_count": 596,
+              "sha256": "f5b5000fcbb6745d42f7cccf3986bb2550f9b56a171b0d4808fb45d2df7972a2",
+              "split": "test",
+              "token_count": 11046,
+              "unaligned_token_count": 0
+            },
+            "dictionary_format": "wiktextract",
+            "dictionary_sha256": "dabc2dbed548bb9b7e404008144c6ce43fdd6fddcbdd4f97915d9d7d17de2405",
+            "distinct_word_count": 5845,
+            "duplicate_records_removed": 0,
+            "files": {
+              "candidates.jsonl": "f6ca0594e10aae0eb13d65777cf16bd04ae74e93a49b8708e42fbed35ca2706b",
+              "corpus-observed-counts.json": "52d3f8cf4cdce1baa777cb7b4dae1c966736a88ccebdcd8b0a7247d30fe33681",
+              "reference-corpus.jsonl": "89532bf661a1fb22482ed76453ed52c08f4dea68a536440bb8333b6e61346d6b",
+              "review.jsonl": "07ef58c6de009c57372b4e122676fb41e9d04aa5c316bb04b612cd379d5a0004",
+              "sources.json": "a1ffbd5bbca6400b370cad6f9a9709d012a24cbe5b4c0234974182f6a9553d17"
+            },
+            "glosses_sha256": null,
+            "inflection_candidate_count": 5187,
+            "language": "nl",
+            "lexical_candidate_count": 9172,
+            "preparation_sha256": "17552dd5beec8f3d7aaa0c1722b3e8f2441389bccb58292af1e6f79abd5ec748",
+            "production_eligible": false,
+            "resolved_identity_count": 0,
+            "schema_version": 1,
+            "source_catalog_sha256": "60a3f0c2a35cdf7f9eba9ba1bd2419f05844f097405d91cb1a4bebf073dfa3dd",
+            "status": "candidate_only",
+            "target_core_identity_count": 3000,
+            "unresolved_pos_count": 68,
+            "workload": {
+              "approved_core_cards": 0,
+              "cost_estimate_available": false,
+              "headword_target": 3000,
+              "important_form_cards": null,
+              "provider_calls_executed": 0
+            }
+          }
+        }
+      ],
+      "evaluation_path": ".multilang/verification/real-languages/evaluations-v2/nl-78967630abe4",
+      "evaluation_manifest_file_sha256": "7d3db5d256368663403945fb26729003f5fd652b997d2568220a8ca909a52482",
+      "evaluation": {
+        "schema_version": 1,
+        "evaluator_version": "2",
+        "language": "nl",
+        "corpus_sha256": "f5b5000fcbb6745d42f7cccf3986bb2550f9b56a171b0d4808fb45d2df7972a2",
+        "corpus_split": "test",
+        "source_catalog_sha256": "60a3f0c2a35cdf7f9eba9ba1bd2419f05844f097405d91cb1a4bebf073dfa3dd",
+        "source_sentence_count": 596,
+        "sample_sentence_count": 200,
+        "sample_policy": "smallest-source-bound-sentence-sha256-v1",
+        "model_fingerprints": [
+          "e83a32185922a9804433245e2c57a6b410bd211dbd12ab239e31c5de695442eb"
+        ],
+        "analysis_statuses": {
+          "complete": 196,
+          "inconclusive": 4
+        },
+        "counts": {
+          "gold_tokens": 3721,
+          "unaligned_gold_tokens": 0,
+          "aligned_gold_tokens": 3721,
+          "predicted_tokens": 3727,
+          "exact_span_matches": 3712,
+          "lemma_eligible_tokens": 3721,
+          "lemma_correct": 3523,
+          "pos_eligible_tokens": 3721,
+          "pos_correct": 3581,
+          "features_eligible_tokens": 2211,
+          "features_correct": 2097,
+          "false_complete_sentences": 140
+        },
+        "metrics": {
+          "exact_span_precision": 0.9959753152669708,
+          "exact_span_recall": 0.9975812953507122,
+          "lemma_accuracy": 0.9467884977156679,
+          "pos_accuracy": 0.9623757054555228,
+          "annotated_features_accuracy": 0.9484396200814111
+        },
+        "false_complete_sentence_count": 140,
+        "target_false_accept_rate": null,
+        "qualification": false,
+        "independent_review": null,
+        "canonical_ranking_input": false,
+        "limitations": [
+          "source_annotations_not_fully_human_verified",
+          "model_pretraining_overlap_not_established",
+          "sense_matching_not_evaluated",
+          "grammar_strict_i_plus_one_not_evaluated",
+          "audio_and_clients_not_evaluated"
+        ],
+        "observations_sha256": "428efd490fbcb3ea300a6c938b9d8052e6bfb399bdaa9b0327b185953492c70d",
+        "evaluation_sha256": "0d2ed3aa89f1fea20343d632b3e5b74ed62a0152cca2bd88398febc23cebcea1"
+      },
+      "approved_core_identities": 0,
+      "approved_important_forms": 0,
+      "production_eligible": false
+    },
+    {
+      "language": "ko",
+      "name": "Korean",
+      "model": {
+        "language": "ko",
+        "backend": "kiwi",
+        "available": true,
+        "package_version": "0.23.2",
+        "model_package": "kiwipiepy-model",
+        "model_package_version": "0.23.0",
+        "model_artifact_sha256": "2a171c71f0e314a9cfd2808a642831bf3a44ff9d1f52e19a6c1da07938b97624",
+        "qualified": false
+      },
+      "lexical_candidates": 27765,
+      "dictionary_inflection_candidates": 680,
+      "unresolved_pos_candidates": 9569,
+      "distinct_preserved_lemmas": 12572,
+      "cross_shard_duplicates_removed": 0,
+      "shards": [
+        {
+          "shard": "all",
+          "seed_words": 29978,
+          "path": ".multilang/verification/real-languages/prepared/ko/all",
+          "manifest_file_sha256": "89f99da8a8105d49014a513ce365d01005be6fae474946a1a9e3fb675d27317b",
+          "manifest": {
+            "approved_important_form_count": 0,
+            "blockers": [
+              "unresolved_part_of_speech",
+              "independent_sense_review",
+              "source_redistribution_review",
+              "language_evaluation",
+              "balanced_frequency_corpora",
+              "important_form_policy",
+              "reviewed_content_and_audio",
+              "anki_client_acceptance"
+            ],
+            "candidate_filter": {
+              "policy": "nfc-casefold-selection-only-v1",
+              "sha256": "645201b33c15d1560efe503541fdcd802e3280f76d8c73a783b4305d71d5ff76"
+            },
+            "corpus": {
+              "canonical_ranking_input": false,
+              "document_count": 1,
+              "sentence_count": 989,
+              "sha256": "3d1df99bda4800235e14bcfd915baf706eafa1a3935a75ffd32420a51e57f5aa",
+              "split": "test",
+              "token_count": 11677,
+              "unaligned_token_count": 0
+            },
+            "dictionary_format": "wiktextract",
+            "dictionary_sha256": "c19cd2326e771c278f76d2de6a14313412e53611911a6ce1d0e68992f3661480",
+            "distinct_word_count": 12572,
+            "duplicate_records_removed": 0,
+            "files": {
+              "candidates.jsonl": "ab52a27e311cf600ae1f3f5ccc960141e5a0dfb473425ab4b5327a09657b8ec4",
+              "corpus-observed-counts.json": "0f74eae0e1f8ba302237628d2236daccab4b32f235bd3afecf26c8191a5d5f20",
+              "reference-corpus.jsonl": "a20d3f823d3147201a27ff2ddb7d2aa99d143c9dd83ed2ce815ffab2fa40517b",
+              "review.jsonl": "791f179b5616979ee2b192b3dc14ab9aa2a9adcb47430cf771cda6c75d85e2e1",
+              "sources.json": "8a01b5665afb963a1d945bd55cc80d818590959d8174644e881e964111fe5ed6"
+            },
+            "glosses_sha256": null,
+            "inflection_candidate_count": 680,
+            "language": "ko",
+            "lexical_candidate_count": 27765,
+            "preparation_sha256": "798d917261bea81f28d0661dbc73971b503e71b0756593d9f4ef7aef13b40fa1",
+            "production_eligible": false,
+            "resolved_identity_count": 0,
+            "schema_version": 1,
+            "source_catalog_sha256": "12396189fbc40c0a914096355f003a2929054394278ece1a524388e05647f92b",
+            "status": "candidate_only",
+            "target_core_identity_count": 3000,
+            "unresolved_pos_count": 9569,
+            "workload": {
+              "approved_core_cards": 0,
+              "cost_estimate_available": false,
+              "headword_target": 3000,
+              "important_form_cards": null,
+              "provider_calls_executed": 0
+            }
+          }
+        }
+      ],
+      "evaluation_path": ".multilang/verification/real-languages/evaluations-v2/ko-d2d97a4daa8b",
+      "evaluation_manifest_file_sha256": "65d2f9f790c9796bab1560196e07f7bb73013bb419f0d8b408d8f6319c107873",
+      "evaluation": {
+        "schema_version": 1,
+        "evaluator_version": "2",
+        "language": "ko",
+        "corpus_sha256": "3d1df99bda4800235e14bcfd915baf706eafa1a3935a75ffd32420a51e57f5aa",
+        "corpus_split": "test",
+        "source_catalog_sha256": "12396189fbc40c0a914096355f003a2929054394278ece1a524388e05647f92b",
+        "source_sentence_count": 989,
+        "sample_sentence_count": 200,
+        "sample_policy": "smallest-source-bound-sentence-sha256-v1",
+        "model_fingerprints": [
+          "08fa6145ba1166d39d8b0af2e08ec183464c3e0e35ce6f1d1ca49c5ec056cf6c"
+        ],
+        "analysis_statuses": {
+          "inconclusive": 189,
+          "complete": 11
+        },
+        "counts": {
+          "gold_tokens": 2468,
+          "unaligned_gold_tokens": 0,
+          "aligned_gold_tokens": 2468,
+          "predicted_tokens": 212,
+          "exact_span_matches": 185,
+          "lemma_eligible_tokens": 2468,
+          "lemma_correct": 72,
+          "pos_eligible_tokens": 2468,
+          "pos_correct": 135,
+          "features_eligible_tokens": 24,
+          "features_correct": 0,
+          "false_complete_sentences": 11
+        },
+        "metrics": {
+          "exact_span_precision": 0.8726415094339622,
+          "exact_span_recall": 0.07495948136142626,
+          "lemma_accuracy": 0.029173419773095625,
+          "pos_accuracy": 0.0547001620745543,
+          "annotated_features_accuracy": 0.0
+        },
+        "false_complete_sentence_count": 11,
+        "target_false_accept_rate": null,
+        "qualification": false,
+        "independent_review": null,
+        "canonical_ranking_input": false,
+        "limitations": [
+          "source_annotations_not_fully_human_verified",
+          "model_pretraining_overlap_not_established",
+          "sense_matching_not_evaluated",
+          "grammar_strict_i_plus_one_not_evaluated",
+          "audio_and_clients_not_evaluated"
+        ],
+        "observations_sha256": "25a7adfbe68540f031a4ff60d775e811512b6c33302f326348c8db4af0853ab9",
+        "evaluation_sha256": "d78279ba700f8eb50f169061805be31958d49b876a7a309958e50b6caac91494"
+      },
+      "approved_core_identities": 0,
+      "approved_important_forms": 0,
+      "production_eligible": false
+    },
+    {
+      "language": "da",
+      "name": "Danish",
+      "model": {
+        "language": "da",
+        "backend": "stanza",
+        "available": true,
+        "package_version": "1.14.0",
+        "manifest_sha256": "73c2e826c8c91602bbd6a76d7738736fae9086e9c2c6ba42c5599f478797601d",
+        "qualified": false
+      },
+      "lexical_candidates": 6783,
+      "dictionary_inflection_candidates": 2555,
+      "unresolved_pos_candidates": 14,
+      "distinct_preserved_lemmas": 4520,
+      "cross_shard_duplicates_removed": 0,
+      "shards": [
+        {
+          "shard": "all",
+          "seed_words": 6000,
+          "path": ".multilang/verification/real-languages/prepared/da/all",
+          "manifest_file_sha256": "eb3ec1916ba73613cc3c045ae405eff5e9d227b78b502351b5153c9981acb707",
+          "manifest": {
+            "approved_important_form_count": 0,
+            "blockers": [
+              "unresolved_part_of_speech",
+              "independent_sense_review",
+              "source_redistribution_review",
+              "language_evaluation",
+              "balanced_frequency_corpora",
+              "important_form_policy",
+              "reviewed_content_and_audio",
+              "anki_client_acceptance"
+            ],
+            "candidate_filter": {
+              "policy": "nfc-casefold-selection-only-v1",
+              "sha256": "c636fec181ee8006ddba8df24bf74aa4b8b6fe629381a185c23e007438a7a120"
+            },
+            "corpus": {
+              "canonical_ranking_input": false,
+              "document_count": 1,
+              "sentence_count": 565,
+              "sha256": "2232ee43dcd35dba32b476534d230edf1aa26d4bd830813f452fd829c276f737",
+              "split": "test",
+              "token_count": 10023,
+              "unaligned_token_count": 0
+            },
+            "dictionary_format": "wiktextract",
+            "dictionary_sha256": "1dd1818f9ca9f6c949b11212a41e24ac06a0b9b5e0afa73d03e7e39448d01d6d",
+            "distinct_word_count": 4520,
+            "duplicate_records_removed": 0,
+            "files": {
+              "candidates.jsonl": "24543caf87be0ad5b9facdccb63a9383e6f3a90c6e749a7a9696a36a89705f25",
+              "corpus-observed-counts.json": "0cc9cfa9d745387776a9c9daa17ef55feb295e5e346a60c2f3e200d938585121",
+              "reference-corpus.jsonl": "91e17489b133148340125fa73fc0f38683e3f1695473fe23ea1f08765d9959e1",
+              "review.jsonl": "4c2a4380bd0352ea20f337bccf27505f0f9aaa0c0276ce232fa1b369b862d7a1",
+              "sources.json": "3bbc9bd6e472ab371aa9d4f680deb238aad4045ea337335c0f72756cbe337526"
+            },
+            "glosses_sha256": null,
+            "inflection_candidate_count": 2555,
+            "language": "da",
+            "lexical_candidate_count": 6783,
+            "preparation_sha256": "6cbde72b13b2688ba70cc70065009023d3fe46437a5429bc3fe83bbbf5992f29",
+            "production_eligible": false,
+            "resolved_identity_count": 0,
+            "schema_version": 1,
+            "source_catalog_sha256": "adc0131ba1f769c2e336b24b69cbd2299e6644d2e21bc9db12d3164c43cb375f",
+            "status": "candidate_only",
+            "target_core_identity_count": 3000,
+            "unresolved_pos_count": 14,
+            "workload": {
+              "approved_core_cards": 0,
+              "cost_estimate_available": false,
+              "headword_target": 3000,
+              "important_form_cards": null,
+              "provider_calls_executed": 0
+            }
+          }
+        }
+      ],
+      "evaluation_path": ".multilang/verification/real-languages/evaluations-v2/da-e8c66b0bc7dd",
+      "evaluation_manifest_file_sha256": "a5cf94d8c6b619950c0141d2d729785e13d21fd6f2aa3aa2ae2345388b50a35f",
+      "evaluation": {
+        "schema_version": 1,
+        "evaluator_version": "2",
+        "language": "da",
+        "corpus_sha256": "2232ee43dcd35dba32b476534d230edf1aa26d4bd830813f452fd829c276f737",
+        "corpus_split": "test",
+        "source_catalog_sha256": "adc0131ba1f769c2e336b24b69cbd2299e6644d2e21bc9db12d3164c43cb375f",
+        "source_sentence_count": 565,
+        "sample_sentence_count": 200,
+        "sample_policy": "smallest-source-bound-sentence-sha256-v1",
+        "model_fingerprints": [
+          "4f7298aaa80bd1e3084e8fd1e284335629922961af92bcf3414724ce618be28d"
+        ],
+        "analysis_statuses": {
+          "complete": 198,
+          "inconclusive": 2
+        },
+        "counts": {
+          "gold_tokens": 3607,
+          "unaligned_gold_tokens": 0,
+          "aligned_gold_tokens": 3607,
+          "predicted_tokens": 3607,
+          "exact_span_matches": 3607,
+          "lemma_eligible_tokens": 3607,
+          "lemma_correct": 3493,
+          "pos_eligible_tokens": 3607,
+          "pos_correct": 3522,
+          "features_eligible_tokens": 2502,
+          "features_correct": 2410,
+          "false_complete_sentences": 117
+        },
+        "metrics": {
+          "exact_span_precision": 1.0,
+          "exact_span_recall": 1.0,
+          "lemma_accuracy": 0.9683947879123925,
+          "pos_accuracy": 0.9764347102855558,
+          "annotated_features_accuracy": 0.9632294164668266
+        },
+        "false_complete_sentence_count": 117,
+        "target_false_accept_rate": null,
+        "qualification": false,
+        "independent_review": null,
+        "canonical_ranking_input": false,
+        "limitations": [
+          "source_annotations_not_fully_human_verified",
+          "model_pretraining_overlap_not_established",
+          "sense_matching_not_evaluated",
+          "grammar_strict_i_plus_one_not_evaluated",
+          "audio_and_clients_not_evaluated"
+        ],
+        "observations_sha256": "912314957a56be0868f7319b17000da1d6f31d765fab2d5c790eff66dbcfc89c",
+        "evaluation_sha256": "3a56bdf382e0fe6ecb19997de635d96c206393c8fa99583919ae5de870bed3de"
+      },
+      "approved_core_identities": 0,
+      "approved_important_forms": 0,
+      "production_eligible": false
+    },
+    {
+      "language": "nb",
+      "name": "Norwegian Bokmål",
+      "model": {
+        "language": "nb",
+        "backend": "stanza",
+        "available": true,
+        "package_version": "1.14.0",
+        "manifest_sha256": "b8b0506c69134d3d2bf3955882002e7d4a04e436fcdc6a1827fee2a5a9ae1e63",
+        "qualified": false
+      },
+      "lexical_candidates": 5941,
+      "dictionary_inflection_candidates": 3702,
+      "unresolved_pos_candidates": 56,
+      "distinct_preserved_lemmas": 5354,
+      "cross_shard_duplicates_removed": 0,
+      "shards": [
+        {
+          "shard": "all",
+          "seed_words": 6000,
+          "path": ".multilang/verification/real-languages/prepared/nb/all",
+          "manifest_file_sha256": "a5a9c9c654d9d3ca77eda5de6584c4144e9f8ef2530dd6853fb96f00ffffdc50",
+          "manifest": {
+            "approved_important_form_count": 0,
+            "blockers": [
+              "unresolved_part_of_speech",
+              "independent_sense_review",
+              "source_redistribution_review",
+              "language_evaluation",
+              "balanced_frequency_corpora",
+              "important_form_policy",
+              "reviewed_content_and_audio",
+              "anki_client_acceptance"
+            ],
+            "candidate_filter": {
+              "policy": "nfc-casefold-selection-only-v1",
+              "sha256": "8e80a656efe8c4de9d6de7a77b85336d04466e81ca3556d44c13083d868160b1"
+            },
+            "corpus": {
+              "canonical_ranking_input": false,
+              "document_count": 1,
+              "sentence_count": 1939,
+              "sha256": "b45e4809d38ea560f0b164023b0f4c6d8f0d7731f66c4df129917bb06d1676f8",
+              "split": "test",
+              "token_count": 29966,
+              "unaligned_token_count": 0
+            },
+            "dictionary_format": "wiktextract",
+            "dictionary_sha256": "fc9cfa6b2a692f443197ff1450a9f181864bde145c2bf0639f5cc1d8d886d90d",
+            "distinct_word_count": 5354,
+            "duplicate_records_removed": 0,
+            "files": {
+              "candidates.jsonl": "2d4f063fa92e558a63e26118d12249ed7d2fb9acc271c226529a4e0f9bf07eb0",
+              "corpus-observed-counts.json": "fe217857fb3508a3368e7a5693b5b530b2f66c6b2b5e7f71a8d5d419bf9b6154",
+              "reference-corpus.jsonl": "c98fc7fd062ecf4d6c449305e0b2c40e8571a3b8bc3dc498d3ab993ad70e5546",
+              "review.jsonl": "cea86e086de40fbddcb3c482bf5c926783f7e3698927e23896dc578a1b2ddd6c",
+              "sources.json": "2d95b402a0698ae3ff36c5fd21afdb34bfbd00766fd17a5e66743c29ef227873"
+            },
+            "glosses_sha256": null,
+            "inflection_candidate_count": 3702,
+            "language": "nb",
+            "lexical_candidate_count": 5941,
+            "preparation_sha256": "24dbb3e0a40d2c273ed980de54e1dc2586a782fe7711a367b7e9cba64cc3a6b8",
+            "production_eligible": false,
+            "resolved_identity_count": 0,
+            "schema_version": 1,
+            "source_catalog_sha256": "502ba9a2f3fe10366bdaa29f55ba0f7d8f0c5654fe5f38a8e4ed1a0af2a09717",
+            "status": "candidate_only",
+            "target_core_identity_count": 3000,
+            "unresolved_pos_count": 56,
+            "workload": {
+              "approved_core_cards": 0,
+              "cost_estimate_available": false,
+              "headword_target": 3000,
+              "important_form_cards": null,
+              "provider_calls_executed": 0
+            }
+          }
+        }
+      ],
+      "evaluation_path": ".multilang/verification/real-languages/evaluations-v2/nb-10f8fd566ff1",
+      "evaluation_manifest_file_sha256": "89f97d1f2f43001e7951693282e4f1a61b46adbb22883f8fe75dadc5a7bdf677",
+      "evaluation": {
+        "schema_version": 1,
+        "evaluator_version": "2",
+        "language": "nb",
+        "corpus_sha256": "b45e4809d38ea560f0b164023b0f4c6d8f0d7731f66c4df129917bb06d1676f8",
+        "corpus_split": "test",
+        "source_catalog_sha256": "502ba9a2f3fe10366bdaa29f55ba0f7d8f0c5654fe5f38a8e4ed1a0af2a09717",
+        "source_sentence_count": 1939,
+        "sample_sentence_count": 200,
+        "sample_policy": "smallest-source-bound-sentence-sha256-v1",
+        "model_fingerprints": [
+          "5a6dd350fa96d29ccfd7be431b8dc0eecbc7af0773e0aa447439cf4c4e1244ab"
+        ],
+        "analysis_statuses": {
+          "complete": 198,
+          "inconclusive": 2
+        },
+        "counts": {
+          "gold_tokens": 3245,
+          "unaligned_gold_tokens": 0,
+          "aligned_gold_tokens": 3245,
+          "predicted_tokens": 3248,
+          "exact_span_matches": 3239,
+          "lemma_eligible_tokens": 3245,
+          "lemma_correct": 3114,
+          "pos_eligible_tokens": 3245,
+          "pos_correct": 3179,
+          "features_eligible_tokens": 1908,
+          "features_correct": 1722,
+          "false_complete_sentences": 150
+        },
+        "metrics": {
+          "exact_span_precision": 0.9972290640394089,
+          "exact_span_recall": 0.998151001540832,
+          "lemma_accuracy": 0.9596302003081664,
+          "pos_accuracy": 0.9796610169491525,
+          "annotated_features_accuracy": 0.9025157232704403
+        },
+        "false_complete_sentence_count": 150,
+        "target_false_accept_rate": null,
+        "qualification": false,
+        "independent_review": null,
+        "canonical_ranking_input": false,
+        "limitations": [
+          "source_annotations_not_fully_human_verified",
+          "model_pretraining_overlap_not_established",
+          "sense_matching_not_evaluated",
+          "grammar_strict_i_plus_one_not_evaluated",
+          "audio_and_clients_not_evaluated"
+        ],
+        "observations_sha256": "2dcc73f40f47e7ffbbc87cbf5cf81dc9c1db08602a041eefbd48055a9ef83a99",
+        "evaluation_sha256": "f401ddec5f10fef58d31d9de42c48e53fe8598f973c3133ab8d8eb3d2b227213"
+      },
+      "approved_core_identities": 0,
+      "approved_important_forms": 0,
+      "production_eligible": false
+    },
+    {
+      "language": "sv",
+      "name": "Swedish",
+      "model": {
+        "language": "sv",
+        "backend": "stanza",
+        "available": true,
+        "package_version": "1.14.0",
+        "manifest_sha256": "31dd306f605e9e0fcd5bc845f56e86aee35f290b9ab48d77fe7f11504f72b415",
+        "qualified": false
+      },
+      "lexical_candidates": 7917,
+      "dictionary_inflection_candidates": 3781,
+      "unresolved_pos_candidates": 60,
+      "distinct_preserved_lemmas": 5941,
+      "cross_shard_duplicates_removed": 0,
+      "shards": [
+        {
+          "shard": "all",
+          "seed_words": 6000,
+          "path": ".multilang/verification/real-languages/prepared/sv/all",
+          "manifest_file_sha256": "c90aa59a26da7769922b485130cbf1cae1ebda4256779cf78a7920dcbf6e5f8a",
+          "manifest": {
+            "approved_important_form_count": 0,
+            "blockers": [
+              "unresolved_part_of_speech",
+              "independent_sense_review",
+              "source_redistribution_review",
+              "language_evaluation",
+              "balanced_frequency_corpora",
+              "important_form_policy",
+              "reviewed_content_and_audio",
+              "anki_client_acceptance"
+            ],
+            "candidate_filter": {
+              "policy": "nfc-casefold-selection-only-v1",
+              "sha256": "3408b14a6837d78becbfbe3bb4ece387d7cc712d5859bb41c4b4f67ce2038a34"
+            },
+            "corpus": {
+              "canonical_ranking_input": false,
+              "document_count": 15,
+              "sentence_count": 1219,
+              "sha256": "eb3950dfb820d13634bed35c1d0f69872851754e0b19af1a9705ce6978580434",
+              "split": "test",
+              "token_count": 20377,
+              "unaligned_token_count": 0
+            },
+            "dictionary_format": "wiktextract",
+            "dictionary_sha256": "0fec58cc6b7526da258684868dcbe7b40754b31c9f56925dc3dc010d81fe64eb",
+            "distinct_word_count": 5941,
+            "duplicate_records_removed": 0,
+            "files": {
+              "candidates.jsonl": "40376e79873d1f1945746798b22535e55a1a5f97aced08e69216c1d9321e2be2",
+              "corpus-observed-counts.json": "67509bf56f1a1e5fde5f1d1c6108474f91f47cdcaaa05299f2fe0cd4c4e78f64",
+              "reference-corpus.jsonl": "70f73d2e2d5ec231f112877b5ceccdcd58f87bd29bf68fee42144e2004ff3b1a",
+              "review.jsonl": "125991ec6b6105b141a41da8b3f56355cf0bcc1bceea6d6d5f7d75b946a30526",
+              "sources.json": "052a7f4f3a75291891581eced9495e3d3a077fc5bcd0e84100a54a6c05e7e6e6"
+            },
+            "glosses_sha256": null,
+            "inflection_candidate_count": 3781,
+            "language": "sv",
+            "lexical_candidate_count": 7917,
+            "preparation_sha256": "3145473a24ddadcd00496d3144cd9ae7db7d507574079c909235620845c47ae1",
+            "production_eligible": false,
+            "resolved_identity_count": 0,
+            "schema_version": 1,
+            "source_catalog_sha256": "ca4971bdd5d7b5c9ec2ec5dc17bb7e1a65520ba822866d65f656eb27b9b06792",
+            "status": "candidate_only",
+            "target_core_identity_count": 3000,
+            "unresolved_pos_count": 60,
+            "workload": {
+              "approved_core_cards": 0,
+              "cost_estimate_available": false,
+              "headword_target": 3000,
+              "important_form_cards": null,
+              "provider_calls_executed": 0
+            }
+          }
+        }
+      ],
+      "evaluation_path": ".multilang/verification/real-languages/evaluations-v2/sv-ab3ce5bc2fa6",
+      "evaluation_manifest_file_sha256": "06c189cb756c911b48960ce8c3326e48984cd97634c8ad84696b1fc602607b1e",
+      "evaluation": {
+        "schema_version": 1,
+        "evaluator_version": "2",
+        "language": "sv",
+        "corpus_sha256": "eb3950dfb820d13634bed35c1d0f69872851754e0b19af1a9705ce6978580434",
+        "corpus_split": "test",
+        "source_catalog_sha256": "ca4971bdd5d7b5c9ec2ec5dc17bb7e1a65520ba822866d65f656eb27b9b06792",
+        "source_sentence_count": 1219,
+        "sample_sentence_count": 200,
+        "sample_policy": "smallest-source-bound-sentence-sha256-v1",
+        "model_fingerprints": [
+          "a0c2d233bfc2c3a1769fdbeb99f8ad2db7414af32b14250a619662f8c944ca6e"
+        ],
+        "analysis_statuses": {
+          "complete": 200
+        },
+        "counts": {
+          "gold_tokens": 3183,
+          "unaligned_gold_tokens": 0,
+          "aligned_gold_tokens": 3183,
+          "predicted_tokens": 3182,
+          "exact_span_matches": 3181,
+          "lemma_eligible_tokens": 3183,
+          "lemma_correct": 3110,
+          "pos_eligible_tokens": 3183,
+          "pos_correct": 3111,
+          "features_eligible_tokens": 2079,
+          "features_correct": 1981,
+          "false_complete_sentences": 110
+        },
+        "metrics": {
+          "exact_span_precision": 0.9996857322438718,
+          "exact_span_recall": 0.9993716619541313,
+          "lemma_accuracy": 0.9770656613257933,
+          "pos_accuracy": 0.9773798303487277,
+          "annotated_features_accuracy": 0.9528619528619529
+        },
+        "false_complete_sentence_count": 110,
+        "target_false_accept_rate": null,
+        "qualification": false,
+        "independent_review": null,
+        "canonical_ranking_input": false,
+        "limitations": [
+          "source_annotations_not_fully_human_verified",
+          "model_pretraining_overlap_not_established",
+          "sense_matching_not_evaluated",
+          "grammar_strict_i_plus_one_not_evaluated",
+          "audio_and_clients_not_evaluated"
+        ],
+        "observations_sha256": "eaeb8fe70396c0250ed246582c9a0b512ca0ae834482b2d7979e837d73e9dc3a",
+        "evaluation_sha256": "c5f166acc47bcf3790c1183952de6e70d8ee58a06b6544df0d37d1df6750f922"
+      },
+      "approved_core_identities": 0,
+      "approved_important_forms": 0,
+      "production_eligible": false
+    },
+    {
+      "language": "fi",
+      "name": "Finnish",
+      "model": {
+        "language": "fi",
+        "backend": "stanza",
+        "available": true,
+        "package_version": "1.14.0",
+        "manifest_sha256": "dbc2d2d7654685762704252ecf23f98a9883c9797c86fa70f8594c0e05ea02a5",
+        "qualified": false
+      },
+      "lexical_candidates": 7184,
+      "dictionary_inflection_candidates": 4789,
+      "unresolved_pos_candidates": 63,
+      "distinct_preserved_lemmas": 5569,
+      "cross_shard_duplicates_removed": 0,
+      "shards": [
+        {
+          "shard": "all-a",
+          "seed_words": 3000,
+          "path": ".multilang/verification/real-languages/prepared/fi/all-a",
+          "manifest_file_sha256": "2883cff79482abe804541c5ce3931f282f0077890fbfd6ec4f58db479185fe92",
+          "manifest": {
+            "approved_important_form_count": 0,
+            "blockers": [
+              "unresolved_part_of_speech",
+              "independent_sense_review",
+              "source_redistribution_review",
+              "language_evaluation",
+              "balanced_frequency_corpora",
+              "important_form_policy",
+              "reviewed_content_and_audio",
+              "anki_client_acceptance"
+            ],
+            "candidate_filter": {
+              "policy": "nfc-casefold-selection-only-v1",
+              "sha256": "a9309ceb8f1e923efe16557e3490ec34ab4df211aa4d8ab84247385e11bd72cb"
+            },
+            "corpus": {
+              "canonical_ranking_input": false,
+              "document_count": 1,
+              "sentence_count": 1555,
+              "sha256": "3317528f16ab74333dce44051971e1ed0d115c8ffa1359a20f3bddb8e63498ee",
+              "split": "test",
+              "token_count": 21070,
+              "unaligned_token_count": 54
+            },
+            "dictionary_format": "wiktextract",
+            "dictionary_sha256": "6e37c55e6304cc31da8b051d64e9773902a36ad19904c330ef6f9f6184792475",
+            "distinct_word_count": 3003,
+            "duplicate_records_removed": 0,
+            "files": {
+              "candidates.jsonl": "bc13b07cfd5efe8d9782e0013b5ba7d95e2345cec8a17d17c958c21b65ea4220",
+              "corpus-observed-counts.json": "ab74e7022fafa65864be57f2d0375a1fa720951ecdc4da5b7bffd3896ba91a97",
+              "reference-corpus.jsonl": "4e4f48fdfcc98d06cd1a7e10d4af4e187e17b057dd61f3d9e78d0ab0eb962b0b",
+              "review.jsonl": "56fad55ee1901b2f1524b5f96311cff7281c28513e9bb7b7d4d9f65ad56c296d",
+              "sources.json": "74bcd0cd6d57580467b57a66e14d8adacfade6651fa0437a6321399bb23336e3"
+            },
+            "glosses_sha256": null,
+            "inflection_candidate_count": 2578,
+            "language": "fi",
+            "lexical_candidate_count": 4475,
+            "preparation_sha256": "38376622f8171c9abb8b9a6bef52655c6af10af21413a3f81b434578059e8645",
+            "production_eligible": false,
+            "resolved_identity_count": 0,
+            "schema_version": 1,
+            "source_catalog_sha256": "98d043e15dba4c2325e91cfc88771d9373c11615c960e2f8c399ea927fbb6b3d",
+            "status": "candidate_only",
+            "target_core_identity_count": 3000,
+            "unresolved_pos_count": 58,
+            "workload": {
+              "approved_core_cards": 0,
+              "cost_estimate_available": false,
+              "headword_target": 3000,
+              "important_form_cards": null,
+              "provider_calls_executed": 0
+            }
+          }
+        },
+        {
+          "shard": "all-b",
+          "seed_words": 3000,
+          "path": ".multilang/verification/real-languages/prepared/fi/all-b",
+          "manifest_file_sha256": "6324989ae70a3a3176df3887682660e68935b86fd16b0d528c2e2e30247aa7fe",
+          "manifest": {
+            "approved_important_form_count": 0,
+            "blockers": [
+              "unresolved_part_of_speech",
+              "insufficient_lexical_candidates",
+              "independent_sense_review",
+              "source_redistribution_review",
+              "language_evaluation",
+              "balanced_frequency_corpora",
+              "important_form_policy",
+              "reviewed_content_and_audio",
+              "anki_client_acceptance"
+            ],
+            "candidate_filter": {
+              "policy": "nfc-casefold-selection-only-v1",
+              "sha256": "45ee3078763c229b6d163e4ac94fda83236d66b74f5db5f32573e1b500e0f26f"
+            },
+            "corpus": {
+              "canonical_ranking_input": false,
+              "document_count": 1,
+              "sentence_count": 1555,
+              "sha256": "3317528f16ab74333dce44051971e1ed0d115c8ffa1359a20f3bddb8e63498ee",
+              "split": "test",
+              "token_count": 21070,
+              "unaligned_token_count": 54
+            },
+            "dictionary_format": "wiktextract",
+            "dictionary_sha256": "6e37c55e6304cc31da8b051d64e9773902a36ad19904c330ef6f9f6184792475",
+            "distinct_word_count": 2566,
+            "duplicate_records_removed": 0,
+            "files": {
+              "candidates.jsonl": "ff6848a2fe0c57898fe8b22e08d65d2e51c15c761a11a2a7d99061a26b7e0133",
+              "corpus-observed-counts.json": "ab74e7022fafa65864be57f2d0375a1fa720951ecdc4da5b7bffd3896ba91a97",
+              "reference-corpus.jsonl": "4e4f48fdfcc98d06cd1a7e10d4af4e187e17b057dd61f3d9e78d0ab0eb962b0b",
+              "review.jsonl": "c64fffd8524a6c476287d6975def14dcb885e5613c7f31ce7d912d91f21260b8",
+              "sources.json": "74bcd0cd6d57580467b57a66e14d8adacfade6651fa0437a6321399bb23336e3"
+            },
+            "glosses_sha256": null,
+            "inflection_candidate_count": 2211,
+            "language": "fi",
+            "lexical_candidate_count": 2709,
+            "preparation_sha256": "46b9310392869c17a883933a6b51f7b9e94e4efb5fb9539ce2aeb52565c315cf",
+            "production_eligible": false,
+            "resolved_identity_count": 0,
+            "schema_version": 1,
+            "source_catalog_sha256": "98d043e15dba4c2325e91cfc88771d9373c11615c960e2f8c399ea927fbb6b3d",
+            "status": "candidate_only",
+            "target_core_identity_count": 3000,
+            "unresolved_pos_count": 5,
+            "workload": {
+              "approved_core_cards": 0,
+              "cost_estimate_available": false,
+              "headword_target": 3000,
+              "important_form_cards": null,
+              "provider_calls_executed": 0
+            }
+          }
+        }
+      ],
+      "evaluation_path": ".multilang/verification/real-languages/evaluations-v2/fi-7aa8a77ce730",
+      "evaluation_manifest_file_sha256": "2232f0634ddf373f62f9c2a1488af5ca02d2aa91057a43cd6d9560f8b5fd885f",
+      "evaluation": {
+        "schema_version": 1,
+        "evaluator_version": "2",
+        "language": "fi",
+        "corpus_sha256": "3317528f16ab74333dce44051971e1ed0d115c8ffa1359a20f3bddb8e63498ee",
+        "corpus_split": "test",
+        "source_catalog_sha256": "98d043e15dba4c2325e91cfc88771d9373c11615c960e2f8c399ea927fbb6b3d",
+        "source_sentence_count": 1555,
+        "sample_sentence_count": 200,
+        "sample_policy": "smallest-source-bound-sentence-sha256-v1",
+        "model_fingerprints": [
+          "4752870b2061f0be66c819c96a6dec3b00df2b4a985f5386c269cefa47c5cfd2"
+        ],
+        "analysis_statuses": {
+          "complete": 199,
+          "inconclusive": 1
+        },
+        "counts": {
+          "gold_tokens": 2634,
+          "unaligned_gold_tokens": 6,
+          "aligned_gold_tokens": 2628,
+          "predicted_tokens": 2623,
+          "exact_span_matches": 2614,
+          "lemma_eligible_tokens": 2628,
+          "lemma_correct": 2486,
+          "pos_eligible_tokens": 2628,
+          "pos_correct": 2543,
+          "features_eligible_tokens": 1892,
+          "features_correct": 1738,
+          "false_complete_sentences": 131
+        },
+        "metrics": {
+          "exact_span_precision": 0.9965688143347312,
+          "exact_span_recall": 0.9946727549467276,
+          "lemma_accuracy": 0.9459665144596652,
+          "pos_accuracy": 0.9676560121765602,
+          "annotated_features_accuracy": 0.9186046511627907
+        },
+        "false_complete_sentence_count": 131,
+        "target_false_accept_rate": null,
+        "qualification": false,
+        "independent_review": null,
+        "canonical_ranking_input": false,
+        "limitations": [
+          "source_annotations_not_fully_human_verified",
+          "model_pretraining_overlap_not_established",
+          "sense_matching_not_evaluated",
+          "grammar_strict_i_plus_one_not_evaluated",
+          "audio_and_clients_not_evaluated"
+        ],
+        "observations_sha256": "7b7bdcb934f993aa40bfc6383760993337da5c9b454cfd21021b83ba0471666f",
+        "evaluation_sha256": "a1195e527335816990b039e6249da176a00eb15c01a9b18c2d389ab506bba3f9"
+      },
+      "approved_core_identities": 0,
+      "approved_important_forms": 0,
+      "production_eligible": false
+    },
+    {
+      "language": "hu",
+      "name": "Hungarian",
+      "model": {
+        "language": "hu",
+        "backend": "stanza",
+        "available": true,
+        "package_version": "1.14.0",
+        "manifest_sha256": "304380ee83fcb585bf50636dd1961e174cbec8047ccd29a6c0d93057a86126b1",
+        "qualified": false
+      },
+      "lexical_candidates": 6734,
+      "dictionary_inflection_candidates": 2741,
+      "unresolved_pos_candidates": 77,
+      "distinct_preserved_lemmas": 5357,
+      "cross_shard_duplicates_removed": 0,
+      "shards": [
+        {
+          "shard": "all",
+          "seed_words": 6000,
+          "path": ".multilang/verification/real-languages/prepared/hu/all",
+          "manifest_file_sha256": "8835a61601da2cfe32b4a67e795c455069d6508c0efbb2636a78a55cd17c9499",
+          "manifest": {
+            "approved_important_form_count": 0,
+            "blockers": [
+              "unresolved_part_of_speech",
+              "independent_sense_review",
+              "source_redistribution_review",
+              "language_evaluation",
+              "balanced_frequency_corpora",
+              "important_form_policy",
+              "reviewed_content_and_audio",
+              "anki_client_acceptance"
+            ],
+            "candidate_filter": {
+              "policy": "nfc-casefold-selection-only-v1",
+              "sha256": "88f81dc01469a84e22d520b64322d7cdea6adffc60b6bc918d2a2b87459f7136"
+            },
+            "corpus": {
+              "canonical_ranking_input": false,
+              "document_count": 1,
+              "sentence_count": 449,
+              "sha256": "e344aa84ca8b3c0239f58f3fa6f4249932a9a2a2bd4475c4aa5468882741e1ef",
+              "split": "test",
+              "token_count": 10448,
+              "unaligned_token_count": 0
+            },
+            "dictionary_format": "wiktextract",
+            "dictionary_sha256": "f4df760cad780de241162750af7b689048cb223b42228b4fa169a906a271a00c",
+            "distinct_word_count": 5357,
+            "duplicate_records_removed": 0,
+            "files": {
+              "candidates.jsonl": "d02abfd869f943e1f1f635f3eaebc51208b73d84823c5c7dee3780efac1dbe89",
+              "corpus-observed-counts.json": "78ba0576e25619d449220e8add4defda2a98e28cfed2d4f719bfc9685149838c",
+              "reference-corpus.jsonl": "45506f74ec1a6daebe20538d0ac210362c27caa69fd1917d2c8762ddf4279b57",
+              "review.jsonl": "e0f99b9d1028998201d9cc636b3051f0ea05ffa93e6a6247b8e8f46e879576fc",
+              "sources.json": "5ae0953ec58d4776a78d24e7b17dfcd8f6903a615ba751ff12ae5e7f29f131f5"
+            },
+            "glosses_sha256": null,
+            "inflection_candidate_count": 2741,
+            "language": "hu",
+            "lexical_candidate_count": 6734,
+            "preparation_sha256": "cb4e0a6a94028293925d3137d255d6d0e29c0260638fe302b041159a39911c8d",
+            "production_eligible": false,
+            "resolved_identity_count": 0,
+            "schema_version": 1,
+            "source_catalog_sha256": "bf088036983514da930c7237e4cab0cd2774ef96ecc6ddd20d75dece4864468e",
+            "status": "candidate_only",
+            "target_core_identity_count": 3000,
+            "unresolved_pos_count": 77,
+            "workload": {
+              "approved_core_cards": 0,
+              "cost_estimate_available": false,
+              "headword_target": 3000,
+              "important_form_cards": null,
+              "provider_calls_executed": 0
+            }
+          }
+        }
+      ],
+      "evaluation_path": ".multilang/verification/real-languages/evaluations-v2/hu-6965e5923601",
+      "evaluation_manifest_file_sha256": "1ecd4a191e13a5f6f6400bf9043f858c36b77dc5496b8ce58cdf4ecb83e72b37",
+      "evaluation": {
+        "schema_version": 1,
+        "evaluator_version": "2",
+        "language": "hu",
+        "corpus_sha256": "e344aa84ca8b3c0239f58f3fa6f4249932a9a2a2bd4475c4aa5468882741e1ef",
+        "corpus_split": "test",
+        "source_catalog_sha256": "bf088036983514da930c7237e4cab0cd2774ef96ecc6ddd20d75dece4864468e",
+        "source_sentence_count": 449,
+        "sample_sentence_count": 200,
+        "sample_policy": "smallest-source-bound-sentence-sha256-v1",
+        "model_fingerprints": [
+          "41cb69c85620f410a2f71e663aa9e4ef471510d5c651ca949d8110a38dd6d7bf"
+        ],
+        "analysis_statuses": {
+          "complete": 200
+        },
+        "counts": {
+          "gold_tokens": 4725,
+          "unaligned_gold_tokens": 0,
+          "aligned_gold_tokens": 4725,
+          "predicted_tokens": 4724,
+          "exact_span_matches": 4718,
+          "lemma_eligible_tokens": 4724,
+          "lemma_correct": 4446,
+          "pos_eligible_tokens": 4725,
+          "pos_correct": 4539,
+          "features_eligible_tokens": 3420,
+          "features_correct": 3157,
+          "false_complete_sentences": 168
+        },
+        "metrics": {
+          "exact_span_precision": 0.9987298899237934,
+          "exact_span_recall": 0.9985185185185185,
+          "lemma_accuracy": 0.941151566469094,
+          "pos_accuracy": 0.9606349206349206,
+          "annotated_features_accuracy": 0.9230994152046783
+        },
+        "false_complete_sentence_count": 168,
+        "target_false_accept_rate": null,
+        "qualification": false,
+        "independent_review": null,
+        "canonical_ranking_input": false,
+        "limitations": [
+          "source_annotations_not_fully_human_verified",
+          "model_pretraining_overlap_not_established",
+          "sense_matching_not_evaluated",
+          "grammar_strict_i_plus_one_not_evaluated",
+          "audio_and_clients_not_evaluated"
+        ],
+        "observations_sha256": "ea20c4d3de2bc5fd606098ba37f2f344a602dbb82fbec6bef51e707f050bb502",
+        "evaluation_sha256": "055a1e8af213e47cced8af2d968f6f47cbdf2f25a076f9a57c62a6375ec759d8"
+      },
+      "approved_core_identities": 0,
+      "approved_important_forms": 0,
+      "production_eligible": false
+    },
+    {
+      "language": "cs",
+      "name": "Czech",
+      "model": {
+        "language": "cs",
+        "backend": "stanza",
+        "available": true,
+        "package_version": "1.14.0",
+        "manifest_sha256": "613547fe3cccf3a0e3f36a3debd7f68c18a61fd01131de491c803ebb0e49ca5f",
+        "qualified": false
+      },
+      "lexical_candidates": 3942,
+      "dictionary_inflection_candidates": 2499,
+      "unresolved_pos_candidates": 33,
+      "distinct_preserved_lemmas": 3939,
+      "cross_shard_duplicates_removed": 0,
+      "shards": [
+        {
+          "shard": "all",
+          "seed_words": 6000,
+          "path": ".multilang/verification/real-languages/prepared/cs/all",
+          "manifest_file_sha256": "bcce5cea70fcf3726515becc5df4bd59482fa62eb60042d31c48df47429a2327",
+          "manifest": {
+            "approved_important_form_count": 0,
+            "blockers": [
+              "unresolved_part_of_speech",
+              "independent_sense_review",
+              "source_redistribution_review",
+              "language_evaluation",
+              "balanced_frequency_corpora",
+              "important_form_policy",
+              "reviewed_content_and_audio",
+              "anki_client_acceptance"
+            ],
+            "candidate_filter": {
+              "policy": "nfc-casefold-selection-only-v1",
+              "sha256": "37113db6045dfaaf6236b39a3b20574df77ef9751cc5ec16d2c3cd5f2e80a96f"
+            },
+            "corpus": {
+              "canonical_ranking_input": false,
+              "document_count": 791,
+              "sentence_count": 20187,
+              "sha256": "08db176defbfb604b06ffd2ea4dc69d3e2a0e3dbf83393bff4d9f5805d702e21",
+              "split": "test",
+              "token_count": 305808,
+              "unaligned_token_count": 1240
+            },
+            "dictionary_format": "wiktextract",
+            "dictionary_sha256": "4f61e410651758ec02c877d82406273461440bff12950dd8aa3a9c5a36fb16a5",
+            "distinct_word_count": 3939,
+            "duplicate_records_removed": 0,
+            "files": {
+              "candidates.jsonl": "6765bf18e512cd8ff0da92d8fb19d544fb8cbb47bacb1cfdab78024b98001b05",
+              "corpus-observed-counts.json": "2ccba878b7e62fcc4212b6c79ee05dfbc644cac4633f65d31f73e8fd8b50d2c5",
+              "reference-corpus.jsonl": "9439c08eff3f950cf008d7b3168c69e0375230157ed808a32b24244d9676fd36",
+              "review.jsonl": "1461664c3c116133d89390fd21c8e931f1d1344bef2935076a2c62ee67c8abab",
+              "sources.json": "8534c856019dff468c14b1a4f8c29a7f73273adf477a929d149f966e21cf271d"
+            },
+            "glosses_sha256": null,
+            "inflection_candidate_count": 2499,
+            "language": "cs",
+            "lexical_candidate_count": 3942,
+            "preparation_sha256": "f8a90e34c385184de291817eae75247b160313b49cc5512f1de1da87bc45255e",
+            "production_eligible": false,
+            "resolved_identity_count": 0,
+            "schema_version": 1,
+            "source_catalog_sha256": "8b4538fc1734571aaa110ed4a3f3154bf126a11a10c01f1716e3eed021ff8ad6",
+            "status": "candidate_only",
+            "target_core_identity_count": 3000,
+            "unresolved_pos_count": 33,
+            "workload": {
+              "approved_core_cards": 0,
+              "cost_estimate_available": false,
+              "headword_target": 3000,
+              "important_form_cards": null,
+              "provider_calls_executed": 0
+            }
+          }
+        }
+      ],
+      "evaluation_path": ".multilang/verification/real-languages/evaluations-v2/cs-7faad0fc0079",
+      "evaluation_manifest_file_sha256": "170f3c94c654db17c26ee774ccad424cff47f094b95bb05e9f05d50adf771f9d",
+      "evaluation": {
+        "schema_version": 1,
+        "evaluator_version": "2",
+        "language": "cs",
+        "corpus_sha256": "08db176defbfb604b06ffd2ea4dc69d3e2a0e3dbf83393bff4d9f5805d702e21",
+        "corpus_split": "test",
+        "source_catalog_sha256": "8b4538fc1734571aaa110ed4a3f3154bf126a11a10c01f1716e3eed021ff8ad6",
+        "source_sentence_count": 20187,
+        "sample_sentence_count": 200,
+        "sample_policy": "smallest-source-bound-sentence-sha256-v1",
+        "model_fingerprints": [
+          "10dfcce48a636e3372b192dc09609c11ee6479626837c8bc9c3ac08a1c79d722"
+        ],
+        "analysis_statuses": {
+          "complete": 188,
+          "inconclusive": 12
+        },
+        "counts": {
+          "gold_tokens": 2902,
+          "unaligned_gold_tokens": 8,
+          "aligned_gold_tokens": 2894,
+          "predicted_tokens": 2783,
+          "exact_span_matches": 2783,
+          "lemma_eligible_tokens": 2894,
+          "lemma_correct": 2754,
+          "pos_eligible_tokens": 2894,
+          "pos_correct": 2711,
+          "features_eligible_tokens": 2150,
+          "features_correct": 1940,
+          "false_complete_sentences": 103
+        },
+        "metrics": {
+          "exact_span_precision": 1.0,
+          "exact_span_recall": 0.9616447823082239,
+          "lemma_accuracy": 0.9516240497581202,
+          "pos_accuracy": 0.9367657221838286,
+          "annotated_features_accuracy": 0.9023255813953488
+        },
+        "false_complete_sentence_count": 103,
+        "target_false_accept_rate": null,
+        "qualification": false,
+        "independent_review": null,
+        "canonical_ranking_input": false,
+        "limitations": [
+          "source_annotations_not_fully_human_verified",
+          "model_pretraining_overlap_not_established",
+          "sense_matching_not_evaluated",
+          "grammar_strict_i_plus_one_not_evaluated",
+          "audio_and_clients_not_evaluated"
+        ],
+        "observations_sha256": "c4e085e1313ed9dc1c37c512076a8db0b8f5a2577cf3f2f7d90efd53692d53e4",
+        "evaluation_sha256": "c419e2048ebbdc184a031e096d1d1056e2d3b8e4e1fdcb94117af28e2ffdd8ce"
+      },
+      "approved_core_identities": 0,
+      "approved_important_forms": 0,
+      "production_eligible": false
+    },
+    {
+      "language": "hr",
+      "name": "Croatian",
+      "model": {
+        "language": "hr",
+        "backend": "stanza",
+        "available": true,
+        "package_version": "1.14.0",
+        "manifest_sha256": "741778dac55fa28d54f4ef42929d74d37d2dfc0e0c530a126a1577bf64cd0ffd",
+        "qualified": false
+      },
+      "lexical_candidates": 5476,
+      "dictionary_inflection_candidates": 0,
+      "unresolved_pos_candidates": 0,
+      "distinct_preserved_lemmas": 1603,
+      "cross_shard_duplicates_removed": 0,
+      "shards": [
+        {
+          "shard": "all",
+          "seed_words": 6000,
+          "path": ".multilang/verification/real-languages/prepared/hr/all",
+          "manifest_file_sha256": "6d3a80ed32fe1202b0729c6dd1761107b9d2011c8e58d09e2fa14d71629267b8",
+          "manifest": {
+            "approved_important_form_count": 0,
+            "blockers": [
+              "independent_sense_review",
+              "source_redistribution_review",
+              "language_evaluation",
+              "balanced_frequency_corpora",
+              "important_form_policy",
+              "reviewed_content_and_audio",
+              "anki_client_acceptance"
+            ],
+            "candidate_filter": {
+              "policy": "nfc-casefold-selection-only-v1",
+              "sha256": "7d2d28aa2a9cd0fdd8e28a1a46d14cc81e60acdccd42fe44ea37e6d26fdbd7d1"
+            },
+            "corpus": {
+              "canonical_ranking_input": false,
+              "document_count": 31,
+              "sentence_count": 1136,
+              "sha256": "78357fc28a5fe99f3c87eb90a014e6b5dd3770ee2d3530e70c3a78aea99384c1",
+              "split": "test",
+              "token_count": 24260,
+              "unaligned_token_count": 0
+            },
+            "dictionary_format": "croatian-wordnet",
+            "dictionary_sha256": "640879334f5a801a39aff42e274db58c96c5621f53ec5c7e9c2beb1cd77c9f7c",
+            "distinct_word_count": 1603,
+            "duplicate_records_removed": 0,
+            "files": {
+              "candidates.jsonl": "b6afb13e2543a613fe8202af198f997d54e4930ea0be2b5d164abb302b4c0147",
+              "corpus-observed-counts.json": "aa7a04c3e5324d2f1e688bd2fa93032fa6a0d6aa3d0bcc5e47eb2b2477d16825",
+              "reference-corpus.jsonl": "c4a34835a06269c91bc5f9115f8b8f18ea0d8d5af66757103c0b1ccb57cb8c43",
+              "review.jsonl": "2425574e753ba80d30a3c3cf4090a42924b59dd80123ffb77c1cc9548dc66ee6",
+              "sources.json": "91bf3bbd601b4b711fd0f1aa9e092ad1c30511b2ef0ecb5fbb4d06b3ff570b9c"
+            },
+            "glosses_sha256": "640db279c949a88f61f851dd54ebbb22d003f8b90b85267042ef85a3781d3a52",
+            "inflection_candidate_count": 0,
+            "language": "hr",
+            "lexical_candidate_count": 5476,
+            "preparation_sha256": "e56b2f82c32cdecf0ff6b30254a88e08cf6696294d5f586694615a03f0dac43f",
+            "production_eligible": false,
+            "resolved_identity_count": 0,
+            "schema_version": 1,
+            "source_catalog_sha256": "f11b33bfe5ffa7681ef486e888e61ce94d646a6093f48cfe490707cb997de145",
+            "status": "candidate_only",
+            "target_core_identity_count": 3000,
+            "unresolved_pos_count": 0,
+            "workload": {
+              "approved_core_cards": 0,
+              "cost_estimate_available": false,
+              "headword_target": 3000,
+              "important_form_cards": null,
+              "provider_calls_executed": 0
+            }
+          }
+        }
+      ],
+      "evaluation_path": ".multilang/verification/real-languages/evaluations-v2/hr-b6a07e8acf38",
+      "evaluation_manifest_file_sha256": "8536cba57ce452220a4f3675873d445808b4ae0f82c031ec6db6ad6caf7f5a9c",
+      "evaluation": {
+        "schema_version": 1,
+        "evaluator_version": "2",
+        "language": "hr",
+        "corpus_sha256": "78357fc28a5fe99f3c87eb90a014e6b5dd3770ee2d3530e70c3a78aea99384c1",
+        "corpus_split": "test",
+        "source_catalog_sha256": "f11b33bfe5ffa7681ef486e888e61ce94d646a6093f48cfe490707cb997de145",
+        "source_sentence_count": 1136,
+        "sample_sentence_count": 200,
+        "sample_policy": "smallest-source-bound-sentence-sha256-v1",
+        "model_fingerprints": [
+          "a4df24fd20fd535a5847ed786568941e0340a09db94c28fe8d120e1cdebb0340"
+        ],
+        "analysis_statuses": {
+          "complete": 196,
+          "inconclusive": 4
+        },
+        "counts": {
+          "gold_tokens": 4278,
+          "unaligned_gold_tokens": 0,
+          "aligned_gold_tokens": 4278,
+          "predicted_tokens": 4277,
+          "exact_span_matches": 4276,
+          "lemma_eligible_tokens": 4278,
+          "lemma_correct": 4140,
+          "pos_eligible_tokens": 4278,
+          "pos_correct": 4202,
+          "features_eligible_tokens": 3422,
+          "features_correct": 3227,
+          "false_complete_sentences": 143
+        },
+        "metrics": {
+          "exact_span_precision": 0.999766191255553,
+          "exact_span_recall": 0.9995324918186068,
+          "lemma_accuracy": 0.967741935483871,
+          "pos_accuracy": 0.9822346891070594,
+          "annotated_features_accuracy": 0.9430157802454705
+        },
+        "false_complete_sentence_count": 143,
+        "target_false_accept_rate": null,
+        "qualification": false,
+        "independent_review": null,
+        "canonical_ranking_input": false,
+        "limitations": [
+          "source_annotations_not_fully_human_verified",
+          "model_pretraining_overlap_not_established",
+          "sense_matching_not_evaluated",
+          "grammar_strict_i_plus_one_not_evaluated",
+          "audio_and_clients_not_evaluated"
+        ],
+        "observations_sha256": "1556603831145bb6b2691b5b7dfb7723b9c2fa0e57fc62dcc493695f56ee2669",
+        "evaluation_sha256": "ee58e4e177e21c832bc9b90d1aa85b20888bb69676f1d223a4d97d85a74797fb"
+      },
+      "approved_core_identities": 0,
+      "approved_important_forms": 0,
+      "production_eligible": false
+    },
+    {
+      "language": "el",
+      "name": "Greek",
+      "model": {
+        "language": "el",
+        "backend": "stanza",
+        "available": true,
+        "package_version": "1.14.0",
+        "manifest_sha256": "e67189fea1e604df31ae36733d8b169323ab1734165aac4efa72a7c16a60eb32",
+        "qualified": false
+      },
+      "lexical_candidates": 4934,
+      "dictionary_inflection_candidates": 3956,
+      "unresolved_pos_candidates": 55,
+      "distinct_preserved_lemmas": 4602,
+      "cross_shard_duplicates_removed": 0,
+      "shards": [
+        {
+          "shard": "all",
+          "seed_words": 6000,
+          "path": ".multilang/verification/real-languages/prepared/el/all",
+          "manifest_file_sha256": "9b800a6a90a5860d2d74504ab3d5bb345466918ee1a7ca3f8fef580892e805dc",
+          "manifest": {
+            "approved_important_form_count": 0,
+            "blockers": [
+              "unresolved_part_of_speech",
+              "independent_sense_review",
+              "source_redistribution_review",
+              "language_evaluation",
+              "balanced_frequency_corpora",
+              "important_form_policy",
+              "reviewed_content_and_audio",
+              "anki_client_acceptance"
+            ],
+            "candidate_filter": {
+              "policy": "nfc-casefold-selection-only-v1",
+              "sha256": "24dee1bdd7f1fd77fc451a65c00fd47135f5946bd1fd4fcafdc5a16489f04731"
+            },
+            "corpus": {
+              "canonical_ranking_input": false,
+              "document_count": 26,
+              "sentence_count": 456,
+              "sha256": "853d8c2bf16e0b6b1ea92942c5d6c4822dc40221994ab4f6f5b644fb29eb48f3",
+              "split": "test",
+              "token_count": 10672,
+              "unaligned_token_count": 500
+            },
+            "dictionary_format": "wiktextract",
+            "dictionary_sha256": "13390f345bb1014c7d56c053fa10f9a084c5b9959bb1d0faaf296b5cff97d25d",
+            "distinct_word_count": 4602,
+            "duplicate_records_removed": 0,
+            "files": {
+              "candidates.jsonl": "53753b55ea7a659ae50e2f01bc5e34208358fa1939b7dabb9b231b7cdd48b8f4",
+              "corpus-observed-counts.json": "b6d9360094761af0779937cbb57abed3a9716401da82661b4a1fd792f8ed2ce7",
+              "reference-corpus.jsonl": "439529ed1900d65d1365ed393cb147e52898be46ed3f5b85e3ea1bd2307503ed",
+              "review.jsonl": "4d221e244b94deb7e722349e5ddc0094ae8d0edd6d2f1c99c51a28a55f0aa70d",
+              "sources.json": "4b9cc637c84890ce585cc2737f1979ec483afd0396a72a500a7a0f71c0a2cf55"
+            },
+            "glosses_sha256": null,
+            "inflection_candidate_count": 3956,
+            "language": "el",
+            "lexical_candidate_count": 4934,
+            "preparation_sha256": "3cace176992350db2fb2553f10248297db3057f2c48f523ea3fa196d30cfa8ab",
+            "production_eligible": false,
+            "resolved_identity_count": 0,
+            "schema_version": 1,
+            "source_catalog_sha256": "71fbb11ba15eb1004d9e68062cc3c7a62135e75e11e0a97e0d74508bb827739f",
+            "status": "candidate_only",
+            "target_core_identity_count": 3000,
+            "unresolved_pos_count": 55,
+            "workload": {
+              "approved_core_cards": 0,
+              "cost_estimate_available": false,
+              "headword_target": 3000,
+              "important_form_cards": null,
+              "provider_calls_executed": 0
+            }
+          }
+        }
+      ],
+      "evaluation_path": ".multilang/verification/real-languages/evaluations-v2/el-606ee356da7d",
+      "evaluation_manifest_file_sha256": "ab7e4dcede701d9faf3731e60ead0fe23be49db8a3a801d49bdab77c728efc61",
+      "evaluation": {
+        "schema_version": 1,
+        "evaluator_version": "2",
+        "language": "el",
+        "corpus_sha256": "853d8c2bf16e0b6b1ea92942c5d6c4822dc40221994ab4f6f5b644fb29eb48f3",
+        "corpus_split": "test",
+        "source_catalog_sha256": "71fbb11ba15eb1004d9e68062cc3c7a62135e75e11e0a97e0d74508bb827739f",
+        "source_sentence_count": 456,
+        "sample_sentence_count": 200,
+        "sample_policy": "smallest-source-bound-sentence-sha256-v1",
+        "model_fingerprints": [
+          "c0654d510bc3a3cb822b9926801ab303acc5ab6e415b50752b52538add7e61f7"
+        ],
+        "analysis_statuses": {
+          "complete": 118,
+          "inconclusive": 82
+        },
+        "counts": {
+          "gold_tokens": 4669,
+          "unaligned_gold_tokens": 200,
+          "aligned_gold_tokens": 4469,
+          "predicted_tokens": 2456,
+          "exact_span_matches": 2455,
+          "lemma_eligible_tokens": 4469,
+          "lemma_correct": 2368,
+          "pos_eligible_tokens": 4469,
+          "pos_correct": 2397,
+          "features_eligible_tokens": 3069,
+          "features_correct": 1507,
+          "false_complete_sentences": 81
+        },
+        "metrics": {
+          "exact_span_precision": 0.9995928338762216,
+          "exact_span_recall": 0.5493398970686955,
+          "lemma_accuracy": 0.5298724546878496,
+          "pos_accuracy": 0.5363616021481316,
+          "annotated_features_accuracy": 0.4910394265232975
+        },
+        "false_complete_sentence_count": 81,
+        "target_false_accept_rate": null,
+        "qualification": false,
+        "independent_review": null,
+        "canonical_ranking_input": false,
+        "limitations": [
+          "source_annotations_not_fully_human_verified",
+          "model_pretraining_overlap_not_established",
+          "sense_matching_not_evaluated",
+          "grammar_strict_i_plus_one_not_evaluated",
+          "audio_and_clients_not_evaluated"
+        ],
+        "observations_sha256": "c404004d197e5dc1668e170faa93f0fcc8f3e36a53f173f952fc67ba2ebd7ee2",
+        "evaluation_sha256": "f426ddf32505d1a054103560e8fce1c6a61d95d562c29a0da3ae40186d3032fa"
+      },
+      "approved_core_identities": 0,
+      "approved_important_forms": 0,
+      "production_eligible": false
+    },
+    {
+      "language": "ja",
+      "name": "Japanese",
+      "model": {
+        "language": "ja",
+        "backend": "fugashi",
+        "available": true,
+        "package_version": "1.5.2",
+        "model_package": "unidic-lite",
+        "model_package_version": "1.0.8",
+        "model_artifact_sha256": "04f6a4fbbfd33543b595beb09a35b8134b2f80da0996065e36919cd1949e45b4",
+        "qualified": false
+      },
+      "lexical_candidates": 17296,
+      "dictionary_inflection_candidates": 165,
+      "unresolved_pos_candidates": 3062,
+      "distinct_preserved_lemmas": 4910,
+      "cross_shard_duplicates_removed": 0,
+      "shards": [
+        {
+          "shard": "all",
+          "seed_words": 6000,
+          "path": ".multilang/verification/real-languages/prepared/ja/all",
+          "manifest_file_sha256": "9e7cc9d8a1831d74abfcfda6e7b36db1bef80e467be45051426589c8b4725777",
+          "manifest": {
+            "approved_important_form_count": 0,
+            "blockers": [
+              "unresolved_part_of_speech",
+              "independent_sense_review",
+              "source_redistribution_review",
+              "language_evaluation",
+              "balanced_frequency_corpora",
+              "important_form_policy",
+              "reviewed_content_and_audio",
+              "anki_client_acceptance"
+            ],
+            "candidate_filter": {
+              "policy": "nfc-casefold-selection-only-v1",
+              "sha256": "74de2a4828003bd64b974f00eda86741ce2f3baff8ff479d5cc7ac79383c7f59"
+            },
+            "corpus": {
+              "canonical_ranking_input": false,
+              "document_count": 543,
+              "sentence_count": 543,
+              "sha256": "980d24fb9b245880454c088938b8417c13066b169b4f9246a060e2ef8be0c2ac",
+              "split": "test",
+              "token_count": 13034,
+              "unaligned_token_count": 0
+            },
+            "dictionary_format": "wiktextract",
+            "dictionary_sha256": "29e6a8f5450f462dc579d7d4ec54e2d67dec4fd8bcaafb17d53b39dbe079207b",
+            "distinct_word_count": 4910,
+            "duplicate_records_removed": 0,
+            "files": {
+              "candidates.jsonl": "e0a4410baf8106fc15da241588267070af883a69c04c48e79f9ec3722a1eb2bb",
+              "corpus-observed-counts.json": "5892d22667808e76ca6805b45b6171ecdc5646a5b6254e8813d92c465b02066d",
+              "reference-corpus.jsonl": "6a9a2eaf9d07d069bc6db65886cc88bd460aab946b45d62d7cb9d5d7babcc46d",
+              "review.jsonl": "be821866680a3f66ec7f244ee8379b012186272f0fc0ba23f0e4076097203f68",
+              "sources.json": "e12360633718e21ec947466b87ce50b3edb5aa0b5dbc0a7ec7c6ba7cea3f0544"
+            },
+            "glosses_sha256": null,
+            "inflection_candidate_count": 165,
+            "language": "ja",
+            "lexical_candidate_count": 17296,
+            "preparation_sha256": "22e14877d05f792ee1f48508f628ac0533157d7616c76cdd5334d2dc9d1a4c25",
+            "production_eligible": false,
+            "resolved_identity_count": 0,
+            "schema_version": 1,
+            "source_catalog_sha256": "8f6ea43fc711fede78bc24ef0a7a366e66caea8ea5c8c9dcc5541f7aea447ba0",
+            "status": "candidate_only",
+            "target_core_identity_count": 3000,
+            "unresolved_pos_count": 3062,
+            "workload": {
+              "approved_core_cards": 0,
+              "cost_estimate_available": false,
+              "headword_target": 3000,
+              "important_form_cards": null,
+              "provider_calls_executed": 0
+            }
+          }
+        }
+      ],
+      "evaluation_path": ".multilang/verification/real-languages/evaluations-v2/ja-109127d1bc90",
+      "evaluation_manifest_file_sha256": "94c33f30a5da5896f9d969bdc1a04fe020cb6e775e92e7dfb0fc778407fed55c",
+      "evaluation": {
+        "schema_version": 1,
+        "evaluator_version": "2",
+        "language": "ja",
+        "corpus_sha256": "980d24fb9b245880454c088938b8417c13066b169b4f9246a060e2ef8be0c2ac",
+        "corpus_split": "test",
+        "source_catalog_sha256": "8f6ea43fc711fede78bc24ef0a7a366e66caea8ea5c8c9dcc5541f7aea447ba0",
+        "source_sentence_count": 543,
+        "sample_sentence_count": 200,
+        "sample_policy": "smallest-source-bound-sentence-sha256-v1",
+        "model_fingerprints": [
+          "6044a75c63894a52bcd4c722e315e76967dda33e4cf6c8389b25ce4f4d191383"
+        ],
+        "analysis_statuses": {
+          "inconclusive": 146,
+          "complete": 54
+        },
+        "counts": {
+          "gold_tokens": 4798,
+          "unaligned_gold_tokens": 0,
+          "aligned_gold_tokens": 4798,
+          "predicted_tokens": 2502,
+          "exact_span_matches": 2481,
+          "lemma_eligible_tokens": 4798,
+          "lemma_correct": 2344,
+          "pos_eligible_tokens": 4798,
+          "pos_correct": 1534,
+          "false_complete_sentences": 53,
+          "features_eligible_tokens": 40,
+          "features_correct": 0
+        },
+        "metrics": {
+          "exact_span_precision": 0.9916067146282974,
+          "exact_span_recall": 0.5170904543559817,
+          "lemma_accuracy": 0.4885368903709879,
+          "pos_accuracy": 0.3197165485619008,
+          "annotated_features_accuracy": 0.0
+        },
+        "false_complete_sentence_count": 53,
+        "target_false_accept_rate": null,
+        "qualification": false,
+        "independent_review": null,
+        "canonical_ranking_input": false,
+        "limitations": [
+          "source_annotations_not_fully_human_verified",
+          "model_pretraining_overlap_not_established",
+          "sense_matching_not_evaluated",
+          "grammar_strict_i_plus_one_not_evaluated",
+          "audio_and_clients_not_evaluated"
+        ],
+        "observations_sha256": "03300cc953da8bc81fc78b254ddeed649ec55cc52915e90466078292bddaaf27",
+        "evaluation_sha256": "c4672b011fcea96f7971991aa35b50e809774a844a328b8b8d83ae9746580df1"
+      },
+      "approved_core_identities": 0,
+      "approved_important_forms": 0,
+      "production_eligible": false
+    },
+    {
+      "language": "zh",
+      "name": "Chinese",
+      "model": {
+        "language": "zh",
+        "backend": "stanza",
+        "available": true,
+        "package_version": "1.14.0",
+        "manifest_sha256": "4a10ce6b6a05f9d1e2d4f3bb78a20186776dd7c18e5a5938a2631c211f6fd14e",
+        "qualified": false
+      },
+      "lexical_candidates": 12646,
+      "dictionary_inflection_candidates": 4,
+      "unresolved_pos_candidates": 8472,
+      "distinct_preserved_lemmas": 2661,
+      "cross_shard_duplicates_removed": 0,
+      "shards": [
+        {
+          "shard": "all-a",
+          "seed_words": 3000,
+          "path": ".multilang/verification/real-languages/prepared/zh/all-a",
+          "manifest_file_sha256": "c4ddd99d0813aff41d665c5c0f591630e38664e83b04df0cd8e1637cf777909f",
+          "manifest": {
+            "approved_important_form_count": 0,
+            "blockers": [
+              "unresolved_part_of_speech",
+              "independent_sense_review",
+              "source_redistribution_review",
+              "language_evaluation",
+              "balanced_frequency_corpora",
+              "important_form_policy",
+              "reviewed_content_and_audio",
+              "anki_client_acceptance"
+            ],
+            "candidate_filter": {
+              "policy": "nfc-casefold-selection-only-v1",
+              "sha256": "00c750f6f06a359577f6c7f098c2576c57034493393cc6c9cfea42eed0261a58"
+            },
+            "corpus": {
+              "canonical_ranking_input": false,
+              "document_count": 1,
+              "sentence_count": 500,
+              "sha256": "573f59b799b499a920d2d5bdc0e3c1dbd7bcacf86bdece4334ecbd03e21b6150",
+              "split": "test",
+              "token_count": 12012,
+              "unaligned_token_count": 0
+            },
+            "dictionary_format": "wiktextract",
+            "dictionary_sha256": "f92620e54861c584e7bfe0ac7bc248cca5658f99a78ac3b63da27a8589f2835d",
+            "distinct_word_count": 1394,
+            "duplicate_records_removed": 0,
+            "files": {
+              "candidates.jsonl": "ce7f8556d9f150679649ffae1bb27ecbf9f5f2920374ec32d6cf8333f5b077f6",
+              "corpus-observed-counts.json": "11b958b71ab0d6301bcc7bdb00ecba0629f40e8b7af2aa7efd085c4a09f50afe",
+              "reference-corpus.jsonl": "a70ee0a3bb30fef9f1056148fb0f8a0e65c7e11f5a10b65f17d6f6378621f8b7",
+              "review.jsonl": "1c04c85f28702758f4e98d947a6bd1f640392ec5b9de448942dfdc2a977d6b07",
+              "sources.json": "458834927f47e936a37177e21a8725bcd67b562ba7b93af80a967a78cb9cb0ff"
+            },
+            "glosses_sha256": null,
+            "inflection_candidate_count": 3,
+            "language": "zh",
+            "lexical_candidate_count": 7770,
+            "preparation_sha256": "1c5d11e8837b646fe913970d6f104a9bd80f914506c6dcb2fe43ca671934e1f1",
+            "production_eligible": false,
+            "resolved_identity_count": 0,
+            "schema_version": 1,
+            "source_catalog_sha256": "0ed335ac33ff34bcc8c4483f397880fe19fd22051a1bf69272e653c5ccfd7a26",
+            "status": "candidate_only",
+            "target_core_identity_count": 3000,
+            "unresolved_pos_count": 5541,
+            "workload": {
+              "approved_core_cards": 0,
+              "cost_estimate_available": false,
+              "headword_target": 3000,
+              "important_form_cards": null,
+              "provider_calls_executed": 0
+            }
+          }
+        },
+        {
+          "shard": "all-b",
+          "seed_words": 3000,
+          "path": ".multilang/verification/real-languages/prepared/zh/all-b",
+          "manifest_file_sha256": "3ce4c64a7bb2de5a77a8f1a791b0e65b2fb45f20442ebaca6bbec0e52f30c4c2",
+          "manifest": {
+            "approved_important_form_count": 0,
+            "blockers": [
+              "unresolved_part_of_speech",
+              "independent_sense_review",
+              "source_redistribution_review",
+              "language_evaluation",
+              "balanced_frequency_corpora",
+              "important_form_policy",
+              "reviewed_content_and_audio",
+              "anki_client_acceptance"
+            ],
+            "candidate_filter": {
+              "policy": "nfc-casefold-selection-only-v1",
+              "sha256": "f357e81a2fcf75dee1068ede3041295f05b4039a9055fd4adc166e6fd60a9757"
+            },
+            "corpus": {
+              "canonical_ranking_input": false,
+              "document_count": 1,
+              "sentence_count": 500,
+              "sha256": "573f59b799b499a920d2d5bdc0e3c1dbd7bcacf86bdece4334ecbd03e21b6150",
+              "split": "test",
+              "token_count": 12012,
+              "unaligned_token_count": 0
+            },
+            "dictionary_format": "wiktextract",
+            "dictionary_sha256": "f92620e54861c584e7bfe0ac7bc248cca5658f99a78ac3b63da27a8589f2835d",
+            "distinct_word_count": 1267,
+            "duplicate_records_removed": 0,
+            "files": {
+              "candidates.jsonl": "e41ba42989c5f15774ca20b443c44dafa072b7073d4ee87e8e570463aa356715",
+              "corpus-observed-counts.json": "11b958b71ab0d6301bcc7bdb00ecba0629f40e8b7af2aa7efd085c4a09f50afe",
+              "reference-corpus.jsonl": "a70ee0a3bb30fef9f1056148fb0f8a0e65c7e11f5a10b65f17d6f6378621f8b7",
+              "review.jsonl": "3b731151124260cd7f98f2cdcd831676e2ca70482f5ec81176c8ef18b22f4daa",
+              "sources.json": "458834927f47e936a37177e21a8725bcd67b562ba7b93af80a967a78cb9cb0ff"
+            },
+            "glosses_sha256": null,
+            "inflection_candidate_count": 1,
+            "language": "zh",
+            "lexical_candidate_count": 4876,
+            "preparation_sha256": "7460120d461af8ef66efdb27d34de4030a4f380c71352dbb1f2ce22333dbb07d",
+            "production_eligible": false,
+            "resolved_identity_count": 0,
+            "schema_version": 1,
+            "source_catalog_sha256": "0ed335ac33ff34bcc8c4483f397880fe19fd22051a1bf69272e653c5ccfd7a26",
+            "status": "candidate_only",
+            "target_core_identity_count": 3000,
+            "unresolved_pos_count": 2931,
+            "workload": {
+              "approved_core_cards": 0,
+              "cost_estimate_available": false,
+              "headword_target": 3000,
+              "important_form_cards": null,
+              "provider_calls_executed": 0
+            }
+          }
+        }
+      ],
+      "evaluation_path": ".multilang/verification/real-languages/evaluations-v2/zh-6473a5730875",
+      "evaluation_manifest_file_sha256": "acba584f806b8a735b1cab644a4ceecf66c646818a2aa1444d52caa0dbde8408",
+      "evaluation": {
+        "schema_version": 1,
+        "evaluator_version": "2",
+        "language": "zh",
+        "corpus_sha256": "573f59b799b499a920d2d5bdc0e3c1dbd7bcacf86bdece4334ecbd03e21b6150",
+        "corpus_split": "test",
+        "source_catalog_sha256": "0ed335ac33ff34bcc8c4483f397880fe19fd22051a1bf69272e653c5ccfd7a26",
+        "source_sentence_count": 500,
+        "sample_sentence_count": 200,
+        "sample_policy": "smallest-source-bound-sentence-sha256-v1",
+        "model_fingerprints": [
+          "351e2860e3896192fde2c18153d3cec30e7a9faf42819ad48a22cbc914d10c64"
+        ],
+        "analysis_statuses": {
+          "complete": 187,
+          "inconclusive": 13
+        },
+        "counts": {
+          "gold_tokens": 4814,
+          "unaligned_gold_tokens": 0,
+          "aligned_gold_tokens": 4814,
+          "predicted_tokens": 4846,
+          "exact_span_matches": 4570,
+          "lemma_eligible_tokens": 4814,
+          "lemma_correct": 4567,
+          "pos_eligible_tokens": 4814,
+          "pos_correct": 4368,
+          "features_eligible_tokens": 551,
+          "features_correct": 520,
+          "false_complete_sentences": 142
+        },
+        "metrics": {
+          "exact_span_precision": 0.9430458109781263,
+          "exact_span_recall": 0.9493144993768177,
+          "lemma_accuracy": 0.9486913169921064,
+          "pos_accuracy": 0.9073535521395929,
+          "annotated_features_accuracy": 0.9437386569872959
+        },
+        "false_complete_sentence_count": 142,
+        "target_false_accept_rate": null,
+        "qualification": false,
+        "independent_review": null,
+        "canonical_ranking_input": false,
+        "limitations": [
+          "source_annotations_not_fully_human_verified",
+          "model_pretraining_overlap_not_established",
+          "sense_matching_not_evaluated",
+          "grammar_strict_i_plus_one_not_evaluated",
+          "audio_and_clients_not_evaluated"
+        ],
+        "observations_sha256": "ca4c3300ddf18740f933f7a6a3611e14de862cbe7eb1c0196016b0d555044673",
+        "evaluation_sha256": "01d8ab4f23b4241f3b63da2b6da0790ca2d1d7f99d8624cc6189f9344be8e221"
+      },
+      "approved_core_identities": 0,
+      "approved_important_forms": 0,
+      "production_eligible": false
+    }
+  ]
+}

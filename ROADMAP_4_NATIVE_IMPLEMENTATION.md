@@ -4,11 +4,18 @@ Branch: `feature/roadmap-4-0-native-architecture`. Baseline: `c13d603`.
 Solicitações: `info1.md` e `info2.md`. Contrato detalhado:
 [plano mestre v4](docs/multilingual-lexical-adaptive-plan-v4.md).
 
+Complemento de 2026-09-12: [preparação linguística e fluxo de revisão](docs/vocabulary-preparation.md)
+e [resultados reais por língua](docs/multilingual-readiness.md). Este complemento
+preserva exatamente os fields Anki, acrescenta fontes/modelos locais, importação
+de sentidos e formas revisados e rascunhos de conteúdo retomáveis. O ensaio em
+PostgreSQL 17.11 foi executado e passou; a seção histórica abaixo descreve a
+validação da entrega inicial até `6149619`.
+
 Esta entrega implementa mecanismos nativos dentro do Multilang: domínio,
 persistência, serviços, importação, ranking, geração, áudio, Anki, histórico,
 adaptação, API, jobs, migração e infraestrutura de verificação. **Isso não
 certifica um rollout completo dos 22 idiomas.** Produção permanece desligada:
-faltam fontes/licenças e avaliações linguísticas independentes por idioma,
+faltam aprovação das fontes/licenças e avaliações linguísticas independentes por idioma,
 conteúdo real aprovado e comparação Anki nos quatro clientes. Não foram
 fabricados receipts, 66 mil verbetes aprovados nem resultados de clientes reais.
 
@@ -95,7 +102,7 @@ foi adiado por decisão expressa do usuário e não foi configurado/executado**.
 | ROUTE-01, LOAD-01, DEPEND-01 | Destino/rank herdado, contagens reconciliadas, pré-requisitos e módulos | Aceitação pedagógica e comportamento real no Anki |
 | DEF-01, DISPLAY-01 | Conteúdo meaning-first, contexto da forma e resposta estruturada | Revisão especialista de exemplos/definições |
 | GUID-01 | Identidade semântica independente de rank/job/provider; aliases explícitos | Decisões de merge/split e provas de migração de GUIDs reais |
-| ANKI-01 | Dois protótipos; gate de decisão assinada e artefatos por cliente/cenário | Comparação real A/B e escolha do modelo |
+| ANKI-01 | Dois protótipos; B preserva os fields existentes; A é experimental e bloqueado para produção | Aceitação real nos clientes; A não atende à restrição posterior de fields |
 | RANK-01 | Pesos/shares, ln/ppm/dispersão, spans, precisão e manifests reproduzíveis | Corpora redistribuíveis, pesos/rubricas aprovados |
 | FORM-04 | Score/política/thresholds, deduplicação, previsão integral sem truncamento | Evidência linguística dos critérios por idioma |
 | AUDIO-01/02 | Texto/contexto/SSML/voz/provider/modelo exatos; cache e hashes | Licença, custo autorizado e revisão de pronúncia |
@@ -104,9 +111,10 @@ foi adiado por decisão expressa do usuário e não foi configurado/executado**.
 | EVAL-01 | Datasets/estratos/métricas/thresholds/baselines e bloqueios de regressão | Goldens e avaliação independente por idioma |
 
 Os 22 perfis modernos e Latim são representados, mas começam desabilitados.
-O analyzer de evidência explícita não se apresenta como analyzer linguístico
-qualificado para todos os idiomas. Não foram produzidos os mínimos de 120/200
-goldens por idioma nem os 66.000 itens Core aprovados exigidos para o rollout.
+O complemento instalou modelos e preparou fontes reais para os 22 idiomas
+modernos. Os 200 casos UD por língua são diagnóstico, sem qualificação automática:
+não substituem os mínimos de goldens independentes exigidos pelo contrato.
+Não foram produzidos os 66.000 itens Core aprovados exigidos para o rollout.
 Os testes sintéticos comprovam invariantes de software e escala, apenas.
 
 ## Migração realizada
@@ -127,7 +135,7 @@ Nenhuma base real foi atualizada e nenhum histórico Anki foi reescrito. O
 processo de aplicação exige evidência e confirmação vinculada à prévia.
 [Migração](docs/migration.md) documenta os comandos e as limitações.
 
-## Revisão e validação
+## Revisão e validação da entrega inicial até `6149619`
 
 A revisão independente reproduziu dois bugs e orientou regressões permanentes:
 replay de uma importação antiga podia restaurar a fonte anterior como atual;
@@ -149,8 +157,8 @@ contra a wheel, além das migrations; wheel e sdist excluem `.planning`, `.env`,
 os documentos de entrada e bytecode. Build Python, lint Ruff e build estrito
 MkDocs passaram.
 
-**Resultado consolidado: 2.307 testes aprovados e 1 ignorado, entre 2.308
-nodeids atuais; nenhum caso ficou sem resultado.** A verificação foi feita em
+**Resultado histórico: 2.307 testes aprovados e 1 ignorado, entre 2.308
+nodeids daquela entrega; nenhum caso ficou sem resultado.** A verificação foi feita em
 lotes, não em uma única execução verde. A primeira execução paralela foi
 interrompida após 2.230 aprovações e 41 falhas: incluía módulos carregados antes
 das últimas correções, fixtures antigas e timeouts sob contenção/sandbox.
@@ -162,7 +170,7 @@ O cruzamento nominal dos três XMLs com a coleta final está em
 
 | Verificação | Resultado observado |
 |---|---|
-| Cobertura nominal da coleta atual | 2.307 aprovados, 1 ignorado, 0 pendentes |
+| Cobertura nominal da coleta inicial | 2.307 aprovados, 1 ignorado, 0 pendentes |
 | Contratos de idioma/ranking/conteúdo/áudio/Anki | 78 aprovados no lote focado |
 | Scanner de IDs, cache e invalidação | 14 aprovados; edição com mesmo tamanho/mtime e mudança de registro continuam detectadas |
 | Migração/backup/restore | Paridade de schema, autorização, ensaio, rollback e proteção de dados aprovados; também exercitados pela CLI e wheel |
@@ -177,12 +185,77 @@ final, nos mesmos 364 arquivos, foi **8,12 s na primeira leitura e 0,33 s na
 repetição**. A CI separa migrações, regressões e integração/escala, evita trabalho
 duplicado e preserva os relatórios mesmo quando uma etapa falha.
 
-O teste PostgreSQL local depende de duas URLs de bancos descartáveis e foi
-ignorado por ausência dessa configuração. Há um job CI separado com PostgreSQL
-17, `pg_dump`, `pg_restore`, bancos isolados e ensaio completo; sua execução no
-GitHub não foi observada nesta entrega.
+Na entrega inicial, o teste PostgreSQL foi ignorado por ausência das duas URLs
+de bancos descartáveis. No complemento, foi executado com PostgreSQL 17.11,
+`pg_dump`, `pg_restore` e dois bancos locais isolados, e passou. O ensaio também
+revelou uma diferença real na representação de CHECKs, corrigida com normalização
+restrita e testes de equivalência e rejeição. A execução do job CI no GitHub
+continua sem observação; a prova aqui é local.
 
-## Commits por domínio
+## Validação do complemento linguístico de 12/09/2026
+
+O complemento preserva os nomes e a ordem exata dos fields por modelo existente.
+`word` contém a forma estudada; lema, sentido, análise e vínculo entre formas
+ficam no banco e no manifest. O Modelo B reutiliza os templates atuais, inclusive
+leituras japonesas e chinesas. O Modelo A permanece experimental e bloqueado
+para produção por não atender à restrição posterior de fields.
+
+Foram implementados aquisição e leitura limitada de fontes, manifests imutáveis,
+gestão de modelos locais, análise contextual, preparação de candidatos, avaliação,
+entrada de revisão e importação de sentidos/formas com evidências assinadas.
+O dataset preserva somente as formas de seu bundle; o bundle inteiro é guardado
+para revalidação. A geração agora pode salvar um rascunho original, aguardar os
+vínculos contextuais revisados e concluir sem repetir a chamada ao provedor.
+
+Os resultados reais são 22 modelos disponíveis, 24 lotes, 260.439 candidatos
+lexicais, 71.940 registros de possíveis flexões e 4.400 frases de diagnóstico.
+Não equivalem a cards aprovados. O [relatório por língua](docs/multilingual-readiness.md)
+expõe as recusas de alinhamento, divergências, limitações das fontes, hashes e
+entradas de revisão ainda necessárias.
+
+| Verificação do complemento | Resultado observado |
+|---|---|
+| Integração e regressões nativas/linguísticas | 299 aprovados, 0 falhas e 0 ignorados, em 151,24 s |
+| Serviço de migração completo | 33 aprovados em 307,19 s; segunda revisão independente também passou os 33 |
+| PostgreSQL real | 1 aprovado em 32,41 s, PostgreSQL 17.11 e duas bases descartáveis |
+| Escala sintética | 3 aprovados em 245,64 s; 66.000 identidades e exportações A/B de 6000 cards |
+| Núcleo Anki 26.8.1 | 11 notas, cinco modelos de fields; importação, renderização, revisão e reimportação preservaram IDs, agendamento e histórico |
+| Distribuição | Wheel e sdist gerados; 209 arquivos de código/recursos iguais à árvore, nenhuma inclusão proibida; CLI da wheel verificada fora do checkout |
+| Qualidade estática | Escopo de Ruff da CI aprovado; `git diff --check` e `uv lock --check --offline` aprovados |
+| Documentação | `mkdocs build --strict` aprovado |
+
+Esses lotes são separados: não se somam testes focados repetidos às contagens
+da suíte de 299. A varredura Ruff do repositório inteiro ainda encontra problemas
+preexistentes fora do escopo da CI; não foi declarada limpa. O GitHub Actions
+não foi executado remotamente nesta entrega.
+
+A primeira execução conjunta ficou bloqueada na sandbox. A investigação
+reproduziu o problema em um portal AnyIO mínimo, sem Multilang; os mesmos cinco
+testes HTTP passaram fora da sandbox. A execução bloqueada foi encerrada e a
+suíte completa de 299 foi repetida fora dela, com timeouts, sem rede nem chamadas
+a provedores. Nenhuma correção de produção foi feita para mascarar esse problema.
+
+Evidências locais principais: `.multilang/verification/native-completion-tests.xml`,
+`native-completion-scale.xml`, `postgresql/run/native-postgresql.xml`,
+`anki-backend/report.json`, `wheel-completion-report.json` e
+`real-languages/`. O [guia linguístico](docs/vocabulary-preparation.md)
+documenta os comandos e a distinção entre biblioteca instalada, material preparado
+e conteúdo efetivamente aprovado. Nenhuma chamada paga ou deploy foi executado.
+
+## Commits do complemento por domínio
+
+| Commit | Domínio |
+|---|---|
+| `82f1a2a` | Fingerprint PostgreSQL e regressões de restauração |
+| `810dfd5` | Fields existentes, formas semânticas e testes Anki |
+| `20d76f8` | Fontes/modelos de 22 línguas, revisão, rascunhos, runtime e testes |
+
+Este relatório, o guia, o inventário e os resultados agregados compõem o commit
+de documentação do complemento. São 52 arquivos novos ou modificados nesta
+etapa. Os arquivos preexistentes do usuário e sua alteração staged foram
+conferidos por hash e preservados. Nenhum push, merge ou deploy foi executado.
+
+## Commits da entrega inicial por domínio
 
 | Commit | Domínio |
 |---|---|
@@ -207,9 +280,10 @@ deploy foi executado.
 
 1. Qualificar individualmente os analyzers, corpora, fontes/licenças e goldens;
    assinar baselines e policies antes de habilitar cada capacidade.
-2. Executar a matriz ANKI-01 em quatro clientes. O Modelo A ainda precisa de
-   prova de ordinais estáveis com formas dinâmicas; o Modelo B usa notas
-   separadas e não promete burying nativo de siblings.
+2. Executar a matriz ANKI-01 nos quatro clientes. O Modelo B preserva os fields
+   e usa notas separadas; não promete burying nativo de siblings. O Modelo A
+   permanece experimental e incompatível com a restrição de fields. A prova
+   local com o núcleo Anki não representa aprovação dos quatro aplicativos.
 3. Congelar Core e expansão revisados, com todas as formas obrigatórias e
    conteúdo/áudio aprovados; não transformar os fixtures em dados de produção.
 4. Definir orçamento, providers/vozes e distribuição de mídia para geração real.
@@ -218,7 +292,7 @@ deploy foi executado.
    conforme a decisão posterior do usuário.
 5. Ensaiar backup/restore na instalação PostgreSQL de destino, revisar aliases
    reais e só então aplicar a prévia confirmada. Teste local SQLite não substitui
-   a prova operacional no banco de destino.
+   a prova operacional no banco de destino, mesmo após o ensaio PostgreSQL local.
 
 Entrega de jobs é pelo menos uma vez: crash após efeito externo pode causar
 retry. Use os caches/idempotência e mantenha budgets. SQLite deve usar um worker

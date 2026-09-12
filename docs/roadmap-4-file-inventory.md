@@ -128,6 +128,65 @@ Arquivos novos ou modificados pela tarefa. Não inclui os arquivos locais preexi
 - `tests/test_settings.py`
 - `uv.lock`
 
+## Complemento linguístico de 12/09/2026
+
+Este complemento parte de `6149619`. Os seguintes arquivos foram acrescentados
+ou atualizados; fontes, modelos e relatórios operacionais brutos permanecem
+locais em `.multilang`, sem inclusão no pacote ou nos commits.
+
+- `.env.example`
+- `.github/workflows/ci.yml`
+- `README.md`
+- `ROADMAP_4_NATIVE_IMPLEMENTATION.md`
+- `docs/multilingual-completion-design.md`
+- `docs/multilingual-completion-plan.md`
+- `docs/multilingual-readiness.json`
+- `docs/multilingual-readiness.md`
+- `docs/multilingual-source-research.md`
+- `docs/roadmap-4-file-inventory.md`
+- `docs/vocabulary-preparation.md`
+- `mkdocs.yml`
+- `pyproject.toml`
+- `src/multilang/domain/anki_semantics.py`
+- `src/multilang/domain/content.py`
+- `src/multilang/native_cli.py`
+- `src/multilang/native_runtime.py`
+- `src/multilang/repositories/native_repository.py`
+- `src/multilang/resources/vocabulary_sources.json`
+- `src/multilang/services/anki_id_registry.py`
+- `src/multilang/services/content_drafts.py`
+- `src/multilang/services/contextual_bindings.py`
+- `src/multilang/services/contextual_morphology.py`
+- `src/multilang/services/language_models.py`
+- `src/multilang/services/native_content.py`
+- `src/multilang/services/native_migration.py`
+- `src/multilang/services/semantic_anki.py`
+- `src/multilang/services/semantic_anki_fields.py`
+- `src/multilang/services/vocabulary_acquisition.py`
+- `src/multilang/services/vocabulary_evaluation.py`
+- `src/multilang/services/vocabulary_preparation.py`
+- `src/multilang/services/vocabulary_review.py`
+- `src/multilang/services/vocabulary_sources.py`
+- `src/multilang/services/wordnet_sources.py`
+- `src/multilang/settings.py`
+- `src/multilang/vocabulary_cli.py`
+- `tests/integration/test_native_application.py`
+- `tests/services/test_anki_id_registry.py`
+- `tests/services/test_contextual_bindings.py`
+- `tests/services/test_contextual_morphology.py`
+- `tests/services/test_language_models.py`
+- `tests/services/test_native_anki_learning.py`
+- `tests/services/test_native_content_audio.py`
+- `tests/services/test_native_migration.py`
+- `tests/services/test_semantic_anki_fields.py`
+- `tests/services/test_vocabulary_acquisition.py`
+- `tests/services/test_vocabulary_evaluation.py`
+- `tests/services/test_vocabulary_preparation.py`
+- `tests/services/test_vocabulary_review.py`
+- `tests/services/test_vocabulary_sources.py`
+- `tests/services/test_wordnet_sources.py`
+- `uv.lock`
+
 ## Evidências coreanas preservadas
 
 Foram acrescentados 385 arquivos copiados byte a byte e um manifest em `data/korean_foundations/evidence`. O inventário integral, com o nome e SHA-256 de cada arquivo copiado, está em `data/korean_foundations/evidence/native-import-manifest.json`. São 233 WAV, 92 PNG, 55 JSON e 5 Markdown; os originais foram preservados.
