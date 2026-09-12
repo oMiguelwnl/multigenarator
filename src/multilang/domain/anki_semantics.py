@@ -231,6 +231,9 @@ class SemanticManifestEntry(BaseModel):
     prerequisite_card_id: str | None
     inventory: str
     deck_edition_id: str
+    content_version_id: str | None = None
+    word_audio_version_id: str | None = None
+    sentence_audio_version_id: str | None = None
 
 
 class SemanticExportResult(BaseModel):
@@ -240,6 +243,7 @@ class SemanticExportResult(BaseModel):
     prototype: bool
     native_sibling_structure: bool
     client_acceptance_proven: bool = False
+    field_contract_compatible: bool = False
     manifest: tuple[SemanticManifestEntry, ...]
     artifact_sha256: str
     composition_sha256: str

@@ -51,10 +51,16 @@ def test_baseline_contains_every_current_production_declaration_once() -> None:
     actual = {
         (entry.family, entry.role, entry.kind.value): entry.value
         for entry in ANKI_ID_REGISTRY
-        if entry.family != "native_prototype"
+        if entry.family not in {"native_prototype", "native_fields"}
     }
 
     assert actual == EXPECTED_BASELINE
+
+
+def test_semantic_field_models_are_separate_from_legacy_and_prototype_ids():
+    native = [entry for entry in ANKI_ID_REGISTRY if entry.family == "native_fields"]
+    assert len(native) == 23 * 3 * 4
+    assert len({entry.value for entry in ANKI_ID_REGISTRY}) == len(ANKI_ID_REGISTRY)
 
 
 def test_native_prototype_allocations_do_not_change_legacy_ids_or_collide() -> None:
@@ -246,3 +252,14 @@ def test_cached_guard_keeps_nonreserved_registration_usage(tmp_path: Path) -> No
     entry = AnkiIdRegistration("fixture", "model", AnkiIdKind.MODEL, 8_888_888_887)
     assert scan_anki_id_registry_paths((source,), registry=(entry,)).passed
     assert scan_anki_id_registry_paths((source,), registry=(entry,)).passed
+
+
+def test_native_model_resolver_is_bounded_to_registered_contracts():
+    from multilang.services.anki_id_registry import native_anki_model_id
+
+    first = native_anki_model_id(language="en", source_type="frequency", role="recognition")
+    second = native_anki_model_id(language="pt", source_type="frequency", role="recognition")
+    assert first != second
+    for changed in ({"language": "xx"}, {"source_type": "unknown"}, {"role": "unbounded"}):
+        with pytest.raises(ValueError, match="unregistered"):
+            native_anki_model_id(**({"language": "en", "source_type": "frequency", "role": "recognition"} | changed))

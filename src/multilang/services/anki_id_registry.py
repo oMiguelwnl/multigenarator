@@ -76,6 +76,13 @@ ANKI_ID_REGISTRY: tuple[AnkiIdRegistration, ...] = (
     AnkiIdRegistration("native_prototype", "family_model", AnkiIdKind.MODEL, 1_762_802_001),
     AnkiIdRegistration("native_prototype", "separate_model", AnkiIdKind.MODEL, 1_762_802_002),
     *(
+        AnkiIdRegistration("native_fields", f"{language}:{source}:{role}", AnkiIdKind.MODEL,
+            1_762_820_000 + language_index * 100 + source_index * 10 + role_index, reserved=True)
+        for language_index, language in enumerate(("pt", "es", "en", "fr", "de", "el", "it", "pl", "tr", "ro", "ru", "nl", "da", "nb", "sv", "fi", "hu", "cs", "hr", "la", "ja", "zh", "ko"))
+        for source_index, source in enumerate(("frequency", "word-list", "kindle-highlights"))
+        for role_index, role in enumerate(("recognition", "reverse", "listening", "cloze"), start=1)
+    ),
+    *(
         AnkiIdRegistration("native_prototype", f"{language}:{destination}", AnkiIdKind.DECK,
             1_762_810_000 + language_index * 10 + destination_index, reserved=True)
         for language_index, language in enumerate(("pt", "es", "en", "fr", "de", "el", "it", "pl", "tr", "ro", "ru", "nl", "da", "nb", "sv", "fi", "hu", "cs", "hr", "la", "ja", "zh", "ko"))
@@ -183,6 +190,15 @@ def registry_id(*, family: str, role: str, kind: AnkiIdKind) -> int:
         if entry.family == family and entry.role == role and entry.kind is kind:
             return entry.value
     raise ValueError(f"unregistered Anki ID: {family}/{role}/{kind.value}")
+
+
+def native_anki_model_id(*, language: str, source_type: str, role: str) -> int:
+    """Resolve only preallocated exact field/template contracts."""
+    key = f"{language}:{source_type}:{role}"
+    for entry in ANKI_ID_REGISTRY:
+        if entry.family == "native_fields" and entry.kind is AnkiIdKind.MODEL and entry.role == key:
+            return entry.value
+    raise ValueError("unregistered native Anki model contract")
 
 
 def native_anki_deck_id(destination: str) -> int:

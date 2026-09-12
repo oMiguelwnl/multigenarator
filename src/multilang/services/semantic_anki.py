@@ -28,6 +28,7 @@ from multilang.services.anki_id_registry import (
 )
 from multilang.services.native_audio import audio_artifact_hash, reusable_audio_version
 from multilang.services.native_content import render_plain_content, validate_target_span
+from multilang.services.semantic_anki_fields import semantic_field_note
 
 
 def project_cards(
@@ -196,7 +197,7 @@ def _render_card(card: SemanticCard, *, prototype: bool) -> tuple[str, str, list
             card.display_text if card.role == "headword" else card.context_cue
         )
         back = render_plain_content(
-            f"Prototype only: {card.parent_lemma} / {card.display_text} / {card.sense_id}"
+            f"Prototype only: {card.parent_lemma} / {card.display_text}"
         )
         return front, back, media
     content = card.content.content
@@ -225,12 +226,10 @@ def _render_card(card: SemanticCard, *, prototype: bool) -> tuple[str, str, list
         for value in (
             card.display_text,
             content.definition,
+            content.explanation,
             content.example_sentence,
             content.translation,
             f"Lemma: {card.parent_lemma}",
-            f"Role: {card.role}",
-            f"Analysis: {card.morphological_analysis_id or 'headword'}",
-            f"Sense: {card.sense_id}",
         )
     )
     back += "<br>" + word_sound + "<br>" + sentence_sound
@@ -272,6 +271,8 @@ def export_semantic_anki(
         decision.require_verified(evidence_verifier)
         if decision.selected_model != model:
             raise ValueError("ANKI-01 rejected model cannot be a production fallback")
+        if model == "A":
+            raise ValueError("topology A is experimental: family slots violate the exact field contract")
     cards = tuple(cards)
     if not cards:
         raise ValueError("cannot export empty semantic edition")
@@ -341,8 +342,12 @@ def export_semantic_anki(
         )
         values = [""] * (slots * 2 + 1)
         for ordinal, card in enumerate(group):
-            front, back, card_media = _render_card(card, prototype=prototype)
-            values[ordinal * 2 : ordinal * 2 + 2] = [front, back]
+            if model == "B":
+                note_model, values, card_media = semantic_field_note(card, prototype=prototype)
+                registered_model = note_model.model_id
+            else:
+                front, back, card_media = _render_card(card, prototype=prototype)
+                values[ordinal * 2 : ordinal * 2 + 2] = [front, back]
             for path in card_media:
                 if path.name in media and audio_artifact_hash(
                     media[path.name]
@@ -366,13 +371,16 @@ def export_semantic_anki(
                     prerequisite_card_id=card.prerequisite_card_id,
                     inventory=card.inventory,
                     deck_edition_id=card.deck_edition_id,
+                    content_version_id=card.content.version_id if card.content else None,
+                    word_audio_version_id=card.word_audio.version_id if card.word_audio else None,
+                    sentence_audio_version_id=card.sentence_audio.version_id if card.sentence_audio else None,
                 )
             )
         note = genanki.Note(
             model=note_model,
             fields=values,
             guid=note_guid,
-            tags=["multilang", f"native_prototype_{model}"],
+            tags=["multilang", f"native_{'prototype' if prototype else 'verified'}_{model}"],
         )
         decks[parent.destination].add_note(note)
     output_path = Path(output_path)
@@ -399,6 +407,7 @@ def export_semantic_anki(
         prototype=prototype,
         native_sibling_structure=model == "A",
         client_acceptance_proven=not prototype,
+        field_contract_compatible=model == "B",
         manifest=tuple(manifest),
         artifact_sha256=audio_artifact_hash(output_path),
         composition_sha256=canonical_content_hash([entry.model_dump() for entry in manifest]),

@@ -11,9 +11,12 @@ from pydantic import (
     ConfigDict,
     Field,
     SerializerFunctionWrapHandler,
+    computed_field,
     model_serializer,
     model_validator,
 )
+
+from multilang.domain.language_profiles import NativeContract
 
 
 class FrozenContentModel(BaseModel):
@@ -22,9 +25,7 @@ class FrozenContentModel(BaseModel):
 
 def canonical_content_hash(value: object) -> str:
     return sha256(
-        json.dumps(
-            value, ensure_ascii=False, sort_keys=True, separators=(",", ":")
-        ).encode()
+        json.dumps(value, ensure_ascii=False, sort_keys=True, separators=(",", ":")).encode()
     ).hexdigest()
 
 
@@ -36,9 +37,7 @@ class ContentRequest(FrozenContentModel):
     lemma: str = Field(min_length=1, max_length=255)
     display_text: str = Field(min_length=1, max_length=1000)
     sense_id: str = Field(min_length=1, max_length=255)
-    morphological_analysis_id: str | None = Field(
-        default=None, min_length=1, max_length=255
-    )
+    morphological_analysis_id: str | None = Field(default=None, min_length=1, max_length=255)
     context_cue: str = Field(min_length=1, max_length=4000)
     namespace: str = Field(min_length=1, max_length=255)
     deck_edition_id: str = Field(min_length=1, max_length=255)
@@ -56,18 +55,10 @@ class ContentRequest(FrozenContentModel):
     @model_validator(mode="after")
     def namespace_policy(self) -> ContentRequest:
         if self.namespace == "core":
-            if (
-                self.known_concept_ids
-                or self.private_context
-                or self.private_context_authorized
-            ):
-                raise ValueError(
-                    "Core content cannot use personal knowledge or context"
-                )
+            if self.known_concept_ids or self.private_context or self.private_context_authorized:
+                raise ValueError("Core content cannot use personal knowledge or context")
         elif not self.namespace.startswith("user:") or len(self.namespace) <= 5:
-            raise ValueError(
-                "content namespace must be core or an explicit user namespace"
-            )
+            raise ValueError("content namespace must be core or an explicit user namespace")
         if self.private_context and not self.private_context_authorized:
             raise ValueError("private context requires explicit authorization")
         return self
@@ -81,6 +72,20 @@ class GeneratedContent(FrozenContentModel):
     exercises: tuple[str, ...] = Field(default=(), max_length=10)
 
 
+class ContentDraft(NativeContract):
+    """Immutable provider output awaiting contextual matching; never an approved card."""
+
+    request: ContentRequest
+    content: GeneratedContent
+    provider: str = Field(min_length=1, max_length=128)
+    model_version: str = Field(min_length=1, max_length=128)
+
+    @computed_field
+    @property
+    def draft_sha256(self) -> str:
+        return canonical_content_hash(self.model_dump(mode="json", exclude={"draft_sha256"}))
+
+
 class TargetMatchEvidence(FrozenContentModel):
     lexical_identity_id: str
     sense_id: str
@@ -92,10 +97,13 @@ class TargetMatchEvidence(FrozenContentModel):
     evidence_sha256: str = Field(pattern=r"^[0-9a-f]{64}$")
     # Matcher-verified Unicode character offsets into the exact example sentence;
     # the end is exclusive. No tokenizer or substring heuristic may infer them.
-    target_span: tuple[
-        Annotated[int, Field(ge=0, strict=True)],
-        Annotated[int, Field(gt=0, strict=True)],
-    ] | None = None
+    target_span: (
+        tuple[
+            Annotated[int, Field(ge=0, strict=True)],
+            Annotated[int, Field(gt=0, strict=True)],
+        ]
+        | None
+    ) = None
 
     @model_serializer(mode="wrap")
     def serialize_verified_span(self, handler: SerializerFunctionWrapHandler) -> dict:
@@ -113,6 +121,26 @@ class ContentLimits(FrozenContentModel):
     max_response_bytes: int = Field(default=32000, ge=1, le=1000000)
 
 
+class ContentPresentation(FrozenContentModel):
+    """Source-backed readings of the exact request word and example sentence.
+
+    This enrichment belongs to the reviewed immutable version; generators must
+    not fabricate it. Provenance is retained here, never in Anki card fields.
+    """
+
+    source_id: str = Field(min_length=1, max_length=255)
+    source_sha256: str = Field(pattern=r"^[0-9a-f]{64}$")
+    ipa: str | None = Field(default=None, max_length=1000)
+    word_reading: str | None = Field(default=None, max_length=4000)
+    word_romaji: str | None = Field(default=None, max_length=4000)
+    sentence_furigana: str | None = Field(default=None, max_length=4000)
+    sentence_romaji: str | None = Field(default=None, max_length=4000)
+    mandarin_word_pinyin: str | None = Field(default=None, max_length=4000)
+    mandarin_word_traditional: str | None = Field(default=None, max_length=4000)
+    mandarin_sentence_pinyin: str | None = Field(default=None, max_length=4000)
+    mandarin_sentence_traditional: str | None = Field(default=None, max_length=4000)
+
+
 class ContentVersion(FrozenContentModel):
     request: ContentRequest
     content: GeneratedContent
@@ -123,6 +151,14 @@ class ContentVersion(FrozenContentModel):
     review_status: Literal["pending", "approved", "rejected"] = "pending"
     review_receipt_sha256: str | None = Field(default=None, pattern=r"^[0-9a-f]{64}$")
     independent_reviewer: str | None = None
+    presentation: ContentPresentation | None = None
+
+    @model_serializer(mode="wrap")
+    def serialize_presentation(self, handler: SerializerFunctionWrapHandler) -> dict:
+        payload = handler(self)
+        if self.presentation is None:
+            payload.pop("presentation", None)
+        return payload
 
     @model_validator(mode="after")
     def independent_review(self) -> ContentVersion:
@@ -159,9 +195,7 @@ class CanonicalContentEdition(FrozenContentModel):
             ):
                 raise ValueError("canonical edition requires same-edition Core content")
             if version.review_status != "approved":
-                raise ValueError(
-                    "canonical edition requires independent approved content"
-                )
+                raise ValueError("canonical edition requires independent approved content")
             if version.request.card_id in ids:
                 raise ValueError("duplicate card content in canonical edition")
             ids.add(version.request.card_id)
@@ -172,16 +206,12 @@ class CanonicalContentEdition(FrozenContentModel):
         return canonical_content_hash(
             {
                 "edition": self.deck_edition_id,
-                "versions": sorted(
-                    version.version_id for version in self.content_versions
-                ),
+                "versions": sorted(version.version_id for version in self.content_versions),
                 "approval": self.approval_receipt_sha256,
             }
         )
 
-    def diff(
-        self, other: CanonicalContentEdition
-    ) -> dict[str, tuple[str | None, str | None]]:
+    def diff(self, other: CanonicalContentEdition) -> dict[str, tuple[str | None, str | None]]:
         old = {v.request.card_id: v.version_id for v in self.content_versions}
         new = {v.request.card_id: v.version_id for v in other.content_versions}
         return {

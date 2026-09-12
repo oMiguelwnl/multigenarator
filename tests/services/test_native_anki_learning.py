@@ -135,7 +135,7 @@ def test_both_prototypes_write_real_decks_cards_and_manifest(tmp_path, model, no
         models = json.loads(connection.execute("select models from col").fetchone()[0])
         for exported_model in models.values():
             assert exported_model["flds"][-1]["name"] == "Image"
-            assert all("{{Image}}" in template["afmt"] for template in exported_model["tmpls"])
+            assert all("{{Image}}" in template["afmt"] + template["qfmt"] for template in exported_model["tmpls"])
         assert {decks[str(deck_id)]["name"] for deck_id in actual_ids} == {"en::Frequency::Level 1"}
     assert result.native_sibling_structure is (model == "A")
     assert not result.client_acceptance_proven
