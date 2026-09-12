@@ -23,6 +23,8 @@ from multilang.db.provisioning import ensure_database_schema, find_project_root
 
 # Import the models module so every table is registered on Base.metadata.
 from multilang.db import models as _models  # noqa: F401
+from multilang.db import native_models as _native_models  # noqa: F401
+from multilang.db import task_models as _task_models  # noqa: F401
 
 _PROJECT_ROOT = Path(__file__).resolve().parents[1]
 _KOREAN_IDENTITY_REVISION = "20260804_17"
@@ -108,7 +110,18 @@ def _alembic_config(database_url: str) -> Config:
 
 def _migrate(tmp_path: Path, name: str) -> str:
     database_url = f"sqlite:///{tmp_path / name}"
-    command.upgrade(_alembic_config(database_url), "head")
+    config = _alembic_config(database_url)
+    config.attributes["explicit_database_url"] = True
+    command.upgrade(config, _GRAMMAR_PERSONAL_REVISION)
+    from multilang.services.native_migration import BackupService, SchemaAuthorization
+    engine = create_engine(database_url)
+    try:
+        backup = BackupService(engine).snapshot(tmp_path / f"{name}-backup")
+        config.attributes["native_authorization"] = SchemaAuthorization(
+            backup.source_locator_sha256, backup.snapshot_sha256, "isolated_rehearsal")
+        command.upgrade(config, "head")
+    finally:
+        engine.dispose()
     return database_url
 
 
@@ -175,10 +188,12 @@ def test_card_exports_mandarin_columns_are_migrated(tmp_path: Path) -> None:
     } <= columns
 
 
-def test_grammar_personal_revision_is_the_sole_linear_head() -> None:
+def test_native_revision_is_the_sole_linear_head() -> None:
     heads = ScriptDirectory.from_config(_alembic_config("sqlite://")).get_heads()
 
-    assert heads == [_GRAMMAR_PERSONAL_REVISION]
+    assert heads == ["20260912_20"]
+    revision = ScriptDirectory.from_config(_alembic_config("sqlite://")).get_revision(heads[0])
+    assert revision.down_revision == _GRAMMAR_PERSONAL_REVISION
 
 
 def test_frequency_text_audio_schema_has_expected_evidence_columns_without_sensitive_names() -> None:
@@ -412,8 +427,10 @@ def test_ensure_database_schema_creates_sqlite_tables_in_place() -> None:
     finally:
         engine.dispose()
 
-    # SQLite path must produce exactly the ORM tables via create_all.
-    assert set(Base.metadata.tables.keys()) <= tables
+    legacy_tables = {table.name for table in Base.metadata.tables.values() if not table.info.get("native")}
+    native_tables = {table.name for table in Base.metadata.tables.values() if table.info.get("native")}
+    assert legacy_tables <= tables
+    assert not native_tables & tables
 
 
 def test_project_root_is_locatable_for_alembic() -> None:

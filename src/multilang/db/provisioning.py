@@ -25,6 +25,8 @@ from multilang.db.base import Base
 # Import the models module so every table is registered on ``Base.metadata``.
 from multilang.db import models as _models  # noqa: F401
 
+LEGACY_SCHEMA_REVISION = "20260828_19"
+
 
 class SchemaProvisioningError(RuntimeError):
     """Raised when the schema cannot be provisioned for a non-SQLite backend."""
@@ -59,7 +61,9 @@ def run_migrations(database_url: str) -> None:
         )
     from alembic import command
 
-    command.upgrade(_alembic_config(database_url, project_root), "head")
+    config = _alembic_config(database_url, project_root)
+    config.attributes["explicit_database_url"] = True
+    command.upgrade(config, LEGACY_SCHEMA_REVISION)
 
 
 def ensure_database_schema(engine: Engine, database_url: str) -> None:
@@ -70,7 +74,8 @@ def ensure_database_schema(engine: Engine, database_url: str) -> None:
     """
 
     if engine.dialect.name == "sqlite":
-        Base.metadata.create_all(engine)
+        Base.metadata.create_all(engine, tables=[table for table in Base.metadata.sorted_tables
+                                               if not table.info.get("native")])
         return
     run_migrations(database_url)
 

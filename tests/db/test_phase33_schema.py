@@ -254,10 +254,11 @@ def _alembic_config(database_url: str) -> Config:
     config = Config(str(_PROJECT_ROOT / "alembic.ini"))
     config.set_main_option("script_location", str(_PROJECT_ROOT / "alembic"))
     config.set_main_option("sqlalchemy.url", database_url)
+    config.attributes["explicit_database_url"] = True
     return config
 
 
-def _migrate(tmp_path: Path, name: str, revision: str = "head") -> str:
+def _migrate(tmp_path: Path, name: str, revision: str = _PHASE33_REVISION) -> str:
     database_url = f"sqlite:///{tmp_path / name}"
     command.upgrade(_alembic_config(database_url), revision)
     return database_url
@@ -579,10 +580,11 @@ def test_phase33_schema_upgrades_to_one_head_and_round_trips(tmp_path: Path) -> 
         engine.dispose()
 
 
-def test_phase33_revision_is_the_sole_linear_head() -> None:
-    heads = ScriptDirectory.from_config(_alembic_config("sqlite://")).get_heads()
-
-    assert heads == [_PHASE33_REVISION]
+def test_phase33_revision_is_preserved_in_the_linear_native_history() -> None:
+    scripts = ScriptDirectory.from_config(_alembic_config("sqlite://"))
+    assert scripts.get_heads() == ["20260912_20"]
+    assert scripts.get_revision("20260912_20").down_revision == _PHASE33_REVISION
+    assert scripts.get_revision(_PHASE33_REVISION).down_revision == _PHASE32_REVISION
 
 
 def _reservation_values(
