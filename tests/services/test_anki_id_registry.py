@@ -14,7 +14,6 @@ from multilang.services.anki_id_registry import (
     validate_anki_id_registry,
 )
 
-
 EXPECTED_BASELINE = {
     ("core", "frequency_model", "model"): 1_602_300_501,
     ("core", "export_deck", "deck"): 1_602_300_502,
@@ -167,3 +166,83 @@ def test_prewrite_guard_raises_without_touching_destination(tmp_path: Path) -> N
         assert_anki_id_registry_clean(roots=(bad_root,))
 
     assert destination.read_bytes() == b"sentinel"
+
+
+def test_repeated_guard_reuses_analysis_but_detects_same_stat_content_changes(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    import os
+
+    import multilang.services.anki_id_registry as registry_module
+
+    source = tmp_path / "source.py"
+    changed = "UNKNOWN_MODEL_ID = 8_888_888_888\n"
+    source.write_text("VALUE = 1".ljust(len(changed) - 1) + "\n", encoding="utf-8")
+    original_stat = source.stat()
+    entry = AnkiIdRegistration("fixture", "model", AnkiIdKind.MODEL, 8_888_888_887, reserved=True)
+    original_parse = registry_module.ast.parse
+    parsed = []
+
+    def counted_parse(*args, **kwargs):
+        parsed.append(kwargs.get("filename"))
+        return original_parse(*args, **kwargs)
+
+    monkeypatch.setattr(registry_module.ast, "parse", counted_parse)
+    assert scan_anki_id_registry_paths((source,), registry=(entry,)).passed
+    assert scan_anki_id_registry_paths((source,), registry=(entry,)).passed
+    assert len(parsed) == 1, "unchanged source must not be parsed again by every export"
+
+    source.write_text(changed, encoding="utf-8")
+    os.utime(source, ns=(original_stat.st_atime_ns, original_stat.st_mtime_ns))
+    assert source.stat().st_size == original_stat.st_size
+    result = scan_anki_id_registry_paths((source,), registry=(entry,))
+    assert any(issue.code == "unknown_declaration" for issue in result.issues)
+    assert len(parsed) == 2
+
+
+def test_cached_guard_rechecks_registry_changes_and_data_bytes(tmp_path: Path) -> None:
+    import os
+
+    source = tmp_path / "source.py"
+    source.write_text(
+        "registry_id(family='fixture', role='model', kind=AnkiIdKind.MODEL)\n",
+        encoding="utf-8",
+    )
+    entry = AnkiIdRegistration("fixture", "model", AnkiIdKind.MODEL, 8_888_888_887, reserved=True)
+    assert scan_anki_id_registry_paths((source,), registry=(entry,)).passed
+    other = AnkiIdRegistration("changed", "model", AnkiIdKind.MODEL, entry.value, reserved=True)
+    assert not scan_anki_id_registry_paths((source,), registry=(other,)).passed
+
+    data = tmp_path / "ids.json"
+    data.write_text('{"note_id": 8888888888}', encoding="utf-8")
+    original_stat = data.stat()
+    assert scan_anki_id_registry_paths((data,), registry=(entry,)).passed
+    data.write_text('{"deck_id": 8888888888}', encoding="utf-8")
+    os.utime(data, ns=(original_stat.st_atime_ns, original_stat.st_mtime_ns))
+    assert data.stat().st_size == original_stat.st_size
+    result = scan_anki_id_registry_paths((data,), registry=(entry,))
+    assert any(issue.code == "unknown_declaration" for issue in result.issues)
+
+
+def test_cached_guard_preserves_registry_exemption_for_the_requested_path(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    source = tmp_path / "src" / "multilang" / "services" / "anki_id_registry.py"
+    source.parent.mkdir(parents=True)
+    source.write_text("VALUE = 8_888_888_887\n", encoding="utf-8")
+    entry = AnkiIdRegistration("fixture", "model", AnkiIdKind.MODEL, 8_888_888_887, reserved=True)
+    assert scan_anki_id_registry_paths((source,), registry=(entry,)).passed
+    monkeypatch.chdir(source.parent)
+    relative_result = scan_anki_id_registry_paths((Path(source.name),), registry=(entry,))
+    assert any(issue.code == "direct_literal" for issue in relative_result.issues)
+
+
+def test_cached_guard_keeps_nonreserved_registration_usage(tmp_path: Path) -> None:
+    source = tmp_path / "source.py"
+    source.write_text(
+        "registry_id(family='fixture', role='model', kind=AnkiIdKind.MODEL)\n",
+        encoding="utf-8",
+    )
+    entry = AnkiIdRegistration("fixture", "model", AnkiIdKind.MODEL, 8_888_888_887)
+    assert scan_anki_id_registry_paths((source,), registry=(entry,)).passed
+    assert scan_anki_id_registry_paths((source,), registry=(entry,)).passed

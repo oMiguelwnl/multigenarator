@@ -3,10 +3,13 @@
 from __future__ import annotations
 
 import ast
+import re
+from collections import OrderedDict
 from dataclasses import dataclass
 from enum import StrEnum
+from hashlib import sha256
 from pathlib import Path
-import re
+from threading import Lock
 from typing import Iterable
 
 
@@ -104,6 +107,42 @@ _ID_LITERAL_RE = re.compile(r"(?<![A-Za-z0-9_])(?:\d(?:_\d{3}){3}|\d{10})(?![A-Z
 _DATA_ID_KEY_RE = re.compile(
     r"(?i)(?:anki[_-]?)?(?:model|deck)[_-]?id[^0-9]{0,24}(?P<value>\d(?:_?\d){5,})"
 )
+
+_RegistryKey = tuple[str, str, AnkiIdKind]
+_ScanCacheKey = tuple[str, bool, str, frozenset[int], frozenset[_RegistryKey]]
+_CLEAN_SCAN_CACHE: OrderedDict[_ScanCacheKey, frozenset[_RegistryKey]] = OrderedDict()
+_CLEAN_SCAN_CACHE_LOCK = Lock()
+_CLEAN_SCAN_CACHE_LIMIT = 512
+
+
+def _scan_cache_key(
+    path: Path, source: str, known_values: set[int], known_keys: set[_RegistryKey]
+) -> _ScanCacheKey:
+    # Read and hash the current text on every scan. Size/mtime are insufficient:
+    # an edit can preserve both. Only analysis facts are cached, never source text.
+    return (
+        str(path.absolute()),
+        _is_registry_file(path),
+        sha256(source.encode("utf-8")).hexdigest(),
+        frozenset(known_values),
+        frozenset(known_keys),
+    )
+
+
+def _cached_clean_scan(key: _ScanCacheKey) -> frozenset[_RegistryKey] | None:
+    with _CLEAN_SCAN_CACHE_LOCK:
+        result = _CLEAN_SCAN_CACHE.get(key)
+        if result is not None:
+            _CLEAN_SCAN_CACHE.move_to_end(key)
+        return result
+
+
+def _remember_clean_scan(key: _ScanCacheKey, used_keys: set[_RegistryKey]) -> None:
+    with _CLEAN_SCAN_CACHE_LOCK:
+        _CLEAN_SCAN_CACHE[key] = frozenset(used_keys)
+        _CLEAN_SCAN_CACHE.move_to_end(key)
+        while len(_CLEAN_SCAN_CACHE) > _CLEAN_SCAN_CACHE_LIMIT:
+            _CLEAN_SCAN_CACHE.popitem(last=False)
 
 
 def validate_anki_id_registry(entries: Iterable[AnkiIdRegistration]) -> None:
@@ -273,31 +312,40 @@ def _scan_python_file(
 ) -> None:
     try:
         source = path.read_text(encoding="utf-8")
+        cache_key = _scan_cache_key(path, source, known_values, known_keys)
+        cached_keys = _cached_clean_scan(cache_key)
+        if cached_keys is not None:
+            used_keys.update(cached_keys)
+            return
         tree = ast.parse(source, filename=str(path))
     except (OSError, SyntaxError, UnicodeDecodeError) as exc:
         issues.append(AnkiIdRegistryScanIssue("parse_error", path, str(exc)))
         return
 
     is_registry = _is_registry_file(path)
+    file_used_keys: set[_RegistryKey] = set()
+    issue_count = len(issues)
     for node in ast.walk(tree):
         if isinstance(node, (ast.Assign, ast.AnnAssign)):
             _scan_python_assignment(node, path=path, known_values=known_values, issues=issues)
         if isinstance(node, ast.Call):
-            _scan_registry_call(node, path=path, known_keys=known_keys, used_keys=used_keys, issues=issues)
+            _scan_registry_call(node, path=path, known_keys=known_keys, used_keys=file_used_keys, issues=issues)
             _scan_unchecked_dynamic_call(node, path=path, issues=issues)
 
-    if is_registry:
-        return
-    for match in _ID_LITERAL_RE.finditer(source):
-        value = int(match.group(0).replace("_", ""))
-        if value in known_values:
-            issues.append(
-                AnkiIdRegistryScanIssue(
-                    code="direct_literal",
-                    path=path,
-                    detail=f"registered Anki ID literal {value} appears outside registry",
+    used_keys.update(file_used_keys)
+    if not is_registry:
+        for match in _ID_LITERAL_RE.finditer(source):
+            value = int(match.group(0).replace("_", ""))
+            if value in known_values:
+                issues.append(
+                    AnkiIdRegistryScanIssue(
+                        code="direct_literal",
+                        path=path,
+                        detail=f"registered Anki ID literal {value} appears outside registry",
+                    )
                 )
-            )
+    if len(issues) == issue_count:
+        _remember_clean_scan(cache_key, file_used_keys)
 
 
 def _scan_python_assignment(
@@ -383,6 +431,10 @@ def _scan_data_file(
     except (OSError, UnicodeDecodeError) as exc:
         issues.append(AnkiIdRegistryScanIssue("parse_error", path, str(exc)))
         return
+    cache_key = _scan_cache_key(path, source, known_values, set())
+    if _cached_clean_scan(cache_key) is not None:
+        return
+    issue_count = len(issues)
     for match in _DATA_ID_KEY_RE.finditer(source):
         value = int(match.group("value").replace("_", ""))
         issues.append(
@@ -392,6 +444,8 @@ def _scan_data_file(
                 detail=f"data file declares Anki-like ID {value}",
             )
         )
+    if len(issues) == issue_count:
+        _remember_clean_scan(cache_key, set())
 
 
 def _constant_keyword(node: ast.Call, name: str) -> str | None:
