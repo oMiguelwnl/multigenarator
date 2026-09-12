@@ -52,9 +52,21 @@ def test_baseline_contains_every_current_production_declaration_once() -> None:
     actual = {
         (entry.family, entry.role, entry.kind.value): entry.value
         for entry in ANKI_ID_REGISTRY
+        if entry.family != "native_prototype"
     }
 
     assert actual == EXPECTED_BASELINE
+
+
+def test_native_prototype_allocations_do_not_change_legacy_ids_or_collide() -> None:
+    from multilang.services.anki_id_registry import native_anki_deck_id
+
+    native = [entry for entry in ANKI_ID_REGISTRY if entry.family == "native_prototype"]
+    assert len(native) == 2 + 23 * 7
+    assert len({entry.value for entry in ANKI_ID_REGISTRY}) == len(ANKI_ID_REGISTRY)
+    assert native_anki_deck_id("en::Frequency::Level 1") != native_anki_deck_id("en::Frequency::Level 2")
+    with pytest.raises(ValueError):
+        native_anki_deck_id("en::Important Forms")
     assert len({entry.value for entry in ANKI_ID_REGISTRY}) == len(ANKI_ID_REGISTRY)
 
 

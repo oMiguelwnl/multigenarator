@@ -70,6 +70,14 @@ ANKI_ID_REGISTRY: tuple[AnkiIdRegistration, ...] = (
     AnkiIdRegistration("korean_frequency", "level_1_deck", AnkiIdKind.DECK, 1_762_801_103, reserved=True),
     AnkiIdRegistration("korean_frequency", "level_2_deck", AnkiIdKind.DECK, 1_762_801_104, reserved=True),
     AnkiIdRegistration("korean_frequency", "level_3_deck", AnkiIdKind.DECK, 1_762_801_105, reserved=True),
+    AnkiIdRegistration("native_prototype", "family_model", AnkiIdKind.MODEL, 1_762_802_001),
+    AnkiIdRegistration("native_prototype", "separate_model", AnkiIdKind.MODEL, 1_762_802_002),
+    *(
+        AnkiIdRegistration("native_prototype", f"{language}:{destination}", AnkiIdKind.DECK,
+            1_762_810_000 + language_index * 10 + destination_index, reserved=True)
+        for language_index, language in enumerate(("pt", "es", "en", "fr", "de", "el", "it", "pl", "tr", "ro", "ru", "nl", "da", "nb", "sv", "fi", "hu", "cs", "hr", "la", "ja", "zh", "ko"))
+        for destination_index, destination in enumerate(("Frequency::Level 1", "Frequency::Level 2", "Frequency::Level 3", "Expansion", "Custom", "Highlight", "Grammar"), start=1)
+    ),
 )
 
 _PRODUCTION_ROOTS = (Path("src/multilang"), Path("scripts"), Path("data"), Path("assets"))
@@ -136,6 +144,17 @@ def registry_id(*, family: str, role: str, kind: AnkiIdKind) -> int:
         if entry.family == family and entry.role == role and entry.kind is kind:
             return entry.value
     raise ValueError(f"unregistered Anki ID: {family}/{role}/{kind.value}")
+
+
+def native_anki_deck_id(destination: str) -> int:
+    """Resolve only preallocated language/inventory destinations, never hash arbitrary names."""
+    language, separator, suffix = destination.partition("::")
+    if not separator:
+        raise ValueError("native Anki destination requires language and inventory")
+    for entry in ANKI_ID_REGISTRY:
+        if entry.family == "native_prototype" and entry.kind is AnkiIdKind.DECK and entry.role == f"{language}:{suffix}":
+            return entry.value
+    raise ValueError("unregistered native Anki destination")
 
 
 def require_registered_anki_id(value: int, *, kind: AnkiIdKind) -> int:
