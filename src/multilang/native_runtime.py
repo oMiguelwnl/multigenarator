@@ -40,6 +40,11 @@ from multilang.services.native_cache import VersionedCache
 from multilang.services.native_imports import CSVImporter, DictionaryImporter, ImportSource
 from multilang.services.plugins import PluginRegistry
 from multilang.services.ranking import RankingEngine
+from multilang.services.vocabulary_review import (
+    CompiledVocabularyBundle,
+    persist_compiled_vocabulary,
+    verify_compiled_vocabulary,
+)
 from multilang.settings import Settings
 
 NATIVE_PLUGINS = PluginRegistry()
@@ -62,6 +67,14 @@ class DatasetImportRequest(ClosedRequest):
     data: str = Field(min_length=1, max_length=8_000_000)
     version: str = Field(min_length=1, max_length=64)
     namespace: Literal["core", "expansion"] = "core"
+
+
+class ReviewedVocabularyImportRequest(ClosedRequest):
+    format: Literal["reviewed-vocabulary"]
+    profile_version: str = Field(min_length=1, max_length=128)
+    version: str = Field(min_length=1, max_length=64)
+    namespace: Literal["core", "expansion"] = "core"
+    bundle: CompiledVocabularyBundle
 
 
 class RankingUpdateRequest(ClosedRequest):
@@ -187,6 +200,8 @@ class NativeFacade:
 
     def import_dataset(self, payload: dict, actor: str) -> dict:
         self._enabled()
+        if payload.get("format") == "reviewed-vocabulary":
+            return self.import_reviewed_vocabulary(payload, actor)
         request = DatasetImportRequest.model_validate(payload)
         source = request.source
         profile = self._profile(source.language.value, source.profile_version)
@@ -281,6 +296,125 @@ class NativeFacade:
             "production_eligible": False,
         }
 
+    def import_reviewed_vocabulary(self, payload: dict, actor: str) -> dict:
+        """Persist verified identities and observed forms without the legacy CSV projection."""
+        self._enabled()
+        request = ReviewedVocabularyImportRequest.model_validate(payload)
+        profile = self._profile(request.bundle.language.value, request.profile_version)
+        profile.require(
+            request.namespace,
+            policy_groups=("identity", "normalization", "morphology", "sense", "sources"),
+        )
+        if profile.version != request.profile_version:
+            raise ValueError("reviewed import profile version mismatch")
+        bundle = verify_compiled_vocabulary(
+            request.bundle, profile=profile, verifier=_evidence_store(self.settings)
+        )
+        if not bundle.identities:
+            raise ValueError("reviewed import has no accepted lexical identities")
+        artifact = persist_compiled_vocabulary(
+            bundle, self.settings.native_evidence_dir / "artifacts"
+        )
+        manifest = DatasetManifest(
+            language=bundle.language,
+            kind="lexical",
+            namespace=request.namespace,
+            version=request.version,
+            source_id=bundle.review.source_id,
+            source_sha256=bundle.preparation_manifest["dictionary_sha256"],
+            policy_version=profile.version,
+            attribution=f"Reviewed source {bundle.review.source_id}, version {bundle.review.source_version}",
+            members=tuple(
+                DatasetMember(identity_id=identity.lexical_identity_id, rank=index + 1)
+                for index, identity in enumerate(bundle.identities)
+            ),
+            metadata={
+                "ordering": "identity-order-staging",
+                "bundle_sha256": bundle.bundle_sha256,
+                "review_bundle_artifact_sha256": artifact,
+                "preparation_sha256": bundle.review.preparation_sha256,
+                "decisions_sha256": bundle.decisions_sha256,
+                "important_form_count": str(len(bundle.important_forms)),
+                "form_count": str(len(bundle.forms)),
+                "source_evidence_sha256": canonical_hash(
+                    [item.model_dump(mode="json") for item in bundle.source_evidence]
+                ),
+                "important_form_policy_sha256": canonical_hash(
+                    bundle.review.important_form_policy.model_dump(mode="json")
+                    if bundle.review.important_form_policy
+                    else None
+                ),
+            },
+        )
+        result = {
+            "dataset_id": manifest.dataset_id,
+            "identity_count": len(bundle.identities),
+            "form_count": len(bundle.forms),
+            "important_form_count": len(bundle.important_forms),
+            "quarantined_count": len(bundle.quarantine),
+            "production_eligible": False,
+        }
+        if self.repository.get_dataset(manifest.dataset_id) is not None:
+            return result
+        for identity in bundle.identities:
+            previous = self.repository.get_identity(identity.lexical_identity_id)
+            self.repository.put_identity(
+                identity,
+                actor=actor,
+                reason="reviewed_vocabulary_import",
+                expected_revision=previous["revision"] if previous else None,
+            )
+        for form in bundle.forms:
+            previous = self.session.get(SurfaceFormRecord, form.surface_form_id)
+            self.repository.put_form(
+                form,
+                identity_id=form.lexical_identity_id,
+                analysis_id=form.analysis.morphological_analysis_id,
+                text=form.text,
+                actor=actor,
+                expected_revision=previous.revision if previous else None,
+            )
+        self.repository.save_dataset(
+            manifest,
+            actor=actor,
+            reason="reviewed_vocabulary_import",
+            form_ids=tuple(form.surface_form_id for form in bundle.forms),
+        )
+        return result
+
+    def import_contextual_bindings(self, payload: dict, actor: str) -> dict:
+        from multilang.services.contextual_bindings import (
+            ContextualBindingSet,
+            ReviewedBindingStore,
+        )
+
+        self._enabled()
+        request = ContextualBindingSet.model_validate(payload)
+        private = request.namespace != "core"
+        if private and request.namespace != f"user:{actor}":
+            raise ValueError("contextual bindings belong to another owner")
+        profile = self._profile(request.language, request.profile_version)
+        profile.require("custom" if private else "core", policy_groups=("sense", "matching"))
+        if profile.version != request.profile_version:
+            raise ValueError("contextual binding profile version mismatch")
+        for binding in request.bindings:
+            identity, _ = self._identity(binding.lexical_identity_id)
+            if identity.language.value != request.language or identity.sense_id != binding.sense_id:
+                raise ValueError("contextual binding differs from canonical lexical identity")
+            if binding.morphological_analysis_id:
+                forms = self.session.scalars(
+                    select(SurfaceFormRecord).where(
+                        SurfaceFormRecord.identity_id == identity.lexical_identity_id,
+                        SurfaceFormRecord.analysis_id == binding.morphological_analysis_id,
+                    )
+                ).first()
+                if forms is None:
+                    raise ValueError("contextual binding refers to an unknown observed form")
+        return ReviewedBindingStore(
+            self.settings.native_contextual_bindings_dir,
+            verifier=_evidence_store(self.settings).verify,
+        ).put(request)
+
     def calculate_ranking(self, payload: dict, actor: str) -> dict:
         self._enabled()
         request = RankingUpdateRequest.model_validate(payload)
@@ -344,7 +478,7 @@ class NativeFacade:
             raise ValueError("unknown lexical identity")
         return LexicalIdentity.model_validate(row.payload), row.content_sha256
 
-    def generate_content(self, payload: dict, actor: str) -> dict:
+    def _content_context(self, payload: dict, actor: str):
         self._enabled()
         request = ContentRequest.model_validate(payload)
         identity, digest = self._identity(request.lexical_identity_id)
@@ -363,6 +497,9 @@ class NativeFacade:
             or request.explanation_language != profile.explanation_language
         ):
             raise ValueError("content request does not match canonical lexical grounding/profile")
+        return request, profile
+
+    def _content_service(self, profile):
         service = self.content_service
         if service is None:
             # A qualified target matcher is registered by trusted application
@@ -387,10 +524,52 @@ class NativeFacade:
                 provider=self.settings.text_generation_provider,
                 model_version=self.settings.text_generation_model,
             )
+        return service
+
+    def generate_content(self, payload: dict, actor: str) -> dict:
+        request, profile = self._content_context(payload, actor)
+        service = self._content_service(profile)
         version = service.generate(request)
+        return self._save_content(version, actor)
+
+    def draft_content(self, payload: dict, actor: str) -> dict:
+        from multilang.services.content_drafts import ContentDraftStore
+
+        request, profile = self._content_context(payload, actor)
+        draft = self._content_service(profile).prepare(request)
+        ContentDraftStore(self.settings.native_content_drafts_dir).put(draft)
+        return draft.model_dump(mode="json")
+
+    def complete_content_draft(self, payload: dict, actor: str) -> dict:
+        from multilang.domain.content import ContentDraft
+        from multilang.services.content_drafts import ContentDraftStore
+        from multilang.services.native_content import NativeContentService
+
+        self._enabled()
+        draft = ContentDraft.model_validate(payload)
+        request, profile = self._content_context(draft.request.model_dump(mode="json"), actor)
+        original = ContentDraftStore(self.settings.native_content_drafts_dir).load(
+            draft.draft_sha256, namespace=request.namespace
+        )
+        if original != draft:
+            raise ValueError("reviewed draft differs from original provider output")
+        matcher = self.plugins.get(
+            "analyzer", f"{profile.analyzer_id}-target", profile.analyzer_version
+        )
+        service = NativeContentService(
+            generator=None,
+            matcher=matcher,
+            provider=draft.provider,
+            model_version=draft.model_version,
+        )
+        return self._save_content(service.complete(draft), actor)
+
+    def _save_content(self, version: ContentVersion, actor: str) -> dict:
+        request = version.request
+        private = request.namespace != "core"
         self.repository.save_content(
             version_id=version.version_id,
-            identity_id=identity.lexical_identity_id,
+            identity_id=request.lexical_identity_id,
             namespace="custom" if private else "core",
             owner_id=actor if private else "",
             edition_id=request.deck_edition_id,
@@ -401,7 +580,7 @@ class NativeFacade:
         return {
             "content_version_id": version.version_id,
             "review_status": version.review_status,
-            "lexical_identity_id": identity.lexical_identity_id,
+            "lexical_identity_id": request.lexical_identity_id,
         }
 
     def generate_audio(self, payload: dict, actor: str) -> dict:
@@ -805,5 +984,29 @@ def _evidence_store(settings: Settings):
 
 
 def build_native_facade(session: Session, settings: Settings) -> NativeFacade:
+    from multilang.services.contextual_bindings import (
+        ReviewedBindingStore,
+        StoredContextualTargetMatcher,
+    )
+    from multilang.services.contextual_morphology import LocalContextualMorphologyService
+
     store = _evidence_store(settings)
-    return NativeFacade(session, settings, topology_verifier=store.verify_topology)
+    plugins = PluginRegistry()
+    for kind, name, version in NATIVE_PLUGINS.inventory():
+        plugins.register(
+            kind=kind, name=name, version=version, plugin=NATIVE_PLUGINS.get(kind, name, version)
+        )
+    plugins.register(
+        kind="analyzer",
+        name="contextual-morphology-target",
+        version="1",
+        plugin=StoredContextualTargetMatcher(
+            analyzer=LocalContextualMorphologyService(
+                model_root=settings.native_language_models_dir
+            ),
+            store=ReviewedBindingStore(
+                settings.native_contextual_bindings_dir, verifier=store.verify
+            ),
+        ),
+    )
+    return NativeFacade(session, settings, plugins=plugins, topology_verifier=store.verify_topology)

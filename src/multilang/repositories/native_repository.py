@@ -295,6 +295,7 @@ class NativeRepository:
         actor: str,
         reason: str,
         _source_dataset_id: str | None = None,
+        form_ids: tuple[str, ...] | None = None,
     ) -> dict:
         if self.session.get(DatasetVersionRecord, manifest.dataset_id) is not None:
             return self.get_dataset(manifest.dataset_id, owner_id=manifest.owner_id)
@@ -311,6 +312,14 @@ class NativeRepository:
             raise ValueError("dataset version already exists with different input")
         # One lookup for the entire inventory; avoid 3000 individual database queries.
         ids = [member.identity_id for member in manifest.members]
+        selected_forms = None
+        if form_ids is not None:
+            if _source_dataset_id or len(form_ids) > 100000 or len(set(form_ids)) != len(form_ids):
+                raise ValueError("explicit dataset form inventory is invalid")
+            selected_forms = list(self.session.scalars(select(SurfaceFormRecord).where(
+                SurfaceFormRecord.id.in_(form_ids), SurfaceFormRecord.identity_id.in_(ids))))
+            if {form.id for form in selected_forms} != set(form_ids):
+                raise ValueError("dataset form missing or belongs to another identity")
         parents = {
             row.id: row
             for row in self.session.scalars(
@@ -366,7 +375,7 @@ class NativeRepository:
                 for member in manifest.members
             ]
         )
-        forms = (
+        forms = selected_forms if selected_forms is not None else (
             self.session.scalars(
                 select(DatasetFormMembership).where(
                     DatasetFormMembership.dataset_id == _source_dataset_id

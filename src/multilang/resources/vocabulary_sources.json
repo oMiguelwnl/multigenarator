@@ -1,0 +1,2580 @@
+{
+  "schema_version": "multilang-vocabulary-source-candidates-v1",
+  "researched_on": "2026-09-12",
+  "status": "research-candidates-not-approval",
+  "scope": "22 modern languages; Classical Latin intentionally excluded",
+  "languages": [
+    {
+      "language": "pt",
+      "name": "Portuguese",
+      "lexical_sources": [
+        {
+          "source_id": "kaikki-enwiktionary-raw",
+          "name": "English Wiktionary via Wiktextract / Kaikki",
+          "url": "https://kaikki.org/dictionary/raw-wiktextract-data.jsonl.gz",
+          "format": "wiktextract-en-jsonl.gz",
+          "documentation_url": "https://github.com/tatuylonen/wiktextract",
+          "download_index_url": "https://kaikki.org/dictionary/rawdata.html",
+          "source_language_codes": [
+            "pt"
+          ],
+          "language_mapping": "exact language code",
+          "license": "CC-BY-SA-4.0 text; third-party exceptions",
+          "license_urls": [
+            "https://foundation.wikimedia.org/wiki/Policy:Terms_of_Use#7._Licensing_of_Content",
+            "https://creativecommons.org/licenses/by-sa/4.0/"
+          ],
+          "attribution": "Wiktionary contributors; Tatu Ylonen / Wiktextract / Kaikki; preserve entry URL/history, snapshot and modifications",
+          "restrictions": [
+            "Candidate evidence only; no linguistic review or redistribution approval is implied.",
+            "No observed usage frequency; dictionary entry order is not a rank.",
+            "Keep source sense evidence and original language/POS; quarantine missing or ambiguous mappings.",
+            "Preserve attribution, source snapshot hash, license notice and modifications.",
+            "Do not copy third-party quotations or audio under the dictionary text license."
+          ],
+          "redistribution_approved": false,
+          "linguistic_review_approved": false
+        }
+      ],
+      "corpus": {
+        "source_id": "ud-pt-bosque",
+        "name": "UD Portuguese-Bosque",
+        "release": "r2.16",
+        "format": "conllu",
+        "train_urls": [
+          "https://raw.githubusercontent.com/UniversalDependencies/UD_Portuguese-Bosque/r2.16/pt_bosque-ud-train.conllu"
+        ],
+        "test_urls": [
+          "https://raw.githubusercontent.com/UniversalDependencies/UD_Portuguese-Bosque/r2.16/pt_bosque-ud-test.conllu"
+        ],
+        "readme_url": "https://raw.githubusercontent.com/UniversalDependencies/UD_Portuguese-Bosque/r2.16/README.md",
+        "license": "CC BY-SA 4.0",
+        "license_urls": [
+          "https://raw.githubusercontent.com/UniversalDependencies/UD_Portuguese-Bosque/r2.16/README.md",
+          "https://creativecommons.org/licenses/by-sa/4.0/"
+        ],
+        "restrictions": [
+          "Annotated contextual evaluation/training source; not dictionary senses or balanced general frequency.",
+          "Keep test split out of vocabulary ranking/training when reporting held-out model evaluation.",
+          "Attribute named treebank contributors and retain release README/license."
+        ],
+        "redistribution_approved": false,
+        "linguistic_review_approved": false
+      },
+      "model": {
+        "name": "Stanza",
+        "language": "pt",
+        "resource_version": "1.10.0",
+        "resource_manifest_url": "https://raw.githubusercontent.com/stanfordnlp/stanza-resources/main/resources_1.10.0.json",
+        "resource_manifest_sha256": "3efb2833a67c0184fac2ea9986c04f9585bfb89fb943a4ab1a6bcbed641d6be0",
+        "model_card_url": "https://huggingface.co/stanfordnlp/stanza-pt/raw/v1.10.0/README.md",
+        "declared_license": "Apache-2.0",
+        "processors": {
+          "tokenize": "bosque",
+          "pos": "bosque_nocharlm",
+          "lemma": "bosque_nocharlm",
+          "mwt": "bosque"
+        },
+        "files": [
+          {
+            "processor": "tokenize",
+            "package": "bosque",
+            "url": "https://huggingface.co/stanfordnlp/stanza-pt/resolve/v1.10.0/models/tokenize/bosque.pt",
+            "upstream_md5": "5a270fd4df72d7877021aaee2acc616d",
+            "dependencies": []
+          },
+          {
+            "processor": "pos",
+            "package": "bosque_nocharlm",
+            "url": "https://huggingface.co/stanfordnlp/stanza-pt/resolve/v1.10.0/models/pos/bosque_nocharlm.pt",
+            "upstream_md5": "93082695b66c8d8068c2b8fa8907daaf",
+            "dependencies": [
+              {
+                "model": "pretrain",
+                "package": "conll17"
+              }
+            ]
+          },
+          {
+            "processor": "lemma",
+            "package": "bosque_nocharlm",
+            "url": "https://huggingface.co/stanfordnlp/stanza-pt/resolve/v1.10.0/models/lemma/bosque_nocharlm.pt",
+            "upstream_md5": "4e85e988b41a84909667582ceaf38d9b",
+            "dependencies": []
+          },
+          {
+            "processor": "mwt",
+            "package": "bosque",
+            "url": "https://huggingface.co/stanfordnlp/stanza-pt/resolve/v1.10.0/models/mwt/bosque.pt",
+            "upstream_md5": "6e7909d03728aca5772d35a127efe2e2",
+            "dependencies": []
+          }
+        ],
+        "restrictions": [
+          "Model availability and model-card license are verified, not linguistic adequacy.",
+          "Acquire declared dependencies; persist runtime/package/model fingerprints.",
+          "Morphology model output is not lexical sense evidence."
+        ],
+        "preferred_runtime": "Stanza",
+        "role": "runtime_default"
+      }
+    },
+    {
+      "language": "es",
+      "name": "Spanish",
+      "lexical_sources": [
+        {
+          "source_id": "kaikki-enwiktionary-raw",
+          "name": "English Wiktionary via Wiktextract / Kaikki",
+          "url": "https://kaikki.org/dictionary/raw-wiktextract-data.jsonl.gz",
+          "format": "wiktextract-en-jsonl.gz",
+          "documentation_url": "https://github.com/tatuylonen/wiktextract",
+          "download_index_url": "https://kaikki.org/dictionary/rawdata.html",
+          "source_language_codes": [
+            "es"
+          ],
+          "language_mapping": "exact language code",
+          "license": "CC-BY-SA-4.0 text; third-party exceptions",
+          "license_urls": [
+            "https://foundation.wikimedia.org/wiki/Policy:Terms_of_Use#7._Licensing_of_Content",
+            "https://creativecommons.org/licenses/by-sa/4.0/"
+          ],
+          "attribution": "Wiktionary contributors; Tatu Ylonen / Wiktextract / Kaikki; preserve entry URL/history, snapshot and modifications",
+          "restrictions": [
+            "Candidate evidence only; no linguistic review or redistribution approval is implied.",
+            "No observed usage frequency; dictionary entry order is not a rank.",
+            "Keep source sense evidence and original language/POS; quarantine missing or ambiguous mappings.",
+            "Preserve attribution, source snapshot hash, license notice and modifications.",
+            "Do not copy third-party quotations or audio under the dictionary text license."
+          ],
+          "redistribution_approved": false,
+          "linguistic_review_approved": false
+        }
+      ],
+      "corpus": {
+        "source_id": "ud-es-ancora",
+        "name": "UD Spanish-AnCora",
+        "release": "r2.16",
+        "format": "conllu",
+        "train_urls": [
+          "https://raw.githubusercontent.com/UniversalDependencies/UD_Spanish-AnCora/r2.16/es_ancora-ud-train.conllu"
+        ],
+        "test_urls": [
+          "https://raw.githubusercontent.com/UniversalDependencies/UD_Spanish-AnCora/r2.16/es_ancora-ud-test.conllu"
+        ],
+        "readme_url": "https://raw.githubusercontent.com/UniversalDependencies/UD_Spanish-AnCora/r2.16/README.md",
+        "license": "CC BY 4.0",
+        "license_urls": [
+          "https://raw.githubusercontent.com/UniversalDependencies/UD_Spanish-AnCora/r2.16/README.md",
+          "https://creativecommons.org/licenses/by/4.0/"
+        ],
+        "restrictions": [
+          "Annotated contextual evaluation/training source; not dictionary senses or balanced general frequency.",
+          "Keep test split out of vocabulary ranking/training when reporting held-out model evaluation.",
+          "Attribute named treebank contributors and retain release README/license."
+        ],
+        "redistribution_approved": false,
+        "linguistic_review_approved": false
+      },
+      "model": {
+        "name": "Stanza",
+        "language": "es",
+        "resource_version": "1.10.0",
+        "resource_manifest_url": "https://raw.githubusercontent.com/stanfordnlp/stanza-resources/main/resources_1.10.0.json",
+        "resource_manifest_sha256": "3efb2833a67c0184fac2ea9986c04f9585bfb89fb943a4ab1a6bcbed641d6be0",
+        "model_card_url": "https://huggingface.co/stanfordnlp/stanza-es/raw/v1.10.0/README.md",
+        "declared_license": "Apache-2.0",
+        "processors": {
+          "tokenize": "combined",
+          "mwt": "combined",
+          "pos": "combined_nocharlm",
+          "lemma": "combined_nocharlm"
+        },
+        "files": [
+          {
+            "processor": "tokenize",
+            "package": "combined",
+            "url": "https://huggingface.co/stanfordnlp/stanza-es/resolve/v1.10.0/models/tokenize/combined.pt",
+            "upstream_md5": "3dabb752b7c9d6c26ddd3c94b6c5fb17",
+            "dependencies": []
+          },
+          {
+            "processor": "mwt",
+            "package": "combined",
+            "url": "https://huggingface.co/stanfordnlp/stanza-es/resolve/v1.10.0/models/mwt/combined.pt",
+            "upstream_md5": "b27837acb40d7c023528b50881a39ac3",
+            "dependencies": []
+          },
+          {
+            "processor": "pos",
+            "package": "combined_nocharlm",
+            "url": "https://huggingface.co/stanfordnlp/stanza-es/resolve/v1.10.0/models/pos/combined_nocharlm.pt",
+            "upstream_md5": "7beadf4ef9bb7b08897ebf085143ad94",
+            "dependencies": [
+              {
+                "model": "pretrain",
+                "package": "conll17"
+              }
+            ]
+          },
+          {
+            "processor": "lemma",
+            "package": "combined_nocharlm",
+            "url": "https://huggingface.co/stanfordnlp/stanza-es/resolve/v1.10.0/models/lemma/combined_nocharlm.pt",
+            "upstream_md5": "0d2f25e17211361d2021054142bbe623",
+            "dependencies": []
+          }
+        ],
+        "restrictions": [
+          "Model availability and model-card license are verified, not linguistic adequacy.",
+          "Acquire declared dependencies; persist runtime/package/model fingerprints.",
+          "Morphology model output is not lexical sense evidence."
+        ],
+        "preferred_runtime": "Stanza",
+        "role": "runtime_default"
+      }
+    },
+    {
+      "language": "en",
+      "name": "English",
+      "lexical_sources": [
+        {
+          "source_id": "kaikki-enwiktionary-raw",
+          "name": "English Wiktionary via Wiktextract / Kaikki",
+          "url": "https://kaikki.org/dictionary/raw-wiktextract-data.jsonl.gz",
+          "format": "wiktextract-en-jsonl.gz",
+          "documentation_url": "https://github.com/tatuylonen/wiktextract",
+          "download_index_url": "https://kaikki.org/dictionary/rawdata.html",
+          "source_language_codes": [
+            "en"
+          ],
+          "language_mapping": "exact language code",
+          "license": "CC-BY-SA-4.0 text; third-party exceptions",
+          "license_urls": [
+            "https://foundation.wikimedia.org/wiki/Policy:Terms_of_Use#7._Licensing_of_Content",
+            "https://creativecommons.org/licenses/by-sa/4.0/"
+          ],
+          "attribution": "Wiktionary contributors; Tatu Ylonen / Wiktextract / Kaikki; preserve entry URL/history, snapshot and modifications",
+          "restrictions": [
+            "Candidate evidence only; no linguistic review or redistribution approval is implied.",
+            "No observed usage frequency; dictionary entry order is not a rank.",
+            "Keep source sense evidence and original language/POS; quarantine missing or ambiguous mappings.",
+            "Preserve attribution, source snapshot hash, license notice and modifications.",
+            "Do not copy third-party quotations or audio under the dictionary text license."
+          ],
+          "redistribution_approved": false,
+          "linguistic_review_approved": false
+        }
+      ],
+      "corpus": {
+        "source_id": "ud-en-ewt",
+        "name": "UD English-EWT",
+        "release": "r2.16",
+        "format": "conllu",
+        "train_urls": [
+          "https://raw.githubusercontent.com/UniversalDependencies/UD_English-EWT/r2.16/en_ewt-ud-train.conllu"
+        ],
+        "test_urls": [
+          "https://raw.githubusercontent.com/UniversalDependencies/UD_English-EWT/r2.16/en_ewt-ud-test.conllu"
+        ],
+        "readme_url": "https://raw.githubusercontent.com/UniversalDependencies/UD_English-EWT/r2.16/README.md",
+        "license": "CC BY-SA 4.0",
+        "license_urls": [
+          "https://raw.githubusercontent.com/UniversalDependencies/UD_English-EWT/r2.16/README.md",
+          "https://creativecommons.org/licenses/by-sa/4.0/"
+        ],
+        "restrictions": [
+          "Annotated contextual evaluation/training source; not dictionary senses or balanced general frequency.",
+          "Keep test split out of vocabulary ranking/training when reporting held-out model evaluation.",
+          "Attribute named treebank contributors and retain release README/license.",
+          "Annotation license does not settle underlying sentence text rights; README retains third-party text caveats."
+        ],
+        "redistribution_approved": false,
+        "linguistic_review_approved": false
+      },
+      "model": {
+        "name": "Stanza",
+        "language": "en",
+        "resource_version": "1.10.0",
+        "resource_manifest_url": "https://raw.githubusercontent.com/stanfordnlp/stanza-resources/main/resources_1.10.0.json",
+        "resource_manifest_sha256": "3efb2833a67c0184fac2ea9986c04f9585bfb89fb943a4ab1a6bcbed641d6be0",
+        "model_card_url": "https://huggingface.co/stanfordnlp/stanza-en/raw/v1.10.0/README.md",
+        "declared_license": "Apache-2.0",
+        "processors": {
+          "tokenize": "combined",
+          "mwt": "combined",
+          "pos": "combined_nocharlm",
+          "lemma": "combined_nocharlm"
+        },
+        "files": [
+          {
+            "processor": "tokenize",
+            "package": "combined",
+            "url": "https://huggingface.co/stanfordnlp/stanza-en/resolve/v1.10.0/models/tokenize/combined.pt",
+            "upstream_md5": "89a9c52688ac0ea655ee9f5388e61fe9",
+            "dependencies": []
+          },
+          {
+            "processor": "mwt",
+            "package": "combined",
+            "url": "https://huggingface.co/stanfordnlp/stanza-en/resolve/v1.10.0/models/mwt/combined.pt",
+            "upstream_md5": "6e49e64f630823cfcd8ab62ca59f42fc",
+            "dependencies": []
+          },
+          {
+            "processor": "pos",
+            "package": "combined_nocharlm",
+            "url": "https://huggingface.co/stanfordnlp/stanza-en/resolve/v1.10.0/models/pos/combined_nocharlm.pt",
+            "upstream_md5": "551743f0d76f20a47abe566623f0beab",
+            "dependencies": [
+              {
+                "model": "pretrain",
+                "package": "conll17"
+              }
+            ]
+          },
+          {
+            "processor": "lemma",
+            "package": "combined_nocharlm",
+            "url": "https://huggingface.co/stanfordnlp/stanza-en/resolve/v1.10.0/models/lemma/combined_nocharlm.pt",
+            "upstream_md5": "c586ee9fb5053d7b3d09f9eacec0be72",
+            "dependencies": []
+          }
+        ],
+        "restrictions": [
+          "Model availability and model-card license are verified, not linguistic adequacy.",
+          "Acquire declared dependencies; persist runtime/package/model fingerprints.",
+          "Morphology model output is not lexical sense evidence."
+        ],
+        "preferred_runtime": "Stanza",
+        "role": "runtime_default"
+      }
+    },
+    {
+      "language": "fr",
+      "name": "French",
+      "lexical_sources": [
+        {
+          "source_id": "kaikki-enwiktionary-raw",
+          "name": "English Wiktionary via Wiktextract / Kaikki",
+          "url": "https://kaikki.org/dictionary/raw-wiktextract-data.jsonl.gz",
+          "format": "wiktextract-en-jsonl.gz",
+          "documentation_url": "https://github.com/tatuylonen/wiktextract",
+          "download_index_url": "https://kaikki.org/dictionary/rawdata.html",
+          "source_language_codes": [
+            "fr"
+          ],
+          "language_mapping": "exact language code",
+          "license": "CC-BY-SA-4.0 text; third-party exceptions",
+          "license_urls": [
+            "https://foundation.wikimedia.org/wiki/Policy:Terms_of_Use#7._Licensing_of_Content",
+            "https://creativecommons.org/licenses/by-sa/4.0/"
+          ],
+          "attribution": "Wiktionary contributors; Tatu Ylonen / Wiktextract / Kaikki; preserve entry URL/history, snapshot and modifications",
+          "restrictions": [
+            "Candidate evidence only; no linguistic review or redistribution approval is implied.",
+            "No observed usage frequency; dictionary entry order is not a rank.",
+            "Keep source sense evidence and original language/POS; quarantine missing or ambiguous mappings.",
+            "Preserve attribution, source snapshot hash, license notice and modifications.",
+            "Do not copy third-party quotations or audio under the dictionary text license."
+          ],
+          "redistribution_approved": false,
+          "linguistic_review_approved": false
+        }
+      ],
+      "corpus": {
+        "source_id": "ud-fr-gsd",
+        "name": "UD French-GSD",
+        "release": "r2.16",
+        "format": "conllu",
+        "train_urls": [
+          "https://raw.githubusercontent.com/UniversalDependencies/UD_French-GSD/r2.16/fr_gsd-ud-train.conllu"
+        ],
+        "test_urls": [
+          "https://raw.githubusercontent.com/UniversalDependencies/UD_French-GSD/r2.16/fr_gsd-ud-test.conllu"
+        ],
+        "readme_url": "https://raw.githubusercontent.com/UniversalDependencies/UD_French-GSD/r2.16/README.md",
+        "license": "CC BY-SA 4.0",
+        "license_urls": [
+          "https://raw.githubusercontent.com/UniversalDependencies/UD_French-GSD/r2.16/README.md",
+          "https://creativecommons.org/licenses/by-sa/4.0/"
+        ],
+        "restrictions": [
+          "Annotated contextual evaluation/training source; not dictionary senses or balanced general frequency.",
+          "Keep test split out of vocabulary ranking/training when reporting held-out model evaluation.",
+          "Attribute named treebank contributors and retain release README/license.",
+          "Annotation license does not settle underlying sentence text rights; README retains third-party text caveats."
+        ],
+        "redistribution_approved": false,
+        "linguistic_review_approved": false
+      },
+      "model": {
+        "name": "Stanza",
+        "language": "fr",
+        "resource_version": "1.10.0",
+        "resource_manifest_url": "https://raw.githubusercontent.com/stanfordnlp/stanza-resources/main/resources_1.10.0.json",
+        "resource_manifest_sha256": "3efb2833a67c0184fac2ea9986c04f9585bfb89fb943a4ab1a6bcbed641d6be0",
+        "model_card_url": "https://huggingface.co/stanfordnlp/stanza-fr/raw/v1.10.0/README.md",
+        "declared_license": "Apache-2.0",
+        "processors": {
+          "tokenize": "combined",
+          "mwt": "combined",
+          "pos": "combined_nocharlm",
+          "lemma": "combined_nocharlm"
+        },
+        "files": [
+          {
+            "processor": "tokenize",
+            "package": "combined",
+            "url": "https://huggingface.co/stanfordnlp/stanza-fr/resolve/v1.10.0/models/tokenize/combined.pt",
+            "upstream_md5": "7164716a5a2aabb0679a79f42f169897",
+            "dependencies": []
+          },
+          {
+            "processor": "mwt",
+            "package": "combined",
+            "url": "https://huggingface.co/stanfordnlp/stanza-fr/resolve/v1.10.0/models/mwt/combined.pt",
+            "upstream_md5": "9f9f1fd67d7f7eded5ef2f291551383f",
+            "dependencies": []
+          },
+          {
+            "processor": "pos",
+            "package": "combined_nocharlm",
+            "url": "https://huggingface.co/stanfordnlp/stanza-fr/resolve/v1.10.0/models/pos/combined_nocharlm.pt",
+            "upstream_md5": "a583a78f1f80f8b6bb50f9cc68961e64",
+            "dependencies": [
+              {
+                "model": "pretrain",
+                "package": "conll17"
+              }
+            ]
+          },
+          {
+            "processor": "lemma",
+            "package": "combined_nocharlm",
+            "url": "https://huggingface.co/stanfordnlp/stanza-fr/resolve/v1.10.0/models/lemma/combined_nocharlm.pt",
+            "upstream_md5": "00e55175ae3c0f14fe0da7598a91f978",
+            "dependencies": []
+          }
+        ],
+        "restrictions": [
+          "Model availability and model-card license are verified, not linguistic adequacy.",
+          "Acquire declared dependencies; persist runtime/package/model fingerprints.",
+          "Morphology model output is not lexical sense evidence."
+        ],
+        "preferred_runtime": "Stanza",
+        "role": "runtime_default"
+      }
+    },
+    {
+      "language": "de",
+      "name": "German",
+      "lexical_sources": [
+        {
+          "source_id": "kaikki-enwiktionary-raw",
+          "name": "English Wiktionary via Wiktextract / Kaikki",
+          "url": "https://kaikki.org/dictionary/raw-wiktextract-data.jsonl.gz",
+          "format": "wiktextract-en-jsonl.gz",
+          "documentation_url": "https://github.com/tatuylonen/wiktextract",
+          "download_index_url": "https://kaikki.org/dictionary/rawdata.html",
+          "source_language_codes": [
+            "de"
+          ],
+          "language_mapping": "exact language code",
+          "license": "CC-BY-SA-4.0 text; third-party exceptions",
+          "license_urls": [
+            "https://foundation.wikimedia.org/wiki/Policy:Terms_of_Use#7._Licensing_of_Content",
+            "https://creativecommons.org/licenses/by-sa/4.0/"
+          ],
+          "attribution": "Wiktionary contributors; Tatu Ylonen / Wiktextract / Kaikki; preserve entry URL/history, snapshot and modifications",
+          "restrictions": [
+            "Candidate evidence only; no linguistic review or redistribution approval is implied.",
+            "No observed usage frequency; dictionary entry order is not a rank.",
+            "Keep source sense evidence and original language/POS; quarantine missing or ambiguous mappings.",
+            "Preserve attribution, source snapshot hash, license notice and modifications.",
+            "Do not copy third-party quotations or audio under the dictionary text license."
+          ],
+          "redistribution_approved": false,
+          "linguistic_review_approved": false
+        }
+      ],
+      "corpus": {
+        "source_id": "ud-de-gsd",
+        "name": "UD German-GSD",
+        "release": "r2.16",
+        "format": "conllu",
+        "train_urls": [
+          "https://raw.githubusercontent.com/UniversalDependencies/UD_German-GSD/r2.16/de_gsd-ud-train.conllu"
+        ],
+        "test_urls": [
+          "https://raw.githubusercontent.com/UniversalDependencies/UD_German-GSD/r2.16/de_gsd-ud-test.conllu"
+        ],
+        "readme_url": "https://raw.githubusercontent.com/UniversalDependencies/UD_German-GSD/r2.16/README.md",
+        "license": "CC BY-SA 4.0",
+        "license_urls": [
+          "https://raw.githubusercontent.com/UniversalDependencies/UD_German-GSD/r2.16/README.md",
+          "https://creativecommons.org/licenses/by-sa/4.0/"
+        ],
+        "restrictions": [
+          "Annotated contextual evaluation/training source; not dictionary senses or balanced general frequency.",
+          "Keep test split out of vocabulary ranking/training when reporting held-out model evaluation.",
+          "Attribute named treebank contributors and retain release README/license.",
+          "Annotation license does not settle underlying sentence text rights; README retains third-party text caveats."
+        ],
+        "redistribution_approved": false,
+        "linguistic_review_approved": false
+      },
+      "model": {
+        "name": "Stanza",
+        "language": "de",
+        "resource_version": "1.10.0",
+        "resource_manifest_url": "https://raw.githubusercontent.com/stanfordnlp/stanza-resources/main/resources_1.10.0.json",
+        "resource_manifest_sha256": "3efb2833a67c0184fac2ea9986c04f9585bfb89fb943a4ab1a6bcbed641d6be0",
+        "model_card_url": "https://huggingface.co/stanfordnlp/stanza-de/raw/v1.10.0/README.md",
+        "declared_license": "Apache-2.0",
+        "processors": {
+          "tokenize": "combined",
+          "mwt": "combined",
+          "pos": "combined_nocharlm",
+          "lemma": "combined_nocharlm"
+        },
+        "files": [
+          {
+            "processor": "tokenize",
+            "package": "combined",
+            "url": "https://huggingface.co/stanfordnlp/stanza-de/resolve/v1.10.0/models/tokenize/combined.pt",
+            "upstream_md5": "8e5a4c90e48f5794acf470828b91f013",
+            "dependencies": []
+          },
+          {
+            "processor": "mwt",
+            "package": "combined",
+            "url": "https://huggingface.co/stanfordnlp/stanza-de/resolve/v1.10.0/models/mwt/combined.pt",
+            "upstream_md5": "44a59d7602fd59a58428b80f39406cc5",
+            "dependencies": []
+          },
+          {
+            "processor": "pos",
+            "package": "combined_nocharlm",
+            "url": "https://huggingface.co/stanfordnlp/stanza-de/resolve/v1.10.0/models/pos/combined_nocharlm.pt",
+            "upstream_md5": "842dedfc356085d28b1b900f149789be",
+            "dependencies": [
+              {
+                "model": "pretrain",
+                "package": "conll17"
+              }
+            ]
+          },
+          {
+            "processor": "lemma",
+            "package": "combined_nocharlm",
+            "url": "https://huggingface.co/stanfordnlp/stanza-de/resolve/v1.10.0/models/lemma/combined_nocharlm.pt",
+            "upstream_md5": "238587be0deaabb97355c559fec5bf59",
+            "dependencies": []
+          }
+        ],
+        "restrictions": [
+          "Model availability and model-card license are verified, not linguistic adequacy.",
+          "Acquire declared dependencies; persist runtime/package/model fingerprints.",
+          "Morphology model output is not lexical sense evidence."
+        ],
+        "preferred_runtime": "Stanza",
+        "role": "runtime_default"
+      }
+    },
+    {
+      "language": "it",
+      "name": "Italian",
+      "lexical_sources": [
+        {
+          "source_id": "kaikki-enwiktionary-raw",
+          "name": "English Wiktionary via Wiktextract / Kaikki",
+          "url": "https://kaikki.org/dictionary/raw-wiktextract-data.jsonl.gz",
+          "format": "wiktextract-en-jsonl.gz",
+          "documentation_url": "https://github.com/tatuylonen/wiktextract",
+          "download_index_url": "https://kaikki.org/dictionary/rawdata.html",
+          "source_language_codes": [
+            "it"
+          ],
+          "language_mapping": "exact language code",
+          "license": "CC-BY-SA-4.0 text; third-party exceptions",
+          "license_urls": [
+            "https://foundation.wikimedia.org/wiki/Policy:Terms_of_Use#7._Licensing_of_Content",
+            "https://creativecommons.org/licenses/by-sa/4.0/"
+          ],
+          "attribution": "Wiktionary contributors; Tatu Ylonen / Wiktextract / Kaikki; preserve entry URL/history, snapshot and modifications",
+          "restrictions": [
+            "Candidate evidence only; no linguistic review or redistribution approval is implied.",
+            "No observed usage frequency; dictionary entry order is not a rank.",
+            "Keep source sense evidence and original language/POS; quarantine missing or ambiguous mappings.",
+            "Preserve attribution, source snapshot hash, license notice and modifications.",
+            "Do not copy third-party quotations or audio under the dictionary text license."
+          ],
+          "redistribution_approved": false,
+          "linguistic_review_approved": false
+        }
+      ],
+      "corpus": {
+        "source_id": "ud-it-isdt",
+        "name": "UD Italian-ISDT",
+        "release": "r2.16",
+        "format": "conllu",
+        "train_urls": [
+          "https://raw.githubusercontent.com/UniversalDependencies/UD_Italian-ISDT/r2.16/it_isdt-ud-train.conllu"
+        ],
+        "test_urls": [
+          "https://raw.githubusercontent.com/UniversalDependencies/UD_Italian-ISDT/r2.16/it_isdt-ud-test.conllu"
+        ],
+        "readme_url": "https://raw.githubusercontent.com/UniversalDependencies/UD_Italian-ISDT/r2.16/README.md",
+        "license": "CC BY-NC-SA 3.0",
+        "license_urls": [
+          "https://raw.githubusercontent.com/UniversalDependencies/UD_Italian-ISDT/r2.16/README.md",
+          "https://creativecommons.org/licenses/by-nc-sa/3.0/"
+        ],
+        "restrictions": [
+          "Annotated contextual evaluation/training source; not dictionary senses or balanced general frequency.",
+          "Keep test split out of vocabulary ranking/training when reporting held-out model evaluation.",
+          "Attribute named treebank contributors and retain release README/license.",
+          "NonCommercial license: not a default source for commercial redistribution; keep access/use decision explicit."
+        ],
+        "redistribution_approved": false,
+        "linguistic_review_approved": false
+      },
+      "model": {
+        "name": "Stanza",
+        "language": "it",
+        "resource_version": "1.10.0",
+        "resource_manifest_url": "https://raw.githubusercontent.com/stanfordnlp/stanza-resources/main/resources_1.10.0.json",
+        "resource_manifest_sha256": "3efb2833a67c0184fac2ea9986c04f9585bfb89fb943a4ab1a6bcbed641d6be0",
+        "model_card_url": "https://huggingface.co/stanfordnlp/stanza-it/raw/v1.10.0/README.md",
+        "declared_license": "Apache-2.0",
+        "processors": {
+          "tokenize": "combined",
+          "mwt": "combined",
+          "pos": "combined_nocharlm",
+          "lemma": "combined_nocharlm"
+        },
+        "files": [
+          {
+            "processor": "tokenize",
+            "package": "combined",
+            "url": "https://huggingface.co/stanfordnlp/stanza-it/resolve/v1.10.0/models/tokenize/combined.pt",
+            "upstream_md5": "f899329597f1e3fd9930328aa03b1902",
+            "dependencies": []
+          },
+          {
+            "processor": "mwt",
+            "package": "combined",
+            "url": "https://huggingface.co/stanfordnlp/stanza-it/resolve/v1.10.0/models/mwt/combined.pt",
+            "upstream_md5": "b8b1dea345e19b390f3d893eb1804dde",
+            "dependencies": []
+          },
+          {
+            "processor": "pos",
+            "package": "combined_nocharlm",
+            "url": "https://huggingface.co/stanfordnlp/stanza-it/resolve/v1.10.0/models/pos/combined_nocharlm.pt",
+            "upstream_md5": "9d296ae85c34b801835a69ad211d4874",
+            "dependencies": [
+              {
+                "model": "pretrain",
+                "package": "conll17"
+              }
+            ]
+          },
+          {
+            "processor": "lemma",
+            "package": "combined_nocharlm",
+            "url": "https://huggingface.co/stanfordnlp/stanza-it/resolve/v1.10.0/models/lemma/combined_nocharlm.pt",
+            "upstream_md5": "faa5cc0bfc26c12840216d15156c569c",
+            "dependencies": []
+          }
+        ],
+        "restrictions": [
+          "Model availability and model-card license are verified, not linguistic adequacy.",
+          "Acquire declared dependencies; persist runtime/package/model fingerprints.",
+          "Morphology model output is not lexical sense evidence."
+        ],
+        "preferred_runtime": "Stanza",
+        "role": "runtime_default"
+      }
+    },
+    {
+      "language": "pl",
+      "name": "Polish",
+      "lexical_sources": [
+        {
+          "source_id": "kaikki-enwiktionary-raw",
+          "name": "English Wiktionary via Wiktextract / Kaikki",
+          "url": "https://kaikki.org/dictionary/raw-wiktextract-data.jsonl.gz",
+          "format": "wiktextract-en-jsonl.gz",
+          "documentation_url": "https://github.com/tatuylonen/wiktextract",
+          "download_index_url": "https://kaikki.org/dictionary/rawdata.html",
+          "source_language_codes": [
+            "pl"
+          ],
+          "language_mapping": "exact language code",
+          "license": "CC-BY-SA-4.0 text; third-party exceptions",
+          "license_urls": [
+            "https://foundation.wikimedia.org/wiki/Policy:Terms_of_Use#7._Licensing_of_Content",
+            "https://creativecommons.org/licenses/by-sa/4.0/"
+          ],
+          "attribution": "Wiktionary contributors; Tatu Ylonen / Wiktextract / Kaikki; preserve entry URL/history, snapshot and modifications",
+          "restrictions": [
+            "Candidate evidence only; no linguistic review or redistribution approval is implied.",
+            "No observed usage frequency; dictionary entry order is not a rank.",
+            "Keep source sense evidence and original language/POS; quarantine missing or ambiguous mappings.",
+            "Preserve attribution, source snapshot hash, license notice and modifications.",
+            "Do not copy third-party quotations or audio under the dictionary text license."
+          ],
+          "redistribution_approved": false,
+          "linguistic_review_approved": false
+        }
+      ],
+      "corpus": {
+        "source_id": "ud-pl-pdb",
+        "name": "UD Polish-PDB",
+        "release": "r2.16",
+        "format": "conllu",
+        "train_urls": [
+          "https://raw.githubusercontent.com/UniversalDependencies/UD_Polish-PDB/r2.16/pl_pdb-ud-train.conllu"
+        ],
+        "test_urls": [
+          "https://raw.githubusercontent.com/UniversalDependencies/UD_Polish-PDB/r2.16/pl_pdb-ud-test.conllu"
+        ],
+        "readme_url": "https://raw.githubusercontent.com/UniversalDependencies/UD_Polish-PDB/r2.16/README.md",
+        "license": "CC BY-NC-SA 4.0",
+        "license_urls": [
+          "https://raw.githubusercontent.com/UniversalDependencies/UD_Polish-PDB/r2.16/README.md",
+          "https://creativecommons.org/licenses/by-nc-sa/4.0/"
+        ],
+        "restrictions": [
+          "Annotated contextual evaluation/training source; not dictionary senses or balanced general frequency.",
+          "Keep test split out of vocabulary ranking/training when reporting held-out model evaluation.",
+          "Attribute named treebank contributors and retain release README/license.",
+          "NonCommercial license: not a default source for commercial redistribution; keep access/use decision explicit."
+        ],
+        "redistribution_approved": false,
+        "linguistic_review_approved": false
+      },
+      "model": {
+        "name": "Stanza",
+        "language": "pl",
+        "resource_version": "1.10.0",
+        "resource_manifest_url": "https://raw.githubusercontent.com/stanfordnlp/stanza-resources/main/resources_1.10.0.json",
+        "resource_manifest_sha256": "3efb2833a67c0184fac2ea9986c04f9585bfb89fb943a4ab1a6bcbed641d6be0",
+        "model_card_url": "https://huggingface.co/stanfordnlp/stanza-pl/raw/v1.10.0/README.md",
+        "declared_license": "Apache-2.0",
+        "processors": {
+          "tokenize": "pdb",
+          "pos": "pdb_nocharlm",
+          "lemma": "pdb_nocharlm",
+          "mwt": "pdb"
+        },
+        "files": [
+          {
+            "processor": "tokenize",
+            "package": "pdb",
+            "url": "https://huggingface.co/stanfordnlp/stanza-pl/resolve/v1.10.0/models/tokenize/pdb.pt",
+            "upstream_md5": "8c6d2c2c47442a8b04b04e8687dd895f",
+            "dependencies": []
+          },
+          {
+            "processor": "pos",
+            "package": "pdb_nocharlm",
+            "url": "https://huggingface.co/stanfordnlp/stanza-pl/resolve/v1.10.0/models/pos/pdb_nocharlm.pt",
+            "upstream_md5": "eeb2e88e6fd82a27ecee99d6d2754305",
+            "dependencies": [
+              {
+                "model": "pretrain",
+                "package": "conll17"
+              }
+            ]
+          },
+          {
+            "processor": "lemma",
+            "package": "pdb_nocharlm",
+            "url": "https://huggingface.co/stanfordnlp/stanza-pl/resolve/v1.10.0/models/lemma/pdb_nocharlm.pt",
+            "upstream_md5": "817595b74ef1dc6509b40be5b2f483ff",
+            "dependencies": []
+          },
+          {
+            "processor": "mwt",
+            "package": "pdb",
+            "url": "https://huggingface.co/stanfordnlp/stanza-pl/resolve/v1.10.0/models/mwt/pdb.pt",
+            "upstream_md5": "4f0d582b9dab65704453be9d38846175",
+            "dependencies": []
+          }
+        ],
+        "restrictions": [
+          "Model availability and model-card license are verified, not linguistic adequacy.",
+          "Acquire declared dependencies; persist runtime/package/model fingerprints.",
+          "Morphology model output is not lexical sense evidence."
+        ],
+        "preferred_runtime": "Stanza",
+        "role": "runtime_default"
+      }
+    },
+    {
+      "language": "tr",
+      "name": "Turkish",
+      "lexical_sources": [
+        {
+          "source_id": "kaikki-enwiktionary-raw",
+          "name": "English Wiktionary via Wiktextract / Kaikki",
+          "url": "https://kaikki.org/dictionary/raw-wiktextract-data.jsonl.gz",
+          "format": "wiktextract-en-jsonl.gz",
+          "documentation_url": "https://github.com/tatuylonen/wiktextract",
+          "download_index_url": "https://kaikki.org/dictionary/rawdata.html",
+          "source_language_codes": [
+            "tr"
+          ],
+          "language_mapping": "exact language code",
+          "license": "CC-BY-SA-4.0 text; third-party exceptions",
+          "license_urls": [
+            "https://foundation.wikimedia.org/wiki/Policy:Terms_of_Use#7._Licensing_of_Content",
+            "https://creativecommons.org/licenses/by-sa/4.0/"
+          ],
+          "attribution": "Wiktionary contributors; Tatu Ylonen / Wiktextract / Kaikki; preserve entry URL/history, snapshot and modifications",
+          "restrictions": [
+            "Candidate evidence only; no linguistic review or redistribution approval is implied.",
+            "No observed usage frequency; dictionary entry order is not a rank.",
+            "Keep source sense evidence and original language/POS; quarantine missing or ambiguous mappings.",
+            "Preserve attribution, source snapshot hash, license notice and modifications.",
+            "Do not copy third-party quotations or audio under the dictionary text license."
+          ],
+          "redistribution_approved": false,
+          "linguistic_review_approved": false
+        }
+      ],
+      "corpus": {
+        "source_id": "ud-tr-imst",
+        "name": "UD Turkish-IMST",
+        "release": "r2.16",
+        "format": "conllu",
+        "train_urls": [
+          "https://raw.githubusercontent.com/UniversalDependencies/UD_Turkish-IMST/r2.16/tr_imst-ud-train.conllu"
+        ],
+        "test_urls": [
+          "https://raw.githubusercontent.com/UniversalDependencies/UD_Turkish-IMST/r2.16/tr_imst-ud-test.conllu"
+        ],
+        "readme_url": "https://raw.githubusercontent.com/UniversalDependencies/UD_Turkish-IMST/r2.16/README.md",
+        "license": "CC BY-NC-SA 4.0",
+        "license_urls": [
+          "https://raw.githubusercontent.com/UniversalDependencies/UD_Turkish-IMST/r2.16/README.md",
+          "https://creativecommons.org/licenses/by-nc-sa/4.0/"
+        ],
+        "restrictions": [
+          "Annotated contextual evaluation/training source; not dictionary senses or balanced general frequency.",
+          "Keep test split out of vocabulary ranking/training when reporting held-out model evaluation.",
+          "Attribute named treebank contributors and retain release README/license.",
+          "NonCommercial license: not a default source for commercial redistribution; keep access/use decision explicit."
+        ],
+        "redistribution_approved": false,
+        "linguistic_review_approved": false
+      },
+      "model": {
+        "name": "Stanza",
+        "language": "tr",
+        "resource_version": "1.10.0",
+        "resource_manifest_url": "https://raw.githubusercontent.com/stanfordnlp/stanza-resources/main/resources_1.10.0.json",
+        "resource_manifest_sha256": "3efb2833a67c0184fac2ea9986c04f9585bfb89fb943a4ab1a6bcbed641d6be0",
+        "model_card_url": "https://huggingface.co/stanfordnlp/stanza-tr/raw/v1.10.0/README.md",
+        "declared_license": "Apache-2.0",
+        "processors": {
+          "tokenize": "imst",
+          "pos": "imst_nocharlm",
+          "lemma": "imst_nocharlm",
+          "mwt": "imst"
+        },
+        "files": [
+          {
+            "processor": "tokenize",
+            "package": "imst",
+            "url": "https://huggingface.co/stanfordnlp/stanza-tr/resolve/v1.10.0/models/tokenize/imst.pt",
+            "upstream_md5": "0f48a3210646c70aca1c897bcd74a387",
+            "dependencies": []
+          },
+          {
+            "processor": "pos",
+            "package": "imst_nocharlm",
+            "url": "https://huggingface.co/stanfordnlp/stanza-tr/resolve/v1.10.0/models/pos/imst_nocharlm.pt",
+            "upstream_md5": "85164b5264a8495664635b71363554d6",
+            "dependencies": [
+              {
+                "model": "pretrain",
+                "package": "conll17"
+              }
+            ]
+          },
+          {
+            "processor": "lemma",
+            "package": "imst_nocharlm",
+            "url": "https://huggingface.co/stanfordnlp/stanza-tr/resolve/v1.10.0/models/lemma/imst_nocharlm.pt",
+            "upstream_md5": "02031263b3d74a8f362607ae8a1f593d",
+            "dependencies": []
+          },
+          {
+            "processor": "mwt",
+            "package": "imst",
+            "url": "https://huggingface.co/stanfordnlp/stanza-tr/resolve/v1.10.0/models/mwt/imst.pt",
+            "upstream_md5": "66ec91634226efd5de24867c28180ed5",
+            "dependencies": []
+          }
+        ],
+        "restrictions": [
+          "Model availability and model-card license are verified, not linguistic adequacy.",
+          "Acquire declared dependencies; persist runtime/package/model fingerprints.",
+          "Morphology model output is not lexical sense evidence."
+        ],
+        "preferred_runtime": "Stanza",
+        "role": "runtime_default"
+      }
+    },
+    {
+      "language": "ro",
+      "name": "Romanian",
+      "lexical_sources": [
+        {
+          "source_id": "kaikki-enwiktionary-raw",
+          "name": "English Wiktionary via Wiktextract / Kaikki",
+          "url": "https://kaikki.org/dictionary/raw-wiktextract-data.jsonl.gz",
+          "format": "wiktextract-en-jsonl.gz",
+          "documentation_url": "https://github.com/tatuylonen/wiktextract",
+          "download_index_url": "https://kaikki.org/dictionary/rawdata.html",
+          "source_language_codes": [
+            "ro"
+          ],
+          "language_mapping": "exact language code",
+          "license": "CC-BY-SA-4.0 text; third-party exceptions",
+          "license_urls": [
+            "https://foundation.wikimedia.org/wiki/Policy:Terms_of_Use#7._Licensing_of_Content",
+            "https://creativecommons.org/licenses/by-sa/4.0/"
+          ],
+          "attribution": "Wiktionary contributors; Tatu Ylonen / Wiktextract / Kaikki; preserve entry URL/history, snapshot and modifications",
+          "restrictions": [
+            "Candidate evidence only; no linguistic review or redistribution approval is implied.",
+            "No observed usage frequency; dictionary entry order is not a rank.",
+            "Keep source sense evidence and original language/POS; quarantine missing or ambiguous mappings.",
+            "Preserve attribution, source snapshot hash, license notice and modifications.",
+            "Do not copy third-party quotations or audio under the dictionary text license."
+          ],
+          "redistribution_approved": false,
+          "linguistic_review_approved": false
+        }
+      ],
+      "corpus": {
+        "source_id": "ud-ro-rrt",
+        "name": "UD Romanian-RRT",
+        "release": "r2.16",
+        "format": "conllu",
+        "train_urls": [
+          "https://raw.githubusercontent.com/UniversalDependencies/UD_Romanian-RRT/r2.16/ro_rrt-ud-train.conllu"
+        ],
+        "test_urls": [
+          "https://raw.githubusercontent.com/UniversalDependencies/UD_Romanian-RRT/r2.16/ro_rrt-ud-test.conllu"
+        ],
+        "readme_url": "https://raw.githubusercontent.com/UniversalDependencies/UD_Romanian-RRT/r2.16/README.md",
+        "license": "CC BY-SA 4.0",
+        "license_urls": [
+          "https://raw.githubusercontent.com/UniversalDependencies/UD_Romanian-RRT/r2.16/README.md",
+          "https://creativecommons.org/licenses/by-sa/4.0/"
+        ],
+        "restrictions": [
+          "Annotated contextual evaluation/training source; not dictionary senses or balanced general frequency.",
+          "Keep test split out of vocabulary ranking/training when reporting held-out model evaluation.",
+          "Attribute named treebank contributors and retain release README/license."
+        ],
+        "redistribution_approved": false,
+        "linguistic_review_approved": false
+      },
+      "model": {
+        "name": "Stanza",
+        "language": "ro",
+        "resource_version": "1.10.0",
+        "resource_manifest_url": "https://raw.githubusercontent.com/stanfordnlp/stanza-resources/main/resources_1.10.0.json",
+        "resource_manifest_sha256": "3efb2833a67c0184fac2ea9986c04f9585bfb89fb943a4ab1a6bcbed641d6be0",
+        "model_card_url": "https://huggingface.co/stanfordnlp/stanza-ro/raw/v1.10.0/README.md",
+        "declared_license": "Apache-2.0",
+        "processors": {
+          "tokenize": "rrt",
+          "pos": "rrt_nocharlm",
+          "lemma": "rrt_nocharlm"
+        },
+        "files": [
+          {
+            "processor": "tokenize",
+            "package": "rrt",
+            "url": "https://huggingface.co/stanfordnlp/stanza-ro/resolve/v1.10.0/models/tokenize/rrt.pt",
+            "upstream_md5": "ae0a05a72e2a014206bdd89a57baa3ad",
+            "dependencies": []
+          },
+          {
+            "processor": "pos",
+            "package": "rrt_nocharlm",
+            "url": "https://huggingface.co/stanfordnlp/stanza-ro/resolve/v1.10.0/models/pos/rrt_nocharlm.pt",
+            "upstream_md5": "7dbeaac396ef2ba634fb86cc6f613097",
+            "dependencies": [
+              {
+                "model": "pretrain",
+                "package": "conll17"
+              }
+            ]
+          },
+          {
+            "processor": "lemma",
+            "package": "rrt_nocharlm",
+            "url": "https://huggingface.co/stanfordnlp/stanza-ro/resolve/v1.10.0/models/lemma/rrt_nocharlm.pt",
+            "upstream_md5": "be62cb371c87b008fdc95ea6e852fbf6",
+            "dependencies": []
+          }
+        ],
+        "restrictions": [
+          "Model availability and model-card license are verified, not linguistic adequacy.",
+          "Acquire declared dependencies; persist runtime/package/model fingerprints.",
+          "Morphology model output is not lexical sense evidence."
+        ],
+        "preferred_runtime": "Stanza",
+        "role": "runtime_default"
+      }
+    },
+    {
+      "language": "ru",
+      "name": "Russian",
+      "lexical_sources": [
+        {
+          "source_id": "kaikki-enwiktionary-raw",
+          "name": "English Wiktionary via Wiktextract / Kaikki",
+          "url": "https://kaikki.org/dictionary/raw-wiktextract-data.jsonl.gz",
+          "format": "wiktextract-en-jsonl.gz",
+          "documentation_url": "https://github.com/tatuylonen/wiktextract",
+          "download_index_url": "https://kaikki.org/dictionary/rawdata.html",
+          "source_language_codes": [
+            "ru"
+          ],
+          "language_mapping": "exact language code",
+          "license": "CC-BY-SA-4.0 text; third-party exceptions",
+          "license_urls": [
+            "https://foundation.wikimedia.org/wiki/Policy:Terms_of_Use#7._Licensing_of_Content",
+            "https://creativecommons.org/licenses/by-sa/4.0/"
+          ],
+          "attribution": "Wiktionary contributors; Tatu Ylonen / Wiktextract / Kaikki; preserve entry URL/history, snapshot and modifications",
+          "restrictions": [
+            "Candidate evidence only; no linguistic review or redistribution approval is implied.",
+            "No observed usage frequency; dictionary entry order is not a rank.",
+            "Keep source sense evidence and original language/POS; quarantine missing or ambiguous mappings.",
+            "Preserve attribution, source snapshot hash, license notice and modifications.",
+            "Do not copy third-party quotations or audio under the dictionary text license."
+          ],
+          "redistribution_approved": false,
+          "linguistic_review_approved": false
+        }
+      ],
+      "corpus": {
+        "source_id": "ud-ru-syntagrus",
+        "name": "UD Russian-SynTagRus",
+        "release": "r2.16",
+        "format": "conllu",
+        "train_urls": [
+          "https://raw.githubusercontent.com/UniversalDependencies/UD_Russian-SynTagRus/r2.16/ru_syntagrus-ud-train-a.conllu",
+          "https://raw.githubusercontent.com/UniversalDependencies/UD_Russian-SynTagRus/r2.16/ru_syntagrus-ud-train-b.conllu",
+          "https://raw.githubusercontent.com/UniversalDependencies/UD_Russian-SynTagRus/r2.16/ru_syntagrus-ud-train-c.conllu"
+        ],
+        "test_urls": [
+          "https://raw.githubusercontent.com/UniversalDependencies/UD_Russian-SynTagRus/r2.16/ru_syntagrus-ud-test.conllu"
+        ],
+        "readme_url": "https://raw.githubusercontent.com/UniversalDependencies/UD_Russian-SynTagRus/r2.16/README.md",
+        "license": "CC BY-NC-SA 4.0",
+        "license_urls": [
+          "https://raw.githubusercontent.com/UniversalDependencies/UD_Russian-SynTagRus/r2.16/README.md",
+          "https://creativecommons.org/licenses/by-nc-sa/4.0/"
+        ],
+        "restrictions": [
+          "Annotated contextual evaluation/training source; not dictionary senses or balanced general frequency.",
+          "Keep test split out of vocabulary ranking/training when reporting held-out model evaluation.",
+          "Attribute named treebank contributors and retain release README/license.",
+          "NonCommercial license: not a default source for commercial redistribution; keep access/use decision explicit."
+        ],
+        "redistribution_approved": false,
+        "linguistic_review_approved": false
+      },
+      "model": {
+        "name": "Stanza",
+        "language": "ru",
+        "resource_version": "1.10.0",
+        "resource_manifest_url": "https://raw.githubusercontent.com/stanfordnlp/stanza-resources/main/resources_1.10.0.json",
+        "resource_manifest_sha256": "3efb2833a67c0184fac2ea9986c04f9585bfb89fb943a4ab1a6bcbed641d6be0",
+        "model_card_url": "https://huggingface.co/stanfordnlp/stanza-ru/raw/v1.10.0/README.md",
+        "declared_license": "Apache-2.0",
+        "processors": {
+          "tokenize": "syntagrus",
+          "pos": "syntagrus_nocharlm",
+          "lemma": "syntagrus_nocharlm"
+        },
+        "files": [
+          {
+            "processor": "tokenize",
+            "package": "syntagrus",
+            "url": "https://huggingface.co/stanfordnlp/stanza-ru/resolve/v1.10.0/models/tokenize/syntagrus.pt",
+            "upstream_md5": "dbc2187177a7f8667defe6d1cee6fe60",
+            "dependencies": []
+          },
+          {
+            "processor": "pos",
+            "package": "syntagrus_nocharlm",
+            "url": "https://huggingface.co/stanfordnlp/stanza-ru/resolve/v1.10.0/models/pos/syntagrus_nocharlm.pt",
+            "upstream_md5": "02dfb285c96ca56292a2629b709dd5ad",
+            "dependencies": [
+              {
+                "model": "pretrain",
+                "package": "conll17"
+              }
+            ]
+          },
+          {
+            "processor": "lemma",
+            "package": "syntagrus_nocharlm",
+            "url": "https://huggingface.co/stanfordnlp/stanza-ru/resolve/v1.10.0/models/lemma/syntagrus_nocharlm.pt",
+            "upstream_md5": "a6d6453c953f4e55edb6c70e1e431612",
+            "dependencies": []
+          }
+        ],
+        "restrictions": [
+          "Model availability and model-card license are verified, not linguistic adequacy.",
+          "Acquire declared dependencies; persist runtime/package/model fingerprints.",
+          "Morphology model output is not lexical sense evidence."
+        ],
+        "preferred_runtime": "Stanza",
+        "role": "runtime_default"
+      }
+    },
+    {
+      "language": "nl",
+      "name": "Dutch",
+      "lexical_sources": [
+        {
+          "source_id": "kaikki-enwiktionary-raw",
+          "name": "English Wiktionary via Wiktextract / Kaikki",
+          "url": "https://kaikki.org/dictionary/raw-wiktextract-data.jsonl.gz",
+          "format": "wiktextract-en-jsonl.gz",
+          "documentation_url": "https://github.com/tatuylonen/wiktextract",
+          "download_index_url": "https://kaikki.org/dictionary/rawdata.html",
+          "source_language_codes": [
+            "nl"
+          ],
+          "language_mapping": "exact language code",
+          "license": "CC-BY-SA-4.0 text; third-party exceptions",
+          "license_urls": [
+            "https://foundation.wikimedia.org/wiki/Policy:Terms_of_Use#7._Licensing_of_Content",
+            "https://creativecommons.org/licenses/by-sa/4.0/"
+          ],
+          "attribution": "Wiktionary contributors; Tatu Ylonen / Wiktextract / Kaikki; preserve entry URL/history, snapshot and modifications",
+          "restrictions": [
+            "Candidate evidence only; no linguistic review or redistribution approval is implied.",
+            "No observed usage frequency; dictionary entry order is not a rank.",
+            "Keep source sense evidence and original language/POS; quarantine missing or ambiguous mappings.",
+            "Preserve attribution, source snapshot hash, license notice and modifications.",
+            "Do not copy third-party quotations or audio under the dictionary text license."
+          ],
+          "redistribution_approved": false,
+          "linguistic_review_approved": false
+        }
+      ],
+      "corpus": {
+        "source_id": "ud-nl-alpino",
+        "name": "UD Dutch-Alpino",
+        "release": "r2.16",
+        "format": "conllu",
+        "train_urls": [
+          "https://raw.githubusercontent.com/UniversalDependencies/UD_Dutch-Alpino/r2.16/nl_alpino-ud-train.conllu"
+        ],
+        "test_urls": [
+          "https://raw.githubusercontent.com/UniversalDependencies/UD_Dutch-Alpino/r2.16/nl_alpino-ud-test.conllu"
+        ],
+        "readme_url": "https://raw.githubusercontent.com/UniversalDependencies/UD_Dutch-Alpino/r2.16/README.txt",
+        "license": "CC BY-SA 4.0",
+        "license_urls": [
+          "https://raw.githubusercontent.com/UniversalDependencies/UD_Dutch-Alpino/r2.16/README.txt",
+          "https://creativecommons.org/licenses/by-sa/4.0/"
+        ],
+        "restrictions": [
+          "Annotated contextual evaluation/training source; not dictionary senses or balanced general frequency.",
+          "Keep test split out of vocabulary ranking/training when reporting held-out model evaluation.",
+          "Attribute named treebank contributors and retain release README/license."
+        ],
+        "redistribution_approved": false,
+        "linguistic_review_approved": false
+      },
+      "model": {
+        "name": "Stanza",
+        "language": "nl",
+        "resource_version": "1.10.0",
+        "resource_manifest_url": "https://raw.githubusercontent.com/stanfordnlp/stanza-resources/main/resources_1.10.0.json",
+        "resource_manifest_sha256": "3efb2833a67c0184fac2ea9986c04f9585bfb89fb943a4ab1a6bcbed641d6be0",
+        "model_card_url": "https://huggingface.co/stanfordnlp/stanza-nl/raw/v1.10.0/README.md",
+        "declared_license": "Apache-2.0",
+        "processors": {
+          "tokenize": "alpino",
+          "pos": "alpino_nocharlm",
+          "lemma": "alpino_nocharlm",
+          "mwt": "alpino"
+        },
+        "files": [
+          {
+            "processor": "tokenize",
+            "package": "alpino",
+            "url": "https://huggingface.co/stanfordnlp/stanza-nl/resolve/v1.10.0/models/tokenize/alpino.pt",
+            "upstream_md5": "6971fb959cf2cfd7efb37601f1655531",
+            "dependencies": []
+          },
+          {
+            "processor": "pos",
+            "package": "alpino_nocharlm",
+            "url": "https://huggingface.co/stanfordnlp/stanza-nl/resolve/v1.10.0/models/pos/alpino_nocharlm.pt",
+            "upstream_md5": "4b883a8c2ae8d9b37a9c4e5487b3c5f4",
+            "dependencies": [
+              {
+                "model": "pretrain",
+                "package": "conll17"
+              }
+            ]
+          },
+          {
+            "processor": "lemma",
+            "package": "alpino_nocharlm",
+            "url": "https://huggingface.co/stanfordnlp/stanza-nl/resolve/v1.10.0/models/lemma/alpino_nocharlm.pt",
+            "upstream_md5": "8654c70f977b82ab4124261fa29aa56a",
+            "dependencies": []
+          },
+          {
+            "processor": "mwt",
+            "package": "alpino",
+            "url": "https://huggingface.co/stanfordnlp/stanza-nl/resolve/v1.10.0/models/mwt/alpino.pt",
+            "upstream_md5": "a3f8426111699af7df40467890cc84a6",
+            "dependencies": []
+          }
+        ],
+        "restrictions": [
+          "Model availability and model-card license are verified, not linguistic adequacy.",
+          "Acquire declared dependencies; persist runtime/package/model fingerprints.",
+          "Morphology model output is not lexical sense evidence."
+        ],
+        "preferred_runtime": "Stanza",
+        "role": "runtime_default"
+      }
+    },
+    {
+      "language": "ko",
+      "name": "Korean",
+      "lexical_sources": [
+        {
+          "source_id": "kaikki-enwiktionary-raw",
+          "name": "English Wiktionary via Wiktextract / Kaikki",
+          "url": "https://kaikki.org/dictionary/raw-wiktextract-data.jsonl.gz",
+          "format": "wiktextract-en-jsonl.gz",
+          "documentation_url": "https://github.com/tatuylonen/wiktextract",
+          "download_index_url": "https://kaikki.org/dictionary/rawdata.html",
+          "source_language_codes": [
+            "ko"
+          ],
+          "language_mapping": "exact language code",
+          "license": "CC-BY-SA-4.0 text; third-party exceptions",
+          "license_urls": [
+            "https://foundation.wikimedia.org/wiki/Policy:Terms_of_Use#7._Licensing_of_Content",
+            "https://creativecommons.org/licenses/by-sa/4.0/"
+          ],
+          "attribution": "Wiktionary contributors; Tatu Ylonen / Wiktextract / Kaikki; preserve entry URL/history, snapshot and modifications",
+          "restrictions": [
+            "Candidate evidence only; no linguistic review or redistribution approval is implied.",
+            "No observed usage frequency; dictionary entry order is not a rank.",
+            "Keep source sense evidence and original language/POS; quarantine missing or ambiguous mappings.",
+            "Preserve attribution, source snapshot hash, license notice and modifications.",
+            "Do not copy third-party quotations or audio under the dictionary text license."
+          ],
+          "redistribution_approved": false,
+          "linguistic_review_approved": false
+        },
+        {
+          "source_id": "nikl-krdict-api",
+          "name": "NIKL Korean Basic Dictionary",
+          "url": "https://krdict.korean.go.kr/api/search",
+          "detail_url": "https://krdict.korean.go.kr/api/view",
+          "format": "krdict-xml",
+          "documentation_url": "https://krdict.korean.go.kr/kor/openApi/openApiInfo",
+          "license": "source-specific copyright policy; no redistribution decision recorded by this research",
+          "license_urls": [
+            "https://krdict.korean.go.kr/kor/mainAction"
+          ],
+          "attribution": "National Institute of Korean Language, Korean Basic Dictionary",
+          "restrictions": [
+            "Requires registered API key; not acquired in this research.",
+            "target_code plus sense_order and snapshot identify sense evidence; sup_no separates homographs.",
+            "Existing NIKL learner-list rank IDs must not be treated as these dictionary sense IDs."
+          ],
+          "redistribution_approved": false,
+          "linguistic_review_approved": false
+        }
+      ],
+      "corpus": {
+        "source_id": "ud-ko-gsd",
+        "name": "UD Korean-GSD",
+        "release": "r2.16",
+        "format": "conllu",
+        "train_urls": [
+          "https://raw.githubusercontent.com/UniversalDependencies/UD_Korean-GSD/r2.16/ko_gsd-ud-train.conllu"
+        ],
+        "test_urls": [
+          "https://raw.githubusercontent.com/UniversalDependencies/UD_Korean-GSD/r2.16/ko_gsd-ud-test.conllu"
+        ],
+        "readme_url": "https://raw.githubusercontent.com/UniversalDependencies/UD_Korean-GSD/r2.16/README.md",
+        "license": "CC BY-SA 4.0",
+        "license_urls": [
+          "https://raw.githubusercontent.com/UniversalDependencies/UD_Korean-GSD/r2.16/README.md",
+          "https://creativecommons.org/licenses/by-sa/4.0/"
+        ],
+        "restrictions": [
+          "Annotated contextual evaluation/training source; not dictionary senses or balanced general frequency.",
+          "Keep test split out of vocabulary ranking/training when reporting held-out model evaluation.",
+          "Attribute named treebank contributors and retain release README/license.",
+          "Annotation license does not settle underlying sentence text rights; README retains third-party text caveats."
+        ],
+        "redistribution_approved": false,
+        "linguistic_review_approved": false
+      },
+      "model": {
+        "name": "Stanza",
+        "language": "ko",
+        "resource_version": "1.10.0",
+        "resource_manifest_url": "https://raw.githubusercontent.com/stanfordnlp/stanza-resources/main/resources_1.10.0.json",
+        "resource_manifest_sha256": "3efb2833a67c0184fac2ea9986c04f9585bfb89fb943a4ab1a6bcbed641d6be0",
+        "model_card_url": "https://huggingface.co/stanfordnlp/stanza-ko/raw/v1.10.0/README.md",
+        "declared_license": "Apache-2.0",
+        "processors": {
+          "tokenize": "gsd",
+          "pos": "gsd_nocharlm",
+          "lemma": "gsd_nocharlm"
+        },
+        "files": [
+          {
+            "processor": "tokenize",
+            "package": "gsd",
+            "url": "https://huggingface.co/stanfordnlp/stanza-ko/resolve/v1.10.0/models/tokenize/gsd.pt",
+            "upstream_md5": "f965dd9feac8431baf4e2bb486ba4950",
+            "dependencies": []
+          },
+          {
+            "processor": "pos",
+            "package": "gsd_nocharlm",
+            "url": "https://huggingface.co/stanfordnlp/stanza-ko/resolve/v1.10.0/models/pos/gsd_nocharlm.pt",
+            "upstream_md5": "b1d727da5ac57bb9c74f345f9156836a",
+            "dependencies": [
+              {
+                "model": "pretrain",
+                "package": "conll17"
+              }
+            ]
+          },
+          {
+            "processor": "lemma",
+            "package": "gsd_nocharlm",
+            "url": "https://huggingface.co/stanfordnlp/stanza-ko/resolve/v1.10.0/models/lemma/gsd_nocharlm.pt",
+            "upstream_md5": "e1684b778f3f1bb9754e75476ecf9af5",
+            "dependencies": []
+          }
+        ],
+        "restrictions": [
+          "Model availability and model-card license are verified, not linguistic adequacy.",
+          "Acquire declared dependencies; persist runtime/package/model fingerprints.",
+          "Morphology model output is not lexical sense evidence."
+        ],
+        "preferred_runtime": "Kiwi with existing pinned fingerprint",
+        "role": "documented_stanza_alternative_not_runtime_default"
+      }
+    },
+    {
+      "language": "da",
+      "name": "Danish",
+      "lexical_sources": [
+        {
+          "source_id": "kaikki-enwiktionary-raw",
+          "name": "English Wiktionary via Wiktextract / Kaikki",
+          "url": "https://kaikki.org/dictionary/raw-wiktextract-data.jsonl.gz",
+          "format": "wiktextract-en-jsonl.gz",
+          "documentation_url": "https://github.com/tatuylonen/wiktextract",
+          "download_index_url": "https://kaikki.org/dictionary/rawdata.html",
+          "source_language_codes": [
+            "da"
+          ],
+          "language_mapping": "exact language code",
+          "license": "CC-BY-SA-4.0 text; third-party exceptions",
+          "license_urls": [
+            "https://foundation.wikimedia.org/wiki/Policy:Terms_of_Use#7._Licensing_of_Content",
+            "https://creativecommons.org/licenses/by-sa/4.0/"
+          ],
+          "attribution": "Wiktionary contributors; Tatu Ylonen / Wiktextract / Kaikki; preserve entry URL/history, snapshot and modifications",
+          "restrictions": [
+            "Candidate evidence only; no linguistic review or redistribution approval is implied.",
+            "No observed usage frequency; dictionary entry order is not a rank.",
+            "Keep source sense evidence and original language/POS; quarantine missing or ambiguous mappings.",
+            "Preserve attribution, source snapshot hash, license notice and modifications.",
+            "Do not copy third-party quotations or audio under the dictionary text license."
+          ],
+          "redistribution_approved": false,
+          "linguistic_review_approved": false
+        }
+      ],
+      "corpus": {
+        "source_id": "ud-da-ddt",
+        "name": "UD Danish-DDT",
+        "release": "r2.16",
+        "format": "conllu",
+        "train_urls": [
+          "https://raw.githubusercontent.com/UniversalDependencies/UD_Danish-DDT/r2.16/da_ddt-ud-train.conllu"
+        ],
+        "test_urls": [
+          "https://raw.githubusercontent.com/UniversalDependencies/UD_Danish-DDT/r2.16/da_ddt-ud-test.conllu"
+        ],
+        "readme_url": "https://raw.githubusercontent.com/UniversalDependencies/UD_Danish-DDT/r2.16/README.md",
+        "license": "CC BY-SA 4.0",
+        "license_urls": [
+          "https://raw.githubusercontent.com/UniversalDependencies/UD_Danish-DDT/r2.16/README.md",
+          "https://creativecommons.org/licenses/by-sa/4.0/"
+        ],
+        "restrictions": [
+          "Annotated contextual evaluation/training source; not dictionary senses or balanced general frequency.",
+          "Keep test split out of vocabulary ranking/training when reporting held-out model evaluation.",
+          "Attribute named treebank contributors and retain release README/license."
+        ],
+        "redistribution_approved": false,
+        "linguistic_review_approved": false
+      },
+      "model": {
+        "name": "Stanza",
+        "language": "da",
+        "resource_version": "1.10.0",
+        "resource_manifest_url": "https://raw.githubusercontent.com/stanfordnlp/stanza-resources/main/resources_1.10.0.json",
+        "resource_manifest_sha256": "3efb2833a67c0184fac2ea9986c04f9585bfb89fb943a4ab1a6bcbed641d6be0",
+        "model_card_url": "https://huggingface.co/stanfordnlp/stanza-da/raw/v1.10.0/README.md",
+        "declared_license": "Apache-2.0",
+        "processors": {
+          "tokenize": "ddt",
+          "pos": "ddt_nocharlm",
+          "lemma": "ddt_nocharlm"
+        },
+        "files": [
+          {
+            "processor": "tokenize",
+            "package": "ddt",
+            "url": "https://huggingface.co/stanfordnlp/stanza-da/resolve/v1.10.0/models/tokenize/ddt.pt",
+            "upstream_md5": "01c619eebc5f42730b47e3fbd4461f76",
+            "dependencies": []
+          },
+          {
+            "processor": "pos",
+            "package": "ddt_nocharlm",
+            "url": "https://huggingface.co/stanfordnlp/stanza-da/resolve/v1.10.0/models/pos/ddt_nocharlm.pt",
+            "upstream_md5": "21bcef6f3f7c940b90fef75fd6ee537c",
+            "dependencies": [
+              {
+                "model": "pretrain",
+                "package": "conll17"
+              }
+            ]
+          },
+          {
+            "processor": "lemma",
+            "package": "ddt_nocharlm",
+            "url": "https://huggingface.co/stanfordnlp/stanza-da/resolve/v1.10.0/models/lemma/ddt_nocharlm.pt",
+            "upstream_md5": "4c6a629974fa394b391844a19e68a14c",
+            "dependencies": []
+          }
+        ],
+        "restrictions": [
+          "Model availability and model-card license are verified, not linguistic adequacy.",
+          "Acquire declared dependencies; persist runtime/package/model fingerprints.",
+          "Morphology model output is not lexical sense evidence."
+        ],
+        "preferred_runtime": "Stanza",
+        "role": "runtime_default"
+      }
+    },
+    {
+      "language": "nb",
+      "name": "Norwegian Bokmål",
+      "lexical_sources": [
+        {
+          "source_id": "kaikki-enwiktionary-raw",
+          "name": "English Wiktionary via Wiktextract / Kaikki",
+          "url": "https://kaikki.org/dictionary/raw-wiktextract-data.jsonl.gz",
+          "format": "wiktextract-en-jsonl.gz",
+          "documentation_url": "https://github.com/tatuylonen/wiktextract",
+          "download_index_url": "https://kaikki.org/dictionary/rawdata.html",
+          "source_language_codes": [
+            "nb"
+          ],
+          "language_mapping": "exact language code",
+          "license": "CC-BY-SA-4.0 text; third-party exceptions",
+          "license_urls": [
+            "https://foundation.wikimedia.org/wiki/Policy:Terms_of_Use#7._Licensing_of_Content",
+            "https://creativecommons.org/licenses/by-sa/4.0/"
+          ],
+          "attribution": "Wiktionary contributors; Tatu Ylonen / Wiktextract / Kaikki; preserve entry URL/history, snapshot and modifications",
+          "restrictions": [
+            "Candidate evidence only; no linguistic review or redistribution approval is implied.",
+            "No observed usage frequency; dictionary entry order is not a rank.",
+            "Keep source sense evidence and original language/POS; quarantine missing or ambiguous mappings.",
+            "Preserve attribution, source snapshot hash, license notice and modifications.",
+            "Do not copy third-party quotations or audio under the dictionary text license."
+          ],
+          "redistribution_approved": false,
+          "linguistic_review_approved": false
+        }
+      ],
+      "corpus": {
+        "source_id": "ud-nb-bokmaal",
+        "name": "UD Norwegian-Bokmaal",
+        "release": "r2.16",
+        "format": "conllu",
+        "train_urls": [
+          "https://raw.githubusercontent.com/UniversalDependencies/UD_Norwegian-Bokmaal/r2.16/no_bokmaal-ud-train.conllu"
+        ],
+        "test_urls": [
+          "https://raw.githubusercontent.com/UniversalDependencies/UD_Norwegian-Bokmaal/r2.16/no_bokmaal-ud-test.conllu"
+        ],
+        "readme_url": "https://raw.githubusercontent.com/UniversalDependencies/UD_Norwegian-Bokmaal/r2.16/README.md",
+        "license": "CC BY-SA 4.0",
+        "license_urls": [
+          "https://raw.githubusercontent.com/UniversalDependencies/UD_Norwegian-Bokmaal/r2.16/README.md",
+          "https://creativecommons.org/licenses/by-sa/4.0/"
+        ],
+        "restrictions": [
+          "Annotated contextual evaluation/training source; not dictionary senses or balanced general frequency.",
+          "Keep test split out of vocabulary ranking/training when reporting held-out model evaluation.",
+          "Attribute named treebank contributors and retain release README/license.",
+          "UD filenames use no_bokmaal; product and Stanza language are nb."
+        ],
+        "redistribution_approved": false,
+        "linguistic_review_approved": false
+      },
+      "model": {
+        "name": "Stanza",
+        "language": "nb",
+        "resource_version": "1.10.0",
+        "resource_manifest_url": "https://raw.githubusercontent.com/stanfordnlp/stanza-resources/main/resources_1.10.0.json",
+        "resource_manifest_sha256": "3efb2833a67c0184fac2ea9986c04f9585bfb89fb943a4ab1a6bcbed641d6be0",
+        "model_card_url": "https://huggingface.co/stanfordnlp/stanza-nb/raw/v1.10.0/README.md",
+        "declared_license": "Apache-2.0",
+        "processors": {
+          "tokenize": "bokmaal",
+          "pos": "bokmaal_nocharlm",
+          "lemma": "bokmaal_nocharlm"
+        },
+        "files": [
+          {
+            "processor": "tokenize",
+            "package": "bokmaal",
+            "url": "https://huggingface.co/stanfordnlp/stanza-nb/resolve/v1.10.0/models/tokenize/bokmaal.pt",
+            "upstream_md5": "6b9a174c83441d8b28401bd9b37a3863",
+            "dependencies": []
+          },
+          {
+            "processor": "pos",
+            "package": "bokmaal_nocharlm",
+            "url": "https://huggingface.co/stanfordnlp/stanza-nb/resolve/v1.10.0/models/pos/bokmaal_nocharlm.pt",
+            "upstream_md5": "73088889434156fabbbb7b3742b388c6",
+            "dependencies": [
+              {
+                "model": "pretrain",
+                "package": "conll17"
+              }
+            ]
+          },
+          {
+            "processor": "lemma",
+            "package": "bokmaal_nocharlm",
+            "url": "https://huggingface.co/stanfordnlp/stanza-nb/resolve/v1.10.0/models/lemma/bokmaal_nocharlm.pt",
+            "upstream_md5": "b52b34f66c689a332613578b95df61f4",
+            "dependencies": []
+          }
+        ],
+        "restrictions": [
+          "Model availability and model-card license are verified, not linguistic adequacy.",
+          "Acquire declared dependencies; persist runtime/package/model fingerprints.",
+          "Morphology model output is not lexical sense evidence."
+        ],
+        "preferred_runtime": "Stanza",
+        "role": "runtime_default"
+      }
+    },
+    {
+      "language": "sv",
+      "name": "Swedish",
+      "lexical_sources": [
+        {
+          "source_id": "kaikki-enwiktionary-raw",
+          "name": "English Wiktionary via Wiktextract / Kaikki",
+          "url": "https://kaikki.org/dictionary/raw-wiktextract-data.jsonl.gz",
+          "format": "wiktextract-en-jsonl.gz",
+          "documentation_url": "https://github.com/tatuylonen/wiktextract",
+          "download_index_url": "https://kaikki.org/dictionary/rawdata.html",
+          "source_language_codes": [
+            "sv"
+          ],
+          "language_mapping": "exact language code",
+          "license": "CC-BY-SA-4.0 text; third-party exceptions",
+          "license_urls": [
+            "https://foundation.wikimedia.org/wiki/Policy:Terms_of_Use#7._Licensing_of_Content",
+            "https://creativecommons.org/licenses/by-sa/4.0/"
+          ],
+          "attribution": "Wiktionary contributors; Tatu Ylonen / Wiktextract / Kaikki; preserve entry URL/history, snapshot and modifications",
+          "restrictions": [
+            "Candidate evidence only; no linguistic review or redistribution approval is implied.",
+            "No observed usage frequency; dictionary entry order is not a rank.",
+            "Keep source sense evidence and original language/POS; quarantine missing or ambiguous mappings.",
+            "Preserve attribution, source snapshot hash, license notice and modifications.",
+            "Do not copy third-party quotations or audio under the dictionary text license."
+          ],
+          "redistribution_approved": false,
+          "linguistic_review_approved": false
+        }
+      ],
+      "corpus": {
+        "source_id": "ud-sv-talbanken",
+        "name": "UD Swedish-Talbanken",
+        "release": "r2.16",
+        "format": "conllu",
+        "train_urls": [
+          "https://raw.githubusercontent.com/UniversalDependencies/UD_Swedish-Talbanken/r2.16/sv_talbanken-ud-train.conllu"
+        ],
+        "test_urls": [
+          "https://raw.githubusercontent.com/UniversalDependencies/UD_Swedish-Talbanken/r2.16/sv_talbanken-ud-test.conllu"
+        ],
+        "readme_url": "https://raw.githubusercontent.com/UniversalDependencies/UD_Swedish-Talbanken/r2.16/README.md",
+        "license": "CC BY-SA 4.0",
+        "license_urls": [
+          "https://raw.githubusercontent.com/UniversalDependencies/UD_Swedish-Talbanken/r2.16/README.md",
+          "https://creativecommons.org/licenses/by-sa/4.0/"
+        ],
+        "restrictions": [
+          "Annotated contextual evaluation/training source; not dictionary senses or balanced general frequency.",
+          "Keep test split out of vocabulary ranking/training when reporting held-out model evaluation.",
+          "Attribute named treebank contributors and retain release README/license."
+        ],
+        "redistribution_approved": false,
+        "linguistic_review_approved": false
+      },
+      "model": {
+        "name": "Stanza",
+        "language": "sv",
+        "resource_version": "1.10.0",
+        "resource_manifest_url": "https://raw.githubusercontent.com/stanfordnlp/stanza-resources/main/resources_1.10.0.json",
+        "resource_manifest_sha256": "3efb2833a67c0184fac2ea9986c04f9585bfb89fb943a4ab1a6bcbed641d6be0",
+        "model_card_url": "https://huggingface.co/stanfordnlp/stanza-sv/raw/v1.10.0/README.md",
+        "declared_license": "Apache-2.0",
+        "processors": {
+          "tokenize": "talbanken",
+          "pos": "talbanken_nocharlm",
+          "lemma": "talbanken_nocharlm"
+        },
+        "files": [
+          {
+            "processor": "tokenize",
+            "package": "talbanken",
+            "url": "https://huggingface.co/stanfordnlp/stanza-sv/resolve/v1.10.0/models/tokenize/talbanken.pt",
+            "upstream_md5": "c4332380bf7c93ecdb971f3bad84b54d",
+            "dependencies": []
+          },
+          {
+            "processor": "pos",
+            "package": "talbanken_nocharlm",
+            "url": "https://huggingface.co/stanfordnlp/stanza-sv/resolve/v1.10.0/models/pos/talbanken_nocharlm.pt",
+            "upstream_md5": "db3c09c51dacbfde0f88f53c55399727",
+            "dependencies": [
+              {
+                "model": "pretrain",
+                "package": "conll17"
+              }
+            ]
+          },
+          {
+            "processor": "lemma",
+            "package": "talbanken_nocharlm",
+            "url": "https://huggingface.co/stanfordnlp/stanza-sv/resolve/v1.10.0/models/lemma/talbanken_nocharlm.pt",
+            "upstream_md5": "7d7776f93e50de1f781768bee524259a",
+            "dependencies": []
+          }
+        ],
+        "restrictions": [
+          "Model availability and model-card license are verified, not linguistic adequacy.",
+          "Acquire declared dependencies; persist runtime/package/model fingerprints.",
+          "Morphology model output is not lexical sense evidence."
+        ],
+        "preferred_runtime": "Stanza",
+        "role": "runtime_default"
+      }
+    },
+    {
+      "language": "fi",
+      "name": "Finnish",
+      "lexical_sources": [
+        {
+          "source_id": "kaikki-enwiktionary-raw",
+          "name": "English Wiktionary via Wiktextract / Kaikki",
+          "url": "https://kaikki.org/dictionary/raw-wiktextract-data.jsonl.gz",
+          "format": "wiktextract-en-jsonl.gz",
+          "documentation_url": "https://github.com/tatuylonen/wiktextract",
+          "download_index_url": "https://kaikki.org/dictionary/rawdata.html",
+          "source_language_codes": [
+            "fi"
+          ],
+          "language_mapping": "exact language code",
+          "license": "CC-BY-SA-4.0 text; third-party exceptions",
+          "license_urls": [
+            "https://foundation.wikimedia.org/wiki/Policy:Terms_of_Use#7._Licensing_of_Content",
+            "https://creativecommons.org/licenses/by-sa/4.0/"
+          ],
+          "attribution": "Wiktionary contributors; Tatu Ylonen / Wiktextract / Kaikki; preserve entry URL/history, snapshot and modifications",
+          "restrictions": [
+            "Candidate evidence only; no linguistic review or redistribution approval is implied.",
+            "No observed usage frequency; dictionary entry order is not a rank.",
+            "Keep source sense evidence and original language/POS; quarantine missing or ambiguous mappings.",
+            "Preserve attribution, source snapshot hash, license notice and modifications.",
+            "Do not copy third-party quotations or audio under the dictionary text license."
+          ],
+          "redistribution_approved": false,
+          "linguistic_review_approved": false
+        }
+      ],
+      "corpus": {
+        "source_id": "ud-fi-tdt",
+        "name": "UD Finnish-TDT",
+        "release": "r2.16",
+        "format": "conllu",
+        "train_urls": [
+          "https://raw.githubusercontent.com/UniversalDependencies/UD_Finnish-TDT/r2.16/fi_tdt-ud-train.conllu"
+        ],
+        "test_urls": [
+          "https://raw.githubusercontent.com/UniversalDependencies/UD_Finnish-TDT/r2.16/fi_tdt-ud-test.conllu"
+        ],
+        "readme_url": "https://raw.githubusercontent.com/UniversalDependencies/UD_Finnish-TDT/r2.16/README.txt",
+        "license": "CC BY-SA 4.0",
+        "license_urls": [
+          "https://raw.githubusercontent.com/UniversalDependencies/UD_Finnish-TDT/r2.16/README.txt",
+          "https://creativecommons.org/licenses/by-sa/4.0/"
+        ],
+        "restrictions": [
+          "Annotated contextual evaluation/training source; not dictionary senses or balanced general frequency.",
+          "Keep test split out of vocabulary ranking/training when reporting held-out model evaluation.",
+          "Attribute named treebank contributors and retain release README/license."
+        ],
+        "redistribution_approved": false,
+        "linguistic_review_approved": false
+      },
+      "model": {
+        "name": "Stanza",
+        "language": "fi",
+        "resource_version": "1.10.0",
+        "resource_manifest_url": "https://raw.githubusercontent.com/stanfordnlp/stanza-resources/main/resources_1.10.0.json",
+        "resource_manifest_sha256": "3efb2833a67c0184fac2ea9986c04f9585bfb89fb943a4ab1a6bcbed641d6be0",
+        "model_card_url": "https://huggingface.co/stanfordnlp/stanza-fi/raw/v1.10.0/README.md",
+        "declared_license": "Apache-2.0",
+        "processors": {
+          "tokenize": "tdt",
+          "pos": "tdt_nocharlm",
+          "lemma": "tdt_nocharlm",
+          "mwt": "tdt"
+        },
+        "files": [
+          {
+            "processor": "tokenize",
+            "package": "tdt",
+            "url": "https://huggingface.co/stanfordnlp/stanza-fi/resolve/v1.10.0/models/tokenize/tdt.pt",
+            "upstream_md5": "aca5abc393b48fbe054c9bfacd61e43d",
+            "dependencies": []
+          },
+          {
+            "processor": "pos",
+            "package": "tdt_nocharlm",
+            "url": "https://huggingface.co/stanfordnlp/stanza-fi/resolve/v1.10.0/models/pos/tdt_nocharlm.pt",
+            "upstream_md5": "ecfbe9ee376a09b54fb5df51b74bd2dc",
+            "dependencies": [
+              {
+                "model": "pretrain",
+                "package": "conll17"
+              }
+            ]
+          },
+          {
+            "processor": "lemma",
+            "package": "tdt_nocharlm",
+            "url": "https://huggingface.co/stanfordnlp/stanza-fi/resolve/v1.10.0/models/lemma/tdt_nocharlm.pt",
+            "upstream_md5": "c55fccd3e3db7d9dd3ccd8a58405faa7",
+            "dependencies": []
+          },
+          {
+            "processor": "mwt",
+            "package": "tdt",
+            "url": "https://huggingface.co/stanfordnlp/stanza-fi/resolve/v1.10.0/models/mwt/tdt.pt",
+            "upstream_md5": "399716dd44d822a9da90d7ef849c441d",
+            "dependencies": []
+          }
+        ],
+        "restrictions": [
+          "Model availability and model-card license are verified, not linguistic adequacy.",
+          "Acquire declared dependencies; persist runtime/package/model fingerprints.",
+          "Morphology model output is not lexical sense evidence."
+        ],
+        "preferred_runtime": "Stanza",
+        "role": "runtime_default"
+      }
+    },
+    {
+      "language": "hu",
+      "name": "Hungarian",
+      "lexical_sources": [
+        {
+          "source_id": "kaikki-enwiktionary-raw",
+          "name": "English Wiktionary via Wiktextract / Kaikki",
+          "url": "https://kaikki.org/dictionary/raw-wiktextract-data.jsonl.gz",
+          "format": "wiktextract-en-jsonl.gz",
+          "documentation_url": "https://github.com/tatuylonen/wiktextract",
+          "download_index_url": "https://kaikki.org/dictionary/rawdata.html",
+          "source_language_codes": [
+            "hu"
+          ],
+          "language_mapping": "exact language code",
+          "license": "CC-BY-SA-4.0 text; third-party exceptions",
+          "license_urls": [
+            "https://foundation.wikimedia.org/wiki/Policy:Terms_of_Use#7._Licensing_of_Content",
+            "https://creativecommons.org/licenses/by-sa/4.0/"
+          ],
+          "attribution": "Wiktionary contributors; Tatu Ylonen / Wiktextract / Kaikki; preserve entry URL/history, snapshot and modifications",
+          "restrictions": [
+            "Candidate evidence only; no linguistic review or redistribution approval is implied.",
+            "No observed usage frequency; dictionary entry order is not a rank.",
+            "Keep source sense evidence and original language/POS; quarantine missing or ambiguous mappings.",
+            "Preserve attribution, source snapshot hash, license notice and modifications.",
+            "Do not copy third-party quotations or audio under the dictionary text license."
+          ],
+          "redistribution_approved": false,
+          "linguistic_review_approved": false
+        }
+      ],
+      "corpus": {
+        "source_id": "ud-hu-szeged",
+        "name": "UD Hungarian-Szeged",
+        "release": "r2.16",
+        "format": "conllu",
+        "train_urls": [
+          "https://raw.githubusercontent.com/UniversalDependencies/UD_Hungarian-Szeged/r2.16/hu_szeged-ud-train.conllu"
+        ],
+        "test_urls": [
+          "https://raw.githubusercontent.com/UniversalDependencies/UD_Hungarian-Szeged/r2.16/hu_szeged-ud-test.conllu"
+        ],
+        "readme_url": "https://raw.githubusercontent.com/UniversalDependencies/UD_Hungarian-Szeged/r2.16/README.md",
+        "license": "CC BY-NC-SA 3.0",
+        "license_urls": [
+          "https://raw.githubusercontent.com/UniversalDependencies/UD_Hungarian-Szeged/r2.16/README.md",
+          "https://creativecommons.org/licenses/by-nc-sa/3.0/"
+        ],
+        "restrictions": [
+          "Annotated contextual evaluation/training source; not dictionary senses or balanced general frequency.",
+          "Keep test split out of vocabulary ranking/training when reporting held-out model evaluation.",
+          "Attribute named treebank contributors and retain release README/license.",
+          "NonCommercial license: not a default source for commercial redistribution; keep access/use decision explicit."
+        ],
+        "redistribution_approved": false,
+        "linguistic_review_approved": false
+      },
+      "model": {
+        "name": "Stanza",
+        "language": "hu",
+        "resource_version": "1.10.0",
+        "resource_manifest_url": "https://raw.githubusercontent.com/stanfordnlp/stanza-resources/main/resources_1.10.0.json",
+        "resource_manifest_sha256": "3efb2833a67c0184fac2ea9986c04f9585bfb89fb943a4ab1a6bcbed641d6be0",
+        "model_card_url": "https://huggingface.co/stanfordnlp/stanza-hu/raw/v1.10.0/README.md",
+        "declared_license": "Apache-2.0",
+        "processors": {
+          "tokenize": "szeged",
+          "pos": "szeged_nocharlm",
+          "lemma": "szeged_nocharlm"
+        },
+        "files": [
+          {
+            "processor": "tokenize",
+            "package": "szeged",
+            "url": "https://huggingface.co/stanfordnlp/stanza-hu/resolve/v1.10.0/models/tokenize/szeged.pt",
+            "upstream_md5": "66cb9c4d6b8a919f6b72c2424268afee",
+            "dependencies": []
+          },
+          {
+            "processor": "pos",
+            "package": "szeged_nocharlm",
+            "url": "https://huggingface.co/stanfordnlp/stanza-hu/resolve/v1.10.0/models/pos/szeged_nocharlm.pt",
+            "upstream_md5": "437e4525bfdf6ea7abfe5a60f06135a4",
+            "dependencies": [
+              {
+                "model": "pretrain",
+                "package": "conll17"
+              }
+            ]
+          },
+          {
+            "processor": "lemma",
+            "package": "szeged_nocharlm",
+            "url": "https://huggingface.co/stanfordnlp/stanza-hu/resolve/v1.10.0/models/lemma/szeged_nocharlm.pt",
+            "upstream_md5": "4d6e3b9bf343c20e622ab063e80415d3",
+            "dependencies": []
+          }
+        ],
+        "restrictions": [
+          "Model availability and model-card license are verified, not linguistic adequacy.",
+          "Acquire declared dependencies; persist runtime/package/model fingerprints.",
+          "Morphology model output is not lexical sense evidence."
+        ],
+        "preferred_runtime": "Stanza",
+        "role": "runtime_default"
+      }
+    },
+    {
+      "language": "cs",
+      "name": "Czech",
+      "lexical_sources": [
+        {
+          "source_id": "kaikki-enwiktionary-raw",
+          "name": "English Wiktionary via Wiktextract / Kaikki",
+          "url": "https://kaikki.org/dictionary/raw-wiktextract-data.jsonl.gz",
+          "format": "wiktextract-en-jsonl.gz",
+          "documentation_url": "https://github.com/tatuylonen/wiktextract",
+          "download_index_url": "https://kaikki.org/dictionary/rawdata.html",
+          "source_language_codes": [
+            "cs"
+          ],
+          "language_mapping": "exact language code",
+          "license": "CC-BY-SA-4.0 text; third-party exceptions",
+          "license_urls": [
+            "https://foundation.wikimedia.org/wiki/Policy:Terms_of_Use#7._Licensing_of_Content",
+            "https://creativecommons.org/licenses/by-sa/4.0/"
+          ],
+          "attribution": "Wiktionary contributors; Tatu Ylonen / Wiktextract / Kaikki; preserve entry URL/history, snapshot and modifications",
+          "restrictions": [
+            "Candidate evidence only; no linguistic review or redistribution approval is implied.",
+            "No observed usage frequency; dictionary entry order is not a rank.",
+            "Keep source sense evidence and original language/POS; quarantine missing or ambiguous mappings.",
+            "Preserve attribution, source snapshot hash, license notice and modifications.",
+            "Do not copy third-party quotations or audio under the dictionary text license."
+          ],
+          "redistribution_approved": false,
+          "linguistic_review_approved": false
+        }
+      ],
+      "corpus": {
+        "source_id": "ud-cs-pdt",
+        "name": "UD Czech-PDT",
+        "release": "r2.16",
+        "format": "conllu",
+        "train_urls": [
+          "https://raw.githubusercontent.com/UniversalDependencies/UD_Czech-PDTC/r2.16/cs_pdtc-ud-train-ca.conllu",
+          "https://raw.githubusercontent.com/UniversalDependencies/UD_Czech-PDTC/r2.16/cs_pdtc-ud-train-ct.conllu",
+          "https://raw.githubusercontent.com/UniversalDependencies/UD_Czech-PDTC/r2.16/cs_pdtc-ud-train-ft.conllu",
+          "https://raw.githubusercontent.com/UniversalDependencies/UD_Czech-PDTC/r2.16/cs_pdtc-ud-train-la.conllu",
+          "https://raw.githubusercontent.com/UniversalDependencies/UD_Czech-PDTC/r2.16/cs_pdtc-ud-train-lt.conllu",
+          "https://raw.githubusercontent.com/UniversalDependencies/UD_Czech-PDTC/r2.16/cs_pdtc-ud-train-ma.conllu",
+          "https://raw.githubusercontent.com/UniversalDependencies/UD_Czech-PDTC/r2.16/cs_pdtc-ud-train-mt.conllu",
+          "https://raw.githubusercontent.com/UniversalDependencies/UD_Czech-PDTC/r2.16/cs_pdtc-ud-train-st.conllu",
+          "https://raw.githubusercontent.com/UniversalDependencies/UD_Czech-PDTC/r2.16/cs_pdtc-ud-train-va.conllu",
+          "https://raw.githubusercontent.com/UniversalDependencies/UD_Czech-PDTC/r2.16/cs_pdtc-ud-train-wt0.conllu",
+          "https://raw.githubusercontent.com/UniversalDependencies/UD_Czech-PDTC/r2.16/cs_pdtc-ud-train-wt1.conllu",
+          "https://raw.githubusercontent.com/UniversalDependencies/UD_Czech-PDTC/r2.16/cs_pdtc-ud-train-wt2.conllu"
+        ],
+        "test_urls": [
+          "https://raw.githubusercontent.com/UniversalDependencies/UD_Czech-PDTC/r2.16/cs_pdtc-ud-test.conllu"
+        ],
+        "readme_url": "https://raw.githubusercontent.com/UniversalDependencies/UD_Czech-PDT/r2.16/README.md",
+        "license": "CC BY-NC-SA 4.0",
+        "license_urls": [
+          "https://raw.githubusercontent.com/UniversalDependencies/UD_Czech-PDT/r2.16/README.md",
+          "https://creativecommons.org/licenses/by-nc-sa/4.0/"
+        ],
+        "restrictions": [
+          "Annotated contextual evaluation/training source; not dictionary senses or balanced general frequency.",
+          "Keep test split out of vocabulary ranking/training when reporting held-out model evaluation.",
+          "Attribute named treebank contributors and retain release README/license.",
+          "NonCommercial license: not a default source for commercial redistribution; keep access/use decision explicit.",
+          "PDT repository redirects to PDTC; r2.16 uses cs_pdtc, with 12 training shards. Stanza v1.10 pdt is an older package."
+        ],
+        "redistribution_approved": false,
+        "linguistic_review_approved": false
+      },
+      "model": {
+        "name": "Stanza",
+        "language": "cs",
+        "resource_version": "1.10.0",
+        "resource_manifest_url": "https://raw.githubusercontent.com/stanfordnlp/stanza-resources/main/resources_1.10.0.json",
+        "resource_manifest_sha256": "3efb2833a67c0184fac2ea9986c04f9585bfb89fb943a4ab1a6bcbed641d6be0",
+        "model_card_url": "https://huggingface.co/stanfordnlp/stanza-cs/raw/v1.10.0/README.md",
+        "declared_license": "Apache-2.0",
+        "processors": {
+          "tokenize": "pdt",
+          "pos": "pdt_nocharlm",
+          "lemma": "pdt_nocharlm",
+          "mwt": "pdt"
+        },
+        "files": [
+          {
+            "processor": "tokenize",
+            "package": "pdt",
+            "url": "https://huggingface.co/stanfordnlp/stanza-cs/resolve/v1.10.0/models/tokenize/pdt.pt",
+            "upstream_md5": "f248abfaa0fd534033155ae17ceaa428",
+            "dependencies": []
+          },
+          {
+            "processor": "pos",
+            "package": "pdt_nocharlm",
+            "url": "https://huggingface.co/stanfordnlp/stanza-cs/resolve/v1.10.0/models/pos/pdt_nocharlm.pt",
+            "upstream_md5": "943b937521e1eab4137da9aae9db9503",
+            "dependencies": [
+              {
+                "model": "pretrain",
+                "package": "conll17"
+              }
+            ]
+          },
+          {
+            "processor": "lemma",
+            "package": "pdt_nocharlm",
+            "url": "https://huggingface.co/stanfordnlp/stanza-cs/resolve/v1.10.0/models/lemma/pdt_nocharlm.pt",
+            "upstream_md5": "ecefec22519776b09c351544fe90d7ea",
+            "dependencies": []
+          },
+          {
+            "processor": "mwt",
+            "package": "pdt",
+            "url": "https://huggingface.co/stanfordnlp/stanza-cs/resolve/v1.10.0/models/mwt/pdt.pt",
+            "upstream_md5": "5e23d8d04b2e04bfdd8bf4b2872f2a5f",
+            "dependencies": []
+          }
+        ],
+        "restrictions": [
+          "Model availability and model-card license are verified, not linguistic adequacy.",
+          "Acquire declared dependencies; persist runtime/package/model fingerprints.",
+          "Morphology model output is not lexical sense evidence."
+        ],
+        "preferred_runtime": "Stanza",
+        "role": "runtime_default"
+      }
+    },
+    {
+      "language": "hr",
+      "name": "Croatian",
+      "lexical_sources": [
+        {
+          "source_id": "omw-croatian-wordnet",
+          "name": "Croatian Wordnet distributed by Open Multilingual Wordnet",
+          "url": "https://raw.githubusercontent.com/omwn/omw-data/master/wns/hrv/wn-data-hrv.tab",
+          "format": "omw-tsv",
+          "license": "CC-BY-3.0",
+          "license_urls": [
+            "https://raw.githubusercontent.com/omwn/omw-data/master/wns/hrv/LICENSE",
+            "https://creativecommons.org/licenses/by/3.0/"
+          ],
+          "documentation_url": "https://github.com/omwn/omw-data/blob/master/index.toml",
+          "attribution": "Croatian Wordnet contributors, Oliver / Šojat / Srebačić (2015), Raffaelli / Bekavac / Agić / Tadić (2008), OMW Bond / Foster (2013)",
+          "source_language_codes": [
+            "hrv"
+          ],
+          "snapshot_sha256": "640879334f5a801a39aff42e274db58c96c5621f53ec5c7e9c2beb1cd77c9f7c",
+          "snapshot_bytes": 1498438,
+          "observed_lemma_links": 47890,
+          "observed_synsets": 23115,
+          "restrictions": [
+            "Contains lemma-to-PWN3 synset links, no gloss rows; join exact Princeton WordNet 3.0 synsets.",
+            "Includes automatic expansion; source-backed is not independently reviewed.",
+            "Open-class POS coverage does not cover all frequent function words."
+          ],
+          "gloss_source": {
+            "source_id": "princeton-wordnet-3.0",
+            "url": "https://wordnetcode.princeton.edu/3.0/WordNet-3.0.tar.gz",
+            "format": "wordnet-database-tar.gz",
+            "license_url": "https://wordnet.princeton.edu/license-and-commercial-use",
+            "attribution": "Princeton University, WordNet 3.0, copyright 2006; retain LICENSE and disclaimers"
+          },
+          "redistribution_approved": false,
+          "linguistic_review_approved": false
+        },
+        {
+          "source_id": "kaikki-enwiktionary-raw",
+          "name": "English Wiktionary via Wiktextract / Kaikki",
+          "url": "https://kaikki.org/dictionary/raw-wiktextract-data.jsonl.gz",
+          "format": "wiktextract-en-jsonl.gz",
+          "documentation_url": "https://github.com/tatuylonen/wiktextract",
+          "download_index_url": "https://kaikki.org/dictionary/rawdata.html",
+          "source_language_codes": [
+            "sh"
+          ],
+          "language_mapping": "requires Croatian-specific evidence; sh is not an hr alias",
+          "license": "CC-BY-SA-4.0 text; third-party exceptions",
+          "license_urls": [
+            "https://foundation.wikimedia.org/wiki/Policy:Terms_of_Use#7._Licensing_of_Content",
+            "https://creativecommons.org/licenses/by-sa/4.0/"
+          ],
+          "attribution": "Wiktionary contributors; Tatu Ylonen / Wiktextract / Kaikki; preserve entry URL/history, snapshot and modifications",
+          "restrictions": [
+            "Candidate evidence only; no linguistic review or redistribution approval is implied.",
+            "No observed usage frequency; dictionary entry order is not a rank.",
+            "Keep source sense evidence and original language/POS; quarantine missing or ambiguous mappings.",
+            "Preserve attribution, source snapshot hash, license notice and modifications.",
+            "Do not copy third-party quotations or audio under the dictionary text license."
+          ],
+          "redistribution_approved": false,
+          "linguistic_review_approved": false
+        }
+      ],
+      "corpus": {
+        "source_id": "ud-hr-set",
+        "name": "UD Croatian-SET",
+        "release": "r2.16",
+        "format": "conllu",
+        "train_urls": [
+          "https://raw.githubusercontent.com/UniversalDependencies/UD_Croatian-SET/r2.16/hr_set-ud-train.conllu"
+        ],
+        "test_urls": [
+          "https://raw.githubusercontent.com/UniversalDependencies/UD_Croatian-SET/r2.16/hr_set-ud-test.conllu"
+        ],
+        "readme_url": "https://raw.githubusercontent.com/UniversalDependencies/UD_Croatian-SET/r2.16/README.md",
+        "license": "CC BY-SA 4.0",
+        "license_urls": [
+          "https://raw.githubusercontent.com/UniversalDependencies/UD_Croatian-SET/r2.16/README.md",
+          "https://creativecommons.org/licenses/by-sa/4.0/"
+        ],
+        "restrictions": [
+          "Annotated contextual evaluation/training source; not dictionary senses or balanced general frequency.",
+          "Keep test split out of vocabulary ranking/training when reporting held-out model evaluation.",
+          "Attribute named treebank contributors and retain release README/license."
+        ],
+        "redistribution_approved": false,
+        "linguistic_review_approved": false
+      },
+      "model": {
+        "name": "Stanza",
+        "language": "hr",
+        "resource_version": "1.10.0",
+        "resource_manifest_url": "https://raw.githubusercontent.com/stanfordnlp/stanza-resources/main/resources_1.10.0.json",
+        "resource_manifest_sha256": "3efb2833a67c0184fac2ea9986c04f9585bfb89fb943a4ab1a6bcbed641d6be0",
+        "model_card_url": "https://huggingface.co/stanfordnlp/stanza-hr/raw/v1.10.0/README.md",
+        "declared_license": "Apache-2.0",
+        "processors": {
+          "tokenize": "set",
+          "pos": "set_nocharlm",
+          "lemma": "set_nocharlm"
+        },
+        "files": [
+          {
+            "processor": "tokenize",
+            "package": "set",
+            "url": "https://huggingface.co/stanfordnlp/stanza-hr/resolve/v1.10.0/models/tokenize/set.pt",
+            "upstream_md5": "347ecec8c1a60f68435b0c902ae14ebc",
+            "dependencies": []
+          },
+          {
+            "processor": "pos",
+            "package": "set_nocharlm",
+            "url": "https://huggingface.co/stanfordnlp/stanza-hr/resolve/v1.10.0/models/pos/set_nocharlm.pt",
+            "upstream_md5": "f93424f3e68e86b03f1743defdfa9d6a",
+            "dependencies": [
+              {
+                "model": "pretrain",
+                "package": "conll17"
+              }
+            ]
+          },
+          {
+            "processor": "lemma",
+            "package": "set_nocharlm",
+            "url": "https://huggingface.co/stanfordnlp/stanza-hr/resolve/v1.10.0/models/lemma/set_nocharlm.pt",
+            "upstream_md5": "e217313fcf7ca5ee8dec9c78bf659172",
+            "dependencies": []
+          }
+        ],
+        "restrictions": [
+          "Model availability and model-card license are verified, not linguistic adequacy.",
+          "Acquire declared dependencies; persist runtime/package/model fingerprints.",
+          "Morphology model output is not lexical sense evidence."
+        ],
+        "preferred_runtime": "Stanza",
+        "role": "runtime_default"
+      }
+    },
+    {
+      "language": "el",
+      "name": "Greek",
+      "lexical_sources": [
+        {
+          "source_id": "kaikki-enwiktionary-raw",
+          "name": "English Wiktionary via Wiktextract / Kaikki",
+          "url": "https://kaikki.org/dictionary/raw-wiktextract-data.jsonl.gz",
+          "format": "wiktextract-en-jsonl.gz",
+          "documentation_url": "https://github.com/tatuylonen/wiktextract",
+          "download_index_url": "https://kaikki.org/dictionary/rawdata.html",
+          "source_language_codes": [
+            "el"
+          ],
+          "language_mapping": "exact language code",
+          "license": "CC-BY-SA-4.0 text; third-party exceptions",
+          "license_urls": [
+            "https://foundation.wikimedia.org/wiki/Policy:Terms_of_Use#7._Licensing_of_Content",
+            "https://creativecommons.org/licenses/by-sa/4.0/"
+          ],
+          "attribution": "Wiktionary contributors; Tatu Ylonen / Wiktextract / Kaikki; preserve entry URL/history, snapshot and modifications",
+          "restrictions": [
+            "Candidate evidence only; no linguistic review or redistribution approval is implied.",
+            "No observed usage frequency; dictionary entry order is not a rank.",
+            "Keep source sense evidence and original language/POS; quarantine missing or ambiguous mappings.",
+            "Preserve attribution, source snapshot hash, license notice and modifications.",
+            "Do not copy third-party quotations or audio under the dictionary text license."
+          ],
+          "redistribution_approved": false,
+          "linguistic_review_approved": false
+        }
+      ],
+      "corpus": {
+        "source_id": "ud-el-gdt",
+        "name": "UD Greek-GDT",
+        "release": "r2.16",
+        "format": "conllu",
+        "train_urls": [
+          "https://raw.githubusercontent.com/UniversalDependencies/UD_Greek-GDT/r2.16/el_gdt-ud-train.conllu"
+        ],
+        "test_urls": [
+          "https://raw.githubusercontent.com/UniversalDependencies/UD_Greek-GDT/r2.16/el_gdt-ud-test.conllu"
+        ],
+        "readme_url": "https://raw.githubusercontent.com/UniversalDependencies/UD_Greek-GDT/r2.16/README.md",
+        "license": "CC BY-NC-SA 3.0",
+        "license_urls": [
+          "https://raw.githubusercontent.com/UniversalDependencies/UD_Greek-GDT/r2.16/README.md",
+          "https://creativecommons.org/licenses/by-nc-sa/3.0/"
+        ],
+        "restrictions": [
+          "Annotated contextual evaluation/training source; not dictionary senses or balanced general frequency.",
+          "Keep test split out of vocabulary ranking/training when reporting held-out model evaluation.",
+          "Attribute named treebank contributors and retain release README/license.",
+          "NonCommercial license: not a default source for commercial redistribution; keep access/use decision explicit."
+        ],
+        "redistribution_approved": false,
+        "linguistic_review_approved": false
+      },
+      "model": {
+        "name": "Stanza",
+        "language": "el",
+        "resource_version": "1.10.0",
+        "resource_manifest_url": "https://raw.githubusercontent.com/stanfordnlp/stanza-resources/main/resources_1.10.0.json",
+        "resource_manifest_sha256": "3efb2833a67c0184fac2ea9986c04f9585bfb89fb943a4ab1a6bcbed641d6be0",
+        "model_card_url": "https://huggingface.co/stanfordnlp/stanza-el/raw/v1.10.0/README.md",
+        "declared_license": "Apache-2.0",
+        "processors": {
+          "tokenize": "gdt",
+          "pos": "gdt_nocharlm",
+          "lemma": "gdt_nocharlm",
+          "mwt": "gdt"
+        },
+        "files": [
+          {
+            "processor": "tokenize",
+            "package": "gdt",
+            "url": "https://huggingface.co/stanfordnlp/stanza-el/resolve/v1.10.0/models/tokenize/gdt.pt",
+            "upstream_md5": "120444c2301629466d349bdf04e58994",
+            "dependencies": []
+          },
+          {
+            "processor": "pos",
+            "package": "gdt_nocharlm",
+            "url": "https://huggingface.co/stanfordnlp/stanza-el/resolve/v1.10.0/models/pos/gdt_nocharlm.pt",
+            "upstream_md5": "b27360a4bc4f234288e75179f760416c",
+            "dependencies": [
+              {
+                "model": "pretrain",
+                "package": "conll17"
+              }
+            ]
+          },
+          {
+            "processor": "lemma",
+            "package": "gdt_nocharlm",
+            "url": "https://huggingface.co/stanfordnlp/stanza-el/resolve/v1.10.0/models/lemma/gdt_nocharlm.pt",
+            "upstream_md5": "8ab30be53502727d3c4ef5391d6c98d1",
+            "dependencies": []
+          },
+          {
+            "processor": "mwt",
+            "package": "gdt",
+            "url": "https://huggingface.co/stanfordnlp/stanza-el/resolve/v1.10.0/models/mwt/gdt.pt",
+            "upstream_md5": "52bcc450eb4ed43416c307c102e6a380",
+            "dependencies": []
+          }
+        ],
+        "restrictions": [
+          "Model availability and model-card license are verified, not linguistic adequacy.",
+          "Acquire declared dependencies; persist runtime/package/model fingerprints.",
+          "Morphology model output is not lexical sense evidence."
+        ],
+        "preferred_runtime": "Stanza",
+        "role": "runtime_default"
+      }
+    },
+    {
+      "language": "ja",
+      "name": "Japanese",
+      "lexical_sources": [
+        {
+          "source_id": "kaikki-enwiktionary-raw",
+          "name": "English Wiktionary via Wiktextract / Kaikki",
+          "url": "https://kaikki.org/dictionary/raw-wiktextract-data.jsonl.gz",
+          "format": "wiktextract-en-jsonl.gz",
+          "documentation_url": "https://github.com/tatuylonen/wiktextract",
+          "download_index_url": "https://kaikki.org/dictionary/rawdata.html",
+          "source_language_codes": [
+            "ja"
+          ],
+          "language_mapping": "exact language code",
+          "license": "CC-BY-SA-4.0 text; third-party exceptions",
+          "license_urls": [
+            "https://foundation.wikimedia.org/wiki/Policy:Terms_of_Use#7._Licensing_of_Content",
+            "https://creativecommons.org/licenses/by-sa/4.0/"
+          ],
+          "attribution": "Wiktionary contributors; Tatu Ylonen / Wiktextract / Kaikki; preserve entry URL/history, snapshot and modifications",
+          "restrictions": [
+            "Candidate evidence only; no linguistic review or redistribution approval is implied.",
+            "No observed usage frequency; dictionary entry order is not a rank.",
+            "Keep source sense evidence and original language/POS; quarantine missing or ambiguous mappings.",
+            "Preserve attribution, source snapshot hash, license notice and modifications.",
+            "Do not copy third-party quotations or audio under the dictionary text license."
+          ],
+          "redistribution_approved": false,
+          "linguistic_review_approved": false
+        },
+        {
+          "source_id": "jmdict-english",
+          "name": "EDRDG JMdict Japanese-English",
+          "url": "https://www.edrdg.org/pub/Nihongo/JMdict_e.gz",
+          "format": "jmdict-xml.gz",
+          "license": "CC-BY-SA-4.0 with EDRDG published conditions",
+          "license_urls": [
+            "https://www.edrdg.org/edrdg/licence.html"
+          ],
+          "documentation_url": "https://www.edrdg.org/jmdict/jmdict_dtd_h.html",
+          "attribution": "Jim Breen and Electronic Dictionary Research and Development Group",
+          "restrictions": [
+            "Preserve ent_seq, sense position, written/reading restrictions and inherited POS.",
+            "Use legacy JMdict XML adapter; new-generation files are a separate schema.",
+            "Preserve license/documentation and update procedure; other-language translations have separate copyrights.",
+            "No contextual morphology or observed frequency is supplied."
+          ],
+          "redistribution_approved": false,
+          "linguistic_review_approved": false
+        }
+      ],
+      "corpus": {
+        "source_id": "ud-ja-gsd",
+        "name": "UD Japanese-GSD",
+        "release": "r2.16",
+        "format": "conllu",
+        "train_urls": [
+          "https://raw.githubusercontent.com/UniversalDependencies/UD_Japanese-GSD/r2.16/ja_gsd-ud-train.conllu"
+        ],
+        "test_urls": [
+          "https://raw.githubusercontent.com/UniversalDependencies/UD_Japanese-GSD/r2.16/ja_gsd-ud-test.conllu"
+        ],
+        "readme_url": "https://raw.githubusercontent.com/UniversalDependencies/UD_Japanese-GSD/r2.16/README.md",
+        "license": "CC BY-SA 4.0",
+        "license_urls": [
+          "https://raw.githubusercontent.com/UniversalDependencies/UD_Japanese-GSD/r2.16/README.md",
+          "https://creativecommons.org/licenses/by-sa/4.0/"
+        ],
+        "restrictions": [
+          "Annotated contextual evaluation/training source; not dictionary senses or balanced general frequency.",
+          "Keep test split out of vocabulary ranking/training when reporting held-out model evaluation.",
+          "Attribute named treebank contributors and retain release README/license.",
+          "Annotation license does not settle underlying sentence text rights; README retains third-party text caveats."
+        ],
+        "redistribution_approved": false,
+        "linguistic_review_approved": false
+      },
+      "model": {
+        "name": "Stanza",
+        "language": "ja",
+        "resource_version": "1.10.0",
+        "resource_manifest_url": "https://raw.githubusercontent.com/stanfordnlp/stanza-resources/main/resources_1.10.0.json",
+        "resource_manifest_sha256": "3efb2833a67c0184fac2ea9986c04f9585bfb89fb943a4ab1a6bcbed641d6be0",
+        "model_card_url": "https://huggingface.co/stanfordnlp/stanza-ja/raw/v1.10.0/README.md",
+        "declared_license": "Apache-2.0",
+        "processors": {
+          "tokenize": "gsd",
+          "pos": "gsd_nocharlm",
+          "lemma": "gsd_nocharlm"
+        },
+        "files": [
+          {
+            "processor": "tokenize",
+            "package": "gsd",
+            "url": "https://huggingface.co/stanfordnlp/stanza-ja/resolve/v1.10.0/models/tokenize/gsd.pt",
+            "upstream_md5": "41a5dee96fc65b7ce75b2439566dd92f",
+            "dependencies": []
+          },
+          {
+            "processor": "pos",
+            "package": "gsd_nocharlm",
+            "url": "https://huggingface.co/stanfordnlp/stanza-ja/resolve/v1.10.0/models/pos/gsd_nocharlm.pt",
+            "upstream_md5": "16a1a1463aa306348fccac39b8bdf879",
+            "dependencies": [
+              {
+                "model": "pretrain",
+                "package": "conll17"
+              }
+            ]
+          },
+          {
+            "processor": "lemma",
+            "package": "gsd_nocharlm",
+            "url": "https://huggingface.co/stanfordnlp/stanza-ja/resolve/v1.10.0/models/lemma/gsd_nocharlm.pt",
+            "upstream_md5": "812374f43b18a7ef69c3e340c5e7870e",
+            "dependencies": []
+          }
+        ],
+        "restrictions": [
+          "Model availability and model-card license are verified, not linguistic adequacy.",
+          "Acquire declared dependencies; persist runtime/package/model fingerprints.",
+          "Morphology model output is not lexical sense evidence."
+        ],
+        "preferred_runtime": "Fugashi / UniDic with separate licenses and version fingerprint",
+        "role": "documented_stanza_alternative_not_runtime_default"
+      }
+    },
+    {
+      "language": "zh",
+      "name": "Chinese",
+      "lexical_sources": [
+        {
+          "source_id": "kaikki-enwiktionary-raw",
+          "name": "English Wiktionary via Wiktextract / Kaikki",
+          "url": "https://kaikki.org/dictionary/raw-wiktextract-data.jsonl.gz",
+          "format": "wiktextract-en-jsonl.gz",
+          "documentation_url": "https://github.com/tatuylonen/wiktextract",
+          "download_index_url": "https://kaikki.org/dictionary/rawdata.html",
+          "source_language_codes": [
+            "zh"
+          ],
+          "language_mapping": "zh is a macrolanguage; Mandarin scope must be established per entry; cmn may be separately admitted by explicit policy",
+          "license": "CC-BY-SA-4.0 text; third-party exceptions",
+          "license_urls": [
+            "https://foundation.wikimedia.org/wiki/Policy:Terms_of_Use#7._Licensing_of_Content",
+            "https://creativecommons.org/licenses/by-sa/4.0/"
+          ],
+          "attribution": "Wiktionary contributors; Tatu Ylonen / Wiktextract / Kaikki; preserve entry URL/history, snapshot and modifications",
+          "restrictions": [
+            "Candidate evidence only; no linguistic review or redistribution approval is implied.",
+            "No observed usage frequency; dictionary entry order is not a rank.",
+            "Keep source sense evidence and original language/POS; quarantine missing or ambiguous mappings.",
+            "Preserve attribution, source snapshot hash, license notice and modifications.",
+            "Do not copy third-party quotations or audio under the dictionary text license."
+          ],
+          "redistribution_approved": false,
+          "linguistic_review_approved": false
+        },
+        {
+          "source_id": "cc-cedict",
+          "name": "CC-CEDICT",
+          "url": "https://www.mdbg.net/chinese/export/cedict/cedict_1_0_ts_utf-8_mdbg.txt.gz",
+          "format": "cedict-text.gz",
+          "license": "CC-BY-SA-4.0",
+          "license_urls": [
+            "https://www.mdbg.net/chinese/dictionary?page=cc-cedict",
+            "https://creativecommons.org/licenses/by-sa/4.0/"
+          ],
+          "attribution": "CC-CEDICT contributors; MDBG distribution",
+          "restrictions": [
+            "Optional supplement; no consistent structured POS or stable source sense IDs.",
+            "Preserve traditional/simplified spellings and Pinyin separately; do not merge pronunciation homographs.",
+            "Use published bulk download, not scripted dictionary-page scraping."
+          ],
+          "redistribution_approved": false,
+          "linguistic_review_approved": false
+        }
+      ],
+      "corpus": {
+        "source_id": "ud-zh-gsdsimp",
+        "name": "UD Chinese-GSDSimp",
+        "release": "r2.16",
+        "format": "conllu",
+        "train_urls": [
+          "https://raw.githubusercontent.com/UniversalDependencies/UD_Chinese-GSDSimp/r2.16/zh_gsdsimp-ud-train.conllu"
+        ],
+        "test_urls": [
+          "https://raw.githubusercontent.com/UniversalDependencies/UD_Chinese-GSDSimp/r2.16/zh_gsdsimp-ud-test.conllu"
+        ],
+        "readme_url": "https://raw.githubusercontent.com/UniversalDependencies/UD_Chinese-GSDSimp/r2.16/README.md",
+        "license": "CC BY-SA 4.0",
+        "license_urls": [
+          "https://raw.githubusercontent.com/UniversalDependencies/UD_Chinese-GSDSimp/r2.16/README.md",
+          "https://creativecommons.org/licenses/by-sa/4.0/"
+        ],
+        "restrictions": [
+          "Annotated contextual evaluation/training source; not dictionary senses or balanced general frequency.",
+          "Keep test split out of vocabulary ranking/training when reporting held-out model evaluation.",
+          "Attribute named treebank contributors and retain release README/license.",
+          "Annotation license does not settle underlying sentence text rights; README retains third-party text caveats.",
+          "Chinese-GSDSimp uses simplified text matching Stanza zh-hans/gsdsimp. Original traditional GSD must not be mixed or silently rewritten; lemma/features include automatic annotation and are not fully manually verified."
+        ],
+        "redistribution_approved": false,
+        "linguistic_review_approved": false
+      },
+      "model": {
+        "name": "Stanza",
+        "language": "zh-hans",
+        "resource_version": "1.10.0",
+        "resource_manifest_url": "https://raw.githubusercontent.com/stanfordnlp/stanza-resources/main/resources_1.10.0.json",
+        "resource_manifest_sha256": "3efb2833a67c0184fac2ea9986c04f9585bfb89fb943a4ab1a6bcbed641d6be0",
+        "model_card_url": "https://huggingface.co/stanfordnlp/stanza-zh-hans/raw/v1.10.0/README.md",
+        "declared_license": "Apache-2.0",
+        "processors": {
+          "tokenize": "gsdsimp",
+          "pos": "gsdsimp_nocharlm",
+          "lemma": "gsdsimp_nocharlm"
+        },
+        "files": [
+          {
+            "processor": "tokenize",
+            "package": "gsdsimp",
+            "url": "https://huggingface.co/stanfordnlp/stanza-zh-hans/resolve/v1.10.0/models/tokenize/gsdsimp.pt",
+            "upstream_md5": "48f993223d568afedc2893f7cd76719c",
+            "dependencies": []
+          },
+          {
+            "processor": "pos",
+            "package": "gsdsimp_nocharlm",
+            "url": "https://huggingface.co/stanfordnlp/stanza-zh-hans/resolve/v1.10.0/models/pos/gsdsimp_nocharlm.pt",
+            "upstream_md5": "ca35e2cf0410c75d15cb7c8429ffa7b4",
+            "dependencies": [
+              {
+                "model": "pretrain",
+                "package": "fasttext157"
+              }
+            ]
+          },
+          {
+            "processor": "lemma",
+            "package": "gsdsimp_nocharlm",
+            "url": "https://huggingface.co/stanfordnlp/stanza-zh-hans/resolve/v1.10.0/models/lemma/gsdsimp_nocharlm.pt",
+            "upstream_md5": "43f3f3b26bbfd5322a09f18f1d748c9a",
+            "dependencies": []
+          }
+        ],
+        "restrictions": [
+          "Model availability and model-card license are verified, not linguistic adequacy.",
+          "Acquire declared dependencies; persist runtime/package/model fingerprints.",
+          "Morphology model output is not lexical sense evidence."
+        ],
+        "preferred_runtime": "Stanza",
+        "role": "runtime_default"
+      }
+    }
+  ]
+}

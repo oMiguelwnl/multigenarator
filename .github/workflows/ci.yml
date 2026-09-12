@@ -33,11 +33,14 @@ jobs:
           src/multilang/jobs src/multilang/security/access.py src/multilang/repositories/native_repository.py
           src/multilang/services/native*.py
           src/multilang/services/{adaptive_queue,anki_history,anki_id_registry,domain_events,language_profiles,legacy_identity_adapter,lexical_pipeline,plugins,ranking,semantic_anki}.py
+          src/multilang/vocabulary_cli.py
+          src/multilang/services/{vocabulary*,contextual*,content_drafts,language_models,wordnet_sources,semantic_anki_fields}.py
           alembic/versions/20260912_20_native_architecture.py
           tests/api tests/jobs tests/cli/test_native_commands.py
           tests/domain/test_native*.py tests/repositories/test_native_repository.py
           tests/services/test_native*.py tests/services/test_legacy_identity_adapter.py
           tests/services/test_anki_id_registry.py
+          tests/services/test_{vocabulary*,contextual*,language_models,wordnet_sources,semantic_anki_fields}.py
           tests/integration/test_native*.py tests/performance
           tests/security/test_native_access.py tests/test_native_observability.py
       - name: Verify migrations and native safety gates

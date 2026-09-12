@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import json
+import os
 from contextlib import contextmanager
 from pathlib import Path
 from time import sleep
@@ -44,6 +45,9 @@ def _print_preview(value: BaseModel) -> None:
 
 def create_native_app(*, settings: Settings | None = None, facade_factory=None) -> typer.Typer:
     cli = typer.Typer(help="Native lexical datasets, evidence, jobs and migration operations.")
+    from multilang.vocabulary_cli import create_vocabulary_app
+
+    cli.add_typer(create_vocabulary_app(settings=settings), name="vocabulary")
 
     def configuration(*, require_enabled=True):
         config = settings or Settings()
@@ -118,6 +122,41 @@ def create_native_app(*, settings: Settings | None = None, facade_factory=None) 
     def import_dataset(path: Path, actor: str = "local-operator"):
         run_operation("import_dataset", path, actor)
 
+    @cli.command("import-reviewed-vocabulary")
+    def import_reviewed_vocabulary(
+        path: Path,
+        sha256: str,
+        language: str,
+        profile_version: str,
+        version: str,
+        namespace: str = "core",
+        actor: str = "local-operator",
+    ):
+        from multilang.native_runtime import _evidence_store
+        from multilang.services.vocabulary_review import load_compiled_vocabulary
+
+        with database() as (config, engine), Session(engine) as session, session.begin():
+            service = facade(session, config)
+            profile = service._profile(language, profile_version)
+            bundle = load_compiled_vocabulary(
+                path, expected_sha256=sha256, profile=profile, verifier=_evidence_store(config)
+            )
+            result = service.import_dataset(
+                {
+                    "format": "reviewed-vocabulary",
+                    "profile_version": profile_version,
+                    "version": version,
+                    "namespace": namespace,
+                    "bundle": bundle.model_dump(mode="json"),
+                },
+                actor,
+            )
+        _print(result)
+
+    @cli.command("import-contextual-bindings")
+    def import_contextual_bindings(path: Path, actor: str = "local-operator"):
+        run_operation("import_contextual_bindings", path, actor)
+
     @cli.command("rank")
     def rank(path: Path, actor: str = "local-operator"):
         run_operation("calculate_ranking", path, actor)
@@ -125,6 +164,30 @@ def create_native_app(*, settings: Settings | None = None, facade_factory=None) 
     @cli.command("generate-content")
     def content(path: Path, actor: str = "local-operator"):
         run_operation("generate_content", path, actor)
+
+    @cli.command("draft-content")
+    def draft_content(path: Path, output: Path, actor: str = "local-operator"):
+        from multilang.services.vocabulary_review import _plain_path
+
+        with database() as (config, engine), Session(engine) as session:
+            target = _plain_path(output)
+            if target.exists():
+                raise ValueError("draft output already exists")
+            draft = facade(session, config).draft_content(_read_object(path), actor)
+            descriptor = os.open(target, os.O_WRONLY | os.O_CREAT | os.O_EXCL, 0o600)
+            with os.fdopen(descriptor, "w", encoding="utf-8") as handle:
+                handle.write(json.dumps(draft, ensure_ascii=False, indent=2) + "\n")
+        _print(
+            {
+                "draft_sha256": draft["draft_sha256"],
+                "output": str(output),
+                "review_status": "pending",
+            }
+        )
+
+    @cli.command("complete-content-draft")
+    def complete_content_draft(path: Path, actor: str = "local-operator"):
+        run_operation("complete_content_draft", path, actor)
 
     @cli.command("generate-audio")
     def audio(path: Path, actor: str = "local-operator"):

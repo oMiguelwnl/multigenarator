@@ -46,6 +46,7 @@ def test_content_provider_cannot_change_core_and_active_markup_is_rejected():
             analyzer_version="test-1",
             evidence_sha256="b" * 64,
         )
+
     request = content_request()
     original = request.model_dump()
     payload = {
@@ -126,6 +127,82 @@ def test_content_limits_apply_before_provider_and_core_edition_is_canonical():
     assert not calls
 
 
+def test_draft_can_be_reviewed_before_matching_and_completed_without_provider_recall():
+    from multilang.domain.content import ContentDraft, TargetMatchEvidence
+    from multilang.services.native_content import NativeContentService
+
+    calls = []
+
+    def generate(request):
+        calls.append("provider")
+        return {
+            "definition": "Moved fast.",
+            "example_sentence": "I ran.",
+            "translation": "Eu corri.",
+        }
+
+    def match(request, text):
+        calls.append("matcher")
+        return TargetMatchEvidence(
+            lexical_identity_id=request.lexical_identity_id,
+            sense_id=request.sense_id,
+            morphological_analysis_id=request.morphological_analysis_id,
+            target_concept_id=request.target_concept_id,
+            matched=True,
+            observed_concept_ids=(request.target_concept_id,),
+            analyzer_version="fixture",
+            evidence_sha256="b" * 64,
+            target_span=(2, 5),
+        )
+
+    service = NativeContentService(
+        generator=generate, matcher=match, provider="fixture", model_version="1"
+    )
+    draft = service.prepare(content_request())
+    assert calls == ["provider"]
+    assert "target_evidence" not in draft.model_dump()
+    reloaded = ContentDraft.model_validate_json(draft.model_dump_json())
+    service.generator = lambda _: pytest.fail("completion must not call provider")
+    version = service.complete(reloaded)
+    assert calls == ["provider", "matcher"]
+    assert version.content == draft.content
+    assert version.review_status == "pending"
+    with pytest.raises(ValueError):
+        service.complete(
+            draft.model_copy(
+                update={
+                    "content": draft.content.model_copy(
+                        update={"definition": "<script>bad</script>"}
+                    )
+                }
+            )
+        )
+
+
+def test_draft_store_binds_exact_original_output_and_namespace(tmp_path):
+    from multilang.domain.content import ContentDraft, GeneratedContent
+    from multilang.services.content_drafts import ContentDraftStore
+
+    draft = ContentDraft(
+        request=content_request(namespace="user:alice"),
+        content=GeneratedContent(
+            definition="Moved fast.", example_sentence="I ran.", translation="Eu corri."
+        ),
+        provider="fixture",
+        model_version="1",
+    )
+    store = ContentDraftStore(tmp_path / "drafts")
+    store.put(draft)
+    assert all(path.stat().st_mode & 0o077 == 0 for path in (tmp_path / "drafts").glob("*/*.json"))
+    assert store.load(draft.draft_sha256, namespace="user:alice") == draft
+    with pytest.raises((ValueError, OSError)):
+        store.load(draft.draft_sha256, namespace="core")
+    data = draft.model_dump(mode="json")
+    data["content"]["example_sentence"] = "I run."
+    with pytest.raises(ValueError, match="drift"):
+        ContentDraft.model_validate(data)
+
+
 def signature(**changes):
     from multilang.domain.audio_version import PronunciationSignature
 
@@ -158,10 +235,7 @@ def test_pronunciation_identity_separates_polyphony_and_provider_versions():
             contextual_reading="háng", context="business", sense_id="trade"
         ).signature_sha256
     )
-    assert (
-        first.signature_sha256
-        != signature(provider_model_version="speech-2").signature_sha256
-    )
+    assert first.signature_sha256 != signature(provider_model_version="speech-2").signature_sha256
     with pytest.raises(ValueError):
         signature(contextual_reading="")
 
@@ -199,15 +273,11 @@ def test_native_audio_uses_existing_adapter_and_verifies_cached_bytes(tmp_path):
     result = service.generate(signature(), job_id="job", item_key="word")
     assert result.artifact_sha256 == sha256(b"ID3-fixture-audio").hexdigest()
     assert result.signature.display_text == "行"
-    reused = service.generate(
-        signature(), job_id="other", item_key="word", cached_version=result
-    )
+    reused = service.generate(signature(), job_id="other", item_key="word", cached_version=result)
     assert reused == result
     assert adapter.calls == 1
     Path(result.storage_path).write_bytes(b"corrupt")
-    service.generate(
-        signature(), job_id="other", item_key="word", cached_version=result
-    )
+    service.generate(signature(), job_id="other", item_key="word", cached_version=result)
     assert adapter.calls == 2
 
 
@@ -242,9 +312,7 @@ def test_existing_text_adapter_uses_real_typed_ports():
     class Ports:
         def generate_definition(self, request):
             assert request.target_language == "en"
-            return DefinitionGenerationResult(
-                definitions_html="<b>verb</b> Moved on foot."
-            )
+            return DefinitionGenerationResult(definitions_html="<b>verb</b> Moved on foot.")
 
         def generate_sentence(self, request):
             assert request.translation_target_language == "en"

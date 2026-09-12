@@ -55,6 +55,18 @@ dev = [
   "hatchling>=1.25",
   "mkdocs>=1.6,<2.0",
 ]
+nlp = [
+    "stanza>=1.11,<2",
+    "torch>=2.6,<3",
+]
+
+[tool.uv.sources]
+torch = [{ index = "pytorch-cpu" }]
+
+[[tool.uv.index]]
+name = "pytorch-cpu"
+url = "https://download.pytorch.org/whl/cpu"
+explicit = true
 
 [tool.hatch.build.targets.wheel]
 packages = ["src/multilang"]

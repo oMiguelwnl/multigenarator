@@ -8,6 +8,7 @@ from collections.abc import Callable, Mapping
 from html import escape
 
 from multilang.domain.content import (
+    ContentDraft,
     ContentLimits,
     ContentRequest,
     ContentVersion,
@@ -24,9 +25,7 @@ _ACTIVE = re.compile(
 def validate_plain_content(value: str) -> str:
     """Plain-text policy permits no provider-authored markup or Anki directives."""
     if _ACTIVE.search(value) or "\x00" in value:
-        raise ValueError(
-            "unapproved active markup or Anki directive in generated content"
-        )
+        raise ValueError("unapproved active markup or Anki directive in generated content")
     if len(value) > 4000:
         raise ValueError("content field limit exceeded")
     return value
@@ -56,7 +55,7 @@ class NativeContentService:
     def __init__(
         self,
         *,
-        generator: Callable[[ContentRequest], Mapping[str, object] | GeneratedContent],
+        generator: Callable[[ContentRequest], Mapping[str, object] | GeneratedContent] | None,
         matcher: Callable[[ContentRequest, str], TargetMatchEvidence],
         provider: str,
         model_version: str,
@@ -68,7 +67,7 @@ class NativeContentService:
         self.model_version = model_version
         self.limits = limits or ContentLimits()
 
-    def generate(self, request: ContentRequest) -> ContentVersion:
+    def _request(self, request: ContentRequest) -> ContentRequest:
         # Revalidation prevents bypass through Pydantic model_copy/model_construct.
         request = ContentRequest.model_validate(request.model_dump(mode="json"))
         serialized = request.model_dump_json()
@@ -80,12 +79,11 @@ class NativeContentService:
             or len(encoded) > self.limits.max_estimated_tokens
         ):
             raise ValueError("content request limit exceeded before provider")
-        payload = self.generator(request)
+        return request
+
+    def _content(self, payload) -> GeneratedContent:
         raw = payload.model_dump() if isinstance(payload, GeneratedContent) else payload
-        if (
-            len(json.dumps(raw, ensure_ascii=False).encode())
-            > self.limits.max_response_bytes
-        ):
+        if len(json.dumps(raw, ensure_ascii=False).encode()) > self.limits.max_response_bytes:
             raise ValueError("content response limit exceeded")
         content = GeneratedContent.model_validate(raw)
         for value in (
@@ -96,6 +94,27 @@ class NativeContentService:
             *content.exercises,
         ):
             validate_plain_content(value)
+        return content
+
+    def prepare(self, request: ContentRequest) -> ContentDraft:
+        request = self._request(request)
+        if self.generator is None:
+            raise ValueError("content drafting requires a configured provider")
+        content = self._content(self.generator(request))
+        return ContentDraft(
+            request=request,
+            content=content,
+            provider=self.provider,
+            model_version=self.model_version,
+        )
+
+    def generate(self, request: ContentRequest) -> ContentVersion:
+        return self.complete(self.prepare(request))
+
+    def complete(self, draft: ContentDraft) -> ContentVersion:
+        draft = ContentDraft.model_validate(draft.model_dump(mode="json"))
+        request = self._request(draft.request)
+        content = self._content(draft.content)
         evidence = self.matcher(request, content.example_sentence)
         evidence = TargetMatchEvidence.model_validate(evidence.model_dump())
         if (
@@ -108,22 +127,16 @@ class NativeContentService:
         ):
             raise ValueError("target/sense/analysis match failed closed")
         validate_target_span(evidence, content.example_sentence, request.display_text)
-        known = set(request.canonical_known_concept_ids) | set(
-            request.known_concept_ids
-        )
+        known = set(request.canonical_known_concept_ids) | set(request.known_concept_ids)
         unknown = set(evidence.observed_concept_ids) - known
-        if request.i_plus_one_mode == "strict" and unknown != {
-            request.target_concept_id
-        }:
-            raise ValueError(
-                "strict i+1 requires exactly the authorized target concept"
-            )
+        if request.i_plus_one_mode == "strict" and unknown != {request.target_concept_id}:
+            raise ValueError("strict i+1 requires exactly the authorized target concept")
         return ContentVersion(
             request=request,
             content=content,
             target_evidence=evidence,
-            provider=self.provider,
-            model_version=self.model_version,
+            provider=draft.provider,
+            model_version=draft.model_version,
             incidental_concept_ids=tuple(sorted(unknown - {request.target_concept_id})),
         )
 
@@ -151,9 +164,7 @@ class ExistingTextContentAdapter:
 
         # Korean has a separate identity-aware adapter. Never erase that authority.
         if request.language == "ko":
-            raise ValueError(
-                "Korean enrichment requires the persisted Korean identity adapter"
-            )
+            raise ValueError("Korean enrichment requires the persisted Korean identity adapter")
         definition = self.definition_adapter.generate_definition(
             DefinitionGenerationRequest(
                 lemma=request.lemma,

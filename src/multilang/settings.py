@@ -98,6 +98,9 @@ class Settings(BaseSettings):
     native_audio_model_version: str = "azure-speech-sdk-1"
     native_evidence_dir: Path = Path(".multilang/evidence")
     native_evidence_signing_key: SecretStr | None = None
+    native_language_models_dir: Path = Path(".multilang/models/stanza-1.10.0")
+    native_contextual_bindings_dir: Path = Path(".multilang/contextual-bindings")
+    native_content_drafts_dir: Path = Path(".multilang/content-drafts")
     native_max_provider_items: int = Field(default=100, ge=1, le=10000)
     default_retry_attempts: int = 2
     frequency_assets_dir: Path = Path("assets/frequency")
