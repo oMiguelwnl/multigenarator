@@ -40,9 +40,9 @@ def _sha256_file(path: Path) -> str:
 
 PHASE_ROOT = (
     Path(__file__).resolve().parents[2]
-    / ".planning"
-    / "phases"
-    / "31-hangul-and-pronunciation-i-plus-1"
+    / "data"
+    / "korean_foundations"
+    / "evidence"
 )
 
 

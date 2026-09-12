@@ -2,23 +2,34 @@
 
 from __future__ import annotations
 
+import io
+import json
+import os
+import stat
+import struct
+import tempfile
+import unicodedata
+import wave
 from dataclasses import dataclass
 from datetime import datetime
 from enum import Enum
 from hashlib import sha256
-import io
-import json
-import os
 from pathlib import Path, PurePosixPath
-import stat
-import struct
-import tempfile
 from typing import Any, Callable, Final, Literal, Self
-import unicodedata
-import wave
 
-from pydantic import BaseModel, ConfigDict, Field, ValidationError, field_validator, model_validator
+from pydantic import (
+    BaseModel,
+    ConfigDict,
+    Field,
+    ValidationError,
+    field_validator,
+    model_validator,
+)
 
+from multilang.services._korean_foundation_state_lock import (
+    KOREAN_FOUNDATION_STATE_LOCK_VERSION,
+    _korean_foundation_state_lock,
+)
 from multilang.services.ai_acoustic_review import (
     AIAcousticReviewAggregate,
     ai_acoustic_review_sha256,
@@ -31,10 +42,6 @@ from multilang.services.ai_linguistic_review import (
     AIValidatorRun,
     ai_review_content_hash,
     build_ai_review_aggregate,
-)
-from multilang.services._korean_foundation_state_lock import (
-    KOREAN_FOUNDATION_STATE_LOCK_VERSION,
-    _korean_foundation_state_lock,
 )
 from multilang.services.korean_curriculum import (
     KoreanConceptRegistry,
@@ -55,11 +62,9 @@ from multilang.services.korean_foundation_review import (
     validate_korean_foundation_curation,
 )
 from multilang.services.korean_foundation_snapshot import KoreanFoundationActivePointer
+from multilang.services.native_evidence_paths import native_korean_evidence_relpath
 
-
-PHASE31_EVIDENCE_INBOX: Final = Path(
-    ".planning/phases/31-hangul-and-pronunciation-i-plus-1/evidence-inbox"
-)
+PHASE31_EVIDENCE_INBOX: Final = native_korean_evidence_relpath() / "evidence-inbox"
 PHASE31_EVIDENCE_INDEX: Final = PHASE31_EVIDENCE_INBOX / "evidence-index.json"
 PHASE31_VALIDATION_RECEIPT: Final = (
     PHASE31_EVIDENCE_INBOX / "validation-receipt.json"
@@ -73,9 +78,7 @@ KOREAN_FOUNDATION_EVIDENCE_POLICY_VERSION: Final = (
 _RECEIPT_VERSION: Final = "phase31-korean-foundation-validation-receipt-v1"
 _INDEX_VERSION: Final = "phase31-korean-foundation-evidence-index-v1"
 _PROJECT_ROOT: Final = Path(__file__).resolve().parents[3]
-_PHASE_RELPATH: Final = Path(
-    ".planning/phases/31-hangul-and-pronunciation-i-plus-1"
-)
+_PHASE_RELPATH: Final = native_korean_evidence_relpath()
 _REGISTRY_FILENAME: Final = "korean-concepts-v1.json"
 _CURRENT_CANDIDATE_FILENAME: Final = "current-candidate.json"
 _BUNDLE_MANIFEST_FILENAME: Final = "bundle-manifest.json"
@@ -1382,7 +1385,7 @@ def _validate_layout(
         expected_files.add("validation-receipt.json")
     if actual_directories - expected_directories:
         _raise(KoreanFoundationEvidenceReasonCode.UNEXPECTED_MEMBER)
-    if expected_directories - actual_directories:
+    if expected_directories - {_AI_FAILED_ATTEMPTS_RELPATH} - actual_directories:
         _raise(KoreanFoundationEvidenceReasonCode.MEMBER_MISSING)
     if actual_files - expected_files:
         _raise(KoreanFoundationEvidenceReasonCode.UNEXPECTED_MEMBER)
@@ -1479,7 +1482,7 @@ def _inspect_inventory(paths: _KoreanFoundationEvidencePaths) -> KoreanFoundatio
         sorted(actual_directories - expected_directories)
     )
     missing_directories = tuple(
-        sorted(expected_directories - actual_directories)
+        sorted(expected_directories - {_AI_FAILED_ATTEMPTS_RELPATH} - actual_directories)
     )
     if missing or unexpected or unexpected_directories or missing_directories:
         return KoreanFoundationEvidenceInventory(
@@ -1729,7 +1732,10 @@ def _derive_current_ai_media_index(
         _MEDIA_RIGHTS_RELPATH,
         _MEDIA_ARTIFACTS_RELPATH,
     }
-    if not required_signature <= actual_files or not _CURRENT_LAYOUT_DIRECTORIES <= actual_directories:
+    # Failed attempts are optional; an empty directory is absent in a clean Git
+    # checkout. Its presence is allowed, but never substitutes for signed files.
+    required_directories = _CURRENT_LAYOUT_DIRECTORIES - {_AI_FAILED_ATTEMPTS_RELPATH}
+    if not required_signature <= actual_files or not required_directories <= actual_directories:
         _raise(KoreanFoundationEvidenceReasonCode.INDEX_MISSING)
     artifacts = _parse_json_object(
         _read_regular_file(

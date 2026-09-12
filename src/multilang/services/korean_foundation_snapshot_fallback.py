@@ -2,9 +2,9 @@
 
 from __future__ import annotations
 
+import json
 from collections.abc import Callable, Mapping
 from hashlib import sha256
-import json
 from pathlib import Path
 from typing import Any
 
@@ -21,20 +21,12 @@ from multilang.services.korean_foundation_snapshot import (
     KoreanFoundationSnapshotReasonCode,
     verify_active_korean_foundation_snapshot_provenance,
 )
+from multilang.services.native_evidence_paths import native_korean_evidence_relpath
 
 _LOWERCASE_HEX = frozenset("0123456789abcdef")
-_PHASE31_SUMMARY_FILE = (
-    Path(".planning")
-    / "phases"
-    / "31-hangul-and-pronunciation-i-plus-1"
-    / "31-32-SUMMARY.md"
-)
-_PHASE31_VERIFICATION_REPORT_FILE = (
-    Path(".planning")
-    / "phases"
-    / "31-hangul-and-pronunciation-i-plus-1"
-    / "31-VERIFICATION.md"
-)
+
+_PHASE31_SUMMARY_FILE = native_korean_evidence_relpath() / "31-32-SUMMARY.md"
+_PHASE31_VERIFICATION_REPORT_FILE = native_korean_evidence_relpath() / "31-VERIFICATION.md"
 _APPROVED_PHASE31_BUNDLE_SHA256 = "b8704d2bbcc390a2cd4ee9b1119928e83c9a75aaa3cf82da98bf2474c8e7c516"
 _APPROVED_PHASE31_SNAPSHOT_MANIFEST_FILE = (
     KOREAN_FOUNDATION_SNAPSHOT_ROOT / _APPROVED_PHASE31_BUNDLE_SHA256 / "snapshot-manifest.json"

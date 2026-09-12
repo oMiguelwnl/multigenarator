@@ -92,6 +92,7 @@ CANONICAL_STATE_PATHS = (
     Path(".planning/phases/31-hangul-and-pronunciation-i-plus-1/31-CURRICULUM-REVIEW.md"),
     Path(".planning/phases/31-hangul-and-pronunciation-i-plus-1/31-AUDIO-PLAYBACK-REVIEW.md"),
     Path(".planning/phases/31-hangul-and-pronunciation-i-plus-1/evidence-inbox"),
+    Path("data/korean_foundations/evidence"),
     Path("data/korean_foundations/validation-receipt.json"),
     Path("data/korean_foundations/snapshots"),
     Path("data/korean_foundations/active-foundations.json"),

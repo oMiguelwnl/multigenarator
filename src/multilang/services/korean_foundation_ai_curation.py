@@ -28,7 +28,7 @@ from multilang.services.korean_curriculum import (
     KoreanPronunciationSourcePack,
     korean_canonical_json_sha256,
 )
-
+from multilang.services.native_evidence_paths import native_korean_evidence_relpath
 
 _LOWERCASE_HEX = frozenset("0123456789abcdef")
 _PLACEHOLDERS = frozenset(
@@ -47,8 +47,7 @@ _SOURCE_PATHS = {
     ),
 }
 KOREAN_FOUNDATION_CURATION_DRAFT_ROOT = (
-    _PROJECT_ROOT
-    / ".planning/phases/31-hangul-and-pronunciation-i-plus-1/curation-drafts"
+    _PROJECT_ROOT / native_korean_evidence_relpath() / "curation-drafts"
 )
 KOREAN_FOUNDATION_CURATION_INPUT_ROOT = (
     KOREAN_FOUNDATION_CURATION_DRAFT_ROOT / "inputs"
@@ -98,8 +97,7 @@ _FAMILY_DRAFT_PATHS = {
 }
 _DRAFT_MANIFEST_PATH = KOREAN_FOUNDATION_CURATION_DRAFT_ROOT / "draft-manifest.json"
 KOREAN_FOUNDATION_EXECUTION_HANDOFF_ROOT = (
-    _PROJECT_ROOT
-    / ".planning/phases/31-hangul-and-pronunciation-i-plus-1/execution-handoffs"
+    _PROJECT_ROOT / native_korean_evidence_relpath() / "execution-handoffs"
 )
 _CURATION_SELECTION_HANDOFF_PATH = (
     KOREAN_FOUNDATION_EXECUTION_HANDOFF_ROOT / "curation-selection.json"

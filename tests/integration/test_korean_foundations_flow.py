@@ -27,9 +27,9 @@ runner = CliRunner()
 PROJECT_ROOT = Path(__file__).resolve().parents[2]
 PHASE_ROOT = (
     PROJECT_ROOT
-    / ".planning"
-    / "phases"
-    / "31-hangul-and-pronunciation-i-plus-1"
+    / "data"
+    / "korean_foundations"
+    / "evidence"
 )
 CANONICAL_STATE_PATHS = (
     PROJECT_ROOT / "data" / "korean_foundations",

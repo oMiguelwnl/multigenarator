@@ -2,35 +2,34 @@
 
 from __future__ import annotations
 
-from copy import deepcopy
-from dataclasses import dataclass
-from hashlib import sha256
-from importlib import import_module, util
 import inspect
 import io
 import json
 import multiprocessing
 import os
-from pathlib import Path
 import shutil
 import stat
 import struct
 import time
-from types import ModuleType
-from typing import Any, Callable
 import unicodedata
 import wave
 import zlib
+from copy import deepcopy
+from dataclasses import dataclass
+from hashlib import sha256
+from importlib import import_module, util
+from pathlib import Path
+from types import ModuleType
+from typing import Any, Callable
 
 import pytest
-
 
 PROJECT_ROOT = Path(__file__).resolve().parents[2]
 PHASE_ROOT = (
     PROJECT_ROOT
-    / ".planning"
-    / "phases"
-    / "31-hangul-and-pronunciation-i-plus-1"
+    / "data"
+    / "korean_foundations"
+    / "evidence"
 )
 CANONICAL_INBOX = PHASE_ROOT / "evidence-inbox"
 CURRENT_BUNDLE_SHA256 = (
@@ -716,15 +715,15 @@ def _build_complete_fixture(
     candidate_root = project_root / "data" / "korean_foundations"
     phase_root = (
         project_root
-        / ".planning"
-        / "phases"
-        / "31-hangul-and-pronunciation-i-plus-1"
+        / "data"
+        / "korean_foundations"
+        / "evidence"
     )
     inbox = phase_root / "evidence-inbox"
     media_root = inbox / "media"
     (inbox / "reviewers").mkdir(parents=True)
     media_root.mkdir()
-    candidate_root.mkdir(parents=True)
+    candidate_root.mkdir(parents=True, exist_ok=True)
     (inbox / "README.md").write_text(
         "FIXTURE ONLY - no production evidence.\n",
         encoding="utf-8",
@@ -882,12 +881,13 @@ def _build_current_ai_media_fixture(tmp_path: Path) -> CurrentAIMediaEvidenceFix
     candidate_root = project_root / "data" / "korean_foundations"
     phase_root = (
         project_root
-        / ".planning"
-        / "phases"
-        / "31-hangul-and-pronunciation-i-plus-1"
+        / "data"
+        / "korean_foundations"
+        / "evidence"
     )
     inbox = phase_root / "evidence-inbox"
-    shutil.copytree(PROJECT_ROOT / "data" / "korean_foundations", candidate_root)
+    shutil.copytree(PROJECT_ROOT / "data" / "korean_foundations", candidate_root,
+        ignore=lambda directory, names: ["evidence"] if Path(directory) == PROJECT_ROOT / "data" / "korean_foundations" else [])
     shutil.copytree(CANONICAL_INBOX, inbox)
     (inbox / "validation-receipt.json").unlink(missing_ok=True)
     handoff_root = phase_root / "execution-handoffs"
@@ -980,7 +980,7 @@ def test_layout_module_and_readme_are_required_before_implementation() -> None:
 def test_layout_constants_and_canonical_inbox_have_only_technical_readme() -> None:
     api = _evidence()
     expected_inbox = Path(
-        ".planning/phases/31-hangul-and-pronunciation-i-plus-1/evidence-inbox"
+        "data/korean_foundations/evidence/evidence-inbox"
     )
     assert api.PHASE31_EVIDENCE_INBOX == expected_inbox
     assert api.PHASE31_EVIDENCE_INDEX == expected_inbox / "evidence-index.json"
@@ -1464,7 +1464,7 @@ def test_combined_validate_and_write_success_is_atomic_and_idempotent(
     assert not tuple(fixture.inbox.glob(".validation-receipt.*.tmp"))
     after = _tree_bytes(fixture.project_root)
     changed = set(after) ^ set(before)
-    assert changed == {".planning/phases/31-hangul-and-pronunciation-i-plus-1/evidence-inbox/validation-receipt.json"}
+    assert changed == {"data/korean_foundations/evidence/evidence-inbox/validation-receipt.json"}
     payload = json.loads(fixture.receipt_path.read_text(encoding="utf-8"))
     unsigned = deepcopy(payload)
     payload_sha256 = unsigned.pop("payload_sha256")

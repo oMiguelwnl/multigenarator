@@ -2,16 +2,16 @@
 
 from __future__ import annotations
 
+import json
+import os
+import shutil
+import stat
+import tempfile
 from dataclasses import dataclass, replace
 from enum import Enum
 from hashlib import sha256
 from importlib import import_module
-import json
-import os
 from pathlib import Path, PurePosixPath
-import shutil
-import stat
-import tempfile
 from typing import Any, Final, Literal, Self, TypeAlias
 
 from pydantic import (
@@ -36,7 +36,7 @@ from multilang.services.korean_foundation_review import (
     KoreanFoundationReviewError,
     validate_korean_foundation_curation,
 )
-
+from multilang.services.native_evidence_paths import native_korean_evidence_relpath
 
 ACTIVE_KOREAN_FOUNDATIONS_POINTER_PATH: Final = (
     Path("data") / "korean_foundations" / "active-foundations.json"
@@ -67,9 +67,8 @@ _LOWERCASE_HEX: Final = frozenset("0123456789abcdef")
 _ARCHIVE_SUFFIXES: Final = frozenset(
     {".apkg", ".zip", ".tar", ".tgz", ".gz", ".bz2", ".7z", ".rar"}
 )
-_PHASE_RELPATH: Final = Path(
-    ".planning/phases/31-hangul-and-pronunciation-i-plus-1"
-)
+
+_PHASE_RELPATH: Final = native_korean_evidence_relpath()
 _REGISTRY_FILENAME: Final = "korean-concepts-v1.json"
 _CURRENT_CANDIDATE_FILENAME: Final = "current-candidate.json"
 _BUNDLE_MANIFEST_FILENAME: Final = "bundle-manifest.json"
