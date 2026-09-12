@@ -1,0 +1,26 @@
+site_name: Multilang
+site_description: Native multilingual lexical architecture and operator documentation
+docs_dir: docs
+site_dir: site
+theme:
+  name: mkdocs
+nav:
+  - Architecture: architecture.md
+  - Domain: domain-model.md
+  - Database: database.md
+  - Content, audio and Anki contracts: native-content-audio-anki-contracts.md
+  - HTTP API and jobs: api.md
+  - Migration: migration.md
+  - Roadmap implementation: roadmap-4-implementation-plan.md
+  - Roadmap analysis: roadmap-4-analysis.md
+  - Implementation file inventory: roadmap-4-file-inventory.md
+  - Decisions:
+      - Native architecture: adr/0001-native-architecture.md
+      - Semantic cards and editions: adr/0002-semantic-cards-and-editions.md
+      - Additive migration: adr/0003-additive-migration.md
+validation:
+  nav:
+    omitted_files: info
+  links:
+    not_found: info
+    anchors: info
