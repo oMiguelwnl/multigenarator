@@ -243,6 +243,227 @@ def _copy_bounded(source: Path, destination: Path, limit: int) -> BackupFile:
     return BackupFile(relative_path=destination.name, sha256=digest.hexdigest(), byte_size=size)
 
 
+@dataclass(frozen=True)
+class _SqlToken:
+    kind: Literal["word", "string", "symbol"]
+    value: str
+    start: int
+    end: int
+
+
+def _quoted_sql_token_end(value: str, start: int, quote: str, *, escapes: bool = False) -> int:
+    index = start + 1
+    while index < len(value):
+        if escapes and value[index] == "\\":
+            index = min(index + 2, len(value))
+            continue
+        if value[index] != quote:
+            index += 1
+            continue
+        if index + 1 < len(value) and value[index + 1] == quote:
+            index += 2
+            continue
+        return index + 1
+    return len(value)
+
+
+def _postgres_sql_tokens(value: str) -> tuple[_SqlToken, ...]:
+    """Tokenize only the SQL forms needed for safe CHECK normalization."""
+    tokens = []
+    index = 0
+    while index < len(value):
+        character = value[index]
+        if character.isspace():
+            index += 1
+            continue
+        start = index
+        if value.startswith("--", index):
+            newline = value.find("\n", index + 2)
+            index = len(value) if newline == -1 else newline
+            tokens.append(_SqlToken("symbol", value[start:index], start, index))
+            continue
+        if value.startswith("/*", index):
+            index += 2
+            depth = 1
+            while index < len(value) and depth:
+                if value.startswith("/*", index):
+                    depth += 1
+                    index += 2
+                elif value.startswith("*/", index):
+                    depth -= 1
+                    index += 2
+                else:
+                    index += 1
+            tokens.append(_SqlToken("symbol", value[start:index], start, index))
+            continue
+        if character == '"':
+            index = _quoted_sql_token_end(value, index, '"')
+            tokens.append(_SqlToken("symbol", value[start:index], start, index))
+            continue
+        if character == "$":
+            delimiter_end = index + 1
+            if delimiter_end < len(value) and (
+                value[delimiter_end].isalpha() or value[delimiter_end] in {"_", "$"}
+            ):
+                while delimiter_end < len(value) and (
+                    value[delimiter_end].isalnum() or value[delimiter_end] == "_"
+                ):
+                    delimiter_end += 1
+                if delimiter_end < len(value) and value[delimiter_end] == "$":
+                    delimiter = value[index : delimiter_end + 1]
+                    close = value.find(delimiter, delimiter_end + 1)
+                    index = len(value) if close == -1 else close + len(delimiter)
+                    tokens.append(_SqlToken("symbol", value[start:index], start, index))
+                    continue
+        if (
+            character in {"E", "e", "B", "b", "X", "x", "N", "n"}
+            and index + 1 < len(value)
+            and value[index + 1] == "'"
+        ):
+            index = _quoted_sql_token_end(
+                value,
+                index + 1,
+                "'",
+                escapes=character in {"E", "e"},
+            )
+            tokens.append(_SqlToken("symbol", value[start:index], start, index))
+            continue
+        if character in {"U", "u"} and value.startswith("&'", index + 1):
+            index = _quoted_sql_token_end(value, index + 2, "'")
+            tokens.append(_SqlToken("symbol", value[start:index], start, index))
+            continue
+        if character == "'":
+            index = _quoted_sql_token_end(value, index, "'")
+            closed = index > start + 1 and value[index - 1 : index] == "'"
+            tokens.append(
+                _SqlToken("string" if closed else "symbol", value[start:index], start, index)
+            )
+            continue
+        if character.isalpha() or character == "_":
+            index += 1
+            while index < len(value) and (value[index].isalnum() or value[index] in {"_", "$"}):
+                index += 1
+            tokens.append(_SqlToken("word", value[start:index], start, index))
+            continue
+        if value.startswith("::", index):
+            index += 2
+        else:
+            index += 1
+        tokens.append(_SqlToken("symbol", value[start:index], start, index))
+    return tuple(tokens)
+
+
+def _token_is(token: _SqlToken, value: str) -> bool:
+    if token.kind == "word":
+        return token.value.casefold() == value.casefold()
+    return token.value == value
+
+
+def _postgres_check_array_cast_edits(
+    tokens: tuple[_SqlToken, ...], start: int
+) -> tuple[int, tuple[tuple[int, int, str], ...]] | None:
+    """Match the exact pg_dump varchar-literal-array cast relocation."""
+    if start + 4 >= len(tokens) or not (
+        _token_is(tokens[start], "ANY")
+        and _token_is(tokens[start + 1], "(")
+        and _token_is(tokens[start + 2], "ARRAY")
+        and _token_is(tokens[start + 3], "[")
+    ):
+        return None
+
+    index = start + 4
+    element_cast_ends = []
+    element_has_text_cast = []
+    while index < len(tokens):
+        if tokens[index].kind != "string":
+            return None
+        index += 1
+        if index + 2 >= len(tokens) or not (
+            _token_is(tokens[index], "::")
+            and _token_is(tokens[index + 1], "character")
+            and _token_is(tokens[index + 2], "varying")
+        ):
+            return None
+        index += 3
+        element_cast_ends.append(tokens[index - 1].end)
+        has_text_cast = (
+            index + 1 < len(tokens)
+            and _token_is(tokens[index], "::")
+            and _token_is(tokens[index + 1], "text")
+        )
+        element_has_text_cast.append(has_text_cast)
+        if has_text_cast:
+            index += 2
+        if index >= len(tokens):
+            return None
+        if _token_is(tokens[index], ","):
+            index += 1
+            continue
+        if _token_is(tokens[index], "]"):
+            index += 1
+            break
+        return None
+
+    if all(element_has_text_cast):
+        if index < len(tokens) and _token_is(tokens[index], ")"):
+            return index + 1, ()
+        return None
+    if any(element_has_text_cast) or index + 3 >= len(tokens):
+        return None
+    if not (
+        _token_is(tokens[index], "::")
+        and _token_is(tokens[index + 1], "text")
+        and _token_is(tokens[index + 2], "[")
+        and _token_is(tokens[index + 3], "]")
+        and index + 4 < len(tokens)
+        and _token_is(tokens[index + 4], ")")
+    ):
+        return None
+
+    edits = [(position, position, "::text") for position in element_cast_ends]
+    edits.append((tokens[index].start, tokens[index + 3].end, ""))
+    return index + 5, tuple(edits)
+
+
+def _normalize_postgresql_check_sqltext(value: str) -> str:
+    """Normalize one proven PostgreSQL dump/restore CHECK rewrite."""
+    tokens = _postgres_sql_tokens(value)
+    edits = []
+    index = 0
+    while index < len(tokens):
+        match = _postgres_check_array_cast_edits(tokens, index)
+        if match is None:
+            index += 1
+            continue
+        index, match_edits = match
+        edits.extend(match_edits)
+    if not edits:
+        return value
+    pieces = []
+    cursor = 0
+    for start, end, replacement in sorted(edits):
+        pieces.append(value[cursor:start])
+        pieces.append(replacement)
+        cursor = end
+    pieces.append(value[cursor:])
+    return "".join(pieces)
+
+
+def _check_constraints_for_fingerprint(inspector, name: str) -> list[dict]:
+    checks = inspector.get_check_constraints(name)
+    if inspector.dialect.name != "postgresql":
+        return checks
+    return [
+        {
+            **check,
+            "sqltext": _normalize_postgresql_check_sqltext(check["sqltext"]),
+        }
+        if isinstance(check.get("sqltext"), str)
+        else check
+        for check in checks
+    ]
+
+
 def _schema_fingerprint(engine: Engine | Connection, *, names: set[str] | None = None) -> str:
     inspector = inspect(engine)
     schema = {}
@@ -270,7 +491,7 @@ def _schema_fingerprint(engine: Engine | Connection, *, names: set[str] | None =
                 key=lambda item: str(item.get("constrained_columns", [])),
             ),
             "checks": sorted(
-                inspector.get_check_constraints(name),
+                _check_constraints_for_fingerprint(inspector, name),
                 key=lambda item: str(item.get("name", "")),
             ),
         }

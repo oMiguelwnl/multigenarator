@@ -80,6 +80,173 @@ def test_fingerprint_detects_constraints_even_when_rows_and_columns_match():
         engine.dispose()
 
 
+_POSTGRES_DUMP_RESTORE_CHECK_PAIRS = (
+    (
+        "state::text = ANY (ARRAY['reserved'::character varying, 'staged'::character varying, 'published'::character varying, 'finalized'::character varying, 'failed_unknown'::character varying, 'blocked_mismatch'::character varying]::text[])",
+        "state::text = ANY (ARRAY['reserved'::character varying::text, 'staged'::character varying::text, 'published'::character varying::text, 'finalized'::character varying::text, 'failed_unknown'::character varying::text, 'blocked_mismatch'::character varying::text])",
+    ),
+    (
+        "terminal_status::text = ANY (ARRAY['accepted'::character varying, 'review_required'::character varying, 'failed'::character varying]::text[])",
+        "terminal_status::text = ANY (ARRAY['accepted'::character varying::text, 'review_required'::character varying::text, 'failed'::character varying::text])",
+    ),
+    (
+        "status::text = ANY (ARRAY['draft'::character varying, 'active'::character varying, 'retired'::character varying]::text[])",
+        "status::text = ANY (ARRAY['draft'::character varying::text, 'active'::character varying::text, 'retired'::character varying::text])",
+    ),
+    (
+        "decision_state::text = ANY (ARRAY['accepted'::character varying, 'duplicate'::character varying, 'bridge'::character varying, 'defer'::character varying, 'needs_review'::character varying, 'rejected'::character varying]::text[])",
+        "decision_state::text = ANY (ARRAY['accepted'::character varying::text, 'duplicate'::character varying::text, 'bridge'::character varying::text, 'defer'::character varying::text, 'needs_review'::character varying::text, 'rejected'::character varying::text])",
+    ),
+    (
+        "idempotency_support::text = ANY (ARRAY['supported'::character varying, 'unsupported'::character varying]::text[])",
+        "idempotency_support::text = ANY (ARRAY['supported'::character varying::text, 'unsupported'::character varying::text])",
+    ),
+    (
+        "state::text = ANY (ARRAY['pending'::character varying, 'disclosing'::character varying, 'disclosed'::character varying, 'failed_unknown'::character varying]::text[])",
+        "state::text = ANY (ARRAY['pending'::character varying::text, 'disclosing'::character varying::text, 'disclosed'::character varying::text, 'failed_unknown'::character varying::text])",
+    ),
+    (
+        "state::text = ANY (ARRAY['pending'::character varying, 'disclosing'::character varying, 'disclosed'::character varying, 'failed_unknown'::character varying]::text[])",
+        "state::text = ANY (ARRAY['pending'::character varying::text, 'disclosing'::character varying::text, 'disclosed'::character varying::text, 'failed_unknown'::character varying::text])",
+    ),
+    (
+        "action::text = ANY (ARRAY['list'::character varying, 'inspect'::character varying, 'private_display'::character varying, 'approve'::character varying, 'reject'::character varying, 'edit'::character varying, 'regenerate'::character varying]::text[])",
+        "action::text = ANY (ARRAY['list'::character varying::text, 'inspect'::character varying::text, 'private_display'::character varying::text, 'approve'::character varying::text, 'reject'::character varying::text, 'edit'::character varying::text, 'regenerate'::character varying::text])",
+    ),
+    (
+        "review_status::text = ANY (ARRAY['needs_review'::character varying, 'approved'::character varying, 'rejected'::character varying]::text[])",
+        "review_status::text = ANY (ARRAY['needs_review'::character varying::text, 'approved'::character varying::text, 'rejected'::character varying::text])",
+    ),
+    (
+        "review_status::text = ANY (ARRAY['needs_review'::character varying, 'approved'::character varying, 'rejected'::character varying]::text[])",
+        "review_status::text = ANY (ARRAY['needs_review'::character varying::text, 'approved'::character varying::text, 'rejected'::character varying::text])",
+    ),
+)
+
+_POSTGRES_DUMP_RESTORE_CHECK_IDS = (
+    "audio_publication_reservations.state",
+    "item_terminal_status_events.status",
+    "korean_grammar_bundles.status",
+    "personal_source_decisions.state",
+    "private_context_capabilities.idempotency_support",
+    "private_context_capabilities.state",
+    "private_disclosure_attempts.state",
+    "review_access_events.action",
+    "review_current_pointers.status",
+    "review_decisions.status",
+)
+
+
+class _CheckInspector:
+    def __init__(self, sqltext: str, dialect: str = "postgresql") -> None:
+        from types import SimpleNamespace
+
+        self.dialect = SimpleNamespace(name=dialect)
+        self._sqltext = sqltext
+
+    def get_table_names(self):
+        return ["probe"]
+
+    def get_columns(self, name):
+        return [{"name": "state", "type": "VARCHAR(32)", "nullable": True, "default": None}]
+
+    def get_pk_constraint(self, name):
+        return {"constrained_columns": []}
+
+    def get_indexes(self, name):
+        return []
+
+    def get_unique_constraints(self, name):
+        return []
+
+    def get_foreign_keys(self, name):
+        return []
+
+    def get_check_constraints(self, name):
+        return [{"name": "ck_probe", "sqltext": self._sqltext}]
+
+
+def _fingerprint_check(monkeypatch, sqltext: str, *, dialect: str = "postgresql") -> str:
+    import multilang.services.native_migration as native_migration
+
+    inspector = _CheckInspector(sqltext, dialect)
+    monkeypatch.setattr(native_migration, "inspect", lambda _: inspector)
+    return native_migration._schema_fingerprint(object())
+
+
+@pytest.mark.parametrize(
+    "source, restored",
+    _POSTGRES_DUMP_RESTORE_CHECK_PAIRS,
+    ids=_POSTGRES_DUMP_RESTORE_CHECK_IDS,
+)
+def test_postgres_check_fingerprint_normalizes_observed_dump_restore_pairs(
+    monkeypatch, source, restored
+):
+    assert _fingerprint_check(monkeypatch, source) == _fingerprint_check(monkeypatch, restored)
+
+
+def test_postgres_check_normalization_respects_quoted_commas_brackets_and_quotes(monkeypatch):
+    source = (
+        "state::text = ANY (ARRAY['a,b'::character varying, "
+        "'it''s ] still one literal'::character varying]::text[])"
+    )
+    restored = (
+        "state::text = ANY (ARRAY['a,b'::character varying::text, "
+        "'it''s ] still one literal'::character varying::text])"
+    )
+    assert _fingerprint_check(monkeypatch, source) == _fingerprint_check(monkeypatch, restored)
+
+
+@pytest.mark.parametrize(
+    "source, different",
+    (
+        (
+            "state::text = ANY (ARRAY['reserved'::character varying]::varchar[])",
+            "state::text = ANY (ARRAY['reserved'::character varying::text])",
+        ),
+        (
+            "state::text = ANY (ARRAY[lower('reserved'::character varying)]::text[])",
+            "state::text = ANY (ARRAY[lower('reserved'::character varying)::text])",
+        ),
+        (
+            "ARRAY['reserved'::character varying]::text[] = expected",
+            "ARRAY['reserved'::character varying::text] = expected",
+        ),
+        (
+            "state::text = ANY (ARRAY['reserved'::text]::text[])",
+            "state::text = ANY (ARRAY['reserved'::text])",
+        ),
+        (
+            "state::text = ANY (ARRAY['reserved'::character varying, now()]::text[])",
+            "state::text = ANY (ARRAY['reserved'::character varying::text, now()])",
+        ),
+        (
+            "state::text = ANY (ARRAY['reserved'::character varying]::text[])",
+            "state::text = ANY (ARRAY['staged'::character varying::text])",
+        ),
+        (
+            "payload = $$ANY (ARRAY['reserved'::character varying]::text[])$$",
+            "payload = $$ANY (ARRAY['reserved'::character varying::text])$$",
+        ),
+        (
+            "\"ANY (ARRAY['reserved'::character varying]::text[])\" IS NOT NULL",
+            "\"ANY (ARRAY['reserved'::character varying::text])\" IS NOT NULL",
+        ),
+    ),
+)
+def test_postgres_check_normalization_preserves_other_expressions_and_types(
+    monkeypatch, source, different
+):
+    assert _fingerprint_check(monkeypatch, source) != _fingerprint_check(monkeypatch, different)
+
+
+def test_sqlite_check_fingerprint_does_not_apply_postgres_normalization(monkeypatch):
+    source, restored = _POSTGRES_DUMP_RESTORE_CHECK_PAIRS[0]
+    assert _fingerprint_check(monkeypatch, source, dialect="sqlite") != _fingerprint_check(
+        monkeypatch, restored, dialect="sqlite"
+    )
+
+
 def test_postgres_source_identity_ignores_credentials_and_transport_options():
     from types import SimpleNamespace
 
