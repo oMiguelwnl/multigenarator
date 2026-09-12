@@ -10,11 +10,13 @@ from sqlalchemy import create_engine, func, select
 from sqlalchemy.orm import Session
 from typer.testing import CliRunner
 
+import multilang.runtime as runtime_module
 from multilang.cli import create_app
 from multilang.db.models import AudioAssetModel, GenerationJob
-import multilang.runtime as runtime_module
+from multilang.domain.jobs import SupportedLanguage
 from multilang.runtime import build_runtime_service
 from multilang.services.audio_synthesis import AudioSynthesisAdapter, AudioSynthesisResponse
+from multilang.services.audio_voice_registry import get_voice_registry
 from multilang.settings import Settings
 
 runner = CliRunner()
@@ -48,7 +50,7 @@ class FakeAzureSpeechAdapter(AudioSynthesisAdapter):
         type(self).instances.append(self)
 
     def available_voice_ids(self) -> set[str] | None:
-        return {"en-US-JennyNeural", "en-US-GuyNeural"}
+        return {get_voice_registry()[SupportedLanguage.EN].preferred.voice_id}
 
     def synthesize(
         self,
@@ -104,11 +106,14 @@ def test_generate_command_default_runtime_uses_azure_audio_adapter(
     monkeypatch.setattr(runtime_module, "AzureSpeechAdapter", FakeAzureSpeechAdapter)
     service = build_runtime_service(
         Settings(
+            _env_file=None,
             database_url=f"sqlite+pysqlite:///{database_path}",
             lexicon_data_dir=lexicon_dir,
             audio_storage_dir=tmp_path / "audio",
             audio_provider="azure",
             audio_fallback_providers=[],
+            text_generation_provider="local",
+            translation_provider="local",
             azure_speech_key="key",
             azure_speech_region="eastus",
             tatoeba_enabled=False,
@@ -166,4 +171,6 @@ def test_generate_command_default_runtime_uses_azure_audio_adapter(
 
     assert first_result.exit_code == 0
     assert "audio_processed_items=1" in first_result.output
+    assert "fallback_audio_items=0" in first_result.output
     assert len(FakeAzureSpeechAdapter.instances) == 1
+    assert len(FakeAzureSpeechAdapter.instances[0].calls) == 1

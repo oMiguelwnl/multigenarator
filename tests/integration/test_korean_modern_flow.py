@@ -2,14 +2,15 @@
 
 from __future__ import annotations
 
-from dataclasses import dataclass
 import json
-from pathlib import Path
 import unicodedata
+from dataclasses import dataclass
+from pathlib import Path
 
 import pytest
 from sqlalchemy import select
 
+import multilang.runtime as runtime_module
 from multilang.db.models import (
     GenerationJob,
     LexicalCandidate,
@@ -17,11 +18,13 @@ from multilang.db.models import (
 )
 from multilang.domain.exporting import ExportCardIdentity, ExportCardRow
 from multilang.domain.jobs import GenerationRequest, SupportedLanguage
-from multilang.domain.korean import KoreanLexicalIdentity
-import multilang.runtime as runtime_module
+from multilang.domain.korean import KoreanFrequencyEntry, KoreanLexicalIdentity, raw_bytes_sha256
 from multilang.runtime import build_runtime_service
 from multilang.services import frequency_decks
 from multilang.services.export_anki_package import build_multilang_note
+from multilang.services.korean_morphology import KiwiKoreanMorphologyService
+from multilang.services.lexical_grounding import LexicalGroundingService
+from multilang.services.lexical_lookup import LexicalLookup
 from multilang.services.text_generation import (
     DefinitionGenerationResult,
     GeneratedSentence,
@@ -30,7 +33,6 @@ from multilang.services.text_generation import (
     SentenceTranslationResult,
 )
 from multilang.settings import Settings
-
 
 PRIVATE_HIGHLIGHT_TEXT = "눈은 매일 공부해요"
 
@@ -156,9 +158,57 @@ def _write_private_highlight(tmp_path: Path) -> Path:
     return path
 
 
-def _temporary_korean_frequency_words(language: str):
-    assert language == "ko"
-    return iter(("공부해요",))
+def _forbidden_korean_frequency_words(language: str):
+    raise AssertionError("Korean final frequency must use the explicit synthetic entry")
+
+
+def _synthetic_frequency_entry(
+    lexicon_dir: Path,
+    morphology: KiwiKoreanMorphologyService,
+) -> tuple[KoreanFrequencyEntry, str]:
+    """Bind test-only source evidence through real source matching and Kiwi.
+
+    This fixture exercises final-entry ingestion, not production authorization,
+    source redistribution approval, or the 3000-entry frequency contract.
+    """
+    binding = LexicalGroundingService(
+        LexicalLookup(lexicon_dir), korean_morphology=morphology
+    ).resolve_korean_source_identity(surface_form="공부해요")
+    assert binding.status == "resolved" and binding.identity is not None
+    identity = binding.identity
+    source_sha256 = raw_bytes_sha256((lexicon_dir / "ko" / "lexical-index.json").read_bytes())
+    bundle_sha256 = raw_bytes_sha256(identity.model_dump_json().encode("utf-8"))
+    review_payload = json.dumps(
+        {
+            "claim_limit": "synthetic-test-only",
+            "source_sha256": source_sha256,
+            "bundle_sha256": bundle_sha256,
+            "lexical_key": identity.lexical_key,
+        },
+        sort_keys=True,
+    ).encode("utf-8")
+    review_sha256 = raw_bytes_sha256(review_payload)
+    entry = KoreanFrequencyEntry(
+        language="ko",
+        version="synthetic-flow-v1",
+        level=1,
+        final_rank=1,
+        source_rank=1,
+        # This fixed protocol identifier models the source adapter's output;
+        # every version, disposition and receipt above remains test-only.
+        source_provenance="nikl-korean-learners-vocabulary",
+        source_version="synthetic-flow-v1",
+        license_decision="synthetic-test-only",
+        storage_disposition="synthetic-test-only",
+        curation_decision="accepted",
+        curation_flags=("synthetic-test-only",),
+        grounding_confidence="reviewed-source-backed",
+        bundle_sha256=bundle_sha256,
+        retrieval_sha256=source_sha256,
+        analyzer_fingerprint=morphology.fingerprint,
+        lexical_identity=identity,
+    )
+    return entry, review_sha256
 
 
 def _exercise_three_mode_flow(
@@ -180,13 +230,16 @@ def _exercise_three_mode_flow(
     monkeypatch.setattr(
         frequency_decks,
         "iter_wordlist",
-        _temporary_korean_frequency_words,
+        _forbidden_korean_frequency_words,
     )
+    lexicon_dir = _write_reviewed_lexicon(tmp_path)
+    morphology = KiwiKoreanMorphologyService()
+    frequency_entry, source_review_sha256 = _synthetic_frequency_entry(lexicon_dir, morphology)
     service = build_runtime_service(
         Settings(
             _env_file=None,
             database_url=f"sqlite+pysqlite:///{tmp_path / 'korean-modern-flow.db'}",
-            lexicon_data_dir=_write_reviewed_lexicon(tmp_path),
+            lexicon_data_dir=lexicon_dir,
             audio_storage_dir=tmp_path / "audio",
             audio_provider="azure",
             text_generation_provider="local",
@@ -194,6 +247,10 @@ def _exercise_three_mode_flow(
             tatoeba_enabled=False,
         ),
         audio_adapter=_ForbiddenAudioAdapter(),
+        korean_morphology_service=morphology,
+        korean_final_frequency_entries=(frequency_entry,),
+        korean_source_review_receipt_sha256=source_review_sha256,
+        korean_source_review_aggregate_sha256=source_review_sha256,
     )
     private_highlight_path = _write_private_highlight(tmp_path)
     requests = (
@@ -334,8 +391,12 @@ def _exercise_three_mode_flow(
             if identity.lemma == "공부하다"
         )
         highlight_job = jobs_by_source["kindle-highlights"]
-        private_records = service.highlight_import_repo.list_private_records(
-            highlight_job.id
+        safe_inventory = service.highlight_import_repo.list_korean_safe_inventory(highlight_job.id)
+        private_records = tuple(
+            service.highlight_import_repo.load_private_excerpt_revision(
+                highlight_job.id, row.excerpt_revision_id
+            )
+            for row in safe_inventory.rows
         )
         manifest = service.highlight_import_repo.get_manifest(highlight_job.id)
         public_rows = tuple(
@@ -348,6 +409,7 @@ def _exercise_three_mode_flow(
         public_dump = json.dumps(
             {
                 "manifest": manifest.model_dump(mode="json") if manifest else None,
+                "safe_inventory": safe_inventory.model_dump(mode="json"),
                 "rows": [
                     {
                         "item_key": row.item_key,
@@ -438,8 +500,10 @@ def _exercise_three_mode_flow(
             ),
             private_record_retained=(
                 len(private_records) == 1
+                and private_records[0] is not None
                 and private_records[0].normalized_text == PRIVATE_HIGHLIGHT_TEXT
-                and not hasattr(private_records[0], "source_path")
+                and private_records[0].source_path == private_highlight_path.name
+                and private_records[0].revision_number == 1
             ),
             public_persistence_is_private=public_persistence_is_private,
             generic_fields=tuple(generic_fields),

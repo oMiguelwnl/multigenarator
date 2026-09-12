@@ -46,6 +46,18 @@ ALLOWED_KOREAN_PROVIDER_LOCALE_LITERALS: frozenset[tuple[str, str]] = frozenset(
         ("src/multilang/services/korean_audio.py", 'if not value.startswith("ko-KR-"):'),
         (
             "src/multilang/services/korean_audio.py",
+            'raise ValueError("selected voice must be a ko-KR Azure voice")',
+        ),
+        (
+            "src/multilang/services/korean_audio.py",
+            'if locale != KOREAN_PROVIDER_LOCALE or not voice_id.startswith("ko-KR-"):',
+        ),
+        (
+            "src/multilang/services/korean_audio.py",
+            'if locale != KOREAN_PROVIDER_LOCALE or not short_name.startswith("ko-KR-"):',
+        ),
+        (
+            "src/multilang/services/korean_audio.py",
             'raise ValueError("Korean Azure voice must be a ko-KR voice")',
         ),
         ("src/multilang/services/korean_audio.py", 'raise ValueError("Korean audio requires ko-KR profile")'),

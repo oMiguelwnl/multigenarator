@@ -210,6 +210,16 @@ def test_full_cli_uses_external_temp_work_root_and_writes_outputs(
 ) -> None:
     module = _load_script_module()
     work_roots: list[Path] = []
+    external_parent = tmp_path / "external-work"
+    external_parent.mkdir()
+    temporary_directory = module.tempfile.TemporaryDirectory
+
+    def isolated_temporary_directory(*, prefix: str, dir: str):
+        assert prefix == "phase32-pre-source-suite-"
+        assert dir == "/tmp/opencode"
+        return temporary_directory(prefix=prefix, dir=external_parent)
+
+    monkeypatch.setattr(module.tempfile, "TemporaryDirectory", isolated_temporary_directory)
 
     def fake_run_full(**kwargs: object) -> dict[str, object]:
         work_root = kwargs["work_root"]
@@ -249,7 +259,9 @@ def test_full_cli_uses_external_temp_work_root_and_writes_outputs(
         ]
     ) == 0
 
-    assert work_roots and work_roots[0].as_posix().startswith("/tmp/opencode/phase32-pre-source-suite-")
+    assert work_roots and work_roots[0].parent == external_parent
+    assert work_roots[0].name.startswith("phase32-pre-source-suite-")
+    assert not work_roots[0].exists()
     assert suite_output.is_file()
     assert dependency_output.is_file()
     assert readiness_output.is_file()

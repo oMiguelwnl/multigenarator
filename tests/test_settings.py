@@ -87,6 +87,13 @@ def test_settings_load_local_dotenv_file(tmp_path: Path, monkeypatch) -> None:
         encoding="utf-8",
     )
     monkeypatch.chdir(tmp_path)
+    for name in (
+        "MULTILANG_FORBID_PROVIDERS",
+        "MULTILANG_FORBID_NETWORK",
+        "MULTILANG_DATABASE_URL",
+        "MULTILANG_DEFAULT_RETRY_ATTEMPTS",
+    ):
+        monkeypatch.delenv(name, raising=False)
 
     settings = Settings()
 
