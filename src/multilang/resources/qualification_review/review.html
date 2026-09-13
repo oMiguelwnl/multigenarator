@@ -1,0 +1,32 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta http-equiv="Content-Security-Policy" content="{{CSP}}">
+<title>Multilang · Revisão linguística local</title>
+<style>{{STYLE}}</style>
+</head>
+<body>
+<header><p class="eyebrow">MULTILANG · REVISÃO LOCAL</p><h1>Revisão linguística</h1>
+<p id="summary"></p><p class="notice">Este arquivo guarda propostas e decisões separadamente. Salve o JSON para preservar seu trabalho. As decisões são rascunhos até a importação e verificação pelo operador.</p></header>
+<main>
+<section class="identity" aria-label="Identificação do revisor">
+<label>Identificador do revisor<input id="reviewer" maxlength="128" autocomplete="off"></label>
+<label>Experiência declarada no idioma<textarea id="expertise" maxlength="2000" rows="2"></textarea></label>
+<div class="actions"><button id="download" type="button">Baixar decisões JSON</button><label class="file">Retomar JSON<input type="file" id="resume" accept=".json,application/json"></label></div>
+</section>
+<section class="toolbar" aria-label="Filtros">
+<label>Buscar<input id="search" type="search" placeholder="Palavra, frase ou identificador"></label>
+<label>Tipo<select id="kind"><option value="all">Todos</option><option value="lexical">Verbetes</option><option value="form">Formas</option><option value="case">Casos</option></select></label>
+<label>Estado<select id="status"><option value="all">Todos</option><option value="pending">Sem decisão</option><option value="accepted">Aceitos</option><option value="corrected">Corrigidos</option><option value="rejected">Rejeitados</option><option value="inconclusive">Inconclusivos</option></select></label>
+</section>
+<p id="message" role="status" aria-live="polite"></p>
+<div id="items"></div>
+<nav class="pagination" aria-label="Paginação"><button id="previous" type="button">Anterior</button><span id="page"></span><button id="next" type="button">Próxima</button></nav>
+</main>
+<footer>Sem transmissão de dados. O JSON baixado não contém assinatura ou aprovação de produção. O arquivo original do pacote permanece intacto.</footer>
+<script id="packet" type="application/json">{{PACKET}}</script>
+<script>{{SCRIPT}}</script>
+</body>
+</html>

@@ -25,7 +25,8 @@ from multilang.services.semantic_anki import project_cards
 from multilang.settings import Settings
 
 
-def test_generate_review_pin_and_export_preserve_canonical_versions(tmp_path):
+@pytest.mark.parametrize("source_path", ["dictionary", "qualification"])
+def test_generate_review_pin_and_export_preserve_canonical_versions(tmp_path, source_path):
     settings = Settings(
         _env_file=None,
         roadmap_4_enabled=True,
@@ -82,7 +83,12 @@ def test_generate_review_pin_and_export_preserve_canonical_versions(tmp_path):
                 qualified_profile().model_copy(update={"provider_locales": {"azure": "en-US"}})
             )
             facade = NativeFacade(session, settings, content_service=content, audio_service=audio)
-            imported = facade.import_dataset(import_payload(), "linguist")
+            if source_path == "qualification":
+                from qualification_fixture import import_qualification_fixture
+
+                imported = import_qualification_fixture(facade, tmp_path, settings)
+            else:
+                imported = facade.import_dataset(import_payload(), "linguist")
             dataset_id = imported["dataset_id"]
             identities = repo.dataset_identities(dataset_id)
             cards = project_cards(

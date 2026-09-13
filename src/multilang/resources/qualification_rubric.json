@@ -1,0 +1,46 @@
+{
+  "schema_version": 1,
+  "rubric_id": "qualification-rubric-proposal-1",
+  "status": "draft-for-independent-review",
+  "production_eligible": false,
+  "rating_scale": "Ordinal 0..1 judgments under this declared draft rubric; not statistical probabilities. Blank means not assessed.",
+  "criteria": {
+    "frequency": {
+      "method": "sample-midrank-cdf-1",
+      "evidence": "Source-bound distinct observed forms, declared token denominator and exact population hash. Conditional sample evidence, not general-language frequency."
+    },
+    "irregularity": {
+      "question": "Does the observed form depart from a documented productive paradigm?",
+      "anchors": {"0": "Productive paradigm explains the form", "0.5": "Mixed regular and exceptional formation", "1": "Documented exception requires separate knowledge"},
+      "evidence": "Cite the lemma, paradigm, source and exact form; absence of a paradigm is unknown."
+    },
+    "unpredictability": {
+      "question": "Can a learner derive this form from the lemma and already taught rules?",
+      "anchors": {"0": "Derivable using documented taught rules", "0.5": "Needs an additional productive rule", "1": "Cannot be derived from those rules"},
+      "evidence": "Name the rules and prerequisite knowledge. Check overlap with irregularity before assigning weights."
+    },
+    "ambiguity": {
+      "question": "Would a separate contextual form card resolve a documented confusion?",
+      "anchors": {"0": "No documented distinct confusion in this context", "0.5": "Context resolves a plausible competing analysis", "1": "Documented competing readings require explicit contrast"},
+      "evidence": "Specify the competing analyses/senses and source contexts; do not count one occurrence for all senses."
+    },
+    "unexpected_pronunciation": {
+      "question": "Does pronunciation require knowledge beyond the taught spelling/pronunciation rules?",
+      "anchors": {"0": "Documented taught rules predict the reading", "0.5": "Additional contextual rule is needed", "1": "Documented exceptional reading"},
+      "evidence": "Cite reviewed phonetic or audio evidence and the relevant rule. No evidence means unknown."
+    },
+    "prerequisite": {
+      "question": "How necessary is explicit knowledge of this form for the declared learner path?",
+      "anchors": {"0": "No demonstrated dependency", "0.5": "Supports a named later construction", "1": "Required for a named next construction"},
+      "evidence": "Link the learning dependency; the corpus count alone cannot establish pedagogical necessity."
+    },
+    "learning_difficulty": {
+      "question": "What evidence shows difficulty retaining or interpreting this form for the intended learner group?",
+      "anchors": {"0": "Observed low difficulty in the declared learner evidence", "0.5": "Observed recurring recoverable errors", "1": "Observed persistent errors needing explicit practice"},
+      "evidence": "Cite learner/error evidence or explicitly identify the assessment as expert judgment. Missing evidence is unknown."
+    }
+  },
+  "analysis_confidence": "Explicit reviewer assessment of exact lemma, POS, features and sense mapping; not a probability reported by Stanza, Kiwi or UniDic. Leave blank when unverified.",
+  "include_label": "Independent human decision on whether the specific sense/form deserves its own card; do not derive this label from the candidate scoring rule.",
+  "evaluation": "Freeze this rubric and criteria before evaluation. Use separate source-bound documents/cases and record inconclusive decisions."
+}

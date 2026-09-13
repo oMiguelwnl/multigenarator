@@ -192,7 +192,8 @@ class ImportantFormSelection(NativeContract):
     policy_sha256: Sha256
 
 
-class ImportantFormPolicy(NativeContract):
+class ImportantFormCriteria(NativeContract):
+    """Scoring proposal; production uses ImportantFormPolicy with an approval receipt."""
     policy_id: Identifier
     version: Identifier
     weights: dict[str, UnitDecimal]
@@ -202,7 +203,6 @@ class ImportantFormPolicy(NativeContract):
     score_precision: int = Field(default=8, ge=0, le=18)
     intermediate_precision: int = Field(default=50, ge=28, le=100)
     missing_evidence: Literal["zero", "reject"] = "zero"
-    approval_sha256: Sha256
 
     @model_validator(mode="after")
     def complete_policy(self) -> Self:
@@ -228,23 +228,10 @@ class ImportantFormPolicy(NativeContract):
             context.prec = self.intermediate_precision
             context.rounding = ROUND_HALF_EVEN
             for form in forms:
-                if self.missing_evidence == "reject" and set(self.weights) - set(
-                    form.evidence_values
-                ):
-                    continue
-                score = sum(
-                    (
-                        weight * form.evidence_values.get(reason, Decimal(0))
-                        for reason, weight in sorted(self.weights.items())
-                    ),
-                    Decimal(0),
+                score = self.score_evidence(
+                    form.evidence_values, form.attestation, form.analysis.confidence
                 )
-                score = score.quantize(Decimal(1).scaleb(-self.score_precision))
-                if (
-                    score < self.minimum_score
-                    or form.attestation < self.attestation_threshold
-                    or form.analysis.confidence < self.analysis_confidence_threshold
-                ):
+                if score is None:
                     continue
                 selected = ImportantFormSelection(
                     form=form, score=score, policy_sha256=self.policy_sha256
@@ -264,6 +251,34 @@ class ImportantFormPolicy(NativeContract):
                 ),
             )
         )
+
+    def score_evidence(
+        self, values: dict[str, Decimal], attestation: int,
+        analysis_confidence: Decimal | None,
+    ) -> Decimal | None:
+        """Use the same arithmetic in selection and calibration; unknown stays closed."""
+        if analysis_confidence is None:
+            return None
+        if not analysis_confidence.is_finite() or not 0 <= analysis_confidence <= 1:
+            raise ValueError("invalid analysis confidence")
+        if attestation < 0 or any(not v.is_finite() or not 0 <= v <= 1 for v in values.values()):
+            raise ValueError("invalid form evidence")
+        if self.missing_evidence == "reject" and set(self.weights) - set(values):
+            return None
+        with localcontext() as arithmetic:
+            arithmetic.prec = self.intermediate_precision
+            arithmetic.rounding = ROUND_HALF_EVEN
+            score = sum((weight * values.get(reason, Decimal(0))
+                         for reason, weight in sorted(self.weights.items())), Decimal(0))
+            score = score.quantize(Decimal(1).scaleb(-self.score_precision))
+        if (score < self.minimum_score or attestation < self.attestation_threshold
+                or analysis_confidence < self.analysis_confidence_threshold):
+            return None
+        return score
+
+
+class ImportantFormPolicy(ImportantFormCriteria):
+    approval_sha256: Sha256
 
 
 class MultiWordExpression(NativeContract):

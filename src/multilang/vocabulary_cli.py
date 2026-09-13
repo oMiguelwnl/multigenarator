@@ -36,10 +36,13 @@ def _guard(function):
 
 
 def create_vocabulary_app(*, settings: Settings | None = None) -> typer.Typer:
+    from multilang.qualification_cli import create_qualification_app
+
     cli = typer.Typer(
         help="Prepare and evaluate real lexical sources locally.",
         pretty_exceptions_show_locals=False,
     )
+    cli.add_typer(create_qualification_app(settings=settings), name="qualification")
 
     def configuration():
         return settings or Settings()
