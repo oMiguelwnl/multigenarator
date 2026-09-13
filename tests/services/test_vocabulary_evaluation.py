@@ -153,3 +153,61 @@ def test_training_split_cannot_be_reported_as_held_out_and_output_is_immutable(t
             output=tmp_path / "evaluation",
             analyzer=Analyzer(),
         )
+
+
+@pytest.mark.parametrize("language", ["ko", "ja"])
+def test_native_annotation_inventory_is_not_reported_as_ud_accuracy(tmp_path, language):
+    from multilang.services.vocabulary_evaluation import evaluate_corpus
+
+    path, digest = corpus(tmp_path)
+    result = evaluate_corpus(
+        language=language,
+        corpus=path,
+        corpus_sha256=digest,
+        output=tmp_path / "evaluation",
+        analyzer=Analyzer(),
+    )
+    assert result["metrics"]["lemma_accuracy"] is None
+    assert result["metrics"]["pos_accuracy"] is None
+    assert result["metrics"]["annotated_features_accuracy"] is None
+    assert result["metrics"]["exact_span_recall"] == 1
+    assert result["counts"]["lemma_eligible_tokens"] == 4
+    assert result["raw_annotation_metrics"]["lemma_accuracy"] == 1
+    assert result["metric_compatibility"]["lemma_accuracy"]["comparable"] is False
+    assert result["metric_compatibility"]["lemma_accuracy"]["reason"]
+    assert result["false_complete_sentence_count"] is None
+    assert result["qualification"] is False
+
+
+def test_stanza_annotation_comparability_remains_explicit(tmp_path):
+    from multilang.services.vocabulary_evaluation import evaluate_corpus
+
+    path, digest = corpus(tmp_path)
+    result = evaluate_corpus(
+        language="en",
+        corpus=path,
+        corpus_sha256=digest,
+        output=tmp_path / "evaluation",
+        analyzer=Analyzer(wrong=True),
+    )
+    assert result["evaluator_version"] == "3"
+    assert result["metric_compatibility"]["lemma_accuracy"]["comparable"] is True
+    assert result["metrics"]["lemma_accuracy"] == 0.75
+    assert result["false_complete_sentence_count"] == 1
+
+
+def test_evaluation_output_budget_covers_observations_and_publishes_nothing_on_failure(tmp_path):
+    from multilang.services.vocabulary_evaluation import evaluate_corpus
+    from multilang.services.vocabulary_sources import SourceLimits
+
+    path, digest = corpus(tmp_path)
+    with pytest.raises(ValueError, match="output byte limit"):
+        evaluate_corpus(
+            language="en",
+            corpus=path,
+            corpus_sha256=digest,
+            output=tmp_path / "evaluation",
+            analyzer=Analyzer(),
+            limits=SourceLimits(max_output_bytes=100),
+        )
+    assert not (tmp_path / "evaluation").exists()

@@ -308,3 +308,269 @@ def test_real_east_asian_local_adapters(language, sentence, tmp_path):
         assert dict(token.features)["pos1"] == "動詞"
     else:
         assert result.tokens[0].pos == "NOUN"
+
+
+def mwt_document(surface, children):
+    result = doc(("Vou", 0, 3, "ir", "VERB", None), ("mercado", 7, 14, "mercado", "NOUN", None))
+    result.sentences[0].tokens.insert(
+        1,
+        NS(
+            text=surface,
+            start_char=4,
+            end_char=6,
+            words=[
+                NS(text=word, lemma=lemma, upos=pos, feats=None, start_char=start, end_char=end)
+                for word, lemma, pos, start, end in children
+            ],
+        ),
+    )
+    return result
+
+
+def test_exact_vendor_mwt_partition_preserves_source_spans(monkeypatch):
+    output = mwt_document("ao", [("a", "a", "ADP", 4, 5), ("o", "o", "DET", 5, 6)])
+    result = fake_service(monkeypatch, output).analyze("pt", "Vou ao mercado")
+    assert result.status == "complete"
+    assert result.analyzer_version == "contextual-morphology-2"
+    assert [(t.text, t.start, t.end) for t in result.tokens] == [
+        ("Vou", 0, 3),
+        ("a", 4, 5),
+        ("o", 5, 6),
+        ("mercado", 7, 14),
+    ]
+    assert result.blocked_spans == ()
+
+
+@pytest.mark.parametrize(
+    ("surface", "children"),
+    [
+        ("do", [("de", "de", "ADP", 4, 5), ("o", "o", "DET", 5, 6)]),
+        ("ao", [("a", "a", "ADP", None, None), ("o", "o", "DET", None, None)]),
+        ("ao", [("a", "a", "ADP", 4, 5), ("o", "o", "DET", 4, 6)]),
+        ("ao", [("a", "a", "ADP", 4, 5), ("o", "o", "DET", 5, True)]),
+    ],
+)
+def test_unproven_mwt_keeps_parent_evidence_and_surrounding_words(monkeypatch, surface, children):
+    text = f"Vou {surface} mercado"
+    result = fake_service(monkeypatch, mwt_document(surface, children)).analyze("pt", text)
+    assert result.status == "inconclusive"
+    assert [t.text for t in result.tokens] == ["Vou", "mercado"]
+    (blocked,) = result.blocked_spans
+    assert (blocked.text, blocked.start, blocked.end) == (surface, 4, 6)
+    assert blocked.reason == "unaligned_multiword_expansion"
+    assert [c.lemma for c in blocked.constituents] == [c[1] for c in children]
+    assert not hasattr(blocked.constituents[0], "start")
+    assert blocked.sentence_sha256 == result.sentence_sha256
+    matcher = api().ContextualTargetMatcher(analyzer=NS(analyze=lambda *a: result), bindings=())
+    assert not matcher(request().model_copy(update={"language": "pt"}), text).matched
+
+
+def test_unknown_stanza_word_keeps_source_without_inventing_lemma(monkeypatch):
+    result = fake_service(
+        monkeypatch, doc(("went", 0, 4, "go", "VERB", None), ("zzq", 5, 8, None, "X", None))
+    ).analyze("en", "went zzq")
+    assert [t.text for t in result.tokens] == ["went"]
+    (blocked,) = result.blocked_spans
+    assert blocked.text == "zzq"
+    assert blocked.constituents[0].lemma is None
+    assert result.status == "inconclusive"
+
+
+def japanese_token(surface, *, lemma, pos, unknown=False):
+    from collections import namedtuple
+
+    Feature = namedtuple("Feature", "pos1 pos2 lemma pron")
+    return NS(
+        surface=surface,
+        white_space="",
+        is_unk=unknown,
+        feature=Feature(pos, "*", lemma, None),
+    )
+
+
+def japanese_service(monkeypatch, vendor_tokens):
+    module = api()
+    service = module.LocalContextualMorphologyService(model_root=Path("/unused"))
+    status = {"available": True, "backend": "fugashi", "manifest_sha256": "a" * 64}
+    monkeypatch.setattr(module, "model_status", lambda *a: status)
+    fingerprint = module.canonical_sha256({"policy": "contextual-morphology-2", **status})
+    service._pipelines[("ja", fingerprint)] = lambda text: vendor_tokens
+    return service
+
+
+def test_japanese_native_unknown_punctuation_does_not_erase_lexical_evidence(monkeypatch):
+    service = japanese_service(
+        monkeypatch,
+        [
+            japanese_token("学校", lemma="学校", pos="名詞"),
+            japanese_token(",", lemma=None, pos="記号", unknown=True),
+            japanese_token("犬", lemma="犬", pos="名詞"),
+        ],
+    )
+    result = service.analyze("ja", "学校,犬")
+    assert result.status == "complete"
+    assert [(t.text, t.lemma, t.pos) for t in result.tokens] == [
+        ("学校", "学校", "NOUN"),
+        (",", ",", "PUNCT"),
+        ("犬", "犬", "NOUN"),
+    ]
+    assert all(value is not None for token in result.tokens for _, value in token.features)
+
+
+def test_japanese_lexical_unknown_is_a_blocker_even_when_mistagged_symbol(monkeypatch):
+    service = japanese_service(
+        monkeypatch,
+        [
+            japanese_token("学校", lemma="学校", pos="名詞"),
+            japanese_token("xyz", lemma=None, pos="記号", unknown=True),
+            japanese_token("犬", lemma="犬", pos="名詞"),
+        ],
+    )
+    result = service.analyze("ja", "学校xyz犬")
+    assert result.status == "inconclusive"
+    assert [t.text for t in result.tokens] == ["学校", "犬"]
+    assert result.blocked_spans[0].text == "xyz"
+    assert result.blocked_spans[0].constituents[0].lemma is None
+
+
+def test_analysis_rejects_blockers_overlapping_tokens_or_claiming_complete(monkeypatch):
+    result = fake_service(
+        monkeypatch,
+        mwt_document("do", [("de", "de", "ADP", 4, 5), ("o", "o", "DET", 5, 6)]),
+    ).analyze("pt", "Vou do mercado")
+    payload = result.model_dump(mode="json")
+    payload["status"] = "complete"
+    with pytest.raises(ValueError):
+        api().ContextualAnalysis.model_validate(payload)
+    payload["status"] = "inconclusive"
+    payload["blocked_spans"][0].update(text="ou", start=1, end=3)
+    with pytest.raises(ValueError):
+        api().ContextualAnalysis.model_validate(payload)
+
+
+def test_legacy_analysis_payload_without_blockers_still_loads():
+    module = api()
+    payload = {
+        "language": "en",
+        "status": "unavailable",
+        "sentence_sha256": "a" * 64,
+        "model_fingerprint": "b" * 64,
+        "reason": "missing",
+        "analyzer_version": "contextual-morphology-1",
+    }
+    assert module.ContextualAnalysis.model_validate(payload).blocked_spans == ()
+
+
+def test_english_contraction_accepts_only_observed_vendor_partition(monkeypatch):
+    output = doc(("I", 0, 1, "I", "PRON", None), ("go", 8, 10, "go", "VERB", None))
+    output.sentences[0].tokens.insert(
+        1,
+        NS(
+            text="don't",
+            start_char=2,
+            end_char=7,
+            words=[
+                NS(text="do", lemma="do", upos="AUX", feats=None, start_char=2, end_char=4),
+                NS(text="n't", lemma="not", upos="PART", feats=None, start_char=4, end_char=7),
+            ],
+        ),
+    )
+    result = fake_service(monkeypatch, output).analyze("en", "I don't go")
+    assert result.status == "complete"
+    assert [(t.text, t.lemma, t.start, t.end) for t in result.tokens[1:3]] == [
+        ("do", "do", 2, 4),
+        ("n't", "not", 4, 7),
+    ]
+
+
+def test_missing_vendor_span_retains_known_tokens_and_exact_unanalyzed_source(monkeypatch):
+    result = fake_service(monkeypatch, doc(("went", 2, 6, "go", "VERB", None))).analyze(
+        "en", "I went home"
+    )
+    assert result.status == "inconclusive"
+    assert [t.text for t in result.tokens] == ["went"]
+    assert [(b.text, b.start, b.end, b.reason) for b in result.blocked_spans] == [
+        ("I", 0, 1, "missing_vendor_span"),
+        ("home", 7, 11, "missing_vendor_span"),
+    ]
+    assert all(not b.constituents for b in result.blocked_spans)
+
+
+def test_korean_compound_keeps_source_morphemes_and_other_lexical_groups(monkeypatch):
+    from multilang.domain.korean import KoreanMorphemeEvidence
+
+    def morpheme(form, lemma, pos):
+        return KoreanMorphemeEvidence(form=form, lemma=lemma, pos=pos, raw_pos=pos, oov=False)
+
+    words = (
+        NS(surface_form="학교", morphemes=(morpheme("학교", "학교", "NNG"),)),
+        NS(
+            surface_form="공부한다",
+            morphemes=(
+                morpheme("공부", "공부", "NNG"),
+                morpheme("하", "하다", "XSV"),
+                morpheme("ᆫ다", "ᆫ다", "EF"),
+            ),
+        ),
+    )
+    module = api()
+    status = {"available": True, "backend": "kiwi", "manifest_sha256": "a" * 64}
+    monkeypatch.setattr(module, "model_status", lambda *a: status)
+    service = module.LocalContextualMorphologyService(model_root=Path("/unused"))
+    fingerprint = module.canonical_sha256({"policy": "contextual-morphology-2", **status})
+    service._pipelines[("ko", fingerprint)] = NS(
+        analyze=lambda text: NS(passing=True, alternatives=(NS(words=words), NS(words=words)))
+    )
+    result = service.analyze("ko", "학교 공부한다")
+    assert result.status == "inconclusive"
+    assert [t.text for t in result.tokens] == ["학교"]
+    (blocker,) = result.blocked_spans
+    assert (blocker.text, blocker.start, blocker.end) == ("공부한다", 3, 7)
+    assert blocker.reason == "compound_lexical_projection"
+    assert [(c.text, c.lemma, c.pos) for c in blocker.constituents] == [
+        ("공부", "공부", "NNG"),
+        ("하", "하다", "XSV"),
+        ("ᆫ다", "ᆫ다", "EF"),
+    ]
+
+
+def test_blocker_constituents_cannot_exhaust_unbounded_memory():
+    module = api()
+    constituent = dict(text="a", lemma="a", pos="DET")
+    with pytest.raises(ValueError):
+        module.ContextualBlockedSpan(
+            text="a",
+            start=0,
+            end=1,
+            sentence_sha256="a" * 64,
+            model_fingerprint="b" * 64,
+            reason="unaligned_multiword_expansion",
+            constituents=[constituent] * 129,
+        )
+
+
+def test_korean_compound_branch_enforces_span_limit_before_next_projection(monkeypatch):
+    module = api()
+    monkeypatch.setattr(module, "_MAX_TOKENS", 1)
+    words = tuple(
+        NS(
+            surface_form=surface,
+            morphemes=(
+                NS(form=surface, lemma=surface, pos="NNG", raw_pos="NNG"),
+                NS(form="하", lemma="하다", pos="XSV", raw_pos="XSV"),
+            ),
+        )
+        for surface in ("가", "나")
+    )
+    pipeline = NS(analyze=lambda text: NS(passing=True, alternatives=(NS(words=words),)))
+    with pytest.raises(ValueError, match="token limit"):
+        module.LocalContextualMorphologyService._kiwi(pipeline, "가 나")
+
+
+def test_korean_constituent_limit_applies_before_blocker_construction():
+    module = api()
+    morphemes = tuple(NS(form="가", lemma="가", pos="NNG", raw_pos="NNG") for _ in range(129))
+    words = (NS(surface_form="가", morphemes=morphemes),)
+    pipeline = NS(analyze=lambda text: NS(passing=True, alternatives=(NS(words=words),)))
+    with pytest.raises(ValueError, match="constituent count"):
+        module.LocalContextualMorphologyService._kiwi(pipeline, "가")

@@ -22,6 +22,8 @@ from multilang.services.language_models import load_stanza_pipeline, model_spec,
 _UPOS = frozenset(
     "ADJ ADP ADV AUX CCONJ DET INTJ NOUN NUM PART PRON PROPN PUNCT SCONJ SYM VERB X".split()
 )
+_ANALYZER_VERSION = "contextual-morphology-2"
+_MAX_TOKENS = 16384
 _JAPANESE_POS = {
     "名詞": "NOUN",
     "代名詞": "PRON",
@@ -105,21 +107,71 @@ class ContextualToken(FrozenContentModel):
         return canonical_sha256(self.model_dump(mode="json"))
 
 
+class ContextualConstituent(FrozenContentModel):
+    """Vendor evidence inside a blocked surface, without invented child spans."""
+
+    text: str = Field(min_length=1, max_length=4096)
+    lemma: str | None = Field(default=None, min_length=1, max_length=4096)
+    pos: str | None = Field(default=None, min_length=1, max_length=128)
+    features: tuple[tuple[str, str], ...] = Field(default=(), max_length=128)
+
+    @model_validator(mode="after")
+    def valid_evidence(self):
+        for value in (self.text, self.lemma, self.pos):
+            if value is not None:
+                _text(value)
+        if len({key for key, _ in self.features}) != len(self.features):
+            raise ValueError("duplicate constituent feature")
+        for key, value in self.features:
+            _text(key)
+            _text(value)
+        return self
+
+
+class ContextualBlockedSpan(FrozenContentModel):
+    text: str = Field(min_length=1, max_length=64000)
+    start: int = Field(ge=0, strict=True)
+    end: int = Field(gt=0, strict=True)
+    sentence_sha256: str = Field(pattern=r"^[0-9a-f]{64}$")
+    model_fingerprint: str = Field(pattern=r"^[0-9a-f]{64}$")
+    reason: Literal[
+        "unaligned_multiword_expansion",
+        "unresolved_morphology",
+        "unknown_lexical_token",
+        "compound_lexical_projection",
+        "missing_vendor_span",
+    ]
+    constituents: tuple[ContextualConstituent, ...] = Field(default=(), max_length=128)
+
+    @model_validator(mode="after")
+    def valid_surface(self):
+        _text(self.text)
+        if self.end <= self.start or self.end - self.start != len(self.text):
+            raise ValueError("invalid blocked surface span")
+        return self
+
+
 class ContextualAnalysis(FrozenContentModel):
     language: str
     status: Literal["complete", "inconclusive", "invalid", "unavailable", "unsupported"]
     sentence_sha256: str = Field(pattern=r"^[0-9a-f]{64}$")
     model_fingerprint: str = Field(pattern=r"^[0-9a-f]{64}$")
-    tokens: tuple[ContextualToken, ...] = ()
+    tokens: tuple[ContextualToken, ...] = Field(default=(), max_length=_MAX_TOKENS)
+    blocked_spans: tuple[ContextualBlockedSpan, ...] = Field(default=(), max_length=_MAX_TOKENS)
     reason: str
     analyzer_version: str = "contextual-morphology-1"
 
     @model_validator(mode="after")
     def valid_tokens(self):
-        if self.status == "complete" and not self.tokens:
-            raise ValueError("complete analysis requires tokens")
+        if self.status == "complete" and (not self.tokens or self.blocked_spans):
+            raise ValueError("complete analysis requires tokens without blockers")
+        if len(self.tokens) + len(self.blocked_spans) > _MAX_TOKENS:
+            raise ValueError("contextual span limit")
         previous = 0
-        for token in self.tokens:
+        for group in (self.tokens, self.blocked_spans):
+            if any(a.start >= b.start for a, b in zip(group, group[1:])):
+                raise ValueError("contextual spans must be ordered")
+        for token in sorted((*self.tokens, *self.blocked_spans), key=lambda row: row.start):
             if (
                 token.start < previous
                 or token.sentence_sha256 != self.sentence_sha256
@@ -145,6 +197,30 @@ def _features(value: object) -> tuple[tuple[str, str], ...]:
     return tuple(sorted(fields))
 
 
+def _exact_span(text, start, end, surface):
+    if (
+        type(start) is not int
+        or type(end) is not int
+        or not isinstance(surface, str)
+        or not surface
+        or start < 0
+        or end <= start
+        or end > len(text)
+        or text[start:end] != surface
+    ):
+        raise ValueError("unproven vendor surface span")
+
+
+def _resolved_row(row):
+    """Validate morphology before retaining a row as usable lexical evidence."""
+    ContextualToken(**row, sentence_sha256="0" * 64, model_fingerprint="0" * 64)
+    return row["pos"] != "X"
+
+
+def _blocked(surface, start, end, reason, constituents=()):
+    return dict(text=surface, start=start, end=end, reason=reason, constituents=constituents)
+
+
 class LocalContextualMorphologyService:
     """Serialize vendor calls, verify local models, and never implicitly download.
 
@@ -168,6 +244,7 @@ class LocalContextualMorphologyService:
                 sentence_sha256=empty,
                 model_fingerprint=empty,
                 reason="invalid_unicode_or_non_nfc",
+                analyzer_version=_ANALYZER_VERSION,
             )
         source = sentence_hash(text)
         try:
@@ -179,6 +256,7 @@ class LocalContextualMorphologyService:
                 sentence_sha256=source,
                 model_fingerprint=empty,
                 reason="unsupported_language",
+                analyzer_version=_ANALYZER_VERSION,
             )
         fingerprint = empty
         with self._lock:
@@ -186,7 +264,7 @@ class LocalContextualMorphologyService:
                 status = model_status(language, self.model_root)
                 if not status.get("available"):
                     raise RuntimeError("model unavailable")
-                fingerprint = canonical_sha256({"policy": "contextual-morphology-1", **status})
+                fingerprint = canonical_sha256({"policy": _ANALYZER_VERSION, **status})
                 key = (language, fingerprint)
                 if key not in self._pipelines:
                     if spec.backend == "stanza":
@@ -209,36 +287,69 @@ class LocalContextualMorphologyService:
                     sentence_sha256=source,
                     model_fingerprint=fingerprint,
                     reason="model_missing_or_drifted",
+                    analyzer_version=_ANALYZER_VERSION,
                 )
             try:
                 if spec.backend == "stanza":
-                    rows, complete = self._stanza(pipeline, text)
+                    rows, blocked, complete = self._stanza(pipeline, text)
                 elif spec.backend == "kiwi":
-                    rows, complete = self._kiwi(pipeline, text)
+                    rows, blocked, complete = self._kiwi(pipeline, text)
                 else:
-                    rows, complete = self._fugashi(pipeline, text)
+                    rows, blocked, complete = self._fugashi(pipeline, text)
                 tokens = tuple(
                     ContextualToken(**row, sentence_sha256=source, model_fingerprint=fingerprint)
                     for row in rows
                 )
+                blockers = [
+                    ContextualBlockedSpan(
+                        **row, sentence_sha256=source, model_fingerprint=fingerprint
+                    )
+                    for row in blocked
+                ]
+
+                def retain_gap(start, end):
+                    # This is the exact unobserved source interval, not an
+                    # inferred token, lemma, sense, or morphological constituent.
+                    while start < end and text[start].isspace():
+                        start += 1
+                    while end > start and text[end - 1].isspace():
+                        end -= 1
+                    if start < end:
+                        blockers.append(
+                            ContextualBlockedSpan(
+                                text=text[start:end],
+                                start=start,
+                                end=end,
+                                reason="missing_vendor_span",
+                                sentence_sha256=source,
+                                model_fingerprint=fingerprint,
+                            )
+                        )
+
                 previous = 0
-                for token in tokens:
-                    if (
-                        token.start < previous
-                        or text[token.start : token.end] != token.text
-                        or text[previous : token.start].strip()
-                    ):
+                for token in sorted((*tokens, *blockers), key=lambda row: row.start):
+                    if token.start < previous or text[token.start : token.end] != token.text:
                         raise ValueError("inexact or missing source span")
+                    retain_gap(previous, token.start)
                     previous = token.end
-                if not tokens or text[previous:].strip() or any(t.pos == "X" for t in tokens):
+                retain_gap(previous, len(text))
+                if not tokens or blockers or any(t.pos == "X" for t in tokens):
                     complete = False
                 return ContextualAnalysis(
                     language=language,
                     status="complete" if complete else "inconclusive",
                     tokens=tokens,
+                    blocked_spans=tuple(sorted(blockers, key=lambda row: row.start)),
                     sentence_sha256=source,
                     model_fingerprint=fingerprint,
-                    reason="morphology_only" if complete else "ambiguous_or_incomplete_analysis",
+                    reason=(
+                        "morphology_only"
+                        if complete
+                        else "blocked_source_spans"
+                        if blockers
+                        else "ambiguous_or_incomplete_analysis"
+                    ),
+                    analyzer_version=_ANALYZER_VERSION,
                 )
             except Exception:
                 return ContextualAnalysis(
@@ -247,38 +358,92 @@ class LocalContextualMorphologyService:
                     sentence_sha256=source,
                     model_fingerprint=fingerprint,
                     reason="malformed_or_unaligned_analysis",
+                    analyzer_version=_ANALYZER_VERSION,
                 )
 
     @staticmethod
     def _stanza(pipeline, text):
         document = pipeline(text)
-        rows = []
+        rows, blocked, total_words = [], [], 0
         for sentence in document.sentences:
             for token in sentence.tokens:
-                # Expanded words often lack exact original surface offsets. Never
-                # guess a contraction's subspans from normalized word spellings.
-                if len(token.words) != 1:
-                    raise ValueError("unaligned multiword expansion")
-                word = token.words[0]
-                if word.text != token.text:
-                    raise ValueError("word/token surface disagreement")
-                rows.append(
-                    dict(
-                        text=token.text,
+                _exact_span(text, token.start_char, token.end_char, token.text)
+                if not 1 <= len(token.words) <= 128:
+                    raise ValueError("invalid constituent count")
+                total_words += len(token.words)
+                if total_words > _MAX_TOKENS:
+                    raise ValueError("token limit")
+                constituents = tuple(
+                    ContextualConstituent(
+                        text=word.text,
                         lemma=word.lemma,
                         pos=word.upos,
                         features=_features(word.feats),
-                        start=token.start_char,
-                        end=token.end_char,
                     )
+                    for word in token.words
                 )
-                if len(rows) > 16384:
-                    raise ValueError("token limit")
-        return rows, True
+                candidate_rows, cursor, aligned = [], token.start_char, True
+                for word in token.words:
+                    start = (
+                        token.start_char
+                        if len(token.words) == 1
+                        else getattr(word, "start_char", None)
+                    )
+                    end = (
+                        token.end_char if len(token.words) == 1 else getattr(word, "end_char", None)
+                    )
+                    try:
+                        _exact_span(text, start, end, word.text)
+                        if start != cursor or end > token.end_char:
+                            raise ValueError("non-partitioning child span")
+                    except ValueError:
+                        aligned = False
+                        break
+                    cursor = end
+                    candidate_rows.append(
+                        dict(
+                            text=word.text,
+                            lemma=word.lemma,
+                            pos=word.upos,
+                            features=_features(word.feats),
+                            start=start,
+                            end=end,
+                        )
+                    )
+                if not aligned or cursor != token.end_char:
+                    blocked.append(
+                        _blocked(
+                            token.text,
+                            token.start_char,
+                            token.end_char,
+                            "unaligned_multiword_expansion"
+                            if len(token.words) > 1
+                            else "unresolved_morphology",
+                            constituents,
+                        )
+                    )
+                    continue
+                try:
+                    resolved = all(_resolved_row(row) for row in candidate_rows)
+                except ValueError:
+                    resolved = False
+                if resolved:
+                    rows.extend(candidate_rows)
+                else:
+                    blocked.append(
+                        _blocked(
+                            token.text,
+                            token.start_char,
+                            token.end_char,
+                            "unresolved_morphology",
+                            constituents,
+                        )
+                    )
+        return rows, blocked, not blocked
 
     @staticmethod
     def _fugashi(pipeline, text):
-        rows, position, complete = [], 0, True
+        rows, blocked, position = [], [], 0
         for token in pipeline(text):
             whitespace = token.white_space
             if not isinstance(whitespace, str) or whitespace.strip():
@@ -286,6 +451,7 @@ class LocalContextualMorphologyService:
             if text[position : position + len(whitespace)] != whitespace:
                 raise ValueError("inexact vendor whitespace")
             position += len(whitespace)
+            _exact_span(text, position, position + len(token.surface), token.surface)
             feature = token.feature
             pos = _JAPANESE_POS.get(feature.pos1, "X")
             if feature.pos1 == "名詞" and feature.pos2 == "固有名詞":
@@ -295,24 +461,48 @@ class LocalContextualMorphologyService:
             features = tuple(
                 (name, getattr(feature, name))
                 for name in feature._fields
-                if getattr(feature, name) not in ("", "*")
+                if getattr(feature, name) not in (None, "", "*")
             )
-            rows.append(
-                dict(
-                    text=token.surface,
-                    lemma=feature.lemma,
-                    pos=pos,
-                    features=features,
-                    start=position,
-                    end=position + len(token.surface),
+            punctuation = feature.pos1 in {"記号", "補助記号"} and all(
+                unicodedata.category(c).startswith("P") for c in token.surface
+            )
+            # A dictionary's missing punctuation lemma does not make a lexical
+            # guess necessary. Lexical unknowns never use this narrow exception.
+            row = dict(
+                text=token.surface,
+                lemma=token.surface if punctuation else feature.lemma,
+                pos="PUNCT" if punctuation else pos,
+                features=features,
+                start=position,
+                end=position + len(token.surface),
+            )
+            try:
+                resolved = _resolved_row(row) and (not token.is_unk or punctuation)
+            except ValueError:
+                resolved = False
+            if resolved:
+                rows.append(row)
+            else:
+                blocked.append(
+                    _blocked(
+                        token.surface,
+                        position,
+                        position + len(token.surface),
+                        "unknown_lexical_token" if token.is_unk else "unresolved_morphology",
+                        (
+                            ContextualConstituent(
+                                text=token.surface,
+                                lemma=feature.lemma,
+                                pos=feature.pos1,
+                                features=features,
+                            ),
+                        ),
+                    )
                 )
-            )
             position += len(token.surface)
-            if token.is_unk:
-                complete = False
-            if len(rows) > 16384:
+            if len(rows) + len(blocked) > _MAX_TOKENS:
                 raise ValueError("token limit")
-        return rows, complete
+        return rows, blocked, not blocked
 
     @staticmethod
     def _kiwi(pipeline, text):
@@ -323,8 +513,14 @@ class LocalContextualMorphologyService:
             raise ValueError("Kiwi unavailable or incomplete")
         alternatives = result.alternatives
         complete = all(item.words == alternatives[0].words for item in alternatives[1:])
-        rows, position = [], 0
+        rows, blocked, position = [], [], 0
         for word in alternatives[0].words:
+            # Check before both branches: compound groups continue early and
+            # must not allocate unbounded constituent/blocker projections.
+            if len(rows) + len(blocked) >= _MAX_TOKENS:
+                raise ValueError("token limit")
+            if not 1 <= len(word.morphemes) <= 128:
+                raise ValueError("invalid constituent count")
             # Existing Kiwi projection already validates raw vendor spans. Its
             # exact grouped surface is aligned sequentially; no substring search,
             # suffix splitting, lemma matching or whitespace-derived identity.
@@ -334,29 +530,57 @@ class LocalContextualMorphologyService:
                 raise ValueError("unprojected Kiwi source text")
             lexical = [item for item in word.morphemes if item.pos in KOREAN_LEXICAL_POS_TAGS]
             if len(lexical) != 1:
-                raise ValueError("compound lexical identity requires explicit projection")
-            rows.append(
-                dict(
-                    text=word.surface_form,
-                    lemma=lexical[0].lemma,
-                    pos=_KOREAN_POS.get(lexical[0].pos, "X"),
-                    features=(
-                        (
-                            "Morphemes",
-                            json.dumps(
-                                [m.model_dump(mode="json") for m in word.morphemes],
-                                ensure_ascii=False,
-                                sort_keys=True,
-                                separators=(",", ":"),
-                            ),
+                blocked.append(
+                    _blocked(
+                        word.surface_form,
+                        position,
+                        position + len(word.surface_form),
+                        "compound_lexical_projection",
+                        tuple(
+                            ContextualConstituent(text=m.form, lemma=m.lemma, pos=m.raw_pos)
+                            for m in word.morphemes
+                        ),
+                    )
+                )
+                position += len(word.surface_form)
+                continue
+            row = dict(
+                text=word.surface_form,
+                lemma=lexical[0].lemma,
+                pos=_KOREAN_POS.get(lexical[0].pos, "X"),
+                features=(
+                    (
+                        "Morphemes",
+                        json.dumps(
+                            [m.model_dump(mode="json") for m in word.morphemes],
+                            ensure_ascii=False,
+                            sort_keys=True,
+                            separators=(",", ":"),
                         ),
                     ),
-                    start=position,
-                    end=position + len(word.surface_form),
-                )
+                ),
+                start=position,
+                end=position + len(word.surface_form),
             )
+            if _resolved_row(row):
+                rows.append(row)
+            else:
+                blocked.append(
+                    _blocked(
+                        word.surface_form,
+                        position,
+                        position + len(word.surface_form),
+                        "unresolved_morphology",
+                        tuple(
+                            ContextualConstituent(text=m.form, lemma=m.lemma, pos=m.raw_pos)
+                            for m in word.morphemes
+                        ),
+                    )
+                )
             position += len(word.surface_form)
-        return rows, complete
+            if len(rows) + len(blocked) > _MAX_TOKENS:
+                raise ValueError("token limit")
+        return rows, blocked, complete and not blocked
 
 
 class ReviewedSenseBinding(FrozenContentModel):

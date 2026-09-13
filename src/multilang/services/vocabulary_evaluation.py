@@ -20,6 +20,7 @@ from multilang.services.contextual_morphology import (
     ContextualAnalyzer,
     sentence_hash,
 )
+from multilang.services.language_models import model_spec
 from multilang.services.vocabulary_preparation import source_catalog
 from multilang.services.vocabulary_sources import SourceLimits, read_conllu
 
@@ -35,6 +36,7 @@ def evaluate_corpus(
     max_sentences: int = 200,
     limits: SourceLimits | None = None,
 ) -> dict:
+    limits = limits or SourceLimits()
     catalog = source_catalog(language)
     if split != "test":
         raise ValueError("held-out diagnostics require the declared test split")
@@ -75,6 +77,7 @@ def evaluate_corpus(
     statuses: Counter = Counter()
     counts: Counter = Counter()
     fingerprints = set()
+    output_bytes = 0
     with TemporaryDirectory(prefix=".evaluation-", dir=output.parent) as temporary:
         staging = Path(temporary) / "result"
         staging.mkdir()
@@ -90,7 +93,11 @@ def evaluate_corpus(
                 for token in analysis.tokens:
                     if reference.text[token.start : token.end] != token.text:
                         raise ValueError("analyzer offsets do not match evaluation source")
+                for blocked in analysis.blocked_spans:
+                    if reference.text[blocked.start : blocked.end] != blocked.text:
+                        raise ValueError("analyzer blocker does not match evaluation source")
                 statuses[analysis.status] += 1
+                counts["blocked_source_spans"] += len(analysis.blocked_spans)
                 fingerprints.add(analysis.model_fingerprint)
                 predicted = {(token.start, token.end): token for token in analysis.tokens}
                 gold = {
@@ -137,7 +144,7 @@ def evaluate_corpus(
                         sentence_errors += 1
                 if analysis.status == "complete" and sentence_errors:
                     counts["false_complete_sentences"] += 1
-                observations.write(
+                payload = (
                     json.dumps(
                         {
                             "reference": reference.model_dump(mode="json"),
@@ -150,20 +157,55 @@ def evaluate_corpus(
                     )
                     + "\n"
                 )
+                output_bytes += len(payload.encode("utf-8"))
+                if output_bytes > limits.max_output_bytes:
+                    raise ValueError("evaluation output byte limit exceeded")
+                observations.write(payload)
 
         def ratio(numerator: str, denominator: str):
             return counts[numerator] / counts[denominator] if counts[denominator] else None
 
-        metrics = {
+        raw_metrics = {
             "exact_span_precision": ratio("exact_span_matches", "predicted_tokens"),
             "exact_span_recall": ratio("exact_span_matches", "aligned_gold_tokens"),
             "lemma_accuracy": ratio("lemma_correct", "lemma_eligible_tokens"),
             "pos_accuracy": ratio("pos_correct", "pos_eligible_tokens"),
             "annotated_features_accuracy": ratio("features_correct", "features_eligible_tokens"),
         }
+        backend = model_spec(language).backend
+        native_annotations = backend in {"kiwi", "fugashi"}
+        reasons = {
+            "kiwi": {
+                "lemma_accuracy": "ud_korean_morpheme_sequence_is_not_kiwi_citation_lemma",
+                "pos_accuracy": "ud_eojeol_pos_is_not_projected_kiwi_lexical_pos",
+                "annotated_features_accuracy": "ud_features_are_not_sejong_morpheme_features",
+            },
+            "fugashi": {
+                "lemma_accuracy": "ud_and_unidic_lemma_inventory_not_qualified_equivalent",
+                "pos_accuracy": "unidic_lexicon_pos_needs_contextual_ud_conversion",
+                "annotated_features_accuracy": "ud_features_are_not_unidic_native_features",
+            },
+        }
+        compatibility = {
+            name: {
+                "comparable": not (native_annotations and name in reasons[backend]),
+                "reason": (
+                    reasons[backend][name]
+                    if native_annotations and name in reasons[backend]
+                    else "exact_source_surface_spans"
+                    if name.startswith("exact_span")
+                    else "stanza_ud_annotation_inventory"
+                ),
+            }
+            for name in raw_metrics
+        }
+        metrics = {
+            name: value if compatibility[name]["comparable"] else None
+            for name, value in raw_metrics.items()
+        }
         result = {
             "schema_version": 1,
-            "evaluator_version": "2",
+            "evaluator_version": "3",
             "language": language,
             "corpus_sha256": corpus_sha256,
             "corpus_split": split,
@@ -175,7 +217,13 @@ def evaluate_corpus(
             "analysis_statuses": dict(statuses),
             "counts": dict(counts),
             "metrics": metrics,
-            "false_complete_sentence_count": counts["false_complete_sentences"],
+            "raw_annotation_metrics": raw_metrics,
+            "metric_compatibility": compatibility,
+            "annotation_backend": backend,
+            "false_complete_sentence_count": (
+                None if native_annotations else counts["false_complete_sentences"]
+            ),
+            "raw_annotation_disagreement_sentence_count": counts["false_complete_sentences"],
             "target_false_accept_rate": None,
             "qualification": False,
             "independent_review": None,
@@ -191,9 +239,10 @@ def evaluate_corpus(
         with (staging / "observations.jsonl").open("rb") as handle:
             result["observations_sha256"] = hashlib.file_digest(handle, "sha256").hexdigest()
         result["evaluation_sha256"] = canonical_sha256(result)
-        (staging / "manifest.json").write_text(
-            json.dumps(result, ensure_ascii=False, indent=2) + "\n"
-        )
+        manifest_payload = json.dumps(result, ensure_ascii=False, indent=2) + "\n"
+        if output_bytes + len(manifest_payload.encode("utf-8")) > limits.max_output_bytes:
+            raise ValueError("evaluation output byte limit exceeded")
+        (staging / "manifest.json").write_text(manifest_payload, encoding="utf-8")
         if output.exists():
             raise ValueError("evaluation output created concurrently")
         os.rename(staging, output)
