@@ -4,6 +4,10 @@ Os nomes e a ordem dos fields Anki são preservados. A entrada linguística é u
 registro interno que distingue idioma, lema, classe gramatical, sentido e formas
 observadas. Ela não acrescenta campos ao cartão.
 
+O [fluxo de qualificação](linguistic-qualification.md) acrescenta medição de
+frequência/dispersão, revisão em HTML local, calibração com decisões autenticadas
+e pilotos por língua. O formulário permite salvar decisões e retomá-las depois.
+
 | Cartão ilustrativo | Palavra exibida | Informação interna |
 |---|---|---|
 | Verbo na forma de referência | `go` | Lema `go`, verbo, sentido de deslocamento |
@@ -118,8 +122,10 @@ uv run --no-sync multilang native vocabulary compile-review \
 
 Os nomes em maiúsculas são argumentos a substituir pelos caminhos, identificadores
 e SHA-256 obtidos nos arquivos. `profile.json` é um `LanguageProfile` com fonte,
-normalização e versões explícitas; use `contextual-morphology` versão `1` para o
-adaptador contextual instalado. Não copie evidências sintéticas dos testes.
+normalização e versões explícitas. O comportamento contextual atual é
+`contextual-morphology-2`; use a versão e o fingerprint exatos retornados pela
+análise. Bindings antigos não autenticam automaticamente uma análise nova.
+Não copie evidências sintéticas dos testes.
 
 Receipts são assinados pelo operador, com `SignedEvidence.sign` e a chave
 `MULTILANG_NATIVE_EVIDENCE_SIGNING_KEY`, depois da revisão. A ordem é: bindings

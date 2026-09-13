@@ -57,6 +57,7 @@ Anki. O relatório de implementação registra os resultados efetivamente obtido
 ## Documentação
 
 - [Preparação do vocabulário, formas e revisão linguística](docs/vocabulary-preparation.md)
+- [Revisão local, importância e calibração](docs/linguistic-qualification.md)
 - [Fontes/modelos reais e resultados por língua](docs/multilingual-readiness.md)
 - [Relatório de implementação e pendências](ROADMAP_4_NATIVE_IMPLEMENTATION.md)
 - [Arquitetura](docs/architecture.md), [domínio](docs/domain-model.md) e [banco](docs/database.md)

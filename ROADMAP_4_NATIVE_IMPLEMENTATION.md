@@ -11,6 +11,15 @@ de sentidos e formas revisados e rascunhos de conteúdo retomáveis. O ensaio em
 PostgreSQL 17.11 foi executado e passou; a seção histórica abaixo descreve a
 validação da entrega inicial até `6149619`.
 
+Complemento de 2026-09-13: [qualificação, revisão e calibração](docs/linguistic-qualification.md)
+e [plano passo a passo](docs/superpowers/plans/2026-09-13-linguistic-qualification.md).
+Acrescenta medição de ocorrências/documentos, critérios propostos separados da
+política aprovada, revisão local retomável, autenticação das decisões, calibração
+com avaliação separada e preparação de pilotos reais por idioma. A integração
+reutiliza o importador, a geração, o áudio e a exportação nativos; os campos Anki
+continuam iguais. Os [resultados e limites desta etapa](docs/linguistic-qualification-results.md)
+são registrados separadamente dos testes e aprovações históricos abaixo.
+
 Esta entrega implementa mecanismos nativos dentro do Multilang: domínio,
 persistência, serviços, importação, ranking, geração, áudio, Anki, histórico,
 adaptação, API, jobs, migração e infraestrutura de verificação. **Isso não
