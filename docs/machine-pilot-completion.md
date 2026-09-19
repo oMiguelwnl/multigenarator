@@ -52,7 +52,11 @@ O pacote corrigido está em `.multilang/verification/pilot-feedback/export-defin
 
 Para a nova leitura de palavras, o plano usa SSML `prosody` com `rate="-15%"` e `volume="+20%"`, sem alterar pitch. Esse controle é suportado pelo [SSML do Azure](https://learn.microsoft.com/en-us/azure/ai-services/speech-service/speech-synthesis-markup-voice#adjust-prosody). A assinatura de cada palavra muda para evitar reaproveitamento do áudio antigo; as assinaturas das frases permanecem iguais. O adaptador foi corrigido para preservar a prosódia do SSML completo até o SDK, validando voz, locale e marcação permitida.
 
-Essa nova síntese ainda não foi executada. O preflight em `.multilang/verification/pilot-feedback/word-audio-preflight.json` contém dez chamadas, 46 caracteres de texto, sem repetição automática, e reutilização dos dez áudios de frases. O orçamento anterior foi consumido; a execução exige nova autorização para esse lote. A contagem de texto não é uma apuração dos caracteres faturáveis nem do preço da conta. A duração e a nitidez percebidas devem ser conferidas na nova gravação.
+Após autorização específica do usuário, a nova síntese concluiu **dez chamadas e 46 caracteres de texto, sem repetição automática**. Os dez áudios de frases foram reutilizados. O preflight original, a autorização e o registro das tentativas permanecem em `.multilang/verification/pilot-feedback/`. A contagem de texto não é uma apuração dos caracteres faturáveis nem do preço da conta.
+
+O pacote final está em `.multilang/verification/pilot-feedback/export-final/pilot.apkg`, com SHA-256 `594980b9b000384c3507df7f1bf5ad37993749ad9259fbe6a1be71560def14f1`. A conferência confirmou dez cards, nove campos, vinte mídias válidas, os mesmos GUIDs, classe gramatical nas dez definições, dez novos áudios de palavras e os áudios originais das frases.
+
+A comparação local dos áudios decodificados mediu aumento de duração em todas as palavras: **15,8% a 18,3%, média de 17,3%**. O RMS aumentou de 1,48 a 1,73 dB, sem clipping digital detectado. A extensão da atividade sonora também aumentou nos três limiares relativos examinados; o aumento não ficou restrito ao silêncio. Esses resultados demonstram mudança de duração e amplitude, sem certificar a nitidez percebida. Métodos e resultados estão em `audio-comparison/comparison.json` dentro do diretório da revisão.
 
 A regressão desta correção passou em **66 casos distintos** no checkout isolado, incluindo a borda do SDK Azure, a exportação APKG e a CLI do piloto. Ruff e formatação também passaram.
 
