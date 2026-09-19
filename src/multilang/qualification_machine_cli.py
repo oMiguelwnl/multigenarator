@@ -329,4 +329,7 @@ def create_machine_qualification_app(*, settings=None):
             }
         )
 
+    from multilang.qualification_followup_cli import register_followup_commands
+
+    register_followup_commands(cli)
     return cli

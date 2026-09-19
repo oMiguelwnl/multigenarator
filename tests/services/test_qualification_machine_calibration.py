@@ -183,9 +183,8 @@ def test_machine_ratings_do_not_reuse_unreviewed_item_ratings():
             for index in range(4)
         }
     )
-    result = _calibrate(qualification, candidates=[_criteria(weights={"irregularity": "1"})])
-    assert result.metrics.selected_item_ids == ()
-    assert result.metrics.false_negative == 2
+    with pytest.raises(ValueError, match="positive and negative"):
+        _calibrate(qualification, candidates=[_criteria(weights={"irregularity": "1"})])
     qualification = _qualification(
         decision_changes={
             index: {"ratings": {"irregularity": "1" if index < 2 else "0"}} for index in range(4)
@@ -193,6 +192,148 @@ def test_machine_ratings_do_not_reuse_unreviewed_item_ratings():
     )
     result = _calibrate(qualification, candidates=[_criteria(weights={"irregularity": "1"})])
     assert result.metrics.true_positive == result.metrics.true_negative == 2
+
+
+@pytest.mark.parametrize("missing_policy", ["zero", "reject"])
+def test_missing_ratings_abstain_instead_of_becoming_false_or_true_negatives(missing_policy):
+    qualification = _qualification(
+        decision_changes={
+            1: {"ratings": {"irregularity": "1"}},
+            3: {"ratings": {"irregularity": "0"}},
+        },
+    )
+    result = _calibrate(
+        qualification,
+        candidates=[_criteria(weights={"irregularity": "1"}, missing_evidence=missing_policy)],
+    )
+    assert result.metrics.evaluated == 2
+    assert result.metrics.true_positive == result.metrics.true_negative == 1
+    assert result.metrics.false_negative == result.metrics.false_positive == 0
+    assert result.metrics.excluded == {
+        "train-0": "missing_required_evidence:irregularity",
+        "train-2": "missing_required_evidence:irregularity",
+    }
+
+
+def test_grid_uses_common_evidence_population_and_evaluation_keeps_that_population():
+    api = _api()
+    qualification = _qualification(
+        decision_changes={
+            1: {"ratings": {"irregularity": "1"}},
+            3: {"ratings": {"irregularity": "0"}},
+        },
+    )
+    frequency = _criteria()
+    # This candidate deliberately loses. Its evidence must still be available
+    # when comparing the winner to fresh evaluation labels.
+    irregularity = _criteria("1", weights={"irregularity": "1"}, attestation_threshold=10)
+    result = _calibrate(qualification, candidates=[frequency, irregularity])
+    assert result.criteria == frequency
+    assert result.required_evidence == ("frequency", "irregularity")
+    assert result.metrics.evaluated == 2
+    assert result.candidate_scores[frequency.policy_sha256] == 0
+    assert result.candidate_scores[irregularity.policy_sha256] == 1
+    evaluation = api.evaluate_machine_importance(
+        result,
+        _qualification(
+            "evaluation",
+            "test",
+            decision_changes={
+                0: {"ratings": {"irregularity": "1"}},
+                2: {"ratings": {"irregularity": "0"}},
+            },
+        ),
+    )
+    assert evaluation.required_evidence == result.required_evidence
+    assert evaluation.metrics.evaluated == 2
+    assert evaluation.metrics.true_positive == evaluation.metrics.true_negative == 1
+    assert set(evaluation.metrics.excluded) == {"test-1", "test-3"}
+
+
+def test_missing_measured_frequency_is_an_abstention_even_with_zero_policy():
+    result = _calibrate(
+        _qualification(item_changes={0: {"proposed_ratings": {}}, 2: {"proposed_ratings": {}}}),
+        candidates=[_criteria(missing_evidence="zero")],
+    )
+    assert result.metrics.evaluated == 2
+    assert result.metrics.true_positive == result.metrics.true_negative == 1
+    assert result.metrics.false_negative == 0
+    assert result.metrics.excluded == {
+        "train-0": "missing_required_evidence:frequency",
+        "train-2": "missing_required_evidence:frequency",
+    }
+
+
+def test_readiness_distinguishes_agreed_labels_from_usable_labels_and_missing_evidence():
+    api = _api()
+    qualification = _qualification(
+        decision_changes={1: {"ratings": {"irregularity": "0"}}},
+        disagree=(2,),
+    )
+    readiness = api.machine_calibration_readiness(
+        qualification, [_criteria(), _criteria(weights={"irregularity": "1"})]
+    )
+    assert readiness.metrics_policy == "common-grid-evidence-v2"
+    assert readiness.required_evidence == ("frequency", "irregularity")
+    assert readiness.total_forms == 4
+    assert readiness.agreed_positive_labels == 2
+    assert readiness.agreed_negative_labels == 1
+    assert readiness.usable_positive_labels == readiness.usable_labels == 1
+    assert readiness.usable_negative_labels == 0
+    assert readiness.abstentions == 3
+    assert readiness.ready_for_calibration is False
+    assert readiness.production_eligible is False
+    assert readiness.missing_evidence == {
+        "train-0": ("irregularity",),
+        "train-3": ("irregularity",),
+    }
+    assert readiness.reason_counts == {
+        "machine_consensus_unavailable": 1,
+        "missing_required_evidence": 2,
+    }
+    assert (
+        api.MachineCalibrationReadiness.model_validate_json(readiness.model_dump_json())
+        == readiness
+    )
+
+
+def test_calibration_semantics_are_explicit_and_legacy_reports_require_recalibration():
+    api = _api()
+    result = _calibrate()
+    assert result.metrics_policy == "common-grid-evidence-v2"
+    payload = result.model_dump(mode="json", exclude_computed_fields=True)
+    del payload["metrics_policy"]
+    del payload["required_evidence"]
+    with pytest.raises(ValueError, match="legacy.*recalibrat"):
+        api.MachineCalibrationResult.model_validate(payload)
+
+
+@pytest.mark.parametrize("split", ["pilot", "evaluation"])
+def test_readiness_does_not_offer_noncalibration_labels_for_policy_selection(split):
+    report = _api().machine_calibration_readiness(_qualification(split, "test"), [_criteria()])
+    assert report.usable_positive_labels == report.usable_negative_labels == 2
+    assert report.ready_for_calibration is False
+    assert report.split == split
+    assert report.blocking_reasons == ("calibration_split_required",)
+
+
+def test_readiness_reports_split_and_missing_label_classes_separately():
+    report = _api().machine_calibration_readiness(
+        _qualification("evaluation", "test", disagree=(0, 1, 2, 3)), [_criteria()]
+    )
+    assert report.ready_for_calibration is False
+    assert report.blocking_reasons == (
+        "calibration_split_required",
+        "usable_positive_label_required",
+        "usable_negative_label_required",
+    )
+
+
+def test_ready_calibration_has_no_blocking_reasons():
+    report = _api().machine_calibration_readiness(_qualification(), [_criteria()])
+    assert report.split == "calibration"
+    assert report.ready_for_calibration is True
+    assert report.blocking_reasons == ()
 
 
 @pytest.mark.parametrize("count", ["1.5", "1000000000001"])
