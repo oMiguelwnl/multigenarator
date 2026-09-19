@@ -48,6 +48,13 @@ def register_revision_commands(cli):
     )
     from multilang.vocabulary_cli import _guard, _print
 
+    @cli.command("prepare-dictionary-evidence")
+    @_guard
+    def prepare_dictionary(input: Path, input_sha256: str, output: Path):
+        from multilang.services.qualification_dictionary_evidence import prepare_dictionary_evidence
+
+        _print(prepare_dictionary_evidence(input, input_sha256, output))
+
     @cli.command("prepare-revision")
     @_guard
     def prepare_revision(

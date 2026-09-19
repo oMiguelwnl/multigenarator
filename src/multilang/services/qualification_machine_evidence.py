@@ -288,11 +288,13 @@ def _lexical_projection(candidate):
     fields = ("glosses", "form_of", "forms", "tags", "examples", "sounds", "source_sense_ids")
     payload = {
         "origin": "verified-prepared-candidate-projection",
-        "transformation": "JSON-escaped-original-fields-v1",
+        "transformation": "JSON-escaped-normalized-candidate-fields-v2",
         "candidate_id": candidate.candidate_id,
         "candidate_sha256": canonical_sha256(candidate.model_dump(mode="json")),
         "source_record_sha256": candidate.source_record_sha256,
         "projection_complete": True,
+        "projection_scope": "normalized-candidate-fields",
+        "original_dictionary_complete": False,
         "original_field_counts": {key: len(getattr(candidate, key)) for key in fields},
         "omitted_counts": {key: 0 for key in fields},
         "candidate": {
@@ -301,7 +303,7 @@ def _lexical_projection(candidate):
             "kind": candidate.kind,
             **{key: [] for key in fields},
         },
-        "note": "Source evidence only. No approved sense, frequency, rule or qualification is inferred.",
+        "note": "Completeness covers normalized candidate fields only, not the original dictionary record or its omitted qualifiers. Source evidence only; no approved sense, frequency, rule or qualification is inferred.",
     }
     # Reserve room for counters/false markers before deciding whether to retain
     # each complete source value. We never truncate a string into an alleged quote.

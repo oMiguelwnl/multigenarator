@@ -303,7 +303,7 @@ def read_wiktextract(
     Candidate hashes identify exact source evidence, not stable semantic senses.
     Explicit review maps them to stable senses before production import.
     """
-    code = _modern_language(language)
+    _modern_language(language)
     lemma_filter = (
         {unicodedata.normalize("NFC", word).casefold() for word in lemmas}
         if lemmas is not None
@@ -312,42 +312,59 @@ def read_wiktextract(
     for line in _verified_lines(path, expected_sha256, limits or SourceLimits()):
         if not line.strip():
             continue
-        record = json.loads(line)
-        if not isinstance(record, dict):
-            raise ValueError("dictionary JSONL records must be objects")
-        if record.get("lang_code") != language:
+        for _, candidate in wiktextract_record_candidates(
+            json.loads(line), language=language, lemma_filter=lemma_filter
+        ):
+            yield candidate
+
+
+def wiktextract_record_candidates(
+    record: dict, *, language: str, lemma_filter: set[str] | None = None
+) -> Iterator[tuple[int, LexicalSenseCandidate]]:
+    """Parse one original record, retaining its exact sense indexes and legacy hashes.
+
+    Callers must verify and bound the source bytes before invoking this parser.
+    The optional lemma filter must already be NFC and casefolded.
+    This is shared by preparation and additive original-dictionary evidence recovery.
+    """
+    code = _modern_language(language)
+    if not isinstance(record, dict):
+        raise ValueError("dictionary JSONL records must be objects")
+    if record.get("lang_code") != language:
+        return
+    word = record.get("word")
+    if not isinstance(word, str) or not word.strip():
+        raise ValueError("dictionary record has no lexical word")
+    word = unicodedata.normalize("NFC", word)
+    if lemma_filter is not None and word.casefold() not in lemma_filter:
+        return
+    if len(word) > 512:
+        raise ValueError("dictionary word exceeds lexical limit")
+    record_hash = canonical_sha256(record)
+    senses = record.get("senses", [])
+    if not isinstance(senses, list) or len(senses) > 4096:
+        raise ValueError("dictionary sense list invalid or exceeds limit")
+    for index, sense in enumerate(senses):
+        if not isinstance(sense, dict):
+            raise ValueError("dictionary sense must be an object")
+        glosses = _strings(sense.get("glosses", ()))
+        if not glosses or any(not isinstance(g, str) or len(g) > 16000 for g in glosses):
             continue
-        word = record.get("word")
-        if not isinstance(word, str) or not word.strip():
-            raise ValueError("dictionary record has no lexical word")
-        word = unicodedata.normalize("NFC", word)
-        if lemma_filter is not None and word.casefold() not in lemma_filter:
-            continue
-        if len(word) > 512:
-            raise ValueError("dictionary word exceeds lexical limit")
-        record_hash = canonical_sha256(record)
-        senses = record.get("senses", [])
-        if not isinstance(senses, list) or len(senses) > 4096:
-            raise ValueError("dictionary sense list invalid or exceeds limit")
-        for index, sense in enumerate(senses):
-            if not isinstance(sense, dict):
-                raise ValueError("dictionary sense must be an object")
-            glosses = _strings(sense.get("glosses", ()))
-            if not glosses or any(not isinstance(g, str) or len(g) > 16000 for g in glosses):
-                continue
-            forms_of = tuple(
-                item["word"]
-                for item in sense.get("form_of", ())
-                if isinstance(item, dict) and isinstance(item.get("word"), str)
-            )
-            examples = tuple(
-                item["text"]
-                for item in sense.get("examples", ())
-                if isinstance(item, dict)
-                and isinstance(item.get("text"), str)
-                and len(item["text"]) <= 64000
-            )
-            yield LexicalSenseCandidate(
+        forms_of = tuple(
+            item["word"]
+            for item in sense.get("form_of", ())
+            if isinstance(item, dict) and isinstance(item.get("word"), str)
+        )
+        examples = tuple(
+            item["text"]
+            for item in sense.get("examples", ())
+            if isinstance(item, dict)
+            and isinstance(item.get("text"), str)
+            and len(item["text"]) <= 64000
+        )
+        yield (
+            index,
+            LexicalSenseCandidate(
                 language=code,
                 lemma=word,
                 pos=_POS.get(record.get("pos"), "X"),
@@ -366,7 +383,8 @@ def read_wiktextract(
                     )
                 ),
                 kind="inflection" if forms_of else "lexeme",
-            )
+            ),
+        )
 
 
 def _strings(value, *, allow_scalar=False) -> tuple[str, ...]:
