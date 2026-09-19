@@ -8,6 +8,8 @@ from typing import ClassVar
 
 from sqlalchemy import create_engine, func, select
 from sqlalchemy.orm import Session
+from support.audio import SILENT_MP3
+from support.text import use_mechanical_text_validation
 from typer.testing import CliRunner
 
 import multilang.runtime as runtime_module
@@ -36,7 +38,7 @@ class FileWritingAudioAdapter(AudioSynthesisAdapter):
         audio_format: str,
     ) -> AudioSynthesisResponse:
         output_path.parent.mkdir(parents=True, exist_ok=True)
-        payload = f"{voice_id}:{locale}:{audio_format}:{ssml_text}".encode("utf-8")
+        payload = SILENT_MP3
         output_path.write_bytes(payload)
         return AudioSynthesisResponse(storage_path=output_path, byte_size=len(payload), duration_ms=800)
 
@@ -63,7 +65,7 @@ class FakeAzureSpeechAdapter(AudioSynthesisAdapter):
     ) -> AudioSynthesisResponse:
         self.calls.append(output_path)
         output_path.parent.mkdir(parents=True, exist_ok=True)
-        payload = b"ID3" + f":{voice_id}:{locale}:{audio_format}:{ssml_text}".encode("utf-8")
+        payload = SILENT_MP3
         output_path.write_bytes(payload)
         return AudioSynthesisResponse(storage_path=output_path, byte_size=len(payload), duration_ms=800)
 
@@ -84,7 +86,8 @@ def write_lookup_index(tmp_path: Path, *terms: str, language_code: str = "en") -
                     "term": term,
                     "display_form": term,
                     "lemma": term,
-                    "definitions": [f"definition for {term}"],
+                    "definitions": [f"a synthetic test item identified as {term}"],
+                    "definition_language": "en",
                     "ipa": f"/{term}/",
                     "source": "manual",
                 }
@@ -104,6 +107,9 @@ def test_generate_command_default_runtime_uses_azure_audio_adapter(
     source = write_word_list(tmp_path, "wash")
     FakeAzureSpeechAdapter.instances.clear()
     monkeypatch.setattr(runtime_module, "AzureSpeechAdapter", FakeAzureSpeechAdapter)
+    # This audio integration exercises the shipped deterministic text fallback;
+    # loading external NLP models belongs to the separate morphology tests.
+    use_mechanical_text_validation(monkeypatch)
     service = build_runtime_service(
         Settings(
             _env_file=None,
@@ -165,7 +171,7 @@ def test_generate_command_default_runtime_uses_azure_audio_adapter(
         assert [asset.storage_path for asset in second_assets] == first_paths
         assert session.scalar(select(func.count()).select_from(AudioAssetModel)) == 1
         for asset in second_assets:
-            assert Path(asset.storage_path).read_bytes().startswith(b"ID3")
+            assert Path(asset.storage_path).read_bytes() == SILENT_MP3
     finally:
         session.close()
 

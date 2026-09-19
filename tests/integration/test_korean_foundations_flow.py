@@ -3,24 +3,23 @@
 from __future__ import annotations
 
 import csv
-from hashlib import sha256
-from importlib import import_module, util
 import json
-from pathlib import Path
 import socket
 import sqlite3
 import stat
 import sys
+import zipfile
+from hashlib import sha256
+from importlib import import_module, util
+from pathlib import Path
 from types import ModuleType, SimpleNamespace
 from typing import Any
-import zipfile
 
 import pytest
 from typer.testing import CliRunner
 
 import multilang.cli as cli_module
 from multilang.cli import create_app
-
 
 runner = CliRunner()
 

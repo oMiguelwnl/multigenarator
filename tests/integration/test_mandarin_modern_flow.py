@@ -3,24 +3,33 @@
 from __future__ import annotations
 
 import csv
-from contextlib import closing
 import json
-from pathlib import Path
 import sqlite3
+import zipfile
+from contextlib import closing
+from pathlib import Path
 from tempfile import TemporaryDirectory
 from typing import ClassVar
-import zipfile
 
 import pytest
 from sqlalchemy import create_engine, func, select
 from sqlalchemy.orm import Session
 from typer.testing import CliRunner
 
-from multilang.cli import create_app
-from multilang.db.models import AudioAssetModel, CardExportModel, GenerationJob, TextQualityRecordModel
-from multilang.domain.exporting import MANDARIN_EXPORT_CARD_FIELD_NAMES, ExportCardIdentity, ExportCardRow
-from multilang.domain.jobs import SupportedLanguage
 import multilang.runtime as runtime_module
+from multilang.cli import create_app
+from multilang.db.models import (
+    AudioAssetModel,
+    CardExportModel,
+    GenerationJob,
+    TextQualityRecordModel,
+)
+from multilang.domain.exporting import (
+    MANDARIN_EXPORT_CARD_FIELD_NAMES,
+    ExportCardIdentity,
+    ExportCardRow,
+)
+from multilang.domain.jobs import SupportedLanguage
 from multilang.runtime import build_runtime_service
 from multilang.services import frequency_decks
 from multilang.services.audio_synthesis import AudioSynthesisAdapter, AudioSynthesisResponse
@@ -36,7 +45,6 @@ from multilang.services.text_generation import (
     SentenceTranslationResult,
 )
 from multilang.settings import Settings
-
 
 runner = CliRunner()
 
@@ -114,12 +122,13 @@ def write_lookup_index(tmp_path: Path, *terms: str) -> Path:
                     "term": term,
                     "display_form": term,
                     "lemma": term,
-                    "definitions": [f"learner meaning for {index + 1}"],
+                    "definitions": [{"中国": "China", "银行": "a bank", "学习": "to study"}[term]],
+                    "definition_language": "en",
                     "part_of_speech": "noun",
                     "ipa": f"/{term}/",
                     "source": "manual",
                 }
-                for index, term in enumerate(terms)
+                for term in terms
             },
             ensure_ascii=False,
         ),

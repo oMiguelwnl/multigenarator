@@ -2,17 +2,17 @@
 
 from __future__ import annotations
 
-from collections.abc import Mapping
-from dataclasses import dataclass
 import base64
 import hashlib
 import os
+import xml.etree.ElementTree as ET
+from collections.abc import Mapping
+from dataclasses import dataclass
 from pathlib import Path
 from typing import Protocol
 from urllib.error import HTTPError, URLError
 from urllib.parse import unquote, urljoin, urlparse
 from urllib.request import Request, urlopen
-import xml.etree.ElementTree as ET
 
 from multilang.domain.webdav import (
     WebDAVConfig,

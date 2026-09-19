@@ -199,8 +199,8 @@
     {
       "id": "KEXP-01",
       "implementation": [
-        "src/multilang/services/export_anki_package.py",
-        "src/multilang/services/export_tabular_bundle.py",
+        "src/multilang/services/exporting/package.py",
+        "src/multilang/services/exporting/tabular.py",
         "src/multilang/services/card_template_loader.py",
         "src/multilang/services/korean_tabular_media.py",
         "src/multilang/services/assemble_export_cards.py"
@@ -215,8 +215,8 @@
     {
       "id": "KEXP-02",
       "implementation": [
-        "src/multilang/services/export_anki_package.py",
-        "src/multilang/services/export_tabular_bundle.py",
+        "src/multilang/services/exporting/package.py",
+        "src/multilang/services/exporting/tabular.py",
         "src/multilang/services/card_template_loader.py"
       ],
       "tests": [
@@ -321,7 +321,7 @@
       "id": "GAUD-01",
       "implementation": [
         "src/multilang/services/korean_audio_runtime.py",
-        "src/multilang/services/audio_integrity.py",
+        "src/multilang/services/audio/integrity.py",
         "src/multilang/services/korean_personal_audio.py"
       ],
       "tests": [
@@ -349,7 +349,7 @@
     {
       "id": "GEXP-01",
       "implementation": [
-        "src/multilang/services/export_anki_package.py",
+        "src/multilang/services/exporting/package.py",
         "src/multilang/services/anki_id_registry.py"
       ],
       "tests": [

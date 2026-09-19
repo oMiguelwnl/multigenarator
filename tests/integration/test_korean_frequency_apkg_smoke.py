@@ -12,12 +12,15 @@ from pathlib import Path
 
 import pytest
 
-from multilang.domain.exporting import FREQUENCY_EXPORT_CARD_FIELD_NAMES, ExportCardIdentity, ExportCardRow
+from multilang.domain.exporting import (
+    FREQUENCY_EXPORT_CARD_FIELD_NAMES,
+    ExportCardIdentity,
+    ExportCardRow,
+)
 from multilang.domain.jobs import SupportedLanguage
 from multilang.runtime import build_korean_frequency_synthetic_export_contract
 from multilang.services.anki_id_registry import AnkiIdKind, registry_id
 from multilang.services.export_anki_package import ExportAnkiPackageError, export_anki_package
-
 
 _BUNDLE_SHA256 = "a" * 64
 _EXPORT_GATE_SHA256 = "b" * 64

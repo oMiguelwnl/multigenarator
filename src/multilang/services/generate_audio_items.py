@@ -3,12 +3,18 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
+from hashlib import sha256
 from typing import Any
 
 from multilang.domain.audio import AudioAssetKind, AudioAssetRecord, AudioSynthesisStatus
 from multilang.domain.exporting import export_field_names_for_language_and_source
 from multilang.domain.jobs import JobStage, SupportedLanguage
-from multilang.services.audio_integrity import word_audio_matches_word
+from multilang.services.audio.integrity import (
+    AudioIntegrityError,
+    assert_sentence_audio_matches_sentence,
+    assert_word_audio_matches_word,
+)
+from multilang.services.audio.media_validation import inspect_local_mp3
 from multilang.services.korean_audio import korean_audio_asset_reusable
 
 
@@ -79,9 +85,7 @@ class GenerateAudioItemsService:
                     asset
                     for asset in assets
                     if self._needs_audio_retry(
-                        job_id,
-                        text_record.item_key,
-                        asset.asset_kind,
+                        asset,
                         fallback_only=fallback_only,
                     )
                 ]
@@ -110,13 +114,13 @@ class GenerateAudioItemsService:
 
         return result
 
-    def _needs_audio_retry(self, job_id: str, item_key: str, asset_kind: AudioAssetKind, *, fallback_only: bool = False) -> bool:
-        existing = self.audio_repository.get_asset(job_id, item_key, asset_kind)
+    def _needs_audio_retry(self, prepared_asset: AudioAssetRecord, *, fallback_only: bool = False) -> bool:
+        existing = self.audio_repository.get_asset(prepared_asset.job_id, prepared_asset.item_key, prepared_asset.asset_kind)
         if existing is None:
             return not fallback_only
         if fallback_only:
             return bool(existing.provenance.fallback_used)
-        return existing.provenance.status is not AudioSynthesisStatus.SYNTHESIZED or existing.provenance.byte_size <= 0
+        return not _can_reuse_asset(prepared_asset, existing)
 
     def _materialize_asset(self, prepared_asset: AudioAssetRecord) -> tuple[AudioAssetRecord, bool]:
         reusable = self.audio_repository.get_reusable_asset(
@@ -151,11 +155,47 @@ def _candidate_source_type(candidate: object) -> str:
 
 
 def _can_reuse_asset(prepared_asset: AudioAssetRecord, reusable: AudioAssetRecord) -> bool:
-    if prepared_asset.provenance.locale == "ko-KR" or reusable.provenance.locale == "ko-KR":
-        return korean_audio_asset_reusable(prepared_asset, reusable)
-    if prepared_asset.asset_kind is not AudioAssetKind.WORD:
-        return True
-    return word_audio_matches_word(reusable, prepared_asset.display_text)
+    requested = prepared_asset.provenance
+    stored = reusable.provenance
+    if prepared_asset.asset_kind is not reusable.asset_kind:
+        return False
+    if stored.status is not AudioSynthesisStatus.SYNTHESIZED:
+        return False
+    if any(getattr(requested, field) != getattr(stored, field) for field in (
+        "provider", "voice_id", "locale", "format", "fallback_used", "text_hash", "ssml_hash",
+    )):
+        return False
+    if prepared_asset.normalized_input.tts_text != reusable.normalized_input.tts_text:
+        return False
+    if prepared_asset.normalized_input.ssml_text != reusable.normalized_input.ssml_text:
+        return False
+    for asset in (prepared_asset, reusable):
+        normalized = asset.normalized_input
+        for value, input_hash, provenance_hash in (
+            (normalized.tts_text, normalized.text_hash, asset.provenance.text_hash),
+            (normalized.ssml_text or normalized.tts_text, normalized.ssml_hash, asset.provenance.ssml_hash),
+        ):
+            if input_hash != sha256(value.encode("utf-8")).hexdigest() or provenance_hash != input_hash:
+                return False
+    if requested.locale == "ko-KR" or stored.locale == "ko-KR":
+        if not korean_audio_asset_reusable(prepared_asset, reusable):
+            return False
+    else:
+        try:
+            if prepared_asset.asset_kind is AudioAssetKind.WORD:
+                assert_word_audio_matches_word(reusable, prepared_asset.display_text)
+            else:
+                assert_sentence_audio_matches_sentence(reusable, prepared_asset.display_text)
+        except AudioIntegrityError:
+            return False
+    media = inspect_local_mp3(
+        stored.storage_path, expected_byte_size=stored.byte_size,
+        artifact_hash_prefix=b"artifact:"
+        if stored.locale == "ko-KR" and stored.audio_review_status is not None else b"",
+    )
+    return media is not None and (
+        stored.artifact_sha256 is None or media.artifact_sha256 == stored.artifact_sha256
+    )
 
 
 __all__ = ["GenerateAudioItemsResult", "GenerateAudioItemsService"]

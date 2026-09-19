@@ -12,7 +12,6 @@ from multilang.domain.personal_sources import (
     PersonalSourceRow,
 )
 
-
 HASH_A = "a" * 64
 HASH_B = "b" * 64
 

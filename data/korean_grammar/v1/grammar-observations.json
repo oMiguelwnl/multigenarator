@@ -1,0 +1,1263 @@
+{
+  "schema_version": "korean-grammar-observations-v1",
+  "course_sha256": "15ad5106629768a4aba9711b9e1f7199f231bc17a643c3dc0573d4e96be0e7d9",
+  "observation_scope": "example-and-spoken-sample",
+  "entries": [
+    {
+      "entry_id": "g0.copula",
+      "observed_grammar_ids": [
+        "g0.copula",
+        "g0.argument-omission",
+        "g0.predicate-final"
+      ],
+      "rationale_pt": "학생 é nome; 이에요 identifica nominalmente um referente não expresso. A classificação do nome é orientação, não outro morfema pronunciado. A oração tem predicado em posição final. A amostra falada fornecida tem o mesmo texto do exemplo; esta anotação cobre ambos os textos, sem avaliar áudio. G0 foi autorizado como introdução guiada fora da sequência estrita; o alvo metalinguístico depende desse enquadramento e não é uma alegação de um único desconhecido nesta frase.",
+      "unresolved": []
+    },
+    {
+      "entry_id": "g0.dictionary-form",
+      "observed_grammar_ids": [
+        "g0.dictionary-form",
+        "g0.copula",
+        "g0.argument-omission",
+        "g0.predicate-final"
+      ],
+      "rationale_pt": "먹다 é mencionado entre aspas como forma de consulta; 예요 identifica essa citação. 다 citado não funciona como uma declaração em estilo plano. A oração tem predicado em posição final. A amostra falada fornecida tem o mesmo texto do exemplo; esta anotação cobre ambos os textos, sem avaliar áudio. G0 foi autorizado como introdução guiada fora da sequência estrita; o alvo metalinguístico depende desse enquadramento e não é uma alegação de um único desconhecido nesta frase.",
+      "unresolved": []
+    },
+    {
+      "entry_id": "g0.stem",
+      "observed_grammar_ids": [
+        "g0.stem",
+        "g0.copula",
+        "g0.argument-omission",
+        "g0.predicate-final"
+      ],
+      "rationale_pt": "먹 é mencionado como radical e recebe 이에요 por funcionar como material citado. A frase não conjuga 먹 como predicado e não pronuncia 다. A oração tem predicado em posição final. A amostra falada fornecida tem o mesmo texto do exemplo; esta anotação cobre ambos os textos, sem avaliar áudio. G0 foi autorizado como introdução guiada fora da sequência estrita; o alvo metalinguístico depende desse enquadramento e não é uma alegação de um único desconhecido nesta frase.",
+      "unresolved": []
+    },
+    {
+      "entry_id": "g0.noun",
+      "observed_grammar_ids": [
+        "g0.noun",
+        "g0.copula",
+        "g0.argument-omission",
+        "g0.predicate-final"
+      ],
+      "rationale_pt": "학생 realiza o nome usado com 이에요; o rótulo substantivo é o foco metalinguístico, não uma terminação adicional. O referente identificado não é expresso. A oração tem predicado em posição final. A amostra falada fornecida tem o mesmo texto do exemplo; esta anotação cobre ambos os textos, sem avaliar áudio. G0 foi autorizado como introdução guiada fora da sequência estrita; o alvo metalinguístico depende desse enquadramento e não é uma alegação de um único desconhecido nesta frase.",
+      "unresolved": []
+    },
+    {
+      "entry_id": "g0.verb",
+      "observed_grammar_ids": [
+        "g0.verb",
+        "g0.dictionary-form",
+        "g0.copula",
+        "g0.argument-omission",
+        "g0.predicate-final"
+      ],
+      "rationale_pt": "먹다 é a forma de dicionário do verbo mencionada como citação; 예요 é a cópula externa. O exemplo identifica a palavra e não descreve uma ação de comer. A oração tem predicado em posição final. A amostra falada fornecida tem o mesmo texto do exemplo; esta anotação cobre ambos os textos, sem avaliar áudio. G0 foi autorizado como introdução guiada fora da sequência estrita; o alvo metalinguístico depende desse enquadramento e não é uma alegação de um único desconhecido nesta frase.",
+      "unresolved": []
+    },
+    {
+      "entry_id": "g0.adjective",
+      "observed_grammar_ids": [
+        "g0.adjective",
+        "g0.dictionary-form",
+        "g0.copula",
+        "g0.argument-omission",
+        "g0.predicate-final"
+      ],
+      "rationale_pt": "좋다 é citado como adjetivo em forma de dicionário; 예요 pertence à identificação externa da citação. Não há 좋다 conjugado com cópula nem afirmação em estilo plano. A oração tem predicado em posição final. A amostra falada fornecida tem o mesmo texto do exemplo; esta anotação cobre ambos os textos, sem avaliar áudio. G0 foi autorizado como introdução guiada fora da sequência estrita; o alvo metalinguístico depende desse enquadramento e não é uma alegação de um único desconhecido nesta frase.",
+      "unresolved": []
+    },
+    {
+      "entry_id": "g0.predicate-final",
+      "observed_grammar_ids": [
+        "g0.predicate-final",
+        "g0.copula"
+      ],
+      "rationale_pt": "학교예요 é o predicado nominal final; 여기 apresenta a localização identificada. Não há 는, 가 ou 에 pronunciado em 여기. A oração tem predicado em posição final. A amostra falada fornecida tem o mesmo texto do exemplo; esta anotação cobre ambos os textos, sem avaliar áudio. G0 foi autorizado como introdução guiada fora da sequência estrita; o alvo metalinguístico depende desse enquadramento e não é uma alegação de um único desconhecido nesta frase.",
+      "unresolved": []
+    },
+    {
+      "entry_id": "g0.argument-omission",
+      "observed_grammar_ids": [
+        "g0.argument-omission",
+        "g0.copula",
+        "g0.predicate-final"
+      ],
+      "rationale_pt": "학생이에요 identifica nominalmente alguém recuperável no contexto; o sujeito não aparece. O conceito de omissão é orientação contextual, não morfema audível. A oração tem predicado em posição final. A amostra falada fornecida tem o mesmo texto do exemplo; esta anotação cobre ambos os textos, sem avaliar áudio. G0 foi autorizado como introdução guiada fora da sequência estrita; o alvo metalinguístico depende desse enquadramento e não é uma alegação de um único desconhecido nesta frase.",
+      "unresolved": []
+    },
+    {
+      "entry_id": "g1.topic",
+      "observed_grammar_ids": [
+        "g1.topic",
+        "g0.copula",
+        "g0.predicate-final"
+      ],
+      "rationale_pt": "저는 contém 는 de tópico; 학생이에요 é identificação nominal polida. 저 é lexicalmente um pronome modesto, sem partícula 이/가. A oração tem predicado em posição final. A amostra falada fornecida tem o mesmo texto do exemplo; esta anotação cobre ambos os textos, sem avaliar áudio.",
+      "unresolved": []
+    },
+    {
+      "entry_id": "g1.subject",
+      "observed_grammar_ids": [
+        "g1.subject",
+        "g0.copula",
+        "g0.predicate-final"
+      ],
+      "rationale_pt": "친구가 contém 가 de sujeito; 학생이에요 identifica esse sujeito. O 이 da cópula não é uma segunda partícula de sujeito. A oração tem predicado em posição final. A amostra falada fornecida tem o mesmo texto do exemplo; esta anotação cobre ambos os textos, sem avaliar áudio.",
+      "unresolved": []
+    },
+    {
+      "entry_id": "g1.present",
+      "observed_grammar_ids": [
+        "g1.present",
+        "g1.subject",
+        "g0.predicate-final"
+      ],
+      "rationale_pt": "친구가 marca sujeito; 자요 é presente/habitual verbal polido com contração de 자다. Não ocorre cópula. A oração tem predicado em posição final. A amostra falada fornecida tem o mesmo texto do exemplo; esta anotação cobre ambos os textos, sem avaliar áudio.",
+      "unresolved": []
+    },
+    {
+      "entry_id": "g1.object",
+      "observed_grammar_ids": [
+        "g1.object",
+        "g1.subject",
+        "g1.present",
+        "g0.predicate-final"
+      ],
+      "rationale_pt": "친구가 marca sujeito, 밥을 marca objeto e 먹어요 realiza o presente verbal polido. A oração tem predicado em posição final. A amostra falada fornecida tem o mesmo texto do exemplo; esta anotação cobre ambos os textos, sem avaliar áudio.",
+      "unresolved": []
+    },
+    {
+      "entry_id": "g1.hada-present",
+      "observed_grammar_ids": [
+        "g1.hada-present",
+        "g1.topic",
+        "g0.predicate-final"
+      ],
+      "rationale_pt": "저는 é tópico; 공부해요 realiza especificamente 하다 → 해요 no verbo composto 공부하다. Essa forma específica cobre a flexão presente, sem duplicar outro alvo. A oração tem predicado em posição final. A amostra falada fornecida tem o mesmo texto do exemplo; esta anotação cobre ambos os textos, sem avaliar áudio.",
+      "unresolved": []
+    },
+    {
+      "entry_id": "g1.adjective-present",
+      "observed_grammar_ids": [
+        "g1.adjective-present",
+        "g1.subject",
+        "g0.predicate-final"
+      ],
+      "rationale_pt": "날씨가 é sujeito; 좋아요 é presente polido de estado, não o verbo transitivo 좋아하다. 오늘 funciona como expressão temporal sem 에. A oração tem predicado em posição final. A amostra falada fornecida tem o mesmo texto do exemplo; esta anotação cobre ambos os textos, sem avaliar áudio.",
+      "unresolved": []
+    },
+    {
+      "entry_id": "g1.present-question",
+      "observed_grammar_ids": [
+        "g1.present-question",
+        "g1.subject",
+        "g0.predicate-final"
+      ],
+      "rationale_pt": "친구가 é sujeito; 자요? funciona como pergunta polida, não como afirmação g1.present. A interrogação escrita não comprova a entonação do áudio. A oração tem predicado em posição final. A amostra falada fornecida tem o mesmo texto do exemplo; esta anotação cobre ambos os textos, sem avaliar áudio.",
+      "unresolved": []
+    },
+    {
+      "entry_id": "g1.u-contraction",
+      "observed_grammar_ids": [
+        "g1.u-contraction",
+        "g1.object",
+        "g1.present",
+        "g0.argument-omission",
+        "g0.predicate-final"
+      ],
+      "rationale_pt": "물을 marca objeto de 주다 como verbo principal dar; 줘요 realiza presente polido e a contração regular de u com eo. O sujeito e o destinatário recuperam-se do contexto, sem serem fixados como eu/você. O alvo é a contração, não o auxiliar benefactivo nem um pedido em 으세요. A oração tem predicado em posição final. A amostra falada fornecida tem o mesmo texto do exemplo; esta anotação cobre ambos os textos, sem avaliar áudio.",
+      "unresolved": []
+    },
+    {
+      "entry_id": "g1.oe-contraction",
+      "observed_grammar_ids": [
+        "g1.oe-contraction",
+        "g1.present",
+        "g0.argument-omission",
+        "g0.predicate-final"
+      ],
+      "rationale_pt": "지금 é o advérbio temporal agora. 돼요 realiza a contração de 되어요 no presente polido com 되다 no sentido lexical de funcionar/dar certo. O contexto fornecido é testar algo que antes não funcionava; o referente é implícito. Não há construção de permissão nem complemento em 이/가 되다. A oração termina no predicado e a amostra falada é idêntica ao exemplo.",
+      "unresolved": []
+    },
+    {
+      "entry_id": "g2.exist",
+      "observed_grammar_ids": [
+        "g2.exist",
+        "g1.subject",
+        "g0.predicate-final"
+      ],
+      "rationale_pt": "책이 é sujeito e 있어요 expressa existência/disponibilidade. Sem possuidor ou local, não anoto posse nem partícula locativa. A oração tem predicado em posição final. A amostra falada fornecida tem o mesmo texto do exemplo; esta anotação cobre ambos os textos, sem avaliar áudio.",
+      "unresolved": []
+    },
+    {
+      "entry_id": "g2.location",
+      "observed_grammar_ids": [
+        "g2.location",
+        "g1.subject",
+        "g2.exist",
+        "g0.predicate-final"
+      ],
+      "rationale_pt": "책이 é sujeito, 집에 contém 에 de lugar estático e 있어요 fornece o predicado existencial/locativo. Não há local de ação 에서. A oração tem predicado em posição final. A amostra falada fornecida tem o mesmo texto do exemplo; esta anotação cobre ambos os textos, sem avaliar áudio.",
+      "unresolved": []
+    },
+    {
+      "entry_id": "g2.destination",
+      "observed_grammar_ids": [
+        "g2.destination",
+        "g1.topic",
+        "g1.present",
+        "g0.predicate-final"
+      ],
+      "rationale_pt": "저는 é tópico; 학교에 marca destino com 가요 no presente polido. 에 não tem função de local estático nesta frase. A oração tem predicado em posição final. A amostra falada fornecida tem o mesmo texto do exemplo; esta anotação cobre ambos os textos, sem avaliar áudio.",
+      "unresolved": []
+    },
+    {
+      "entry_id": "g2.time",
+      "observed_grammar_ids": [
+        "g2.time",
+        "g1.topic",
+        "g1.present",
+        "g0.predicate-final"
+      ],
+      "rationale_pt": "저는 é tópico, 밤에 marca período temporal e 자요 é presente habitual verbal polido. A oração tem predicado em posição final. A amostra falada fornecida tem o mesmo texto do exemplo; esta anotação cobre ambos os textos, sem avaliar áudio.",
+      "unresolved": []
+    },
+    {
+      "entry_id": "g2.action-location",
+      "observed_grammar_ids": [
+        "g2.action-location",
+        "g1.topic",
+        "g1.hada-present",
+        "g0.predicate-final"
+      ],
+      "rationale_pt": "저는 é tópico; 학교에서 marca o local de estudar e 공부해요 reutiliza a conjugação de 하다. Não se observa o 에 de destino. A oração tem predicado em posição final. A amostra falada fornecida tem o mesmo texto do exemplo; esta anotação cobre ambos os textos, sem avaliar áudio.",
+      "unresolved": []
+    },
+    {
+      "entry_id": "g2.absent",
+      "observed_grammar_ids": [
+        "g2.absent",
+        "g1.subject",
+        "g0.predicate-final"
+      ],
+      "rationale_pt": "물이 marca o sujeito e 없어요 expressa ausência. Não há 안 nem afirmação existencial positiva; a ausência inteira é a construção-alvo. A oração tem predicado em posição final. A amostra falada fornecida tem o mesmo texto do exemplo; esta anotação cobre ambos os textos, sem avaliar áudio.",
+      "unresolved": []
+    },
+    {
+      "entry_id": "g2.possession",
+      "observed_grammar_ids": [
+        "g2.possession",
+        "g1.topic",
+        "g1.subject",
+        "g0.predicate-final"
+      ],
+      "rationale_pt": "저는 apresenta o possuidor; 책이 é o bem possuído e 있어요 integra a construção de posse. A leitura não é a existência sem possuidor de g2.exist. A oração tem predicado em posição final. A amostra falada fornecida tem o mesmo texto do exemplo; esta anotação cobre ambos os textos, sem avaliar áudio.",
+      "unresolved": []
+    },
+    {
+      "entry_id": "g2.genitive",
+      "observed_grammar_ids": [
+        "g2.genitive",
+        "g0.copula",
+        "g0.argument-omission",
+        "g0.predicate-final"
+      ],
+      "rationale_pt": "친구의 liga possuidor ao nome 책; 책이에요 é identificação nominal cujo referente externo está omitido. A oração tem predicado em posição final. A amostra falada fornecida tem o mesmo texto do exemplo; esta anotação cobre ambos os textos, sem avaliar áudio.",
+      "unresolved": []
+    },
+    {
+      "entry_id": "g3.also",
+      "observed_grammar_ids": [
+        "g3.also",
+        "g0.copula",
+        "g0.predicate-final"
+      ],
+      "rationale_pt": "저도 contém adição com 도; 학생이에요 é cópula nominal. Não há 는 ou 가 pronunciado após 저, nem um sujeito adicional omitido. A oração tem predicado em posição final. A amostra falada fornecida tem o mesmo texto do exemplo; esta anotação cobre ambos os textos, sem avaliar áudio.",
+      "unresolved": []
+    },
+    {
+      "entry_id": "g3.only",
+      "observed_grammar_ids": [
+        "g3.only",
+        "g1.topic",
+        "g1.present",
+        "g0.predicate-final"
+      ],
+      "rationale_pt": "저는 é tópico; 물만 restringe o objeto e 마셔요 é presente polido com contração regular. 만 ocupa a posição do marcador de objeto: 을/를 não é observado. A oração tem predicado em posição final. A amostra falada fornecida tem o mesmo texto do exemplo; esta anotação cobre ambos os textos, sem avaliar áudio.",
+      "unresolved": []
+    },
+    {
+      "entry_id": "g3.wa-coordination",
+      "observed_grammar_ids": [
+        "g3.wa-coordination",
+        "g1.subject",
+        "g2.exist",
+        "g0.predicate-final"
+      ],
+      "rationale_pt": "책과 물 coordena nomes; 이 marca o grupo coordenado como sujeito de 있어요. 과 não indica acompanhante. A oração tem predicado em posição final. A amostra falada fornecida tem o mesmo texto do exemplo; esta anotação cobre ambos os textos, sem avaliar áudio.",
+      "unresolved": []
+    },
+    {
+      "entry_id": "g3.wa-companion",
+      "observed_grammar_ids": [
+        "g3.wa-companion",
+        "g1.topic",
+        "g1.hada-present",
+        "g0.predicate-final"
+      ],
+      "rationale_pt": "저는 é tópico; 친구와 é acompanhante da atividade 공부해요. Não há coordenação nominal entre 저 e 친구 nem partícula de objeto. A oração tem predicado em posição final. A amostra falada fornecida tem o mesmo texto do exemplo; esta anotação cobre ambos os textos, sem avaliar áudio.",
+      "unresolved": []
+    },
+    {
+      "entry_id": "g3.hago-coordination",
+      "observed_grammar_ids": [
+        "g3.hago-coordination",
+        "g1.subject",
+        "g2.exist",
+        "g0.predicate-final"
+      ],
+      "rationale_pt": "책하고 물 coordena nomes; 이 marca esse grupo como sujeito de 있어요. 하고 é partícula, não 하다 seguido do conector 고. A oração tem predicado em posição final. A amostra falada fornecida tem o mesmo texto do exemplo; esta anotação cobre ambos os textos, sem avaliar áudio.",
+      "unresolved": []
+    },
+    {
+      "entry_id": "g3.hago-companion",
+      "observed_grammar_ids": [
+        "g3.hago-companion",
+        "g1.topic",
+        "g1.hada-present",
+        "g0.predicate-final"
+      ],
+      "rationale_pt": "저는 é tópico; 친구하고 indica companhia e 공부해요 é presente de 공부하다. A ocorrência de 하고 não tem função de coordenação. A oração tem predicado em posição final. A amostra falada fornecida tem o mesmo texto do exemplo; esta anotação cobre ambos os textos, sem avaliar áudio.",
+      "unresolved": []
+    },
+    {
+      "entry_id": "g3.rang-coordination",
+      "observed_grammar_ids": [
+        "g3.rang-coordination",
+        "g1.subject",
+        "g2.exist",
+        "g0.predicate-final"
+      ],
+      "rationale_pt": "책이랑 물 coordena nomes; 이 marca o grupo como sujeito de 있어요. 이랑 é um alomorfe coloquial de coordenação, sem alterar o final polido. A oração tem predicado em posição final. A amostra falada fornecida tem o mesmo texto do exemplo; esta anotação cobre ambos os textos, sem avaliar áudio.",
+      "unresolved": []
+    },
+    {
+      "entry_id": "g3.rang-companion",
+      "observed_grammar_ids": [
+        "g3.rang-companion",
+        "g1.topic",
+        "g1.hada-present",
+        "g0.predicate-final"
+      ],
+      "rationale_pt": "저는 é tópico; 친구랑 indica acompanhante e 공부해요 é presente de 공부하다. 랑 não coordena dois nomes nesta ocorrência. A oração tem predicado em posição final. A amostra falada fornecida tem o mesmo texto do exemplo; esta anotação cobre ambos os textos, sem avaliar áudio.",
+      "unresolved": []
+    },
+    {
+      "entry_id": "g4.ege-recipient",
+      "observed_grammar_ids": [
+        "g4.ege-recipient",
+        "g1.topic",
+        "g1.object",
+        "g1.present",
+        "g0.predicate-final",
+        "g1.u-contraction"
+      ],
+      "rationale_pt": "저는 é tópico, 친구에게 é destinatário e 책을 é objeto de 줘요. 주다 funciona como verbo principal dar; 줘요 é sua forma presente contraída. A oração tem predicado em posição final. A amostra falada fornecida tem o mesmo texto do exemplo; esta anotação cobre ambos os textos, sem avaliar áudio. A contração 주다 → 줘요 reutiliza explicitamente g1.u-contraction, agora anterior ao destinatário.",
+      "unresolved": []
+    },
+    {
+      "entry_id": "g4.hante-recipient",
+      "observed_grammar_ids": [
+        "g4.hante-recipient",
+        "g1.topic",
+        "g1.object",
+        "g1.present",
+        "g0.predicate-final",
+        "g1.u-contraction"
+      ],
+      "rationale_pt": "저는 é tópico, 친구한테 é destinatário e 물을 é objeto de 줘요. O verbo principal 주다 não é auxiliar benefactivo; 에게 não está pronunciado. A oração tem predicado em posição final. A amostra falada fornecida tem o mesmo texto do exemplo; esta anotação cobre ambos os textos, sem avaliar áudio. A contração 주다 → 줘요 reutiliza explicitamente g1.u-contraction, agora anterior ao destinatário.",
+      "unresolved": []
+    },
+    {
+      "entry_id": "g4.ro-direction",
+      "observed_grammar_ids": [
+        "g4.ro-direction",
+        "g1.topic",
+        "g1.present",
+        "g0.predicate-final"
+      ],
+      "rationale_pt": "저는 é tópico; 집으로 marca direção com 가요 no presente. Não se observa 에 de destino nem o uso instrumental de 으로. A oração tem predicado em posição final. A amostra falada fornecida tem o mesmo texto do exemplo; esta anotação cobre ambos os textos, sem avaliar áudio.",
+      "unresolved": []
+    },
+    {
+      "entry_id": "g4.ro-instrument",
+      "observed_grammar_ids": [
+        "g4.ro-instrument",
+        "g1.topic",
+        "g1.object",
+        "g1.present",
+        "g0.predicate-final"
+      ],
+      "rationale_pt": "저는 é tópico, 숟가락으로 marca instrumento, 밥을 é objeto e 먹어요 é presente. 으로 não tem função de direção aqui. A oração tem predicado em posição final. A amostra falada fornecida tem o mesmo texto do exemplo; esta anotação cobre ambos os textos, sem avaliar áudio.",
+      "unresolved": []
+    },
+    {
+      "entry_id": "g4.buteo",
+      "observed_grammar_ids": [
+        "g4.buteo",
+        "g1.topic",
+        "g1.hada-present",
+        "g0.predicate-final"
+      ],
+      "rationale_pt": "저는 é tópico; 오늘부터 marca início temporal da atividade 공부해요. Não há limite final nem 에 temporal pronunciado. A oração tem predicado em posição final. A amostra falada fornecida tem o mesmo texto do exemplo; esta anotação cobre ambos os textos, sem avaliar áudio.",
+      "unresolved": []
+    },
+    {
+      "entry_id": "g4.kkaji",
+      "observed_grammar_ids": [
+        "g4.kkaji",
+        "g1.topic",
+        "g1.present",
+        "g0.predicate-final"
+      ],
+      "rationale_pt": "저는 é tópico; 학교까지 marca limite espacial do movimento 가요. Não há 에 de destino nem limite temporal. A oração tem predicado em posição final. A amostra falada fornecida tem o mesmo texto do exemplo; esta anotação cobre ambos os textos, sem avaliar áudio.",
+      "unresolved": []
+    },
+    {
+      "entry_id": "g4.kkaji-time",
+      "observed_grammar_ids": [
+        "g4.kkaji-time",
+        "g1.topic",
+        "g1.hada-present",
+        "g0.predicate-final"
+      ],
+      "rationale_pt": "저는 é tópico; 밤까지 marca limite temporal de 공부해요. Não há 부터 nem um percurso espacial nesta frase. A oração tem predicado em posição final. A amostra falada fornecida tem o mesmo texto do exemplo; esta anotação cobre ambos os textos, sem avaliar áudio.",
+      "unresolved": []
+    },
+    {
+      "entry_id": "g4.comparison",
+      "observed_grammar_ids": [
+        "g4.comparison",
+        "g1.subject",
+        "g1.adjective-present",
+        "g0.predicate-final"
+      ],
+      "rationale_pt": "오늘이 é sujeito; 어제보다 é referência comparativa e 더 é advérbio lexical de grau. 좋아요 é presente adjetival, sem paradigma irregular. A oração tem predicado em posição final. A amostra falada fornecida tem o mesmo texto do exemplo; esta anotação cobre ambos os textos, sem avaliar áudio.",
+      "unresolved": []
+    },
+    {
+      "entry_id": "g5.an",
+      "observed_grammar_ids": [
+        "g5.an",
+        "g1.topic",
+        "g2.destination",
+        "g1.present",
+        "g0.predicate-final"
+      ],
+      "rationale_pt": "저는 é tópico; 학교에 é destino; 안 nega a ação em 가요. 오늘 é expressão temporal sem 에. Não há sentido gramatical de incapacidade. A oração tem predicado em posição final. A amostra falada fornecida tem o mesmo texto do exemplo; esta anotação cobre ambos os textos, sem avaliar áudio.",
+      "unresolved": []
+    },
+    {
+      "entry_id": "g5.mot",
+      "observed_grammar_ids": [
+        "g5.mot",
+        "g1.topic",
+        "g2.destination",
+        "g1.present",
+        "g0.predicate-final"
+      ],
+      "rationale_pt": "저는 é tópico; 학교에 é destino; 못 expressa impedimento para 가요. Não anoto 안, que não ocorre nem tem a mesma função. A oração tem predicado em posição final. A amostra falada fornecida tem o mesmo texto do exemplo; esta anotação cobre ambos os textos, sem avaliar áudio.",
+      "unresolved": []
+    },
+    {
+      "entry_id": "g5.long-negation",
+      "observed_grammar_ids": [
+        "g5.long-negation",
+        "g1.topic",
+        "g0.predicate-final"
+      ],
+      "rationale_pt": "저는 é tópico; 공부하지 않아요 realiza a negação longa completa com auxiliar 않다 no final polido. 공부하다 não aparece como 공부해요 e não há 안. A oração tem predicado em posição final. A amostra falada fornecida tem o mesmo texto do exemplo; esta anotação cobre ambos os textos, sem avaliar áudio.",
+      "unresolved": []
+    },
+    {
+      "entry_id": "g5.negative-copula",
+      "observed_grammar_ids": [
+        "g5.negative-copula",
+        "g1.topic",
+        "g0.predicate-final"
+      ],
+      "rationale_pt": "저는 é tópico; 학생이 아니에요 é a negação nominal completa. O 이 depois de 학생 é complemento de 아니다, não o sujeito de g1.subject nem a cópula afirmativa. A oração tem predicado em posição final. A amostra falada fornecida tem o mesmo texto do exemplo; esta anotação cobre ambos os textos, sem avaliar áudio.",
+      "unresolved": []
+    },
+    {
+      "entry_id": "g5.past",
+      "observed_grammar_ids": [
+        "g5.past",
+        "g1.topic",
+        "g1.object",
+        "g0.predicate-final"
+      ],
+      "rationale_pt": "저는 é tópico; 밥을 é objeto e 먹었어요 realiza passado verbal polido. 어제 é tempo lexical; não anoto g1.present como se o evento fosse presente. A oração tem predicado em posição final. A amostra falada fornecida tem o mesmo texto do exemplo; esta anotação cobre ambos os textos, sem avaliar áudio.",
+      "unresolved": []
+    },
+    {
+      "entry_id": "g5.hada-past",
+      "observed_grammar_ids": [
+        "g5.hada-past",
+        "g1.topic",
+        "g5.past",
+        "g0.predicate-final"
+      ],
+      "rationale_pt": "저는 é tópico; 공부했어요 combina o passado 았/었 com a alternância específica 하다 → 했어요. A forma não é o presente 공부해요. A oração tem predicado em posição final. A amostra falada fornecida tem o mesmo texto do exemplo; esta anotação cobre ambos os textos, sem avaliar áudio.",
+      "unresolved": []
+    },
+    {
+      "entry_id": "g5.past-copula",
+      "observed_grammar_ids": [
+        "g5.past-copula",
+        "g1.topic",
+        "g0.copula",
+        "g5.past",
+        "g0.predicate-final"
+      ],
+      "rationale_pt": "저는 é tópico; 학생이었어요 conserva a identificação nominal de 이다 e acrescenta passado. A combinação específica da cópula com passado é o alvo. A oração tem predicado em posição final. A amostra falada fornecida tem o mesmo texto do exemplo; esta anotação cobre ambos os textos, sem avaliar áudio.",
+      "unresolved": []
+    },
+    {
+      "entry_id": "g5.future-plan",
+      "observed_grammar_ids": [
+        "g5.future-plan",
+        "g1.topic",
+        "g2.destination",
+        "g0.predicate-final"
+      ],
+      "rationale_pt": "저는 é tópico; 학교에 é destino; 갈 거예요 realiza a unidade de plano futuro inteira. Seus elementos internos adnominal, nome dependente e cópula não são anotados como aulas gerais posteriores já dominadas. A oração tem predicado em posição final. A amostra falada fornecida tem o mesmo texto do exemplo; esta anotação cobre ambos os textos, sem avaliar áudio.",
+      "unresolved": []
+    },
+    {
+      "entry_id": "g5.intention",
+      "observed_grammar_ids": [
+        "g5.intention",
+        "g1.topic",
+        "g1.object",
+        "g1.hada-present",
+        "g0.predicate-final"
+      ],
+      "rationale_pt": "저는 é tópico, 책을 é objeto e 읽으려고 해요 expressa intenção. 해요 reutiliza a conjugação de 하다 como suporte final; não ocorre 갈 거예요. A oração tem predicado em posição final. A amostra falada fornecida tem o mesmo texto do exemplo; esta anotação cobre ambos os textos, sem avaliar áudio.",
+      "unresolved": []
+    },
+    {
+      "entry_id": "g5.progressive",
+      "observed_grammar_ids": [
+        "g5.progressive",
+        "g1.subject",
+        "g1.object",
+        "g0.predicate-final"
+      ],
+      "rationale_pt": "친구가 é sujeito; 책을 é objeto; 읽고 있어요 é a unidade progressiva. 고 não é coordenação G8 e 있다 funciona como auxiliar, não como existência lexical. A oração tem predicado em posição final. A amostra falada fornecida tem o mesmo texto do exemplo; esta anotação cobre ambos os textos, sem avaliar áudio.",
+      "unresolved": []
+    },
+    {
+      "entry_id": "g6.desire",
+      "observed_grammar_ids": [
+        "g6.desire",
+        "g1.topic",
+        "g1.object",
+        "g0.predicate-final"
+      ],
+      "rationale_pt": "저는 é tópico e 물을 é objeto de 마시고 싶어요, construção inteira de desejo. 고 não coordena orações e 싶다 é auxiliar da construção. A oração tem predicado em posição final. A amostra falada fornecida tem o mesmo texto do exemplo; esta anotação cobre ambos os textos, sem avaliar áudio.",
+      "unresolved": []
+    },
+    {
+      "entry_id": "g6.ability",
+      "observed_grammar_ids": [
+        "g6.ability",
+        "g1.topic",
+        "g1.object",
+        "g0.predicate-final"
+      ],
+      "rationale_pt": "저는 é tópico; 책을 é objeto; 읽을 수 있어요 expressa capacidade como unidade. Não atribuo uma aula geral futura de adnominais só pela estrutura interna dessa unidade. A oração tem predicado em posição final. A amostra falada fornecida tem o mesmo texto do exemplo; esta anotação cobre ambos os textos, sem avaliar áudio.",
+      "unresolved": []
+    },
+    {
+      "entry_id": "g6.inability",
+      "observed_grammar_ids": [
+        "g6.inability",
+        "g1.topic",
+        "g2.destination",
+        "g6.ability",
+        "g2.absent",
+        "g0.predicate-final"
+      ],
+      "rationale_pt": "저는 é tópico; 학교에 é destino; 갈 수 없어요 reutiliza a estrutura de capacidade e a forma negativa 없다. O alvo é a capacidade negada, sem 못 ou proibição. A oração tem predicado em posição final. A amostra falada fornecida tem o mesmo texto do exemplo; esta anotação cobre ambos os textos, sem avaliar áudio.",
+      "unresolved": []
+    },
+    {
+      "entry_id": "g6.honorific-subject",
+      "observed_grammar_ids": [
+        "g6.honorific-subject",
+        "g1.subject",
+        "g2.destination",
+        "g1.present",
+        "g0.predicate-final"
+      ],
+      "rationale_pt": "선생님이 é sujeito; 학교에 é destino; 가세요 é declaração presente honorífica sobre esse sujeito, não pedido. 선생님 é uma unidade lexical, não alvo separado de derivação 님. A oração tem predicado em posição final. A amostra falada fornecida tem o mesmo texto do exemplo; esta anotação cobre ambos os textos, sem avaliar áudio.",
+      "unresolved": []
+    },
+    {
+      "entry_id": "g6.polite-request",
+      "observed_grammar_ids": [
+        "g6.polite-request",
+        "g1.object",
+        "g6.honorific-subject",
+        "g0.argument-omission",
+        "g0.predicate-final"
+      ],
+      "rationale_pt": "책을 é objeto; 읽으세요 usa a forma honorífica dirigida ao interlocutor como pedido. O agente solicitado fica implícito; não há declaração sobre uma terceira pessoa. A oração tem predicado em posição final. A amostra falada fornecida tem o mesmo texto do exemplo; esta anotação cobre ambos os textos, sem avaliar áudio.",
+      "unresolved": []
+    },
+    {
+      "entry_id": "g6.benefactive-request",
+      "observed_grammar_ids": [
+        "g6.benefactive-request",
+        "g1.object",
+        "g6.polite-request",
+        "g6.honorific-subject",
+        "g0.argument-omission",
+        "g0.predicate-final"
+      ],
+      "rationale_pt": "책을 é objeto; 읽어 주세요 adiciona o auxiliar benefactivo 주다 ao pedido respeitoso. O destinatário do pedido e o beneficiário são recuperados no contexto; 주다 não significa simplesmente entregar um livro. A oração tem predicado em posição final. A amostra falada fornecida tem o mesmo texto do exemplo; esta anotação cobre ambos os textos, sem avaliar áudio.",
+      "unresolved": []
+    },
+    {
+      "entry_id": "g6.honorific-subject-particle",
+      "observed_grammar_ids": [
+        "g6.honorific-subject-particle",
+        "g2.destination",
+        "g6.honorific-subject",
+        "g1.present",
+        "g0.predicate-final"
+      ],
+      "rationale_pt": "선생님께서 marca sujeito respeitado, 학교에 é destino e 가세요 é declaração honorífica presente. Não há 이/가 pronunciado; 께서 não marca destinatário. A oração tem predicado em posição final. A amostra falada fornecida tem o mesmo texto do exemplo; esta anotação cobre ambos os textos, sem avaliar áudio.",
+      "unresolved": []
+    },
+    {
+      "entry_id": "g7.eu",
+      "observed_grammar_ids": [
+        "g7.eu",
+        "g1.topic",
+        "g1.object",
+        "g1.present",
+        "g0.predicate-final"
+      ],
+      "rationale_pt": "저는 é tópico; 글을 é objeto; 써요 aplica a queda de eu em 쓰다 junto ao presente polido. O sujeito 저 é explícito, portanto não anoto omissão de sujeito. A oração tem predicado em posição final. A amostra falada fornecida tem o mesmo texto do exemplo; esta anotação cobre ambos os textos, sem avaliar áudio.",
+      "unresolved": []
+    },
+    {
+      "entry_id": "g7.rieul",
+      "observed_grammar_ids": [
+        "g7.rieul",
+        "g1.subject",
+        "g1.object",
+        "g6.honorific-subject",
+        "g1.present",
+        "g0.predicate-final"
+      ],
+      "rationale_pt": "선생님이 é sujeito e 문을 é objeto; 여세요 realiza 열다 (abrir) com queda de rieul diante da forma honorífica declarativa. As duas alternativas do analisador no preflight v3, cujos hashes de exemplo e amostra coincidem com v4, identificam 열다/VV. A antiga ambiguidade de 파세요 não se aplica a este texto. A oração tem predicado em posição final. A amostra falada fornecida tem o mesmo texto do exemplo; esta anotação cobre ambos os textos, sem avaliar áudio.",
+      "unresolved": []
+    },
+    {
+      "entry_id": "g7.bieup",
+      "observed_grammar_ids": [
+        "g7.bieup",
+        "g1.topic",
+        "g1.adjective-present",
+        "g0.predicate-final",
+        "g1.u-contraction"
+      ],
+      "rationale_pt": "오늘은 é tópico temporal; 추워요 combina a alternância de 춥다 com presente adjetival polido. A descrição meteorológica não exige inventar um sujeito pessoal omitido. A oração tem predicado em posição final. A amostra falada fornecida tem o mesmo texto do exemplo; esta anotação cobre ambos os textos, sem avaliar áudio. A fusão de u com eo após a alternância lexical reutiliza g1.u-contraction.",
+      "unresolved": []
+    },
+    {
+      "entry_id": "g7.digeut",
+      "observed_grammar_ids": [
+        "g7.digeut",
+        "g1.topic",
+        "g1.object",
+        "g1.present",
+        "g0.predicate-final"
+      ],
+      "rationale_pt": "저는 é tópico, 음악을 é objeto e 들어요 aplica a alternância de 듣다 antes de 어요. 저 está explícito; não há nova omissão de sujeito. A oração tem predicado em posição final. A amostra falada fornecida tem o mesmo texto do exemplo; esta anotação cobre ambos os textos, sem avaliar áudio.",
+      "unresolved": []
+    },
+    {
+      "entry_id": "g7.reu",
+      "observed_grammar_ids": [
+        "g7.reu",
+        "g1.subject",
+        "g1.adjective-present",
+        "g0.predicate-final"
+      ],
+      "rationale_pt": "친구가 marca sujeito; 빨라요 aplica a alternância reu de 빠르다 em presente adjetival. Não é ação verbal nem antecipação temporal. A oração tem predicado em posição final. A amostra falada fornecida tem o mesmo texto do exemplo; esta anotação cobre ambos os textos, sem avaliar áudio.",
+      "unresolved": []
+    },
+    {
+      "entry_id": "g7.siot",
+      "observed_grammar_ids": [
+        "g7.siot",
+        "g1.topic",
+        "g1.object",
+        "g1.present",
+        "g0.predicate-final"
+      ],
+      "rationale_pt": "저는 é tópico; 집을 é objeto; 지어요 aplica a queda de siot em 짓다 antes de 어요, sem contração adicional das vogais. A oração tem predicado em posição final. A amostra falada fornecida tem o mesmo texto do exemplo; esta anotação cobre ambos os textos, sem avaliar áudio.",
+      "unresolved": []
+    },
+    {
+      "entry_id": "g7.hieut",
+      "observed_grammar_ids": [
+        "g7.hieut",
+        "g1.subject",
+        "g1.adjective-present",
+        "g0.predicate-final"
+      ],
+      "rationale_pt": "하늘이 é sujeito; 파래요 realiza a alternância de hieut de 파랗다 com presente adjetival polido. A oração tem predicado em posição final. A amostra falada fornecida tem o mesmo texto do exemplo; esta anotação cobre ambos os textos, sem avaliar áudio.",
+      "unresolved": []
+    },
+    {
+      "entry_id": "g8.go-addition",
+      "observed_grammar_ids": [
+        "g8.go-addition",
+        "g1.subject",
+        "g1.adjective-present",
+        "g0.argument-omission",
+        "g0.predicate-final"
+      ],
+      "rationale_pt": "집이 é sujeito compartilhado de 크고 좋아요; 고 soma propriedades e 좋아요 fornece presente adjetival final. A segunda propriedade retoma o mesmo sujeito, sem sequência temporal. A oração tem predicado em posição final. A amostra falada fornecida tem o mesmo texto do exemplo; esta anotação cobre ambos os textos, sem avaliar áudio.",
+      "unresolved": []
+    },
+    {
+      "entry_id": "g8.go-sequence",
+      "observed_grammar_ids": [
+        "g8.go-sequence",
+        "g1.topic",
+        "g1.object",
+        "g1.present",
+        "g0.argument-omission",
+        "g0.predicate-final"
+      ],
+      "rationale_pt": "저는 é tópico/agente compartilhado; 밥을 e 물을 são objetos. 먹고 liga ações em sequência e 마셔요 marca o presente final. A segunda ação retoma o agente; não há soma de propriedades. A oração tem predicado em posição final. A amostra falada fornecida tem o mesmo texto do exemplo; esta anotação cobre ambos os textos, sem avaliar áudio.",
+      "unresolved": []
+    },
+    {
+      "entry_id": "g8.aseo-cause",
+      "observed_grammar_ids": [
+        "g8.aseo-cause",
+        "g1.topic",
+        "g7.bieup",
+        "g1.subject",
+        "g2.location",
+        "g2.exist",
+        "g0.predicate-final",
+        "g1.u-contraction"
+      ],
+      "rationale_pt": "오늘은 é tópico; 추워서 aplica a alternância de 춥다 com conector causal. 학생이 é sujeito da consequência, 집에 marca local estático e 있어요 é predicado locativo. A oração tem predicado em posição final. A amostra falada fornecida tem o mesmo texto do exemplo; esta anotação cobre ambos os textos, sem avaliar áudio. A combinação 추우 + 어서 também reutiliza u + eo → wo; isso é distinto da troca lexical de bieup por u.",
+      "unresolved": []
+    },
+    {
+      "entry_id": "g8.aseo-sequence",
+      "observed_grammar_ids": [
+        "g8.aseo-sequence",
+        "g1.subject",
+        "g2.destination",
+        "g1.hada-present",
+        "g0.argument-omission",
+        "g0.predicate-final"
+      ],
+      "rationale_pt": "학생이 é sujeito; 학교에 marca destino, 가서 cria o contexto espacial da ação 공부해요. O agente da segunda ação é compartilhado; 서 não exprime causa nesta ocorrência. A oração tem predicado em posição final. A amostra falada fornecida tem o mesmo texto do exemplo; esta anotação cobre ambos os textos, sem avaliar áudio.",
+      "unresolved": []
+    },
+    {
+      "entry_id": "g8.jiman",
+      "observed_grammar_ids": [
+        "g8.jiman",
+        "g1.subject",
+        "g1.adjective-present",
+        "g0.argument-omission",
+        "g0.predicate-final"
+      ],
+      "rationale_pt": "집이 é sujeito de 작지만 좋아요; 지만 contrapõe duas propriedades e 좋아요 fornece o final polido. A segunda propriedade retoma o sujeito. A oração tem predicado em posição final. A amostra falada fornecida tem o mesmo texto do exemplo; esta anotação cobre ambos os textos, sem avaliar áudio.",
+      "unresolved": []
+    },
+    {
+      "entry_id": "g8.condition",
+      "observed_grammar_ids": [
+        "g8.condition",
+        "g1.subject",
+        "g2.location",
+        "g1.present",
+        "g0.predicate-final"
+      ],
+      "rationale_pt": "있어요 emprega o verbo lexical 있다, permanecer, no presente polido conhecido de g1.present; 집에 reutiliza 에 de lugar de g2.location. A leitura selecionada não é a construção existencial de g2.exist. 내일 비가 오면 apresenta a condição futura; 이/가 marcam os sujeitos: 비가 e 학생이. A única novidade é o conector condicional. O exemplo e a amostra falada são idênticos; o predicado encerra cada oração.",
+      "unresolved": []
+    },
+    {
+      "entry_id": "g8.nikka-reason",
+      "observed_grammar_ids": [
+        "g8.nikka-reason",
+        "g1.topic",
+        "g7.bieup",
+        "g1.subject",
+        "g2.location",
+        "g1.present",
+        "g0.predicate-final"
+      ],
+      "rationale_pt": "있어요 emprega o verbo lexical 있다, permanecer, no presente polido conhecido de g1.present; 집에 reutiliza 에 de lugar de g2.location. A leitura selecionada não é a construção existencial de g2.exist. 오늘은 é tópico temporal; 추우니까 usa a alternância de ㅂ já ensinada em g7.bieup. A única novidade é o conector de razão. 학생이 contém 이 de sujeito na oração principal. O exemplo e a amostra falada são idênticos; o predicado encerra cada oração.",
+      "unresolved": []
+    },
+    {
+      "entry_id": "g8.neunde-background",
+      "observed_grammar_ids": [
+        "g8.neunde-background",
+        "g1.subject",
+        "g1.present",
+        "g0.predicate-final"
+      ],
+      "rationale_pt": "학생이 e 친구가 marcam os sujeitos das duas orações; 공부하는데 apresenta pano de fundo e 와요 é presente polido de 오다. 는데 não é adnominal 는 nem 공부해요. A oração tem predicado em posição final. A amostra falada fornecida tem o mesmo texto do exemplo; esta anotação cobre ambos os textos, sem avaliar áudio.",
+      "unresolved": []
+    },
+    {
+      "entry_id": "g9.adjective",
+      "observed_grammar_ids": [
+        "g9.adjective",
+        "g1.subject",
+        "g1.object",
+        "g1.present",
+        "g0.predicate-final"
+      ],
+      "rationale_pt": "학생이 é sujeito; 좋은 modifica 책, que recebe 을; 읽어요 é presente verbal. 은 em 좋은 é adnominal adjetival, não tópico nem passado verbal. A oração tem predicado em posição final. A amostra falada fornecida tem o mesmo texto do exemplo; esta anotação cobre ambos os textos, sem avaliar áudio.",
+      "unresolved": []
+    },
+    {
+      "entry_id": "g9.verb-present",
+      "observed_grammar_ids": [
+        "g9.verb-present",
+        "g1.object",
+        "g1.subject",
+        "g2.exist",
+        "g0.predicate-final"
+      ],
+      "rationale_pt": "책을 é objeto dentro da relativa 읽는; 학생 é seu antecedente e recebe 이 na oração principal com 있어요. A posição de sujeito da relativa é ligada a 학생, não mera omissão discursiva. A oração tem predicado em posição final. A amostra falada fornecida tem o mesmo texto do exemplo; esta anotação cobre ambos os textos, sem avaliar áudio.",
+      "unresolved": []
+    },
+    {
+      "entry_id": "g9.verb-past",
+      "observed_grammar_ids": [
+        "g9.verb-past",
+        "g1.subject",
+        "g1.adjective-present",
+        "g0.predicate-final"
+      ],
+      "rationale_pt": "학생이 é sujeito da relativa 읽은; 책 é seu antecedente e sujeito com 이 de 좋아요. 은 marca a ação anterior adnominal; a lacuna de objeto é a ligação relativa, não um pronome apagado livremente. A oração tem predicado em posição final. A amostra falada fornecida tem o mesmo texto do exemplo; esta anotação cobre ambos os textos, sem avaliar áudio.",
+      "unresolved": []
+    },
+    {
+      "entry_id": "g9.verb-prospective",
+      "observed_grammar_ids": [
+        "g9.verb-prospective",
+        "g1.subject",
+        "g2.exist",
+        "g0.argument-omission",
+        "g0.predicate-final"
+      ],
+      "rationale_pt": "읽을 modifica 책 prospectivamente; 책이 é sujeito de 있어요. O agente de ler não é expresso, e não se atribui automaticamente ao falante; 내일 fornece a orientação temporal. A oração tem predicado em posição final. A amostra falada fornecida tem o mesmo texto do exemplo; esta anotação cobre ambos os textos, sem avaliar áudio.",
+      "unresolved": []
+    },
+    {
+      "entry_id": "g9.noun",
+      "observed_grammar_ids": [
+        "g9.noun",
+        "g0.copula",
+        "g1.subject",
+        "g1.present",
+        "g0.predicate-final"
+      ],
+      "rationale_pt": "학생인 deriva a identificação nominal de 이다 em forma adnominal que modifica 친구; 친구가 é sujeito de 와요, presente polido. Não há 는 verbal adnominal. A oração tem predicado em posição final. A amostra falada fornecida tem o mesmo texto do exemplo; esta anotação cobre ambos os textos, sem avaliar áudio.",
+      "unresolved": []
+    },
+    {
+      "entry_id": "g10.gi",
+      "observed_grammar_ids": [
+        "g10.gi",
+        "g1.object",
+        "g1.subject",
+        "g1.adjective-present",
+        "g7.bieup",
+        "g0.argument-omission",
+        "g0.predicate-final",
+        "g1.u-contraction"
+      ],
+      "rationale_pt": "책을 é objeto de 읽기; 기 nominaliza a atividade e 가 marca essa atividade como sujeito de 쉬워요. 쉬워요 é presente adjetival com alternância de 쉽다. O leitor é genérico/contextual e não expresso. A oração tem predicado em posição final. A amostra falada fornecida tem o mesmo texto do exemplo; esta anotação cobre ambos os textos, sem avaliar áudio. A fusão de u com eo após a alternância lexical reutiliza g1.u-contraction.",
+      "unresolved": []
+    },
+    {
+      "entry_id": "g10.eum",
+      "observed_grammar_ids": [
+        "g10.eum",
+        "g1.topic",
+        "g1.subject",
+        "g5.past",
+        "g1.object",
+        "g1.present",
+        "g0.predicate-final"
+      ],
+      "rationale_pt": "저는 é tópico; 친구가 é sujeito da oração com 왔음. 었 marca passado, 음 nominaliza a proposição e 을 torna-a objeto de 알아요, presente polido de 알다 com rieul conservado. A oração tem predicado em posição final. A amostra falada fornecida tem o mesmo texto do exemplo; esta anotação cobre ambos os textos, sem avaliar áudio.",
+      "unresolved": []
+    },
+    {
+      "entry_id": "g10.geot",
+      "observed_grammar_ids": [
+        "g10.geot",
+        "g1.topic",
+        "g1.object",
+        "g9.verb-present",
+        "g1.hada-present",
+        "g0.predicate-final",
+        "g0.argument-omission"
+      ],
+      "rationale_pt": "저는 é tópico; 책을 é objeto da relativa 읽는 que modifica 것; 것을 é objeto de 좋아해요. A flexão final reutiliza 하다 → 해요. 것 forma nominalização de atividade, sem contração 걸. A oração tem predicado em posição final. A amostra falada fornecida tem o mesmo texto do exemplo; esta anotação cobre ambos os textos, sem avaliar áudio. O agente não expresso de 읽는 é recuperado como a pessoa indicada por 저는, que também gosta da atividade; essa omissão reutiliza a orientação G0.",
+      "unresolved": []
+    },
+    {
+      "entry_id": "g10.su-particle",
+      "observed_grammar_ids": [
+        "g10.su-particle",
+        "g1.topic",
+        "g1.object",
+        "g1.subject",
+        "g6.ability",
+        "g0.predicate-final"
+      ],
+      "rationale_pt": "저는 é tópico; 이 é determinante lexical de 책을; 읽을 수 있어요 é capacidade conhecida, agora com 가 em 수가. A novidade declarada é essa marcação; o adnominal interno já está contido na unidade de capacidade. A oração tem predicado em posição final. A amostra falada fornecida tem o mesmo texto do exemplo; esta anotação cobre ambos os textos, sem avaliar áudio.",
+      "unresolved": []
+    },
+    {
+      "entry_id": "g11.formal-statement",
+      "observed_grammar_ids": [
+        "g11.formal-statement",
+        "g1.subject",
+        "g1.object",
+        "g0.predicate-final"
+      ],
+      "rationale_pt": "학생이 é sujeito, 책을 é objeto e 읽습니다 realiza declaração formal polida. Não há final 해요 nem honorífico 시 do sujeito. A oração tem predicado em posição final. A amostra falada fornecida tem o mesmo texto do exemplo; esta anotação cobre ambos os textos, sem avaliar áudio.",
+      "unresolved": []
+    },
+    {
+      "entry_id": "g11.formal-question",
+      "observed_grammar_ids": [
+        "g11.formal-question",
+        "g1.subject",
+        "g1.object",
+        "g0.predicate-final"
+      ],
+      "rationale_pt": "학생이 é sujeito, 책을 é objeto e 읽습니까? é pergunta formal polida. Não anoto declaração formal como se também fosse usada na frase interrogativa. A oração tem predicado em posição final. A amostra falada fornecida tem o mesmo texto do exemplo; esta anotação cobre ambos os textos, sem avaliar áudio.",
+      "unresolved": []
+    },
+    {
+      "entry_id": "g11.polite-question",
+      "observed_grammar_ids": [
+        "g11.polite-question",
+        "g1.subject",
+        "g1.object",
+        "g0.predicate-final"
+      ],
+      "rationale_pt": "학생이 é sujeito, 물을 é objeto e 마시나요? é a pergunta polida em 나요. A frase não contém 마셔요?; sua relação pedagógica não é identidade de ocorrência. A oração tem predicado em posição final. A amostra falada fornecida tem o mesmo texto do exemplo; esta anotação cobre ambos os textos, sem avaliar áudio.",
+      "unresolved": []
+    },
+    {
+      "entry_id": "g11.informal",
+      "observed_grammar_ids": [
+        "g11.informal",
+        "g1.topic",
+        "g2.destination",
+        "g0.predicate-final"
+      ],
+      "rationale_pt": "나는 é tópico com pronome não modesto; 집에 marca destino e 가 é presente declarativo informal em 해체. Não há 요 pronunciado. A oração tem predicado em posição final. A amostra falada fornecida tem o mesmo texto do exemplo; esta anotação cobre ambos os textos, sem avaliar áudio.",
+      "unresolved": []
+    },
+    {
+      "entry_id": "g11.plain-verb",
+      "observed_grammar_ids": [
+        "g11.plain-verb",
+        "g1.topic",
+        "g1.object",
+        "g0.predicate-final"
+      ],
+      "rationale_pt": "학생은 é tópico; 책을 é objeto; 읽는다 é declaração verbal em estilo plano. 다 final integra 는다, não é forma de dicionário citada. A oração tem predicado em posição final. A amostra falada fornecida tem o mesmo texto do exemplo; esta anotação cobre ambos os textos, sem avaliar áudio.",
+      "unresolved": []
+    },
+    {
+      "entry_id": "g11.plain-adjective",
+      "observed_grammar_ids": [
+        "g11.plain-adjective",
+        "g1.subject",
+        "g0.predicate-final"
+      ],
+      "rationale_pt": "집이 é sujeito e 크다 declara a propriedade em estilo plano. A coincidência gráfica com a forma de dicionário não torna a frase uma citação metalinguística. A oração tem predicado em posição final. A amostra falada fornecida tem o mesmo texto do exemplo; esta anotação cobre ambos os textos, sem avaliar áudio.",
+      "unresolved": []
+    },
+    {
+      "entry_id": "g12.obligation",
+      "observed_grammar_ids": [
+        "g12.obligation",
+        "g1.topic",
+        "g1.hada-present",
+        "g0.predicate-final"
+      ],
+      "rationale_pt": "학생은 é tópico; 공부해야 해요 é obrigação com 아/어야 하다, com 해요 no auxiliar final. 오늘 é tempo lexical; não há intenção 려고 nem previsão. A oração tem predicado em posição final. A amostra falada fornecida tem o mesmo texto do exemplo; esta anotação cobre ambos os textos, sem avaliar áudio.",
+      "unresolved": []
+    },
+    {
+      "entry_id": "g12.permission",
+      "observed_grammar_ids": [
+        "g12.permission",
+        "g1.topic",
+        "g1.object",
+        "g0.predicate-final",
+        "g1.oe-contraction"
+      ],
+      "rationale_pt": "학생은 é tópico; 물을 é objeto; 마셔도 돼요 é a unidade concessiva de permissão, incluindo a contração 되어요 → 돼요. 도 interno ao conector não é 도 aditivo nominal. A oração tem predicado em posição final. A amostra falada fornecida tem o mesmo texto do exemplo; esta anotação cobre ambos os textos, sem avaliar áudio. 돼요 reutiliza a contração regular já ensinada em g1.oe-contraction, enquanto a permissão é a função nova da construção completa.",
+      "unresolved": []
+    },
+    {
+      "entry_id": "g12.prohibition",
+      "observed_grammar_ids": [
+        "g12.prohibition",
+        "g2.action-location",
+        "g6.polite-request",
+        "g6.honorific-subject",
+        "g7.rieul",
+        "g0.argument-omission",
+        "g0.predicate-final"
+      ],
+      "rationale_pt": "여기에서 marca local da ação; 먹지 마세요 é proibição, com 말다 honorificado no pedido e queda de rieul antes de 시. O interlocutor agente está implícito. 지 não é a negação longa com 않다. A oração tem predicado em posição final. A amostra falada fornecida tem o mesmo texto do exemplo; esta anotação cobre ambos os textos, sem avaliar áudio.",
+      "unresolved": []
+    },
+    {
+      "entry_id": "g12.try",
+      "observed_grammar_ids": [
+        "g12.try",
+        "g1.object",
+        "g6.polite-request",
+        "g6.honorific-subject",
+        "g0.argument-omission",
+        "g0.predicate-final"
+      ],
+      "rationale_pt": "이 é determinante lexical, 책을 é objeto e 읽어 보세요 usa 보다 como auxiliar de experimentar no pedido respeitoso. O agente é o interlocutor implícito; não ocorre 보다 comparativo nem lexical ver. A oração tem predicado em posição final. A amostra falada fornecida tem o mesmo texto do exemplo; esta anotação cobre ambos os textos, sem avaliar áudio.",
+      "unresolved": []
+    },
+    {
+      "entry_id": "g12.experience",
+      "observed_grammar_ids": [
+        "g12.experience",
+        "g1.topic",
+        "g1.object",
+        "g9.verb-past",
+        "g1.subject",
+        "g2.exist",
+        "g0.predicate-final"
+      ],
+      "rationale_pt": "저는 é tópico; 이 determina 책을; 읽은 é adnominal anterior que modifica 적. 적이 é sujeito de 있어요 dentro da construção de experiência; não se usa 적 com sentido inimigo. A oração tem predicado em posição final. A amostra falada fornecida tem o mesmo texto do exemplo; esta anotação cobre ambos os textos, sem avaliar áudio.",
+      "unresolved": []
+    },
+    {
+      "entry_id": "g12.conjecture",
+      "observed_grammar_ids": [
+        "g12.conjecture",
+        "g1.subject",
+        "g9.verb-prospective",
+        "g1.adjective-present",
+        "g0.predicate-final"
+      ],
+      "rationale_pt": "비가 é sujeito de 올; 올 modifica 것 prospectivamente e 같아요 é presente adjetival dentro da conjectura. Não se observa a nominalização presente de atividade em 는 것 nem a futura forma 갈 거예요. A oração tem predicado em posição final. A amostra falada fornecida tem o mesmo texto do exemplo; esta anotação cobre ambos os textos, sem avaliar áudio.",
+      "unresolved": []
+    },
+    {
+      "entry_id": "g13.report-verb",
+      "observed_grammar_ids": [
+        "g13.report-verb",
+        "g1.subject",
+        "g1.topic",
+        "g1.object",
+        "g1.hada-present",
+        "g0.predicate-final"
+      ],
+      "rationale_pt": "친구는 é o tópico externo/relator; 학생이 é sujeito do conteúdo relatado, 책을 é objeto e 읽는다고 introduz relato de ação presente. 해요 flexiona o verbo do relato. Não há tópico interno 학생은 nem declaração independente em 해라체. A oração tem predicado em posição final. A amostra falada fornecida tem o mesmo texto do exemplo; esta anotação cobre ambos os textos, sem avaliar áudio.",
+      "unresolved": []
+    },
+    {
+      "entry_id": "g13.report-adjective",
+      "observed_grammar_ids": [
+        "g13.report-adjective",
+        "g1.subject",
+        "g1.hada-present",
+        "g0.predicate-final"
+      ],
+      "rationale_pt": "친구가 é o relator e 집이 é sujeito da propriedade 크다고, relatada com 해요. 다고 é citação de propriedade, não declaração final em estilo plano. A oração tem predicado em posição final. A amostra falada fornecida tem o mesmo texto do exemplo; esta anotação cobre ambos os textos, sem avaliar áudio.",
+      "unresolved": []
+    },
+    {
+      "entry_id": "g13.report-noun",
+      "observed_grammar_ids": [
+        "g13.report-noun",
+        "g1.subject",
+        "g0.copula",
+        "g1.hada-present",
+        "g0.predicate-final"
+      ],
+      "rationale_pt": "선생님이 é o relator, 친구가 é sujeito da identificação 학생이라고 e 해요 flexiona o relato. 이다 permanece na identificação nominal reportada; 라고 não expressa ordem. A oração tem predicado em posição final. A amostra falada fornecida tem o mesmo texto do exemplo; esta anotação cobre ambos os textos, sem avaliar áudio.",
+      "unresolved": []
+    },
+    {
+      "entry_id": "g13.report-past",
+      "observed_grammar_ids": [
+        "g13.report-past",
+        "g1.subject",
+        "g1.topic",
+        "g1.object",
+        "g5.past",
+        "g1.hada-present",
+        "g0.predicate-final"
+      ],
+      "rationale_pt": "친구는 é o tópico externo/relator; 학생이 é sujeito do conteúdo, 밥을 é objeto e 먹었다고 combina passado com relato. 해요 mantém o verbo de relato no presente. Não há tópico interno 학생은 nem ocorrência de 는다고 presente. A oração tem predicado em posição final. A amostra falada fornecida tem o mesmo texto do exemplo; esta anotação cobre ambos os textos, sem avaliar áudio.",
+      "unresolved": []
+    },
+    {
+      "entry_id": "g13.report-question",
+      "observed_grammar_ids": [
+        "g13.report-question",
+        "g1.subject",
+        "g1.object",
+        "g1.hada-present",
+        "g0.predicate-final"
+      ],
+      "rationale_pt": "친구가 é relator, 학생이 é sujeito da ação e 책을 é objeto; 읽느냐고 relata uma pergunta, com 해요 no relato. Não há pergunta direta ao ouvinte nem forma 냐고 no exemplo. A oração tem predicado em posição final. A amostra falada fornecida tem o mesmo texto do exemplo; esta anotação cobre ambos os textos, sem avaliar áudio.",
+      "unresolved": []
+    },
+    {
+      "entry_id": "g13.report-command",
+      "observed_grammar_ids": [
+        "g13.report-command",
+        "g1.subject",
+        "g4.hante-recipient",
+        "g1.object",
+        "g1.hada-present",
+        "g0.argument-omission",
+        "g0.predicate-final"
+      ],
+      "rationale_pt": "친구가 é relator; 학생한테 identifica destinatário e agente recuperável da ordem, 물을 é objeto; 마시라고 해요 relata a instrução. Não há pedido direto em 으세요. A oração tem predicado em posição final. A amostra falada fornecida tem o mesmo texto do exemplo; esta anotação cobre ambos os textos, sem avaliar áudio.",
+      "unresolved": []
+    },
+    {
+      "entry_id": "g13.report-suggestion",
+      "observed_grammar_ids": [
+        "g13.report-suggestion",
+        "g1.subject",
+        "g2.destination",
+        "g1.hada-present",
+        "g0.argument-omission",
+        "g0.predicate-final"
+      ],
+      "rationale_pt": "친구가 é relator/proponente e 학교에 é destino; 가자고 해요 relata proposta conjunta. O grupo que irá não está expresso por pronome: sua composição vem da proposta e do contexto. A oração tem predicado em posição final. A amostra falada fornecida tem o mesmo texto do exemplo; esta anotação cobre ambos os textos, sem avaliar áudio.",
+      "unresolved": []
+    },
+    {
+      "entry_id": "g13.passive",
+      "observed_grammar_ids": [
+        "g13.passive",
+        "g1.subject",
+        "g1.present",
+        "g0.predicate-final"
+      ],
+      "rationale_pt": "문이 é sujeito afetado; 열려요 é presente polido de 열리다 no sentido abrir-se, lexicalmente relacionado a 열다. O agente não expresso é permitido pela passiva, sem inventar um sujeito transitivo apagado. A oração tem predicado em posição final. A amostra falada fornecida tem o mesmo texto do exemplo; esta anotação cobre ambos os textos, sem avaliar áudio.",
+      "unresolved": []
+    },
+    {
+      "entry_id": "g13.causative-suffix",
+      "observed_grammar_ids": [
+        "g13.causative-suffix",
+        "g1.subject",
+        "g1.object",
+        "g1.present",
+        "g0.predicate-final"
+      ],
+      "rationale_pt": "선생님이 é causador, 학생을 é pessoa que senta e 앉혀요 é presente polido da causativa 앉히다. 히 é derivação lexical restrita; não há auxiliar 하다. A oração tem predicado em posição final. A amostra falada fornecida tem o mesmo texto do exemplo; esta anotação cobre ambos os textos, sem avaliar áudio.",
+      "unresolved": []
+    },
+    {
+      "entry_id": "g13.causative-analytic",
+      "observed_grammar_ids": [
+        "g13.causative-analytic",
+        "g1.subject",
+        "g1.object",
+        "g1.hada-present",
+        "g0.predicate-final"
+      ],
+      "rationale_pt": "선생님이 é causador, 학생을 é agente causado e 공부하게 해요 expressa causação analítica. 해요 é conjugação do auxiliar 하다; 게 não é adnominal nem nominalização. A oração tem predicado em posição final. A amostra falada fornecida tem o mesmo texto do exemplo; esta anotação cobre ambos os textos, sem avaliar áudio.",
+      "unresolved": []
+    },
+    {
+      "entry_id": "g13.change-circumstance",
+      "observed_grammar_ids": [
+        "g13.change-circumstance",
+        "g1.subject",
+        "g2.action-location",
+        "g5.past",
+        "g0.predicate-final",
+        "g1.oe-contraction"
+      ],
+      "rationale_pt": "학생이 é sujeito, 학교에서 é local de ação e 공부하게 됐어요 expressa mudança circunstancial no passado. 게 되다 não é voz passiva nem causativa em 게 하다; 공부하다 não aparece como 공부해요. A oração tem predicado em posição final. A amostra falada fornecida tem o mesmo texto do exemplo; esta anotação cobre ambos os textos, sem avaliar áudio. 됐어요 reutiliza a contração oe + eo de g1.oe-contraction junto ao passado conhecido de g5.past; não se atribui sentido de permissão a esta ocorrência.",
+      "unresolved": []
+    },
+    {
+      "entry_id": "g13.new-realization",
+      "observed_grammar_ids": [
+        "g13.new-realization",
+        "g1.subject",
+        "g0.predicate-final"
+      ],
+      "rationale_pt": "집이 é sujeito; 크네요 exprime constatação atual com 네요. Não ocorre 좋아요/커요 como presente em 아/어요 nem um morfema separado para o Ah português. A oração tem predicado em posição final. A amostra falada fornecida tem o mesmo texto do exemplo; esta anotação cobre ambos os textos, sem avaliar áudio.",
+      "unresolved": []
+    },
+    {
+      "entry_id": "g13.background-explanation",
+      "observed_grammar_ids": [
+        "g13.background-explanation",
+        "g1.topic",
+        "g2.destination",
+        "g1.present",
+        "g0.argument-omission",
+        "g0.predicate-final"
+      ],
+      "rationale_pt": "저는 é tópico, 학교에 é destino e 가요 é presente da primeira frase. 공부하거든요 oferece explicação na segunda, cujo sujeito retoma 저; não há 공부해요 nem 거든 condicional. A oração tem predicado em posição final. A amostra falada fornecida tem o mesmo texto do exemplo; esta anotação cobre ambos os textos, sem avaliar áudio.",
+      "unresolved": []
+    },
+    {
+      "entry_id": "g13.shared-reminder",
+      "observed_grammar_ids": [
+        "g13.shared-reminder",
+        "g1.topic",
+        "g1.subject",
+        "g2.location",
+        "g2.exist",
+        "g0.predicate-final"
+      ],
+      "rationale_pt": "오늘은 é tópico temporal, 학생이 é sujeito e 집에 indica local estático com 있다. 잖아요 marca lembrete compartilhado; não é negação em 지 않아요 nem pergunta literal equivalente ao lembra português. A oração tem predicado em posição final. A amostra falada fornecida tem o mesmo texto do exemplo; esta anotação cobre ambos os textos, sem avaliar áudio.",
+      "unresolved": []
+    }
+  ]
+}

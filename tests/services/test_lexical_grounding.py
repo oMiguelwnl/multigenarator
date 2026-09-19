@@ -5,6 +5,8 @@ from __future__ import annotations
 import unicodedata
 from hashlib import sha256
 
+import pytest
+
 from multilang.domain.highlights import HighlightCandidate
 from multilang.domain.jobs import SupportedLanguage
 from multilang.domain.korean import (
@@ -29,6 +31,7 @@ from multilang.services.content.definition_evidence import DefinitionReviewVerdi
 from multilang.services.korean_morphology import KiwiKoreanMorphologyService
 from multilang.services.lexical_grounding import LexicalGroundingService
 from multilang.services.lexical_lookup import LexicalRecord
+from multilang.services.provider_pronunciation_adapters import PronunciationGenerationResult
 from multilang.services.text_generation import DefinitionGenerationResult
 from multilang.services.word_list_parser import ParsedWordListItem
 
@@ -82,8 +85,54 @@ class FailingPronunciationGenerator:
         raise ValueError("all pronunciation adapters failed")
 
 
+@pytest.mark.parametrize(
+    ("source", "ipa", "uncertainty", "authoritative"),
+    [
+        ("library-pronunciation-generator", "/haʊs/", [], True),
+        ("library-pronunciation-generator", "/haʊs/", ["uncertain dialect"], False),
+        ("library-pronunciation-generator", "house", [], False),
+        ("provider-pronunciation-generator", "/haʊs/", [], False),
+        ("provider-pronunciation-generator", "/haʊs/", ["uncertain dialect"], False),
+    ],
+)
+def test_generated_pronunciation_authority_preserves_evidence(source, ipa, uncertainty, authoritative):
+    class Generator:
+        def generate_pronunciation(self, request):
+            return PronunciationGenerationResult(
+                ipa=ipa, spoken_form="house", uncertainty_notes=uncertainty,
+                provenance={"source": source, "provider": "synthetic", "language_code": "en-us"},
+            )
+
+    result = LexicalGroundingService(
+        lookup=None, pronunciation_generator=Generator()
+    )._grounded_candidate(
+        language=SupportedLanguage.EN, submitted_form="house", display_form="house",
+        definition_language="en", record=LexicalRecord(
+            term="house", display_form="house", lemma="house", definitions=["a dwelling"],
+            part_of_speech="noun", definition_language="en", source="synthetic-lexicon",
+        ),
+    )
+    pronunciation = result.provenance.pronunciation
+    assert pronunciation.authoritative is authoritative
+    assert pronunciation.uncertainty_notes == uncertainty
+    assert pronunciation.provenance["provider"] == "synthetic"
+    assert result.grounding_status is (GroundingStatus.GROUNDED if authoritative else GroundingStatus.PENDING)
+    if not authoritative:
+        assert result.warning_code == "pronunciation_review_required"
 
 
+@pytest.mark.parametrize("language", [SupportedLanguage.JA, SupportedLanguage.ZH])
+def test_specialized_reading_contracts_do_not_require_ordinary_ipa(language):
+    result = LexicalGroundingService(lookup=None)._grounded_candidate(
+        language=language, submitted_form="test", display_form="test", definition_language="en",
+        record=LexicalRecord(
+            term="test", display_form="test", lemma="test", definitions=["a trial"],
+            part_of_speech="noun", definition_language="en", source="synthetic-lexicon",
+        ),
+    )
+    assert result.ipa is None
+    assert result.grounding_status is GroundingStatus.GROUNDED
+    assert result.warning_code is None
 
 
 class StubDefinitionGenerator:
@@ -419,7 +468,7 @@ def test_definition_formatter_covers_supported_basic_part_of_speech_labels() -> 
         )
 
 
-def test_grounding_uses_word_fallback_when_authoritative_ipa_is_missing() -> None:
+def test_grounding_keeps_ipa_missing_when_authoritative_ipa_is_missing() -> None:
     service = LexicalGroundingService(
         lookup=StubLookup(
             {
@@ -428,6 +477,7 @@ def test_grounding_uses_word_fallback_when_authoritative_ipa_is_missing() -> Non
                     display_form="casa",
                     lemma="casa",
                     definitions=["house"],
+                    definition_language="en",
                     ipa=None,
                 )
             }
@@ -444,13 +494,13 @@ def test_grounding_uses_word_fallback_when_authoritative_ipa_is_missing() -> Non
         ),
     )
 
-    assert candidate.ipa == "casa"
-    assert candidate.spoken_form == "casa"
+    assert candidate.ipa is None
+    assert candidate.spoken_form is None
     assert candidate.provenance.pronunciation is not None
-    assert candidate.provenance.pronunciation.value == "casa"
+    assert candidate.provenance.pronunciation.value is None
     assert candidate.provenance.pronunciation.source == "manual_missing"
     assert candidate.provenance.pronunciation.authoritative is False
-    assert any("word fallback" in note for note in candidate.provenance.notes)
+    assert "pronunciation requires review before export" in candidate.provenance.notes
 
 
 def test_custom_word_list_failures_stay_pending() -> None:
@@ -825,6 +875,7 @@ def test_grounding_uses_ai_pronunciation_when_authoritative_ipa_is_missing() -> 
                     display_form="casa",
                     lemma="casa",
                     definitions=["house"],
+                    definition_language="en",
                     ipa=None,
                 )
             }
@@ -842,10 +893,11 @@ def test_grounding_uses_ai_pronunciation_when_authoritative_ipa_is_missing() -> 
     assert candidate.provenance.pronunciation is not None
     assert candidate.provenance.pronunciation.source == "provider-pronunciation-generator"
     assert generator.calls
-    assert "provider IPA used because authoritative IPA was missing" in candidate.provenance.notes
+    assert not candidate.provenance.pronunciation.authoritative
+    assert "generated pronunciation retained for review" in candidate.provenance.notes
 
 
-def test_grounding_uses_word_fallback_when_pronunciation_generator_fails() -> None:
+def test_grounding_keeps_ipa_missing_when_pronunciation_generator_fails() -> None:
     generator = FailingPronunciationGenerator()
     service = LexicalGroundingService(
         lookup=StubLookup(
@@ -855,6 +907,7 @@ def test_grounding_uses_word_fallback_when_pronunciation_generator_fails() -> No
                     display_form="casa",
                     lemma="casa",
                     definitions=["house"],
+                    definition_language="en",
                     ipa=None,
                 )
             }
@@ -867,14 +920,14 @@ def test_grounding_uses_word_fallback_when_pronunciation_generator_fails() -> No
         item=ParsedWordListItem(line_number=1, submitted_form="casa", display_form="casa", item_key="casa"),
     )
 
-    assert candidate.ipa == "casa"
-    assert candidate.spoken_form == "casa"
+    assert candidate.ipa is None
+    assert candidate.spoken_form is None
     assert candidate.provenance.pronunciation is not None
     assert candidate.provenance.pronunciation.source == "manual_missing"
     assert candidate.provenance.pronunciation.authoritative is False
     assert generator.calls
-    assert "pronunciation generator failed; word fallback will be used" in candidate.provenance.notes
-    assert "word fallback used because authoritative IPA was missing" in candidate.provenance.notes
+    assert "pronunciation generator failed; pronunciation requires review" in candidate.provenance.notes
+    assert "pronunciation requires review before export" in candidate.provenance.notes
 
 
 def test_grounding_preserves_authoritative_ipa_for_frequency_candidates() -> None:
@@ -1102,6 +1155,7 @@ def _korean_record(
         display_form=lemma,
         lemma=lemma,
         definitions=["synthetic fixture only"],
+        definition_language="en",
         part_of_speech=part_of_speech,
         sense_id=sense_id,
         register=register,
@@ -1659,6 +1713,7 @@ def test_korean_word_list_grounding_preserves_nfd_submission_and_portuguese_poli
         ),
         korean_morphology=morphology,
         definition_generator=definition_generator,
+        definition_reviewer=AdvisoryDefinitionReviewer(),
         pronunciation_generator=pronunciation_generator,
     )
 
@@ -1675,14 +1730,17 @@ def test_korean_word_list_grounding_preserves_nfd_submission_and_portuguese_poli
     assert candidate.submitted_form == submitted
     assert candidate.display_form == candidate.lemma == "공부하다"
     assert candidate.grounding_status is GroundingStatus.GROUNDED
-    assert candidate.definition_language == "pt"
+    assert candidate.definition_language == "en"
     assert candidate.translation_target_language == "pt"
     assert candidate.korean_identity is not None
     assert candidate.korean_identity.submitted_form == submitted
     assert candidate.korean_identity.canonical_nfc == "공부해요"
     assert candidate.korean_identity.lemma == "공부하다"
     assert candidate.lemma_key == candidate.korean_identity.lexical_key
-    assert candidate.definitions_html == "VV: LLM definition for 공부하다"
+    assert candidate.definitions_html == "term: synthetic fixture only"
+    assert candidate.provenance.definition.quality_decision == "review_required"
+    assert candidate.ipa is None
+    assert candidate.spoken_form is None
     assert len(definition_generator.calls) == 1
     definition_request = definition_generator.calls[0]
     assert definition_request.source_language == "ko"
@@ -1752,6 +1810,7 @@ def test_korean_definition_output_cannot_replace_resolved_identity() -> None:
         ),
         korean_morphology=morphology,
         definition_generator=generator,
+        definition_reviewer=AdvisoryDefinitionReviewer(),
     )
 
     candidate = service.ground_word_list_item(
@@ -1867,7 +1926,7 @@ def test_korean_frequency_grounding_uses_source_selector_and_never_seed_fallback
     assert candidate.frequency_rank == 142
     assert candidate.frequency_level == 1
     assert candidate.lemma == "먹다"
-    assert candidate.definition_language == "pt"
+    assert candidate.definition_language == "en"
     assert candidate.translation_target_language == "pt"
     assert candidate.korean_identity is not None
     assert candidate.provenance.source != "wordfreq"

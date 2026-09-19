@@ -2,9 +2,9 @@
 
 from __future__ import annotations
 
-from dataclasses import dataclass
 import json
 import os
+from dataclasses import dataclass
 from pathlib import Path
 from tempfile import NamedTemporaryFile
 from typing import Literal, Self
@@ -21,7 +21,6 @@ from multilang.domain.korean import (
     raw_bytes_sha256,
 )
 from multilang.services.korean_frequency import validate_korean_source_build_result
-
 
 _BATCH_SCHEMA_VERSION = "korean-source-review-batch-v1"
 _RECEIPT_SCHEMA_VERSION = "korean-source-review-receipt-v1"

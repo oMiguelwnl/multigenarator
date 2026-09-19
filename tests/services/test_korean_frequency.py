@@ -2,12 +2,11 @@
 
 from __future__ import annotations
 
-import json
 import importlib.util
+import json
 from pathlib import Path
 
 import pytest
-
 
 _HASH_A = "a" * 64
 _HASH_B = "b" * 64
@@ -129,7 +128,7 @@ def test_retrieval_contract_separates_landing_attachment_and_source_bytes() -> N
 
 
 def test_build_result_requires_retrieval_binding_and_no_activation_power() -> None:
-    from multilang.domain.korean import KoreanFrequencyBuildResult, KoreanFrequencyBuildPolicy
+    from multilang.domain.korean import KoreanFrequencyBuildPolicy, KoreanFrequencyBuildResult
 
     policy = KoreanFrequencyBuildPolicy(
         source_id="nikl-korean-learners-vocabulary",
@@ -340,7 +339,10 @@ def test_bounded_retrieval_installs_valid_txt_and_result_after_validation(tmp_pa
 
 
 def test_bounded_retrieval_preserves_cp949_source_bytes(tmp_path: Path) -> None:
-    from multilang.services.korean_frequency import KoreanFrequencySourceRetriever, validate_korean_source_retrieval_result
+    from multilang.services.korean_frequency import (
+        KoreanFrequencySourceRetriever,
+        validate_korean_source_retrieval_result,
+    )
 
     landing = f"<a href='{_CURRENT_ATTACHMENT_URL}'>한국어 학습용 어휘 목록.txt</a>".encode()
     source = "1195\t가각\t명사\t거리의 모퉁이\n".encode("cp949")
@@ -473,7 +475,7 @@ def _write_minimal_valid_build_tree(tmp_path: Path) -> tuple[Path, Path]:
 
     target_root = tmp_path / "bundles"
     inputs = fixture_module._fixture_inputs(tmp_path)
-    result = build_korean_frequency_assets(**inputs, target_root=target_root)
+    build_korean_frequency_assets(**inputs, target_root=target_root)
     return target_root / "fixture-v1", target_root / "fixture-v1" / "build-result.json"
 
 
@@ -509,7 +511,11 @@ def test_inactive_exact_existing_build_validation_is_read_only(tmp_path: Path) -
 def test_final_runtime_loader_rehashes_locator_content_and_rejects_binding_drift(
     tmp_path: Path,
 ) -> None:
-    from multilang.domain.korean import KoreanFrequencyBuildResult, KoreanFrequencyJobAuthority, raw_bytes_sha256
+    from multilang.domain.korean import (
+        KoreanFrequencyBuildResult,
+        KoreanFrequencyJobAuthority,
+        raw_bytes_sha256,
+    )
     from multilang.services.korean_frequency import load_korean_final_frequency_entries
 
     bundle_dir, result_file = _write_minimal_valid_build_tree(tmp_path)
@@ -562,7 +568,11 @@ def test_final_runtime_loader_rehashes_locator_content_and_rejects_binding_drift
 def test_final_runtime_loader_uses_validated_build_result_authority_not_bundle_format(
     tmp_path: Path,
 ) -> None:
-    from multilang.domain.korean import KoreanFrequencyBuildResult, KoreanFrequencyJobAuthority, raw_bytes_sha256
+    from multilang.domain.korean import (
+        KoreanFrequencyBuildResult,
+        KoreanFrequencyJobAuthority,
+        raw_bytes_sha256,
+    )
     from multilang.services.korean_frequency import load_korean_final_frequency_entries
 
     bundle_dir, result_file = _write_minimal_valid_build_tree(tmp_path)

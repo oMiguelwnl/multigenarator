@@ -17,7 +17,6 @@ from multilang.domain.personal_sources import (
 )
 from multilang.services.korean_personal_sources import KoreanPersonalSourceService
 
-
 HASH_A = "a" * 64
 HASH_B = "b" * 64
 

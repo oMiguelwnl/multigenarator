@@ -2,15 +2,14 @@
 
 from __future__ import annotations
 
-from hashlib import sha256
 import json
 import os
+from hashlib import sha256
 from pathlib import Path
 from shutil import move
 from typing import Mapping
 
 from pydantic import BaseModel, ConfigDict, Field, field_validator
-
 
 KOREAN_RELEASE_INPUT_MEMBER_PATHS: tuple[str, ...] = (
     "text-review-application.json",

@@ -39,11 +39,14 @@ def grammar_candidate_sha256(entry) -> str:
 
 def grammar_review_curriculum_sha256(bundle: KoreanGrammarBundle) -> str:
     """Review the graph and foundation independently of its review receipts."""
-    return korean_grammar_canonical_json_sha256({
+    payload = {
         "phase31_binding": bundle.phase31_binding.model_dump(mode="json"),
         "imported_concepts": [item.model_dump(mode="json") for item in bundle.imported_concepts],
         "overlay_concepts": [item.model_dump(mode="json") for item in bundle.overlay_concepts],
-    })
+    }
+    if bundle.orientation_entries:
+        payload["orientation_concept_ids"] = [entry.target_concept_id for entry in bundle.orientation_entries]
+    return korean_grammar_canonical_json_sha256(payload)
 
 
 def assemble_korean_grammar_export_rows(
@@ -61,9 +64,9 @@ def assemble_korean_grammar_export_rows(
     are delivered first in the same package, in the bundle's prerequisite order.
     """
     bundle = KoreanGrammarBundle.model_validate(bundle.model_dump(mode="json", by_alias=True))
-    if not job_id.strip() or not bundle.grammar_entries:
+    if not job_id.strip() or not (bundle.orientation_entries or bundle.grammar_entries):
         raise ValueError("grammar export requires a job and nonempty curriculum")
-    entry_ids = [entry.entry_id for entry in (*bundle.lexical_bootstrap, *bundle.grammar_entries)]
+    entry_ids = [entry.entry_id for entry in (*bundle.lexical_bootstrap, *bundle.orientation_entries, *bundle.grammar_entries)]
     if len(entry_ids) != len(set(entry_ids)):
         raise ValueError("grammar entry identifiers must be unique")
     teaching_cards = tuple(KoreanGrammarBootstrapCard.model_validate(card.model_dump(mode="json")) for card in bootstrap_cards)
@@ -71,7 +74,8 @@ def assemble_korean_grammar_export_rows(
     if len(teaching) != len(teaching_cards) or set(teaching) != {entry.entry_id for entry in bundle.lexical_bootstrap}:
         raise ValueError("grammar export requires exact reviewed lexical bootstrap inventory")
     current = KoreanGrammarBundleBuilder(active_snapshot_resolver=active_snapshot_resolver).build_bundle(
-        lexical_bootstrap=bundle.lexical_bootstrap, grammar_entries=bundle.grammar_entries,
+        lexical_bootstrap=bundle.lexical_bootstrap, orientation_entries=bundle.orientation_entries,
+        grammar_entries=bundle.grammar_entries,
     )
     if current != bundle:
         raise ValueError("grammar bundle or active foundation evidence drift")
@@ -124,7 +128,8 @@ def assemble_korean_grammar_export_rows(
             word_audio=include_media(card.word_media_binding, entry.canonical_nfc, "word"),
             sentence_audio=include_media(card.sentence_media_binding, card.example_sentence, "sentence"),
         ))
-    for entry in bundle.grammar_entries:
+    orientation_ids = {entry.entry_id for entry in bundle.orientation_entries}
+    for entry in (*bundle.orientation_entries, *bundle.grammar_entries):
         review = entry.review_binding
         bindings = (entry.source_binding, review, entry.word_media_binding, entry.sentence_media_binding)
         if any(binding.content_hash != grammar_content_hash(binding) for binding in bindings):
@@ -148,10 +153,14 @@ def assemble_korean_grammar_export_rows(
                 ("Áudio", entry.spoken_sample),
             )
         )
+        if entry.entry_id in orientation_ids:
+            definitions = "<b>Introdução guiada</b><br>" + definitions
         rows.append(ExportCardRow(
             identity=ExportCardIdentity(
                 language=SupportedLanguage.KO, source_type="korean-grammar", job_id=job_id,
-                item_key=entry.entry_id, lemma_key=entry.target_concept_id, sort_index=len(bundle.lexical_bootstrap) + entry.sequence,
+                item_key=entry.entry_id, lemma_key=entry.target_concept_id,
+                sort_index=(len(rows) + 1 if bundle.orientation_entries
+                    else len(bundle.lexical_bootstrap) + entry.sequence),
             ),
             word=escape(entry.form), front_of_card=escape(entry.form), definitions=definitions,
             example_sentence=escape(entry.example_sentence), translation=escape(entry.portuguese_translation),

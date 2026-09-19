@@ -4,17 +4,16 @@ from pathlib import Path
 
 import pytest
 
+from multilang.domain.jobs import SupportedLanguage
 from multilang.domain.korean import (
     KoreanAnalyzerFingerprint,
     KoreanLexicalIdentity,
     KoreanSignatureItem,
 )
-from multilang.domain.jobs import SupportedLanguage
 from multilang.services.highlight_candidate_extraction import extract_highlight_candidates
 from multilang.services.highlight_import_preview import build_highlight_import_preview
 from multilang.services.kindle_highlight_parser import parse_kindle_highlight_export
 from multilang.services.lexical_grounding import KoreanResolvedLexeme
-
 
 FIXTURE_DIR = Path(__file__).parents[1] / "fixtures" / "kindle_highlights"
 

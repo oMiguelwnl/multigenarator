@@ -2,9 +2,9 @@
 
 from __future__ import annotations
 
+import unicodedata
 from importlib import import_module, util
 from types import ModuleType
-import unicodedata
 
 import pytest
 from pydantic import ValidationError

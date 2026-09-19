@@ -2,14 +2,13 @@
 
 from __future__ import annotations
 
+import re
 from dataclasses import dataclass
 from importlib.resources import files
-import re
 
 import genanki
 
 from multilang.services.anki_id_registry import AnkiIdKind, require_registered_anki_id
-
 
 PHONEME_FIELD_NAMES = (
     "Spellings",

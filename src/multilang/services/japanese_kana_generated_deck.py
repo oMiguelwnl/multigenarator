@@ -18,9 +18,9 @@ import genanki
 
 from multilang.services.azure_speech_adapter import AzureSpeechAdapter
 from multilang.services.japanese_kana_deck import (
+    DEFAULT_KANA_DECK_NAME,
     KANA_HIRAGANA_DECK_ID,
     KANA_KATAKANA_DECK_ID,
-    DEFAULT_KANA_DECK_NAME,
     KanaCard,
     KanaDeckExportResult,
     build_kana_model,

@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+from hashlib import sha256
+
 import pytest
 
 from multilang.domain.audio import (
@@ -13,7 +15,11 @@ from multilang.domain.audio import (
     AudioSynthesisStatus,
     NormalizedTtsInput,
 )
-from multilang.services.audio_integrity import AudioIntegrityError, assert_word_audio_matches_word, word_audio_matches_word
+from multilang.services.audio_integrity import (
+    AudioIntegrityError,
+    assert_word_audio_matches_word,
+    word_audio_matches_word,
+)
 
 
 def make_record(
@@ -123,3 +129,95 @@ def test_sentence_asset_is_never_treated_as_matching_word_audio() -> None:
     asset = make_record(word="Eu uso ação todos os dias.", asset_kind=AudioAssetKind.SENTENCE)
 
     assert_integrity_error(asset, "ação", "asset_kind")
+
+
+@pytest.mark.parametrize(("display", "tts"), [("l’homme", "l'homme"), ("cafe\u0301", "café"), ("très  bien", "très bien")])
+def test_synthesis_normalization_keeps_display_text_and_accents(display: str, tts: str) -> None:
+    from multilang.services.audio_integrity import normalize_tts_text
+
+    asset = make_record(word=display, tts_text=tts)
+
+    assert normalize_tts_text(display) == tts
+    assert_word_audio_matches_word(asset, display)
+    assert asset.display_text == display
+
+
+def test_stale_normalized_text_hash_is_rejected() -> None:
+    asset = make_record(word="coração")
+    asset.normalized_input.text_hash = "stale-hash"
+
+    assert_integrity_error(asset, "coração", "normalized_input.text_hash")
+
+
+def test_sentence_integrity_uses_normalized_speech_and_checks_hashes() -> None:
+    from multilang.services.audio_integrity import assert_sentence_audio_matches_sentence
+
+    sentence = "L’homme lit chaque soir."
+    asset = make_record(word=sentence, tts_text="L'homme lit chaque soir.", asset_kind=AudioAssetKind.SENTENCE)
+    assert_sentence_audio_matches_sentence(asset, sentence)
+    asset.provenance.text_hash = "stale-hash"
+
+    with pytest.raises(AudioIntegrityError, match="sentence_audio.*item-1.*provenance.text_hash"):
+        assert_sentence_audio_matches_sentence(asset, sentence)
+
+
+@pytest.mark.parametrize("field", ["normalized_input", "provenance"])
+def test_changed_ssml_hash_is_rejected(field: str) -> None:
+    asset = make_record(word="coração")
+    getattr(asset, field).ssml_hash = "stale-hash"
+
+    assert_integrity_error(asset, "coração", f"{field}.ssml_hash")
+
+
+def replace_ssml(asset: AudioAssetRecord, ssml: str) -> AudioAssetRecord:
+    asset.normalized_input.ssml_text = ssml
+    digest = sha256(ssml.encode("utf-8")).hexdigest()
+    asset.normalized_input.ssml_hash = digest
+    asset.provenance.ssml_hash = digest
+    return asset
+
+
+@pytest.mark.parametrize("asset_kind", [AudioAssetKind.WORD, AudioAssetKind.SENTENCE])
+def test_self_consistent_ssml_for_different_words_is_rejected(asset_kind: AudioAssetKind) -> None:
+    from multilang.services.audio_integrity import assert_sentence_audio_matches_sentence
+
+    text = "coração" if asset_kind is AudioAssetKind.WORD else "Eu cuido do coração."
+    asset = replace_ssml(make_record(word=text, asset_kind=asset_kind), "<speak>outro texto</speak>")
+    check = assert_word_audio_matches_word if asset_kind is AudioAssetKind.WORD else assert_sentence_audio_matches_sentence
+
+    with pytest.raises(AudioIntegrityError, match="ssml.*spoken"):
+        check(asset, text)
+
+
+@pytest.mark.parametrize("ssml", [
+    '<speak><audio src="https://example.invalid/speech.mp3">coração</audio></speak>',
+    '<speak><sub alias="outro">coração</sub></speak>',
+    '<speak><lexicon uri="https://example.invalid/lexicon"/>coração</speak>',
+    '<!DOCTYPE speak [<!ENTITY word "coração">]><speak>&word;</speak>',
+    '<speak xmlns="urn:unapproved">coração</speak>',
+    '<speak><prosody onload="active">coração</prosody></speak>',
+    '<speak>coração',
+    '<speak>' + ('<prosody>' * 257) + 'coração' + ('</prosody>' * 257) + '</speak>',
+])
+def test_unsupported_ssml_is_rejected_even_with_matching_hashes(ssml: str) -> None:
+    asset = replace_ssml(make_record(), ssml)
+
+    with pytest.raises(AudioIntegrityError, match="ssml"):
+        assert_word_audio_matches_word(asset, "coração")
+
+
+@pytest.mark.parametrize("ssml", [
+    "coração",
+    '<speak version="1.0"><prosody rate="-10%">coração</prosody></speak>',
+    '<speak xmlns="http://www.w3.org/2001/10/synthesis" xml:lang="pt-BR"><voice name="pt-BR-FranciscaNeural"><phoneme alphabet="ipa" ph="koɾɐsɐ̃w">coração</phoneme></voice></speak>',
+    '<speak><sub alias="coração">coração</sub></speak>',
+])
+def test_supported_ssml_preserves_same_spoken_text(ssml: str) -> None:
+    assert_word_audio_matches_word(replace_ssml(make_record(), ssml), "coração")
+
+
+def test_ssml_preserves_escaped_text_and_element_tails() -> None:
+    text = "café & chá"
+    asset = replace_ssml(make_record(word=text), "<speak><prosody>café</prosody> &amp; chá</speak>")
+
+    assert_word_audio_matches_word(asset, text)

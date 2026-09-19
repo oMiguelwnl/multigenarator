@@ -10,15 +10,15 @@ newer zstd-compressed ``collection.anki21b`` + protobuf media map format.
 
 from __future__ import annotations
 
-from dataclasses import dataclass
-from hashlib import sha256
-from importlib.resources import files
-from pathlib import Path
 import io
 import re
 import sqlite3
 import tempfile
 import zipfile
+from dataclasses import dataclass
+from hashlib import sha256
+from importlib.resources import files
+from pathlib import Path
 
 import genanki
 import zstandard

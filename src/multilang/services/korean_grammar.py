@@ -24,7 +24,6 @@ from multilang.services.korean_foundation_snapshot import (
     resolve_active_korean_foundation_snapshot,
 )
 
-
 _MAX_IDS: Final = 512
 
 
@@ -39,6 +38,7 @@ class KoreanGrammarReasonCode(str, Enum):
     FORWARD_DEPENDENCY = "forward_dependency"
     INCOMPLETE_CLOSURE = "incomplete_closure"
     STRICT_POLICY_REQUIRED = "strict_policy_required"
+    ORIENTATION_POLICY_REQUIRED = "orientation_policy_required"
     TARGET_NOT_OBSERVED = "target_not_observed"
     REPEATED_TARGET = "repeated_target"
     UNKNOWN_PREREQUISITE = "unknown_prerequisite"
@@ -65,6 +65,7 @@ class KoreanGrammarValidationResult(_FrozenServiceModel):
     ready_state: Literal["blocked", "learner_ready"]
     imported_known_concept_ids: tuple[str, ...] = Field(default=(), max_length=_MAX_IDS)
     admitted_bootstrap_concept_ids: tuple[str, ...] = Field(default=(), max_length=_MAX_IDS)
+    admitted_orientation_concept_ids: tuple[str, ...] = Field(default=(), max_length=_MAX_IDS)
     admitted_grammar_concept_ids: tuple[str, ...] = Field(default=(), max_length=_MAX_IDS)
     known_concept_ids: tuple[str, ...] = Field(default=(), max_length=_MAX_IDS)
     blocked_reason_codes: tuple[str, ...] = Field(default=(), max_length=_MAX_IDS)
@@ -143,10 +144,12 @@ def _overlay_concepts(
     imported_concepts: tuple[KoreanConcept, ...],
     lexical_bootstrap: tuple[KoreanGrammarBootstrapEntry, ...],
     grammar_entries: tuple[KoreanGrammarEntry, ...],
+    orientation_entries: tuple[KoreanGrammarEntry, ...] = (),
 ) -> tuple[KoreanConcept, ...]:
     imported_ids = {concept.id for concept in imported_concepts}
     overlay_ids = [
         *(entry.target_concept_id for entry in lexical_bootstrap),
+        *(entry.target_concept_id for entry in orientation_entries),
         *(entry.target_concept_id for entry in grammar_entries),
     ]
     if len(overlay_ids) != len(set(overlay_ids)) or imported_ids & set(overlay_ids):
@@ -163,7 +166,7 @@ def _overlay_concepts(
                 sequence=base_sequence + offset,
             )
         )
-    for offset, entry in enumerate(grammar_entries, start=len(lexical_bootstrap) + 1):
+    for offset, entry in enumerate((*orientation_entries, *grammar_entries), start=len(lexical_bootstrap) + 1):
         if entry.category_id not in KOREAN_GRAMMAR_CATEGORIES:
             _raise(KoreanGrammarReasonCode.BROAD_TARGET_CATEGORY)
         concepts.append(
@@ -228,6 +231,7 @@ def _strict_result(bundle: KoreanGrammarBundle) -> KoreanGrammarValidationResult
         *(concept.id for concept in bundle.overlay_concepts),
     }
     admitted_bootstrap: list[str] = []
+    admitted_orientation: list[str] = []
     admitted_grammar: list[str] = []
 
     for entry in bundle.lexical_bootstrap:
@@ -241,6 +245,33 @@ def _strict_result(bundle: KoreanGrammarBundle) -> KoreanGrammarValidationResult
         known.add(entry.target_concept_id)
         known_order.append(entry.target_concept_id)
         admitted_bootstrap.append(entry.target_concept_id)
+
+    # Each guided card declares unknowns against the same pre-orientation state.
+    # Peers may be observed together; the complete block becomes known afterward.
+    orientation_ids = {entry.target_concept_id for entry in bundle.orientation_entries}
+    orientation_prerequisites = set(known)
+    for entry in bundle.orientation_entries:
+        evidence = entry.evidence
+        target_id = entry.target_concept_id
+        if entry.category_id != "G0" or evidence.policy != "contextual":
+            _raise(KoreanGrammarReasonCode.ORIENTATION_POLICY_REQUIRED)
+        if target_id not in evidence.observed_concept_ids:
+            _raise(KoreanGrammarReasonCode.TARGET_NOT_OBSERVED)
+        if target_id in known or target_id in admitted_orientation:
+            _raise(KoreanGrammarReasonCode.REPEATED_TARGET)
+        if not set(evidence.observed_concept_ids) <= known | orientation_ids:
+            _raise(KoreanGrammarReasonCode.UNKNOWN_CONCEPT)
+        if not set(evidence.prerequisite_concept_ids) <= orientation_prerequisites:
+            _raise(KoreanGrammarReasonCode.FORWARD_DEPENDENCY)
+        recomputed_unknown = tuple(
+            concept_id for concept_id in evidence.observed_concept_ids if concept_id not in known
+        )
+        if tuple(evidence.unknown_concept_ids) != recomputed_unknown:
+            _raise(KoreanGrammarReasonCode.SERIALIZED_UNKNOWN_MISMATCH)
+        admitted_orientation.append(target_id)
+        orientation_prerequisites.add(target_id)
+    known.update(admitted_orientation)
+    known_order.extend(admitted_orientation)
 
     for entry in bundle.grammar_entries:
         evidence = entry.evidence
@@ -273,6 +304,7 @@ def _strict_result(bundle: KoreanGrammarBundle) -> KoreanGrammarValidationResult
         ready_state="learner_ready",
         imported_known_concept_ids=imported_ids,
         admitted_bootstrap_concept_ids=tuple(admitted_bootstrap),
+        admitted_orientation_concept_ids=tuple(admitted_orientation),
         admitted_grammar_concept_ids=tuple(admitted_grammar),
         known_concept_ids=tuple(known_order),
         blocked_reason_codes=(),
@@ -288,7 +320,7 @@ def _production_blockers(bundle: KoreanGrammarBundle) -> tuple[str, ...]:
             reasons.append("missing_source")
         if not entry.source_binding.license_decision.startswith("approved"):
             reasons.append("missing_license")
-    for entry in bundle.grammar_entries:
+    for entry in (*bundle.orientation_entries, *bundle.grammar_entries):
         if entry.ready_state != "learner_ready":
             reasons.append("entry_not_learner_ready")
         if entry.source_binding.synthetic:
@@ -347,14 +379,17 @@ class KoreanGrammarBundleBuilder:
         *,
         lexical_bootstrap: tuple[KoreanGrammarBootstrapEntry, ...],
         grammar_entries: tuple[KoreanGrammarEntry, ...],
+        orientation_entries: tuple[KoreanGrammarEntry, ...] = (),
     ) -> KoreanGrammarBundle:
         snapshot = self._active_snapshot_resolver()
         phase31_binding, imported_concepts = _phase31_binding_from_snapshot(snapshot)
         _ensure_ordered_sequences(lexical_bootstrap)
+        _ensure_ordered_sequences(orientation_entries)
         _ensure_ordered_sequences(grammar_entries)
         overlay_concepts = _overlay_concepts(
             imported_concepts=imported_concepts,
             lexical_bootstrap=lexical_bootstrap,
+            orientation_entries=orientation_entries,
             grammar_entries=grammar_entries,
         )
         _validate_graph_closure(
@@ -366,6 +401,7 @@ class KoreanGrammarBundleBuilder:
             imported_concepts=imported_concepts,
             overlay_concepts=overlay_concepts,
             lexical_bootstrap=lexical_bootstrap,
+            orientation_entries=orientation_entries,
             grammar_entries=grammar_entries,
         )
         payload = {
@@ -375,6 +411,7 @@ class KoreanGrammarBundleBuilder:
             "imported_concepts": imported_concepts,
             "overlay_concepts": overlay_concepts,
             "lexical_bootstrap": lexical_bootstrap,
+            "orientation_entries": orientation_entries,
             "grammar_entries": grammar_entries,
             "member_hashes": member_hashes,
         }
@@ -397,6 +434,10 @@ class KoreanGrammarBundleBuilder:
                     "grammar_entries": [
                         entry.model_dump(mode="json", by_alias=True)
                         for entry in grammar_entries
+                    ],
+                    "orientation_entries": [
+                        entry.model_dump(mode="json", by_alias=True)
+                        for entry in orientation_entries
                     ],
                 }
             ),

@@ -15,7 +15,6 @@ from multilang.services.latin_source_pack import (
     validate_latin_gramatica,
 )
 
-
 PHASE_24_REQUIREMENTS = {
     "GRAM-01": "Every Latin MVP entry carries typed morphology evidence for the target form.",
     "GRAM-02": "Learner-facing Gramatica values use concise approved abbreviations.",

@@ -3,15 +3,15 @@
 from __future__ import annotations
 
 from dataclasses import dataclass, replace
-from pathlib import Path
-from hashlib import sha256
 from datetime import datetime
+from hashlib import sha256
+from pathlib import Path
 
 import genanki
 
+import multilang.services.phoneme_deck as _phoneme_deck
 from multilang.services.anki_id_registry import AnkiIdKind, registry_id
 from multilang.services.azure_speech_adapter import AzureSpeechAdapter
-import multilang.services.phoneme_deck as _phoneme_deck
 from multilang.services.phoneme_deck import (
     PHONEME_FIELD_NAMES,
     PhonemeCard,

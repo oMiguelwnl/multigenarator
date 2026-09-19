@@ -2,9 +2,8 @@
 
 from __future__ import annotations
 
-from collections.abc import Iterable, Mapping
 import re
-from typing import Any
+from collections.abc import Iterable, Mapping
 
 SENSITIVE_VALUE_REDACTION = "[REDACTED]"
 

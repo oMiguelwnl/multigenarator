@@ -16,7 +16,6 @@ from multilang.services.provider_text_adapters import (
 )
 from multilang.settings import Settings
 
-
 _SYSTEM_PROMPT = """You generate pronunciation data for an Anki vocabulary card. Return only JSON with keys: ipa, spoken_form, uncertainty_notes."""
 _HTML_RE = re.compile(r"<[^>]+>")
 _LANGUAGE_NAMES = {

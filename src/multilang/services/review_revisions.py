@@ -40,7 +40,6 @@ from multilang.domain.review import (
     derive_audio_final_path,
 )
 
-
 _SENTENCE_DEPENDENT_FIELDS: Final = (ReviewField.TRANSLATION, ReviewField.SENTENCE_AUDIO)
 
 

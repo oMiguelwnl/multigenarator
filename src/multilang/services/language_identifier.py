@@ -2,12 +2,11 @@
 
 from __future__ import annotations
 
-from dataclasses import dataclass
 import re
+from dataclasses import dataclass
 from typing import Protocol
 
 from wordfreq import zipf_frequency
-
 
 SUPPORTED_LANGUAGE_CODES = (
     "pt",

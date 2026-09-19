@@ -9,9 +9,12 @@ from sqlalchemy import create_engine, event, text
 from sqlalchemy.orm import Session
 
 from multilang.db.base import Base
-from multilang.db.models import GenerationRunDenominatorModel, ItemProcessingFactModel, ItemTerminalStatusEventModel
+from multilang.db.models import (
+    GenerationRunDenominatorModel,
+    ItemProcessingFactModel,
+    ItemTerminalStatusEventModel,
+)
 from multilang.domain.highlights import HighlightProvenance, NormalizedHighlight
-from multilang.domain.korean import KoreanFrequencyJobAuthority, raw_bytes_sha256
 from multilang.domain.jobs import (
     ControlledReasonCode,
     FieldObligationSummary,
@@ -21,6 +24,7 @@ from multilang.domain.jobs import (
     JobStatus,
     SupportedLanguage,
 )
+from multilang.domain.korean import KoreanFrequencyJobAuthority, raw_bytes_sha256
 from multilang.domain.personal_sources import PersonalSourceRow
 from multilang.repositories.highlight_import_repository import HighlightImportRepository
 from multilang.repositories.job_repository import JobRepository

@@ -12,7 +12,6 @@ from multilang.domain.korean import (
     KoreanSignatureItem,
 )
 
-
 runner = CliRunner()
 FIXTURE_DIR = Path(__file__).parents[1] / "fixtures" / "kindle_highlights"
 

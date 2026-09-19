@@ -9,13 +9,13 @@ through Anki's built-in ``{{furigana:...}}`` filter.
 
 from __future__ import annotations
 
+import re
 from dataclasses import dataclass, replace
 from datetime import datetime
 from functools import cached_property
 from hashlib import sha256
 from importlib.resources import files
 from pathlib import Path
-import re
 
 import genanki
 

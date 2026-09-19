@@ -41,8 +41,10 @@ from multilang.services.part_of_speech import (
     resolve_part_of_speech_label,
 )
 from multilang.services.polish_function_words import lookup_polish_function_word
+from multilang.services.pronunciation_validation import is_usable_ipa
 from multilang.services.provider_pronunciation_adapters import (
     PronunciationGenerationRequest,
+    PronunciationGenerationResult,
 )
 from multilang.services.rate_limit import RateLimiter
 from multilang.services.text_field_remediation import builtin_definition_correction
@@ -907,20 +909,23 @@ class LexicalGroundingService:
         rate_limiter: RateLimiter | None = None,
     ) -> LexicalCardCandidate:
         policy = policy_for_language(SupportedLanguage.KO)
-        definition_result = self._generate_definition(
-            display_form=identity.lemma,
-            lemma=identity.lemma,
-            source_language=SupportedLanguage.KO.value,
-            target_language=policy.definition_language,
-            part_of_speech=identity.part_of_speech,
-            korean_identity=identity,
-            rate_limiter=rate_limiter,
+        # Identity admission and definition approval are separate authorities.
+        candidates = getattr(self._lookup, "lookup_candidates", None)
+        inventory = getattr(self._lookup, "iter_candidates", None)
+        records = (candidates(language_code="ko", term=identity.lemma) if callable(candidates)
+                   else inventory(language_code="ko") if callable(inventory) else ())
+        matches = [record for record in records
+                   if record.lemma == identity.lemma and record.sense_id == identity.sense_id
+                   and _normalize_source_pos(record.part_of_speech) == _source_pos_for_signature(identity.morpheme_signature)
+                   and (record.register or "standard") == identity.register]
+        record = matches[0] if len(matches) == 1 else None
+        definition = self._definition_decision(
+            display_form=identity.lemma, lemma=identity.lemma,
+            source_language="ko", target_language=policy.definition_language,
+            part_of_speech=identity.part_of_speech, korean_identity=identity,
+            record=record, rate_limiter=rate_limiter,
         )
-        definitions_html = (
-            canonicalize_korean(definition_result.definitions_html)
-            if definition_result is not None
-            else None
-        )
+        definitions_html = definition.definitions_html
         return LexicalCardCandidate(
             submitted_form=submitted_form,
             display_form=identity.lemma,
@@ -929,24 +934,12 @@ class LexicalGroundingService:
             frequency_rank=frequency_rank,
             frequency_level=frequency_level,
             definitions_html=definitions_html,
-            definition_language=policy.definition_language,
+            definition_language=definition.actual_language or "und",
             translation_target_language=policy.translation_target_language,
             grounding_status=GroundingStatus.GROUNDED,
             provenance=LexicalProvenance(
                 source="source_backed_korean_lexicon",
-                definition=(
-                    DefinitionRecord(
-                        source=str(
-                            definition_result.provenance.get(
-                                "source", "definition-generator"
-                            )
-                        ),
-                        value=definitions_html,
-                        fallback_used=False,
-                    )
-                    if definition_result is not None
-                    else None
-                ),
+                definition=definition.record,
                 notes=["Korean identity resolved by exact source signature consensus"],
             ),
             korean_identity=identity,
@@ -1012,10 +1005,13 @@ class LexicalGroundingService:
             rate_limiter=rate_limiter,
         )
         definitions_html = definition.definitions_html
-        ipa = record.ipa.strip() if record.ipa else None
+        ipa = record.ipa.strip() if is_usable_ipa(record.ipa) else None
         spoken_form: str | None = learner_display_form if ipa else None
         pronunciation_source = record.source if ipa else f"{record.source}_missing"
         pronunciation_authoritative = bool(ipa)
+        pronunciation_uncertainty: list[str] = []
+        pronunciation_provenance: dict[str, object] = {}
+        pronunciation_value = record.ipa
         notes: list[str] = []
         if ipa:
             notes.append("authoritative IPA used from lexical source")
@@ -1025,34 +1021,52 @@ class LexicalGroundingService:
             if rate_limiter is not None:
                 rate_limiter.wait()
             try:
-                pronunciation = self._pronunciation_generator.generate_pronunciation(
-                    PronunciationGenerationRequest(
-                        target_language=language.value,
-                        display_form=learner_display_form,
-                        lemma=record.lemma,
-                        definitions_html=definitions_html,
-                    )
+                pronunciation = PronunciationGenerationResult.model_validate(
+                    self._pronunciation_generator.generate_pronunciation(
+                        PronunciationGenerationRequest(
+                            target_language=language.value,
+                            display_form=learner_display_form,
+                            lemma=record.lemma,
+                            definitions_html=definitions_html,
+                        )
+                    ),
+                    from_attributes=True,
                 )
             except Exception:
-                notes.append("pronunciation generator failed; word fallback will be used")
+                notes.append("pronunciation generator failed; pronunciation requires review")
             else:
-                ipa = str(getattr(pronunciation, "ipa")).strip()
-                spoken_form = str(getattr(pronunciation, "spoken_form")).strip()
+                pronunciation_value = pronunciation.ipa.strip()
+                ipa = pronunciation_value if is_usable_ipa(pronunciation_value) else None
+                spoken_form = pronunciation.spoken_form.strip() or None
+                pronunciation_uncertainty = pronunciation.uncertainty_notes
+                pronunciation_provenance = pronunciation.provenance
                 pronunciation_source = str(
-                    getattr(pronunciation, "provenance", {}).get(
+                    pronunciation.provenance.get(
                         "source", "provider-pronunciation-generator"
                     )
                 )
-                pronunciation_authoritative = True
-                notes.append("provider IPA used because authoritative IPA was missing")
-        if not ipa:
-            ipa = learner_display_form
-            spoken_form = learner_display_form
-            pronunciation_authoritative = False
-            notes.append("word fallback used because authoritative IPA was missing")
-
-        warning_code = "definition_review_required" if definition.review_required else None
-        warning_detail = definition.record.fallback_reason if definition.review_required else None
+                pronunciation_authoritative = bool(
+                    ipa
+                    and not pronunciation_uncertainty
+                    and pronunciation_source == "library-pronunciation-generator"
+                )
+                notes.append(
+                    "deterministic library IPA used because authoritative IPA was missing"
+                    if pronunciation_authoritative
+                    else "generated pronunciation retained for review"
+                )
+        pronunciation_review_required = (
+            language not in {SupportedLanguage.JA, SupportedLanguage.ZH, SupportedLanguage.KO}
+            and not pronunciation_authoritative
+        )
+        if pronunciation_review_required:
+            notes.append("pronunciation requires review before export")
+        warning_code = "definition_review_required" if definition.review_required else (
+            "pronunciation_review_required" if pronunciation_review_required else None
+        )
+        warning_detail = definition.record.fallback_reason if definition.review_required else (
+            "trusted IPA unavailable" if pronunciation_review_required else None
+        )
 
         return LexicalCardCandidate(
             submitted_form=submitted_form,
@@ -1072,39 +1086,14 @@ class LexicalGroundingService:
                 definition=definition.record,
                 pronunciation=PronunciationRecord(
                     source=pronunciation_source,
-                    value=ipa,
+                    value=ipa if pronunciation_authoritative else pronunciation_value,
                     authoritative=pronunciation_authoritative,
+                    uncertainty_notes=pronunciation_uncertainty,
+                    provenance=pronunciation_provenance,
                 ),
                 notes=notes,
             ),
         )
-
-    def _generate_definition(
-        self,
-        *,
-        display_form: str,
-        lemma: str,
-        source_language: str,
-        target_language: str,
-        part_of_speech: str | None,
-        korean_identity: KoreanLexicalIdentity | None = None,
-        rate_limiter: RateLimiter | None = None,
-    ) -> DefinitionGenerationResult | None:
-        if self._definition_generator is None:
-            return None
-        if rate_limiter is not None:
-            rate_limiter.wait()
-        return self._definition_generator.generate_definition(
-            DefinitionGenerationRequest(
-                display_form=display_form,
-                lemma=lemma,
-                source_language=source_language,
-                target_language=target_language,
-                part_of_speech=part_of_speech,
-                korean_identity=korean_identity,
-            )
-        )
-
 
     def _definition_decision(
         self,

@@ -2,16 +2,15 @@
 
 from __future__ import annotations
 
+import json
+import subprocess
 from collections.abc import Callable
 from hashlib import sha256
-import json
 from pathlib import Path
-import subprocess
 
 from pydantic import BaseModel, ConfigDict, Field
 
 from multilang.services.korean_release_safety import KoreanReleaseAuthorization
-
 
 GitRunner = Callable[[tuple[str, ...], Path], None]
 

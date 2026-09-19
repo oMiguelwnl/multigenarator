@@ -5,7 +5,10 @@ from sqlalchemy.orm import Session
 
 from multilang.db.base import Base
 from multilang.domain.korean import raw_bytes_sha256
-from multilang.repositories.provider_call_log_repository import ProviderCallLogCreate, ProviderCallLogRepository
+from multilang.repositories.provider_call_log_repository import (
+    ProviderCallLogCreate,
+    ProviderCallLogRepository,
+)
 
 
 def _hash(seed: str) -> str:

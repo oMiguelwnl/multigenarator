@@ -145,7 +145,7 @@ class KoreanLearningRuntime:
                 return ()
             bundle = KoreanGrammarBundle.model_validate(payload)
             return tuple(Phase33JobItem(source_family=source, item_id=entry.entry_id)
-                         for entry in (*bundle.lexical_bootstrap, *bundle.grammar_entries))
+                         for entry in (*bundle.lexical_bootstrap, *bundle.orientation_entries, *bundle.grammar_entries))
         if source == "custom":
             inventory = KoreanPersonalSourceRepository(self.session).list_inventory(job_id, "word-list")
             if inventory.rows:
@@ -515,8 +515,9 @@ class KoreanLearningRuntime:
         )
         from multilang.services.korean_grammar import KoreanGrammarBundleBuilder
         validated = KoreanGrammarBundleBuilder(active_snapshot_resolver=resolve_active_korean_foundation_snapshot).build_bundle(
-            lexical_bootstrap=bundle.lexical_bootstrap, grammar_entries=bundle.grammar_entries)
-        if validated != bundle or not bundle.grammar_entries:
+            lexical_bootstrap=bundle.lexical_bootstrap, orientation_entries=bundle.orientation_entries,
+            grammar_entries=bundle.grammar_entries)
+        if validated != bundle or not (bundle.orientation_entries or bundle.grammar_entries):
             _fail("grammar_bundle_mismatch")
         if job_id is None:
             key = f"ko-grammar:{bundle.bundle_sha256}"
@@ -524,7 +525,7 @@ class KoreanLearningRuntime:
             if job is None:
                 job = self.jobs.create_job(request=GenerationRequest(language=SupportedLanguage.KO, source_type="korean-grammar"),
                     run_key=key, source_fingerprint=bundle.bundle_sha256,
-                    total_items=len(bundle.lexical_bootstrap) + len(bundle.grammar_entries))
+                    total_items=len(bundle.lexical_bootstrap) + len(bundle.orientation_entries) + len(bundle.grammar_entries))
         else:
             job = self._job(job_id)
         existing = job.resume_state.get("korean_grammar_bundle")
@@ -533,7 +534,7 @@ class KoreanLearningRuntime:
             _fail("grammar_import_conflict")
         with repository_transaction(self.session):
             job.resume_state = {**job.resume_state, "korean_grammar_bundle": payload}
-        return {"job_id": job.id, "imported": len(bundle.lexical_bootstrap) + len(bundle.grammar_entries), "bundle_sha256": bundle.bundle_sha256,
+        return {"job_id": job.id, "imported": len(bundle.lexical_bootstrap) + len(bundle.orientation_entries) + len(bundle.grammar_entries), "bundle_sha256": bundle.bundle_sha256,
                 "reused": existing is not None}
 
     def load_grammar_bundle(self, job_id):
@@ -721,7 +722,7 @@ class KoreanLearningRuntime:
         from multilang.domain.korean_grammar_bootstrap import KoreanGrammarBootstrapCard
         from multilang.domain.source_profiles import get_source_profile
         from multilang.services.export_anki_package import export_anki_package
-        from multilang.services.export_tabular_bundle import write_export_tabular_bundle
+        from multilang.services.exporting.tabular import write_export_tabular_bundle
         from multilang.services.korean_grammar_export import assemble_korean_grammar_export_rows
         if export_format not in {"apkg", "csv", "tsv"} or media_dir.is_symlink() or not media_dir.is_dir():
             _fail("invalid_export_input")

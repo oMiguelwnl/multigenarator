@@ -8,7 +8,6 @@ from importlib import import_module, util
 import pytest
 from pydantic import ValidationError
 
-
 SHA_A = "a" * 64
 SHA_B = "b" * 64
 SHA_C = "c" * 64

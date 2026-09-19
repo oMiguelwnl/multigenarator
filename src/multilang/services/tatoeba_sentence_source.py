@@ -4,9 +4,9 @@ from __future__ import annotations
 
 import json
 import re
+import unicodedata
 import urllib.parse
 import urllib.request
-import unicodedata
 from typing import Protocol
 
 from pydantic import BaseModel, Field

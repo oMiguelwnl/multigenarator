@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-import json
 import importlib.util
 from pathlib import Path
 from typing import Any
@@ -18,7 +17,6 @@ from multilang.domain.korean import (
     KoreanSignatureItem,
     raw_bytes_sha256,
 )
-
 
 _LANDING_HASH = "a" * 64
 _ATTACHMENT_HASH = "b" * 64

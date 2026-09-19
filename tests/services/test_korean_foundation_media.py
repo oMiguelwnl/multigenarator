@@ -2,20 +2,19 @@
 
 from __future__ import annotations
 
-from copy import deepcopy
-from hashlib import sha256
-from importlib import import_module, util
 import inspect
 import io
 import json
 import os
-from pathlib import Path
 import stat
 import struct
-from types import ModuleType, SimpleNamespace
 import unicodedata
 import wave
 import zlib
+from hashlib import sha256
+from importlib import import_module, util
+from pathlib import Path
+from types import ModuleType, SimpleNamespace
 
 import pytest
 from pydantic import ValidationError

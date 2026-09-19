@@ -5,7 +5,10 @@ from sqlalchemy.orm import Session
 
 from multilang.db.base import Base
 from multilang.repositories.text_repository import TextRepository
-from multilang.services.provider_response_cache import ProviderCacheKey, ProviderResponseCacheService
+from multilang.services.provider_response_cache import (
+    ProviderCacheKey,
+    ProviderResponseCacheService,
+)
 
 
 def test_provider_response_cache_reuses_identical_key_and_misses_prompt_version() -> None:

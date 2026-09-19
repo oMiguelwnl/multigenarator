@@ -3,8 +3,8 @@
 from __future__ import annotations
 
 import importlib.util
-from pathlib import Path
 import sys
+from pathlib import Path
 from types import ModuleType
 
 from typer.testing import CliRunner
@@ -15,8 +15,11 @@ from multilang.domain.exporting import (
     HIGHLIGHT_EXPORT_CARD_FIELD_NAMES,
     MANUAL_EXPORT_CARD_FIELD_NAMES,
 )
-from multilang.services.export_anki_package import HIGHLIGHT_NOTE_TYPE_NAME, MANUAL_NOTE_TYPE_NAME, NOTE_TYPE_NAME
-
+from multilang.services.export_anki_package import (
+    HIGHLIGHT_NOTE_TYPE_NAME,
+    MANUAL_NOTE_TYPE_NAME,
+    NOTE_TYPE_NAME,
+)
 
 runner = CliRunner()
 

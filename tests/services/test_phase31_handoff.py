@@ -8,7 +8,6 @@ from types import ModuleType
 
 import pytest
 
-
 PROJECT_ROOT = Path(__file__).resolve().parents[2]
 HANDOFF_SCRIPT = PROJECT_ROOT / "scripts" / "phase31_handoff.py"
 PHASE_RELPATH = Path(".planning/phases/31-hangul-and-pronunciation-i-plus-1")

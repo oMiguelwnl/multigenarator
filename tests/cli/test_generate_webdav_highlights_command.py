@@ -8,7 +8,6 @@ from multilang.cli import create_app
 from multilang.domain.jobs import GenerationRequest
 from multilang.domain.webdav import WebDAVError, WebDAVFailureCode, WebDAVFetchResult
 
-
 runner = CliRunner()
 
 

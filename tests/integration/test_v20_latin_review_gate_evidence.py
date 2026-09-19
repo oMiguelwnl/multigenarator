@@ -2,12 +2,12 @@
 
 from __future__ import annotations
 
-import pytest
-
 from multilang.domain.jobs import SupportedLanguage
-from multilang.services.latin_review import assert_latin_records_export_ready, load_latin_curated_records
+from multilang.services.latin_review import (
+    assert_latin_records_export_ready,
+    load_latin_curated_records,
+)
 from multilang.services.latin_source_pack import load_latin_mvp_source_pack
-
 
 PHASE_25_REQUIREMENTS = ("REV-01", "REV-02", "REV-03")
 

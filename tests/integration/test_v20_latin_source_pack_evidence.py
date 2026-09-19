@@ -10,8 +10,10 @@ from multilang.domain.source_profiles import get_source_profile
 from multilang.services.generate_job import GenerateJobService
 from multilang.services.ingest_lexical_items import IngestLexicalItemsService
 from multilang.services.latin_mvp import LatinMvpGenerationService
-from multilang.services.latin_source_pack import load_latin_mvp_source_pack, validate_latin_target_presence
-
+from multilang.services.latin_source_pack import (
+    load_latin_mvp_source_pack,
+    validate_latin_target_presence,
+)
 
 PHASE_23_REQUIREMENTS = ("FREQ-01", "FREQ-02", "FREQ-03", "SRC-01", "SRC-02", "SENT-01", "SENT-02")
 

@@ -2,13 +2,12 @@
 
 from __future__ import annotations
 
+import os
+import stat
 from contextlib import contextmanager
 from hashlib import sha256
-import os
 from pathlib import Path
-import stat
 from typing import Final, Iterator
-
 
 KOREAN_FOUNDATION_STATE_LOCK_VERSION: Final = (
     "phase31-korean-foundation-state-lock-v1"

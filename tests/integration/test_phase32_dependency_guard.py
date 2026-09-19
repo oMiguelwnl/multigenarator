@@ -2,7 +2,12 @@
 
 from __future__ import annotations
 
+from inspect import getsource, unwrap
 from pathlib import Path
+
+from typer.main import get_command
+
+from multilang.cli import create_app
 
 
 def test_txt_official_source_contract_avoids_spreadsheet_parsers_and_wordfreq_final_authority() -> None:
@@ -18,14 +23,13 @@ def test_txt_official_source_contract_avoids_spreadsheet_parsers_and_wordfreq_fi
 
 
 def test_dependency_guard_keeps_official_source_commands_out_of_runtime_construction() -> None:
-    cli_source = Path("src/multilang/cli.py").read_text(encoding="utf-8")
+    commands = get_command(create_app()).commands
 
     for command_name in (
         "retrieve-korean-frequency-source",
         "validate-korean-source-retrieval-result",
     ):
-        index = cli_source.index(command_name)
-        command_block = cli_source[index : cli_source.index("@cli.command", index + 1)]
+        command_block = getsource(unwrap(commands[command_name].callback))
         assert "build_runtime_service" not in command_block
         assert "LexicalGroundingService" not in command_block
         assert "KiwiKoreanMorphologyService" not in command_block

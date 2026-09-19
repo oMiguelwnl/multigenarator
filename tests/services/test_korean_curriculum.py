@@ -2,14 +2,14 @@
 
 from __future__ import annotations
 
+import inspect
+import json
+import unicodedata
 from copy import deepcopy
 from hashlib import sha256
 from importlib import import_module, util
-import inspect
-import json
 from pathlib import Path
 from types import ModuleType, SimpleNamespace
-import unicodedata
 
 import pytest
 from pydantic import ValidationError

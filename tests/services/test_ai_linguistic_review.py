@@ -2,10 +2,9 @@
 
 from __future__ import annotations
 
+import inspect
 from copy import deepcopy
 from importlib import import_module, util
-import inspect
-import json
 from pathlib import Path
 from types import ModuleType, SimpleNamespace
 

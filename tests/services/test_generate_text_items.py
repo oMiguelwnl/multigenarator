@@ -45,6 +45,15 @@ from multilang.services.text_generation import (
 from multilang.services.text_validation import TextValidationResult, TextValidationService
 
 
+@pytest.fixture(autouse=True)
+def unavailable_optional_morphology(monkeypatch):
+    """Orchestration tests do not load optional NLP models."""
+    monkeypatch.setattr(
+        "multilang.services.text_validation.OptionalStanzaMorphologicalAnalyzer",
+        lambda: SimpleNamespace(contains_target_lemma=lambda **_: SimpleNamespace(reliable=False)),
+    )
+
+
 def make_candidate(
     *,
     lemma: str = "wash",
@@ -682,6 +691,21 @@ def test_generate_text_items_limits_eligible_candidates_after_missing_only_selec
     assert [snapshot.remaining_missing for snapshot in progress] == [1, 0]
     assert [snapshot.last_item_key for snapshot in progress] == ["line-1", "line-2"]
     assert all(snapshot.elapsed_seconds >= 0 for snapshot in progress)
+
+
+@pytest.mark.parametrize("concurrency", [0, 2, 100])
+def test_generate_text_items_rejects_unsupported_concurrency_before_database_or_provider_work(concurrency) -> None:
+    service = GenerateTextItemsService(
+        job_repository=None,
+        lexical_repository=None,
+        text_repository=None,
+        text_generation_service=None,
+        text_validation_service=None,
+        tatoeba_sentence_source=None,
+    )
+
+    with pytest.raises(ValueError, match="concurrency=1"):
+        service.execute(job_id="job-1", deck_language=SupportedLanguage.EN, concurrency=concurrency)
 
 
 def test_generate_text_items_selects_a_bounded_sequential_batch() -> None:
@@ -1737,27 +1761,3 @@ def test_korean_generation_persists_hash_only_two_plus_one_selector_history() ->
     assert bad_translation not in str(history)
     assert saved.repair_attempt_count == 1
     assert tatoeba.calls == []
-
-
-@pytest.mark.parametrize("concurrency", [0, 2, 100])
-def test_generate_text_items_rejects_unsupported_concurrency_before_database_or_provider_work(concurrency) -> None:
-    service = GenerateTextItemsService(
-        job_repository=None,
-        lexical_repository=None,
-        text_repository=None,
-        text_generation_service=None,
-        text_validation_service=None,
-        tatoeba_sentence_source=None,
-    )
-
-    with pytest.raises(ValueError, match="concurrency=1"):
-        service.execute(job_id="job-1", deck_language=SupportedLanguage.EN, concurrency=concurrency)
-
-
-@pytest.fixture(autouse=True)
-def unavailable_optional_morphology(monkeypatch):
-    """Orchestration tests do not load optional NLP models."""
-    monkeypatch.setattr(
-        "multilang.services.text_validation.OptionalStanzaMorphologicalAnalyzer",
-        lambda: SimpleNamespace(contains_target_lemma=lambda **_: SimpleNamespace(reliable=False)),
-    )

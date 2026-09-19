@@ -2,15 +2,15 @@
 
 from __future__ import annotations
 
+import unicodedata
 from hashlib import sha256
 from pathlib import Path
-import unicodedata
 
 from multilang.domain.jobs import GenerationRequest, SupportedLanguage
 from multilang.domain.personal_sources import PersonalSourceRow
 from multilang.services.input_fingerprint import (
-    build_korean_ordered_source_fingerprint,
     build_input_fingerprint,
+    build_korean_ordered_source_fingerprint,
     build_run_key,
     normalize_requested_item_keys,
 )

@@ -3,20 +3,20 @@
 from __future__ import annotations
 
 import csv
+import json
+import os
+import re
+import sqlite3
+import stat
+import tempfile
+import zipfile
 from dataclasses import dataclass
 from hashlib import sha256
 from html import escape
 from importlib.resources import files
 from io import StringIO
-import json
-import os
 from pathlib import Path
-import re
-import sqlite3
-import stat
-import tempfile
 from typing import Final
-import zipfile
 
 import genanki
 
@@ -45,7 +45,6 @@ from multilang.services.phoneme_deck import (
     build_phoneme_model,
     build_phoneme_note,
 )
-
 
 KOREAN_HANGUL_MODEL_ID: Final = registry_id(
     family="korean_foundation", role="hangul_model", kind=AnkiIdKind.MODEL

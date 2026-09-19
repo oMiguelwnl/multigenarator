@@ -38,6 +38,10 @@ def register_commands(cli: typer.Typer, dependencies: Dependencies) -> None:
     cli.add_typer(phase33, name="phase33")
     cli.add_typer(phase33, name="korean")
 
+    from multilang.cli_commands.korean_grammar_course import register_commands as register_course
+
+    register_course(phase33)
+
     def _operate(method: str, **kwargs):
         runtime = None
         try:

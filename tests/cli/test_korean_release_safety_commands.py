@@ -2,15 +2,14 @@
 
 from __future__ import annotations
 
-from hashlib import sha256
 import json
+from hashlib import sha256
 from pathlib import Path
 
 from typer.testing import CliRunner
 
 from multilang.cli import create_app
 from multilang.services.korean_release_safety import KOREAN_RELEASE_INPUT_MEMBER_PATHS
-
 
 runner = CliRunner()
 

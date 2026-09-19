@@ -17,9 +17,18 @@ from multilang.services.export_anki_package import (
     NOTE_TYPE_NAME,
     build_multilang_model,
 )
-from multilang.services.latin_export import LATIN_EXPORT_FIELD_NAMES, LATIN_MODEL_ID, LATIN_NOTE_TYPE_NAME, build_latin_anki_model
-from multilang.services.russian_phoneme_deck import PHONEME_FIELD_NAMES, PHONEME_MODEL_ID, PHONEME_NOTE_TYPE_NAME, build_russian_phoneme_model
-
+from multilang.services.latin_export import (
+    LATIN_EXPORT_FIELD_NAMES,
+    LATIN_MODEL_ID,
+    LATIN_NOTE_TYPE_NAME,
+    build_latin_anki_model,
+)
+from multilang.services.russian_phoneme_deck import (
+    PHONEME_FIELD_NAMES,
+    PHONEME_MODEL_ID,
+    PHONEME_NOTE_TYPE_NAME,
+    build_russian_phoneme_model,
+)
 
 EVID_03_EXISTING_MODE_EXPORT_REQUIREMENTS = ("EVID-03",)
 

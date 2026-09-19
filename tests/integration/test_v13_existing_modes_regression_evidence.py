@@ -21,7 +21,6 @@ from multilang.services.export_anki_package import (
 )
 from multilang.services.russian_phoneme_deck import PHONEME_FIELD_NAMES, build_russian_phoneme_model
 
-
 V13_NORMAL_FIELD_NAMES = (
     "SortIndex",
     "word",

@@ -2,19 +2,19 @@
 
 from __future__ import annotations
 
+import io
+import json
+import os
+import stat
+import struct
+import unicodedata
+import wave
 from copy import deepcopy
 from datetime import datetime
 from enum import Enum
 from hashlib import sha256
-import io
-import json
-import os
 from pathlib import Path, PurePosixPath
-import stat
-import struct
 from typing import Final, Literal, Protocol, Self, TypeAlias
-import unicodedata
-import wave
 
 from pydantic import BaseModel, ConfigDict, Field, ValidationError, field_validator, model_validator
 
@@ -33,10 +33,8 @@ from multilang.services.korean_curriculum import (
     validate_korean_foundation_pack,
 )
 from multilang.services.korean_foundation_snapshot import (
-    ResolvedKoreanFoundationSnapshot,
     resolve_active_korean_foundation_snapshot,
 )
-
 
 DEFAULT_KOREAN_FOUNDATION_MEDIA_MANIFEST_PATH: Final = (
     CURRENT_KOREAN_FOUNDATION_CANDIDATE_PATH

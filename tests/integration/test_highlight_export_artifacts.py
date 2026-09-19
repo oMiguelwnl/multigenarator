@@ -10,10 +10,10 @@ import zipfile
 from pathlib import Path
 
 from multilang.domain.exporting import (
+    HIGHLIGHT_EXPORT_CARD_FIELD_NAMES,
     ExportArtifactFormat,
     ExportCardIdentity,
     ExportCardRow,
-    HIGHLIGHT_EXPORT_CARD_FIELD_NAMES,
 )
 from multilang.domain.jobs import SupportedLanguage
 from multilang.services.export_anki_package import (

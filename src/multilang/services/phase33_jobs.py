@@ -25,7 +25,6 @@ from multilang.services.item_outcomes import (
     run_item_outcomes,
 )
 
-
 _SOURCE_ORDER = ("grammar", "custom", "highlight")
 _PRIVATE_CLOSED_STATES = frozenset({"disclosing", "disclosed", "failed_unknown"})
 

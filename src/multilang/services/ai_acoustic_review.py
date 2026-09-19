@@ -2,15 +2,14 @@
 
 from __future__ import annotations
 
-from datetime import datetime
-from copy import deepcopy
-from hashlib import sha256
 import json
-from typing import Final, Literal, Self
 import unicodedata
+from copy import deepcopy
+from datetime import datetime
+from hashlib import sha256
+from typing import Final, Literal, Self
 
 from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator
-
 
 _LOWERCASE_HEX: Final = frozenset("0123456789abcdef")
 _MAX_IDENTIFIER_LENGTH: Final = 160

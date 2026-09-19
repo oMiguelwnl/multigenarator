@@ -8,16 +8,15 @@ from pathlib import Path
 import pytest
 
 from multilang.domain.exporting import (
-    ExportArtifactFormat,
-    ExportCardIdentity,
-    ExportCardRow,
     FREQUENCY_EXPORT_CARD_FIELD_NAMES,
     HIGHLIGHT_EXPORT_CARD_FIELD_NAMES,
     MANDARIN_EXPORT_CARD_FIELD_NAMES,
+    ExportArtifactFormat,
+    ExportCardIdentity,
+    ExportCardRow,
 )
 from multilang.domain.jobs import SupportedLanguage
 from multilang.services.export_tabular_bundle import write_export_tabular_bundle
-
 
 _HASH_A = "a" * 64
 _HASH_B = "b" * 64

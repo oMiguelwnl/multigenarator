@@ -7,8 +7,12 @@ from hashlib import sha256
 import pytest
 
 from multilang.domain.audio import AudioAssetKind
-from multilang.services.korean_audio import build_korean_audio_asset, build_korean_tts_input
-from multilang.services.korean_audio import KoreanAzureCatalogVoice, KoreanVoiceProfile
+from multilang.services.korean_audio import (
+    KoreanAzureCatalogVoice,
+    KoreanVoiceProfile,
+    build_korean_audio_asset,
+    build_korean_tts_input,
+)
 from multilang.services.korean_audio_pilot_evidence import (
     KoreanAudioPilotAuthority,
     validate_korean_audio_pilot_result,

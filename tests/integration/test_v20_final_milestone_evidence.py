@@ -2,13 +2,14 @@
 
 from __future__ import annotations
 
-import json
 import importlib.util
+import json
 from pathlib import Path
 from types import ModuleType
 
 from multilang.domain.exporting import ExportArtifactFormat
 from multilang.services.latin_export import export_latin_mvp_bundle
+
 V20_REQUIREMENTS = (
     "MODE-01", "MODE-02", "MODE-03",
     "FREQ-01", "FREQ-02", "FREQ-03", "SRC-01", "SRC-02", "SENT-01", "SENT-02",

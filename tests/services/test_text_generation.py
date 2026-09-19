@@ -2,10 +2,10 @@
 
 from __future__ import annotations
 
+import unicodedata
 from datetime import UTC, datetime, timedelta
 from hashlib import sha256
 from types import SimpleNamespace
-import unicodedata
 
 import pytest
 
@@ -16,17 +16,17 @@ from multilang.domain.korean import (
     KoreanSignatureItem,
     KoreanTextError,
 )
-from multilang.domain.lexicon import (
-    DefinitionRecord,
-    GroundingStatus,
-    LexicalCardCandidate,
-    LexicalProvenance,
-)
 from multilang.domain.korean_provider import (
     KoreanProviderBudget,
     KoreanProviderPolicy,
     KoreanProviderRoute,
     KoreanProviderTask,
+)
+from multilang.domain.lexicon import (
+    DefinitionRecord,
+    GroundingStatus,
+    LexicalCardCandidate,
+    LexicalProvenance,
 )
 from multilang.domain.private_processing import (
     PrivateDisclosureState,
@@ -45,19 +45,18 @@ from multilang.services.text_generation import (
     DefinitionGenerationRequest,
     GeneratedTextBundle,
     PrivateContextAuthorizationError,
+    SentenceGenerationAdapter,
     SentenceGenerationFallback,
-    TextGenerationService,
     SentenceGenerationRequest,
     SentenceGenerationResult,
-    SentenceGenerationAdapter,
+    SentenceTranslationAdapter,
     SentenceTranslationRequest,
     SentenceTranslationResult,
-    SentenceTranslationAdapter,
+    TextGenerationService,
     _cache_key_for_request,
     _private_provider_route_sha256,
 )
 from multilang.settings import Settings
-
 
 PRIVATE_NOW = datetime(2026, 8, 30, 13, 0, tzinfo=UTC)
 PRIVATE_POLICY_SHA = "d" * 64

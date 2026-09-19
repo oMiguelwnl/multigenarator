@@ -8,7 +8,6 @@ from pathlib import Path
 
 from multilang.services.latin_source_pack import load_latin_mvp_source_pack
 
-
 FORBIDDEN_MARKERS = ("TBD", "placeholder", "future", "later", "hardcoded", "C:\\", "/Users/", "\\Users\\")
 
 

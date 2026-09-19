@@ -1,0 +1,1522 @@
+{
+  "schema_version": "korean-grammar-lexical-support-v1",
+  "course_sha256": "15ad5106629768a4aba9711b9e1f7199f231bc17a643c3dc0573d4e96be0e7d9",
+  "source_id": "nikl-korean-learners-vocabulary",
+  "source_version": "2003-06-04.revised-2019-05-30",
+  "source_sha256": "3b49681f05d6a7490c13da2a2847e433effdf65da409fd295792d6ee33685064",
+  "entries": [
+    {
+      "entry_id": "lex.student",
+      "lemma": "학생",
+      "source_form": "학생",
+      "source_pos": "명",
+      "source_entry_sha256": "c1cc139db829e01cd33ee716dd99d29ccee05513fd9673375028bbf5db830898",
+      "meaning_pt": "estudante; pessoa que estuda em uma instituição.",
+      "teaching_mode": "lexical",
+      "introduced_by": null,
+      "usage_note_pt": "Não especifica gênero por si só. Apresentar o significado antes do primeiro cartão de cópula.",
+      "used_by": [
+        "g0.copula",
+        "g0.noun",
+        "g0.argument-omission",
+        "g1.topic",
+        "g1.subject",
+        "g3.also",
+        "g5.negative-copula",
+        "g5.past-copula",
+        "g8.aseo-cause",
+        "g8.aseo-sequence",
+        "g8.condition",
+        "g8.nikka-reason",
+        "g8.neunde-background",
+        "g9.adjective",
+        "g9.verb-present",
+        "g9.verb-past",
+        "g9.noun",
+        "g11.formal-statement",
+        "g11.formal-question",
+        "g11.polite-question",
+        "g11.plain-verb",
+        "g12.obligation",
+        "g12.permission",
+        "g13.report-verb",
+        "g13.report-noun",
+        "g13.report-past",
+        "g13.report-question",
+        "g13.report-command",
+        "g13.causative-suffix",
+        "g13.causative-analytic",
+        "g13.change-circumstance",
+        "g13.shared-reminder"
+      ]
+    },
+    {
+      "entry_id": "lex.eat",
+      "lemma": "먹다",
+      "source_form": "먹다02",
+      "source_pos": "동",
+      "source_entry_sha256": "3ddb0c67454604ce6e7eb49bd349ac6e2333f1399e12debcfc125d55978913e3",
+      "meaning_pt": "comer; ingerir alimento.",
+      "teaching_mode": "lexical",
+      "introduced_by": null,
+      "usage_note_pt": "Seleciona o verbo de comer da linha 먹다02/동. Exclui o homógrafo ligado à perda de audição e o uso auxiliar de outras construções.",
+      "used_by": [
+        "g0.dictionary-form",
+        "g0.stem",
+        "g0.verb",
+        "g1.object",
+        "g4.ro-instrument",
+        "g5.past",
+        "g8.go-sequence",
+        "g12.prohibition",
+        "g13.report-past"
+      ]
+    },
+    {
+      "entry_id": "lex.good",
+      "lemma": "좋다",
+      "source_form": "좋다01",
+      "source_pos": "형",
+      "source_entry_sha256": "88b65c41958fd0872fb9bdf0ac6057c91c165e4846c2ed44269bcda32dd3790c",
+      "meaning_pt": "ser bom; estar bom; ter uma qualidade positiva.",
+      "teaching_mode": "lexical",
+      "introduced_by": null,
+      "usage_note_pt": "Adjetivo regular: a consoante final não segue o paradigma irregular de 파랗다. Não equivale automaticamente ao verbo transitivo gostar de.",
+      "used_by": [
+        "g0.adjective",
+        "g1.adjective-present",
+        "g4.comparison",
+        "g7.hieut",
+        "g8.go-addition",
+        "g8.jiman",
+        "g9.adjective",
+        "g9.verb-past"
+      ]
+    },
+    {
+      "entry_id": "lex.here",
+      "lemma": "여기",
+      "source_form": "여기01",
+      "source_pos": "대",
+      "source_entry_sha256": "21ec7b410146b87dd6624e42c56f20ab32928ee1bc3010c2ea281922a1e1f176",
+      "meaning_pt": "aqui; este lugar próximo de quem fala.",
+      "teaching_mode": "lexical",
+      "introduced_by": null,
+      "usage_note_pt": "A fonte classifica a palavra como pronome locativo. O papel em uma frase depende das partículas que a acompanham.",
+      "used_by": [
+        "g0.predicate-final",
+        "g12.prohibition"
+      ]
+    },
+    {
+      "entry_id": "lex.school",
+      "lemma": "학교",
+      "source_form": "학교",
+      "source_pos": "명",
+      "source_entry_sha256": "b66218d911ad5875983525590ed84f65c385d855fb4877bcf678c2e623aa5f9a",
+      "meaning_pt": "escola; instituição onde se estuda.",
+      "teaching_mode": "lexical",
+      "introduced_by": null,
+      "usage_note_pt": "Nome de lugar; as partículas de destino e local de ação são ensinadas no curso, não incorporadas à glosa.",
+      "used_by": [
+        "g0.predicate-final",
+        "g2.destination",
+        "g2.action-location",
+        "g4.kkaji",
+        "g5.an",
+        "g5.mot",
+        "g5.future-plan",
+        "g6.inability",
+        "g6.honorific-subject",
+        "g6.honorific-subject-particle",
+        "g8.aseo-sequence",
+        "g13.report-suggestion",
+        "g13.change-circumstance",
+        "g13.background-explanation"
+      ]
+    },
+    {
+      "entry_id": "lex.i-humble",
+      "lemma": "저",
+      "source_form": "저03",
+      "source_pos": "대",
+      "source_entry_sha256": "3af0da93ac67642a64c2164ffe8c934fec6b311e088c9b1c5902d4a1fa62f3aa",
+      "meaning_pt": "eu, em uma forma modesta de falar de si.",
+      "teaching_mode": "lexical",
+      "introduced_by": null,
+      "usage_note_pt": "Seleciona a primeira pessoa. Exclui o demonstrativo distante e a interjeição de mesma escrita. A partícula de tópico não faz parte deste lema.",
+      "used_by": [
+        "g1.topic",
+        "g1.hada-present",
+        "g2.destination",
+        "g2.time",
+        "g2.action-location",
+        "g2.possession",
+        "g3.also",
+        "g3.only",
+        "g3.wa-companion",
+        "g3.hago-companion",
+        "g3.rang-companion",
+        "g4.ege-recipient",
+        "g4.hante-recipient",
+        "g4.ro-direction",
+        "g4.ro-instrument",
+        "g4.buteo",
+        "g4.kkaji",
+        "g4.kkaji-time",
+        "g5.an",
+        "g5.mot",
+        "g5.long-negation",
+        "g5.negative-copula",
+        "g5.past",
+        "g5.hada-past",
+        "g5.past-copula",
+        "g5.future-plan",
+        "g5.intention",
+        "g6.desire",
+        "g6.ability",
+        "g6.inability",
+        "g7.eu",
+        "g7.digeut",
+        "g7.siot",
+        "g8.go-sequence",
+        "g10.eum",
+        "g10.geot",
+        "g10.su-particle",
+        "g12.experience",
+        "g13.background-explanation"
+      ]
+    },
+    {
+      "entry_id": "lex.friend",
+      "lemma": "친구",
+      "source_form": "친구02",
+      "source_pos": "명",
+      "source_entry_sha256": "416f2625171406915760412ce2c8a4490e98c301cce8e92ae55e7e4c07b6d55d",
+      "meaning_pt": "amigo ou amiga; pessoa com quem se tem amizade.",
+      "teaching_mode": "lexical",
+      "introduced_by": null,
+      "usage_note_pt": "A palavra isolada não determina gênero nem um artigo definido em português.",
+      "used_by": [
+        "g1.subject",
+        "g1.present",
+        "g1.object",
+        "g1.present-question",
+        "g2.genitive",
+        "g3.wa-companion",
+        "g3.hago-companion",
+        "g3.rang-companion",
+        "g4.ege-recipient",
+        "g4.hante-recipient",
+        "g5.progressive",
+        "g7.reu",
+        "g8.neunde-background",
+        "g9.noun",
+        "g10.eum",
+        "g13.report-verb",
+        "g13.report-adjective",
+        "g13.report-noun",
+        "g13.report-past",
+        "g13.report-question",
+        "g13.report-command",
+        "g13.report-suggestion"
+      ]
+    },
+    {
+      "entry_id": "lex.come",
+      "lemma": "오다",
+      "source_form": "오다01",
+      "source_pos": "동",
+      "source_entry_sha256": "1d77a5a0957c0b3f6cb847c1116c8037d93b1d48a61edcaf59814ad4592046ff",
+      "meaning_pt": "vir; deslocar-se em direção a um ponto de referência.",
+      "teaching_mode": "lexical",
+      "introduced_by": null,
+      "usage_note_pt": "Verbo principal de deslocamento. Não usa a linha auxiliar de progressão; o uso meteorológico tem uma entrada editorial distinta.",
+      "used_by": [
+        "g1.present",
+        "g2.destination",
+        "g8.neunde-background",
+        "g9.noun",
+        "g10.eum"
+      ]
+    },
+    {
+      "entry_id": "lex.drink",
+      "lemma": "마시다",
+      "source_form": "마시다",
+      "source_pos": "동",
+      "source_entry_sha256": "36a061b91031d90d975a4d41b952a76ae301cbf9ebd43932328c4b7f82b1af0e",
+      "meaning_pt": "beber; ingerir um líquido.",
+      "teaching_mode": "lexical",
+      "introduced_by": null,
+      "usage_note_pt": "Verbo principal. A construção de desejo e os pedidos são introduzidos nas suas próprias aulas.",
+      "used_by": [
+        "g1.present",
+        "g3.only",
+        "g5.past",
+        "g6.desire",
+        "g8.go-sequence",
+        "g11.polite-question",
+        "g12.permission",
+        "g13.report-command"
+      ]
+    },
+    {
+      "entry_id": "lex.sleep",
+      "lemma": "자다",
+      "source_form": "자다01",
+      "source_pos": "동",
+      "source_entry_sha256": "e0954034a660cb12523074fb0a6eadd8e5992edb9e11b0e648f386b742b241a0",
+      "meaning_pt": "dormir.",
+      "teaching_mode": "lexical",
+      "introduced_by": null,
+      "usage_note_pt": "Verbo de ação ou processo; o significado lexical não antecipa as terminações polidas.",
+      "used_by": [
+        "g1.present",
+        "g1.present-question",
+        "g2.time"
+      ]
+    },
+    {
+      "entry_id": "lex.cooked-rice",
+      "lemma": "밥",
+      "source_form": "밥01",
+      "source_pos": "명",
+      "source_entry_sha256": "70efd731de4ebb4c0fca05e2feaa96faa44767a1347dd6f1e16dd25b343f5fe5",
+      "meaning_pt": "arroz cozido, servido como alimento.",
+      "teaching_mode": "lexical",
+      "introduced_by": null,
+      "usage_note_pt": "O curso seleciona o sentido de arroz cozido. Em outros contextos a palavra também pode significar refeição; esse uso não é presumido aqui.",
+      "used_by": [
+        "g1.object",
+        "g4.ro-instrument",
+        "g5.past",
+        "g8.go-sequence",
+        "g13.report-past"
+      ]
+    },
+    {
+      "entry_id": "lex.do",
+      "lemma": "하다",
+      "source_form": "하다01",
+      "source_pos": "동",
+      "source_entry_sha256": "4f54e087fca61eb3053e2921638d99a595807b43bed7f039e78fe841c984caf6",
+      "meaning_pt": "fazer; realizar uma ação ou atividade.",
+      "teaching_mode": "lexical",
+      "introduced_by": null,
+      "usage_note_pt": "Lema principal mencionado nas regras de flexão. Não serve como substituto da identidade de 공부하다 nem concede os sentidos de intenção, obrigação, relato e causação.",
+      "used_by": [
+        "g1.hada-present",
+        "g3.hago-coordination",
+        "g5.an",
+        "g5.past",
+        "g5.hada-past",
+        "g6.benefactive-request",
+        "g8.aseo-cause",
+        "g11.informal"
+      ]
+    },
+    {
+      "entry_id": "lex.study",
+      "lemma": "공부하다",
+      "source_form": "공부하다",
+      "source_pos": "동",
+      "source_entry_sha256": "ac7fb9040ffa30b1396dcb1c400dc2f575839ceef7ad33dc3d3a3afb658197d5",
+      "meaning_pt": "estudar; dedicar-se a aprender um assunto.",
+      "teaching_mode": "lexical",
+      "introduced_by": null,
+      "usage_note_pt": "Preservar o verbo composto completo 공부하다. Conhecer o substantivo 공부 ou o verbo 하다 separadamente não substitui esta identidade.",
+      "used_by": [
+        "g1.hada-present",
+        "g2.action-location",
+        "g3.wa-companion",
+        "g3.hago-companion",
+        "g3.rang-companion",
+        "g4.buteo",
+        "g4.kkaji-time",
+        "g5.an",
+        "g5.long-negation",
+        "g5.hada-past",
+        "g8.aseo-sequence",
+        "g8.neunde-background",
+        "g12.obligation",
+        "g13.causative-analytic",
+        "g13.change-circumstance",
+        "g13.background-explanation"
+      ]
+    },
+    {
+      "entry_id": "lex.like",
+      "lemma": "좋아하다",
+      "source_form": "좋아하다",
+      "source_pos": "동",
+      "source_entry_sha256": "7a05f08fe333fae51da1fc12cee57be2ad6eb177e4ac1a8067b2cfe2b9da8faf",
+      "meaning_pt": "gostar de alguém ou de algo.",
+      "teaching_mode": "lexical",
+      "introduced_by": null,
+      "usage_note_pt": "Verbo transitivo completo. Distinguir de 좋다, ser bom ou estar bom, e preservar a conjugação de 하다 no composto.",
+      "used_by": [
+        "g1.adjective-present",
+        "g10.geot"
+      ]
+    },
+    {
+      "entry_id": "lex.today-adverb",
+      "lemma": "오늘",
+      "source_form": "오늘",
+      "source_pos": "부",
+      "source_entry_sha256": "2d1d9b63b0ba828ad7cad139addbdfec50354cae9ddf7828a669a28ea8cb5751",
+      "meaning_pt": "hoje; neste dia.",
+      "teaching_mode": "lexical",
+      "introduced_by": null,
+      "usage_note_pt": "Uso temporal sem partícula nominal nestas ocorrências. A menção em G2 esclarece que hoje normalmente dispensa a partícula de tempo.",
+      "used_by": [
+        "g1.adjective-present",
+        "g2.time",
+        "g5.an",
+        "g5.mot",
+        "g5.long-negation",
+        "g6.inability",
+        "g12.obligation",
+        "g13.background-explanation"
+      ]
+    },
+    {
+      "entry_id": "lex.weather",
+      "lemma": "날씨",
+      "source_form": "날씨01",
+      "source_pos": "명",
+      "source_entry_sha256": "2d43bf9b73fbe0aceab455543b470b2706338aa8ea5db5297fe67498063dcec1",
+      "meaning_pt": "tempo; condições do clima em certo momento.",
+      "teaching_mode": "lexical",
+      "introduced_by": null,
+      "usage_note_pt": "Refere-se às condições meteorológicas, não à passagem do tempo.",
+      "used_by": [
+        "g1.adjective-present"
+      ]
+    },
+    {
+      "entry_id": "lex.give",
+      "lemma": "주다",
+      "source_form": "주다01",
+      "source_pos": "동",
+      "source_entry_sha256": "9fecaddff5c26fb8e3ab9c3dde6ec05eeb5f29e87dbd2544c0e1b2d08768e04f",
+      "meaning_pt": "dar; entregar algo para que outra pessoa receba ou use.",
+      "teaching_mode": "lexical",
+      "introduced_by": null,
+      "usage_note_pt": "Verbo principal: dar ou entregar algo. Surge primeiro na aula de contração vocálica e depois com destinatário expresso. Não equivale ao auxiliar benefactivo de G6.",
+      "used_by": [
+        "g1.u-contraction",
+        "g4.ege-recipient",
+        "g4.hante-recipient"
+      ]
+    },
+    {
+      "entry_id": "lex.water",
+      "lemma": "물",
+      "source_form": "물01",
+      "source_pos": "명",
+      "source_entry_sha256": "c3fef05d917260a7b1f33f57a1b02c469dc63415660a345c0febac48f498d3ea",
+      "meaning_pt": "água.",
+      "teaching_mode": "lexical",
+      "introduced_by": null,
+      "usage_note_pt": "Sentido literal de água para beber nos exemplos; não importar sentidos figurados.",
+      "used_by": [
+        "g1.u-contraction",
+        "g2.absent",
+        "g3.only",
+        "g3.wa-coordination",
+        "g3.hago-coordination",
+        "g3.rang-coordination",
+        "g4.hante-recipient",
+        "g6.desire",
+        "g8.go-sequence",
+        "g11.polite-question",
+        "g12.permission",
+        "g13.report-command"
+      ]
+    },
+    {
+      "entry_id": "lex.work-out",
+      "lemma": "되다",
+      "source_form": "되다01",
+      "source_pos": "동",
+      "source_entry_sha256": "47e78c61ac51dd7c803a819d0b65307f6d480b539a680a04f7d61b285ec1e4a8",
+      "meaning_pt": "dar certo; uma tarefa ou situação se realizar de modo satisfatório.",
+      "teaching_mode": "lexical",
+      "introduced_by": null,
+      "usage_note_pt": "Uso principal de 되다, correspondente ao sentido 13 da entrada 89858 do Korean Basic Dictionary. A linha NIKL 되다01/동 é polissêmica e não fornece esse número de sub-sentido; a seleção é editorial explícita. Em G1, 돼요 significa dar certo, não conceder permissão. O referente do sujeito é recuperado do contexto.",
+      "used_by": [
+        "g1.oe-contraction"
+      ]
+    },
+    {
+      "entry_id": "lex.book",
+      "lemma": "책",
+      "source_form": "책01",
+      "source_pos": "명",
+      "source_entry_sha256": "736e02365eadc832b09c5768e74cd1880ca562bc481270d848e154b7398ffec5",
+      "meaning_pt": "livro.",
+      "teaching_mode": "lexical",
+      "introduced_by": null,
+      "usage_note_pt": "Nome de objeto; a fonte registra a forma lexical sem partículas.",
+      "used_by": [
+        "g2.exist",
+        "g2.location",
+        "g2.possession",
+        "g2.genitive",
+        "g3.wa-coordination",
+        "g3.hago-coordination",
+        "g3.rang-coordination",
+        "g4.ege-recipient",
+        "g5.intention",
+        "g5.progressive",
+        "g6.ability",
+        "g6.polite-request",
+        "g6.benefactive-request",
+        "g9.adjective",
+        "g9.verb-present",
+        "g9.verb-past",
+        "g9.verb-prospective",
+        "g10.gi",
+        "g10.geot",
+        "g10.su-particle",
+        "g11.formal-statement",
+        "g11.formal-question",
+        "g11.plain-verb",
+        "g12.try",
+        "g12.experience",
+        "g13.report-verb",
+        "g13.report-question"
+      ]
+    },
+    {
+      "entry_id": "lex.exist",
+      "lemma": "있다",
+      "source_form": "있다01",
+      "source_pos": "형",
+      "source_entry_sha256": "10b5b26f7d8c384dd6ba7602855f25a9d688bb7c211b8d499544bd798f88343c",
+      "meaning_pt": "existir; estar presente ou disponível.",
+      "teaching_mode": "construction",
+      "introduced_by": "g2.exist",
+      "usage_note_pt": "Unidade de forma e função do predicado existencial introduzida em G2. Não incluir o sentido de existência como vocabulário já conhecido antes dessa aula, pois isso apagaria sua novidade. Reutilizada em localização, posse e outros contextos posteriores; progressivo, capacidade e experiência têm classificações próprias.",
+      "used_by": [
+        "g2.exist",
+        "g2.location",
+        "g2.action-location",
+        "g2.possession",
+        "g3.wa-coordination",
+        "g3.hago-coordination",
+        "g3.rang-coordination",
+        "g8.aseo-cause",
+        "g9.verb-present",
+        "g9.verb-prospective",
+        "g13.shared-reminder"
+      ]
+    },
+    {
+      "entry_id": "lex.house",
+      "lemma": "집",
+      "source_form": "집01",
+      "source_pos": "명",
+      "source_entry_sha256": "3674c5c81c698d15c6a70f06ea7bb3fc424a4106f0f3b497196c95e41af6be49",
+      "meaning_pt": "casa; lugar onde alguém mora.",
+      "teaching_mode": "lexical",
+      "introduced_by": null,
+      "usage_note_pt": "O sentido de lar pode ser natural conforme o contexto. Não significa automaticamente casa de quem fala.",
+      "used_by": [
+        "g2.location",
+        "g4.ro-direction",
+        "g7.siot",
+        "g8.go-addition",
+        "g8.aseo-cause",
+        "g8.jiman",
+        "g8.condition",
+        "g8.nikka-reason",
+        "g11.informal",
+        "g11.plain-adjective",
+        "g13.report-adjective",
+        "g13.new-realization",
+        "g13.shared-reminder"
+      ]
+    },
+    {
+      "entry_id": "lex.go",
+      "lemma": "가다",
+      "source_form": "가다01",
+      "source_pos": "동",
+      "source_entry_sha256": "29a1df2629ba8544687aeaf1623649b7839886cb55cf9d7460cd1bf746cd166d",
+      "meaning_pt": "ir; deslocar-se para outro lugar.",
+      "teaching_mode": "lexical",
+      "introduced_by": null,
+      "usage_note_pt": "Seleciona o verbo principal de deslocamento. O uso auxiliar de progressão não ocorre como alvo lexical nesta coleção.",
+      "used_by": [
+        "g2.destination",
+        "g4.ege-recipient",
+        "g4.ro-direction",
+        "g4.kkaji",
+        "g5.an",
+        "g5.mot",
+        "g5.past",
+        "g5.future-plan",
+        "g6.inability",
+        "g6.honorific-subject",
+        "g6.honorific-subject-particle",
+        "g8.aseo-sequence",
+        "g11.formal-statement",
+        "g11.formal-question",
+        "g11.informal",
+        "g11.plain-verb",
+        "g13.report-suggestion",
+        "g13.background-explanation"
+      ]
+    },
+    {
+      "entry_id": "lex.night",
+      "lemma": "밤",
+      "source_form": "밤01",
+      "source_pos": "명",
+      "source_entry_sha256": "dcc70b569ba24976067756680043c2df169cec77f74ac38a78c537421b6c74ee",
+      "meaning_pt": "noite; período escuro entre o fim do dia e a manhã.",
+      "teaching_mode": "lexical",
+      "introduced_by": null,
+      "usage_note_pt": "Seleciona 밤01, período noturno. Exclui 밤02, castanha.",
+      "used_by": [
+        "g2.time",
+        "g4.kkaji-time"
+      ]
+    },
+    {
+      "entry_id": "lex.tomorrow-adverb",
+      "lemma": "내일",
+      "source_form": "내일",
+      "source_pos": "부",
+      "source_entry_sha256": "ff14bbcb246748d9d79e857f271495b365146155ed7819e28dbfc0214c4c575f",
+      "meaning_pt": "amanhã; no dia seguinte ao de hoje.",
+      "teaching_mode": "lexical",
+      "introduced_by": null,
+      "usage_note_pt": "Todas as ocorrências atuais são advérbios temporais sem partícula nominal. A existência de uma linha nominal na fonte não justifica escolhê-la automaticamente.",
+      "used_by": [
+        "g2.time",
+        "g5.future-plan",
+        "g5.intention",
+        "g8.condition",
+        "g9.verb-prospective",
+        "g12.conjecture"
+      ]
+    },
+    {
+      "entry_id": "lex.yesterday-adverb",
+      "lemma": "어제",
+      "source_form": "어제01",
+      "source_pos": "부",
+      "source_entry_sha256": "ef3dd2ba31923490d599fc67b0ab005d93bc5318f838b0e2edac7945db9011dd",
+      "meaning_pt": "ontem; no dia anterior ao de hoje.",
+      "teaching_mode": "lexical",
+      "introduced_by": null,
+      "usage_note_pt": "Uso adverbial de tempo, sem uma partícula nominal anexada.",
+      "used_by": [
+        "g2.time",
+        "g5.past",
+        "g5.hada-past",
+        "g9.verb-past"
+      ]
+    },
+    {
+      "entry_id": "lex.absent",
+      "lemma": "없다",
+      "source_form": "없다01",
+      "source_pos": "형",
+      "source_entry_sha256": "8cd7b1320a19ac541ec85f80864dabbb6d124a2fa2b8c201bd6ab73356281d24",
+      "meaning_pt": "não existir; não estar presente ou disponível.",
+      "teaching_mode": "construction",
+      "introduced_by": "g2.absent",
+      "usage_note_pt": "Unidade de forma e função do predicado de ausência introduzida em G2. Não antecipar como vocabulário conhecido o sentido que esta aula ensina. A construção de incapacidade com 수 없다 tem classificação própria.",
+      "used_by": [
+        "g2.absent"
+      ]
+    },
+    {
+      "entry_id": "lex.spoon",
+      "lemma": "숟가락",
+      "source_form": "숟가락",
+      "source_pos": "명",
+      "source_entry_sha256": "a1aff88218c74d0e18598572f0b3f91c466eb3a749f2495da74e34967a8dcfc8",
+      "meaning_pt": "colher, utensílio para comer.",
+      "teaching_mode": "lexical",
+      "introduced_by": null,
+      "usage_note_pt": "O instrumento é uma palavra de conteúdo; o sentido instrumental de (으)로 é uma construção separada.",
+      "used_by": [
+        "g4.ro-instrument"
+      ]
+    },
+    {
+      "entry_id": "lex.today-noun",
+      "lemma": "오늘",
+      "source_form": "오늘",
+      "source_pos": "명",
+      "source_entry_sha256": "a1bdffb0617826dddaeeae9b4a060ce68416bb7db394122e1c519d226b98f5b7",
+      "meaning_pt": "o dia de hoje.",
+      "teaching_mode": "lexical",
+      "introduced_by": null,
+      "usage_note_pt": "Uso nominal com partícula, como tópico, sujeito de comparação ou início temporal. Mantido separado do advérbio da mesma escrita.",
+      "used_by": [
+        "g4.buteo",
+        "g4.comparison",
+        "g7.bieup",
+        "g8.aseo-cause",
+        "g8.nikka-reason",
+        "g13.shared-reminder"
+      ]
+    },
+    {
+      "entry_id": "lex.more",
+      "lemma": "더",
+      "source_form": "더01",
+      "source_pos": "부",
+      "source_entry_sha256": "3a8adc882756ad531a27c4af7eb564de22bef7f57779bfaa88767ee4efaf14d4",
+      "meaning_pt": "mais; em grau maior.",
+      "teaching_mode": "lexical",
+      "introduced_by": null,
+      "usage_note_pt": "Advérbio de aumento ou comparação. Não confundir com a partícula que marca o termo de referência.",
+      "used_by": [
+        "g4.comparison"
+      ]
+    },
+    {
+      "entry_id": "lex.see",
+      "lemma": "보다",
+      "source_form": "보다01",
+      "source_pos": "동",
+      "source_entry_sha256": "7731df15845882c02316fdf322b5eb79831d363a049d5129828acf81dddfecea",
+      "meaning_pt": "ver; perceber algo com os olhos.",
+      "teaching_mode": "lexical",
+      "introduced_by": null,
+      "usage_note_pt": "Citado apenas como contraste lexical na nota de G4: o alvo comparativo 보다 é uma partícula, não esta entrada verbal. Este apoio não cobre nem pré-ensina a partícula.",
+      "used_by": [
+        "g4.comparison"
+      ]
+    },
+    {
+      "entry_id": "lex.yesterday-noun",
+      "lemma": "어제",
+      "source_form": "어제01",
+      "source_pos": "명",
+      "source_entry_sha256": "b1b57f8e1b675a1b08824228446183215b649ea6634326b70dd4439e85437f44",
+      "meaning_pt": "o dia de ontem.",
+      "teaching_mode": "lexical",
+      "introduced_by": null,
+      "usage_note_pt": "Uso nominal como referência da comparação em 어제보다; a seleção da linha 명 não é transferida aos usos adverbiais.",
+      "used_by": [
+        "g4.comparison"
+      ]
+    },
+    {
+      "entry_id": "lex.negation-short",
+      "lemma": "안",
+      "source_form": "안02",
+      "source_pos": "부",
+      "source_entry_sha256": "503a37dfb5468861a26cd51bf1187a259a22d5d3a77177df99684d17760c8e58",
+      "meaning_pt": "negar a ação ou o estado: não.",
+      "teaching_mode": "construction",
+      "introduced_by": "g5.an",
+      "usage_note_pt": "Advérbio negativo; não é o substantivo interior. É ensinado junto da construção de negação curta, sem antecipar esse valor como vocabulário conhecido.",
+      "used_by": [
+        "g5.an",
+        "g5.negative-copula"
+      ]
+    },
+    {
+      "entry_id": "lex.inability-short",
+      "lemma": "못",
+      "source_form": "못04",
+      "source_pos": "부",
+      "source_entry_sha256": "9eaa562a4b355394bc39f23c775913101d371418550b989d4d6829be6f6cb71b",
+      "meaning_pt": "indicar que a ação não é realizada por impedimento ou incapacidade.",
+      "teaching_mode": "construction",
+      "introduced_by": "g5.mot",
+      "usage_note_pt": "Seleciona o advérbio negativo, não o substantivo prego. O significado é ensinado com a construção, sem inventar a causa do impedimento.",
+      "used_by": [
+        "g5.mot"
+      ]
+    },
+    {
+      "entry_id": "lex.negation-long",
+      "lemma": "않다",
+      "source_form": "않다",
+      "source_pos": "보",
+      "source_entry_sha256": "da4b90aae1888f156e989dfdad3c461156d41357d0009dc1957002537175c711",
+      "meaning_pt": "com -지, negar o predicado anterior.",
+      "teaching_mode": "construction",
+      "introduced_by": "g5.long-negation",
+      "usage_note_pt": "Seleciona a linha auxiliar. Não se usa este apoio como tradução lexical independente de não fazer antes da aula de negação longa.",
+      "used_by": [
+        "g5.long-negation"
+      ]
+    },
+    {
+      "entry_id": "lex.negative-copula",
+      "lemma": "아니다",
+      "source_form": "아니다",
+      "source_pos": "형",
+      "source_entry_sha256": "98fd6872d27031727ba880d839c6c2587832d1db78bb21e07ec76962547da2c6",
+      "meaning_pt": "não ser; negar uma identificação com um nome.",
+      "teaching_mode": "construction",
+      "introduced_by": "g5.negative-copula",
+      "usage_note_pt": "Predicado adjetivo que compõe a identificação negativa. Sua posição com 이/가 deve ser aprendida na construção, não deduzida de uma glosa solta.",
+      "used_by": [
+        "g5.negative-copula"
+      ]
+    },
+    {
+      "entry_id": "lex.future-dependent-ge",
+      "lemma": "거",
+      "source_form": "거01",
+      "source_pos": "의",
+      "source_entry_sha256": "59a7df72d97a6eac6ad6d45e456f1bc1544924a44b73e95f5d9122412ae9b476",
+      "meaning_pt": "forma reduzida de 것 dentro da expressão de plano futuro.",
+      "teaching_mode": "construction",
+      "introduced_by": "g5.future-plan",
+      "usage_note_pt": "Seleciona o substantivo dependente, não a linha pronominal. O valor futuro vem da construção com a forma adnominal e a cópula, não de 거 sozinho.",
+      "used_by": [
+        "g5.future-plan"
+      ]
+    },
+    {
+      "entry_id": "lex.intend-aux",
+      "lemma": "하다",
+      "source_form": "하다01",
+      "source_pos": "보",
+      "source_entry_sha256": "bc86a5aaec24d91a96c5b1283bc62e76c532c1f5200167bb1c970d830447f914",
+      "meaning_pt": "com -(으)려고, indicar a intenção de realizar uma ação.",
+      "teaching_mode": "construction",
+      "introduced_by": "g5.intention",
+      "usage_note_pt": "Uso auxiliar de intenção, distinto de fazer como verbo principal e dos demais auxiliares com a mesma escrita.",
+      "used_by": [
+        "g5.intention"
+      ]
+    },
+    {
+      "entry_id": "lex.read",
+      "lemma": "읽다",
+      "source_form": "읽다",
+      "source_pos": "동",
+      "source_entry_sha256": "b48c1121d621daf8a9c097d794b0a5a104f8d7eef7d1dd263db7b18c482f7004",
+      "meaning_pt": "ler; compreender palavras escritas.",
+      "teaching_mode": "lexical",
+      "introduced_by": null,
+      "usage_note_pt": "O radical termina no encontro consonantal de 읽-. Essa classe deve permanecer identificada ao escolher terminações, sem reduzir o radical por heurística.",
+      "used_by": [
+        "g5.intention",
+        "g5.progressive",
+        "g6.ability",
+        "g6.polite-request",
+        "g6.benefactive-request",
+        "g9.adjective",
+        "g9.verb-present",
+        "g9.verb-past",
+        "g9.verb-prospective",
+        "g10.gi",
+        "g10.geot",
+        "g10.su-particle",
+        "g11.formal-statement",
+        "g11.formal-question",
+        "g11.plain-verb",
+        "g12.try",
+        "g12.experience",
+        "g13.report-verb",
+        "g13.report-question"
+      ]
+    },
+    {
+      "entry_id": "lex.now-adverb",
+      "lemma": "지금",
+      "source_form": "지금03",
+      "source_pos": "부",
+      "source_entry_sha256": "40fa0ca0d0585a1ecae26ff70d94a5371c56d34baa7539f844ab9526c0185466",
+      "meaning_pt": "agora; neste momento.",
+      "teaching_mode": "lexical",
+      "introduced_by": null,
+      "usage_note_pt": "Uso adverbial na frase progressiva. Não seleciona a entrada nominal da mesma escrita.",
+      "used_by": [
+        "g1.oe-contraction",
+        "g5.progressive"
+      ]
+    },
+    {
+      "entry_id": "lex.progressive-be",
+      "lemma": "있다",
+      "source_form": "있다01",
+      "source_pos": "보",
+      "source_entry_sha256": "56b792100782618da4fd09ced26260153dd0dcd0fa5ff1d34ad7412aab738b53",
+      "meaning_pt": "com -고, apresentar uma ação que continua em andamento.",
+      "teaching_mode": "construction",
+      "introduced_by": "g5.progressive",
+      "usage_note_pt": "Auxiliar da construção progressiva. Não converter em verbo lexical de existir nem tornar seu significado gramatical conhecido por um cartão de vocabulário.",
+      "used_by": [
+        "g5.progressive"
+      ]
+    },
+    {
+      "entry_id": "lex.desire-aux",
+      "lemma": "싶다",
+      "source_form": "싶다",
+      "source_pos": "보",
+      "source_entry_sha256": "f572b8b41497da2499b71115bc93fe9b7cedaba911215757de9f40bbc3bc1e15",
+      "meaning_pt": "com -고, expressar desejo de realizar uma ação.",
+      "teaching_mode": "construction",
+      "introduced_by": "g6.desire",
+      "usage_note_pt": "Auxiliar de desejo; não é um verbo transitivo livre equivalente a querer. Mantém a classificação 보 do inventário, sem inventar uma classe mais específica para essa fonte.",
+      "used_by": [
+        "g6.desire"
+      ]
+    },
+    {
+      "entry_id": "lex.ability-dependent-su",
+      "lemma": "수",
+      "source_form": "수02",
+      "source_pos": "의",
+      "source_entry_sha256": "33b5b77953d900fcaa6f10e638f77c38288deacdf109a9d72e09e357fc17cfe9",
+      "meaning_pt": "substantivo dependente da expressão de capacidade ou possibilidade.",
+      "teaching_mode": "construction",
+      "introduced_by": "g6.ability",
+      "usage_note_pt": "Seleciona 수02/의, não o substantivo número nem um nome livre de método. A construção com 있다 ou 없다 fornece a leitura de conseguir ou não conseguir.",
+      "used_by": [
+        "g6.ability",
+        "g6.inability",
+        "g10.su-particle"
+      ]
+    },
+    {
+      "entry_id": "lex.ability-exist",
+      "lemma": "있다",
+      "source_form": "있다01",
+      "source_pos": "형",
+      "source_entry_sha256": "10b5b26f7d8c384dd6ba7602855f25a9d688bb7c211b8d499544bd798f88343c",
+      "meaning_pt": "em 수 있다, compor a expressão de capacidade ou possibilidade.",
+      "teaching_mode": "construction",
+      "introduced_by": "g6.ability",
+      "usage_note_pt": "Mesmo vínculo de fonte adjetivo de 있다, mas uso pertence à construção de capacidade. O aprendizado de existir isoladamente não prova domínio dessa composição.",
+      "used_by": [
+        "g6.ability",
+        "g10.su-particle"
+      ]
+    },
+    {
+      "entry_id": "lex.inability-absent",
+      "lemma": "없다",
+      "source_form": "없다01",
+      "source_pos": "형",
+      "source_entry_sha256": "8cd7b1320a19ac541ec85f80864dabbb6d124a2fa2b8c201bd6ab73356281d24",
+      "meaning_pt": "em 수 없다, compor a expressão de impossibilidade ou incapacidade.",
+      "teaching_mode": "construction",
+      "introduced_by": "g6.inability",
+      "usage_note_pt": "A fonte é o mesmo predicado adjetivo de ausência, mas este uso é propriedade da construção de G6 e não é pré-ensinado como capacidade negativa.",
+      "used_by": [
+        "g6.inability"
+      ]
+    },
+    {
+      "entry_id": "lex.teacher",
+      "lemma": "선생님",
+      "source_form": "선생님",
+      "source_pos": "명",
+      "source_entry_sha256": "018ab11026b6137c7fab7e86b3055a2e5fd23cb431d827ac701166589727e320",
+      "meaning_pt": "professor ou professora, em uma forma respeitosa de referência.",
+      "teaching_mode": "lexical",
+      "introduced_by": null,
+      "usage_note_pt": "Preservar 선생님 inteiro como palavra. O respeito lexical do nome não substitui as partículas e terminações honoríficas ensinadas depois.",
+      "used_by": [
+        "g6.honorific-subject",
+        "g6.honorific-subject-particle",
+        "g7.rieul",
+        "g13.report-noun",
+        "g13.causative-suffix",
+        "g13.causative-analytic"
+      ]
+    },
+    {
+      "entry_id": "lex.give-benefactive",
+      "lemma": "주다",
+      "source_form": "주다01",
+      "source_pos": "보",
+      "source_entry_sha256": "ad630764006b8cac866b3e4f322e314b4d6b5d83a7f989b6c8a20b44fe5ce612",
+      "meaning_pt": "indicar que a ação é realizada como benefício ou favor para alguém.",
+      "teaching_mode": "construction",
+      "introduced_by": "g6.benefactive-request",
+      "usage_note_pt": "Uso auxiliar em -아/어 주세요. Não ensinar este valor como uma palavra independente antes da construção de pedido de favor.",
+      "used_by": [
+        "g6.benefactive-request"
+      ]
+    },
+    {
+      "entry_id": "lex.busy",
+      "lemma": "바쁘다",
+      "source_form": "바쁘다",
+      "source_pos": "형",
+      "source_entry_sha256": "b38218bcbbf5ca5c8f966bec5de1a7f65829e5ffc4b3fa8e613830c47d2f667e",
+      "meaning_pt": "estar ocupado; ter tarefas e pouco tempo livre.",
+      "teaching_mode": "lexical",
+      "introduced_by": null,
+      "usage_note_pt": "Adjetivo com queda de eu. É citado na formação de G7 como exemplo com uma sílaba anterior que orienta a vogal; não é tradução de 쓰다.",
+      "used_by": [
+        "g7.eu"
+      ]
+    },
+    {
+      "entry_id": "lex.write",
+      "lemma": "쓰다",
+      "source_form": "쓰다01",
+      "source_pos": "동",
+      "source_entry_sha256": "1b69578f1f8dbfd3fbe4c221bed50bd472cbe7744cc5e8b7e08a60e74e2423f7",
+      "meaning_pt": "escrever; registrar palavras por escrito.",
+      "teaching_mode": "lexical",
+      "introduced_by": null,
+      "usage_note_pt": "Seleciona 쓰다01, escrever. Exclui usar roupa ou objeto sobre a cabeça, empregar algo e ser amargo. Pertence ao paradigma com queda de eu ensinado em G7.",
+      "used_by": [
+        "g7.eu"
+      ]
+    },
+    {
+      "entry_id": "lex.written-text",
+      "lemma": "글",
+      "source_form": "글",
+      "source_pos": "명",
+      "source_entry_sha256": "68c3b93dce7a7f77bdd39623fed8f3ebbd65917e703c7bcc97e127065a671e04",
+      "meaning_pt": "texto; conteúdo expresso por escrito.",
+      "teaching_mode": "lexical",
+      "introduced_by": null,
+      "usage_note_pt": "Na frase com 쓰다, é aquilo que se escreve. Não restringir a uma letra isolada.",
+      "used_by": [
+        "g7.eu"
+      ]
+    },
+    {
+      "entry_id": "lex.door",
+      "lemma": "문",
+      "source_form": "문05",
+      "source_pos": "명",
+      "source_entry_sha256": "e6a6a4dd234f42e19f6259ca0855ef0feb78ba0bf42ad5cde1204781f65fd3e0",
+      "meaning_pt": "porta; abertura com uma folha que permite fechar a passagem.",
+      "teaching_mode": "lexical",
+      "introduced_by": null,
+      "usage_note_pt": "Seleciona 門. Não confundir com homógrafos relacionados a texto, pergunta ou unidade de medida.",
+      "used_by": [
+        "g7.rieul",
+        "g13.passive"
+      ]
+    },
+    {
+      "entry_id": "lex.open-transitive",
+      "lemma": "열다",
+      "source_form": "열다02",
+      "source_pos": "동",
+      "source_entry_sha256": "610d953828be905d9adf84cabeb679a3454a70187cc3c3bb7373b0a40a7df33f",
+      "meaning_pt": "abrir algo, como uma porta.",
+      "teaching_mode": "lexical",
+      "introduced_by": null,
+      "usage_note_pt": "Verbo-base transitivo para compreender a relação com 열리다. Radical em rieul; a derivação passiva precisa ser ensinada separadamente.",
+      "used_by": [
+        "g7.rieul",
+        "g13.passive"
+      ]
+    },
+    {
+      "entry_id": "lex.cold-weather",
+      "lemma": "춥다",
+      "source_form": "춥다",
+      "source_pos": "형",
+      "source_entry_sha256": "5bcc5873e749e3ce64f1e3b927ba2202c6f4127c4b2c3ce14abd5e657abc8726",
+      "meaning_pt": "estar frio, em relação ao ambiente ou à sensação de frio.",
+      "teaching_mode": "lexical",
+      "introduced_by": null,
+      "usage_note_pt": "Adjetivo da classe irregular de bieup com alternância para 우. Não é o verbo de esfriar nem o adjetivo genérico para qualquer objeto frio.",
+      "used_by": [
+        "g7.bieup",
+        "g8.aseo-cause",
+        "g8.nikka-reason"
+      ]
+    },
+    {
+      "entry_id": "lex.listen",
+      "lemma": "듣다",
+      "source_form": "듣다01",
+      "source_pos": "동",
+      "source_entry_sha256": "71553d29bfe1a6efac5b138ee21fca3c1c677b4af36612f00270525ccb717836",
+      "meaning_pt": "ouvir; escutar um som.",
+      "teaching_mode": "lexical",
+      "introduced_by": null,
+      "usage_note_pt": "Seleciona o verbo de percepção auditiva. Pertence à classe irregular de digeut exemplificada em G7; nem todo verbo terminado nessa consoante pertence à classe.",
+      "used_by": [
+        "g7.digeut"
+      ]
+    },
+    {
+      "entry_id": "lex.music",
+      "lemma": "음악",
+      "source_form": "음악01",
+      "source_pos": "명",
+      "source_entry_sha256": "3b4b077f7342b48089514f61d2fc86d2a2c47b0e901c42374f35c79d69fddb15",
+      "meaning_pt": "música.",
+      "teaching_mode": "lexical",
+      "introduced_by": null,
+      "usage_note_pt": "Nome do conteúdo escutado no exemplo; não especifica gênero musical.",
+      "used_by": [
+        "g7.digeut"
+      ]
+    },
+    {
+      "entry_id": "lex.fast",
+      "lemma": "빠르다",
+      "source_form": "빠르다",
+      "source_pos": "형",
+      "source_entry_sha256": "0b62aa88479520ebf27f0507d8b1989f8cafbe55c7bd13899b1d18015632c31e",
+      "meaning_pt": "ser rápido; agir ou mover-se com rapidez.",
+      "teaching_mode": "lexical",
+      "introduced_by": null,
+      "usage_note_pt": "Seleciona rapidez, não antecedência no horário. É um adjetivo da classe irregular de reu.",
+      "used_by": [
+        "g7.reu"
+      ]
+    },
+    {
+      "entry_id": "lex.build",
+      "lemma": "짓다",
+      "source_form": "짓다01",
+      "source_pos": "동",
+      "source_entry_sha256": "20a79416e4f80d00774d1b2cd189622fa5f0ab572ed589b469e238cb544cc804",
+      "meaning_pt": "construir; fazer uma construção, como uma casa.",
+      "teaching_mode": "lexical",
+      "introduced_by": null,
+      "usage_note_pt": "Seleciona o sentido de construir. É da classe irregular de siot; outros sentidos de 짓다 não são ativados pela mesma glosa.",
+      "used_by": [
+        "g7.siot"
+      ]
+    },
+    {
+      "entry_id": "lex.blue",
+      "lemma": "파랗다",
+      "source_form": "파랗다",
+      "source_pos": "형",
+      "source_entry_sha256": "1424c4ec5fc472b350157b6299b466c8be7766e776d31cd24f27eb1d179a6fc9",
+      "meaning_pt": "ser azul; apresentar uma cor azul.",
+      "teaching_mode": "lexical",
+      "introduced_by": null,
+      "usage_note_pt": "Adjetivo da classe irregular de hieut. A cor do céu contextualiza o sentido; não generalizar a alternância a todo adjetivo terminado nessa consoante.",
+      "used_by": [
+        "g7.hieut"
+      ]
+    },
+    {
+      "entry_id": "lex.sky",
+      "lemma": "하늘",
+      "source_form": "하늘01",
+      "source_pos": "명",
+      "source_entry_sha256": "ed64e71a3f3987a6e15c9dc776def5341ab417edea16d635e01708b75082eb9a",
+      "meaning_pt": "céu.",
+      "teaching_mode": "lexical",
+      "introduced_by": null,
+      "usage_note_pt": "Refere-se ao céu visível no exemplo de cor, sem sentido religioso presumido.",
+      "used_by": [
+        "g7.hieut"
+      ]
+    },
+    {
+      "entry_id": "lex.large",
+      "lemma": "크다",
+      "source_form": "크다01",
+      "source_pos": "형",
+      "source_entry_sha256": "5b635c403fce69c9f3f043cd9851bf8b22f7d04ab5ed60fbac900b6191adbf1c",
+      "meaning_pt": "ser grande; ter tamanho ou dimensão grande.",
+      "teaching_mode": "lexical",
+      "introduced_by": null,
+      "usage_note_pt": "Seleciona a linha adjetiva 크다01/형, não o verbo crescer. A flexão com queda de eu deve usar a classe já ensinada.",
+      "used_by": [
+        "g8.go-addition",
+        "g9.adjective",
+        "g11.plain-adjective",
+        "g13.report-adjective",
+        "g13.new-realization"
+      ]
+    },
+    {
+      "entry_id": "lex.small",
+      "lemma": "작다",
+      "source_form": "작다01",
+      "source_pos": "형",
+      "source_entry_sha256": "a5026bc9cad1d86d69194d3c6ed232359bd83854e3922e54d8f8937c1fe3fe11",
+      "meaning_pt": "ser pequeno; ter tamanho reduzido.",
+      "teaching_mode": "lexical",
+      "introduced_by": null,
+      "usage_note_pt": "Sentido de tamanho físico no exemplo da casa.",
+      "used_by": [
+        "g8.jiman"
+      ]
+    },
+    {
+      "entry_id": "lex.rain",
+      "lemma": "비",
+      "source_form": "비01",
+      "source_pos": "명",
+      "source_entry_sha256": "5fd81dcc902070f329fdf190d35221570f04d1c8bb16ab44ba62ad66795b60d1",
+      "meaning_pt": "chuva.",
+      "teaching_mode": "lexical",
+      "introduced_by": null,
+      "usage_note_pt": "Seleciona 비01, fenômeno meteorológico. Exclui o homógrafo referente a monumento ou inscrição.",
+      "used_by": [
+        "g8.condition",
+        "g12.conjecture"
+      ]
+    },
+    {
+      "entry_id": "lex.rain-fall",
+      "lemma": "오다",
+      "source_form": "오다01",
+      "source_pos": "동",
+      "source_entry_sha256": "1d77a5a0957c0b3f6cb847c1116c8037d93b1d48a61edcaf59814ad4592046ff",
+      "meaning_pt": "cair ou ocorrer, referido à chuva na expressão 비가 오다.",
+      "teaching_mode": "lexical",
+      "introduced_by": null,
+      "usage_note_pt": "Mesmo lema e linha de fonte do verbo 오다, com sentido meteorológico distinto de vir. A combinação significa chover; não constitui evidência de uma regra geral para qualquer fenômeno.",
+      "used_by": [
+        "g8.condition",
+        "g12.conjecture"
+      ]
+    },
+    {
+      "entry_id": "lex.stay",
+      "lemma": "있다",
+      "source_form": "있다01",
+      "source_pos": "동",
+      "source_entry_sha256": "b02377b3350f3ce3436d48f6ff0486038291d55796cef99e26971a3c2aaf6155",
+      "meaning_pt": "ficar; permanecer em um lugar sem sair.",
+      "teaching_mode": "lexical",
+      "introduced_by": null,
+      "usage_note_pt": "Uso verbal de permanência de uma pessoa: ficar em casa nas traduções selecionadas. É um sentido diferente da existência ou presença. Requer apoio lexical antes da primeira ocorrência e confirmação contextual na revisão; uma tag do analisador isolada não resolve a distinção.",
+      "used_by": [
+        "g8.condition",
+        "g8.nikka-reason"
+      ]
+    },
+    {
+      "entry_id": "lex.easy",
+      "lemma": "쉽다",
+      "source_form": "쉽다",
+      "source_pos": "형",
+      "source_entry_sha256": "b2dda7f25fafd95e85833540692f99367300befc6d1779d6fbc5158e1a116729",
+      "meaning_pt": "ser fácil; exigir pouco esforço ou apresentar pouca dificuldade.",
+      "teaching_mode": "lexical",
+      "introduced_by": null,
+      "usage_note_pt": "Membro da classe irregular de bieup com alternância para 우, como 춥다. Essa pertença lexical precisa ser ensinada; conhecer apenas a regra de outro adjetivo em bieup não a demonstra.",
+      "used_by": [
+        "g7.bieup",
+        "g10.gi"
+      ]
+    },
+    {
+      "entry_id": "lex.know",
+      "lemma": "알다",
+      "source_form": "알다",
+      "source_pos": "동",
+      "source_entry_sha256": "8c7c746d739289bfd489706d08bb3422f22ef742c04d078a91c38882e8f5081b",
+      "meaning_pt": "saber; ter conhecimento de algo.",
+      "teaching_mode": "lexical",
+      "introduced_by": null,
+      "usage_note_pt": "Na frase de G10, refere-se a conhecer um fato. O radical em rieul segue os ambientes de manutenção ou queda ensinados no curso.",
+      "used_by": [
+        "g10.eum",
+        "g13.shared-reminder"
+      ]
+    },
+    {
+      "entry_id": "lex.live",
+      "lemma": "살다",
+      "source_form": "살다01",
+      "source_pos": "동",
+      "source_entry_sha256": "1ba6daf056b3fed606f7d1c1bd1a1c89ebabc07f46ceafdfb1d7794879e17279",
+      "meaning_pt": "viver; morar em algum lugar.",
+      "teaching_mode": "lexical",
+      "introduced_by": null,
+      "usage_note_pt": "Verbo com radical em rieul. É exemplo de flexão e nominalização nas regras de G10 e G11; conhecer seu significado não comprova domínio desses ambientes gramaticais.",
+      "used_by": [
+        "g10.eum",
+        "g11.formal-statement",
+        "g11.polite-question"
+      ]
+    },
+    {
+      "entry_id": "lex.nominalizer-geot",
+      "lemma": "것",
+      "source_form": "것01",
+      "source_pos": "의",
+      "source_entry_sha256": "54a551cfe679b0a8f0b2119ab7aaffb785e66ff7195e461aa81bde9d9bc8e6de",
+      "meaning_pt": "elemento dependente que permite tratar uma ação ou situação como expressão nominal.",
+      "teaching_mode": "construction",
+      "introduced_by": "g10.geot",
+      "usage_note_pt": "Uso de nominalização em -는 것. O elemento não significa sempre um objeto material; a unidade é ensinada na aula própria e não entra como vocabulário inicial.",
+      "used_by": [
+        "g10.geot"
+      ]
+    },
+    {
+      "entry_id": "lex.this",
+      "lemma": "이",
+      "source_form": "이05",
+      "source_pos": "관",
+      "source_entry_sha256": "6179be2453e25411de111c6c85dada61055d811a48dd1a255ae920a35cc8b70f",
+      "meaning_pt": "este, esta; indica algo próximo ou já apontado antes do nome.",
+      "teaching_mode": "lexical",
+      "introduced_by": null,
+      "usage_note_pt": "Seleciona o determinante 이05/관 em 이 책. Exclui dente, número dois, pronome demonstrativo independente e a partícula de sujeito de mesma escrita.",
+      "used_by": [
+        "g10.su-particle",
+        "g12.try",
+        "g12.experience"
+      ]
+    },
+    {
+      "entry_id": "lex.i-familiar",
+      "lemma": "나",
+      "source_form": "나03",
+      "source_pos": "대",
+      "source_entry_sha256": "fa0d35ee8f4f3f947d53c63919a0132891f511a1ace061380d94a2b435f0eaae",
+      "meaning_pt": "eu, em uma forma sem a modéstia de 저.",
+      "teaching_mode": "lexical",
+      "introduced_by": null,
+      "usage_note_pt": "Usar conforme a relação entre interlocutores. A escolha do pronome não autoriza por si só qualquer nível de tratamento.",
+      "used_by": [
+        "g11.informal"
+      ]
+    },
+    {
+      "entry_id": "lex.obligation-aux",
+      "lemma": "하다",
+      "source_form": "하다01",
+      "source_pos": "보",
+      "source_entry_sha256": "bc86a5aaec24d91a96c5b1283bc62e76c532c1f5200167bb1c970d830447f914",
+      "meaning_pt": "com -아/어야, indicar que é necessário realizar a ação.",
+      "teaching_mode": "construction",
+      "introduced_by": "g12.obligation",
+      "usage_note_pt": "O sentido de obrigação é da construção inteira. A mesma linha auxiliar da fonte sustenta um uso diferente daquele de intenção.",
+      "used_by": [
+        "g12.obligation"
+      ]
+    },
+    {
+      "entry_id": "lex.obligation-doeda",
+      "lemma": "되다",
+      "source_form": "되다01",
+      "source_pos": "동",
+      "source_entry_sha256": "47e78c61ac51dd7c803a819d0b65307f6d480b539a680a04f7d61b285ec1e4a8",
+      "meaning_pt": "com -아/어야, participar de uma expressão de obrigação.",
+      "teaching_mode": "construction",
+      "introduced_by": "g12.obligation",
+      "usage_note_pt": "Alternativa mencionada na nota de obrigação, não realizada na frase-alvo. Usa a mesma linha da fonte com uma leitura diferente da construção de permissão.",
+      "used_by": [
+        "g12.obligation"
+      ]
+    },
+    {
+      "entry_id": "lex.permission-doeda",
+      "lemma": "되다",
+      "source_form": "되다01",
+      "source_pos": "동",
+      "source_entry_sha256": "47e78c61ac51dd7c803a819d0b65307f6d480b539a680a04f7d61b285ec1e4a8",
+      "meaning_pt": "com -아/어도, indicar que a ação é permitida.",
+      "teaching_mode": "construction",
+      "introduced_by": "g12.permission",
+      "usage_note_pt": "A fonte mantém o POS 동. A função permissiva pertence à construção inteira, não ao significado básico de tornar-se.",
+      "used_by": [
+        "g12.permission"
+      ]
+    },
+    {
+      "entry_id": "lex.prohibition-aux",
+      "lemma": "말다",
+      "source_form": "말다03",
+      "source_pos": "보",
+      "source_entry_sha256": "d89da5419600cb48ee7278fe00877a295a017ef8257417af4353436cd0a0eac7",
+      "meaning_pt": "com -지, pedir ou ordenar que uma ação não seja feita.",
+      "teaching_mode": "construction",
+      "introduced_by": "g12.prohibition",
+      "usage_note_pt": "Seleciona o auxiliar de proibição. Exclui enrolar e o verbo principal interromper ou desistir, embora compartilhem a escrita.",
+      "used_by": [
+        "g12.prohibition"
+      ]
+    },
+    {
+      "entry_id": "lex.try-aux",
+      "lemma": "보다",
+      "source_form": "보다01",
+      "source_pos": "보",
+      "source_entry_sha256": "798bf8c66ec9b718e2f90840c10126572a6721357b45abd373b420adb5e07ef7",
+      "meaning_pt": "com -아/어, realizar uma ação para experimentá-la.",
+      "teaching_mode": "construction",
+      "introduced_by": "g12.try",
+      "usage_note_pt": "Seleciona o auxiliar de tentativa. Não usar o verbo principal ver nem o advérbio mais; a partícula comparativa 보다 é tratada pelo cartão de gramática correspondente.",
+      "used_by": [
+        "g12.try"
+      ]
+    },
+    {
+      "entry_id": "lex.experience-dependent-jeok",
+      "lemma": "적",
+      "source_form": "적03",
+      "source_pos": "의",
+      "source_entry_sha256": "0db27e9dbd445b0b0704f34c09dbc8c8f209fe037905604d58e78f0256ccb196",
+      "meaning_pt": "ocasião ou experiência anterior, dentro da construção de ter feito algo.",
+      "teaching_mode": "construction",
+      "introduced_by": "g12.experience",
+      "usage_note_pt": "Seleciona 적03 como substantivo dependente, não inimigo. A existência de experiência depende da construção com forma adnominal e 있다.",
+      "used_by": [
+        "g12.experience"
+      ]
+    },
+    {
+      "entry_id": "lex.experience-exist",
+      "lemma": "있다",
+      "source_form": "있다01",
+      "source_pos": "형",
+      "source_entry_sha256": "10b5b26f7d8c384dd6ba7602855f25a9d688bb7c211b8d499544bd798f88343c",
+      "meaning_pt": "em 적이 있다, indicar que uma experiência ocorreu anteriormente.",
+      "teaching_mode": "construction",
+      "introduced_by": "g12.experience",
+      "usage_note_pt": "Mesmo vínculo de fonte adjetivo, com função experiencial dentro de uma construção diferente de capacidade ou existência simples.",
+      "used_by": [
+        "g12.experience"
+      ]
+    },
+    {
+      "entry_id": "lex.conjecture-gatda",
+      "lemma": "같다",
+      "source_form": "같다",
+      "source_pos": "형",
+      "source_entry_sha256": "825fcf35fa058c86ecece8bf8de1e0248f5e59f8e97ce15a4219561f7f564039",
+      "meaning_pt": "com a forma adnominal e 것, indicar uma avaliação ou conjectura.",
+      "teaching_mode": "construction",
+      "introduced_by": "g12.conjecture",
+      "usage_note_pt": "A fonte é adjetiva; o valor de parecer provável é ensinado na construção inteira. Não é um cartão prévio que ensine essa conjectura como tradução isolada.",
+      "used_by": [
+        "g12.conjecture"
+      ]
+    },
+    {
+      "entry_id": "lex.conjecture-geot",
+      "lemma": "것",
+      "source_form": "것01",
+      "source_pos": "의",
+      "source_entry_sha256": "54a551cfe679b0a8f0b2119ab7aaffb785e66ff7195e461aa81bde9d9bc8e6de",
+      "meaning_pt": "elemento dependente da construção de conjectura com 같다.",
+      "teaching_mode": "construction",
+      "introduced_by": "g12.conjecture",
+      "usage_note_pt": "Compartilha a linha de fonte de 것, mas o uso pertence à expressão conjectural inteira. O domínio da nominalização anterior não torna a conjectura automaticamente conhecida.",
+      "used_by": [
+        "g12.conjecture"
+      ]
+    },
+    {
+      "entry_id": "lex.report-say",
+      "lemma": "하다",
+      "source_form": "하다01",
+      "source_pos": "동",
+      "source_entry_sha256": "4f54e087fca61eb3053e2921638d99a595807b43bed7f039e78fe841c984caf6",
+      "meaning_pt": "dizer; relatar um conteúdo enunciado.",
+      "teaching_mode": "construction",
+      "introduced_by": "g13.report-verb",
+      "usage_note_pt": "Na função de dizer, a fonte classifica 하다 como verbo principal. O apoio continua classificado como construção para não pré-ensinar o discurso reportado como simples fazer; as terminações de relato variam por aula.",
+      "used_by": [
+        "g13.report-verb",
+        "g13.report-adjective",
+        "g13.report-noun",
+        "g13.report-past",
+        "g13.report-question",
+        "g13.report-command",
+        "g13.report-suggestion"
+      ]
+    },
+    {
+      "entry_id": "lex.sell",
+      "lemma": "팔다",
+      "source_form": "팔다",
+      "source_pos": "동",
+      "source_entry_sha256": "1c400bbb32c65b043048cb48b8792d20c805c240825df870eddd1ff46a2ce075",
+      "meaning_pt": "vender; entregar algo em troca de pagamento.",
+      "teaching_mode": "lexical",
+      "introduced_by": null,
+      "usage_note_pt": "Radical em rieul. A queda diante de certas terminações é uma regra gramatical ensinada no curso, não uma alteração arbitrária do lema.",
+      "used_by": [
+        "g13.report-question"
+      ]
+    },
+    {
+      "entry_id": "lex.open-passive",
+      "lemma": "열리다",
+      "source_form": "열리다02",
+      "source_pos": "동",
+      "source_entry_sha256": "b2455f6b40c9c9e174b166d53bf11067ed050f34b4181b7f1cc089baec6e542b",
+      "meaning_pt": "abrir-se; passar a estar aberto, como uma porta.",
+      "teaching_mode": "construction",
+      "introduced_by": "g13.passive",
+      "usage_note_pt": "Seleciona 문이 열리다, não o homógrafo frutificar. Entrada pertence à derivação lexical de G13: não inseri-la como bootstrap já conhecido para apagar o contraste com 열다.",
+      "used_by": [
+        "g13.passive"
+      ]
+    },
+    {
+      "entry_id": "lex.seat-causative",
+      "lemma": "앉히다",
+      "source_form": "앉히다",
+      "source_pos": "동",
+      "source_entry_sha256": "bf16423bdfdbcb51e98ed9fd7275bf19a439583d05d78185b5c06021a4944c90",
+      "meaning_pt": "fazer alguém sentar-se; colocar uma pessoa sentada.",
+      "teaching_mode": "construction",
+      "introduced_by": "g13.causative-suffix",
+      "usage_note_pt": "Derivado causativo relacionado a 앉다. É apoio da construção de G13, não prova de que o aprendiz já domina o sufixo por conhecer a tradução.",
+      "used_by": [
+        "g13.causative-suffix"
+      ]
+    },
+    {
+      "entry_id": "lex.sit",
+      "lemma": "앉다",
+      "source_form": "앉다",
+      "source_pos": "동",
+      "source_entry_sha256": "9d0c2cb0788860ce3c3bd04ab83d86452e009059550c1ea982d8c5803ce1f637",
+      "meaning_pt": "sentar-se; assumir uma posição sentada.",
+      "teaching_mode": "lexical",
+      "introduced_by": null,
+      "usage_note_pt": "Verbo-base intransitivo da relação com 앉히다. Conhecer a palavra não comprova conhecimento de derivação causativa.",
+      "used_by": [
+        "g13.causative-suffix"
+      ]
+    },
+    {
+      "entry_id": "lex.cause-aux",
+      "lemma": "하다",
+      "source_form": "하다01",
+      "source_pos": "보",
+      "source_entry_sha256": "bc86a5aaec24d91a96c5b1283bc62e76c532c1f5200167bb1c970d830447f914",
+      "meaning_pt": "com -게, fazer ou levar alguém a realizar uma ação.",
+      "teaching_mode": "construction",
+      "introduced_by": "g13.causative-analytic",
+      "usage_note_pt": "Uso auxiliar causativo, distinto da intenção e obrigação apesar de compartilhar a mesma linha da fonte. Não implica automaticamente coerção em todo contexto.",
+      "used_by": [
+        "g13.causative-analytic"
+      ]
+    },
+    {
+      "entry_id": "lex.change-doeda",
+      "lemma": "되다",
+      "source_form": "되다01",
+      "source_pos": "동",
+      "source_entry_sha256": "47e78c61ac51dd7c803a819d0b65307f6d480b539a680a04f7d61b285ec1e4a8",
+      "meaning_pt": "com -게, passar a realizar uma ação ou entrar em uma nova situação.",
+      "teaching_mode": "construction",
+      "introduced_by": "g13.change-circumstance",
+      "usage_note_pt": "Uso de mudança por circunstâncias, distinto de permissão e obrigação apesar da mesma identidade lexical de fonte. Não classificar toda ocorrência como passiva.",
+      "used_by": [
+        "g13.change-circumstance"
+      ]
+    }
+  ]
+}

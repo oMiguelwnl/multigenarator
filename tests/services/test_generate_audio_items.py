@@ -3,14 +3,43 @@
 from __future__ import annotations
 
 from dataclasses import dataclass, field
+from pathlib import Path
 from types import SimpleNamespace
 
-from multilang.domain.audio import AudioAssetKind, AudioAssetRecord, AudioFormat, AudioProvenance, AudioProvider, AudioSynthesisStatus, NormalizedTtsInput
+import pytest
+from support.audio import SILENT_MP3
+
+from multilang.domain.audio import (
+    AudioAssetKind,
+    AudioAssetRecord,
+    AudioFormat,
+    AudioProvenance,
+    AudioProvider,
+    AudioSynthesisStatus,
+    NormalizedTtsInput,
+)
 from multilang.domain.jobs import JobStage, SupportedLanguage
-from multilang.domain.lexicon import DefinitionRecord, GroundingStatus, LexicalCardCandidate, LexicalProvenance
-from multilang.domain.text_quality import ConfidenceLabel, ReviewStatus, TextGenerationStatus, TextProvenance, TextQualityRecord, ValidationStatus
+from multilang.domain.lexicon import (
+    DefinitionRecord,
+    GroundingStatus,
+    LexicalCardCandidate,
+    LexicalProvenance,
+)
+from multilang.domain.text_quality import (
+    ConfidenceLabel,
+    ReviewStatus,
+    TextGenerationStatus,
+    TextProvenance,
+    TextQualityRecord,
+    ValidationStatus,
+)
 from multilang.services.audio_synthesis import AudioSynthesisBundle
-from multilang.services.generate_audio_items import GenerateAudioItemsService
+from multilang.services.generate_audio_items import GenerateAudioItemsService, _can_reuse_asset
+
+
+@pytest.fixture(autouse=True)
+def isolated_audio_storage(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.chdir(tmp_path)
 
 
 def make_text_record(*, item_key: str, review_status: ReviewStatus) -> TextQualityRecord:
@@ -53,11 +82,16 @@ def make_candidate(*, item_key: str, source_type: str = "frequency") -> object:
 
 
 def make_asset(*, item_key: str, asset_kind: AudioAssetKind, status: AudioSynthesisStatus, fallback_used: bool = False) -> AudioAssetRecord:
+    text = item_key if asset_kind is AudioAssetKind.WORD else f"I use {item_key} every day."
     normalized = NormalizedTtsInput(
-        display_text=item_key if asset_kind is AudioAssetKind.WORD else f"I use {item_key} every day.",
-        tts_text=item_key if asset_kind is AudioAssetKind.WORD else f"I use {item_key} every day.",
-        ssml_text=f"<speak version=\"1.0\">{item_key}</speak>",
+        display_text=text,
+        tts_text=text,
+        ssml_text=f"<speak version=\"1.0\">{text}</speak>",
     )
+    path = Path(f"audio/{asset_kind.value}/{item_key}.mp3")
+    if status is AudioSynthesisStatus.SYNTHESIZED:
+        path.parent.mkdir(parents=True, exist_ok=True)
+        path.write_bytes(SILENT_MP3)
     return AudioAssetRecord(
         job_id="job-1",
         item_key=item_key,
@@ -72,7 +106,7 @@ def make_asset(*, item_key: str, asset_kind: AudioAssetKind, status: AudioSynthe
             text_hash=normalized.text_hash or "",
             ssml_hash=normalized.ssml_hash or "",
             storage_path=f"audio/{asset_kind.value}/{item_key}.mp3",
-            byte_size=4096 if status is AudioSynthesisStatus.SYNTHESIZED else 0,
+            byte_size=len(SILENT_MP3) if status is AudioSynthesisStatus.SYNTHESIZED else 0,
             duration_ms=800 if status is AudioSynthesisStatus.SYNTHESIZED else None,
             status=status,
             fallback_used=fallback_used,
@@ -130,12 +164,15 @@ class FakeAudioSynthesisService:
         return self.prepared[text_record.item_key]
 
     def synthesize_prepared_asset(self, prepared_asset: AudioAssetRecord) -> AudioAssetRecord:
+        path = Path(prepared_asset.provenance.storage_path)
+        path.parent.mkdir(parents=True, exist_ok=True)
+        path.write_bytes(SILENT_MP3)
         synthesized = prepared_asset.model_copy(
             update={
                 "provenance": prepared_asset.provenance.model_copy(
                     update={
                         "status": AudioSynthesisStatus.SYNTHESIZED,
-                        "byte_size": 4096,
+                        "byte_size": len(SILENT_MP3),
                         "duration_ms": 900,
                     }
                 )
@@ -435,3 +472,54 @@ def test_generate_audio_items_fallback_only_regenerates_only_fallback_assets() -
 
     assert result.processed_items == 1
     assert {asset.asset_kind for asset in audio_repository.saved_assets} == {AudioAssetKind.WORD}
+
+
+@pytest.mark.parametrize("damage", ["deleted", "corrupt", "text", "ssml", "voice", "provider", "locale", "format", "hash"])
+@pytest.mark.parametrize("missing_only", [False, True])
+def test_stale_audio_is_regenerated(damage: str, missing_only: bool) -> None:
+    word = make_asset(item_key="alpha", asset_kind=AudioAssetKind.WORD, status=AudioSynthesisStatus.PENDING)
+    sentence = make_asset(item_key="alpha", asset_kind=AudioAssetKind.SENTENCE, status=AudioSynthesisStatus.PENDING)
+    existing = make_asset(item_key="alpha", asset_kind=AudioAssetKind.SENTENCE, status=AudioSynthesisStatus.SYNTHESIZED)
+    if damage == "deleted":
+        Path(existing.provenance.storage_path).unlink()
+    elif damage == "corrupt":
+        Path(existing.provenance.storage_path).write_bytes(b"x" * len(SILENT_MP3))
+    elif damage == "text":
+        existing.normalized_input.tts_text = "This is an old sentence."
+    elif damage == "ssml":
+        existing.normalized_input.ssml_text = "<speak>This is an old sentence.</speak>"
+    else:
+        field_name, replacement = {
+            "voice": ("voice_id", "other-voice"),
+            "provider": ("provider", AudioProvider.ELEVENLABS),
+            "locale": ("locale", "fr-FR"),
+            "format": ("format", AudioFormat.MP3),
+            "hash": ("text_hash", "stale-hash"),
+        }[damage]
+        setattr(existing.provenance, field_name, replacement)
+    key = (sentence.asset_kind.value, sentence.normalized_input.text_hash or "", sentence.normalized_input.ssml_hash or "", sentence.provenance.voice_id, sentence.provenance.format.value)
+    repository = FakeAudioRepository(
+        reusable_assets={key: existing},
+        existing_assets={("job-1", "alpha", AudioAssetKind.SENTENCE.value): existing},
+    )
+    synthesis = FakeAudioSynthesisService(prepared={"alpha": AudioSynthesisBundle(word_asset=word, sentence_asset=sentence)})
+    service = GenerateAudioItemsService(
+        job_repository=FakeJobRepository(),
+        lexical_repository=FakeLexicalRepository(candidates={"alpha": make_candidate(item_key="alpha", source_type="word-list")}),
+        text_repository=FakeTextRepository(accepted_records=[make_text_record(item_key="alpha", review_status=ReviewStatus.ACCEPTED)]),
+        audio_repository=repository, audio_synthesis_service=synthesis,
+    )
+
+    result = service.execute(job_id="job-1", deck_language=SupportedLanguage.EN, missing_only=missing_only)
+
+    assert result.processed_items == 1
+    assert result.reused_items == 0
+    assert len(synthesis.synthesized) == 1
+
+
+def test_reusable_sentence_requires_its_display_text_to_match() -> None:
+    prepared = make_asset(item_key="alpha", asset_kind=AudioAssetKind.SENTENCE, status=AudioSynthesisStatus.PENDING)
+    existing = make_asset(item_key="alpha", asset_kind=AudioAssetKind.SENTENCE, status=AudioSynthesisStatus.SYNTHESIZED)
+    existing.display_text = "A stale sentence."
+
+    assert not _can_reuse_asset(prepared, existing)

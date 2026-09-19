@@ -341,7 +341,10 @@ def _review_coverage_payload(**overrides: object) -> dict[str, object]:
 
 
 def _review_decision_payload(**overrides: object) -> dict[str, object]:
-    from multilang.domain.text_quality import KoreanTextReviewCoverage, KoreanTextReviewQualification
+    from multilang.domain.text_quality import (
+        KoreanTextReviewCoverage,
+        KoreanTextReviewQualification,
+    )
 
     identity_hash = _hash("candidate-identity")
     payload: dict[str, object] = {

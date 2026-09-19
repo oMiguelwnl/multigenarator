@@ -2,14 +2,14 @@
 
 from __future__ import annotations
 
+import json
+import stat
+import unicodedata
 from enum import Enum
 from graphlib import CycleError, TopologicalSorter
 from hashlib import sha256
-import json
 from pathlib import Path
-import stat
 from typing import Final, Literal, Self, TypeVar
-import unicodedata
 
 from pydantic import (
     BaseModel,
@@ -30,7 +30,6 @@ from multilang.domain.korean import (
     KoreanPronunciationEvidence,
     KoreanReviewStatus,
 )
-
 
 KOREAN_FOUNDATION_DATA_ROOT: Final = Path("data") / "korean_foundations"
 KOREAN_CONCEPT_REGISTRY_V1_PATH: Final[Path] = (

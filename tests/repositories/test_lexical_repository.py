@@ -7,19 +7,19 @@ from sqlalchemy import create_engine, text
 from sqlalchemy.orm import Session
 
 from multilang.db.base import Base
+from multilang.domain.jobs import GenerationRequest, SupportedLanguage
 from multilang.domain.korean import (
     KoreanAnalyzerFingerprint,
     KoreanLexicalIdentity,
     KoreanSignatureItem,
     raw_bytes_sha256,
 )
-from multilang.domain.jobs import GenerationRequest, SupportedLanguage
 from multilang.domain.lexicon import (
     DefinitionRecord,
     GroundingStatus,
+    KoreanFrequencyLexicalEvidence,
     LexicalCardCandidate,
     LexicalProvenance,
-    KoreanFrequencyLexicalEvidence,
     PronunciationRecord,
 )
 from multilang.repositories.job_repository import JobRepository

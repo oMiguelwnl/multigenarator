@@ -21,7 +21,6 @@ from multilang.services.item_outcomes import (
     run_item_outcomes,
 )
 
-
 NOW = datetime(2026, 1, 1, 12, 0, tzinfo=timezone.utc)
 
 

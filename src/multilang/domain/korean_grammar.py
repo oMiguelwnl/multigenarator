@@ -2,10 +2,10 @@
 
 from __future__ import annotations
 
-from hashlib import sha256
 import json
-from typing import Any, Final, Literal, Self
 import unicodedata
+from hashlib import sha256
+from typing import Any, Final, Literal, Self
 
 from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator
 
@@ -15,7 +15,6 @@ from multilang.domain.korean import (
     KoreanCurriculumEvidence,
     canonicalize_korean,
 )
-
 
 KOREAN_GRAMMAR_REVIEW_POLICY_ID: Final = "multilang-ai-linguistic-review-v1"
 KOREAN_GRAMMAR_SOURCE_KIND: Final = "active-approved-snapshot"
@@ -442,6 +441,9 @@ class KoreanGrammarBundle(_FrozenGrammarModel):
         default=(),
         max_length=_MAX_IDS,
     )
+    orientation_entries: tuple[KoreanGrammarEntry, ...] = Field(
+        default=(), max_length=_MAX_IDS, exclude_if=lambda value: not value,
+    )
     grammar_entries: tuple[KoreanGrammarEntry, ...] = Field(default=(), max_length=_MAX_IDS)
     member_hashes: dict[str, str]
     bundle_sha256: str = Field(min_length=64, max_length=64)
@@ -463,6 +465,9 @@ class KoreanGrammarBundle(_FrozenGrammarModel):
 
     @model_validator(mode="after")
     def imported_ids_must_match_binding(self) -> Self:
+        if any(entry.category_id != "G0" or entry.evidence.policy != "contextual"
+               for entry in self.orientation_entries):
+            raise ValueError("grammar orientation requires contextual G0 entries")
         imported_ids = tuple(concept.id for concept in self.imported_concepts)
         if imported_ids != self.phase31_binding.imported_concept_ids:
             raise ValueError("imported concepts must match Phase 31 binding")
@@ -481,10 +486,11 @@ def build_member_hashes(
     overlay_concepts: tuple[KoreanConcept, ...],
     lexical_bootstrap: tuple[KoreanGrammarBootstrapEntry, ...],
     grammar_entries: tuple[KoreanGrammarEntry, ...],
+    orientation_entries: tuple[KoreanGrammarEntry, ...] = (),
 ) -> dict[str, str]:
     """Return stable member hashes for the independently versioned bundle parts."""
 
-    return {
+    hashes = {
         "phase31_binding": korean_grammar_canonical_json_sha256(phase31_binding),
         "imported_concepts": korean_grammar_canonical_json_sha256(
             [concept.model_dump(mode="json") for concept in imported_concepts]
@@ -499,11 +505,18 @@ def build_member_hashes(
             [entry.model_dump(mode="json", by_alias=True) for entry in grammar_entries]
         ),
     }
+    if orientation_entries:
+        hashes["orientation_entries"] = korean_grammar_canonical_json_sha256(
+            [entry.model_dump(mode="json", by_alias=True) for entry in orientation_entries]
+        )
+    return hashes
 
 
 def build_bundle_sha256(payload: dict[str, Any]) -> str:
     unsigned = dict(payload)
     unsigned.pop("bundle_sha256", None)
+    if not unsigned.get("orientation_entries"):
+        unsigned.pop("orientation_entries", None)
     return korean_grammar_canonical_json_sha256(unsigned)
 
 

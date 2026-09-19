@@ -16,13 +16,12 @@ from multilang.domain.personal_sources import (
     PersonalSourceAdaptiveEvidence,
     PersonalSourceDecisionCommand,
     PersonalSourceDecisionReason,
-    PersonalSourcePreparedItem,
     PersonalSourcePreparationStatus,
+    PersonalSourcePreparedItem,
     PersonalSourcePrerequisiteDecision,
     PersonalSourcePrerequisiteProposal,
     PersonalSourceRow,
 )
-
 
 KOREAN_PERSONAL_PREREQUISITE_POLICY_VERSION = "korean-personal-adaptive-prereq-v1"
 _KOREAN_PERSONAL_PREREQUISITE_ASSESSOR = "korean-personal-prerequisite-assessor-v1"

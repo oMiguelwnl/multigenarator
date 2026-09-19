@@ -20,7 +20,6 @@ from multilang.services.latin_mvp import LatinMvpGenerationService
 from multilang.services.latin_review import load_latin_curated_records
 from multilang.services.latin_source_pack import load_latin_mvp_source_pack
 
-
 PHASE_27_REQUIREMENTS = ("AUD-01", "AUD-02", "AUD-03", "AUD-04")
 PHASE_27_REQUIREMENT_EVIDENCE = {
     "AUD-01": "test_phase_27_evidence_loads_real_assets_and_approved_playback_policy",

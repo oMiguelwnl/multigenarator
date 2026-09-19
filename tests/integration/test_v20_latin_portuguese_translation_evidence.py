@@ -15,7 +15,6 @@ from multilang.services.latin_translation_quality import (
     load_latin_portuguese_translation_pack,
 )
 
-
 PHASE_26_REQUIREMENTS = ("PT-01", "PT-02", "PT-03")
 
 

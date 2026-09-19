@@ -2,15 +2,14 @@
 
 from __future__ import annotations
 
-from enum import Enum
 import math
 import re
+from enum import Enum
 from typing import Literal, Self
 
 from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator
 
 from multilang.domain.korean import canonical_json_sha256
-
 
 KOREAN_PROVIDER_POLICY_VERSION = "korean-provider-policy-v1"
 _HEX = frozenset("0123456789abcdef")

@@ -16,7 +16,6 @@ from multilang.services.phoneme_deck import (
 )
 from multilang.services.russian_phoneme_deck import build_russian_phoneme_model
 
-
 EXPECTED_PHONEME_FIELD_NAMES = (
     "Spellings",
     "Sound",

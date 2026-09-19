@@ -3,7 +3,11 @@
 from __future__ import annotations
 
 from dataclasses import dataclass, field
+from pathlib import Path
 from types import SimpleNamespace
+
+import pytest
+from support.audio import SILENT_MP3
 
 from multilang.domain.audio import (
     AudioAssetKind,
@@ -15,6 +19,7 @@ from multilang.domain.audio import (
     NormalizedTtsInput,
 )
 from multilang.domain.jobs import JobStage, SupportedLanguage
+from multilang.domain.lexicon import LexicalProvenance, PronunciationRecord
 from multilang.domain.text_quality import (
     ConfidenceLabel,
     ReviewStatus,
@@ -27,8 +32,12 @@ from multilang.services.assemble_export_cards import AssembleExportCardsService
 from multilang.services.audio_synthesis import AudioSynthesisBundle
 from multilang.services.generate_audio_items import GenerateAudioItemsService
 
-
 ITEM_KEY = "highlight:abc:wash"
+
+
+@pytest.fixture(autouse=True)
+def isolated_audio_storage(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.chdir(tmp_path)
 
 
 def make_text_record() -> TextQualityRecord:
@@ -68,12 +77,20 @@ def make_candidate() -> SimpleNamespace:
         grounding_status="grounded",
         warning_code=None,
         warning_detail=None,
+        provenance=LexicalProvenance(
+            source="manual",
+            pronunciation=PronunciationRecord(source="manual", value="/wɑʃ/", authoritative=True),
+        ),
     )
 
 
 def make_asset(*, asset_kind: AudioAssetKind, status: AudioSynthesisStatus = AudioSynthesisStatus.PENDING) -> AudioAssetRecord:
     text = "wash" if asset_kind is AudioAssetKind.WORD else "Readers wash every cup before the quiet chapter ends."
     normalized = NormalizedTtsInput(display_text=text, tts_text=text, ssml_text=f"<speak>{text}</speak>")
+    if status is AudioSynthesisStatus.SYNTHESIZED:
+        path = Path(f"audio/{asset_kind.value}/wash-{asset_kind.value}.mp3")
+        path.parent.mkdir(parents=True, exist_ok=True)
+        path.write_bytes(SILENT_MP3)
     return AudioAssetRecord(
         job_id="job-highlight",
         item_key=ITEM_KEY,
@@ -88,7 +105,7 @@ def make_asset(*, asset_kind: AudioAssetKind, status: AudioSynthesisStatus = Aud
             text_hash=normalized.text_hash or "",
             ssml_hash=normalized.ssml_hash or "",
             storage_path=f"audio/{asset_kind.value}/wash-{asset_kind.value}.mp3",
-            byte_size=4096 if status is AudioSynthesisStatus.SYNTHESIZED else 0,
+            byte_size=len(SILENT_MP3) if status is AudioSynthesisStatus.SYNTHESIZED else 0,
             duration_ms=900 if status is AudioSynthesisStatus.SYNTHESIZED else None,
             status=status,
         ),
@@ -145,8 +162,11 @@ class AudioSynthesis:
         )
 
     def synthesize_prepared_asset(self, prepared_asset: AudioAssetRecord) -> AudioAssetRecord:
+        path = Path(prepared_asset.provenance.storage_path)
+        path.parent.mkdir(parents=True, exist_ok=True)
+        path.write_bytes(SILENT_MP3)
         synthesized = prepared_asset.model_copy(
-            update={"provenance": prepared_asset.provenance.model_copy(update={"status": AudioSynthesisStatus.SYNTHESIZED, "byte_size": 4096})}
+            update={"provenance": prepared_asset.provenance.model_copy(update={"status": AudioSynthesisStatus.SYNTHESIZED, "byte_size": len(SILENT_MP3)})}
         )
         self.synthesized.append(synthesized)
         return synthesized

@@ -2,9 +2,9 @@
 
 from __future__ import annotations
 
+import unicodedata
 from dataclasses import dataclass
 from functools import lru_cache
-import unicodedata
 
 from opencc import OpenCC
 from pypinyin import Style, lazy_pinyin

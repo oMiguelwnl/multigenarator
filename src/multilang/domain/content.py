@@ -156,6 +156,8 @@ class ContentLimits(FrozenContentModel):
     max_request_bytes: int = Field(default=64000, ge=1, le=1000000)
     max_request_characters: int = Field(default=32000, ge=1, le=1000000)
     max_estimated_tokens: int = Field(default=16000, ge=1, le=1000000)
+    max_known_concept_ids: int = Field(default=10000, ge=1, le=10000)
+    max_known_concept_bytes: int = Field(default=750000, ge=1, le=3000000)
     max_response_bytes: int = Field(default=32000, ge=1, le=1000000)
 
 

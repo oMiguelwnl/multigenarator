@@ -11,11 +11,14 @@ from multilang.db.models import (
     HighlightImportRecordModel,
     HighlightPrivateExcerptRevisionModel,
 )
-from multilang.domain.highlights import HighlightImportManifest, HighlightProvenance, NormalizedHighlight
+from multilang.domain.highlights import (
+    HighlightImportManifest,
+    HighlightProvenance,
+    NormalizedHighlight,
+)
 from multilang.domain.jobs import GenerationRequest, SupportedLanguage
 from multilang.repositories.highlight_import_repository import HighlightImportRepository
 from multilang.repositories.job_repository import JobRepository
-
 
 PRIVATE_SENTENCE = "La frase privada solo vive en registros internos"
 

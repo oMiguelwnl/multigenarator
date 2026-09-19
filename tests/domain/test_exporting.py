@@ -6,17 +6,17 @@ import pytest
 
 from multilang.domain.exporting import (
     EXPORT_CARD_FIELD_NAMES,
-    ExportArtifactFormat,
-    ExportCardIdentity,
-    ExportCardRow,
     FREQUENCY_EXPORT_CARD_FIELD_NAMES,
     HIGHLIGHT_EXPORT_CARD_FIELD_NAMES,
     LATIN_EXPORT_CARD_FIELD_NAMES,
     MANDARIN_EXPORT_CARD_FIELD_NAMES,
     MANUAL_EXPORT_CARD_FIELD_NAMES,
+    ExportArtifactFormat,
+    ExportCardIdentity,
+    ExportCardRow,
     evaluate_export_quality_gate,
-    export_field_names_for_rows,
     export_field_names_for_language_and_source,
+    export_field_names_for_rows,
     export_field_names_for_source_type,
 )
 from multilang.domain.jobs import SupportedLanguage

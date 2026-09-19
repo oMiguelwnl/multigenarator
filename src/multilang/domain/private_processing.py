@@ -2,17 +2,16 @@
 
 from __future__ import annotations
 
-from datetime import datetime
-from enum import Enum
-from hashlib import sha256
 import json
 import math
 import re
 import unicodedata
-from typing import Any, Literal, Self
+from datetime import datetime
+from enum import Enum
+from hashlib import sha256
+from typing import Literal, Self
 
 from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator
-
 
 PRIVATE_TOKENIZATION_RULE_ID = "phase33-private-token-v1"
 MAX_PRIVATE_CONTEXT_TOKENS = 24

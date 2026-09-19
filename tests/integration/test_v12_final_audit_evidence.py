@@ -5,7 +5,6 @@ from __future__ import annotations
 import re
 from pathlib import Path
 
-
 EVIDENCE_PATH = Path(".planning/phases/16-end-to-end-v12-audit/16-V12-AUDIT-EVIDENCE.md")
 
 REQUIREMENT_IDS = (

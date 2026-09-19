@@ -4,8 +4,9 @@ import csv
 import json
 import sqlite3
 import zipfile
-import pytest
 from pathlib import Path
+
+import pytest
 
 from multilang.domain.exporting import ExportArtifactFormat
 from multilang.services.anki_id_registry import AnkiIdKind, registry_id

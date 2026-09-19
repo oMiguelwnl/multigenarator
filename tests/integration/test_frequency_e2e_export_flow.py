@@ -10,6 +10,7 @@ from typing import ClassVar
 import pytest
 from sqlalchemy import create_engine, func, select
 from sqlalchemy.orm import Session
+from support.audio import SILENT_MP3
 from support.text import use_mechanical_text_validation
 from typer.testing import CliRunner
 
@@ -74,7 +75,7 @@ class FakeAzureSpeechAdapter(AudioSynthesisAdapter):
         audio_format: str,
     ) -> AudioSynthesisResponse:
         output_path.parent.mkdir(parents=True, exist_ok=True)
-        payload = b"ID3" + f":{voice_id}:{locale}:{audio_format}:{ssml_text}".encode("utf-8")
+        payload = SILENT_MP3
         output_path.write_bytes(payload)
         return AudioSynthesisResponse(storage_path=output_path, byte_size=len(payload), duration_ms=800)
 
@@ -162,7 +163,7 @@ def test_frequency_sample_generates_audio_and_exports_all_formats(tmp_path: Path
         text_rows = list(session.scalars(select(TextQualityRecordModel)))
         assert {row.review_status for row in text_rows} == {"accepted"}
         for asset in session.scalars(select(AudioAssetModel)):
-            assert Path(asset.storage_path).read_bytes().startswith(b"ID3")
+            assert Path(asset.storage_path).read_bytes() == SILENT_MP3
 
         for export_format in ["apkg", "csv", "tsv"]:
             export_result = runner.invoke(

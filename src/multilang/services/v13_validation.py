@@ -2,10 +2,10 @@
 
 from __future__ import annotations
 
-from dataclasses import dataclass
-from enum import StrEnum
 import re
 import unicodedata
+from dataclasses import dataclass
+from enum import StrEnum
 
 from multilang.domain.audio import AudioAssetRecord
 from multilang.domain.exporting import ExportCardRow
@@ -69,7 +69,9 @@ def validate_v13_card(
             )
         )
 
-    text_result = TextValidationService().validate(
+    # This is the mechanical package check; semantic admission runs in the
+    # generation runtime with its configured provider and exact-pair cache.
+    text_result = TextValidationService(require_translation_fidelity=False).validate(
         sentence=GeneratedSentence(
             text=row.example_sentence,
             target_language=row.identity.language.value,

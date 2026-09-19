@@ -17,7 +17,6 @@ from multilang.services.latin_mvp import LatinMvpGenerationService
 from multilang.services.russian_phoneme_deck import PHONEME_FIELD_NAMES
 from multilang.services.text_review import ReviewReport, ReviewReportItem, TextReviewService
 
-
 PHASE_22_REQUIREMENTS = ("MODE-01", "MODE-02", "MODE-03")
 
 V20_NORMAL_FIELD_NAMES = (

@@ -1,0 +1,60 @@
+{
+  "schema_version": "korean-grammar-editorial-summary-v1",
+  "recorded_at": "2026-09-19T15:30:20.912761+00:00",
+  "course_sha256": "751905ef1ceb96935d38a73bd5034ec704f91d5726a607dc8cdfa061ced47b41",
+  "source_hashes": {
+    "data/korean_grammar/v1/cards-g0-g6.json": "c9bed6a79315f8edf3a855df920636d20d8eb6c22952205a3f3bd31eb540259e",
+    "data/korean_grammar/v1/cards-g7-g13.json": "0013e61066679829a5a58d406d6ea0b6e715680e593e7d809733649f9337d74c",
+    "data/korean_grammar/v1/lexical-support.json": "7c4de43f3739a6f623a4a4732b3254bc46cef7e0ed282fb31b1b7134f682087f",
+    "data/korean_grammar/v1/grammar-observations.json": "2d79f447b0c956c8dd0914669752578e6bda7ee74c894238e81e78106a14abfa"
+  },
+  "policy_id": "multilang-ai-linguistic-review-v1",
+  "scope": "Editorial text only: correctness, Portuguese sense, observation completeness and semantic teaching sequence. Assumes lexical support and all prior lessons known. G0 is guided.",
+  "textual_consensus": "ai_review_passed",
+  "passes": [
+    {
+      "pass_id": "grammar-final-review-a",
+      "report_path": ".multilang/verification/korean-grammar/final-review-a-v5.json",
+      "report_sha256": "fe421f824b075f13276f73e60a3c15bb603cef2cde3061e08439d74dbce85f87",
+      "actor_type": "ai_model",
+      "is_human": false,
+      "model_identifier": "unknown",
+      "independence_scope": "fresh_context_same_model",
+      "textual_verdict": "ai_review_passed",
+      "covered_entries": 108
+    },
+    {
+      "pass_id": "grammar-final-review-b",
+      "report_path": ".multilang/verification/korean-grammar/final-review-b-v5.json",
+      "report_sha256": "a23006a7437f40f07d9656ceb86abb49a12f367bcd9c642762f00ede42ec3695",
+      "actor_type": "ai_model",
+      "is_human": false,
+      "model_identifier": "unknown",
+      "independence_scope": "fresh_context_same_model",
+      "textual_verdict": "ai_review_passed",
+      "covered_entries": 108
+    },
+    {
+      "pass_id": "grammar-final-review-c",
+      "report_path": ".multilang/verification/korean-grammar/final-review-c-v5.json",
+      "report_sha256": "5c5c65caf88de37959b6d7832f3259c693c067acb3363afc2f5b4b212431dffb",
+      "actor_type": "ai_model",
+      "is_human": false,
+      "model_identifier": "unknown",
+      "independence_scope": "fresh_context_same_model",
+      "textual_verdict": "ai_review_passed",
+      "covered_entries": 108
+    }
+  ],
+  "learner_ready": false,
+  "production_receipt": false,
+  "pending": [
+    "complete_contextual_morphology_identity_evidence",
+    "runtime_lexical_bootstrap_with_reviewed_media",
+    "final_bundle_review_bindings",
+    "reviewed_grammar_audio",
+    "Anki_application_acceptance"
+  ],
+  "note": "The three independent initial reviewers rechecked repairs. This summary does not create an extra review pass, identify an unknown model, or override any deterministic or production gate. Two later production-review corrections change the current subject; these original pass hashes remain historical, not rebound to new content.",
+  "status": "historical_editorial_evidence_superseded_by_production_review"
+}

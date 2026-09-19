@@ -5,7 +5,10 @@ from __future__ import annotations
 import pytest
 
 from multilang.services.part_of_speech import canonical_part_of_speech_label
-from multilang.services.text_field_remediation import remediate_definition_html, validate_definition_html
+from multilang.services.text_field_remediation import (
+    remediate_definition_html,
+    validate_definition_html,
+)
 
 
 def test_validate_definition_html_rejects_morphology_only_metadata() -> None:

@@ -17,7 +17,6 @@ from multilang.services.latin_audio import (
 from multilang.services.latin_review import load_latin_curated_records
 from multilang.services.latin_source_pack import load_latin_mvp_source_pack
 
-
 PHASE_27_REQUIREMENTS = ("AUD-01", "AUD-02", "AUD-03", "AUD-04")
 
 REPO_ROOT = Path(__file__).resolve().parents[2]

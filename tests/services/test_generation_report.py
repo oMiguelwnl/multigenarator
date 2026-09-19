@@ -1,15 +1,19 @@
 from __future__ import annotations
 
-from dataclasses import dataclass
 import json
+from dataclasses import dataclass
 from types import SimpleNamespace
 
-from multilang.domain.audio import AudioAssetKind, AudioProvider, AudioReviewStatus, AudioSynthesisStatus
+from multilang.domain.audio import (
+    AudioAssetKind,
+    AudioProvider,
+    AudioReviewStatus,
+    AudioSynthesisStatus,
+)
 from multilang.domain.exporting import ExportCardIdentity, ExportCardRow, ExportQualityGateResult
 from multilang.domain.jobs import SupportedLanguage
 from multilang.domain.text_quality import ReviewStatus, ValidationStatus
 from multilang.services.generation_report import write_generation_report
-
 
 _HASH_A = "a" * 64
 _HASH_B = "b" * 64

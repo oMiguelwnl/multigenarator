@@ -18,7 +18,6 @@ from multilang.repositories.korean_grammar_repository import (
     canonical_grammar_member_sha256,
 )
 
-
 SHA_A = "a" * 64
 SHA_B = "b" * 64
 SHA_C = "c" * 64

@@ -9,14 +9,25 @@ from typing import ClassVar
 import pytest
 from sqlalchemy import create_engine, func, select
 from sqlalchemy.orm import Session
+from support.audio import SILENT_MP3
+from support.text import use_mechanical_text_validation
 from typer.testing import CliRunner
 
+import multilang.runtime as runtime_module
 from multilang.cli import create_app
 from multilang.db.models import AudioAssetModel, CardExportModel, DeckExportModel, GenerationJob
-import multilang.runtime as runtime_module
+from multilang.domain.translation_quality import TranslationFidelityVerdict
 from multilang.runtime import build_runtime_service
+from multilang.services import frequency_decks
 from multilang.services.audio_synthesis import AudioSynthesisAdapter, AudioSynthesisResponse
+from multilang.services.local_text_adapter import LocalSentenceAdapter
 from multilang.settings import Settings
+
+
+@pytest.fixture(autouse=True)
+def offline_morphology(monkeypatch):
+    use_mechanical_text_validation(monkeypatch)
+
 
 runner = CliRunner()
 
@@ -41,7 +52,7 @@ class FakeAzureSpeechAdapter(AudioSynthesisAdapter):
         audio_format: str,
     ) -> AudioSynthesisResponse:
         output_path.parent.mkdir(parents=True, exist_ok=True)
-        payload = b"ID3" + f":{voice_id}:{locale}:{audio_format}:{ssml_text}".encode("utf-8")
+        payload = SILENT_MP3
         output_path.write_bytes(payload)
         return AudioSynthesisResponse(storage_path=output_path, byte_size=len(payload), duration_ms=800)
 
@@ -52,7 +63,9 @@ def write_word_list(tmp_path: Path, *items: str) -> Path:
     return path
 
 
-def write_lookup_index(tmp_path: Path, *terms: str, language_code: str = "en") -> Path:
+def write_lookup_index(
+    tmp_path: Path, *terms: str, language_code: str = "en", definition_language: str = "en"
+) -> Path:
     index_path = tmp_path / "lexicon" / language_code / "lexical-index.json"
     index_path.parent.mkdir(parents=True, exist_ok=True)
     index_path.write_text(
@@ -62,7 +75,12 @@ def write_lookup_index(tmp_path: Path, *terms: str, language_code: str = "en") -
                     "term": term,
                     "display_form": term,
                     "lemma": term,
-                    "definitions": [f"definition for {term}"],
+                    "definitions": [
+                        f"um item sintético identificado como {term}"
+                        if definition_language == "pt"
+                        else f"a synthetic test item identified as {term}"
+                    ],
+                    "definition_language": definition_language,
                     "part_of_speech": "verb",
                     "ipa": f"/{term}/",
                     "source": "manual",
@@ -206,9 +224,20 @@ def test_export_command_runtime_path_blocks_persisted_word_audio_mismatches(
     monkeypatch,
 ) -> None:
     database_path = tmp_path / f"export-audio-integrity-{export_format}.db"
-    lexicon_dir = write_lookup_index(tmp_path, "the")
+    lexicon_dir = write_lookup_index(tmp_path, "harbor", definition_language="pt")
     output_dir = tmp_path / "exports"
     monkeypatch.setattr(runtime_module, "AzureSpeechAdapter", FakeAzureSpeechAdapter)
+    monkeypatch.setattr(frequency_decks, "iter_wordlist", lambda _: iter(["harbor"]))
+
+    def fixture_review(_adapter, request):
+        equivalent = (
+            request.source_language == "en" and request.target_language == "pt"
+            and request.sentence == "The fishing boats returned to the harbor before sunset."
+            and request.translation == "Os barcos de pesca voltaram ao porto antes do pôr do sol."
+        )
+        return TranslationFidelityVerdict(decision="equivalent" if equivalent else "uncertain")
+
+    monkeypatch.setattr(LocalSentenceAdapter, "review_translation", fixture_review, raising=False)
     service = build_runtime_service(
         Settings(
             _env_file=None,

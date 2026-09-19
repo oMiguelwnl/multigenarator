@@ -14,12 +14,15 @@ from pathlib import Path
 
 import pytest
 
-from multilang.domain.exporting import FREQUENCY_EXPORT_CARD_FIELD_NAMES, ExportCardIdentity, ExportCardRow
+from multilang.domain.exporting import (
+    FREQUENCY_EXPORT_CARD_FIELD_NAMES,
+    ExportCardIdentity,
+    ExportCardRow,
+)
 from multilang.domain.jobs import SupportedLanguage
 from multilang.runtime import build_korean_frequency_synthetic_manifest_shape
 from multilang.services.anki_id_registry import AnkiIdKind, registry_id
 from multilang.services.export_anki_package import export_anki_package
-
 
 with warnings.catch_warnings():
     warnings.filterwarnings("ignore", category=pytest.PytestUnknownMarkWarning)

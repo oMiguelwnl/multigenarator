@@ -2,14 +2,13 @@
 
 from __future__ import annotations
 
-from hashlib import sha256
 import json
+from hashlib import sha256
 from typing import Literal
 
 from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator
 
 from multilang.domain.audio import AudioAssetKind, AudioReviewStatus
-
 
 _HEX = frozenset("0123456789abcdef")
 

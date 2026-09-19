@@ -2,11 +2,11 @@
 
 from __future__ import annotations
 
-from dataclasses import asdict
-from hashlib import sha256
 import json
 import re
 import zipfile
+from dataclasses import asdict
+from hashlib import sha256
 from pathlib import Path
 
 import multilang.services.phoneme_deck as neutral_phoneme_deck
@@ -29,7 +29,6 @@ from multilang.services.russian_phoneme_deck import (
     export_polish_phoneme_deck,
     export_russian_phoneme_deck,
 )
-
 
 _FIELD_REFERENCE_RE = re.compile(r"{{[#/^]?([^}:]+)}}|{{hint:([^}]+)}}")
 

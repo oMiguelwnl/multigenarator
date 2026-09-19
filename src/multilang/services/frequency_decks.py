@@ -3,13 +3,14 @@
 from __future__ import annotations
 
 import csv
+import re
+import unicodedata
 from collections import Counter
 from collections.abc import Iterable, Iterator
 from dataclasses import dataclass
 from pathlib import Path
-import re
-import unicodedata
 
+from opencc import OpenCC
 from wordfreq import iter_wordlist
 
 from multilang.domain.jobs import SupportedLanguage
@@ -26,7 +27,6 @@ from multilang.services.mandarin_orthography import (
     script_counts,
     validate_simplified_mandarin,
 )
-from opencc import OpenCC
 
 WEB_NOISE_TOKENS = {"http", "https", "www", "nbsp"}
 _WORDFREQ_LANGUAGE_ALIASES = {"hr": "sh"}

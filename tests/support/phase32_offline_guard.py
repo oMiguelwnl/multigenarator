@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-
 FORBIDDEN_ENV_FRAGMENTS = ("KEY", "TOKEN", "SECRET", "OPENAI", "AZURE", "DEEPL", "LITELLM")
 
 

@@ -2,14 +2,14 @@
 
 from __future__ import annotations
 
-from dataclasses import dataclass
-from hashlib import sha256
 import json
-from pathlib import Path, PurePosixPath
 import re
 import sqlite3
-from tempfile import TemporaryDirectory
 import zipfile
+from dataclasses import dataclass
+from hashlib import sha256
+from pathlib import Path, PurePosixPath
+from tempfile import TemporaryDirectory
 
 from multilang.domain.deck_audit import AuditCard
 

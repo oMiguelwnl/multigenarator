@@ -2,10 +2,10 @@
 
 from __future__ import annotations
 
+import zipfile
 from copy import copy
 from importlib import import_module
 from importlib.util import find_spec
-import zipfile
 from pathlib import Path
 
 import pytest

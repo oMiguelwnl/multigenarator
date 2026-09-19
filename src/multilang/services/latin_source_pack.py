@@ -11,8 +11,12 @@ from typing import Literal
 
 from pydantic import BaseModel, Field, HttpUrl, field_validator, model_validator
 
-from multilang.domain.latin import DEFAULT_LATIN_SOURCE_PACK_VERSION, LATIN_LANGUAGE_CODE, LATIN_MVP_CARD_COUNT, LatinVariant
-
+from multilang.domain.latin import (
+    DEFAULT_LATIN_SOURCE_PACK_VERSION,
+    LATIN_LANGUAGE_CODE,
+    LATIN_MVP_CARD_COUNT,
+    LatinVariant,
+)
 
 LatinSourceType = Literal["original_classical", "adapted_didactic", "reference_example"]
 LatinLicenseGate = Literal["approved", "blocked"]

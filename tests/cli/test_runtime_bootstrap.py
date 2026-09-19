@@ -31,7 +31,8 @@ def write_lookup_index(tmp_path: Path, *terms: str) -> Path:
                     "term": term,
                     "display_form": term,
                     "lemma": term,
-                    "definitions": [f"definition for {term}"],
+                    "definitions": [f"a synthetic test item identified as {term}"],
+                    "definition_language": "en",
                     "ipa": f"/{term}/",
                     "source": "manual",
                 }

@@ -151,7 +151,7 @@ def generate_latin_elevenlabs_samples(
     runtime_repo_root = (repo_root or Path.cwd()).resolve()
     target_dir = output_dir if output_dir.is_absolute() else runtime_repo_root / output_dir
     target_dir.mkdir(parents=True, exist_ok=True)
-    sample_manifest = generate_latin_audio_sample_manifest(output_dir=target_dir)
+    generate_latin_audio_sample_manifest(output_dir=target_dir)
     adapter = synthesizer or ElevenLabsSpeechAdapter(runtime_settings)
     artifacts: list[LatinAudioRefreshArtifact] = []
 

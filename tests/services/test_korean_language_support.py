@@ -3,15 +3,16 @@
 from __future__ import annotations
 
 import importlib.util
+import sys
+import tomllib
 from importlib import import_module
 from importlib.metadata import version as distribution_version
 from pathlib import Path
-import sys
-import tomllib
 from types import ModuleType
 
-import multilang.settings as settings_module
 import pytest
+
+import multilang.settings as settings_module
 from multilang.domain.exporting import ExportCardIdentity, ExportCardRow
 from multilang.domain.jobs import GenerationRequest, SupportedLanguage
 from multilang.domain.korean import KOREAN_LANGUAGE_CODE, KOREAN_PROVIDER_LOCALE
@@ -24,7 +25,6 @@ from multilang.services.audio_voice_registry import (
 from multilang.services.export_anki_package import build_multilang_note
 from multilang.services.input_fingerprint import build_run_key
 from multilang.services.tatoeba_sentence_source import TatoebaSentenceSource
-
 
 PROJECT_ROOT = Path(__file__).resolve().parents[2]
 PRODUCTION_SCAN_ROOTS = (PROJECT_ROOT / "src", PROJECT_ROOT / "scripts")

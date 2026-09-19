@@ -81,12 +81,14 @@ include = [
   "/pyproject.toml",
   "/uv.lock",
   "/README.md",
+  "/data/korean_grammar/v1/**",
 ]
 exclude = ["**/__pycache__/**", "**/*.pyc"]
 
 [tool.hatch.build.targets.wheel.force-include]
 "alembic" = "multilang/migration_resources/alembic"
 "alembic.ini" = "multilang/migration_resources/alembic.ini"
+"data/korean_grammar/v1" = "multilang/data/korean_grammar/v1"
 
 [tool.pytest.ini_options]
 pythonpath = ["src"]

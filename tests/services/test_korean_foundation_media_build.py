@@ -3,13 +3,12 @@ from __future__ import annotations
 import importlib.util
 import io
 import json
+import wave
 from hashlib import sha256
 from pathlib import Path
 from types import ModuleType, SimpleNamespace
-import wave
 
 import pytest
-
 
 PROJECT_ROOT = Path(__file__).resolve().parents[2]
 BUILD_SCRIPT = PROJECT_ROOT / "scripts" / "build_korean_foundation_media.py"
@@ -344,7 +343,7 @@ def test_generate_authorized_reads_azure_credentials_from_dotenv(
     _write_media_authority(api, tmp_path, rights_sha256)
 
     result = api.generate_authorized()
-    projected = api.project_acoustic()
+    api.project_acoustic()
 
     assert result["status"] != "blocked" or result["reason_code"] != "azure_speech_credentials_missing"
 

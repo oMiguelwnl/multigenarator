@@ -22,7 +22,6 @@ from multilang.repositories.job_repository import JobRepository
 from multilang.services.item_outcomes import ItemHandlerResult, ItemLocalError, SystemicJobError
 from multilang.services.phase33_jobs import Phase33JobCoordinator, Phase33JobItem
 
-
 NOW = datetime(2026, 1, 3, 4, 5, tzinfo=timezone.utc)
 
 

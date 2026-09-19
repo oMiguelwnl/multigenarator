@@ -9,7 +9,6 @@ from time import monotonic, sleep
 from typing import TypeVar
 
 from multilang.repositories.provider_call_log_repository import ProviderCallLogCreate
-from multilang.security.redaction import redact_sensitive_text
 
 T = TypeVar("T")
 
@@ -122,7 +121,6 @@ def is_temporary_provider_error(exc: BaseException) -> bool:
 
 
 def safe_provider_error_summary(exc: BaseException) -> str:
-    text = redact_sensitive_text(str(exc) or type(exc).__name__)
     kind = classify_provider_error(exc)
     if kind == "permanent":
         kind = "permanent_provider_error"

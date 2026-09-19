@@ -9,8 +9,12 @@ nav:
   - Domain: domain-model.md
   - Database: database.md
   - Content, audio and Anki contracts: native-content-audio-anki-contracts.md
+  - Qualidade da geração: generation-quality.md
+  - Melhorias de geração e estrutura: generation-architecture-implementation.md
   - Preparação linguística: vocabulary-preparation.md
+  - Curso de gramática coreana: korean-grammar-course.md
   - Comparação de modelos: morphology-model-comparison.md
+  - Revisão e calibração: linguistic-qualification.md
   - Resultados por língua: multilingual-readiness.md
   - HTTP API and jobs: api.md
   - Migration: migration.md

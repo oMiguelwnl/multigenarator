@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from enum import Enum
-from typing import Literal, Self
+from typing import Any, Literal, Self
 
 from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator
 
@@ -41,6 +41,8 @@ class PronunciationRecord(BaseModel):
     source: str = Field(min_length=1)
     value: str | None = None
     authoritative: bool = True
+    uncertainty_notes: list[str] = Field(default_factory=list, exclude_if=lambda value: not value)
+    provenance: dict[str, Any] = Field(default_factory=dict, exclude_if=lambda value: not value)
 
 
 class LexicalProvenance(BaseModel):

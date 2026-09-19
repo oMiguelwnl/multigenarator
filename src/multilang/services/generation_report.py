@@ -2,18 +2,21 @@
 
 from __future__ import annotations
 
+import json
 from collections import Counter
 from dataclasses import dataclass
 from hashlib import sha256
-import json
 from pathlib import Path
 from typing import Any
 
 from multilang.domain.audio import AudioAssetKind, AudioReviewStatus, AudioSynthesisStatus
-from multilang.domain.exporting import ExportQualityGateResult, validate_korean_frequency_export_rows
+from multilang.domain.exporting import (
+    ExportQualityGateResult,
+    validate_korean_frequency_export_rows,
+)
 from multilang.domain.text_quality import ReviewStatus, ValidationStatus
-from multilang.services.anki_id_registry import AnkiIdKind, registry_id
 from multilang.repositories.provider_call_log_repository import summarize_provider_call_records
+from multilang.services.anki_id_registry import AnkiIdKind, registry_id
 
 
 @dataclass(frozen=True)

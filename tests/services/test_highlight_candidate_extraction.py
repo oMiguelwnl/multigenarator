@@ -5,7 +5,11 @@ import unicodedata
 
 import pytest
 
-from multilang.domain.highlights import HighlightImportManifest, HighlightProvenance, NormalizedHighlight
+from multilang.domain.highlights import (
+    HighlightImportManifest,
+    HighlightProvenance,
+    NormalizedHighlight,
+)
 from multilang.domain.jobs import SupportedLanguage
 from multilang.domain.korean import (
     KoreanAnalyzerFingerprint,
@@ -14,7 +18,6 @@ from multilang.domain.korean import (
 )
 from multilang.services.highlight_candidate_extraction import extract_highlight_candidates
 from multilang.services.lexical_grounding import KoreanResolvedLexeme
-
 
 LANGUAGE_EXAMPLES = {
     SupportedLanguage.PT: "O menino vê a praça bonita",

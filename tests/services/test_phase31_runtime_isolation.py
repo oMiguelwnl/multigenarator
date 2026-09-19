@@ -2,18 +2,17 @@
 
 from __future__ import annotations
 
-from hashlib import sha256
-from importlib import util
 import json
 import os
-from pathlib import Path
 import stat
 import subprocess
 import sys
+from hashlib import sha256
+from importlib import util
+from pathlib import Path
 from types import ModuleType
 
 import pytest
-
 
 PROJECT_ROOT = Path(__file__).resolve().parents[2]
 SCRIPT_PATH = PROJECT_ROOT / "scripts" / "verify_phase31_runtime_isolation.py"

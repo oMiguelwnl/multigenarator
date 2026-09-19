@@ -6,16 +6,22 @@ stored history, or carry private values in events.
 
 from __future__ import annotations
 
+import json
+import re
 from collections.abc import Mapping
 from enum import Enum
 from hashlib import sha256
-import json
-import re
 from types import MappingProxyType
 from typing import Any, Literal, Self
 
-from pydantic import BaseModel, ConfigDict, Field, field_serializer, field_validator, model_validator
-
+from pydantic import (
+    BaseModel,
+    ConfigDict,
+    Field,
+    field_serializer,
+    field_validator,
+    model_validator,
+)
 
 AI_LINGUISTIC_POLICY_ID = "multilang-ai-linguistic-review-v1"
 

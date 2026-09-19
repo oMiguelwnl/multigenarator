@@ -2,16 +2,15 @@
 
 from __future__ import annotations
 
+import json
 from collections import Counter
 from hashlib import sha256
-import json
 from pathlib import Path
 from typing import Literal
 
 from pydantic import BaseModel, Field, field_validator, model_validator
 
 from multilang.services.latin_source_pack import load_latin_mvp_source_pack
-
 
 LatinAudioKind = Literal["word", "sentence"]
 CURRENT_LATIN_AUDIO_PROVIDER = "google-translate-tts"

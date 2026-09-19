@@ -11,7 +11,6 @@ from typer.testing import CliRunner
 from multilang.cli import create_app
 from multilang.domain.korean import raw_bytes_sha256
 
-
 runner = CliRunner()
 _HASH = "a" * 64
 

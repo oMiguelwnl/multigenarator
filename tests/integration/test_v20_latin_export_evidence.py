@@ -18,7 +18,6 @@ from multilang.services.latin_export import (
     export_latin_mvp_bundle,
 )
 
-
 PHASE_28_EXPORT_REQUIREMENTS = ("EXP-01", "EXP-02", "EXP-03")
 REPO_ROOT = Path(__file__).resolve().parents[2]
 

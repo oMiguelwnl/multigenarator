@@ -7,15 +7,14 @@ validators or populate human-review authority.
 
 from __future__ import annotations
 
-from datetime import datetime
-from hashlib import sha256
 import json
 import math
 import re
-from typing import Annotated, Final, Literal, Self, TypeAlias
+from datetime import datetime
+from hashlib import sha256
+from typing import Final, Literal, Self, TypeAlias
 
 from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator
-
 
 _HEX_64: Final = re.compile(r"^[0-9a-f]{64}$")
 _IDENTIFIER: Final = re.compile(r"^[A-Za-z0-9][A-Za-z0-9._:-]{0,127}$")

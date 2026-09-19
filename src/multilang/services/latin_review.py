@@ -2,16 +2,14 @@
 
 from __future__ import annotations
 
-from collections import Counter
 import json
+from collections import Counter
 from pathlib import Path
-from typing import cast
-from typing import Literal
+from typing import Literal, cast
 
 from pydantic import BaseModel, Field, field_validator, model_validator
 
 from multilang.services.latin_source_pack import load_latin_mvp_source_pack
-
 
 LatinReviewStatus = Literal["needs_review", "approved", "rejected"]
 LatinReviewGateName = Literal["source", "translation", "grammar", "audio"]

@@ -4,12 +4,12 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from alembic import command
 from alembic.config import Config
 from alembic.script import ScriptDirectory
 from sqlalchemy import Text, create_engine, inspect, text
 from sqlalchemy.orm import Session
 
+from alembic import command
 from multilang.db.base import Base
 from multilang.domain.exporting import (
     ExportArtifactFormat,

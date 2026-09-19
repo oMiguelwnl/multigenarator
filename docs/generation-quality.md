@@ -94,7 +94,8 @@ uma saída ausente não é um fallback bem-sucedido. Esses metadados ficam fora 
 campos exibidos ao estudante. Definições explicitamente pendentes de revisão
 não são exportadas como conteúdo pronto.
 
-Correções editoriais já existentes, como a de
+A saída coreana mantém normalização NFC; caracteres de controle inválidos
+produzem revisão pendente. Correções editoriais já existentes, como a de
 `достичь`, são tratadas como fonte interna identificada, com idioma inglês
 explícito. Elas não recebem uma aprovação humana inventada.
 
@@ -159,3 +160,79 @@ recuperar uma definição da fonte sem atribuir a ela a origem do modelo.
 
 No runtime, esse orçamento de uma a cinco tentativas é aplicado à configuração
 geral de retries sem alterar o valor usado pelos demais serviços.
+
+## Reparos, tradução e pronúncia
+
+Um reparo e uma regeneração manual recebem um identificador de tentativa novo.
+A chave de cache inclui esse identificador, a frase rejeitada e os códigos de
+validação. O prompt recebe a frase anterior como dado e os motivos do reparo;
+uma chamada normal idêntica continua podendo reutilizar o cache. Isso evita
+repetir uma resposta reprovada por causa do cache, mas não garante que o modelo
+produza uma frase diferente ou correta. Cada tentativa passa pela validação.
+
+Nas traduções entre idiomas do fluxo genérico, o runtime exige também um parecer
+de fidelidade sobre a frase e a tradução exatas. O adapter LiteLLM compara o
+significado, incluindo entidades, ações, negação e números, com timeout de 45
+segundos e saída limitada. `mismatch`, `uncertain`, resposta inválida e falha de
+transporte exigem revisão. O cache é vinculado aos dois textos, idiomas, modelo
+e versão do prompt; um parecer inconclusivo não é armazenado. O provider local
+sem verificador não aprova automaticamente traduções. Essa avaliação de IA é
+consultiva e pode errar; não constitui revisão humana. O coreano preserva seu
+fluxo separado de avaliação vinculado à identidade e revisão final.
+
+A avaliação de tradução usa o mesmo limite de chamadas da execução, inclusive
+nas repetições após falha. Resultados vindos do cache não consomem esse limite.
+As chamadas registram o job, o item e os tokens informados pelo provider; esses
+metadados de transporte ficam fora do parecer semântico aceito do modelo.
+
+Essa verificação de tradução é aplicada ao validar ou regenerar texto. Cartões
+aceitos anteriormente não são reavaliados em massa; precisam passar novamente
+por revisão ou regeneração para receber essa verificação.
+
+IPA ausente permanece ausente: a grafia da palavra não preenche esse campo.
+Transcrições propostas por LLM preservam incertezas e proveniência, mas ficam
+pendentes de verificação. IPA de fonte ou biblioteca passa por validação
+estrutural; isso não demonstra, por si só, correção linguística. A exportação
+recusa IPA inválido ou explicitamente não verificado, inclusive registros
+antigos identificados como saída do gerador de pronúncia do provider. Leituras
+de japonês, mandarim e coreano mantêm seus contratos próprios.
+
+## Integridade do áudio e dos campos exportados
+
+O campo Word usa a forma apresentada ao estudante; o lema continua sendo parte
+da identidade lexical. O áudio da palavra precisa corresponder a essa forma,
+e o áudio da frase precisa corresponder ao ExampleSentence atual. A comparação
+confere o texto exibido, sua normalização de síntese e os hashes de texto e SSML.
+Apóstrofos tipográficos e normalização NFC são tratados de forma consistente.
+Depois de alterar uma frase, seu áudio antigo não pode acompanhar a exportação.
+
+Síntese, reutilização e exportação verificam o arquivo MP3 com `miniaudio`, usando
+decodificação real e limitada a 16 MiB e 300 segundos. Arquivos vazios, inválidos,
+com tamanho ou hash divergente deixam de ser tratados como mídia pronta. O
+decoder recebe bytes locais e não resolve URLs. Essa validação comprova a
+integridade técnica do arquivo; não ouve nem certifica a pronúncia sintetizada.
+
+## Contexto do fluxo nativo
+
+O `ContentRequest` completo permanece disponível para autorização, matching e
+validação estrita de i+1. A projeção `ProviderContentContext` leva ao modelo os
+dados legíveis da tarefa; identificadores administrativos e os conjuntos de
+conceitos conhecidos permanecem locais. Contexto privado exige a autorização
+já prevista pelo contrato.
+
+O orçamento local admite até 10.000 identificadores, com limite separado de
+750.000 bytes serializados. As mensagens efetivamente enviadas ao provider têm
+limite de 16.000 bytes UTF-8. A validação não trunca o conjunto conhecido: um
+conceito desconhecido adicional continua reprovando o modo estrito.
+
+## Verificação reproduzível
+
+Os testes offline em `tests/services/test_definition_evidence.py` exercitam
+significado incorreto, idioma incorreto, ambiguidade, falha de provider,
+proveniência, cache, cota e revisão vinculada ao conteúdo. Os testes em
+`test_native_content_audio.py` incluem conjuntos de 3.000 e 10.000 conceitos.
+São verificações dos contratos de software com fontes sintéticas, sem chamadas
+pagas. Não substituem uma avaliação humana de definições, tradução e pronúncia.
+
+A organização dos módulos e a composição transacional estão descritas em
+[Arquitetura](architecture.md).

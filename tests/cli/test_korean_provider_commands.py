@@ -2,8 +2,8 @@
 
 from __future__ import annotations
 
-from hashlib import sha256
 import json
+from hashlib import sha256
 from pathlib import Path
 from types import SimpleNamespace
 from typing import Any
@@ -18,16 +18,18 @@ import multilang.cli as cli_module
 from multilang.cli import create_app
 from multilang.db.provisioning import ensure_database_schema
 from multilang.domain.jobs import SupportedLanguage
-from multilang.domain.lexicon import GroundingStatus, LexicalCardCandidate, LexicalProvenance
 from multilang.domain.korean_provider import (
     KoreanProviderBudget,
     KoreanProviderPolicy,
     KoreanProviderRoute,
     KoreanProviderTask,
 )
-from multilang.repositories.provider_call_log_repository import ProviderCallLogCreate, ProviderCallLogRepository
+from multilang.domain.lexicon import GroundingStatus, LexicalCardCandidate, LexicalProvenance
+from multilang.repositories.provider_call_log_repository import (
+    ProviderCallLogCreate,
+    ProviderCallLogRepository,
+)
 from multilang.runtime import RuntimeTextResult
-
 
 runner = CliRunner()
 
@@ -666,6 +668,8 @@ def test_synthesize_korean_frequency_audio_delegates_with_exact_authority(tmp_pa
             str(tmp_path / "catalog.json"),
             "--voice-profile-file",
             str(tmp_path / "profile.json"),
+            "--provider-policy-file",
+            str(tmp_path / "policy.json"),
             "--max-items",
             "1",
             "--missing-only",
@@ -677,6 +681,10 @@ def test_synthesize_korean_frequency_audio_delegates_with_exact_authority(tmp_pa
     assert calls[0]["authority"].job_id == "job-ko"
     assert calls[0]["catalog_result_file"] == tmp_path / "catalog.json"
     assert calls[0]["voice_profile_file"] == tmp_path / "profile.json"
+    assert calls[0]["provider_policy_file"] == tmp_path / "policy.json"
+    assert calls[0]["frequency_bundle_root"] == tmp_path / "bundle"
+    assert calls[0]["job_authority"].stage == "full"
+    assert calls[0]["job_authority"].heard_review_authority_sha256 is not None
     assert calls[0]["max_items"] == 1
     assert calls[0]["missing_only"] is True
     assert "korean_frequency_audio_status=synthesized" in result.output

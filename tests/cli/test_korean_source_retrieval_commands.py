@@ -10,7 +10,6 @@ from typer.testing import CliRunner
 import multilang.cli as cli_module
 from multilang.cli import create_app
 
-
 runner = CliRunner()
 
 _HASH = "a" * 64

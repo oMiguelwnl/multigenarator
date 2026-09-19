@@ -15,7 +15,6 @@ from multilang.repositories.korean_personal_source_repository import (
     PersonalSourceConflict,
 )
 
-
 SHA_A = "a" * 64
 SHA_B = "b" * 64
 

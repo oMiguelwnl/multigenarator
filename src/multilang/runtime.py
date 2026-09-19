@@ -35,7 +35,11 @@ from multilang.repositories.provider_call_log_repository import ProviderCallLogR
 from multilang.repositories.text_repository import TextRepository
 from multilang.services.anki_id_registry import assert_anki_id_registry_clean
 from multilang.services.assemble_export_cards import AssembleExportCardsService
-from multilang.services.audio_integrity import assert_word_audio_matches_word
+from multilang.services.audio.media_validation import inspect_local_mp3
+from multilang.services.audio_integrity import (
+    assert_sentence_audio_matches_sentence,
+    assert_word_audio_matches_word,
+)
 from multilang.services.audio_synthesis import (
     AudioSynthesisAdapter,
     AudioSynthesisService,
@@ -745,6 +749,7 @@ class RuntimeGenerateService(IngestLexicalItemsService):
                 )
                 word_path = Path(word_asset.provenance.storage_path)
                 _validate_media_reference(sound_tag=row.word_audio, media_path=word_path)
+                _validate_audio_artifact(word_asset)
                 _add_media_reference(media_index, sound_tag=row.word_audio, media_path=word_path)
             if "sentence_audio" in field_names:
                 sentence_asset = self._get_audio_asset(
@@ -755,8 +760,12 @@ class RuntimeGenerateService(IngestLexicalItemsService):
                 )
                 if sentence_asset is None:
                     raise ValueError(f"missing required sentence audio for item {row.identity.item_key}")
+                assert_sentence_audio_matches_sentence(
+                    sentence_asset, unescape(row.example_sentence), item_key=row.identity.item_key,
+                )
                 sentence_path = Path(sentence_asset.provenance.storage_path)
                 _validate_media_reference(sound_tag=row.sentence_audio, media_path=sentence_path)
+                _validate_audio_artifact(sentence_asset)
                 _add_media_reference(media_index, sound_tag=row.sentence_audio, media_path=sentence_path)
         return media_index
 
@@ -786,6 +795,20 @@ class RuntimeGenerateService(IngestLexicalItemsService):
         if asset_index is not None:
             return asset_index.get((item_key, asset_kind.value))
         return self.audio_repository.get_asset(job_id, item_key, asset_kind)
+
+
+def _validate_audio_artifact(asset: object) -> None:
+    provenance = asset.provenance
+    hash_prefix = (
+        b"artifact:" if provenance.locale == "ko-KR" and provenance.audio_review_status is not None else b""
+    )
+    media = inspect_local_mp3(
+        provenance.storage_path, expected_byte_size=provenance.byte_size, artifact_hash_prefix=hash_prefix
+    )
+    if media is None:
+        raise ValueError(f"invalid or corrupt {asset.asset_kind.value} audio for item {asset.item_key}")
+    if provenance.artifact_sha256 is not None and provenance.artifact_sha256 != media.artifact_sha256:
+        raise ValueError(f"audio artifact hash mismatch for item {asset.item_key}")
 
 
 def _validate_media_reference(*, sound_tag: str, media_path: Path) -> None:

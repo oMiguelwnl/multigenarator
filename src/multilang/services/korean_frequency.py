@@ -29,6 +29,7 @@ from multilang.domain.korean import (
     raw_bytes_sha256,
     validate_korean_frequency_accounting,
 )
+
 _MAX_LANDING_BYTES = 2_000_000
 _MAX_SOURCE_BYTES = 20_000_000
 # Official selected source attachment: 한국어 학습용 어휘 목록.txt

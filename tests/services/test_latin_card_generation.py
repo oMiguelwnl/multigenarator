@@ -4,7 +4,10 @@ from __future__ import annotations
 
 import pytest
 
-from multilang.services.latin_card_generation import LatinCardGenerationSeed, LatinCardGenerationService
+from multilang.services.latin_card_generation import (
+    LatinCardGenerationSeed,
+    LatinCardGenerationService,
+)
 
 
 def test_latin_card_generation_validates_and_preserves_seed_order() -> None:

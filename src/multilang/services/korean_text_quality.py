@@ -2,10 +2,10 @@
 
 from __future__ import annotations
 
+import re
 from collections.abc import Callable, Iterable
 from dataclasses import dataclass, replace
-import re
-from typing import Any, Literal
+from typing import Literal
 
 from multilang.domain.korean import (
     KOREAN_TEXT_QUALITY_POLICY_VERSION,
@@ -29,7 +29,10 @@ from multilang.services.korean_foundation_snapshot import (
     verify_active_korean_foundation_snapshot_provenance,
 )
 from multilang.services.korean_morphology import KiwiKoreanMorphologyService
-from multilang.services.text_validation import detect_language_mismatch, looks_like_invalid_translation
+from multilang.services.text_validation import (
+    detect_language_mismatch,
+    looks_like_invalid_translation,
+)
 
 _HEX = frozenset("0123456789abcdef")
 _SELECTOR_VERSION = "korean-text-quality-selector-v1"

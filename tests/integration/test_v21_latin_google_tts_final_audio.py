@@ -5,10 +5,12 @@ from __future__ import annotations
 import json
 from pathlib import Path
 
-from multilang.services.latin_audio import assert_latin_audio_manifest_export_ready, load_latin_audio_manifest
+from multilang.services.latin_audio import (
+    assert_latin_audio_manifest_export_ready,
+    load_latin_audio_manifest,
+)
 from multilang.services.latin_audio_samples import generate_latin_audio_sample_manifest
 from multilang.services.latin_source_pack import load_latin_mvp_source_pack
-
 
 PHASE_29_REQUIREMENTS = ("AUDR-01", "AUDR-02", "AUDR-03", "AUDR-04", "AUDR-05")
 REPO_ROOT = Path(__file__).resolve().parents[2]

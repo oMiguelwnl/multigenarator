@@ -2,11 +2,11 @@
 
 from __future__ import annotations
 
+import json
 from collections import Counter
 from datetime import datetime
 from enum import Enum
 from hashlib import sha256
-import json
 from pathlib import Path
 from typing import Final, Literal, Protocol, Self, TypeAlias
 
@@ -23,7 +23,6 @@ from multilang.services.korean_curriculum import (
     load_korean_v1_foundation_bundle,
     validate_korean_foundation_pack,
 )
-
 
 DEFAULT_KOREAN_FOUNDATION_CURATION_PATH: Final = (
     CURRENT_KOREAN_FOUNDATION_CANDIDATE_PATH

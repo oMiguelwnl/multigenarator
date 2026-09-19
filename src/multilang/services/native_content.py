@@ -101,13 +101,27 @@ class NativeContentService:
     def _request(self, request: ContentRequest) -> ContentRequest:
         # Revalidation prevents bypass through Pydantic model_copy/model_construct.
         request = ContentRequest.model_validate(request.model_dump(mode="json"))
-        serialized = request.model_dump_json()
+        payload = request.model_dump(mode="json")
+        known_payload = {
+            "canonical_known_concept_ids": payload.pop("canonical_known_concept_ids"),
+            "known_concept_ids": payload.pop("known_concept_ids"),
+        }
+        serialized = json.dumps(
+            payload, ensure_ascii=False, sort_keys=True, separators=(",", ":")
+        )
         encoded = serialized.encode()
-        # UTF-8 byte count is a conservative token upper bound, not a tokenizer estimate.
+        known_encoded = json.dumps(
+            known_payload, ensure_ascii=False, sort_keys=True, separators=(",", ":")
+        ).encode()
+        known_count = sum(len(values) for values in known_payload.values())
+        # Identity sets have their own cardinality and byte budgets. They remain
+        # complete for the local matcher and never consume the provider budget.
         if (
             len(encoded) > self.limits.max_request_bytes
             or len(serialized) > self.limits.max_request_characters
             or len(encoded) > self.limits.max_estimated_tokens
+            or known_count > self.limits.max_known_concept_ids
+            or len(known_encoded) > self.limits.max_known_concept_bytes
         ):
             raise ValueError("content request limit exceeded before provider")
         return request

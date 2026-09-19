@@ -15,7 +15,6 @@ from multilang.services.russian_phoneme_deck import (
     export_russian_phoneme_deck,
 )
 
-
 _FIELD_REFERENCE_RE = re.compile(r"{{[#/^]?([^}:]+)}}|{{hint:([^}]+)}}")
 _FORBIDDEN_REFERENCES = {
     "Notes",

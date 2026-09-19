@@ -2,6 +2,9 @@
 
 from types import SimpleNamespace
 
+import pytest
+
+from multilang.domain.audio import AudioAssetKind, AudioSynthesisStatus
 from multilang.domain.jobs import SupportedLanguage
 from multilang.domain.lexicon import GroundingStatus, LexicalCardCandidate, LexicalProvenance
 from multilang.domain.text_quality import (
@@ -13,6 +16,7 @@ from multilang.domain.text_quality import (
 from multilang.services.generate_text_items import GenerateTextItemsService
 from multilang.services.lexical_grounding import LexicalGroundingService
 from multilang.services.lexical_lookup import LexicalRecord
+from multilang.services.provider_pronunciation_adapters import PronunciationGenerationResult
 from multilang.services.provider_response_cache import ProviderResponseCacheService
 from multilang.services.text_generation import (
     DefinitionGenerationResult,
@@ -115,8 +119,21 @@ def lexical_candidate(*, pronunciation=None, generator=None):
     )
 
 
+def test_missing_ipa_never_turns_the_spelling_into_pronunciation():
+    item = lexical_candidate()
+    assert item.ipa is None
+    assert item.grounding_status is GroundingStatus.PENDING
+    assert item.warning_code == "pronunciation_review_required"
 
 
+def test_model_pronunciation_remains_unverified_and_retains_uncertainty():
+    item = lexical_candidate(pronunciation=SimpleNamespace(generate_pronunciation=lambda _: PronunciationGenerationResult(
+        ipa="/nonsense/", spoken_form="nonsense", uncertainty_notes=["pronunciation uncertain"],
+        provenance={"source": "provider-pronunciation-generator", "provider": "litellm"},
+    )))
+    assert not item.provenance.pronunciation.authoritative
+    assert item.grounding_status is GroundingStatus.PENDING
+    assert "pronunciation uncertain" in item.provenance.pronunciation.uncertainty_notes
 
 
 def test_definitions_without_independent_rewrite_review_do_not_call_model():
@@ -128,3 +145,66 @@ def test_definitions_without_independent_rewrite_review_do_not_call_model():
     assert item.definitions_html == "noun: a dwelling"
     assert calls == []
     assert item.provenance.definition.quality_decision == "source_verified"
+
+
+def test_audio_normalization_preserves_display_but_accepts_typographic_apostrophe():
+    from multilang.services.audio_integrity import assert_word_audio_matches_word
+    from multilang.services.audio_synthesis import AudioSynthesisService
+    from multilang.settings import Settings
+    service = AudioSynthesisService(adapter=SimpleNamespace(available_voice_ids=lambda: None), settings=Settings(_env_file=None))
+    asset = service._prepare_asset(language=SupportedLanguage.FR, job_id="job", item_key="item", asset_kind=AudioAssetKind.WORD, display_text="l’homme")
+    assert_word_audio_matches_word(asset, "l’homme")
+    assert asset.display_text == "l’homme"
+    assert asset.normalized_input.tts_text == "l'homme"
+
+
+def test_sentence_audio_binding_rejects_old_example():
+    from multilang.services.audio_integrity import (
+        AudioIntegrityError,
+        assert_sentence_audio_matches_sentence,
+    )
+    from multilang.services.audio_synthesis import AudioSynthesisService
+    from multilang.settings import Settings
+    service = AudioSynthesisService(adapter=SimpleNamespace(available_voice_ids=lambda: None), settings=Settings(_env_file=None))
+    asset = service._prepare_asset(language=SupportedLanguage.EN, job_id="job", item_key="item", asset_kind=AudioAssetKind.SENTENCE, display_text="I run every morning.")
+    with pytest.raises(AudioIntegrityError):
+        assert_sentence_audio_matches_sentence(asset, "I run beside the river.")
+
+
+def test_synthesis_rejects_non_audio_bytes(tmp_path):
+    from multilang.services.audio_synthesis import AudioSynthesisResponse, AudioSynthesisService
+    from multilang.settings import Settings
+    def synthesize(**kwargs):
+        path = kwargs["output_path"]
+        path.parent.mkdir(parents=True, exist_ok=True)
+        path.write_bytes(b"not an mp3 recording")
+        return AudioSynthesisResponse(storage_path=path, byte_size=path.stat().st_size, duration_ms=900)
+    service = AudioSynthesisService(adapter=SimpleNamespace(available_voice_ids=lambda: None, synthesize=synthesize), settings=Settings(_env_file=None, audio_storage_dir=tmp_path))
+    asset = service._prepare_asset(language=SupportedLanguage.EN, job_id="job", item_key="item", asset_kind=AudioAssetKind.WORD, display_text="house")
+    assert service.synthesize_prepared_asset(asset).provenance.status is AudioSynthesisStatus.FAILED
+
+
+def test_runtime_export_rechecks_media_bytes_and_recorded_hash(tmp_path):
+    from hashlib import sha256
+
+    from support.audio import SILENT_MP3
+
+    from multilang.runtime import _validate_audio_artifact
+    from multilang.services.audio_synthesis import AudioSynthesisService
+    from multilang.settings import Settings
+
+    service = AudioSynthesisService(adapter=SimpleNamespace(available_voice_ids=lambda: None), settings=Settings(_env_file=None))
+    asset = service._prepare_asset(language=SupportedLanguage.EN, job_id="job", item_key="house", asset_kind=AudioAssetKind.WORD, display_text="house")
+    path = tmp_path / "house.mp3"
+    path.write_bytes(SILENT_MP3)
+    asset.provenance = asset.provenance.model_copy(update={
+        "storage_path": str(path), "byte_size": len(SILENT_MP3),
+        "artifact_sha256": sha256(SILENT_MP3).hexdigest(),
+    })
+    _validate_audio_artifact(asset)
+    asset.provenance.artifact_sha256 = "0" * 64
+    with pytest.raises(ValueError, match="hash mismatch"):
+        _validate_audio_artifact(asset)
+    path.write_bytes(b"x" * len(SILENT_MP3))
+    with pytest.raises(ValueError, match="invalid or corrupt"):
+        _validate_audio_artifact(asset)

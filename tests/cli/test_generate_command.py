@@ -9,6 +9,7 @@ from typing import ClassVar
 import pytest
 from sqlalchemy import create_engine, func, select
 from sqlalchemy.orm import Session
+from support.audio import SILENT_MP3
 from support.text import use_mechanical_text_validation
 from typer.testing import CliRunner
 
@@ -74,7 +75,7 @@ class FileWritingAudioAdapter(AudioSynthesisAdapter):
         audio_format: str,
     ) -> AudioSynthesisResponse:
         output_path.parent.mkdir(parents=True, exist_ok=True)
-        payload = f"{voice_id}:{locale}:{audio_format}:{ssml_text}".encode("utf-8")
+        payload = SILENT_MP3
         output_path.write_bytes(payload)
         return AudioSynthesisResponse(storage_path=output_path, byte_size=len(payload), duration_ms=800)
 
@@ -102,7 +103,7 @@ class FakeAzureSpeechAdapter(AudioSynthesisAdapter):
     ) -> AudioSynthesisResponse:
         self.calls.append(output_path)
         output_path.parent.mkdir(parents=True, exist_ok=True)
-        payload = b"ID3" + f":{voice_id}:{locale}:{audio_format}:{ssml_text}".encode("utf-8")
+        payload = SILENT_MP3
         output_path.write_bytes(payload)
         return AudioSynthesisResponse(storage_path=output_path, byte_size=len(payload), duration_ms=800)
 
@@ -172,7 +173,7 @@ def write_lookup_index(tmp_path: Path, *terms: str) -> Path:
                     "lemma": term,
                     "definitions": [f"a synthetic test item identified as {term}"],
                     "definition_language": "en",
-                    "ipa": f"/{term}/",
+                    "ipa": "/flæɡ beɪtə/" if term == "flag-beta" else f"/{term}/",
                     "source": "manual",
                 }
                 for term in terms
@@ -271,6 +272,18 @@ def test_generate_frequency_resume_accepts_max_items() -> None:
     assert captured[0].concurrency == 1
 
 
+def test_generate_rejects_parallel_workers_before_executor_construction() -> None:
+    captured: list[GenerationRequest] = []
+    app = create_app(generate_executor=lambda request: captured.append(request))
+
+    result = runner.invoke(
+        app,
+        ["generate", "--language", "pl", "--source", "frequency", "--concurrency", "2"],
+    )
+
+    assert result.exit_code == 2
+    assert "--concurrency" in result.output
+    assert captured == []
 
 
 def test_repair_text_command_uses_repair_only_without_audio() -> None:
@@ -910,17 +923,3 @@ def test_export_greek_phonemes_command_writes_limited_deck(tmp_path: Path, monke
     assert output_path.exists()
     assert f"artifact_path={output_path}" in result.output
     assert "card_count=2" in result.output
-
-
-def test_generate_rejects_parallel_workers_before_executor_construction() -> None:
-    captured: list[GenerationRequest] = []
-    app = create_app(generate_executor=lambda request: captured.append(request))
-
-    result = runner.invoke(
-        app,
-        ["generate", "--language", "pl", "--source", "frequency", "--concurrency", "2"],
-    )
-
-    assert result.exit_code == 2
-    assert "--concurrency" in result.output
-    assert captured == []

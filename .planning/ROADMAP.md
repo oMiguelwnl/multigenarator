@@ -8,12 +8,16 @@
 - [x] **v1.3 Card Quality Remediation and Deck Validation** - Phases 17-21 shipped 2026-05-16.
 - [x] **v2.0 Classical Latin MVP** - Phases 22-28 shipped 2026-06-08.
 - [x] **v2.1 Latin Google TTS Finalization** - Phase 29 verified 2026-06-22.
-- [x] **v3.0 Korean Learning System and Shared Generation Hardening** — implementation completed 2026-09-19; production/delivery pending.
+- [x] **v3.0 Korean Learning System and Shared Generation Hardening** — implementation completed 2026-09-19; local grammar delivery completed; remaining production/delivery tracked separately.
 
 ## Current Focus
 
 Korean implementation is complete at `3c7c91a`. GSD implementation execution is
-closed. Final content production and learner acceptance remain in
+closed. The direct grammar follow-up is also complete: 165 cards with audio,
+including guided G0, passed final content review, Anki backend import/reimport
+and browser rendering/playback. See [grammar delivery](../docs/korean-grammar-course.md).
+Remaining frequency production, personal-source samples, production-environment
+checks and native Anki client acceptance remain in
 [KOREAN-PRODUCTION-BACKLOG.md](KOREAN-PRODUCTION-BACKLOG.md).
 No new milestone is started here.
 
@@ -41,5 +45,7 @@ Audit: [v3.0 implementation audit](v3.0-MILESTONE-AUDIT.md).
 - [v2.0 Classical Latin](milestones/v2.0-ROADMAP.md)
 - [v2.1 Latin Google TTS](milestones/v2.1-ROADMAP.md)
 
-Completion means `repo_only` / `repo_closeout`. The original production and
-Anki acceptance criteria remain pending; no learner-ready release is asserted.
+The original milestone closeout means `repo_only` / `repo_closeout` and remains
+historical. The subsequent local grammar delivery closes KPROD-03 with its own
+artifact-bound evidence. It does not close the remaining Korean production or
+native Anki client acceptance criteria.

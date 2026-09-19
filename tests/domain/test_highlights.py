@@ -15,7 +15,6 @@ from multilang.domain.highlights import (
     SafeHighlightExcerptReference,
 )
 
-
 HASH_A = "a" * 64
 HASH_B = "b" * 64
 HASH_C = "c" * 64

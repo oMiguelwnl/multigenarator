@@ -16,7 +16,6 @@ from multilang.services.korean_curriculum import (
     load_korean_v1_pronunciation_source_pack,
 )
 
-
 PROJECT_ROOT = Path(__file__).resolve().parents[2]
 CURATION_SCRIPT = PROJECT_ROOT / "scripts/build_korean_foundation_candidates.py"
 HANGUL_SOURCE = PROJECT_ROOT / "data/korean_foundations/hangul-v1.json"

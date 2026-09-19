@@ -7,8 +7,8 @@ import pytest
 from multilang.domain.jobs import GenerationRequest, SupportedLanguage
 from multilang.domain.korean import (
     KoreanAnalyzerFingerprint,
-    KoreanFrequencyJobAuthority,
     KoreanFrequencyEntry,
+    KoreanFrequencyJobAuthority,
     KoreanLexicalIdentity,
     KoreanMorphologyStatus,
     KoreanSignatureItem,
@@ -22,8 +22,8 @@ from multilang.runtime import (
 )
 from multilang.services.audio_synthesis import AudioSynthesisResponse
 from multilang.services.fallback_audio_adapter import FallbackAudioAdapter
-from multilang.services.korean_morphology import KiwiKoreanMorphologyService
 from multilang.services.korean_foundation_snapshot_fallback import KoreanFoundationApprovedFallback
+from multilang.services.korean_morphology import KiwiKoreanMorphologyService
 from multilang.services.library_pronunciation_adapters import (
     FallbackPronunciationAdapter,
     LibraryPronunciationAdapter,
@@ -340,6 +340,21 @@ def test_runtime_allows_local_text_services_only_when_explicitly_configured(tmp_
 
     assert service is not None
     assert isinstance(service.grounding_service._pronunciation_generator, LibraryPronunciationAdapter)
+
+
+def test_runtime_bounds_definition_retries_without_rejecting_global_retry_settings(tmp_path) -> None:
+    service = build_runtime_service(
+        Settings(
+            _env_file=None,
+            database_url=f"sqlite+pysqlite:///{tmp_path / 'retry-budget.db'}",
+            text_generation_provider="local",
+            translation_provider="local",
+            default_retry_attempts=9,
+        )
+    )
+
+    assert service.settings.default_retry_attempts == 9
+    assert service.grounding_service._definition_generator.attempts == 5
 
 
 def test_runtime_wires_litellm_pronunciation_adapter_when_configured(tmp_path) -> None:

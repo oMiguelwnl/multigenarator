@@ -11,10 +11,14 @@ from typer.testing import CliRunner
 import multilang.cli as cli_module
 from multilang.cli import create_app
 from multilang.domain.exporting import ExportArtifactFormat
-from multilang.services.latin_export import LATIN_NOTE_TYPE_NAME
 from multilang.domain.latin import LatinGenerationRequest
-from multilang.services.latin_review import load_latin_curated_records, update_latin_review_gate, write_latin_curated_records
+from multilang.services.latin_export import LATIN_NOTE_TYPE_NAME
 from multilang.services.latin_mvp import LatinMvpGenerationService
+from multilang.services.latin_review import (
+    load_latin_curated_records,
+    update_latin_review_gate,
+    write_latin_curated_records,
+)
 
 runner = CliRunner()
 

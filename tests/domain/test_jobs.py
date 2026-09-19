@@ -2,10 +2,9 @@
 
 from datetime import datetime, timedelta, timezone
 
-from pydantic import ValidationError
 import pytest
+from pydantic import ValidationError
 
-from multilang.domain.latin import LatinGenerationRequest, LatinVariant
 from multilang.domain.jobs import (
     ControlledReasonCode,
     FieldObligationSummary,
@@ -21,7 +20,7 @@ from multilang.domain.jobs import (
     ResumeDiagnostic,
     SupportedLanguage,
 )
-
+from multilang.domain.latin import LatinGenerationRequest, LatinVariant
 
 NOW = datetime(2026, 1, 1, 12, 0, tzinfo=timezone.utc)
 

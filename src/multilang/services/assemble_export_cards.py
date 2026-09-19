@@ -26,7 +26,11 @@ from multilang.domain.exporting import (
 from multilang.domain.jobs import SupportedLanguage
 from multilang.domain.lexicon import LexicalCardCandidate, LexicalProvenance
 from multilang.domain.text_quality import ReviewStatus, TextQualityRecord, ValidationStatus
-from multilang.services.audio_integrity import AudioIntegrityError, assert_word_audio_matches_word
+from multilang.services.audio_integrity import (
+    AudioIntegrityError,
+    assert_sentence_audio_matches_sentence,
+    assert_word_audio_matches_word,
+)
 from multilang.services.japanese_furigana import JapaneseFuriganaError, format_japanese_furigana
 from multilang.services.japanese_romaji import JapaneseRomajiError, romanize_japanese
 from multilang.services.mandarin_orthography import (
@@ -84,6 +88,7 @@ class AssembleExportCardsService:
             korean_personal = deck_language is SupportedLanguage.KO and source_type in {"word-list", "kindle-highlights"}
             if korean_personal:
                 self._require_korean_personal_text(job_id, text_record.item_key)
+            study_word = lexical_candidate.lemma if korean_final else lexical_candidate.display_form
             row_sort_index = self._row_sort_index(
                 fallback_sort_index=sort_index,
                 lexical_candidate=lexical_candidate,
@@ -107,7 +112,7 @@ class AssembleExportCardsService:
                 try:
                     assert_word_audio_matches_word(
                         word_audio,
-                        lexical_candidate.lemma,
+                        lexical_candidate.lemma if korean_personal else study_word,
                         item_key=text_record.item_key,
                     )
                 except AudioIntegrityError as exc:
@@ -118,6 +123,12 @@ class AssembleExportCardsService:
                 asset_kind=AudioAssetKind.SENTENCE,
                 audio_index=audio_index,
             )
+            try:
+                assert_sentence_audio_matches_sentence(
+                    sentence_audio, text_record.example_sentence or "", item_key=text_record.item_key,
+                )
+            except AudioIntegrityError as exc:
+                raise AssembleExportCardsError(str(exc)) from exc
             japanese_readings = self._japanese_readings(
                 item_key=text_record.item_key,
                 display_word=lexical_candidate.display_form,
@@ -155,9 +166,9 @@ class AssembleExportCardsService:
                 text_review_receipt_sha256=korean_metadata.get("text_review_receipt_sha256"),
                 word_audio_artifact_sha256=korean_metadata.get("word_audio_artifact_sha256"),
                 sentence_audio_artifact_sha256=korean_metadata.get("sentence_audio_artifact_sha256"),
-                word=escape(lexical_candidate.display_form if korean_personal else lexical_candidate.lemma),
+                word=escape(study_word),
                 front_of_card=escape(lexical_candidate.display_form),
-                ipa=self._render_ipa(lexical_candidate.ipa, lexical_candidate.spoken_form) if "IPA" in field_names else None,
+                ipa=self._render_candidate_ipa(lexical_candidate) if "IPA" in field_names else None,
                 definitions=self._render_definitions(lexical_candidate, deck_language=deck_language),
                 example_sentence=escape(text_record.example_sentence or ""),
                 translation=(
@@ -291,13 +302,28 @@ class AssembleExportCardsService:
         cleaned = " ".join(str(gramatica).split())
         return escape(cleaned) if cleaned else None
 
+    def _render_candidate_ipa(self, candidate: LexicalCardCandidate) -> str:
+        provenance = LexicalProvenance.model_validate(candidate.provenance, from_attributes=True)
+        pronunciation = provenance.pronunciation
+        if pronunciation is not None and (
+            not pronunciation.authoritative
+            or pronunciation.uncertainty_notes
+            or pronunciation.source == "provider-pronunciation-generator"
+        ):
+            raise AssembleExportCardsError(f"IPA for {candidate.lemma_key} requires pronunciation review")
+        return self._render_ipa(candidate.ipa, candidate.spoken_form)
+
     def _render_ipa(self, ipa: str | None, spoken_form: str | None) -> str:
+        from multilang.services.pronunciation_validation import is_usable_ipa
         if not ipa:
             raise AssembleExportCardsError("missing IPA for export candidate")
         cleaned = " ".join(ipa.split())
         if not cleaned:
             raise AssembleExportCardsError("missing IPA for export candidate")
-        return escape(_strip_trailing_ipa_word_hint(cleaned))
+        cleaned = _strip_trailing_ipa_word_hint(cleaned)
+        if not is_usable_ipa(cleaned):
+            raise AssembleExportCardsError("invalid IPA for export candidate; pronunciation review required")
+        return escape(cleaned)
 
     def _japanese_readings(
         self,

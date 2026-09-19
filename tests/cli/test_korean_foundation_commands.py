@@ -2,13 +2,13 @@
 
 from __future__ import annotations
 
-from dataclasses import dataclass
-from hashlib import sha256
 import inspect
 import json
-from pathlib import Path
 import socket
 import stat
+from dataclasses import dataclass
+from hashlib import sha256
+from pathlib import Path
 from types import SimpleNamespace
 from typing import Any
 
@@ -20,7 +20,6 @@ from typer.testing import CliRunner
 import multilang.cli as cli_module
 from multilang.cli import create_app
 from multilang.services.korean_curriculum import KoreanFoundationFamily
-
 
 runner = CliRunner()
 

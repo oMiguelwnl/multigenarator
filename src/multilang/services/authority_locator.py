@@ -2,10 +2,10 @@
 
 from __future__ import annotations
 
-from hashlib import sha256
 import os
-from pathlib import Path
 import unicodedata
+from hashlib import sha256
+from pathlib import Path
 
 from multilang.db.provisioning import find_project_root
 

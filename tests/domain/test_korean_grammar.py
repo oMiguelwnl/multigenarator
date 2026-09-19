@@ -2,15 +2,14 @@
 
 from __future__ import annotations
 
+import json
+import unicodedata
 from copy import deepcopy
 from hashlib import sha256
 from importlib import import_module, util
-import json
-import unicodedata
 
 import pytest
 from pydantic import ValidationError
-
 
 SHA = "a" * 64
 SHA_B = "b" * 64

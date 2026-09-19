@@ -10,7 +10,6 @@ import os
 import shutil
 import stat
 import struct
-import time
 import unicodedata
 import wave
 import zlib

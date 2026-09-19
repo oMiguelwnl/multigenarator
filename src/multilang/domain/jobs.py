@@ -320,6 +320,12 @@ class GenerationRequest(BaseModel):
                 raise ValueError("Korean highlights require the existing morphology-based text mode")
         return self
 
+    @model_validator(mode="after")
+    def grammar_requires_korean(self):
+        if self.source_type == "korean-grammar" and self.language is not SupportedLanguage.KO:
+            raise ValueError("Korean grammar requires language ko")
+        return self
+
     def resolved_cards_per_level(self) -> int:
         if self.cards_per_level is not None:
             return self.cards_per_level

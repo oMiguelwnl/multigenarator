@@ -10,7 +10,6 @@ from typer.testing import CliRunner
 
 from multilang.cli import create_app
 
-
 runner = CliRunner()
 
 

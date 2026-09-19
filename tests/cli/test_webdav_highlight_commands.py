@@ -18,7 +18,6 @@ from multilang.domain.webdav import (
     WebDAVRemoteCandidate,
 )
 
-
 runner = CliRunner()
 
 

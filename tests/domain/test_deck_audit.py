@@ -2,7 +2,12 @@
 
 from __future__ import annotations
 
-from multilang.domain.deck_audit import AuditCard, AuditIssueType, audit_deck_package, detect_card_issues
+from multilang.domain.deck_audit import (
+    AuditCard,
+    AuditIssueType,
+    audit_deck_package,
+    detect_card_issues,
+)
 from multilang.services.deck_audit_reader import DeckAuditReadResult
 
 

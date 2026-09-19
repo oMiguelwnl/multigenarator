@@ -98,6 +98,24 @@ def test_candidate_models_pending_state_without_fabricated_ipa() -> None:
     assert candidate.provenance.pronunciation.authoritative is False
 
 
+def test_pronunciation_uncertainty_and_provider_evidence_survive_json_round_trip() -> None:
+    record = PronunciationRecord(
+        source="provider-pronunciation-generator", value="/haʊs/", authoritative=False,
+        uncertainty_notes=["dialect requires review"],
+        provenance={"provider": "synthetic", "model": "fixture-v1"},
+    )
+    restored = PronunciationRecord.model_validate_json(record.model_dump_json())
+    assert restored == record
+    assert restored.uncertainty_notes == ["dialect requires review"]
+    assert restored.provenance == {"provider": "synthetic", "model": "fixture-v1"}
+
+
+def test_empty_pronunciation_metadata_preserves_legacy_payload() -> None:
+    assert PronunciationRecord(source="manual", value="/haʊs/").model_dump(mode="json") == {
+        "source": "manual", "value": "/haʊs/", "authoritative": True,
+    }
+
+
 def test_candidate_round_trips_complete_korean_identity() -> None:
     identity = _korean_identity()
 

@@ -12,7 +12,6 @@ from multilang.domain.highlights import (
 )
 from multilang.services.kindle_highlight_parser import parse_kindle_highlight_export
 
-
 FIXTURE_DIR = Path(__file__).parents[1] / "fixtures" / "kindle_highlights"
 
 

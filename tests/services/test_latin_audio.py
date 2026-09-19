@@ -20,7 +20,6 @@ from multilang.services.latin_audio import (
     assert_latin_audio_manifest_export_ready,
     summarize_latin_audio_manifest,
 )
-from multilang.services.latin_source_pack import load_latin_mvp_source_pack
 
 
 class FakeSourceEntry:

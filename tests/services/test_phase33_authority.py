@@ -2,8 +2,8 @@
 
 from __future__ import annotations
 
-from hashlib import sha256
 import json
+from hashlib import sha256
 from pathlib import Path
 
 import pytest
@@ -14,7 +14,6 @@ from multilang.services.phase33_authority import (
     read_phase33_review_input,
     validate_phase33_authority,
 )
-
 
 _HASH = "a" * 64
 

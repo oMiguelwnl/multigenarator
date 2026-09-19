@@ -2,15 +2,16 @@
 
 from __future__ import annotations
 
-from hashlib import sha256
 import json
+from hashlib import sha256
 
 from pydantic import BaseModel, ConfigDict, Field, field_validator
 
 from multilang.domain.audio import AudioAssetKind, AudioAssetRecord, AudioSynthesisStatus
 from multilang.domain.korean import KOREAN_PROVIDER_LOCALE
-from multilang.services.korean_foundation_snapshot import verify_active_korean_foundation_snapshot_provenance
-
+from multilang.services.korean_foundation_snapshot import (
+    verify_active_korean_foundation_snapshot_provenance,
+)
 
 _HEX = frozenset("0123456789abcdef")
 

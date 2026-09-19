@@ -2,17 +2,16 @@
 
 from __future__ import annotations
 
-from importlib import util
 import json
 import os
-from pathlib import Path
 import stat
 import subprocess
 import sys
+from importlib import util
+from pathlib import Path
 from types import ModuleType
 
 import pytest
-
 
 PROJECT_ROOT = Path(__file__).resolve().parents[2]
 SCRIPT_PATH = PROJECT_ROOT / "scripts" / "phase31_parallel_launch.py"

@@ -8,7 +8,6 @@ from typing import Any
 
 from pydantic import BaseModel, Field
 
-
 REPRESENTATIVE_LATIN_SAMPLE_WORDS = (
     "virum",
     "puella",

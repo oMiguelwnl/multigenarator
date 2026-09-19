@@ -28,18 +28,18 @@ from multilang.services.export_anki_package import (
     DECK_ID,
     HIGHLIGHT_MODEL_ID,
     HIGHLIGHT_NOTE_TYPE_NAME,
-    MANUAL_MODEL_ID,
-    MANUAL_NOTE_TYPE_NAME,
     MANDARIN_MODEL_ID,
     MANDARIN_NOTE_TYPE_NAME,
+    MANUAL_MODEL_ID,
+    MANUAL_NOTE_TYPE_NAME,
     MODEL_ID,
     ExportAnkiPackageError,
     build_multilang_model,
     build_multilang_note,
     export_anki_package,
 )
-from multilang.services.japanese_frequency_deck import JAPANESE_MODEL_ID, JAPANESE_NOTE_TYPE_NAME
 from multilang.services.export_tabular_bundle import write_export_tabular_bundle
+from multilang.services.japanese_frequency_deck import JAPANESE_MODEL_ID, JAPANESE_NOTE_TYPE_NAME
 
 
 def test_core_export_ids_are_registry_backed_without_local_numeric_declarations() -> None:

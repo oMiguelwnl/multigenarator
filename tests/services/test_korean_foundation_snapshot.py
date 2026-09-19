@@ -3,25 +3,24 @@
 from __future__ import annotations
 
 import builtins
-from contextlib import contextmanager
-from copy import deepcopy
-from hashlib import sha256
-from importlib import import_module, util
 import inspect
 import json
 import os
-from pathlib import Path
 import stat
 import subprocess
 import sys
 import threading
 import time
+from contextlib import contextmanager
+from copy import deepcopy
+from hashlib import sha256
+from importlib import import_module, util
+from pathlib import Path
 from types import ModuleType, SimpleNamespace
 from typing import Any, Callable, Iterator
 
 import pytest
 from pydantic import ValidationError
-
 
 CURRENT_BUNDLE_SHA256 = (
     "e95c795f0e9653b67163345d8acf6d1e31228c544380e95db84342e7e1401357"

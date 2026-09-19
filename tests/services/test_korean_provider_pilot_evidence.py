@@ -12,7 +12,6 @@ from multilang.services.korean_provider_pilot_evidence import (
     validate_korean_provider_catalog_pilot_result,
 )
 
-
 HASHES = tuple(f"{index:x}" * 64 for index in range(1, 16))
 
 

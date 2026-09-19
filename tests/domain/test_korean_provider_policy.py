@@ -99,7 +99,11 @@ def test_route_policy_requires_all_tasks_no_fallback_and_hashable_budget() -> No
 
 
 def test_budget_denominator_privacy_and_same_route_retry_are_enforced_before_work() -> None:
-    from multilang.domain.korean_provider import KoreanProviderResultSummary, KoreanProviderRoute, KoreanProviderTask
+    from multilang.domain.korean_provider import (
+        KoreanProviderResultSummary,
+        KoreanProviderRoute,
+        KoreanProviderTask,
+    )
 
     route = _route(KoreanProviderTask.SENTENCE_GENERATION)
     route.assert_within_budget(
@@ -170,7 +174,10 @@ def test_budget_denominator_privacy_and_same_route_retry_are_enforced_before_wor
 
 
 def test_settings_policy_values_are_proposals_not_live_authority() -> None:
-    from multilang.domain.korean_provider import KoreanProviderPolicyProposal, propose_korean_provider_policy_from_settings
+    from multilang.domain.korean_provider import (
+        KoreanProviderPolicyProposal,
+        propose_korean_provider_policy_from_settings,
+    )
 
     settings = Settings(
         _env_file=None,

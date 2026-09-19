@@ -15,7 +15,6 @@ from multilang.domain.highlights import HighlightProvenance, NormalizedHighlight
 from multilang.repositories.highlight_import_repository import HighlightImportRepository
 from multilang.repositories.private_processing_repository import PrivateProcessingRepository
 
-
 SHA_A = "a" * 64
 SHA_B = "b" * 64
 SHA_C = "c" * 64

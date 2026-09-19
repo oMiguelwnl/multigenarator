@@ -2,9 +2,9 @@
 
 from __future__ import annotations
 
+import json
 from dataclasses import dataclass, field
 from hashlib import sha256
-import json
 
 import pytest
 
@@ -14,7 +14,12 @@ from multilang.domain.korean import (
     KoreanLexicalIdentity,
     KoreanSignatureItem,
 )
-from multilang.domain.lexicon import DefinitionRecord, GroundingStatus, LexicalCardCandidate, LexicalProvenance
+from multilang.domain.lexicon import (
+    DefinitionRecord,
+    GroundingStatus,
+    LexicalCardCandidate,
+    LexicalProvenance,
+)
 from multilang.domain.text_quality import (
     ConfidenceLabel,
     TextGenerationStatus,
@@ -23,8 +28,8 @@ from multilang.domain.text_quality import (
     ValidationFlagCode,
     ValidationStatus,
 )
-from multilang.services.provider_text_adapters import LiteLLMSentenceAdapter
 from multilang.services.korean_text_generation import KoreanTextGenerationSelector
+from multilang.services.provider_text_adapters import LiteLLMSentenceAdapter
 from multilang.services.text_generation import (
     GeneratedSentence,
     GeneratedTextBundle,

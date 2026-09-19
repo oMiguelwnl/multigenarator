@@ -1,8 +1,8 @@
 from __future__ import annotations
 
+import json
 from hashlib import sha256
 from importlib import import_module, util
-import json
 from types import ModuleType
 
 import pytest

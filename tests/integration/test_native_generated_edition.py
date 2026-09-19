@@ -7,6 +7,7 @@ from xml.sax.saxutils import escape
 import pytest
 from sqlalchemy import create_engine
 from sqlalchemy.orm import Session
+from support.audio import SILENT_MP3
 from test_native_application import import_payload, qualified_profile
 
 from multilang.db.base import Base
@@ -43,7 +44,7 @@ def test_generate_review_pin_and_export_preserve_canonical_versions(tmp_path, so
         def synthesize(self, **kwargs):
             path = kwargs["output_path"]
             path.parent.mkdir(parents=True, exist_ok=True)
-            path.write_bytes(b"ID3-synthetic-adapter-fixture")
+            path.write_bytes(SILENT_MP3)
             return AudioSynthesisResponse(
                 storage_path=path, byte_size=path.stat().st_size, duration_ms=200
             )

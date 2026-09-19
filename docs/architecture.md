@@ -23,9 +23,11 @@ flowchart TD
 
 ## Fronteiras
 
-`domain/` contém contratos tipados, identidades e invariantes. `services/`
-contém cálculo, importação, validação, geração e exportação. `repositories/`
-persiste os fatos sem commit implícito; a aplicação controla sua transação.
+`domain/` contém contratos tipados, identidades e invariantes, sem importar os
+serviços ou a persistência. `services/` contém cálculo, importação, validação,
+geração e exportação. Os repositórios nativos deixam o commit com a aplicação.
+Os legados preservam commit em chamadas isoladas e fazem apenas flush quando
+a aplicação declara uma transação; veja a regra de composição abaixo.
 `native_runtime.py` compõe esses serviços e usa o mesmo `Settings` e os mesmos
 providers de `runtime.py`. A API, a CLI e os workers usam essa composição.
 
@@ -33,6 +35,59 @@ Core guarda identidades, revisões, formas, fontes, ranking e edições.
 Generated guarda versões imutáveis de conteúdo e áudio. User guarda estado e
 histórico minimizado por proprietário. A adaptação pode mudar prioridade,
 módulo e elegibilidade; não muda GUID, rank nem conteúdo Core.
+
+## Organização dos serviços e comandos
+
+| Pacote | Responsabilidade |
+|---|---|
+| `services/vocabulary/` | Pipeline de identidade lexical e cálculo de ranking |
+| `services/content/` | Definições fundamentadas, decisões de qualidade e execução de providers |
+| `services/audio/` | Versões de áudio, integridade dos bytes e fallback de síntese |
+| `services/review/` | Revisão de versões e relatórios de texto |
+| `services/exporting/` | Projeção de cartões, fields, APKG e exportação tabular |
+| `cli_commands/` | Registro dos comandos por responsabilidade |
+
+Os caminhos antigos dos serviços movidos são módulos de compatibilidade que
+resolvem para o mesmo objeto Python da implementação. Isso preserva imports,
+classes e pontos de substituição usados pelos testes. Código novo deve usar os
+pacotes por responsabilidade. A migração física dos demais serviços específicos
+de língua pode ocorrer quando seu comportamento for alterado, mantendo as mesmas
+fronteiras. O código principal não depende de carregar todos os pacotes de uma vez.
+
+`cli.py` conserva a composição, a assinatura de `create_app` e os pontos públicos
+de integração; os registradores contêm os corpos dos comandos. A composição usa
+dependências explícitas, sem executar strings de Python ou copiar o namespace
+global para os comandos.
+
+## Transações de aplicação
+
+Para combinar repositórios que compartilham a mesma `Session`:
+
+```python
+from multilang.repositories.transactions import repository_transaction
+
+with repository_transaction(session):
+    job = job_repository.create_job(
+        request=request, run_key=run_key,
+        source_fingerprint=fingerprint, total_items=len(items),
+    )
+    lexical_repository.upsert_candidates(
+        job_id=job.id, run_key=run_key, source_type=request.source_type,
+        candidates=items,
+    )
+```
+
+O escopo confirma tudo ao final ou reverte tudo na falha. Um `session.begin()`
+explícito também mantém a propriedade do commit. `repository_transaction` adota
+uma transação implícita já iniciada, inclusive suas escritas pendentes; quando
+existe uma transação externa explícita, apenas participa dela. Escopos aninhados
+compartilham a unidade: capturar um erro interno não permite confirmar o restante
+como sucesso. Um rollback executado internamente também invalida a unidade.
+
+Cada requisição ou worker deve usar sua própria `Session`. Chamadas de rede e
+processamento pesado devem acontecer fora de transações de persistência longas.
+Os logs de tentativas que precisam sobreviver a um rollback de negócio devem usar
+uma sessão própria. A fila continua com suas transações curtas de claim/heartbeat.
 
 ## Integração e extensibilidade
 

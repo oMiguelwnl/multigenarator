@@ -9,13 +9,13 @@ from urllib.parse import parse_qs, urlparse
 import pytest
 
 from multilang.domain.jobs import SupportedLanguage
+from multilang.services.audio_voice_registry import VOICE_REGISTRY_VERSION, get_voice_registry
+from multilang.services.elevenlabs_speech_adapter import ElevenLabsSpeechAdapter
+from multilang.services.google_translate_speech_adapter import GoogleTranslateSpeechAdapter
 from multilang.services.lexical_grounding import LexicalGroundingService
 from multilang.services.lexical_lookup import LexicalRecord
 from multilang.services.local_text_adapter import LocalSentenceAdapter
 from multilang.services.part_of_speech import infer_function_word_part_of_speech
-from multilang.services.audio_voice_registry import VOICE_REGISTRY_VERSION, get_voice_registry
-from multilang.services.elevenlabs_speech_adapter import ElevenLabsSpeechAdapter
-from multilang.services.google_translate_speech_adapter import GoogleTranslateSpeechAdapter
 from multilang.services.provider_pronunciation_adapters import (
     PronunciationGenerationRequest,
     _pronunciation_prompt,
@@ -238,6 +238,7 @@ def test_mandarin_word_list_grounding_uses_english_policy() -> None:
                 display_form="中国",
                 lemma="中国",
                 definitions=["China"],
+                definition_language="en",
                 part_of_speech="proper noun",
                 ipa="zhong guo",
                 source="fixture",

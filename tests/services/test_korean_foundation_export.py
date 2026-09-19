@@ -3,21 +3,21 @@
 from __future__ import annotations
 
 import csv
-from dataclasses import replace
-from hashlib import sha256
-from importlib import import_module, util
-import io
 import inspect
+import io
 import json
-from pathlib import Path
 import re
 import sqlite3
 import struct
-from types import ModuleType
 import unicodedata
 import wave
 import zipfile
 import zlib
+from dataclasses import replace
+from hashlib import sha256
+from importlib import import_module, util
+from pathlib import Path
+from types import ModuleType
 
 import pytest
 
@@ -28,7 +28,6 @@ from multilang.services.anki_id_registry import (
     validate_anki_id_registry,
 )
 from multilang.services.phoneme_deck import PHONEME_FIELD_NAMES
-
 
 EXPECTED_HANGUL_FIELD_NAMES = (
     "SortIndex",

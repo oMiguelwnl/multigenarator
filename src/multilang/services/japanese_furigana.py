@@ -2,8 +2,8 @@
 
 from __future__ import annotations
 
-from functools import lru_cache
 import unicodedata
+from functools import lru_cache
 
 
 class JapaneseFuriganaError(ValueError):

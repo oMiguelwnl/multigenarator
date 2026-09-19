@@ -15,7 +15,11 @@ from multilang.domain.audio import (
     AudioSynthesisStatus,
     NormalizedTtsInput,
 )
-from multilang.domain.exporting import ExportCardIdentity, ExportCardRow, FREQUENCY_EXPORT_CARD_FIELD_NAMES
+from multilang.domain.exporting import (
+    FREQUENCY_EXPORT_CARD_FIELD_NAMES,
+    ExportCardIdentity,
+    ExportCardRow,
+)
 from multilang.domain.jobs import SupportedLanguage
 from multilang.services.card_template_loader import CardTemplate
 from multilang.services.v13_validation import validate_v13_card, validate_v13_template_contract

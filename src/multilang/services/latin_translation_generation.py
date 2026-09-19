@@ -7,7 +7,10 @@ from collections.abc import Callable
 from pydantic import BaseModel, Field
 
 from multilang.services.latin_source_pack import LatinMvpSourcePackEntry
-from multilang.services.latin_translation_quality import LatinPortugueseTranslationEntry, LatinPortugueseTranslationQaService
+from multilang.services.latin_translation_quality import (
+    LatinPortugueseTranslationEntry,
+    LatinPortugueseTranslationQaService,
+)
 
 
 class LatinPortugueseDraftTranslation(BaseModel):

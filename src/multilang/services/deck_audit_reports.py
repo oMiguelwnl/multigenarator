@@ -2,10 +2,10 @@
 
 from __future__ import annotations
 
-from dataclasses import asdict, dataclass
 import json
-from pathlib import Path
 from collections import defaultdict
+from dataclasses import asdict, dataclass
+from pathlib import Path
 
 from multilang.domain.deck_audit import AuditIssue
 from multilang.services.deck_audit_reader import DeckAuditReadResult

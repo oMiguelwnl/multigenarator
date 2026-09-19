@@ -21,14 +21,12 @@ from multilang.domain.private_processing import (
     PrivateProcessingReceipt,
     PrivateProcessingRefusalReason,
     PrivateProviderIdempotency,
-    private_text_sha256,
 )
 from multilang.repositories.private_processing_repository import (
     PrivateProcessingRepository,
     PrivateProcessingRepositoryConflict,
     PrivateProcessingRepositoryValidationError,
 )
-
 
 SHA_A = "a" * 64
 SHA_B = "b" * 64

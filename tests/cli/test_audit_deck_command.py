@@ -12,7 +12,6 @@ from multilang.domain.exporting import ExportCardIdentity, ExportCardRow
 from multilang.domain.jobs import SupportedLanguage
 from multilang.services.export_anki_package import export_anki_package
 
-
 runner = CliRunner()
 
 

@@ -1,0 +1,1505 @@
+[
+  {
+    "entry_id": "g7.eu",
+    "category_id": "G7",
+    "form": "쓰다 → 써요",
+    "function": "Aplicar a queda da vogal final eu antes de uma terminação iniciada em 아 ou 어.",
+    "attachment_rule": "Retire a vogal final de 쓰- antes de 어요: 써요. Em radicais maiores, a vogal anterior orienta 아/어: 바쁘다 → 바빠요.",
+    "register": "해요체",
+    "example_sentence": "저는 글을 써요.",
+    "portuguese_translation": "Escrevo um texto.",
+    "spoken_sample": "저는 글을 써요.",
+    "prerequisite_ids": [
+      "g0.stem",
+      "g1.object",
+      "g1.present",
+      "g0.argument-omission",
+      "g1.topic"
+    ],
+    "lexical_lemmas": [
+      "글",
+      "쓰다",
+      "저"
+    ],
+    "source_ids": [
+      "sejong-curriculum",
+      "krdict"
+    ],
+    "notes": "O vocabulário precisa distinguir 쓰다 escrever de seus homógrafos. A queda de eu é uma alternância regular em descrições normativas, embora apareça entre os paradigmas especiais de ensino.",
+    "target_surfaces": [
+      "써요"
+    ]
+  },
+  {
+    "entry_id": "g7.rieul",
+    "category_id": "G7",
+    "form": "열다 → 여세요",
+    "function": "Reconhecer a queda da consoante final rieul diante da forma honorífica já estudada.",
+    "attachment_rule": "Em 열다, a consoante final rieul desaparece antes de -시-: 열다 → 여시다 → 여세요. Não acrescente 으 antes de 시.",
+    "register": "해요체",
+    "example_sentence": "선생님이 문을 여세요.",
+    "portuguese_translation": "O professor abre a porta.",
+    "spoken_sample": "선생님이 문을 여세요.",
+    "prerequisite_ids": [
+      "g1.subject",
+      "g1.object",
+      "g6.honorific-subject"
+    ],
+    "lexical_lemmas": [
+      "선생님",
+      "문",
+      "열다"
+    ],
+    "source_ids": [
+      "sejong-curriculum"
+    ],
+    "notes": "A queda de rieul também ocorre diante de outras terminações específicas; este cartão focaliza somente -시-. Não é uma regra de apagar a consoante antes de qualquer terminação.",
+    "target_surfaces": [
+      "여세요"
+    ]
+  },
+  {
+    "entry_id": "g7.bieup",
+    "category_id": "G7",
+    "form": "춥다 → 추워요",
+    "function": "Conjugar 춥다 e 쉽다 com a alternância de bieup para 우 antes de vogal.",
+    "attachment_rule": "춥다 e 쉽다 pertencem à classe irregular de bieup que troca a consoante final por 우 antes de 어요. 우 + 어 contrai para 워: 춥다 → 추워요; 쉽다 → 쉬워요.",
+    "register": "해요체",
+    "example_sentence": "오늘은 추워요.",
+    "portuguese_translation": "Hoje está frio.",
+    "spoken_sample": "오늘은 추워요.",
+    "prerequisite_ids": [
+      "g1.topic",
+      "g1.present",
+      "g1.adjective-present"
+    ],
+    "lexical_lemmas": [
+      "오늘",
+      "춥다",
+      "쉽다"
+    ],
+    "source_ids": [
+      "sejong-curriculum",
+      "krdict"
+    ],
+    "notes": "Aprenda explicitamente os dois membros desta classe: 춥다 (ser frio) e 쉽다 (ser fácil). Nem todo radical terminado em bieup segue esta alteração; há palavras regulares e outros subtipos lexicais, estudados separadamente.",
+    "target_surfaces": [
+      "추워요"
+    ]
+  },
+  {
+    "entry_id": "g7.digeut",
+    "category_id": "G7",
+    "form": "듣다 → 들어요",
+    "function": "Conjugar 듣다 trocando a consoante final digeut por rieul diante de vogal.",
+    "attachment_rule": "듣- passa a 들- antes de 어요: 들어요; diante de 고 mantém 듣고.",
+    "register": "해요체",
+    "example_sentence": "저는 음악을 들어요.",
+    "portuguese_translation": "Escuto música.",
+    "spoken_sample": "저는 음악을 들어요.",
+    "prerequisite_ids": [
+      "g1.object",
+      "g1.present",
+      "g0.argument-omission",
+      "g1.topic"
+    ],
+    "lexical_lemmas": [
+      "저",
+      "음악",
+      "듣다"
+    ],
+    "source_ids": [
+      "sejong-curriculum",
+      "krdict"
+    ],
+    "notes": "Nem todo verbo terminado nessa consoante é irregular. A alteração depende da classe lexical do verbo e do tipo de terminação.",
+    "target_surfaces": [
+      "들어요"
+    ]
+  },
+  {
+    "entry_id": "g7.reu",
+    "category_id": "G7",
+    "form": "빠르다 → 빨라요",
+    "function": "Aplicar a alternância reu em 빠르다 no presente polido.",
+    "attachment_rule": "Antes de 아/어, retire a vogal de 르 e acrescente rieul à sílaba anterior: 빠르다 → 빨라요.",
+    "register": "해요체",
+    "example_sentence": "친구가 빨라요.",
+    "portuguese_translation": "O amigo é rápido.",
+    "spoken_sample": "친구가 빨라요.",
+    "prerequisite_ids": [
+      "g1.subject",
+      "g1.present",
+      "g1.adjective-present"
+    ],
+    "lexical_lemmas": [
+      "친구",
+      "빠르다"
+    ],
+    "source_ids": [
+      "sejong-curriculum",
+      "krdict"
+    ],
+    "notes": "A alteração pertence a esta classe de radicais; não se aplica automaticamente a toda palavra com a mesma sílaba final.",
+    "target_surfaces": [
+      "빨라요"
+    ]
+  },
+  {
+    "entry_id": "g7.siot",
+    "category_id": "G7",
+    "form": "짓다 → 지어요",
+    "function": "Conjugar 짓다 com queda de siot diante de vogal.",
+    "attachment_rule": "Em 짓다, retire a consoante final antes de 어요: 지어요. As vogais permanecem separadas nessa forma.",
+    "register": "해요체",
+    "example_sentence": "저는 집을 지어요.",
+    "portuguese_translation": "Construo uma casa.",
+    "spoken_sample": "저는 집을 지어요.",
+    "prerequisite_ids": [
+      "g1.object",
+      "g1.present",
+      "g0.argument-omission",
+      "g1.topic"
+    ],
+    "lexical_lemmas": [
+      "집",
+      "짓다",
+      "저"
+    ],
+    "source_ids": [
+      "sejong-curriculum"
+    ],
+    "notes": "Há verbos regulares com essa consoante final. Aprenda a classe lexical de cada verbo; não apague a consoante apenas pela grafia.",
+    "target_surfaces": [
+      "지어요"
+    ]
+  },
+  {
+    "entry_id": "g7.hieut",
+    "category_id": "G7",
+    "form": "파랗다 → 파래요",
+    "function": "Conjugar o adjetivo 파랗다 com a alternância de hieut.",
+    "attachment_rule": "Em 파랗다, a combinação com 아요 perde a consoante final e muda a vogal: 파래요.",
+    "register": "해요체",
+    "example_sentence": "하늘이 파래요.",
+    "portuguese_translation": "O céu está azul.",
+    "spoken_sample": "하늘이 파래요.",
+    "prerequisite_ids": [
+      "g1.subject",
+      "g1.present",
+      "g1.adjective-present"
+    ],
+    "lexical_lemmas": [
+      "하늘",
+      "파랗다"
+    ],
+    "source_ids": [
+      "sejong-curriculum",
+      "krdict"
+    ],
+    "notes": "좋다 é regular: 좋아요. Não estenda automaticamente a alternância a toda palavra terminada em hieut.",
+    "target_surfaces": [
+      "파래요"
+    ]
+  },
+  {
+    "entry_id": "g8.go-addition",
+    "category_id": "G8",
+    "form": "-고",
+    "function": "Somar duas propriedades do mesmo referente.",
+    "attachment_rule": "Acrescente 고 ao radical do primeiro predicado. O último predicado recebe a terminação polida.",
+    "register": "해요체",
+    "example_sentence": "집이 크고 좋아요.",
+    "portuguese_translation": "A casa é grande e boa.",
+    "spoken_sample": "집이 크고 좋아요.",
+    "prerequisite_ids": [
+      "g0.stem",
+      "g1.subject",
+      "g1.present",
+      "g1.adjective-present"
+    ],
+    "lexical_lemmas": [
+      "집",
+      "크다",
+      "좋다"
+    ],
+    "source_ids": [
+      "sejong-curriculum"
+    ],
+    "notes": "Aqui 고 coordena propriedades; não estabelece causa nem ordem temporal.",
+    "target_surfaces": [
+      "크고"
+    ]
+  },
+  {
+    "entry_id": "g8.go-sequence",
+    "category_id": "G8",
+    "form": "-고",
+    "function": "Apresentar uma ação seguida de outra, em sequência simples.",
+    "attachment_rule": "Acrescente 고 ao radical do primeiro verbo e conjugue o último. A ordem temporal vem do contexto.",
+    "register": "해요체",
+    "example_sentence": "저는 밥을 먹고 물을 마셔요.",
+    "portuguese_translation": "Como arroz e depois bebo água.",
+    "spoken_sample": "저는 밥을 먹고 물을 마셔요.",
+    "prerequisite_ids": [
+      "g1.object",
+      "g1.present",
+      "g8.go-addition",
+      "g0.argument-omission",
+      "g1.topic"
+    ],
+    "lexical_lemmas": [
+      "밥",
+      "먹다",
+      "물",
+      "마시다",
+      "저"
+    ],
+    "source_ids": [
+      "sejong-curriculum"
+    ],
+    "notes": "Este uso não diz por si só que a primeira ação é condição necessária para a segunda.",
+    "target_surfaces": [
+      "먹고"
+    ]
+  },
+  {
+    "entry_id": "g8.aseo-cause",
+    "category_id": "G8",
+    "form": "-아서 / -어서",
+    "function": "Apresentar uma situação como causa da afirmação seguinte.",
+    "attachment_rule": "Use 아서 após a vogal relevante 아/오, 어서 nos demais casos, e 해서 com 하다. Aplique a alternância do radical quando houver.",
+    "register": "해요체",
+    "example_sentence": "오늘은 추워서 학생이 집에 있어요.",
+    "portuguese_translation": "Hoje está frio, por isso o estudante está em casa.",
+    "spoken_sample": "오늘은 추워서 학생이 집에 있어요.",
+    "prerequisite_ids": [
+      "g1.topic",
+      "g2.location",
+      "g2.exist",
+      "g7.bieup",
+      "g1.subject"
+    ],
+    "lexical_lemmas": [
+      "오늘",
+      "춥다",
+      "집",
+      "있다",
+      "학생"
+    ],
+    "source_ids": [
+      "sejong-curriculum"
+    ],
+    "notes": "O alvo é a relação causal. No uso básico aqui ensinado, evite terminar a oração seguinte em ordem ou convite; essas combinações precisam de análise própria.",
+    "target_surfaces": [
+      "추워서"
+    ]
+  },
+  {
+    "entry_id": "g8.aseo-sequence",
+    "category_id": "G8",
+    "form": "-아서 / -어서",
+    "function": "Ligar uma ação à ação seguinte realizada no contexto criado pela primeira.",
+    "attachment_rule": "Una o primeiro verbo a 아서/어서, com as contrações usuais. A mesma pessoa executa as ações neste exemplo.",
+    "register": "해요체",
+    "example_sentence": "학생이 학교에 가서 공부해요.",
+    "portuguese_translation": "O estudante vai à escola e estuda lá.",
+    "spoken_sample": "학생이 학교에 가서 공부해요.",
+    "prerequisite_ids": [
+      "g2.destination",
+      "g1.hada-present",
+      "g8.aseo-cause",
+      "g0.argument-omission",
+      "g1.subject"
+    ],
+    "lexical_lemmas": [
+      "학교",
+      "가다",
+      "공부하다",
+      "학생"
+    ],
+    "source_ids": [
+      "sejong-curriculum"
+    ],
+    "notes": "A ida à escola estabelece o local da ação seguinte. Não traduza automaticamente todo 아서/어서 como porque.",
+    "target_surfaces": [
+      "가서"
+    ]
+  },
+  {
+    "entry_id": "g8.jiman",
+    "category_id": "G8",
+    "form": "-지만",
+    "function": "Contrapor uma informação a outra, preservando a validade de ambas.",
+    "attachment_rule": "Acrescente 지만 ao radical de verbo ou adjetivo; o último predicado marca a polidez.",
+    "register": "해요체",
+    "example_sentence": "집이 작지만 좋아요.",
+    "portuguese_translation": "A casa é pequena, mas é boa.",
+    "spoken_sample": "집이 작지만 좋아요.",
+    "prerequisite_ids": [
+      "g0.stem",
+      "g1.subject",
+      "g1.present",
+      "g1.adjective-present"
+    ],
+    "lexical_lemmas": [
+      "집",
+      "작다",
+      "좋다"
+    ],
+    "source_ids": [
+      "sejong-curriculum",
+      "krdict"
+    ],
+    "notes": "A avaliação positiva não nega o tamanho pequeno.",
+    "target_surfaces": [
+      "작지만"
+    ]
+  },
+  {
+    "entry_id": "g8.condition",
+    "category_id": "G8",
+    "form": "-면 / -으면",
+    "function": "Introduzir uma condição para a situação seguinte.",
+    "attachment_rule": "Use 면 após vogal ou rieul final e 으면 após outra consoante, respeitando alternâncias lexicais.",
+    "register": "해요체",
+    "example_sentence": "내일 비가 오면 학생이 집에 있어요.",
+    "portuguese_translation": "Se chover amanhã, o estudante fica em casa.",
+    "spoken_sample": "내일 비가 오면 학생이 집에 있어요.",
+    "prerequisite_ids": [
+      "g1.subject",
+      "g2.location",
+      "g1.present"
+    ],
+    "lexical_lemmas": [
+      "내일",
+      "비",
+      "오다",
+      "집",
+      "있다",
+      "학생"
+    ],
+    "source_ids": [
+      "sejong-curriculum"
+    ],
+    "notes": "Aqui a condição é futura. 면 também pode introduzir situações habituais; esse uso não é o alvo do cartão.",
+    "target_surfaces": [
+      "오면"
+    ]
+  },
+  {
+    "entry_id": "g8.nikka-reason",
+    "category_id": "G8",
+    "form": "-니까 / -으니까",
+    "function": "Apresentar a razão que sustenta uma decisão ou avaliação do falante.",
+    "attachment_rule": "Use 니까 após vogal, 으니까 após consoante; rieul final cai antes de 니까. 춥다 alterna para 추우니까.",
+    "register": "해요체",
+    "example_sentence": "오늘은 추우니까 학생이 집에 있어요.",
+    "portuguese_translation": "Como hoje está frio, o estudante fica em casa.",
+    "spoken_sample": "오늘은 추우니까 학생이 집에 있어요.",
+    "prerequisite_ids": [
+      "g1.topic",
+      "g2.location",
+      "g1.present",
+      "g7.bieup",
+      "g1.subject"
+    ],
+    "lexical_lemmas": [
+      "오늘",
+      "춥다",
+      "집",
+      "있다",
+      "학생"
+    ],
+    "source_ids": [
+      "sejong-curriculum"
+    ],
+    "notes": "Diferentemente do alvo básico com 아서/어서, esta construção também aceita ordens e propostas na oração seguinte. O sentido de descoberta de 니까 exige outro cartão.",
+    "target_surfaces": [
+      "추우니까"
+    ]
+  },
+  {
+    "entry_id": "g8.neunde-background",
+    "category_id": "G8",
+    "form": "-는데 / -은데 / -인데",
+    "function": "Apresentar uma situação de fundo para a informação seguinte.",
+    "attachment_rule": "Acrescente 는데 ao radical de um verbo de ação para apresentar o contexto da oração seguinte. Este cartão focaliza o padrão verbal do exemplo.",
+    "register": "해요체",
+    "example_sentence": "학생이 공부하는데 친구가 와요.",
+    "portuguese_translation": "O estudante está estudando, e um amigo chega.",
+    "spoken_sample": "학생이 공부하는데 친구가 와요.",
+    "prerequisite_ids": [
+      "g1.subject",
+      "g1.present",
+      "g1.hada-present"
+    ],
+    "lexical_lemmas": [
+      "학생",
+      "공부하다",
+      "친구",
+      "오다"
+    ],
+    "source_ids": [
+      "sejong-curriculum",
+      "krdict"
+    ],
+    "notes": "Outros tipos de predicado têm formas próprias, estudadas separadamente. O conectivo pode introduzir contexto, sem significar necessariamente oposição.",
+    "target_surfaces": [
+      "공부하는데"
+    ]
+  },
+  {
+    "entry_id": "g9.adjective",
+    "category_id": "G9",
+    "form": "좋은 / 큰 + nome",
+    "function": "Colocar um adjetivo antes de um nome para caracterizá-lo.",
+    "attachment_rule": "Adjetivo com consoante final recebe 은: 좋은. Após vogal, acrescente a consoante nasal final como em 크다 → 큰. Rieul final cai.",
+    "register": "해요체",
+    "example_sentence": "학생이 좋은 책을 읽어요.",
+    "portuguese_translation": "O estudante lê um bom livro.",
+    "spoken_sample": "학생이 좋은 책을 읽어요.",
+    "prerequisite_ids": [
+      "g0.adjective",
+      "g1.object",
+      "g1.present",
+      "g0.argument-omission",
+      "g1.subject"
+    ],
+    "lexical_lemmas": [
+      "좋다",
+      "책",
+      "읽다",
+      "학생"
+    ],
+    "source_ids": [
+      "sejong-curriculum"
+    ],
+    "notes": "Alguns predicados têm um padrão próprio; esta aula cobre o adjetivo do exemplo. A expressão modifica o substantivo que vem a seguir.",
+    "target_surfaces": [
+      "좋은"
+    ]
+  },
+  {
+    "entry_id": "g9.verb-present",
+    "category_id": "G9",
+    "form": "-는 + nome",
+    "function": "Identificar uma pessoa ou coisa por uma ação presente ou habitual.",
+    "attachment_rule": "Acrescente 는 ao radical verbal antes do nome. Rieul final cai diante de 는.",
+    "register": "해요체",
+    "example_sentence": "책을 읽는 학생이 있어요.",
+    "portuguese_translation": "Há um estudante que lê um livro.",
+    "spoken_sample": "책을 읽는 학생이 있어요.",
+    "prerequisite_ids": [
+      "g1.object",
+      "g1.subject",
+      "g2.exist"
+    ],
+    "lexical_lemmas": [
+      "책",
+      "읽다",
+      "학생",
+      "있다"
+    ],
+    "source_ids": [
+      "sejong-curriculum"
+    ],
+    "notes": "읽는 não é o tópico 는: modifica 학생. O exemplo admite a leitura de ação em curso, conforme o contexto.",
+    "target_surfaces": [
+      "읽는"
+    ]
+  },
+  {
+    "entry_id": "g9.verb-past",
+    "category_id": "G9",
+    "form": "읽은 / 간 + nome",
+    "function": "Identificar um referente por uma ação concluída anteriormente.",
+    "attachment_rule": "Acrescente 은 após consoante ou a consoante nasal final após vogal: 읽은, 간. Rieul final cai.",
+    "register": "해요체",
+    "example_sentence": "학생이 어제 읽은 책이 좋아요.",
+    "portuguese_translation": "O livro que o estudante leu ontem é bom.",
+    "spoken_sample": "학생이 어제 읽은 책이 좋아요.",
+    "prerequisite_ids": [
+      "g1.subject",
+      "g1.present",
+      "g9.verb-present",
+      "g0.argument-omission",
+      "g1.adjective-present"
+    ],
+    "lexical_lemmas": [
+      "어제",
+      "읽다",
+      "책",
+      "좋다",
+      "학생"
+    ],
+    "source_ids": [
+      "sejong-curriculum"
+    ],
+    "notes": "A forma verbal indica ação concluída. Não confunda com a forma semelhante do adjetivo presente 좋은. O estudante é o sujeito da oração que modifica 책.",
+    "target_surfaces": [
+      "읽은"
+    ]
+  },
+  {
+    "entry_id": "g9.verb-prospective",
+    "category_id": "G9",
+    "form": "읽을 / 갈 + nome",
+    "function": "Identificar um referente por uma ação prevista ou ainda por realizar.",
+    "attachment_rule": "Acrescente 을 após consoante ou rieul final após vogal: 읽을, 갈. Radical já terminado em rieul não recebe outro.",
+    "register": "해요체",
+    "example_sentence": "내일 읽을 책이 있어요.",
+    "portuguese_translation": "Há um livro para ler amanhã.",
+    "spoken_sample": "내일 읽을 책이 있어요.",
+    "prerequisite_ids": [
+      "g1.subject",
+      "g2.exist",
+      "g9.verb-present"
+    ],
+    "lexical_lemmas": [
+      "내일",
+      "읽다",
+      "책",
+      "있다"
+    ],
+    "source_ids": [
+      "sejong-curriculum"
+    ],
+    "notes": "A forma pode indicar intenção, previsão ou possibilidade conforme o contexto; aqui a leitura é prospectiva.",
+    "target_surfaces": [
+      "읽을"
+    ]
+  },
+  {
+    "entry_id": "g9.noun",
+    "category_id": "G9",
+    "form": "-인 + nome",
+    "function": "Usar um predicado nominal para identificar o nome seguinte.",
+    "attachment_rule": "Acrescente 인 ao nome, derivado de 이다: 학생인. Não use o adnominal verbal 는 diretamente no nome.",
+    "register": "해요체",
+    "example_sentence": "학생인 친구가 와요.",
+    "portuguese_translation": "O amigo que é estudante vem.",
+    "spoken_sample": "학생인 친구가 와요.",
+    "prerequisite_ids": [
+      "g0.copula",
+      "g1.subject",
+      "g1.present"
+    ],
+    "lexical_lemmas": [
+      "학생",
+      "친구",
+      "오다"
+    ],
+    "source_ids": [
+      "sejong-curriculum"
+    ],
+    "notes": "A frase relaciona amigo e estudante; não afirma que todos os amigos sejam estudantes.",
+    "target_surfaces": [
+      "학생인"
+    ]
+  },
+  {
+    "entry_id": "g10.gi",
+    "category_id": "G10",
+    "form": "-기",
+    "function": "Tratar uma ação como atividade que pode ocupar uma posição nominal.",
+    "attachment_rule": "Acrescente 기 ao radical verbal; partículas podem seguir essa forma: 읽기 + 가.",
+    "register": "해요체",
+    "example_sentence": "책을 읽기가 쉬워요.",
+    "portuguese_translation": "É fácil ler livros.",
+    "spoken_sample": "책을 읽기가 쉬워요.",
+    "prerequisite_ids": [
+      "g1.object",
+      "g1.subject",
+      "g1.present",
+      "g7.bieup",
+      "g1.adjective-present"
+    ],
+    "lexical_lemmas": [
+      "책",
+      "읽다",
+      "쉽다"
+    ],
+    "source_ids": [
+      "sejong-curriculum",
+      "krdict"
+    ],
+    "notes": "O foco é a atividade de ler. Existem outras nominalizações, cuja escolha depende do predicado e do sentido. A palavra 쉽다 pertence à classe irregular estudada em G7.",
+    "target_surfaces": [
+      "읽기가"
+    ]
+  },
+  {
+    "entry_id": "g10.eum",
+    "category_id": "G10",
+    "form": "-음; 오다 → 옴",
+    "function": "Transformar uma oração em conteúdo nominal, comum em registro escrito.",
+    "attachment_rule": "Após consoante diferente de rieul, use 음; após vogal, acrescente mieum final. Com rieul, forme o encontro final, como 살다 → 삶. Partículas podem seguir a nominalização: 왔음 + 을.",
+    "register": "해요체",
+    "example_sentence": "저는 친구가 왔음을 알아요.",
+    "portuguese_translation": "Sei que o amigo veio.",
+    "spoken_sample": "저는 친구가 왔음을 알아요.",
+    "prerequisite_ids": [
+      "g1.subject",
+      "g1.object",
+      "g1.present",
+      "g5.past",
+      "g1.topic"
+    ],
+    "lexical_lemmas": [
+      "친구",
+      "오다",
+      "알다",
+      "저"
+    ],
+    "source_ids": [
+      "sejong-curriculum",
+      "krdict"
+    ],
+    "notes": "O exemplo mantém a terminação final polida, mas a nominalização é mais própria da escrita ou de fala formal. Não é uma regra de passado obrigatório para 음.",
+    "target_surfaces": [
+      "왔음을"
+    ]
+  },
+  {
+    "entry_id": "g10.geot",
+    "category_id": "G10",
+    "form": "-는 것",
+    "function": "Usar a oração adnominal com 것 para falar de uma atividade.",
+    "attachment_rule": "Coloque 것 separado da forma verbal em 는. Acrescente a partícula diretamente a 것: 것을.",
+    "register": "해요체",
+    "example_sentence": "저는 책을 읽는 것을 좋아해요.",
+    "portuguese_translation": "Gosto de ler livros.",
+    "spoken_sample": "저는 책을 읽는 것을 좋아해요.",
+    "prerequisite_ids": [
+      "g1.object",
+      "g1.present",
+      "g9.verb-present",
+      "g1.topic",
+      "g1.hada-present",
+      "g0.argument-omission"
+    ],
+    "lexical_lemmas": [
+      "책",
+      "읽다",
+      "것",
+      "좋아하다",
+      "저"
+    ],
+    "source_ids": [
+      "sejong-curriculum"
+    ],
+    "notes": "O alvo é a nominalização da atividade; 것 também pode apontar para uma coisa concreta em outros contextos. A contração 걸 deve ser ensinada antes de ser usada em exemplo estrito.",
+    "target_surfaces": [
+      "읽는 것을"
+    ]
+  },
+  {
+    "entry_id": "g10.su-particle",
+    "category_id": "G10",
+    "form": "수가 있다",
+    "function": "Reconhecer 수 como nome dependente que pode receber partícula dentro da construção de capacidade.",
+    "attachment_rule": "Mantenha espaço antes de 수 e una 가 a ele: 읽을 수가 있어요. A forma adnominal prospectiva continua obrigatória.",
+    "register": "해요체",
+    "example_sentence": "저는 이 책을 읽을 수가 있어요.",
+    "portuguese_translation": "Consigo ler este livro.",
+    "spoken_sample": "저는 이 책을 읽을 수가 있어요.",
+    "prerequisite_ids": [
+      "g6.ability",
+      "g9.verb-prospective",
+      "g1.object",
+      "g1.topic"
+    ],
+    "lexical_lemmas": [
+      "이",
+      "책",
+      "읽다",
+      "수",
+      "있다",
+      "저"
+    ],
+    "source_ids": [
+      "sejong-curriculum"
+    ],
+    "notes": "Retoma a capacidade já apresentada em G6. O único foco novo é a possibilidade de marcar 수 com 가; não é um novo sentido de capacidade. A ênfase depende do contexto e não precisa aparecer artificialmente na tradução.",
+    "target_surfaces": [
+      "읽을 수가 있어요"
+    ]
+  },
+  {
+    "entry_id": "g11.formal-statement",
+    "category_id": "G11",
+    "form": "-습니다; 가다 → 갑니다",
+    "function": "Fazer uma declaração em estilo formal e polido.",
+    "attachment_rule": "Use 습니다 após consoante; após vogal, acrescente bieup final e 니다. Rieul final cai: 살다 → 삽니다.",
+    "register": "하십시오체",
+    "example_sentence": "학생이 책을 읽습니다.",
+    "portuguese_translation": "O estudante lê um livro.",
+    "spoken_sample": "학생이 책을 읽습니다.",
+    "prerequisite_ids": [
+      "g1.subject",
+      "g1.object",
+      "g0.stem"
+    ],
+    "lexical_lemmas": [
+      "학생",
+      "책",
+      "읽다"
+    ],
+    "source_ids": [
+      "sejong-curriculum",
+      "krdict"
+    ],
+    "notes": "A polidez ao interlocutor não substitui o honorífico referente ao sujeito. O registro formal não indica necessariamente um evento mais importante.",
+    "target_surfaces": [
+      "읽습니다"
+    ]
+  },
+  {
+    "entry_id": "g11.formal-question",
+    "category_id": "G11",
+    "form": "-습니까; 가다 → 갑니까",
+    "function": "Fazer uma pergunta em estilo formal e polido.",
+    "attachment_rule": "Use 습니까 após consoante; após vogal, acrescente bieup final e 니까. Rieul final cai.",
+    "register": "하십시오체",
+    "example_sentence": "학생이 책을 읽습니까?",
+    "portuguese_translation": "O estudante lê um livro?",
+    "spoken_sample": "학생이 책을 읽습니까?",
+    "prerequisite_ids": [
+      "g11.formal-statement",
+      "g1.object",
+      "g0.argument-omission",
+      "g1.subject"
+    ],
+    "lexical_lemmas": [
+      "책",
+      "읽다",
+      "학생"
+    ],
+    "source_ids": [
+      "sejong-curriculum"
+    ],
+    "notes": "A terminação indica pergunta ao interlocutor; o estudante é o sujeito explicitamente nomeado.",
+    "target_surfaces": [
+      "읽습니까"
+    ]
+  },
+  {
+    "entry_id": "g11.polite-question",
+    "category_id": "G11",
+    "form": "-나요?",
+    "function": "Perguntar de modo polido, apresentando a pergunta como busca de informação.",
+    "attachment_rule": "Acrescente 나요 ao radical verbal; rieul final cai: 살다 → 사나요. Este cartão cobre verbos de ação, sem generalizar o mesmo padrão a todos os adjetivos.",
+    "register": "해요체",
+    "example_sentence": "학생이 물을 마시나요?",
+    "portuguese_translation": "O estudante bebe água?",
+    "spoken_sample": "학생이 물을 마시나요?",
+    "prerequisite_ids": [
+      "g1.present",
+      "g1.object",
+      "g0.argument-omission",
+      "g1.subject",
+      "g1.present-question"
+    ],
+    "lexical_lemmas": [
+      "물",
+      "마시다",
+      "학생"
+    ],
+    "source_ids": [
+      "sejong-curriculum"
+    ],
+    "notes": "O grau de suavidade depende de entonação e contexto. A diferença em relação a 마셔요? não é uma mudança obrigatória de respeito. O alvo novo aqui é a terminação 나요.",
+    "target_surfaces": [
+      "마시나요?"
+    ]
+  },
+  {
+    "entry_id": "g11.informal",
+    "category_id": "G11",
+    "form": "-아 / -어",
+    "function": "Fazer uma declaração em estilo informal sem 요.",
+    "attachment_rule": "Use a forma em 아/어 e omita 요; 하다 resulta em 해. A alternância vocálica permanece.",
+    "register": "해체",
+    "example_sentence": "나는 집에 가.",
+    "portuguese_translation": "Eu vou para casa.",
+    "spoken_sample": "나는 집에 가.",
+    "prerequisite_ids": [
+      "g1.topic",
+      "g2.destination",
+      "g1.present"
+    ],
+    "lexical_lemmas": [
+      "나",
+      "집",
+      "가다"
+    ],
+    "source_ids": [
+      "sejong-curriculum"
+    ],
+    "notes": "Use com pessoas com quem exista intimidade ou acordo de tratamento. Não pressuponha que remover 요 seja apropriado com qualquer interlocutor.",
+    "target_surfaces": [
+      "가."
+    ]
+  },
+  {
+    "entry_id": "g11.plain-verb",
+    "category_id": "G11",
+    "form": "-는다; 가다 → 간다",
+    "function": "Declarar uma ação no presente em estilo plano, comum na escrita narrativa.",
+    "attachment_rule": "Após consoante, use 는다; após vogal, acrescente nieun final e 다. Rieul final cai.",
+    "register": "해라체",
+    "example_sentence": "학생은 책을 읽는다.",
+    "portuguese_translation": "O estudante lê um livro.",
+    "spoken_sample": "학생은 책을 읽는다.",
+    "prerequisite_ids": [
+      "g1.topic",
+      "g1.object",
+      "g0.verb"
+    ],
+    "lexical_lemmas": [
+      "학생",
+      "책",
+      "읽다"
+    ],
+    "source_ids": [
+      "sejong-curriculum"
+    ],
+    "notes": "A escrita narrativa não pressupõe desrespeito. Na conversa, esse estilo pode soar descendente e depende da relação entre as pessoas.",
+    "target_surfaces": [
+      "읽는다"
+    ]
+  },
+  {
+    "entry_id": "g11.plain-adjective",
+    "category_id": "G11",
+    "form": "-다",
+    "function": "Declarar uma propriedade no estilo plano escrito.",
+    "attachment_rule": "Adjetivos usam o radical seguido de 다 no presente; não recebem o marcador verbal 는 de 읽는다.",
+    "register": "해라체",
+    "example_sentence": "집이 크다.",
+    "portuguese_translation": "A casa é grande.",
+    "spoken_sample": "집이 크다.",
+    "prerequisite_ids": [
+      "g0.adjective",
+      "g1.subject",
+      "g11.plain-verb"
+    ],
+    "lexical_lemmas": [
+      "집",
+      "크다"
+    ],
+    "source_ids": [
+      "sejong-curriculum"
+    ],
+    "notes": "A aparência coincide com a forma de dicionário, mas aqui 크다 funciona como predicado de uma frase.",
+    "target_surfaces": [
+      "크다"
+    ]
+  },
+  {
+    "entry_id": "g12.obligation",
+    "category_id": "G12",
+    "form": "-아야 / -어야 하다",
+    "function": "Indicar que uma ação é necessária.",
+    "attachment_rule": "Una 아야/어야 ao radical conforme a vogal; 하다 resulta em 해야. Conjugue o auxiliar 하다: 해요.",
+    "register": "해요체",
+    "example_sentence": "학생은 오늘 공부해야 해요.",
+    "portuguese_translation": "O estudante precisa estudar hoje.",
+    "spoken_sample": "학생은 오늘 공부해야 해요.",
+    "prerequisite_ids": [
+      "g1.topic",
+      "g1.hada-present"
+    ],
+    "lexical_lemmas": [
+      "오늘",
+      "공부하다",
+      "하다",
+      "학생"
+    ],
+    "source_ids": [
+      "sejong-curriculum"
+    ],
+    "notes": "Não confunda obrigação com previsão. A construção também admite 되다, mas o alvo deste cartão usa 하다.",
+    "target_surfaces": [
+      "공부해야 해요"
+    ]
+  },
+  {
+    "entry_id": "g12.permission",
+    "category_id": "G12",
+    "form": "-아도 / -어도 되다",
+    "function": "Dar permissão para uma ação.",
+    "attachment_rule": "Use 아도/어도 conforme a vogal e depois 되다, separado: 마셔도 돼요. 돼요 é a contração de 되어요.",
+    "register": "해요체",
+    "example_sentence": "학생은 물을 마셔도 돼요.",
+    "portuguese_translation": "O estudante pode beber água.",
+    "spoken_sample": "학생은 물을 마셔도 돼요.",
+    "prerequisite_ids": [
+      "g1.object",
+      "g1.present",
+      "g0.argument-omission",
+      "g1.topic",
+      "g1.oe-contraction"
+    ],
+    "lexical_lemmas": [
+      "물",
+      "마시다",
+      "되다",
+      "학생"
+    ],
+    "source_ids": [
+      "sejong-curriculum"
+    ],
+    "notes": "A frase concede permissão; capacidade física ou habilidade são ensinadas com outra construção.",
+    "target_surfaces": [
+      "마셔도 돼요"
+    ]
+  },
+  {
+    "entry_id": "g12.prohibition",
+    "category_id": "G12",
+    "form": "-지 마세요",
+    "function": "Pedir de forma polida que uma ação não seja feita.",
+    "attachment_rule": "Acrescente 지 ao radical verbal e escreva 마세요 separadamente. 마세요 é a forma usada aqui com 말다.",
+    "register": "해요체",
+    "example_sentence": "여기에서 먹지 마세요.",
+    "portuguese_translation": "Por favor, não coma aqui.",
+    "spoken_sample": "여기에서 먹지 마세요.",
+    "prerequisite_ids": [
+      "g2.action-location",
+      "g6.polite-request"
+    ],
+    "lexical_lemmas": [
+      "여기",
+      "먹다",
+      "말다"
+    ],
+    "source_ids": [
+      "sejong-curriculum"
+    ],
+    "notes": "A frase é uma proibição ou pedido negativo, não uma afirmação de que alguém não come.",
+    "target_surfaces": [
+      "먹지 마세요"
+    ]
+  },
+  {
+    "entry_id": "g12.try",
+    "category_id": "G12",
+    "form": "-아 / -어 보다",
+    "function": "Convidar a experimentar uma ação para ver como ela é.",
+    "attachment_rule": "Una 아/어 ao radical e use 보다 separado, conjugado no pedido polido: 읽어 보세요.",
+    "register": "해요체",
+    "example_sentence": "이 책을 읽어 보세요.",
+    "portuguese_translation": "Experimente ler este livro.",
+    "spoken_sample": "이 책을 읽어 보세요.",
+    "prerequisite_ids": [
+      "g1.object",
+      "g6.polite-request"
+    ],
+    "lexical_lemmas": [
+      "이",
+      "책",
+      "읽다",
+      "보다"
+    ],
+    "source_ids": [
+      "sejong-curriculum"
+    ],
+    "notes": "보다 é auxiliar de tentativa neste uso, não o verbo lexical ver. A forma não garante sucesso na tentativa.",
+    "target_surfaces": [
+      "읽어 보세요"
+    ]
+  },
+  {
+    "entry_id": "g12.experience",
+    "category_id": "G12",
+    "form": "-은 적이 있다; 간 적이 있다",
+    "function": "Indicar que uma ação ocorreu ao menos uma vez na experiência anterior.",
+    "attachment_rule": "Use a forma adnominal de ação concluída, espaço e 적이 있다: 읽은 적이 있어요.",
+    "register": "해요체",
+    "example_sentence": "저는 이 책을 읽은 적이 있어요.",
+    "portuguese_translation": "Já li este livro alguma vez.",
+    "spoken_sample": "저는 이 책을 읽은 적이 있어요.",
+    "prerequisite_ids": [
+      "g9.verb-past",
+      "g2.exist",
+      "g1.subject",
+      "g1.object",
+      "g1.topic"
+    ],
+    "lexical_lemmas": [
+      "이",
+      "책",
+      "읽다",
+      "적",
+      "있다",
+      "저"
+    ],
+    "source_ids": [
+      "sejong-curriculum",
+      "krdict"
+    ],
+    "notes": "Não especifica uma data nem o número exato de ocorrências. 적 é um nome dependente e não recebe uma tradução literal isolada aqui.",
+    "target_surfaces": [
+      "읽은 적이 있어요"
+    ]
+  },
+  {
+    "entry_id": "g12.conjecture",
+    "category_id": "G12",
+    "form": "-을 것 같다; 갈 것 같다",
+    "function": "Apresentar uma previsão como impressão, sem afirmar certeza.",
+    "attachment_rule": "Use a forma adnominal prospectiva e 것 같다, com espaços: 올 것 같아요.",
+    "register": "해요체",
+    "example_sentence": "내일 비가 올 것 같아요.",
+    "portuguese_translation": "Parece que vai chover amanhã.",
+    "spoken_sample": "내일 비가 올 것 같아요.",
+    "prerequisite_ids": [
+      "g9.verb-prospective",
+      "g10.geot",
+      "g1.subject",
+      "g1.present"
+    ],
+    "lexical_lemmas": [
+      "내일",
+      "비",
+      "오다",
+      "것",
+      "같다"
+    ],
+    "source_ids": [
+      "sejong-curriculum"
+    ],
+    "notes": "Este cartão cobre conjectura prospectiva. 것 같다 também se combina com formas presentes e passadas, com mudanças de sentido.",
+    "target_surfaces": [
+      "올 것 같아요"
+    ]
+  },
+  {
+    "entry_id": "g13.report-verb",
+    "category_id": "G13",
+    "form": "-는다고 하다; 간다고 하다",
+    "function": "Relatar uma afirmação sobre ação presente ou habitual.",
+    "attachment_rule": "Verbo com consoante: 는다고; com vogal: nieun final + 다고. Acrescente 하다. Rieul final cai antes da forma com nieun.",
+    "register": "해요체",
+    "example_sentence": "친구는 학생이 책을 읽는다고 해요.",
+    "portuguese_translation": "O amigo diz que o estudante lê um livro.",
+    "spoken_sample": "친구는 학생이 책을 읽는다고 해요.",
+    "prerequisite_ids": [
+      "g11.plain-verb",
+      "g1.subject",
+      "g1.object",
+      "g1.hada-present",
+      "g1.topic"
+    ],
+    "lexical_lemmas": [
+      "친구",
+      "책",
+      "읽다",
+      "하다",
+      "학생"
+    ],
+    "source_ids": [
+      "sejong-curriculum"
+    ],
+    "notes": "O registro da frase reportada não é copiado como 요: a polidez aparece no verbo final 해요.",
+    "target_surfaces": [
+      "읽는다고 해요"
+    ]
+  },
+  {
+    "entry_id": "g13.report-adjective",
+    "category_id": "G13",
+    "form": "-다고 하다",
+    "function": "Relatar uma afirmação que descreve uma propriedade.",
+    "attachment_rule": "Adjetivo: radical + 다고, seguido de 하다. Não acrescente 는 como se fosse um verbo de ação.",
+    "register": "해요체",
+    "example_sentence": "친구가 집이 크다고 해요.",
+    "portuguese_translation": "O amigo diz que a casa é grande.",
+    "spoken_sample": "친구가 집이 크다고 해요.",
+    "prerequisite_ids": [
+      "g11.plain-adjective",
+      "g1.subject",
+      "g1.hada-present"
+    ],
+    "lexical_lemmas": [
+      "친구",
+      "집",
+      "크다",
+      "하다"
+    ],
+    "source_ids": [
+      "sejong-curriculum"
+    ],
+    "notes": "친구가 identifica quem fala; 집이 identifica o sujeito da propriedade relatada.",
+    "target_surfaces": [
+      "크다고 해요"
+    ]
+  },
+  {
+    "entry_id": "g13.report-noun",
+    "category_id": "G13",
+    "form": "-이라고 / -라고 하다",
+    "function": "Relatar uma identificação nominal.",
+    "attachment_rule": "Após nome com consoante final, use 이라고; após vogal, 라고. O verbo 하다 carrega a terminação final.",
+    "register": "해요체",
+    "example_sentence": "선생님이 친구가 학생이라고 해요.",
+    "portuguese_translation": "O professor diz que o amigo é estudante.",
+    "spoken_sample": "선생님이 친구가 학생이라고 해요.",
+    "prerequisite_ids": [
+      "g0.copula",
+      "g1.subject",
+      "g1.hada-present"
+    ],
+    "lexical_lemmas": [
+      "친구",
+      "학생",
+      "하다",
+      "선생님"
+    ],
+    "source_ids": [
+      "sejong-curriculum"
+    ],
+    "notes": "선생님이 nomeia quem faz o relato e 친구가 nomeia a pessoa identificada como estudante. A terminação honorífica do sujeito depende da relação social, não apenas da palavra professor.",
+    "target_surfaces": [
+      "학생이라고 해요"
+    ]
+  },
+  {
+    "entry_id": "g13.report-past",
+    "category_id": "G13",
+    "form": "-았다고 / -었다고 하다",
+    "function": "Relatar uma afirmação sobre evento passado.",
+    "attachment_rule": "Acrescente 다고 à forma passada em 았/었, sem a terminação final 요: 먹었다고.",
+    "register": "해요체",
+    "example_sentence": "친구는 학생이 밥을 먹었다고 해요.",
+    "portuguese_translation": "O amigo diz que o estudante comeu arroz.",
+    "spoken_sample": "친구는 학생이 밥을 먹었다고 해요.",
+    "prerequisite_ids": [
+      "g5.past",
+      "g13.report-verb",
+      "g1.subject",
+      "g1.object",
+      "g1.hada-present",
+      "g1.topic"
+    ],
+    "lexical_lemmas": [
+      "친구",
+      "밥",
+      "먹다",
+      "하다",
+      "학생"
+    ],
+    "source_ids": [
+      "sejong-curriculum"
+    ],
+    "notes": "O passado de 먹었다고 situa a ação de comer arroz antes; 해요 mantém o relato no presente.",
+    "target_surfaces": [
+      "먹었다고 해요"
+    ]
+  },
+  {
+    "entry_id": "g13.report-question",
+    "category_id": "G13",
+    "form": "-느냐고 하다",
+    "function": "Relatar uma pergunta sobre uma ação.",
+    "attachment_rule": "Acrescente 느냐고 ao radical verbal e depois 하다. Se o radical termina em rieul, retire essa consoante antes de 느냐고: 팔다 → 파느냐고. Este cartão usa verbos de ação no presente; perguntas com adjetivos e cópula têm formas próprias.",
+    "register": "해요체",
+    "example_sentence": "친구가 학생이 책을 읽느냐고 해요.",
+    "portuguese_translation": "O amigo pergunta se o estudante está lendo um livro.",
+    "spoken_sample": "친구가 학생이 책을 읽느냐고 해요.",
+    "prerequisite_ids": [
+      "g1.subject",
+      "g1.object",
+      "g1.hada-present",
+      "g0.argument-omission"
+    ],
+    "lexical_lemmas": [
+      "친구",
+      "책",
+      "읽다",
+      "하다",
+      "학생",
+      "팔다"
+    ],
+    "source_ids": [
+      "sejong-curriculum",
+      "krdict"
+    ],
+    "notes": "Em conversas, a alternativa 냐고 também ocorre com verbos. O alvo deste cartão é 느냐고. Não confundir pergunta relatada com pergunta direta dirigida ao ouvinte.",
+    "target_surfaces": [
+      "읽느냐고 해요"
+    ]
+  },
+  {
+    "entry_id": "g13.report-command",
+    "category_id": "G13",
+    "form": "-으라고 / -라고 하다",
+    "function": "Relatar uma ordem ou orientação dirigida a alguém.",
+    "attachment_rule": "Use 으라고 após consoante, 라고 após vogal ou rieul; acrescente 하다 para relatar.",
+    "register": "해요체",
+    "example_sentence": "친구가 학생한테 물을 마시라고 해요.",
+    "portuguese_translation": "O amigo diz ao estudante para beber água.",
+    "spoken_sample": "친구가 학생한테 물을 마시라고 해요.",
+    "prerequisite_ids": [
+      "g1.subject",
+      "g1.object",
+      "g1.hada-present",
+      "g4.hante-recipient"
+    ],
+    "lexical_lemmas": [
+      "친구",
+      "물",
+      "마시다",
+      "하다",
+      "학생"
+    ],
+    "source_ids": [
+      "sejong-curriculum"
+    ],
+    "notes": "O alvo relata a instrução. A terminação polida do relato não torna automaticamente polida a ordem original.",
+    "target_surfaces": [
+      "마시라고 해요"
+    ]
+  },
+  {
+    "entry_id": "g13.report-suggestion",
+    "category_id": "G13",
+    "form": "-자고 하다",
+    "function": "Relatar uma proposta de fazer algo em conjunto.",
+    "attachment_rule": "Acrescente 자고 ao radical verbal e depois 하다. Não é necessário acrescentar 으 após consoante.",
+    "register": "해요체",
+    "example_sentence": "친구가 학교에 가자고 해요.",
+    "portuguese_translation": "O amigo propõe: “Vamos à escola”.",
+    "spoken_sample": "친구가 학교에 가자고 해요.",
+    "prerequisite_ids": [
+      "g1.subject",
+      "g2.destination",
+      "g1.hada-present"
+    ],
+    "lexical_lemmas": [
+      "친구",
+      "학교",
+      "가다",
+      "하다"
+    ],
+    "source_ids": [
+      "sejong-curriculum"
+    ],
+    "notes": "A proposta inclui quem a fez; não é uma ordem para apenas outra pessoa ir.",
+    "target_surfaces": [
+      "가자고 해요"
+    ]
+  },
+  {
+    "entry_id": "g13.passive",
+    "category_id": "G13",
+    "form": "열다 → 열리다",
+    "function": "Descrever um evento de abertura pela perspectiva da coisa que se abre.",
+    "attachment_rule": "Neste par lexical, 열다 recebe o sufixo passivo 리: 열리다. A coisa afetada passa a sujeito.",
+    "register": "해요체",
+    "example_sentence": "문이 열려요.",
+    "portuguese_translation": "A porta se abre.",
+    "spoken_sample": "문이 열려요.",
+    "prerequisite_ids": [
+      "g1.subject",
+      "g1.present"
+    ],
+    "lexical_lemmas": [
+      "문",
+      "열리다",
+      "열다"
+    ],
+    "source_ids": [
+      "sejong-curriculum",
+      "krdict"
+    ],
+    "notes": "A formação passiva por sufixo é lexicalmente restrita; não escolha 리 por uma regra automática. O agente está ausente, e a tradução não inventa quem abriu a porta.",
+    "target_surfaces": [
+      "열려요"
+    ]
+  },
+  {
+    "entry_id": "g13.causative-suffix",
+    "category_id": "G13",
+    "form": "앉다 → 앉히다",
+    "function": "Indicar que alguém faz outra pessoa sentar.",
+    "attachment_rule": "No par lexical 앉다/앉히다, o sufixo 히 forma a causativa; a pessoa que senta recebe 을/를 neste exemplo.",
+    "register": "해요체",
+    "example_sentence": "선생님이 학생을 앉혀요.",
+    "portuguese_translation": "O professor faz o estudante sentar.",
+    "spoken_sample": "선생님이 학생을 앉혀요.",
+    "prerequisite_ids": [
+      "g1.subject",
+      "g1.object",
+      "g1.present"
+    ],
+    "lexical_lemmas": [
+      "선생님",
+      "학생",
+      "앉히다",
+      "앉다"
+    ],
+    "source_ids": [
+      "sejong-curriculum",
+      "krdict"
+    ],
+    "notes": "A escolha do sufixo depende do verbo. Não gere causativas novas apenas acrescentando 히. O honorífico do sujeito é possível, mas não obrigatório sem contexto honorífico.",
+    "target_surfaces": [
+      "앉혀요"
+    ]
+  },
+  {
+    "entry_id": "g13.causative-analytic",
+    "category_id": "G13",
+    "form": "-게 하다",
+    "function": "Apresentar alguém como responsável por fazer outra pessoa realizar uma ação.",
+    "attachment_rule": "Acrescente 게 ao radical verbal e escreva 하다 separado. O causador é sujeito da oração principal.",
+    "register": "해요체",
+    "example_sentence": "선생님이 학생을 공부하게 해요.",
+    "portuguese_translation": "O professor faz o estudante estudar.",
+    "spoken_sample": "선생님이 학생을 공부하게 해요.",
+    "prerequisite_ids": [
+      "g1.subject",
+      "g1.object",
+      "g1.hada-present"
+    ],
+    "lexical_lemmas": [
+      "선생님",
+      "학생",
+      "공부하다",
+      "하다"
+    ],
+    "source_ids": [
+      "sejong-curriculum"
+    ],
+    "notes": "O contexto pode dar leitura de fazer ou permitir. Aqui a tradução escolhe fazer; não afirma força física nem usa o padrão como sinônimo automático da causativa com sufixo.",
+    "target_surfaces": [
+      "공부하게 해요"
+    ]
+  },
+  {
+    "entry_id": "g13.change-circumstance",
+    "category_id": "G13",
+    "form": "-게 되다",
+    "function": "Apresentar uma nova situação que se estabeleceu pelas circunstâncias.",
+    "attachment_rule": "Acrescente 게 ao verbo e conjugue 되다 separadamente; 됐어요 é passado contraído.",
+    "register": "해요체",
+    "example_sentence": "학생이 학교에서 공부하게 됐어요.",
+    "portuguese_translation": "O estudante passou a estudar na escola.",
+    "spoken_sample": "학생이 학교에서 공부하게 됐어요.",
+    "prerequisite_ids": [
+      "g2.action-location",
+      "g1.hada-present",
+      "g5.past",
+      "g1.subject",
+      "g1.oe-contraction"
+    ],
+    "lexical_lemmas": [
+      "학교",
+      "공부하다",
+      "되다",
+      "학생"
+    ],
+    "source_ids": [
+      "sejong-curriculum"
+    ],
+    "notes": "Não classifique toda ocorrência como voz passiva: aqui há mudança de situação, sem agente causador expresso.",
+    "target_surfaces": [
+      "공부하게 됐어요"
+    ]
+  },
+  {
+    "entry_id": "g13.new-realization",
+    "category_id": "G13",
+    "form": "-네요",
+    "function": "Expressar uma constatação percebida no momento da fala.",
+    "attachment_rule": "Acrescente 네요 ao radical de verbo ou adjetivo; rieul final cai. Não use 요 adicional depois.",
+    "register": "해요체",
+    "example_sentence": "집이 크네요.",
+    "portuguese_translation": "Ah, a casa é grande!",
+    "spoken_sample": "집이 크네요.",
+    "prerequisite_ids": [
+      "g1.subject",
+      "g0.adjective"
+    ],
+    "lexical_lemmas": [
+      "집",
+      "크다"
+    ],
+    "source_ids": [
+      "sejong-curriculum",
+      "krdict"
+    ],
+    "notes": "O alvo é a descoberta ou constatação do falante, sem presumir surpresa intensa em toda ocorrência.",
+    "target_surfaces": [
+      "크네요"
+    ]
+  },
+  {
+    "entry_id": "g13.background-explanation",
+    "category_id": "G13",
+    "form": "-거든요",
+    "function": "Acrescentar uma informação que explica a situação para o interlocutor.",
+    "attachment_rule": "Acrescente 거든요 ao radical de verbo ou adjetivo; a explicação funciona como uma frase final polida.",
+    "register": "해요체",
+    "example_sentence": "저는 오늘 학교에 가요. 공부하거든요.",
+    "portuguese_translation": "Hoje vou à escola. É que estudo lá.",
+    "spoken_sample": "저는 오늘 학교에 가요. 공부하거든요.",
+    "prerequisite_ids": [
+      "g1.topic",
+      "g2.destination",
+      "g1.present",
+      "g1.hada-present",
+      "g0.argument-omission"
+    ],
+    "lexical_lemmas": [
+      "오늘",
+      "학교",
+      "가다",
+      "공부하다",
+      "저"
+    ],
+    "source_ids": [
+      "sejong-curriculum",
+      "krdict"
+    ],
+    "notes": "거든요 oferece contexto explicativo. O 거든 condicional não é o mesmo alvo. A segunda frase conserva o sujeito da primeira e a tradução lá retoma a escola pelo contexto.",
+    "target_surfaces": [
+      "공부하거든요"
+    ]
+  },
+  {
+    "entry_id": "g13.shared-reminder",
+    "category_id": "G13",
+    "form": "-잖아요",
+    "function": "Lembrar ao interlocutor uma informação tratada como conhecida ou evidente.",
+    "attachment_rule": "Acrescente 잖아요 ao radical: 알다 → 알잖아요. O radical conserva rieul diante de 지 na formação histórica.",
+    "register": "해요체",
+    "example_sentence": "오늘은 학생이 집에 있잖아요.",
+    "portuguese_translation": "Hoje o estudante está em casa, lembra?",
+    "spoken_sample": "오늘은 학생이 집에 있잖아요.",
+    "prerequisite_ids": [
+      "g1.topic",
+      "g2.location",
+      "g2.exist",
+      "g0.argument-omission",
+      "g1.subject"
+    ],
+    "lexical_lemmas": [
+      "오늘",
+      "집",
+      "있다",
+      "학생"
+    ],
+    "source_ids": [
+      "sejong-curriculum",
+      "krdict"
+    ],
+    "notes": "Pressupõe um contexto em que a informação é compartilhada. Pode soar insistente; a tradução lembra? explicita a função de lembrete, sem inventar outra pessoa como sujeito.",
+    "target_surfaces": [
+      "있잖아요"
+    ]
+  }
+]

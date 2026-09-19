@@ -4,6 +4,9 @@ from __future__ import annotations
 
 from pathlib import Path
 
+import pytest
+from support.audio import SILENT_MP3, SILENT_MP3_DURATION_MS
+
 from multilang.domain.audio import AudioAssetKind, AudioFormat, AudioProvider, AudioSynthesisStatus
 from multilang.domain.jobs import SupportedLanguage
 from multilang.domain.text_quality import (
@@ -66,7 +69,7 @@ class FakeAudioAdapter(AudioSynthesisAdapter):
     ) -> AudioSynthesisResponse:
         self.calls.append((ssml_text, voice_id, locale, output_path))
         output_path.parent.mkdir(parents=True, exist_ok=True)
-        output_path.write_bytes(f"{voice_id}:{audio_format}:{ssml_text}".encode("utf-8"))
+        output_path.write_bytes(SILENT_MP3)
         return AudioSynthesisResponse(storage_path=output_path, byte_size=output_path.stat().st_size, duration_ms=875)
 
 
@@ -84,7 +87,7 @@ class FlakyAudioAdapter(FakeAudioAdapter):
         if len(self.calls) == 1:
             raise TimeoutError("temporary timeout api_key=secret")
         output_path.parent.mkdir(parents=True, exist_ok=True)
-        output_path.write_bytes(f"{voice_id}:{audio_format}:{ssml_text}".encode("utf-8"))
+        output_path.write_bytes(SILENT_MP3)
         return AudioSynthesisResponse(storage_path=output_path, byte_size=output_path.stat().st_size, duration_ms=875)
 
 
@@ -319,3 +322,30 @@ def test_audio_synthesis_service_logs_successful_retry_attempt_count(tmp_path: P
     service.synthesize_prepared_asset(prepared)
 
     assert [(record.status, record.attempt) for record in logger.records] == [("failure", 1), ("success", 2)]
+
+
+@pytest.mark.parametrize("payload", [b"not audio", b"ID3" + bytes(200), SILENT_MP3[:100]])
+def test_synthesis_rejects_corrupt_nonempty_media(tmp_path: Path, payload: bytes) -> None:
+    service = build_service(tmp_path)
+    path = tmp_path / "broken.mp3"
+    path.write_bytes(payload)
+    response = AudioSynthesisResponse(storage_path=path, byte_size=len(payload), duration_ms=800)
+
+    assert not service._is_valid_media(expected_path=path, response=response)
+
+
+def test_synthesis_records_decoded_duration_instead_of_provider_claim(tmp_path: Path) -> None:
+    bundle = build_service(tmp_path).synthesize_item(
+        language=SupportedLanguage.EN, display_word="read", text_record=make_text_record(),
+    )
+
+    assert bundle.word_asset.provenance.status is AudioSynthesisStatus.SYNTHESIZED
+    assert bundle.word_asset.provenance.duration_ms == SILENT_MP3_DURATION_MS
+
+
+def test_synthesis_rejects_reported_size_mismatch(tmp_path: Path) -> None:
+    path = tmp_path / "wrong-size.mp3"
+    path.write_bytes(SILENT_MP3)
+    response = AudioSynthesisResponse(storage_path=path, byte_size=len(SILENT_MP3) + 1, duration_ms=313)
+
+    assert not build_service(tmp_path)._is_valid_media(expected_path=path, response=response)

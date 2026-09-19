@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass, field
+from html import escape
 from importlib import import_module
 from importlib.util import find_spec
 from types import SimpleNamespace
@@ -102,7 +103,7 @@ def make_candidate(
 ) -> LexicalCardCandidate:
     return LexicalCardCandidate(
         submitted_form=item_key,
-        display_form=f"{item_key} <front>",
+        display_form=item_key,
         lemma=item_key,
         lemma_key=f"en:{item_key}",
         frequency_rank=12,
@@ -120,12 +121,12 @@ def make_candidate(
     )
 
 
-def make_asset(*, item_key: str, asset_kind: AudioAssetKind, storage_path: str) -> AudioAssetRecord:
-    display_text = item_key if asset_kind is AudioAssetKind.WORD else f"I use {item_key} every day."
+def make_asset(*, item_key: str, asset_kind: AudioAssetKind, storage_path: str, display_text: str | None = None) -> AudioAssetRecord:
+    display_text = display_text or (item_key if asset_kind is AudioAssetKind.WORD else make_text_record(item_key=item_key).example_sentence)
     normalized = NormalizedTtsInput(
         display_text=display_text,
         tts_text=display_text,
-        ssml_text=f"<speak version=\"1.0\">{display_text}</speak>",
+        ssml_text=f"<speak version=\"1.0\">{escape(display_text)}</speak>",
     )
     return AudioAssetRecord(
         job_id="job-1",
@@ -146,6 +147,45 @@ def make_asset(*, item_key: str, asset_kind: AudioAssetKind, storage_path: str) 
             status=AudioSynthesisStatus.SYNTHESIZED,
         ),
     )
+
+
+def test_export_rejects_stale_sentence_audio_even_when_synthesis_succeeded():
+    service, repository = build_service(
+        accepted_records=[make_text_record(item_key="run", example_sentence="I run beside the river.")],
+        candidates={"run": make_candidate(item_key="run")},
+        assets={("run", kind.value): make_asset(item_key="run", asset_kind=kind, storage_path=f"run-{kind.value}.mp3") for kind in AudioAssetKind},
+    )
+    with pytest.raises(AssembleExportCardsError, match="sentence_audio"):
+        service.execute(job_id="job-1", deck_language=SupportedLanguage.EN)
+    assert repository.saved_rows == []
+
+
+def test_export_study_form_word_ipa_and_audio_stay_together():
+    item = make_candidate(item_key="run", ipa="/ræn/").model_copy(update={"display_form": "ran"})
+    service, _ = build_service(
+        accepted_records=[make_text_record(item_key="run")], candidates={"run": item},
+        assets={
+            ("run", "word"): make_asset(item_key="run", asset_kind=AudioAssetKind.WORD, storage_path="ran.mp3", display_text="ran"),
+            ("run", "sentence"): make_asset(item_key="run", asset_kind=AudioAssetKind.SENTENCE, storage_path="sentence.mp3"),
+        },
+    )
+    row = service.execute(job_id="job-1", deck_language=SupportedLanguage.EN).cards[0]
+    assert row.word == "ran"
+    assert row.ipa == "/ræn/"
+    assert row.identity.lemma_key == "en:run"
+
+
+@pytest.mark.parametrize("authoritative", [False, True])
+def test_export_rejects_unverified_pronunciation_even_on_accepted_text(authoritative):
+    from multilang.domain.lexicon import PronunciationRecord
+    item = make_candidate(item_key="run")
+    item.provenance.pronunciation = PronunciationRecord(source="provider-pronunciation-generator", value="/run/", authoritative=authoritative)
+    service, _ = build_service(
+        accepted_records=[make_text_record(item_key="run")], candidates={"run": item},
+        assets={("run", kind.value): make_asset(item_key="run", asset_kind=kind, storage_path=f"{kind.value}.mp3") for kind in AudioAssetKind},
+    )
+    with pytest.raises(AssembleExportCardsError, match="pronunciation review"):
+        service.execute(job_id="job-1", deck_language=SupportedLanguage.EN)
 
 
 def test_korean_grammar_registered_source_preserves_normal_fields() -> None:
@@ -331,6 +371,22 @@ def make_korean_text_record(
     )
 
 
+@pytest.mark.parametrize("source_type", ["word-list", "kindle-highlights"])
+def test_korean_personal_export_cannot_use_generic_accepted_flag_without_current_ai_evidence(source_type):
+    candidate = SimpleNamespace(**{**make_korean_candidate().model_dump(), "source_type": source_type})
+    text = make_korean_text_record()
+    service, repository = build_service(accepted_records=[text], candidates={"학교": candidate}, assets={
+        ("학교", kind.value): make_korean_asset(item_key="학교", asset_kind=kind,
+            storage_path=f"{kind.value}.mp3", artifact_sha256=_HASH_A,
+            display_text="학교" if kind is AudioAssetKind.WORD else text.example_sentence)
+        for kind in AudioAssetKind
+    })
+
+    with pytest.raises(AssembleExportCardsError, match="Korean personal export requires current"):
+        service.execute(job_id="job-1", deck_language=SupportedLanguage.KO)
+    assert repository.saved_rows == []
+
+
 @dataclass
 class FakeTextRepository:
     accepted_records: list[TextQualityRecord]
@@ -458,7 +514,7 @@ def test_assemble_mandarin_derives_once_and_requires_both_audio_assets(source_ty
                 item_key="中国", asset_kind=AudioAssetKind.WORD, storage_path="audio/word/zh-word.mp3"
             ),
             ("中国", AudioAssetKind.SENTENCE.value): make_asset(
-                item_key="中国", asset_kind=AudioAssetKind.SENTENCE, storage_path="audio/sentence/zh-sentence.mp3"
+                item_key="中国", asset_kind=AudioAssetKind.SENTENCE, storage_path="audio/sentence/zh-sentence.mp3", display_text="我去银行。"
             ),
         },
         mandarin_orthography_service=orthography,
@@ -489,7 +545,7 @@ def test_assemble_mandarin_wraps_orthography_errors_with_item_context() -> None:
                 item_key="中國", asset_kind=AudioAssetKind.WORD, storage_path="audio/word/zh-word.mp3"
             ),
             ("中國", AudioAssetKind.SENTENCE.value): make_asset(
-                item_key="中國", asset_kind=AudioAssetKind.SENTENCE, storage_path="audio/sentence/zh-sentence.mp3"
+                item_key="中國", asset_kind=AudioAssetKind.SENTENCE, storage_path="audio/sentence/zh-sentence.mp3", display_text="我去銀行。"
             ),
         },
         mandarin_orthography_service=orthography,
@@ -619,7 +675,7 @@ def test_assemble_mandarin_rejects_invalid_pinyin_before_persisting_snapshot() -
                 item_key="㐂", asset_kind=AudioAssetKind.WORD, storage_path="audio/word/zh-word.mp3"
             ),
             ("㐂", AudioAssetKind.SENTENCE.value): make_asset(
-                item_key="㐂", asset_kind=AudioAssetKind.SENTENCE, storage_path="audio/sentence/zh-sentence.mp3"
+                item_key="㐂", asset_kind=AudioAssetKind.SENTENCE, storage_path="audio/sentence/zh-sentence.mp3", display_text="我用㐂。"
             ),
         },
     )
@@ -755,7 +811,7 @@ def test_assemble_export_cards_builds_highlight_row_without_translation_field() 
         ],
         candidates={"wash": highlight_candidate},
         assets={
-            ("wash", AudioAssetKind.SENTENCE.value): make_asset(item_key="wash", asset_kind=AudioAssetKind.SENTENCE, storage_path="wash-sentence.mp3"),
+            ("wash", AudioAssetKind.SENTENCE.value): make_asset(item_key="wash", asset_kind=AudioAssetKind.SENTENCE, storage_path="wash-sentence.mp3", display_text="Readers wash every cup before the quiet chapter ends."),
         },
     )
 
@@ -883,7 +939,7 @@ def test_assemble_export_cards_builds_japanese_row_without_ipa(monkeypatch: pyte
         candidates={"学校": candidate},
         assets={
             ("学校", AudioAssetKind.WORD.value): make_asset(item_key="学校", asset_kind=AudioAssetKind.WORD, storage_path="gakkou-word.mp3"),
-            ("学校", AudioAssetKind.SENTENCE.value): make_asset(item_key="学校", asset_kind=AudioAssetKind.SENTENCE, storage_path="gakkou-sentence.mp3"),
+            ("学校", AudioAssetKind.SENTENCE.value): make_asset(item_key="学校", asset_kind=AudioAssetKind.SENTENCE, storage_path="gakkou-sentence.mp3", display_text="学校に行く。"),
         },
     )
 
@@ -941,7 +997,7 @@ def test_assemble_japanese_romaji_fails_before_persisting(monkeypatch: pytest.Mo
                 item_key="学校", asset_kind=AudioAssetKind.WORD, storage_path="gakkou-word.mp3"
             ),
             ("学校", AudioAssetKind.SENTENCE.value): make_asset(
-                item_key="学校", asset_kind=AudioAssetKind.SENTENCE, storage_path="gakkou-sentence.mp3"
+                item_key="学校", asset_kind=AudioAssetKind.SENTENCE, storage_path="gakkou-sentence.mp3", display_text="学校に行く。"
             ),
         },
     )
@@ -968,7 +1024,7 @@ def test_assemble_export_cards_rejects_non_english_definition_label() -> None:
         candidates={"父親": candidate},
         assets={
             ("父親", AudioAssetKind.WORD.value): make_asset(item_key="父親", asset_kind=AudioAssetKind.WORD, storage_path="chichioya-word.mp3"),
-            ("父親", AudioAssetKind.SENTENCE.value): make_asset(item_key="父親", asset_kind=AudioAssetKind.SENTENCE, storage_path="chichioya-sentence.mp3"),
+            ("父親", AudioAssetKind.SENTENCE.value): make_asset(item_key="父親", asset_kind=AudioAssetKind.SENTENCE, storage_path="chichioya-sentence.mp3", display_text="父親は今年50歳になる。"),
         },
     )
 
@@ -1059,7 +1115,10 @@ def test_assemble_export_cards_escapes_text_and_keeps_guid_stable_when_text_chan
     changed_service, _ = build_service(
         accepted_records=[make_text_record(item_key="read", example_sentence="I read <later>.", translation_text='Eu leio "depois" & sempre.')],
         candidates={"read": make_candidate(item_key="read", definitions_html="verb: definition & example")},
-        assets=assets,
+        assets={**assets, ("read", AudioAssetKind.SENTENCE.value): make_asset(
+            item_key="read", asset_kind=AudioAssetKind.SENTENCE,
+            storage_path="dir/read-updated-sentence.mp3", display_text="I read <later>.",
+        )},
     )
 
     original = service.execute(job_id="job-1", deck_language=SupportedLanguage.EN).cards[0]
@@ -1121,7 +1180,7 @@ def test_assemble_export_cards_rejects_untemplated_definitions() -> None:
 def test_assemble_export_cards_rejects_unresolved_morphology_only_definitions() -> None:
     service, _ = build_service(
         accepted_records=[make_text_record(item_key="case-form")],
-        candidates={"case-form": make_candidate(item_key="case-form", definitions_html="adjective: masculine animate accusative singular")},
+        candidates={"case-form": make_candidate(item_key="case-form", ipa="/keɪs/", definitions_html="adjective: masculine animate accusative singular")},
         assets={
             ("case-form", AudioAssetKind.WORD.value): make_asset(
                 item_key="case-form", asset_kind=AudioAssetKind.WORD, storage_path="case-form-word.mp3"
@@ -1205,19 +1264,3 @@ def test_assemble_leaves_gramatica_blank_without_structured_metadata() -> None:
     result = service.execute(job_id="job-1", deck_language=SupportedLanguage.EN)
 
     assert result.cards[0].gramatica is None
-
-
-@pytest.mark.parametrize("source_type", ["word-list", "kindle-highlights"])
-def test_korean_personal_export_cannot_use_generic_accepted_flag_without_current_ai_evidence(source_type):
-    candidate = SimpleNamespace(**{**make_korean_candidate().model_dump(), "source_type": source_type})
-    text = make_korean_text_record()
-    service, repository = build_service(accepted_records=[text], candidates={"학교": candidate}, assets={
-        ("학교", kind.value): make_korean_asset(item_key="학교", asset_kind=kind,
-            storage_path=f"{kind.value}.mp3", artifact_sha256=_HASH_A,
-            display_text="학교" if kind is AudioAssetKind.WORD else text.example_sentence)
-        for kind in AudioAssetKind
-    })
-
-    with pytest.raises(AssembleExportCardsError, match="Korean personal export requires current"):
-        service.execute(job_id="job-1", deck_language=SupportedLanguage.KO)
-    assert repository.saved_rows == []

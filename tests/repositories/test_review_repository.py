@@ -48,6 +48,48 @@ def _seed_job(session: Session) -> None:
     session.commit()
 
 
+def test_revision_creation_preserves_history_under_real_append_only_guards() -> None:
+    import runpy
+    from pathlib import Path
+
+    from alembic.migration import MigrationContext
+    from alembic.operations import Operations
+    from sqlalchemy import text
+    from sqlalchemy.exc import IntegrityError
+
+    session = _session()
+    engine = session.get_bind()
+    migration = runpy.run_path(str(Path(__file__).resolve().parents[2]
+        / "alembic/versions/20260828_19_grammar_personal_sources.py"))
+    with engine.begin() as connection, Operations.context(MigrationContext.configure(connection)):
+        migration["_create_append_only_guards"]()
+    repository = ReviewRepository(session)
+    first_command = dict(actor_id="editor", request_id="first", job_id="job-1", item_id="item-1",
+        field_name="definition", value_sha256=SHA_A, generator_id="operator-edit",
+        generator_version="1", route_id=None, expected_pointer_version=0)
+    first = repository.create_candidate_revision(**first_command)
+    # An omitted history link and explicit None retain the same legacy command ID.
+    replay = repository.create_candidate_revision(**first_command, previous_revision_sha256=None)
+    assert replay.replayed and replay.revision.revision_id == first.revision.revision_id
+    next_command = {**first_command, "request_id": "next", "value_sha256": SHA_B,
+        "generator_id": "openai", "generator_version": "model", "route_id": SHA_C,
+        "expected_pointer_version": 1, "previous_revision_sha256": SHA_A}
+    second = repository.create_candidate_revision(**next_command)
+    assert repository.create_candidate_revision(**next_command).replayed
+    stored = session.get(ReviewFieldRevisionModel, second.revision.revision_id)
+    assert (stored.previous_revision_sha256, stored.generator_id, stored.generator_version, stored.route_id) == (
+        SHA_A, "openai", "model", SHA_C)
+    with pytest.raises(ReviewRepositoryConflict):
+        repository.create_candidate_revision(**{**next_command, "previous_revision_sha256": SHA_D})
+    with pytest.raises(IntegrityError, match="append-only"):
+        session.execute(text("UPDATE review_field_revisions SET previous_revision_sha256 = :value WHERE id = :id"),
+            {"value": SHA_D, "id": second.revision.revision_id})
+    session.rollback()
+    assert session.scalar(select(func.count(ReviewFieldRevisionModel.id))) == 2
+    session.close()
+    engine.dispose()
+
+
 def test_revision_pointer_stable_access_key_changed_hash_conflict_and_no_release_on_conflict() -> None:
     session = _session()
     repository = ReviewRepository(session)
@@ -332,45 +374,3 @@ def test_audio_reserve_before_call_unique_revision_path_same_hash_distinct_paths
 
     assert finalized.state == "finalized"
     assert second_finalized.artifact_sha256 == SHA_D
-
-
-def test_revision_creation_preserves_history_under_real_append_only_guards() -> None:
-    import runpy
-    from pathlib import Path
-
-    from alembic.migration import MigrationContext
-    from alembic.operations import Operations
-    from sqlalchemy import text
-    from sqlalchemy.exc import IntegrityError
-
-    session = _session()
-    engine = session.get_bind()
-    migration = runpy.run_path(str(Path(__file__).resolve().parents[2]
-        / "alembic/versions/20260828_19_grammar_personal_sources.py"))
-    with engine.begin() as connection, Operations.context(MigrationContext.configure(connection)):
-        migration["_create_append_only_guards"]()
-    repository = ReviewRepository(session)
-    first_command = dict(actor_id="editor", request_id="first", job_id="job-1", item_id="item-1",
-        field_name="definition", value_sha256=SHA_A, generator_id="operator-edit",
-        generator_version="1", route_id=None, expected_pointer_version=0)
-    first = repository.create_candidate_revision(**first_command)
-    # An omitted history link and explicit None retain the same legacy command ID.
-    replay = repository.create_candidate_revision(**first_command, previous_revision_sha256=None)
-    assert replay.replayed and replay.revision.revision_id == first.revision.revision_id
-    next_command = {**first_command, "request_id": "next", "value_sha256": SHA_B,
-        "generator_id": "openai", "generator_version": "model", "route_id": SHA_C,
-        "expected_pointer_version": 1, "previous_revision_sha256": SHA_A}
-    second = repository.create_candidate_revision(**next_command)
-    assert repository.create_candidate_revision(**next_command).replayed
-    stored = session.get(ReviewFieldRevisionModel, second.revision.revision_id)
-    assert (stored.previous_revision_sha256, stored.generator_id, stored.generator_version, stored.route_id) == (
-        SHA_A, "openai", "model", SHA_C)
-    with pytest.raises(ReviewRepositoryConflict):
-        repository.create_candidate_revision(**{**next_command, "previous_revision_sha256": SHA_D})
-    with pytest.raises(IntegrityError, match="append-only"):
-        session.execute(text("UPDATE review_field_revisions SET previous_revision_sha256 = :value WHERE id = :id"),
-            {"value": SHA_D, "id": second.revision.revision_id})
-    session.rollback()
-    assert session.scalar(select(func.count(ReviewFieldRevisionModel.id))) == 2
-    session.close()
-    engine.dispose()

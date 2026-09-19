@@ -7,7 +7,10 @@ from collections.abc import Callable
 from pydantic import BaseModel, Field
 
 from multilang.services.latin_card_generation import LatinGeneratedCard
-from multilang.services.latin_source_pack import validate_latin_gramatica, validate_latin_target_presence
+from multilang.services.latin_source_pack import (
+    validate_latin_gramatica,
+    validate_latin_target_presence,
+)
 
 
 class LatinCardValidationIssue(BaseModel):

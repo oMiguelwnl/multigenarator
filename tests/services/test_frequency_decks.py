@@ -14,7 +14,6 @@ from multilang.domain.korean import (
 )
 from multilang.settings import APPROVED_FREQUENCY_ASSET_LANGUAGES
 
-
 _HASH_A = "a" * 64
 _HASH_B = "b" * 64
 

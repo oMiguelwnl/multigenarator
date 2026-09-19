@@ -28,7 +28,6 @@ from multilang.services.russian_phoneme_deck import (
     build_russian_phoneme_model,
 )
 
-
 NORMAL_TEMPLATE = """
 # Template
 

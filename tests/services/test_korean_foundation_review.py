@@ -3,12 +3,11 @@
 from __future__ import annotations
 
 import hashlib
+import inspect
 import json
 from importlib import import_module, util
-import inspect
 from pathlib import Path
-from types import ModuleType
-from types import SimpleNamespace
+from types import ModuleType, SimpleNamespace
 
 import pytest
 from pydantic import ValidationError

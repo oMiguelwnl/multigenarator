@@ -2,9 +2,11 @@
 
 from __future__ import annotations
 
+import re
 from dataclasses import dataclass
 from enum import Enum
-import re
+
+from multilang.domain.translation_quality import looks_like_invalid_translation
 
 
 class AuditIssueType(str, Enum):
@@ -158,7 +160,6 @@ def _detect_incomplete_frequency_deck(cards: list[AuditCard]) -> list[AuditIssue
 
 
 def _detect_invalid_translations(cards: list[AuditCard]) -> list[AuditIssue]:
-    from multilang.services.text_validation import looks_like_invalid_translation
 
     issues: list[AuditIssue] = []
     for card in cards:

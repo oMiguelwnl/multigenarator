@@ -6,7 +6,6 @@ from dataclasses import dataclass
 from hashlib import sha256
 from html import escape
 from pathlib import Path
-import re
 from time import perf_counter
 from typing import Protocol
 
@@ -21,12 +20,21 @@ from multilang.domain.audio import (
 )
 from multilang.domain.jobs import SupportedLanguage
 from multilang.domain.text_quality import ReviewStatus, TextQualityRecord, ValidationStatus
-from multilang.services.audio_voice_registry import VoiceSelection, VoiceSelectionError, select_voice
-from multilang.settings import Settings
 from multilang.repositories.provider_call_log_repository import ProviderCallLogCreate
-from multilang.services.provider_retry import ProviderCircuitBreaker, ProviderRetryContext, retry_provider_call, safe_provider_error_summary
-
-_WHITESPACE_RE = re.compile(r"\s+")
+from multilang.services.audio.integrity import normalize_tts_text
+from multilang.services.audio.media_validation import AudioMediaInfo, inspect_local_mp3
+from multilang.services.audio_voice_registry import (
+    VoiceSelection,
+    VoiceSelectionError,
+    select_voice,
+)
+from multilang.services.provider_retry import (
+    ProviderCircuitBreaker,
+    ProviderRetryContext,
+    retry_provider_call,
+    safe_provider_error_summary,
+)
+from multilang.settings import Settings
 
 
 @dataclass(frozen=True, slots=True)
@@ -188,13 +196,14 @@ class AudioSynthesisService:
                 fallback_used=prepared_asset.provenance.fallback_used,
             )
 
-        if not self._is_valid_media(expected_path=output_path, response=response):
+        media_info = self._inspect_media(expected_path=output_path, response=response)
+        if media_info is None:
             self._log_provider_call(
                 prepared_asset=prepared_asset,
                 status="failure",
                 latency_ms=_elapsed_ms(started),
                 error_code="invalid_media",
-                error_summary="provider returned missing or empty media",
+                error_summary="provider returned missing, inconsistent, or undecodable media",
             )
             return self._build_record(
                 job_id=prepared_asset.job_id,
@@ -227,14 +236,15 @@ class AudioSynthesisService:
             voice_id=response.voice_id or prepared_asset.provenance.voice_id,
             locale=response.locale or prepared_asset.provenance.locale,
             storage_path=str(response.storage_path),
-            byte_size=response.byte_size,
-            duration_ms=response.duration_ms,
+            byte_size=media_info.byte_size,
+            duration_ms=media_info.duration_ms,
             status=AudioSynthesisStatus.SYNTHESIZED,
             fallback_used=response.fallback_used
             if response.fallback_used is not None
             else prepared_asset.provenance.fallback_used,
             provider=response.provider,
             audio_format=response.audio_format,
+            artifact_sha256=media_info.artifact_sha256,
         )
 
     def _prepare_asset(
@@ -330,6 +340,7 @@ class AudioSynthesisService:
         fallback_used: bool,
         provider: AudioProvider | None = None,
         audio_format: AudioFormat | None = None,
+        artifact_sha256: str | None = None,
     ) -> AudioAssetRecord:
         return AudioAssetRecord(
             job_id=job_id,
@@ -349,6 +360,7 @@ class AudioSynthesisService:
                 duration_ms=duration_ms,
                 status=status,
                 fallback_used=fallback_used,
+                artifact_sha256=artifact_sha256,
             ),
         )
 
@@ -368,7 +380,7 @@ class AudioSynthesisService:
         return AudioFormat(getattr(self.adapter, "audio_format", self.settings.azure_speech_output_format))
 
     def _normalize_input(self, display_text: str, *, asset_kind: AudioAssetKind) -> NormalizedTtsInput:
-        normalized = _WHITESPACE_RE.sub(" ", display_text.replace("’", "'").strip())
+        normalized = normalize_tts_text(display_text)
         escaped = escape(normalized, quote=True)
         if asset_kind is AudioAssetKind.WORD:
             ssml_text = (
@@ -402,13 +414,12 @@ class AudioSynthesisService:
         )
 
     def _is_valid_media(self, *, expected_path: Path, response: AudioSynthesisResponse) -> bool:
+        return self._inspect_media(expected_path=expected_path, response=response) is not None
+
+    def _inspect_media(self, *, expected_path: Path, response: AudioSynthesisResponse) -> AudioMediaInfo | None:
         if response.storage_path != expected_path:
-            return False
-        if not response.storage_path.exists():
-            return False
-        if response.byte_size <= 0:
-            return False
-        return response.storage_path.stat().st_size > 0
+            return None
+        return inspect_local_mp3(response.storage_path, expected_byte_size=response.byte_size)
 
     def _is_accepted(self, text_record: TextQualityRecord) -> bool:
         return (

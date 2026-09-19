@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-import io
 import zipfile
 from pathlib import Path
 
@@ -11,9 +10,9 @@ import zstandard
 
 from multilang.services.anki_id_registry import AnkiIdKind, registry_id
 from multilang.services.japanese_kana_deck import (
+    KANA_FIELD_NAMES,
     KANA_HIRAGANA_DECK_ID,
     KANA_KATAKANA_DECK_ID,
-    KANA_FIELD_NAMES,
     KANA_MODEL_ID,
     KANA_NOTE_TYPE_NAME,
     KanaCard,

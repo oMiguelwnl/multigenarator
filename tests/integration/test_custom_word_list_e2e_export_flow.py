@@ -6,16 +6,31 @@ import json
 from pathlib import Path
 from typing import ClassVar
 
+import pytest
 from sqlalchemy import create_engine, func, select
 from sqlalchemy.orm import Session
+from support.audio import SILENT_MP3
+from support.text import use_mechanical_text_validation
 from typer.testing import CliRunner
 
-from multilang.cli import create_app
-from multilang.db.models import AudioAssetModel, CardExportModel, DeckExportModel, GenerationJob, TextQualityRecordModel
 import multilang.runtime as runtime_module
+from multilang.cli import create_app
+from multilang.db.models import (
+    AudioAssetModel,
+    CardExportModel,
+    DeckExportModel,
+    GenerationJob,
+    TextQualityRecordModel,
+)
 from multilang.runtime import build_runtime_service
 from multilang.services.audio_synthesis import AudioSynthesisAdapter, AudioSynthesisResponse
 from multilang.settings import Settings
+
+
+@pytest.fixture(autouse=True)
+def offline_morphology(monkeypatch):
+    use_mechanical_text_validation(monkeypatch)
+
 
 runner = CliRunner()
 
@@ -40,7 +55,7 @@ class FakeAzureSpeechAdapter(AudioSynthesisAdapter):
         audio_format: str,
     ) -> AudioSynthesisResponse:
         output_path.parent.mkdir(parents=True, exist_ok=True)
-        payload = b"ID3" + f":{voice_id}:{locale}:{audio_format}:{ssml_text}".encode("utf-8")
+        payload = SILENT_MP3
         output_path.write_bytes(payload)
         return AudioSynthesisResponse(storage_path=output_path, byte_size=len(payload), duration_ms=800)
 
@@ -61,7 +76,8 @@ def write_lookup_index(tmp_path: Path, *terms: str) -> Path:
                     "term": term,
                     "display_form": term,
                     "lemma": term,
-                    "definitions": [f"definition for {term}"],
+                    "definitions": [f"a synthetic test item identified as {term}"],
+                    "definition_language": "en",
                     "part_of_speech": "noun",
                     "ipa": f"/{term}/",
                     "source": "manual",
@@ -125,7 +141,7 @@ def test_custom_word_list_generates_audio_and_exports_all_formats(tmp_path: Path
         assert {row.review_status for row in text_rows} == {"accepted"}
         audio_assets = list(session.scalars(select(AudioAssetModel)))
         for asset in audio_assets:
-            assert Path(asset.storage_path).read_bytes().startswith(b"ID3")
+            assert Path(asset.storage_path).read_bytes() == SILENT_MP3
 
         for export_format in ["apkg", "csv", "tsv"]:
             export_result = runner.invoke(

@@ -8,7 +8,6 @@ from types import ModuleType
 import pytest
 from pydantic import ValidationError
 
-
 HEX = "a" * 64
 
 
