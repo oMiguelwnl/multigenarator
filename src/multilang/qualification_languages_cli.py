@@ -20,3 +20,16 @@ def register_language_commands(cli):
         )
         expansion = build_machine_language_expansion(request)
         _print(export_machine_language_expansion(expansion, output))
+
+    @cli.command("review-languages")
+    @_guard
+    def review_languages(configuration: Path, configuration_sha256: str, output: Path):
+        from multilang.services.qualification_language_reviews import (
+            LanguageReviewsInput,
+            export_language_reviews,
+        )
+
+        request = LanguageReviewsInput.model_validate(
+            read_json(configuration, configuration_sha256)
+        )
+        _print(export_language_reviews(request, output))
