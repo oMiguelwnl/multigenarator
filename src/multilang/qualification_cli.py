@@ -62,6 +62,10 @@ def create_qualification_app(*, settings=None):
         pretty_exceptions_show_locals=False,
     )
 
+    from multilang.qualification_machine_cli import create_machine_qualification_app
+
+    cli.add_typer(create_machine_qualification_app(settings=settings), name="ai")
+
     def store():
         from multilang.native_runtime import _evidence_store
         from multilang.settings import Settings
@@ -257,7 +261,8 @@ def create_qualification_app(*, settings=None):
             raise ValueError("selection and its SHA-256 must be supplied together")
         frozen = (
             PageSelection.model_validate(_json(selection, selection_sha256))
-            if selection is not None else None
+            if selection is not None
+            else None
         )
         _print(
             acquire_wikimedia_documents(
