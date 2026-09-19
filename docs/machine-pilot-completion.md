@@ -44,6 +44,18 @@ Conteúdo e áudio têm estado nativo `pending`; o pacote é uma edição local 
 
 O APKG foi exportado e a repetição da exportação reutilizou o mesmo manifesto. A verificação confirmou ZIP válido, SQLite íntegro, **10 notas, 10 cards, 10 GUIDs distintos, 20 áudios referenciados e decodificáveis com sinal não silencioso, e 10 campos `Image` vazios**. O SHA-256 do pacote é `bda47ffe8a7f1d9e6606c70c5167349ae4688ad94566689b021229993b93bcaf`. A abertura nos clientes Anki desktop e móvel ainda não foi verificada; integridade de mídia não certifica a pronúncia pelo ouvido.
 
+### Correções após avaliação do piloto
+
+O primeiro pacote não aplicava a regra existente de classe gramatical em `Definitions`. A exportação agora usa a classe do mapeamento lexical e a mesma política de definições do produto: por exemplo, `noun: House; a building where people live.` e `verb: To eat; to consume food.`. Rótulos existentes incompatíveis são rejeitados. Propostas e julgamentos anteriores permanecem intactos; a apresentação derivada é identificada no relatório e no binding da exportação.
+
+O pacote corrigido está em `.multilang/verification/pilot-feedback/export-definitions/pilot.apkg`, com SHA-256 `ae7a60781aa1c0ff9207d2175f1087f3b77f4fa927649e9dc699e8d88dc29236`. A comparação com o anterior confirmou que somente `Definitions` mudou: os nove campos, os dez GUIDs e os vinte arquivos de áudio foram preservados.
+
+Para a nova leitura de palavras, o plano usa SSML `prosody` com `rate="-15%"` e `volume="+20%"`, sem alterar pitch. Esse controle é suportado pelo [SSML do Azure](https://learn.microsoft.com/en-us/azure/ai-services/speech-service/speech-synthesis-markup-voice#adjust-prosody). A assinatura de cada palavra muda para evitar reaproveitamento do áudio antigo; as assinaturas das frases permanecem iguais. O adaptador foi corrigido para preservar a prosódia do SSML completo até o SDK, validando voz, locale e marcação permitida.
+
+Essa nova síntese ainda não foi executada. O preflight em `.multilang/verification/pilot-feedback/word-audio-preflight.json` contém dez chamadas, 46 caracteres de texto, sem repetição automática, e reutilização dos dez áudios de frases. O orçamento anterior foi consumido; a execução exige nova autorização para esse lote. A contagem de texto não é uma apuração dos caracteres faturáveis nem do preço da conta. A duração e a nitidez percebidas devem ser conferidas na nova gravação.
+
+A regressão desta correção passou em **66 casos distintos** no checkout isolado, incluindo a borda do SDK Azure, a exportação APKG e a CLI do piloto. Ruff e formatação também passaram.
+
 ## Comandos adicionados
 
 Os comandos ficam em `multilang vocabulary qualification ai`:

@@ -97,7 +97,7 @@ def pilot_fixture(tmp_path, *, inflection=False):
     )
 
 
-def content_fixture(tmp_path):
+def content_fixture(tmp_path, *, definition="Move from one place to another."):
     from test_qualification_machine_runner import metadata_fixture
 
     from multilang.services.contextual_morphology import (
@@ -124,7 +124,7 @@ def content_fixture(tmp_path):
                 "item_id": entry.item_id,
                 "item_sha256": entry.item_sha256,
                 "content": {
-                    "definition": "Move from one place to another.",
+                    "definition": definition,
                     "example_sentence": "I go.",
                     "translation": "Eu vou.",
                 },
@@ -268,11 +268,64 @@ def test_apkg_requires_exact_complete_audio_and_preserves_fields(tmp_path):
         fields = dict(zip(names, fields.split("\x1f"), strict=True))
         assert len(names) == 9 and fields["Image"] == ""
         assert fields["word"] == "go" and fields["IPA"] == "/ɡoʊ/"
+        assert fields["Definitions"] == "verb: Move from one place to another."
         assert "native_prototype_B" in tags
         assert "Prototype only" not in fields.values()
+    saved = json.loads((output / "cards.json").read_text())[0]
+    assert saved["content"]["content"]["definition"] == fields["Definitions"]
+    assert type(content.cards[0]).model_validate(saved).card_id == content.cards[0].card_id
+    assert saved["word_audio"]["signature"] == versions[0].signature.model_dump(mode="json")
+    assert content.cards[0].content.content.definition == "Move from one place to another."
+    assert api().MachinePilotContent.model_validate_json(content.model_dump_json()) == content
+    assert json.loads((output / "report.json").read_text())["definition_presentation_policy"]
     (tmp_path / "fixture-0.mp3").write_bytes(b"corrupt")
     with pytest.raises(ValueError, match="audio|integrity"):
         api().export_machine_pilot(content, plan, audio_versions=versions, output=output)
+
+
+def test_pilot_word_prosody_is_slower_without_changing_sentence_signature(tmp_path):
+    from xml.etree import ElementTree
+
+    from multilang.services.native_audio import validate_pronunciation_ssml
+
+    content = content_fixture(tmp_path)[-1]
+    plan, _ = audio_fixture(tmp_path, content)
+    word, sentence = (item.signature for item in plan.items)
+    ns = {"ssml": "http://www.w3.org/2001/10/synthesis"}
+    prosody = ElementTree.fromstring(word.ssml).find("ssml:voice/ssml:prosody", ns)
+    assert prosody is not None, "isolated words need deliberate pronunciation"
+    assert prosody.attrib == {"rate": "-15%", "volume": "+20%"}
+    assert prosody.text == word.normalized_text == "go"
+    assert word.pronunciation_policy_version == "machine-pilot-word-clear-2"
+    assert (
+        sentence.ssml
+        == '<speak xmlns="http://www.w3.org/2001/10/synthesis" version="1.0" xml:lang="en-US"><voice name="en-US-AriaNeural">I go.</voice></speak>'
+    )
+    assert sentence.pronunciation_policy_version == "machine-pilot-source-ipa-1"
+    for signature in (word, sentence):
+        validate_pronunciation_ssml(signature)
+
+
+@pytest.mark.parametrize(
+    "definition",
+    ["noun: a journey", "unknown: movement", "verb:", " noun: a journey", "proper_noun: a person"],
+)
+def test_pilot_export_rejects_incompatible_or_invalid_definition_label(tmp_path, definition):
+    content = content_fixture(tmp_path, definition=definition)[-1]
+    plan, versions = audio_fixture(tmp_path, content)
+    with pytest.raises(ValueError, match="definition"):
+        api().export_machine_pilot(content, plan, audio_versions=versions, output=tmp_path / "bad")
+    assert not (tmp_path / "bad").exists()
+
+
+def test_pilot_export_does_not_duplicate_existing_definition_label(tmp_path):
+    definition = "verb: Move from one place to another."
+    content = content_fixture(tmp_path, definition=definition)[-1]
+    plan, versions = audio_fixture(tmp_path, content)
+    output = tmp_path / "export"
+    api().export_machine_pilot(content, plan, audio_versions=versions, output=output)
+    saved = json.loads((output / "cards.json").read_text())[0]
+    assert saved["content"]["content"]["definition"] == definition
 
 
 @pytest.mark.parametrize("attack", ["undecodable", "ssml", "parent_symlink", "voice"])

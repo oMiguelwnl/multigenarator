@@ -21,7 +21,19 @@ from multilang.services.audio_synthesis import AudioSynthesisResponse
 from multilang.settings import Settings
 
 _VOICE_LIST_PATH = "/cognitiveservices/voices/list"
-_LEGACY_SPEAK_RE = re.compile(r"^<speak(?:\s[^>]*)?>(.*)</speak>$", re.DOTALL)
+_LEGACY_TEXT_SPEAK_RE = re.compile(
+    r"""^<speak(?:\s+version=(?:"1\.0"|'1\.0'))?\s*>([^<>]*)</speak>$""", re.DOTALL
+)
+_SSML_NAMESPACE = "http://www.w3.org/2001/10/synthesis"
+_XML_LANGUAGE = "{http://www.w3.org/XML/1998/namespace}lang"
+_XML_ESCAPES = {'"': "&quot;", "'": "&apos;"}
+_SSML_ATTRIBUTES = {
+    "speak": {"version", _XML_LANGUAGE},
+    "voice": {"name"},
+    "prosody": {"rate", "pitch", "volume", "duration"},
+    "phoneme": {"alphabet", "ph"},
+    "break": {"time", "strength"},
+}
 _OUTPUT_FORMATS = {
     "audio-24khz-48kbitrate-mono-mp3": "Audio24Khz48KBitRateMonoMp3",
     "pcm_s16le_wav": "Riff24Khz16BitMonoPcm",
@@ -93,9 +105,12 @@ class AzureSpeechAdapter:
         audio_format: str,
         timeout_seconds: float | None = None,
     ) -> AudioSynthesisResponse:
-        if timeout_seconds is not None and (not math.isfinite(timeout_seconds) or timeout_seconds <= 0):
+        if timeout_seconds is not None and (
+            not math.isfinite(timeout_seconds) or timeout_seconds <= 0
+        ):
             raise ValueError("Azure synthesis timeout must be finite and positive")
         self._require_credentials()
+        ssml = build_azure_ssml(text=ssml_text, locale=locale, voice_id=voice_id)
         speechsdk = self._speechsdk
         output_path.parent.mkdir(parents=True, exist_ok=True)
 
@@ -111,13 +126,13 @@ class AzureSpeechAdapter:
 
         audio_config = (
             speechsdk.audio.AudioOutputConfig(filename=str(output_path))
-            if timeout_seconds is None else None
+            if timeout_seconds is None
+            else None
         )
         synthesizer = speechsdk.SpeechSynthesizer(
             speech_config=speech_config,
             audio_config=audio_config,
         )
-        ssml = build_azure_ssml(text=ssml_text, locale=locale, voice_id=voice_id)
         if timeout_seconds is None:
             result = synthesizer.speak_ssml_async(ssml).get()
         else:
@@ -204,11 +219,10 @@ class AzureSpeechAdapter:
 def build_azure_ssml(*, text: str, locale: str, voice_id: str) -> str:
     """Normalize plain text or legacy SSML into Azure-compatible SSML."""
 
-    safe_ssml = _extract_safe_spoken_ssml(text)
+    safe_ssml = _extract_safe_spoken_ssml(text, locale=locale, voice_id=voice_id)
     if safe_ssml is None:
-        plain_text = _extract_spoken_text(text)
-        safe_ssml = escape(plain_text, {'"': '&quot;', "'": '&apos;'})
-    attributes = {'"': '&quot;', "'": '&apos;'}
+        safe_ssml = escape(text.strip(), _XML_ESCAPES)
+    attributes = {'"': "&quot;", "'": "&apos;"}
     return (
         f'<speak version="1.0" xmlns="http://www.w3.org/2001/10/synthesis" '
         f'xml:lang="{escape(locale, attributes)}">'
@@ -217,51 +231,74 @@ def build_azure_ssml(*, text: str, locale: str, voice_id: str) -> str:
     )
 
 
-def _extract_safe_spoken_ssml(text: str) -> str | None:
+def _extract_safe_spoken_ssml(text: str, *, locale: str, voice_id: str) -> str | None:
+    """Preserve bounded pronunciation markup and reject mismatched native controls."""
     stripped = text.strip()
     if not stripped:
         return ""
+    if "<!" in stripped or "<?" in stripped:
+        raise ValueError("SSML declarations and entities are prohibited")
+    if stripped.startswith("<") and len(stripped.encode("utf-8")) > 64000:
+        raise ValueError("SSML exceeds the byte limit")
 
     try:
         root = ElementTree.fromstring(stripped)
-    except ElementTree.ParseError:
+    except ElementTree.ParseError as exc:
+        # Old callers wrapped literal text without XML-escaping ampersands. This
+        # narrowly scoped compatibility case cannot contain pronunciation markup.
+        legacy = _LEGACY_TEXT_SPEAK_RE.fullmatch(stripped)
+        if legacy is not None:
+            return escape(legacy.group(1).strip(), _XML_ESCAPES)
+        if re.match(r"<\s*[a-zA-Z_!?]", stripped):
+            raise ValueError("SSML must be well formed") from exc
         return None
 
-    tag_name = root.tag.rsplit("}", 1)[-1]
-    if tag_name != "speak":
-        return None
+    elements = list(root.iter())
+    names = [element.tag.rsplit("}", 1)[-1] for element in elements]
+    if len(elements) > 256 or names[0] != "speak" or names.count("speak") != 1:
+        raise ValueError("SSML structure limit or root mismatch")
+    for element, name in zip(elements, names, strict=True):
+        if name not in _SSML_ATTRIBUTES or set(element.attrib) - _SSML_ATTRIBUTES[name]:
+            raise ValueError("SSML contains unapproved elements or attributes")
+        if element.tag.startswith("{") and not element.tag.startswith(f"{{{_SSML_NAMESPACE}}}"):
+            raise ValueError("SSML contains an unapproved namespace")
+        if name in {"break", "phoneme"} and list(element):
+            raise ValueError("SSML pronunciation leaf cannot contain nested markup")
+        if name == "break" and (element.text or "").strip():
+            raise ValueError("SSML break cannot contain spoken text")
+    if root.get("version") not in {None, "1.0"}:
+        raise ValueError("SSML version is unsupported")
+    if root.get(_XML_LANGUAGE) not in {None, locale}:
+        raise ValueError("SSML locale differs from the requested locale")
+    if "voice" in names:
+        children = list(root)
+        if (
+            root.get(_XML_LANGUAGE) != locale
+            or names.count("voice") != 1
+            or len(children) != 1
+            or children[0].tag.rsplit("}", 1)[-1] != "voice"
+            or (root.text or "").strip()
+            or (children[0].tail or "").strip()
+        ):
+            raise ValueError("SSML requires one explicit voice and locale enclosing all text")
+        voice = children[0]
+        if voice.get("name") != voice_id:
+            raise ValueError("SSML voice differs from the requested voice")
+        return _spoken_markup(voice)
+    return _spoken_markup(root)
 
-    safe_children: list[str] = []
-    if root.text and root.text.strip():
-        return None
-    for child in list(root):
-        child_tag = child.tag.rsplit("}", 1)[-1]
-        if child_tag != "prosody":
-            return None
-        safe_children.append(ElementTree.tostring(child, encoding="unicode", short_empty_elements=False))
-        if child.tail and child.tail.strip():
-            return None
-    return "".join(safe_children)
 
-
-def _extract_spoken_text(text: str) -> str:
-    stripped = text.strip()
-    if not stripped:
-        return ""
-
-    try:
-        root = ElementTree.fromstring(stripped)
-    except ElementTree.ParseError:
-        legacy_match = _LEGACY_SPEAK_RE.match(stripped)
-        if legacy_match is not None:
-            return legacy_match.group(1).strip()
-        return stripped
-
-    tag_name = root.tag.rsplit("}", 1)[-1]
-    if tag_name != "speak":
-        return "".join(root.itertext()).strip() or stripped
-
-    return "".join(root.itertext()).strip()
+def _spoken_markup(container: ElementTree.Element) -> str:
+    """Serialize only a previously validated tree into the selected Azure voice."""
+    parts = [escape(container.text or "", _XML_ESCAPES)]
+    for child in container:
+        name = child.tag.rsplit("}", 1)[-1]
+        attributes = "".join(
+            f' {key}="{escape(value, _XML_ESCAPES)}"' for key, value in child.attrib.items()
+        )
+        parts.append(f"<{name}{attributes}>{_spoken_markup(child)}</{name}>")
+        parts.append(escape(child.tail or "", _XML_ESCAPES))
+    return "".join(parts)
 
 
 def _duration_to_ms(value: object) -> int | None:

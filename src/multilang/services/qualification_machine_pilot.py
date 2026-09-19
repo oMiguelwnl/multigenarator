@@ -7,6 +7,7 @@ receipts, learner evidence, or permission to call a paid provider.
 from __future__ import annotations
 
 import json
+import re
 import unicodedata
 from pathlib import Path
 from tempfile import TemporaryDirectory
@@ -27,9 +28,14 @@ from multilang.domain.content import (
 )
 from multilang.domain.language_profiles import Identifier, LanguageProfile, NativeContract, Sha256
 from multilang.domain.lexical_identity import LexicalIdentity, canonical_sha256
+from multilang.services.content.definition_policy import (
+    DEFINITION_POLICY_VERSION,
+    validate_definition,
+)
 from multilang.services.contextual_morphology import ContextualAnalysis, sentence_hash
 from multilang.services.native_audio import validate_pronunciation_ssml
 from multilang.services.native_content import validate_plain_content
+from multilang.services.part_of_speech import canonical_part_of_speech_label
 from multilang.services.qualification_machine import (
     MachineActor,
     MachineCitation,
@@ -594,6 +600,11 @@ def prepare_pilot_audio(
             ("word", card.display_text),
             ("sentence", card.content.content.example_sentence),
         ):
+            spoken = escape(text)
+            policy = "machine-pilot-source-ipa-1"
+            if kind == "word":
+                spoken = f'<prosody rate="-15%" volume="+20%">{spoken}</prosody>'
+                policy = "machine-pilot-word-clear-2"
             signature = PronunciationSignature(
                 language=card.language.value,
                 language_profile_version=content.plan.profile.version,
@@ -604,8 +615,8 @@ def prepare_pilot_audio(
                 sense_id=card.sense_id,
                 locale=locale,
                 voice_id=voice_id,
-                ssml=f'<speak xmlns="http://www.w3.org/2001/10/synthesis" version="1.0" xml:lang={quoteattr(locale)}><voice name={quoteattr(voice_id)}>{escape(text)}</voice></speak>',
-                pronunciation_policy_version="machine-pilot-source-ipa-1",
+                ssml=f'<speak xmlns="http://www.w3.org/2001/10/synthesis" version="1.0" xml:lang={quoteattr(locale)}><voice name={quoteattr(voice_id)}>{spoken}</voice></speak>',
+                pronunciation_policy_version=policy,
                 provider="azure",
                 provider_model_version=provider_model_version,
                 audio_format=audio_format,
@@ -628,11 +639,41 @@ def _check_variant_locale(plan, locale):
         raise ValueError("pilot audio locale differs from the source IPA variant")
 
 
+def _definition_presentation_cards(content):
+    """Add source POS at export without rewriting the reviewed source artifacts."""
+    entries = {entry.card.card_id: entry for entry in content.plan.entries}
+    cards = []
+    for card in content.cards:
+        pos = canonical_part_of_speech_label(entries[card.card_id].mapping.decision.proposed_pos)
+        if pos is None:
+            raise ValueError("pilot definition requires a resolved source part of speech")
+        definition = card.content.content.definition
+        # A supplied label must pass the existing policy; never hide a wrong label
+        # by prefixing the correct one. Bare legacy meanings receive source POS.
+        if re.match(r"^\s*[A-Za-z][A-Za-z _-]{1,40}:", definition) is None:
+            definition = f"{pos}: {definition}"
+        validate_definition(
+            definition,
+            lemma=card.parent_lemma,
+            display_form=card.display_text,
+            part_of_speech=pos,
+        )
+        version = ContentVersion.model_validate(
+            card.content.model_dump(mode="json")
+            | {"content": card.content.content.model_dump(mode="json") | {"definition": definition}}
+        )
+        cards.append(
+            SemanticCard.model_validate(card.model_dump(mode="json") | {"content": version})
+        )
+    return tuple(cards)
+
+
 def export_machine_pilot(content, audio_plan, *, audio_versions, output):
     from multilang.services.audio.media_validation import inspect_local_mp3
     from multilang.services.semantic_anki import export_semantic_anki
 
     content, audio_plan = _checked(content), _checked(audio_plan)
+    presentation_cards = _definition_presentation_cards(content)
     versions = tuple(_checked(item) for item in audio_versions)
     if audio_plan.content_sha256 != content.content_sha256 or len(audio_plan.items) != 2 * len(
         content.cards
@@ -708,10 +749,11 @@ def export_machine_pilot(content, audio_plan, *, audio_versions, output):
                 "sentence_audio": supplied[(card.card_id, "sentence")],
             }
         )
-        for card in content.cards
+        for card in presentation_cards
     )
     binding = canonical_sha256(
         [
+            {"export_version": 2, "definition_presentation_policy": DEFINITION_POLICY_VERSION},
             content.content_sha256,
             audio_plan.audio_plan_sha256,
             [item.model_dump(mode="json") for item in versions],
@@ -741,7 +783,7 @@ def export_machine_pilot(content, audio_plan, *, audio_versions, output):
                     "sentence_audio": staged[(card.card_id, "sentence")],
                 }
             )
-            for card in content.cards
+            for card in presentation_cards
         )
         result = export_semantic_anki(
             cards=export_cards, output_path=root / "pilot.apkg", model="B", prototype=True
@@ -754,6 +796,8 @@ def export_machine_pilot(content, audio_plan, *, audio_versions, output):
             "card_count": len(enriched),
             "audio_count": len(versions),
             "content_sha256": content.content_sha256,
+            "definition_presentation_policy": DEFINITION_POLICY_VERSION,
+            "definition_presentation_origin": "source-pos-prefix; original reviewed meanings retained",
             "audio_plan_sha256": audio_plan.audio_plan_sha256,
             "artifact_sha256": result.artifact_sha256,
             "field_contract_compatible": result.field_contract_compatible,
