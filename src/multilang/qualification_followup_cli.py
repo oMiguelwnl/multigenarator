@@ -2,7 +2,7 @@
 
 from pathlib import Path
 
-from pydantic import Field
+from pydantic import Field, TypeAdapter
 
 from multilang.domain.language_profiles import NativeContract
 from multilang.services.qualification_machine_runner import json_bytes, persist_artifact, read_json
@@ -30,6 +30,7 @@ def register_followup_commands(cli):
         build_machine_followup,
         export_machine_followup,
     )
+    from multilang.services.qualification_machine_revision import MachineRevisionPlan
     from multilang.vocabulary_cli import _guard, _print
 
     def result_input(path, sha):
@@ -108,7 +109,9 @@ def register_followup_commands(cli):
         output: Path,
     ):
         parent = campaign_input(campaign, campaign_sha256)
-        followup = MachineFollowupPlan.model_validate(read_json(plan, plan_sha256))
+        followup = TypeAdapter(MachineFollowupPlan | MachineRevisionPlan).validate_python(
+            read_json(plan, plan_sha256)
+        )
         references = MachineRoundResultsInput.model_validate(read_json(results, results_sha256))
         children = tuple(result_input(row.path, row.sha256) for row in references.results)
         updated = append_machine_round(parent, followup, children)

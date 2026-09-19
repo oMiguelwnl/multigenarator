@@ -330,6 +330,12 @@ def create_machine_qualification_app(*, settings=None):
         )
 
     from multilang.qualification_followup_cli import register_followup_commands
+    from multilang.qualification_languages_cli import register_language_commands
+    from multilang.qualification_pilot_cli import register_pilot_commands
+    from multilang.qualification_revision_cli import register_revision_commands
 
     register_followup_commands(cli)
+    register_language_commands(cli)
+    register_pilot_commands(cli)
+    register_revision_commands(cli)
     return cli
