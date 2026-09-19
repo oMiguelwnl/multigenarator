@@ -129,14 +129,18 @@ def test_wrong_meaning_and_language_recover_to_source(output):
 
 
 def test_fallback_records_actual_language_and_requires_review():
+    portuguese_source = source().model_copy(update={
+        "definitions": ["uma moradia"], "definition_language": "pt",
+    })
     result = LexicalGroundingService(
-        lookup=Lookup(source()), definition_generator=Generator("noun: a dog"),
+        lookup=Lookup(portuguese_source), definition_generator=Generator("noun: a dog"),
         definition_reviewer=AdvisoryDefinitionReviewer(),
     ).ground_frequency_candidate(language=SupportedLanguage.EN, candidate=seed())
-    assert result.definition_language == "en"
+    assert result.definition_language == "pt"
     assert result.grounding_status != GroundingStatus.GROUNDED
     assert result.provenance.definition.fallback_used
     assert result.provenance.definition.quality_decision == "review_required"
+    assert result.provenance.definition.fallback_reason == "target_language_evidence_unavailable"
 
 
 def test_seed_without_index_cannot_acquire_authority_from_generator():

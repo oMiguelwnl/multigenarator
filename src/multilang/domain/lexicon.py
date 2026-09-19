@@ -157,15 +157,17 @@ class LexicalCardCandidate(BaseModel):
 
 
 def policy_for_language(language: SupportedLanguage) -> DeckLanguagePolicy:
-    output_language = (
+    translation_language = (
         "pt"
         if language in {SupportedLanguage.EN, SupportedLanguage.KO}
         else DEFAULT_DEFINITION_LANGUAGE
     )
     return DeckLanguagePolicy(
         deck_language=language,
-        definition_language=output_language,
-        translation_target_language=output_language,
+        definition_language=(
+            DEFAULT_DEFINITION_LANGUAGE if language is SupportedLanguage.EN else translation_language
+        ),
+        translation_target_language=translation_language,
     )
 
 

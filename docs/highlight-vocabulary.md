@@ -7,6 +7,12 @@ Cada entrada precisa de correspondência no cache lexical configurado.
 A definição é gerada com as evidências disponíveis, e o exemplo precisa
 corresponder ao sentido escolhido e passar pelas validações de texto.
 
+Nos cards de inglês, `Definition` fica em inglês tanto no modo normal
+quanto nas listas e highlights. No modo normal, `Translation` continua
+em português: o idioma da tradução da frase é independente da definição.
+Essa regra vale para novas gerações. Para atualizar um deck já exportado,
+inicie uma nova geração do deck e exporte o resultado.
+
 ## Lista `.txt`
 
 Prefira uma palavra ou expressão por linha:
