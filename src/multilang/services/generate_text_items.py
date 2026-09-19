@@ -971,6 +971,8 @@ class GenerateTextItemsService:
     ) -> str | None:
         if source_type != "kindle-highlights" or self.highlight_import_repository is None:
             return None
+        if "highlight_input=vocabulary" in candidate.provenance.notes:
+            return None
         highlight_id = _provenance_note_value(candidate.provenance.notes, "first_highlight_id")
         if not highlight_id:
             return None

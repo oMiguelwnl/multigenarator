@@ -2,10 +2,10 @@
 
 from __future__ import annotations
 
-from html.parser import HTMLParser
 import hashlib
-from pathlib import Path
 import re
+from html.parser import HTMLParser
+from pathlib import Path
 
 from multilang.domain.highlights import (
     HighlightProvenance,
@@ -14,41 +14,58 @@ from multilang.domain.highlights import (
     RejectedHighlight,
 )
 
-
 _CONTROL_CHARACTER_RE = re.compile(r"[\x00-\x08\x0b\x0c\x0e-\x1f\x7f]")
 _SCRIPT_OR_STYLE_RE = re.compile(r"(?is)<\s*(script|style)\b|</\s*(script|style)\s*>")
 _WHITESPACE_RE = re.compile(r"\s+")
 _TEXT_LOCATION_RE = re.compile(r"(?i)location\s+([^\r\n]+)")
+_VOID_TAGS = frozenset({"area", "base", "br", "col", "embed", "hr", "img", "input", "link", "meta", "param", "source", "track", "wbr"})
 
 
 class _KindleHTMLParser(HTMLParser):
     def __init__(self) -> None:
         super().__init__(convert_charrefs=True)
-        self._current_class = ""
+        self._capture_tags: list[str] = []
         self._capture_kind: str | None = None
         self._buffer: list[str] = []
         self.locations: list[str] = []
         self.highlights: list[tuple[str | None, str]] = []
 
     def handle_starttag(self, tag: str, attrs: list[tuple[str, str | None]]) -> None:
+        if self._capture_kind is not None:
+            if tag in {"br", "p", "div", "li"}:
+                self._buffer.append(" ")
+            if tag not in _VOID_TAGS:
+                self._capture_tags.append(tag)
+            return
         attrs_map = {key.lower(): value or "" for key, value in attrs}
-        class_names = attrs_map.get("class", "")
-        self._current_class = class_names
+        class_names = attrs_map.get("class", "").split()
         if "noteHeading" in class_names:
             self._capture_kind = "heading"
             self._buffer = []
         elif "noteText" in class_names:
             self._capture_kind = "text"
             self._buffer = []
+        if self._capture_kind is not None:
+            self._capture_tags = [tag]
+
+    def handle_startendtag(self, tag: str, attrs: list[tuple[str, str | None]]) -> None:
+        self.handle_starttag(tag, attrs)
+        if tag not in _VOID_TAGS:
+            self.handle_endtag(tag)
 
     def handle_data(self, data: str) -> None:
         if self._capture_kind is not None:
             self._buffer.append(data)
 
     def handle_endtag(self, tag: str) -> None:
-        if self._capture_kind is None:
+        if self._capture_kind is None or not self._capture_tags or tag != self._capture_tags[-1]:
             return
-        captured = _normalize_whitespace(" ".join(self._buffer))
+        self._capture_tags.pop()
+        if self._capture_tags:
+            if tag in {"p", "div", "li"}:
+                self._buffer.append(" ")
+            return
+        captured = _normalize_whitespace("".join(self._buffer))
         if self._capture_kind == "heading":
             self.locations.append(captured)
         elif self._capture_kind == "text":
@@ -56,7 +73,6 @@ class _KindleHTMLParser(HTMLParser):
             self.highlights.append((location, captured))
         self._capture_kind = None
         self._buffer = []
-        self._current_class = ""
 
 
 def parse_kindle_highlight_export(path: str | Path) -> KindleParseResult:
@@ -80,7 +96,7 @@ def parse_kindle_highlight_export(path: str | Path) -> KindleParseResult:
         )
 
     try:
-        raw_text = source_path.read_text(encoding="utf-8")
+        raw_text = source_path.read_text(encoding="utf-8-sig")
     except UnicodeDecodeError:
         raw_text = source_path.read_text(encoding="utf-8-sig", errors="replace")
 
@@ -143,8 +159,10 @@ def _parse_text_records(raw_text: str) -> list[tuple[str | None, str]]:
         if not non_empty_lines:
             continue
 
-        location = next((line for line in non_empty_lines if "highlight" in line.casefold()), None)
-        text_lines = [line for line in non_empty_lines if not _looks_like_metadata_line(line)]
+        metadata_index = next((index for index, line in enumerate(non_empty_lines) if _looks_like_metadata_line(line)), None)
+        location = non_empty_lines[metadata_index] if metadata_index is not None else None
+        # My Clippings places the book title before the metadata, never in the entry.
+        text_lines = non_empty_lines[metadata_index + 1:] if metadata_index is not None else non_empty_lines
         if not text_lines:
             records.append((location, ""))
             continue
@@ -161,7 +179,7 @@ def _extract_location(line: str | None) -> str | None:
 
 def _looks_like_metadata_line(line: str) -> bool:
     folded = line.casefold()
-    return folded.startswith("- your highlight") or folded.startswith("synthetic learner reader")
+    return folded.startswith(("- your highlight", "- seu destaque", "- seu grifo"))
 
 
 def _normalize_whitespace(text: str) -> str:

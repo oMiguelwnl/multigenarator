@@ -2,10 +2,9 @@
 
 from __future__ import annotations
 
-from pathlib import Path
 import re
-import shlex
 import unicodedata
+from pathlib import Path
 
 from pydantic import BaseModel, Field
 
@@ -109,6 +108,50 @@ def _looks_like_dense_entry_start(token: str) -> bool:
     return bool(stripped) and stripped[0].isalpha() and stripped[0].isupper()
 
 
+def _split_list_syntax(text: str, *, whitespace: bool) -> tuple[list[str], bool, bool]:
+    """Split outside grouping quotes; apostrophes inside words stay literal."""
+    pairs = {'"': '"', "'": "'", "“": "”", "‘": "’"}
+    parts: list[str] = []
+    buffer: list[str] = []
+    closing = None
+    grouped = False
+    separated = False
+    index = 0
+    while index < len(text):
+        char = text[index]
+        if closing:
+            if char == "\\" and index + 1 < len(text) and text[index + 1] == closing:
+                if not whitespace:
+                    buffer.append(char)
+                buffer.append(text[index + 1])
+                index += 2
+                continue
+            if char == closing:
+                closing = None
+                if not whitespace:
+                    buffer.append(char)
+            else:
+                buffer.append(char)
+        elif char in pairs and (index == 0 or text[index - 1].isspace() or text[index - 1] in ",;|"):
+            closing = pairs[char]
+            grouped = True
+            if not whitespace:
+                buffer.append(char)
+        elif (char.isspace() if whitespace else char in ",;|"):
+            separated = True
+            if value := "".join(buffer).strip():
+                parts.append(value)
+            buffer = []
+        else:
+            buffer.append(char)
+        index += 1
+    if closing:
+        return [text], False, False
+    if value := "".join(buffer).strip():
+        parts.append(value)
+    return parts, grouped, separated
+
+
 def split_loose_word_list_line(line: str) -> list[str]:
     """Split a loose word-list line while preserving quoted multiword terms.
 
@@ -124,8 +167,7 @@ def split_loose_word_list_line(line: str) -> list[str]:
         return []
 
     has_markdown_prefix = stripped != stripped_line
-    has_separator_syntax = bool(_ENTRY_SEPARATOR_RE.search(stripped))
-    has_quote_syntax = any(quote in stripped for quote in {'"', "'"})
+    chunks, has_quote_syntax, has_separator_syntax = _split_list_syntax(stripped, whitespace=False)
     has_loose_syntax = has_markdown_prefix or has_separator_syntax or has_quote_syntax
     if not has_loose_syntax:
         dense_entries = split_dense_word_list_line(stripped)
@@ -141,24 +183,13 @@ def split_loose_word_list_line(line: str) -> list[str]:
 
     if has_separator_syntax:
         entries: list[str] = []
-        for chunk in _ENTRY_SEPARATOR_RE.split(stripped):
-            chunk = chunk.strip()
-            if not chunk:
-                continue
-            if any(quote in chunk for quote in {'"', "'"}):
-                entries.extend(split_loose_word_list_line(chunk))
-            else:
-                entries.append(chunk)
+        for chunk in chunks:
+            tokens, grouped, _ = _split_list_syntax(chunk, whitespace=True)
+            entries.extend(tokens if grouped else [chunk])
         return entries
 
-    try:
-        parts = shlex.split(stripped, posix=True)
-    except ValueError:
-        # Unbalanced quotes should not drop user data. Fall back to separator
-        # splitting, leaving quote characters visible for later review.
-        return [part.strip() for part in _ENTRY_SEPARATOR_RE.split(stripped) if part.strip()]
-
-    return [part.strip() for part in parts if part.strip()]
+    parts, grouped, _ = _split_list_syntax(stripped, whitespace=True)
+    return parts if grouped else [stripped]
 
 
 def parse_word_list(path: str | Path) -> ParsedWordList:

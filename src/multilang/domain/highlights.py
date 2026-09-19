@@ -3,11 +3,17 @@
 from __future__ import annotations
 
 import unicodedata
+from enum import Enum
 from typing import Literal, Self
 
 from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator
 
 from multilang.domain.korean import KoreanLexicalIdentity
+
+
+class HighlightInputMode(str, Enum):
+    TEXT = "text"
+    VOCABULARY = "vocabulary"
 
 
 _LOWERCASE_HEX = frozenset("0123456789abcdef")
@@ -381,6 +387,7 @@ class HighlightExtractionError(_HighlightContract):
 
     source_index: int = Field(ge=0)
     reason_code: Literal[
+        "invalid_vocabulary_entry",
         "korean_resolver_required",
         "korean_resolution_failed",
         "korean_resolution_unavailable",

@@ -21,6 +21,7 @@ from multilang.db.provisioning import ensure_database_schema
 from multilang.domain.audio import AudioAssetRecord
 from multilang.domain.deck_audit import audit_deck_package
 from multilang.domain.exporting import ExportArtifactFormat
+from multilang.domain.highlights import HighlightInputMode
 from multilang.domain.jobs import (
     GenerationRequest,
     JobProgressSnapshot,
@@ -1330,6 +1331,7 @@ def _build_cli_highlight_preview(
     language: SupportedLanguage,
     planned_card_limit: int | None,
     korean_resolver: object | None,
+    input_mode: str = "text",
 ) -> object:
     guarded_resolver = (
         _FailClosedKoreanPreviewResolver(korean_resolver)
@@ -1341,6 +1343,7 @@ def _build_cli_highlight_preview(
         language=language,
         planned_card_limit=planned_card_limit,
         korean_resolver=guarded_resolver,
+        input_mode=input_mode,
     )
     if language is SupportedLanguage.KO and (
         guarded_resolver is None or guarded_resolver.failed
@@ -1366,12 +1369,14 @@ def _print_highlight_preview_counts(
     language: SupportedLanguage,
     planned_card_limit: int | None,
     korean_resolver: object | None = None,
+    input_mode: str = "text",
 ) -> None:
     preview = _build_cli_highlight_preview(
         input_file,
         language=language,
         planned_card_limit=planned_card_limit,
         korean_resolver=korean_resolver,
+        input_mode=input_mode,
     )
     typer.echo(f"imported_highlights={preview.imported_highlights}")
     typer.echo(f"extracted_candidates={preview.extracted_candidates}")
@@ -3609,12 +3614,19 @@ def create_app(
             int | None,
             typer.Option("--planned-card-limit", min=0, help="Optional cap for planned preview cards."),
         ] = None,
+        highlight_input: Annotated[
+            HighlightInputMode,
+            typer.Option("--highlight-input", help="Kindle input: text extracts words; vocabulary keeps each highlight as one word or expression."),
+        ] = HighlightInputMode.TEXT,
     ) -> None:
+        if language is SupportedLanguage.KO and highlight_input is HighlightInputMode.VOCABULARY:
+            raise typer.BadParameter("Korean highlights require --highlight-input text")
         try:
             preview = _build_cli_highlight_preview(
                 input_file,
                 language=language,
                 planned_card_limit=planned_card_limit,
+                input_mode=highlight_input,
                 korean_resolver=(
                     resolve_korean_preview_resolver()
                     if language is SupportedLanguage.KO
@@ -3661,7 +3673,13 @@ def create_app(
             int | None,
             typer.Option("--planned-card-limit", min=0, help="Optional cap for planned preview cards."),
         ] = None,
+        highlight_input: Annotated[
+            HighlightInputMode,
+            typer.Option("--highlight-input", help="Kindle input: text extracts words; vocabulary keeps each highlight as one word or expression."),
+        ] = HighlightInputMode.TEXT,
     ) -> None:
+        if language is SupportedLanguage.KO and highlight_input is HighlightInputMode.VOCABULARY:
+            raise typer.BadParameter("Korean highlights require --highlight-input text")
         try:
             fetch_result: WebDAVFetchResult = resolve_webdav_service().fetch_export(remote_path)
             if language is not SupportedLanguage.KO:
@@ -3672,6 +3690,7 @@ def create_app(
                 fetch_result.cached_path,
                 language=language,
                 planned_card_limit=planned_card_limit,
+                input_mode=highlight_input,
                 korean_resolver=(
                     resolve_korean_preview_resolver()
                     if language is SupportedLanguage.KO
@@ -3716,6 +3735,10 @@ def create_app(
             Path | None,
             typer.Option("--input-file", exists=False, dir_okay=False, help="Path to a word list."),
         ] = None,
+        highlight_input: Annotated[
+            HighlightInputMode,
+            typer.Option("--highlight-input", help="Kindle input: text extracts words; vocabulary keeps each highlight as one word or expression."),
+        ] = HighlightInputMode.TEXT,
         webdav_remote_path: Annotated[
             str | None,
             typer.Option(
@@ -3789,6 +3812,11 @@ def create_app(
     ) -> None:
         if source not in {"frequency", "word-list", "highlights"}:
             raise typer.BadParameter("--source must be one of: frequency, word-list, highlights")
+        if highlight_input is HighlightInputMode.VOCABULARY:
+            if source != "highlights":
+                raise typer.BadParameter("--highlight-input vocabulary is only valid when --source highlights")
+            if language is SupportedLanguage.KO:
+                raise typer.BadParameter("Korean highlights require --highlight-input text")
         if language == SupportedLanguage.LA and source == "frequency":
             raise typer.BadParameter("--source frequency is not supported for Latin (la); use --source word-list with a list of lemmas instead (frozen data path is legacy)")
         if webdav_remote_path is not None and source != "highlights":
@@ -3816,6 +3844,7 @@ def create_app(
             level=level,
             cards_per_level=resolved_cards_per_level,
             input_file=input_file,
+            highlight_input=highlight_input,
             resume_job_id=resume,
             overwrite=overwrite,
             yes_overwrite=yes_overwrite,

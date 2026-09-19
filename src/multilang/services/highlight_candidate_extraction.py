@@ -2,22 +2,22 @@
 
 from __future__ import annotations
 
+import re
+import unicodedata
 from collections.abc import Sequence
 from hashlib import sha256
-import re
 from typing import Protocol
-import unicodedata
 
 from multilang.domain.highlights import (
     HighlightCandidate,
     HighlightCandidateExtractionResult,
     HighlightExtractionError,
+    HighlightInputMode,
     NormalizedHighlight,
 )
 from multilang.domain.jobs import SupportedLanguage
 from multilang.domain.korean import KoreanLexicalIdentity
-from multilang.services.word_list_parser import split_dense_word_list_line
-
+from multilang.services.word_list_parser import normalize_word_list_key, split_dense_word_list_line
 
 _TOKEN_RE = re.compile(r"[^\W\d_]+(?:['’-][^\W\d_]+)*", re.UNICODE)
 _QUOTED_PHRASE_RE = re.compile(
@@ -58,9 +58,15 @@ def extract_highlight_candidates(
     *,
     language: SupportedLanguage,
     korean_resolver: KoreanHighlightResolver | None = None,
+    input_mode: HighlightInputMode = HighlightInputMode.TEXT,
 ) -> HighlightCandidateExtractionResult:
     """Return first-seen ordered candidate forms with duplicate/noise counters."""
 
+    input_mode = HighlightInputMode(input_mode)
+    if input_mode is HighlightInputMode.VOCABULARY:
+        if language is SupportedLanguage.KO:
+            raise ValueError("Korean highlights require the existing morphology-based text mode")
+        return _extract_vocabulary_candidates(highlights, language=language)
     if language is SupportedLanguage.KO:
         return _extract_korean_highlight_candidates(
             highlights,
@@ -141,6 +147,39 @@ def extract_highlight_candidates(
         duplicate_count=duplicate_count,
         rejected_token_count=rejected_token_count,
     )
+
+
+def _extract_vocabulary_candidates(
+    highlights: Sequence[NormalizedHighlight], *, language: SupportedLanguage,
+) -> HighlightCandidateExtractionResult:
+    """A selected highlight is one explicit entry, including function words."""
+    entries: dict[str, HighlightCandidate] = {}
+    duplicates = rejected = 0
+    errors: list[HighlightExtractionError] = []
+    for highlight in sorted(highlights, key=lambda item: item.provenance.source_index):
+        display = " ".join(unicodedata.normalize("NFC", highlight.text).split())
+        key = normalize_word_list_key(display)
+        if (not key or len(display) > 256 or len(key) > 256
+                or not any(char.isalpha() for char in display)
+                or _URL_RE.search(display)):
+            rejected += 1
+            errors.append(HighlightExtractionError(source_index=highlight.provenance.source_index,
+                                                   reason_code="invalid_vocabulary_entry"))
+            continue
+        if key in entries:
+            duplicates += 1
+            entries[key] = entries[key].model_copy(update={"occurrence_count": entries[key].occurrence_count + 1})
+            continue
+        digest = sha256(key.encode()).hexdigest()[:32]
+        entries[key] = HighlightCandidate(
+            item_key=f"highlight-vocabulary-{language.value}-{digest}",
+            source_content_hash=highlight.provenance.content_hash,
+            display_form=display, lemma_key=key,
+            first_highlight_id=highlight.highlight_id,
+            first_source_index=highlight.provenance.source_index, occurrence_count=1,
+        )
+    return HighlightCandidateExtractionResult(candidates=list(entries.values()), duplicate_count=duplicates,
+                                             rejected_token_count=rejected, errors=errors)
 
 
 def _extract_korean_highlight_candidates(

@@ -2,13 +2,13 @@
 
 from __future__ import annotations
 
+import unicodedata
 from collections.abc import Iterable
 from hashlib import sha256
-import unicodedata
 
+from multilang.domain.highlights import HighlightInputMode
 from multilang.domain.jobs import GenerationRequest
 from multilang.domain.personal_sources import PersonalSourceRow
-
 
 _KOREAN_ORDERED_SOURCE_FINGERPRINT_VERSION = "korean-ordered-source-v1"
 
@@ -39,6 +39,8 @@ def build_input_fingerprint(
 
     normalized = normalize_requested_item_keys(requested_item_keys)
     digest = sha256("\n".join(normalized).encode("utf-8")).hexdigest()
+    if request.source_type == "kindle-highlights" and request.highlight_input is HighlightInputMode.VOCABULARY:
+        return f"highlight-vocabulary-v1:items:{digest}"
     return f"items:{digest}"
 
 

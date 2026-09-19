@@ -7,6 +7,7 @@ from typing import Any
 
 from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator
 
+from multilang.domain.highlights import HighlightInputMode
 from multilang.domain.source_profiles import SourceType
 
 
@@ -299,6 +300,9 @@ class GenerationRequest(BaseModel):
     level: int | None = Field(default=None, ge=1, le=3)
     cards_per_level: int | None = Field(default=None, ge=1)
     input_file: Path | None = None
+    highlight_input: HighlightInputMode = Field(
+        default=HighlightInputMode.TEXT, exclude_if=lambda value: value == HighlightInputMode.TEXT,
+    )
     resume_job_id: str | None = None
     overwrite: bool = False
     yes_overwrite: bool = False
@@ -306,6 +310,15 @@ class GenerationRequest(BaseModel):
     max_items: int | None = Field(default=None, ge=1)
     rate_limit_per_minute: int | None = Field(default=None, ge=1)
     concurrency: int = Field(default=1, ge=1)
+
+    @model_validator(mode="after")
+    def highlight_input_requires_highlights(self):
+        if self.highlight_input is HighlightInputMode.VOCABULARY:
+            if self.source_type != "kindle-highlights":
+                raise ValueError("highlight_input requires kindle-highlights")
+            if self.language is SupportedLanguage.KO:
+                raise ValueError("Korean highlights require the existing morphology-based text mode")
+        return self
 
     def resolved_cards_per_level(self) -> int:
         if self.cards_per_level is not None:

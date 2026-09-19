@@ -347,9 +347,18 @@ class GeneratedSentence(BaseModel):
 
 
 class GeneratedTranslation(BaseModel):
-    text: str = Field(min_length=1)
+    text: str
     target_language: str = Field(min_length=2)
     provenance: TextProvenance
+
+    @model_validator(mode="after")
+    def empty_translation_requires_explicit_omission(self) -> "GeneratedTranslation":
+        if not self.text and not (
+            self.provenance.source == "not-required-by-source-profile"
+            and self.provenance.metadata.get("source_type") == "kindle-highlights"
+        ):
+            raise ValueError("empty translation requires an explicit highlight omission")
+        return self
 
 
 class GeneratedTextBundle(BaseModel):
@@ -439,6 +448,7 @@ class TextGenerationService:
             candidate=candidate,
             deck_language=deck_language,
             translation_request=translation_request,
+            source_type=source_type,
             rate_limiter=rate_limiter,
             job_id=job_id,
         )
@@ -502,6 +512,7 @@ class TextGenerationService:
             candidate=candidate,
             deck_language=deck_language,
             translation_request=translation_request,
+            source_type=source_type,
             rate_limiter=rate_limiter,
             job_id=job_id,
         )
@@ -557,6 +568,7 @@ class TextGenerationService:
         candidate: LexicalCardCandidate,
         deck_language: SupportedLanguage,
         translation_request: SentenceTranslationRequest,
+        source_type: str | None = None,
         rate_limiter: RateLimiter | None = None,
         job_id: str | None = None,
     ) -> GeneratedTextBundle:
@@ -568,10 +580,23 @@ class TextGenerationService:
                 sentence_result,
                 identity=identity,
             )
-        if candidate.translation_target_language == deck_language.value:
+        if source_type == "kindle-highlights" and deck_language is not SupportedLanguage.KO:
+            translation = GeneratedTranslation(
+                text="", target_language=candidate.translation_target_language,
+                provenance=TextProvenance(
+                    source="not-required-by-source-profile",
+                    metadata={"source_type": "kindle-highlights"},
+                ),
+            )
+        elif candidate.translation_target_language == deck_language.value:
             translation_result = SentenceTranslationResult(
                 translation=sentence_result.sentence,
                 provenance={"source": "same-language-translator"},
+            )
+            translation = GeneratedTranslation(
+                text=translation_result.translation,
+                target_language=candidate.translation_target_language,
+                provenance=_normalize_provenance(translation_result.provenance),
             )
         else:
             if rate_limiter is not None:
@@ -582,6 +607,11 @@ class TextGenerationService:
                 item_key=candidate.lemma_key,
                 korean_policy_task=(KoreanProviderTask.TRANSLATION if deck_language is SupportedLanguage.KO else None),
             )
+            translation = GeneratedTranslation(
+                text=translation_result.translation,
+                target_language=candidate.translation_target_language,
+                provenance=_normalize_provenance(translation_result.provenance),
+            )
 
         return GeneratedTextBundle(
             sentence=GeneratedSentence(
@@ -591,11 +621,7 @@ class TextGenerationService:
                 uncertainty_notes=[note.strip() for note in sentence_result.uncertainty_notes if note.strip()],
                 provenance=_normalize_provenance(sentence_result.provenance),
             ),
-            translation=GeneratedTranslation(
-                text=translation_result.translation,
-                target_language=candidate.translation_target_language,
-                provenance=_normalize_provenance(translation_result.provenance),
-            ),
+            translation=translation,
         )
 
     def review_translation(
@@ -678,7 +704,10 @@ class TextGenerationService:
         return verdict
 
     def _generate_sentence(self, request: SentenceGenerationRequest, *, job_id: str | None = None, item_key: str | None = None) -> SentenceGenerationResult:
-        key = _cache_key_for_request("sentence", request, adapter=self._sentence_adapter, prompt_version=self._prompt_version)
+        prompt_version = self._prompt_version
+        if request.source_type in {"word-list", "kindle-highlights"} and request.target_language not in {"ko", "la"}:
+            prompt_version += "/vocabulary-entry-v1"
+        key = _cache_key_for_request("sentence", request, adapter=self._sentence_adapter, prompt_version=prompt_version)
         if self._provider_cache is not None:
             cached = self._provider_cache.get(key)
             if cached is not None:

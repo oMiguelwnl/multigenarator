@@ -38,7 +38,12 @@ from multilang.services.mandarin_orthography import (
     script_counts,
     validate_simplified_mandarin,
 )
-from multilang.services.morphology import MorphologicalAnalyzer, OptionalStanzaMorphologicalAnalyzer
+from multilang.services.morphology import (
+    MorphologicalAnalyzer,
+    OptionalStanzaMorphologicalAnalyzer,
+    contains_whole_expression,
+    multiword_targets,
+)
 from multilang.services.rate_limit import RateLimiter
 from multilang.services.text_generation import GeneratedSentence, GeneratedTranslation
 
@@ -350,13 +355,19 @@ class TextValidationService:
         ):
             return
 
-        candidates = _match_keys(display_form) | _match_keys(lemma)
-        sentence_terms = {
-            key
-            for token in context.sentence_tokens
-            for key in _match_keys(token)
-        }
-        heuristic_match = not candidates.isdisjoint(sentence_terms)
+        expressions = multiword_targets(display_form, lemma)
+        if expressions:
+            if any(contains_whole_expression(context.sentence_text, expression) for expression in expressions):
+                return
+            heuristic_match = False
+        else:
+            candidates = _match_keys(display_form) | _match_keys(lemma)
+            sentence_terms = {
+                key
+                for token in context.sentence_tokens
+                for key in _match_keys(token)
+            }
+            heuristic_match = not candidates.isdisjoint(sentence_terms)
         morphology_result = self.morphological_analyzer.contains_target_lemma(
             sentence_text=context.sentence_text,
             target_language=context.target_language,

@@ -8,7 +8,9 @@ import sqlite3
 import zipfile
 from dataclasses import dataclass, field
 from pathlib import Path
+from types import SimpleNamespace
 
+import pytest
 from sqlalchemy import create_engine, select
 from sqlalchemy.orm import Session
 
@@ -23,7 +25,8 @@ from multilang.domain.audio import (
     AudioSynthesisStatus,
     NormalizedTtsInput,
 )
-from multilang.domain.exporting import ExportArtifactFormat, HIGHLIGHT_EXPORT_CARD_FIELD_NAMES
+from multilang.domain.definitions import DefinitionConsistencyVerdict
+from multilang.domain.exporting import HIGHLIGHT_EXPORT_CARD_FIELD_NAMES, ExportArtifactFormat
 from multilang.domain.jobs import GenerationRequest, JobStage, SupportedLanguage
 from multilang.domain.text_quality import (
     ConfidenceLabel,
@@ -38,14 +41,20 @@ from multilang.repositories.job_repository import JobRepository
 from multilang.repositories.lexical_repository import LexicalRepository
 from multilang.services.assemble_export_cards import AssembleExportCardsService
 from multilang.services.audio_synthesis import AudioSynthesisBundle
-from multilang.services.export_anki_package import HIGHLIGHT_MODEL_ID, HIGHLIGHT_NOTE_TYPE_NAME, export_anki_package
+from multilang.services.export_anki_package import (
+    HIGHLIGHT_MODEL_ID,
+    HIGHLIGHT_NOTE_TYPE_NAME,
+    export_anki_package,
+)
 from multilang.services.export_tabular_bundle import write_export_tabular_bundle
 from multilang.services.generate_audio_items import GenerateAudioItemsService
 from multilang.services.generate_job import GenerateJobService
 from multilang.services.ingest_lexical_items import IngestLexicalItemsService
-from multilang.services.lexical_lookup import LexicalRecord
 from multilang.services.lexical_grounding import LexicalGroundingService
+from multilang.services.lexical_lookup import LexicalRecord
 from multilang.services.local_text_adapter import LocalSentenceAdapter
+from multilang.services.text_generation import SentenceGenerationResult, TextGenerationService
+from multilang.services.text_validation import TextValidationService
 
 
 class FakeLookup:
@@ -57,7 +66,9 @@ class FakeLookup:
                 term="jardín",
                 display_form="jardín",
                 lemma="jardín",
-                definitions=["noun: a cultivated outdoor place with plants"],
+                definitions=["un espacio al aire libre donde se cultivan plantas"],
+                definition_language="es",
+                part_of_speech="noun",
                 ipa="/xaɾˈðin/",
                 source="manual-test-fixture",
             )
@@ -224,12 +235,15 @@ def sound_file_name(sound_tag: str) -> str:
     return sound_tag.removeprefix("[sound:").removesuffix("]")
 
 
-def test_local_kindle_fixture_ingests_generates_audio_and_assembles_highlight_card(tmp_path: Path) -> None:
+@pytest.mark.parametrize("input_mode", ["text", "vocabulary"])
+def test_local_kindle_fixture_ingests_generates_audio_and_assembles_highlight_card(tmp_path: Path, input_mode: str) -> None:
     fixture_path = write_synthetic_kindle_fixture(tmp_path)
+    if input_mode == "vocabulary":
+        fixture_path.write_text('<div class="noteText">jardín</div>', encoding="utf-8")
     ingest_service, lexical_repo, session = build_ingest_service()
 
     ingest_result = ingest_service.execute(
-        GenerationRequest(language=SupportedLanguage.ES, source_type="kindle-highlights", input_file=fixture_path)
+        GenerationRequest(language=SupportedLanguage.ES, source_type="kindle-highlights", input_file=fixture_path, highlight_input=input_mode)
     )
     job_id = ingest_result.report.orchestration.job_id
     candidate_row = session.scalar(select(LexicalCandidate).where(LexicalCandidate.job_id == job_id))
@@ -238,6 +252,38 @@ def test_local_kindle_fixture_ingests_generates_audio_and_assembles_highlight_ca
     text_repo = TextRepo(
         accepted_text_record(job_id=job_id, item_key=candidate_row.item_key, lexical_candidate_id=candidate_row.id)
     )
+    if input_mode == "vocabulary":
+        candidate = lexical_repo.list_candidates(job_id)[0]
+        def forbidden_translation(_):
+            pytest.fail("highlight vocabulary must not call a translator")
+        generation = TextGenerationService(
+            sentence_adapter=SimpleNamespace(generate_sentence=lambda _: SentenceGenerationResult(
+                sentence="El jardín tranquilo recibe la luz de la mañana.", provenance={"source": "test-provider"})),
+            translation_adapter=SimpleNamespace(translate_sentence=forbidden_translation),
+        )
+        bundle = generation.generate_bundle(candidate=candidate, deck_language=SupportedLanguage.ES, source_type="kindle-highlights")
+        reviewed = []
+        def check_definition(request, **_):
+            reviewed.append(request)
+            return DefinitionConsistencyVerdict(decision="consistent")
+        validation = TextValidationService(
+            morphological_analyzer=SimpleNamespace(contains_target_lemma=lambda **_: SimpleNamespace(reliable=False)),
+            language_identifier=SimpleNamespace(detect=lambda *_, **__: SimpleNamespace(reliable=False)),
+            require_definition_consistency=True, definition_consistency_checker=check_definition,
+        ).validate(
+            sentence=bundle.sentence, translation=bundle.translation,
+            display_form=candidate.display_form, lemma=candidate.lemma,
+            definitions_html=candidate.definitions_html, definition_language=candidate.definition_language,
+            require_translation=False, min_sentence_tokens=6, max_sentence_tokens=16,
+        )
+        assert validation.validation_status is ValidationStatus.PASSED
+        assert reviewed[0].sentence == bundle.sentence.text
+        assert reviewed[0].definition == candidate.definitions_html
+        text_repo.record = text_repo.record.model_copy(update={
+            "example_sentence": bundle.sentence.text, "translation_text": bundle.translation.text,
+            "sentence_provenance": bundle.sentence.provenance,
+            "translation_provenance": bundle.translation.provenance,
+        })
     audio_repo = AudioRepo()
     audio_result = GenerateAudioItemsService(
         job_repository=AudioJobRepo(),

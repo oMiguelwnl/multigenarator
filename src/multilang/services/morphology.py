@@ -2,11 +2,10 @@
 
 from __future__ import annotations
 
-from dataclasses import dataclass
 import re
 import unicodedata
+from dataclasses import dataclass
 from typing import Protocol
-
 
 _TOKEN_RE = re.compile(r"\b[\w'-]+\b", re.UNICODE)
 
@@ -63,13 +62,16 @@ class OptionalStanzaMorphologicalAnalyzer:
                 detail=f"Stanza morphology failed: {type(exc).__name__}",
             )
 
-        target_keys = _target_keys(display_form, lemma)
-        observed: set[str] = set()
-        for sentence in getattr(document, "sentences", []) or []:
-            for word in getattr(sentence, "words", []) or []:
-                observed.update(_target_keys(str(getattr(word, "text", "") or ""), str(getattr(word, "lemma", "") or "")))
-
-        matched = not target_keys.isdisjoint(observed)
+        expressions = multiword_targets(display_form, lemma)
+        if expressions:
+            matched = _document_contains_expression(document, expressions)
+        else:
+            target_keys = _target_keys(display_form, lemma)
+            observed: set[str] = set()
+            for sentence in getattr(document, "sentences", []) or []:
+                for word in getattr(sentence, "words", []) or []:
+                    observed.update(_target_keys(str(getattr(word, "text", "") or ""), str(getattr(word, "lemma", "") or "")))
+            matched = not target_keys.isdisjoint(observed)
         return MorphologyValidationResult(
             matched=matched,
             reliable=True,
@@ -94,6 +96,34 @@ class OptionalStanzaMorphologicalAnalyzer:
             pipeline = None
         self._pipelines[language] = pipeline
         return pipeline
+
+
+def _expression_form(value: str) -> str:
+    return " ".join(unicodedata.normalize("NFC", value).casefold().replace("’", "'").split())
+
+
+def multiword_targets(*values: str) -> tuple[str, ...]:
+    """Keep complete expression alternatives without accepting their components."""
+    return tuple(dict.fromkeys(_expression_form(value) for value in values if len(value.split()) > 1))
+
+
+def contains_whole_expression(text: str, expression: str) -> bool:
+    pattern = r"(?<![\w'-])" + re.escape(expression) + r"(?![\w'-])"
+    return re.search(pattern, _expression_form(text)) is not None
+
+
+def _document_contains_expression(document: object, expressions: tuple[str, ...]) -> bool:
+    for sentence in getattr(document, "sentences", []) or []:
+        words = [
+            {_expression_form(str(getattr(word, field, "") or "")) for field in ("text", "lemma")}
+            for word in getattr(sentence, "words", []) or []
+        ]
+        for expression in expressions:
+            parts = expression.split()
+            for start in range(len(words) - len(parts) + 1):
+                if all(part in words[start + offset] for offset, part in enumerate(parts)):
+                    return True
+    return False
 
 
 def _target_keys(*values: str) -> set[str]:

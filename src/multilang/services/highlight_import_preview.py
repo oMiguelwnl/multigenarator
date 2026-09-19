@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from multilang.domain.highlights import HighlightImportPreview
+from multilang.domain.highlights import HighlightImportPreview, HighlightInputMode
 from multilang.domain.jobs import SupportedLanguage
 from multilang.services.highlight_candidate_extraction import (
     KoreanHighlightResolver,
@@ -19,6 +19,7 @@ def build_highlight_import_preview(
     language: SupportedLanguage,
     planned_card_limit: int | None = None,
     korean_resolver: KoreanHighlightResolver | None = None,
+    input_mode: HighlightInputMode = HighlightInputMode.TEXT,
 ) -> HighlightImportPreview:
     """Return count-only import/extraction metrics for a local Kindle export."""
 
@@ -34,6 +35,7 @@ def build_highlight_import_preview(
         parse_result.highlights,
         language=language,
         korean_resolver=korean_resolver,
+        input_mode=input_mode,
     )
     extracted_count = len(extraction_result.candidates)
     planned_cards = extracted_count if planned_card_limit is None else min(planned_card_limit, extracted_count)
@@ -41,7 +43,9 @@ def build_highlight_import_preview(
     return HighlightImportPreview(
         imported_highlights=len(parse_result.highlights),
         extracted_candidates=extracted_count,
-        rejected_highlights=len(parse_result.rejected),
+        rejected_highlights=len(parse_result.rejected) + (
+            len(extraction_result.errors) if input_mode == HighlightInputMode.VOCABULARY else 0
+        ),
         duplicate_candidates=extraction_result.duplicate_count,
         planned_cards=planned_cards,
     )

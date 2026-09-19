@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from pathlib import Path
 
+import pytest
 from sqlalchemy import create_engine
 from sqlalchemy.orm import Session
 
@@ -27,9 +28,8 @@ from multilang.repositories.job_repository import JobRepository
 from multilang.repositories.lexical_repository import LexicalRepository
 from multilang.services.generate_job import GenerateJobService
 from multilang.services.ingest_lexical_items import IngestLexicalItemsService
-from multilang.services.lexical_lookup import LexicalRecord
 from multilang.services.lexical_grounding import LexicalGroundingService
-
+from multilang.services.lexical_lookup import LexicalRecord
 
 PRIVATE_SENTENCE = "El jardín secreto guarda una llave brillante"
 
@@ -65,7 +65,8 @@ def record(term: str) -> LexicalRecord:
         term=term,
         display_form=term,
         lemma=term,
-        definitions=[f"a learner definition for {term}"],
+        definitions=["un espacio al aire libre donde se cultivan plantas"],
+        definition_language="es",
         part_of_speech="noun",
         ipa="/x/",
         source="manual",
@@ -142,6 +143,43 @@ def test_highlight_rerun_reuses_completed_items_without_duplicate_rows(tmp_path:
     assert second.reused_existing_items == first.planned_cards
     assert second.newly_planned_candidates == 0
     assert len(LexicalRepository(session).list_candidates(first.report.job_id)) == 1
+
+
+def test_vocabulary_ingestion_keeps_expression_and_reuses_it_on_rerun(tmp_path: Path) -> None:
+    service, session = build_service({"sin embargo": record("sin embargo")})
+    export_path = tmp_path / "words.txt"
+    write_export(export_path, "sin embargo")
+    vocabulary_request = GenerationRequest(language="es", source_type="kindle-highlights", input_file=export_path, highlight_input="vocabulary")
+    try:
+        first = service.execute(vocabulary_request)
+        second = service.execute(vocabulary_request)
+        rows = LexicalRepository(session).list_candidates(first.report.job_id)
+        assert first.extracted_candidates == first.planned_cards == 1
+        assert len(rows) == 1
+        assert rows[0].display_form == "sin embargo"
+        assert "highlight_input=vocabulary" in rows[0].provenance.notes
+        assert second.reused_existing_items == 1
+        assert second.newly_planned_candidates == 0
+    finally:
+        session.close()
+
+
+@pytest.mark.parametrize("first_mode,second_mode", [("text", "vocabulary"), ("vocabulary", "text")])
+def test_resume_cannot_switch_highlight_input_mode(tmp_path: Path, first_mode: str, second_mode: str) -> None:
+    service, session = build_service({"jardín": record("jardín")})
+    export_path = tmp_path / "words.txt"
+    write_export(export_path, "jardín")
+    first_request = GenerationRequest(language="es", source_type="kindle-highlights", input_file=export_path, highlight_input=first_mode)
+    try:
+        first = service.execute(first_request)
+        manifest = HighlightImportRepository(session).get_manifest(first.report.job_id)
+        resumed = GenerationRequest(language="es", source_type="kindle-highlights", input_file=export_path,
+                                    highlight_input=second_mode, resume_job_id=first.report.job_id)
+        with pytest.raises(ValueError, match="highlight input mode"):
+            service.execute(resumed)
+        assert HighlightImportRepository(session).get_manifest(first.report.job_id) == manifest
+    finally:
+        session.close()
 
 
 def _korean_fingerprint() -> KoreanAnalyzerFingerprint:

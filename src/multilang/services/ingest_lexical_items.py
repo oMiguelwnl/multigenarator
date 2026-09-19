@@ -5,7 +5,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 from hashlib import sha256
 
-from multilang.domain.highlights import HighlightImportManifest
+from multilang.domain.highlights import HighlightImportManifest, HighlightInputMode
 from multilang.domain.jobs import GenerationRequest, JobStage, SupportedLanguage
 from multilang.domain.lexicon import GroundingStatus, LexicalCardCandidate
 from multilang.repositories.highlight_import_repository import HighlightImportRepository
@@ -90,11 +90,18 @@ class IngestLexicalItemsService:
             raise ValueError("kindle-highlights requests require an input file")
         if self.highlight_import_repo is None:
             raise ValueError("kindle-highlights requests require a highlight import repository")
+        if request.resume_job_id:
+            existing = self.repository.get_job(request.resume_job_id)
+            if existing is not None:
+                was_vocabulary = existing.source_fingerprint.startswith("highlight-vocabulary-v1:")
+                if was_vocabulary != (request.highlight_input is HighlightInputMode.VOCABULARY):
+                    raise ValueError("cannot change highlight input mode when resuming a job")
 
         parsed = parse_kindle_highlight_export(request.input_file)
         extraction = extract_highlight_candidates(
             parsed.highlights,
             language=request.language,
+            input_mode=request.highlight_input,
             korean_resolver=(
                 self.grounding_service
                 if request.language is SupportedLanguage.KO
@@ -167,6 +174,7 @@ class IngestLexicalItemsService:
                 update={
                     "notes": [
                         *grounded.provenance.notes,
+                        *(["highlight_input=vocabulary"] if request.highlight_input is HighlightInputMode.VOCABULARY else []),
                         f"first_highlight_id={highlight_candidate.first_highlight_id}",
                         f"source_content_hash={highlight_candidate.source_content_hash}",
                         f"first_source_index={highlight_candidate.first_source_index}",
