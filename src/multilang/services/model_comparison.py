@@ -22,7 +22,12 @@ from pydantic import BaseModel, ConfigDict, Field, model_validator
 
 from multilang.domain.jobs import SupportedLanguage
 from multilang.domain.lexical_identity import canonical_sha256
-from multilang.services.contextual_morphology import ContextualAnalysis, sentence_hash
+from multilang.services.contextual_morphology import (
+    ContextualAnalysis,
+    contextual_model_fingerprint,
+    sentence_hash,
+)
+from multilang.services.vocabulary.diagnostics import diagnose_observation
 from multilang.services.vocabulary_sources import CorpusSentence
 
 ModelProfile = Literal["fast", "balanced", "accurate"]
@@ -231,7 +236,9 @@ def _read_bounded_worker_output(
                 kind, descriptor = key.data
                 if kind == "input":
                     try:
-                        written = os.write(descriptor, encoded[input_position : input_position + 65536])
+                        written = os.write(
+                            descriptor, encoded[input_position : input_position + 65536]
+                        )
                     except BlockingIOError:
                         continue
                     except BrokenPipeError:
@@ -394,6 +401,7 @@ def _observation_evidence(path: Path, *, dataset: ModelComparisonDataset, finger
     references = []
     missing_fields: Counter[str] = Counter()
     different_values: Counter[str] = Counter()
+    alignment: Counter[str] = Counter()
     with path.open("rb") as handle:
         for line_number, line in enumerate(handle, 1):
             if len(line) > _MAX_OBSERVATION_LINE_BYTES:
@@ -411,17 +419,11 @@ def _observation_evidence(path: Path, *, dataset: ModelComparisonDataset, finger
                 or analysis.model_fingerprint != fingerprint
             ):
                 raise ValueError("observation identity does not match comparison request")
-            predicted = {(token.start, token.end): token for token in analysis.tokens}
-            for token in reference.tokens:
-                if token.start is None or token.end is None:
-                    continue
-                predicted_token = predicted.get((token.start, token.end))
-                features = dict(predicted_token.features) if predicted_token is not None else {}
-                for name, value in token.features.items():
-                    if name not in features:
-                        missing_fields[name] += 1
-                    elif features[name] != value:
-                        different_values[name] += 1
+            diagnostics = diagnose_observation(reference, analysis)["feature_diagnostics"]
+            missing_fields.update(diagnostics["missing_fields"])
+            different_values.update(diagnostics["different_values"])
+            for name in ("unaligned_tokens", "unaligned_reference_tokens"):
+                alignment[name] += diagnostics[name]
             references.append(reference.model_dump(mode="json"))
     if not references:
         raise ValueError("comparison observations are empty")
@@ -429,8 +431,10 @@ def _observation_evidence(path: Path, *, dataset: ModelComparisonDataset, finger
         canonical_sha256(references),
         len(references),
         {
+            "schema_version": 2,
             "missing_fields": dict(sorted(missing_fields.items())),
             "different_values": dict(sorted(different_values.items())),
+            **dict(alignment),
         },
     )
 
@@ -452,7 +456,7 @@ def _completed_run(
         or status.get("language") != dataset.language.value
         or status.get("available") is not True
         or not isinstance(fingerprint, str)
-        or fingerprint != canonical_sha256({"policy": "contextual-morphology-2", **status})
+        or fingerprint != contextual_model_fingerprint(status)
     ):
         raise ValueError("worker model status or fingerprint mismatch")
     artifact = _plain_path(artifact, label="worker artifact")

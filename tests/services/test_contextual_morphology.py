@@ -331,7 +331,7 @@ def test_exact_vendor_mwt_partition_preserves_source_spans(monkeypatch):
     output = mwt_document("ao", [("a", "a", "ADP", 4, 5), ("o", "o", "DET", 5, 6)])
     result = fake_service(monkeypatch, output).analyze("pt", "Vou ao mercado")
     assert result.status == "complete"
-    assert result.analyzer_version == "contextual-morphology-2"
+    assert result.analyzer_version == "contextual-morphology-4"
     assert [(t.text, t.start, t.end) for t in result.tokens] == [
         ("Vou", 0, 3),
         ("a", 4, 5),
@@ -393,7 +393,7 @@ def japanese_service(monkeypatch, vendor_tokens):
     service = module.LocalContextualMorphologyService(model_root=Path("/unused"))
     status = {"available": True, "backend": "fugashi", "manifest_sha256": "a" * 64}
     monkeypatch.setattr(module, "model_status", lambda *a: status)
-    fingerprint = module.canonical_sha256({"policy": "contextual-morphology-2", **status})
+    fingerprint = module.contextual_model_fingerprint(status)
     service._pipelines[("ja", fingerprint)] = lambda text: vendor_tokens
     return service
 
@@ -503,9 +503,11 @@ def test_korean_compound_keeps_source_morphemes_and_other_lexical_groups(monkeyp
         return KoreanMorphemeEvidence(form=form, lemma=lemma, pos=pos, raw_pos=pos, oov=False)
 
     words = (
-        NS(surface_form="학교", morphemes=(morpheme("학교", "학교", "NNG"),)),
+        NS(surface_form="학교", start=0, end=2, morphemes=(morpheme("학교", "학교", "NNG"),)),
         NS(
             surface_form="공부한다",
+            start=3,
+            end=7,
             morphemes=(
                 morpheme("공부", "공부", "NNG"),
                 morpheme("하", "하다", "XSV"),
@@ -517,9 +519,11 @@ def test_korean_compound_keeps_source_morphemes_and_other_lexical_groups(monkeyp
     status = {"available": True, "backend": "kiwi", "manifest_sha256": "a" * 64}
     monkeypatch.setattr(module, "model_status", lambda *a: status)
     service = module.LocalContextualMorphologyService(model_root=Path("/unused"))
-    fingerprint = module.canonical_sha256({"policy": "contextual-morphology-2", **status})
+    fingerprint = module.contextual_model_fingerprint(status)
     service._pipelines[("ko", fingerprint)] = NS(
-        analyze=lambda text: NS(passing=True, alternatives=(NS(words=words), NS(words=words)))
+        analyze=lambda text: NS(
+            passing=True, alternatives=(NS(surface_spans=words), NS(surface_spans=words))
+        )
     )
     result = service.analyze("ko", "학교 공부한다")
     assert result.status == "inconclusive"
@@ -555,14 +559,16 @@ def test_korean_compound_branch_enforces_span_limit_before_next_projection(monke
     words = tuple(
         NS(
             surface_form=surface,
+            start=position * 2,
+            end=position * 2 + 1,
             morphemes=(
-                NS(form=surface, lemma=surface, pos="NNG", raw_pos="NNG"),
-                NS(form="하", lemma="하다", pos="XSV", raw_pos="XSV"),
+                NS(form=surface, lemma=surface, pos="NNG", raw_pos="NNG", oov=False),
+                NS(form="하", lemma="하다", pos="XSV", raw_pos="XSV", oov=False),
             ),
         )
-        for surface in ("가", "나")
+        for position, surface in enumerate(("가", "나"))
     )
-    pipeline = NS(analyze=lambda text: NS(passing=True, alternatives=(NS(words=words),)))
+    pipeline = NS(analyze=lambda text: NS(passing=True, alternatives=(NS(surface_spans=words),)))
     with pytest.raises(ValueError, match="token limit"):
         module.LocalContextualMorphologyService._kiwi(pipeline, "가 나")
 
@@ -571,6 +577,6 @@ def test_korean_constituent_limit_applies_before_blocker_construction():
     module = api()
     morphemes = tuple(NS(form="가", lemma="가", pos="NNG", raw_pos="NNG") for _ in range(129))
     words = (NS(surface_form="가", morphemes=morphemes),)
-    pipeline = NS(analyze=lambda text: NS(passing=True, alternatives=(NS(words=words),)))
+    pipeline = NS(analyze=lambda text: NS(passing=True, alternatives=(NS(surface_spans=words),)))
     with pytest.raises(ValueError, match="constituent count"):
         module.LocalContextualMorphologyService._kiwi(pipeline, "가")

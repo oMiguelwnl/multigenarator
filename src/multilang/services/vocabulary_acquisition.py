@@ -32,9 +32,14 @@ def _digest(path: Path) -> str:
 
 def _catalog_source(language: str, kind: str, index: int) -> tuple[dict, str]:
     catalog = source_catalog(language)
-    if kind in {"corpus-test", "corpus-train"}:
+    if kind in {"corpus-test", "corpus-train", "corpus-dev"}:
         source = catalog["corpus"]
-        urls = source["test_urls" if kind == "corpus-test" else "train_urls"]
+        if kind == "corpus-dev":
+            urls = source.get("dev_urls")
+            if not isinstance(urls, list) or not urls:
+                raise ValueError("no catalogued development corpus for this language")
+        else:
+            urls = source["test_urls" if kind == "corpus-test" else "train_urls"]
     elif kind == "dictionary":
         source = catalog["lexical_sources"][0]
         urls = [source["url"]]

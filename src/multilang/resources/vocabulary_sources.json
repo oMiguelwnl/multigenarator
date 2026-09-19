@@ -509,6 +509,9 @@
         "test_urls": [
           "https://raw.githubusercontent.com/UniversalDependencies/UD_German-GSD/r2.16/de_gsd-ud-test.conllu"
         ],
+        "dev_urls": [
+          "https://raw.githubusercontent.com/UniversalDependencies/UD_German-GSD/r2.16/de_gsd-ud-dev.conllu"
+        ],
         "readme_url": "https://raw.githubusercontent.com/UniversalDependencies/UD_German-GSD/r2.16/README.md",
         "license": "CC BY-SA 4.0",
         "license_urls": [
@@ -856,6 +859,9 @@
         ],
         "test_urls": [
           "https://raw.githubusercontent.com/UniversalDependencies/UD_Turkish-IMST/r2.16/tr_imst-ud-test.conllu"
+        ],
+        "dev_urls": [
+          "https://raw.githubusercontent.com/UniversalDependencies/UD_Turkish-IMST/r2.16/tr_imst-ud-dev.conllu"
         ],
         "readme_url": "https://raw.githubusercontent.com/UniversalDependencies/UD_Turkish-IMST/r2.16/README.md",
         "license": "CC BY-NC-SA 4.0",

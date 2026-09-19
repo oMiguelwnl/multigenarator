@@ -2,11 +2,11 @@
 
 from __future__ import annotations
 
+import json
+import unicodedata
 from enum import Enum
 from hashlib import sha256
-import json
 from typing import Any, Final, Literal, Self
-import unicodedata
 from urllib.parse import parse_qs, urlparse
 
 from pydantic import (
@@ -20,7 +20,7 @@ from pydantic import (
 KOREAN_LANGUAGE_CODE: Final = "ko"
 KOREAN_PROVIDER_LOCALE: Final = "ko-KR"
 KOREAN_LANGUAGE_VARIANT: Final = "modern-standard-seoul"
-KOREAN_MORPHOLOGY_POLICY_VERSION: Final = "kiwi-top2-consensus-v1"
+KOREAN_MORPHOLOGY_POLICY_VERSION: Final = "kiwi-top2-consensus-v3"
 KOREAN_LEXICON_CONCEPT_PREFIX: Final = "lexicon:"
 KOREAN_TEXT_QUALITY_POLICY_VERSION: Final = "korean-adaptive-text-quality-v1"
 KOREAN_FOUNDATION_DEFAULT_SOURCE: Final = "current-candidate"
@@ -622,7 +622,9 @@ class KoreanAnalyzerFingerprint(_FrozenContract):
     z_coda: Literal[False]
     typos: None
     oov_handling: Literal["chr"]
-    policy_version: Literal["kiwi-top2-consensus-v1"]
+    policy_version: Literal[
+        "kiwi-top2-consensus-v1", "kiwi-top2-consensus-v2", "kiwi-top2-consensus-v3"
+    ]
 
     @field_validator("analyzer_package_version", "model_package_version")
     @classmethod
@@ -703,6 +705,27 @@ class KoreanWordAnalysis(_FrozenContract):
         return self
 
 
+class KoreanSurfaceSpan(_FrozenContract):
+    """Nonempty vendor-backed surface, including nonlexical morphology groups."""
+
+    surface_form: str = Field(min_length=1, max_length=64000)
+    start: int = Field(ge=0, strict=True)
+    end: int = Field(gt=0, strict=True)
+    word_position: int = Field(ge=0, strict=True)
+    morphemes: tuple[KoreanMorphemeEvidence, ...] = Field(min_length=1, max_length=128)
+
+    @field_validator("surface_form")
+    @classmethod
+    def surface_must_be_canonical(cls, value: str) -> str:
+        return _require_canonical_text(value, field_name="surface form")
+
+    @model_validator(mode="after")
+    def surface_must_match_span_length(self) -> Self:
+        if self.end <= self.start or self.end - self.start != len(self.surface_form):
+            raise ValueError("surface span must address its exact nonempty text")
+        return self
+
+
 class KoreanAnalysisAlternative(_FrozenContract):
     """One ranked Kiwi analysis projected into project-owned word groups."""
 
@@ -710,15 +733,45 @@ class KoreanAnalysisAlternative(_FrozenContract):
     score: float = Field(allow_inf_nan=False)
     words: tuple[KoreanWordAnalysis, ...] = Field(min_length=1)
     has_oov: bool
+    surface_spans: tuple[KoreanSurfaceSpan, ...] = Field(default=(), max_length=16384)
 
     @model_validator(mode="after")
     def evidence_must_be_consistent(self) -> Self:
         positions = tuple(word.word_position for word in self.words)
         if positions != tuple(sorted(set(positions))):
             raise ValueError("word positions must be unique and ordered")
+        if self.surface_spans:
+            spans_by_word: dict[int, list[KoreanSurfaceSpan]] = {}
+            previous_end, previous_word = 0, -1
+            for span in self.surface_spans:
+                if span.start < previous_end or span.word_position < previous_word:
+                    raise ValueError("surface spans must be disjoint and source ordered")
+                group = spans_by_word.setdefault(span.word_position, [])
+                if group and span.start != group[-1].end:
+                    raise ValueError("one source group cannot conceal missing text")
+                group.append(span)
+                previous_end, previous_word = span.end, span.word_position
+            lexical_positions = tuple(
+                position
+                for position, spans in spans_by_word.items()
+                if any(
+                    morpheme.pos in KOREAN_LEXICAL_POS_TAGS
+                    for span in spans
+                    for morpheme in span.morphemes
+                )
+            )
+            if positions != lexical_positions:
+                raise ValueError("surface evidence must retain every lexical word group")
+            for word in self.words:
+                spans = spans_by_word[word.word_position]
+                if (
+                    word.surface_form != "".join(span.surface_form for span in spans)
+                    or word.morphemes != tuple(m for span in spans for m in span.morphemes)
+                ):
+                    raise ValueError("surface and lexical evidence must describe the same group")
         observed_oov = any(
             morpheme.oov
-            for word in self.words
+            for word in (*self.words, *self.surface_spans)
             for morpheme in word.morphemes
         )
         if self.has_oov is not observed_oov:
@@ -1300,6 +1353,7 @@ __all__ = [
     "KoreanMorphemeEvidence",
     "KoreanMorphologyResult",
     "KoreanMorphologyStatus",
+    "KoreanSurfaceSpan",
     "KoreanPedagogicalJamoMapping",
     "KoreanPronunciationEvidence",
     "KoreanReasonCode",

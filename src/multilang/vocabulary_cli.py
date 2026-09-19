@@ -113,6 +113,14 @@ def create_vocabulary_app(*, settings: Settings | None = None) -> typer.Typer:
         )
         _print(compare_models(inputs, output=output))
 
+    @cli.command("diagnose")
+    @_guard
+    def diagnose_command(report: Path, manifest_sha256: str, output: Path):
+        """Explain a local evaluation or comparison without loading models."""
+        from multilang.services.vocabulary.diagnostic_reports import diagnose_report
+
+        _print(diagnose_report(report, manifest_sha256=manifest_sha256, output=output))
+
     @cli.command("prepare-model")
     @_guard
     def model(

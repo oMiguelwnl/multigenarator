@@ -19,48 +19,24 @@ from pydantic import Field, model_validator
 
 from multilang.domain.content import ContentRequest, FrozenContentModel, TargetMatchEvidence
 from multilang.domain.lexical_identity import canonical_sha256
+from multilang.services.japanese_pos import unidic_to_upos
+from multilang.services.korean_pos import is_kiwi_punctuation, kiwi_to_upos
 from multilang.services.language_models import load_stanza_pipeline, model_spec, model_status
 
 _UPOS = frozenset(
     "ADJ ADP ADV AUX CCONJ DET INTJ NOUN NUM PART PRON PROPN PUNCT SCONJ SYM VERB X".split()
 )
-_ANALYZER_VERSION = "contextual-morphology-2"
+_ANALYZER_VERSION = "contextual-morphology-4"
 _MAX_TOKENS = 16384
-_JAPANESE_POS = {
-    "名詞": "NOUN",
-    "代名詞": "PRON",
-    "動詞": "VERB",
-    "形容詞": "ADJ",
-    "形状詞": "ADJ",
-    "副詞": "ADV",
-    "助詞": "PART",
-    "助動詞": "AUX",
-    "連体詞": "DET",
-    "接続詞": "CCONJ",
-    "感動詞": "INTJ",
-    "補助記号": "PUNCT",
-    "記号": "SYM",
-}
-_KOREAN_POS = {
-    "NNG": "NOUN",
-    "NNP": "PROPN",
-    "NNB": "NOUN",
-    "NR": "NUM",
-    "NP": "PRON",
-    "VV": "VERB",
-    "VA": "ADJ",
-    "VX": "AUX",
-    "VCP": "AUX",
-    "VCN": "ADJ",
-    "MM": "DET",
-    "MAG": "ADV",
-    "MAJ": "CCONJ",
-    "IC": "INTJ",
-}
 
 
 def sentence_hash(text: str) -> str:
     return hashlib.sha256(text.encode("utf-8")).hexdigest()
+
+
+def contextual_model_fingerprint(status: Mapping[str, object]) -> str:
+    """Bind model metadata to the current interpretation of its predictions."""
+    return canonical_sha256({**status, "policy": _ANALYZER_VERSION})
 
 
 def _text(value: object) -> str:
@@ -199,6 +175,20 @@ def _features(value: object) -> tuple[tuple[str, str], ...]:
     return tuple(sorted(fields))
 
 
+def _complete_features(language, surface, pos, features):
+    # Russian UD defines NumForm=Digit for numerals written with digits.
+    # This source property needs no inferred lemma, case, gender or sense.
+    # https://universaldependencies.org/ru/feat/NumForm.html
+    if (
+        language == "ru"
+        and pos in {"NUM", "ADJ"}
+        and surface.isdecimal()
+        and not any(key == "NumForm" for key, _ in features)
+    ):
+        return tuple(sorted((*features, ("NumForm", "Digit"))))
+    return features
+
+
 def _exact_span(text, start, end, surface):
     if (
         type(start) is not int
@@ -287,7 +277,7 @@ class LocalContextualMorphologyService:
                 status = model_status(language, self.model_root, **profile_kwargs)
                 if not status.get("available"):
                     raise RuntimeError("model unavailable")
-                fingerprint = canonical_sha256({"policy": _ANALYZER_VERSION, **status})
+                fingerprint = contextual_model_fingerprint(status)
                 key = (language, fingerprint)
                 if key not in self._pipelines:
                     if spec.backend == "stanza":
@@ -319,7 +309,7 @@ class LocalContextualMorphologyService:
                 )
             try:
                 if spec.backend == "stanza":
-                    rows, blocked, complete = self._stanza(pipeline, text)
+                    rows, blocked, complete = self._stanza(pipeline, text, language=language)
                 elif spec.backend == "kiwi":
                     rows, blocked, complete = self._kiwi(pipeline, text)
                 else:
@@ -390,7 +380,7 @@ class LocalContextualMorphologyService:
                 )
 
     @staticmethod
-    def _stanza(pipeline, text):
+    def _stanza(pipeline, text, *, language=None):
         document = pipeline(text)
         rows, blocked, total_words = [], [], 0
         for sentence in document.sentences:
@@ -433,7 +423,9 @@ class LocalContextualMorphologyService:
                             text=word.text,
                             lemma=word.lemma,
                             pos=word.upos,
-                            features=_features(word.feats),
+                            features=_complete_features(
+                                language, word.text, word.upos, _features(word.feats)
+                            ),
                             start=start,
                             end=end,
                         )
@@ -481,11 +473,7 @@ class LocalContextualMorphologyService:
             position += len(whitespace)
             _exact_span(text, position, position + len(token.surface), token.surface)
             feature = token.feature
-            pos = _JAPANESE_POS.get(feature.pos1, "X")
-            if feature.pos1 == "名詞" and feature.pos2 == "固有名詞":
-                pos = "PROPN"
-            elif feature.pos1 == "名詞" and feature.pos2 == "数詞":
-                pos = "NUM"
+            pos = unidic_to_upos(feature.pos1, feature.pos2, feature.lemma)
             features = tuple(
                 (name, getattr(feature, name))
                 for name in feature._fields
@@ -534,48 +522,83 @@ class LocalContextualMorphologyService:
 
     @staticmethod
     def _kiwi(pipeline, text):
-        from multilang.domain.korean import KOREAN_LEXICAL_POS_TAGS
+        from multilang.domain.korean import KOREAN_LEXICAL_POS_TAGS, KoreanMorphologyStatus
 
         result = pipeline.analyze(text)
-        if not result.passing:
+        if not result.passing and result.status != KoreanMorphologyStatus.OOV:
             raise ValueError("Kiwi unavailable or incomplete")
         alternatives = result.alternatives
-        complete = all(item.words == alternatives[0].words for item in alternatives[1:])
-        rows, blocked, position = [], [], 0
-        for word in alternatives[0].words:
+        if not alternatives or any(not getattr(item, "surface_spans", ()) for item in alternatives):
+            raise ValueError("Kiwi analysis requires proven surface spans")
+        complete = result.passing and all(
+            item.surface_spans == alternatives[0].surface_spans for item in alternatives[1:]
+        )
+        unknown_spans = []
+        for alternative in alternatives:
+            if len(alternative.surface_spans) > _MAX_TOKENS:
+                raise ValueError("token limit")
+            for span in alternative.surface_spans:
+                if not 1 <= len(span.morphemes) <= 128:
+                    raise ValueError("invalid constituent count")
+                if any(m.oov for m in span.morphemes):
+                    _exact_span(text, span.start, span.end, span.surface_form)
+                    unknown_spans.append((span.start, span.end))
+        unknown_spans.sort()
+        unknown_index = 0
+        rows, blocked = [], []
+        for word in alternatives[0].surface_spans:
             # Check before both branches: compound groups continue early and
             # must not allocate unbounded constituent/blocker projections.
             if len(rows) + len(blocked) >= _MAX_TOKENS:
                 raise ValueError("token limit")
             if not 1 <= len(word.morphemes) <= 128:
                 raise ValueError("invalid constituent count")
-            # Existing Kiwi projection already validates raw vendor spans. Its
-            # exact grouped surface is aligned sequentially; no substring search,
-            # suffix splitting, lemma matching or whitespace-derived identity.
-            while position < len(text) and text[position].isspace():
-                position += 1
-            if text[position : position + len(word.surface_form)] != word.surface_form:
-                raise ValueError("unprojected Kiwi source text")
+            _exact_span(text, word.start, word.end, word.surface_form)
+            constituents = tuple(
+                ContextualConstituent(text=m.form, lemma=m.lemma, pos=m.raw_pos)
+                for m in word.morphemes
+            )
             lexical = [item for item in word.morphemes if item.pos in KOREAN_LEXICAL_POS_TAGS]
-            if len(lexical) != 1:
+            punctuation = len(word.morphemes) == 1 and (
+                word.morphemes[0].form == word.surface_form
+                and is_kiwi_punctuation(word.morphemes[0].pos, word.surface_form)
+            )
+            # A standalone number/postposition can use its exact native lemma.
+            # This does not add a lexical head or collapse a multi-morpheme group.
+            singleton = (
+                word.morphemes[0]
+                if len(word.morphemes) == 1
+                and word.morphemes[0].form == word.surface_form
+                and kiwi_to_upos(word.morphemes[0].pos) != "X"
+                else None
+            )
+            resolved = lexical[0] if len(lexical) == 1 else singleton
+            # Top-2 OOV evidence must not disappear when rank 1 recognizes the
+            # same source. Retain the proven rank-1 span as a blocked parent.
+            while (
+                unknown_index < len(unknown_spans) and unknown_spans[unknown_index][1] <= word.start
+            ):
+                unknown_index += 1
+            oov = unknown_index < len(unknown_spans) and unknown_spans[unknown_index][0] < word.end
+            if oov or (resolved is None and not punctuation):
                 blocked.append(
                     _blocked(
                         word.surface_form,
-                        position,
-                        position + len(word.surface_form),
-                        "compound_lexical_projection",
-                        tuple(
-                            ContextualConstituent(text=m.form, lemma=m.lemma, pos=m.raw_pos)
-                            for m in word.morphemes
+                        word.start,
+                        word.end,
+                        "unknown_lexical_token"
+                        if oov
+                        else (
+                            "compound_lexical_projection" if lexical else "unresolved_morphology"
                         ),
+                        constituents,
                     )
                 )
-                position += len(word.surface_form)
                 continue
             row = dict(
                 text=word.surface_form,
-                lemma=lexical[0].lemma,
-                pos=_KOREAN_POS.get(lexical[0].pos, "X"),
+                lemma=word.surface_form if punctuation else resolved.lemma,
+                pos="PUNCT" if punctuation else kiwi_to_upos(resolved.pos),
                 features=(
                     (
                         "Morphemes",
@@ -587,8 +610,8 @@ class LocalContextualMorphologyService:
                         ),
                     ),
                 ),
-                start=position,
-                end=position + len(word.surface_form),
+                start=word.start,
+                end=word.end,
             )
             if _resolved_row(row):
                 rows.append(row)
@@ -596,16 +619,12 @@ class LocalContextualMorphologyService:
                 blocked.append(
                     _blocked(
                         word.surface_form,
-                        position,
-                        position + len(word.surface_form),
+                        word.start,
+                        word.end,
                         "unresolved_morphology",
-                        tuple(
-                            ContextualConstituent(text=m.form, lemma=m.lemma, pos=m.raw_pos)
-                            for m in word.morphemes
-                        ),
+                        constituents,
                     )
                 )
-            position += len(word.surface_form)
             if len(rows) + len(blocked) > _MAX_TOKENS:
                 raise ValueError("token limit")
         return rows, blocked, complete and not blocked

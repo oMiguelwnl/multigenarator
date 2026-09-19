@@ -152,7 +152,7 @@ def _completed_worker(
             "qualified": False,
         }
         fingerprint = canonical_sha256(
-            {"policy": "contextual-morphology-2", **status}
+            {"policy": "contextual-morphology-4", **status}
         )
         analyzer = _ProfileAnalyzer(
             fingerprint,
@@ -684,7 +684,7 @@ def test_fixed_worker_passes_profile_and_cpu_bounds_to_local_analyzer(tmp_path, 
     assert calls[1][0] == "evaluate"
     assert result["status"] == "completed"
     assert result["model_fingerprint"] == canonical_sha256(
-        {"policy": "contextual-morphology-2", **status}
+        {"policy": "contextual-morphology-4", **status}
     )
 
 

@@ -2,15 +2,14 @@
 
 from __future__ import annotations
 
-from importlib import import_module, util
 import os
 import subprocess
 import sys
-from types import ModuleType
 import unicodedata
+from importlib import import_module, util
+from types import ModuleType
 
 import pytest
-
 
 _OOV_TEXT = "알리오올리오가 진짜 맛있는 집"
 _ANALYZE_OPTIONS: dict[str, object] = {
@@ -89,7 +88,7 @@ def test_fingerprint_records_every_locked_constructor_and_analysis_option() -> N
         "z_coda": False,
         "typos": None,
         "oov_handling": "chr",
-        "policy_version": "kiwi-top2-consensus-v1",
+        "policy_version": "kiwi-top2-consensus-v3",
     }
 
 

@@ -2,10 +2,12 @@
 
 from __future__ import annotations
 
+import math
+import unicodedata
 from collections import defaultdict
 from collections.abc import Callable, Iterable
-from importlib.metadata import PackageNotFoundError, version as distribution_version
-import math
+from importlib.metadata import PackageNotFoundError
+from importlib.metadata import version as distribution_version
 from threading import Lock
 from typing import Final
 
@@ -22,15 +24,19 @@ from multilang.domain.korean import (
     KoreanMorphologyStatus,
     KoreanReasonCode,
     KoreanSignatureItem,
+    KoreanSurfaceSpan,
     KoreanTextError,
     KoreanWordAnalysis,
     canonicalize_korean,
 )
+from multilang.services.korean_pos import is_kiwi_punctuation
 
 _ANALYZER_PACKAGE: Final = "kiwipiepy"
 _MODEL_PACKAGE: Final = "kiwipiepy-model"
 _EXPECTED_ANALYZER_VERSION: Final = "0.23.2"
 _EXPECTED_MODEL_VERSION: Final = "0.23.0"
+_PUNCTUATION_POS: Final = frozenset({"SF", "SP", "SS", "SSO", "SSC", "SE", "SO", "SW"})
+_MAX_SURFACE_SPANS: Final = 16384
 
 _ANALYSIS_OPTIONS: Final[dict[str, object]] = {
     "top_n": 2,
@@ -358,27 +364,29 @@ def _project_alternative(
     rank: int,
     canonical_text: str,
 ) -> KoreanAnalysisAlternative:
-    evidence_by_word: dict[int, list[KoreanMorphemeEvidence]] = defaultdict(list)
-    spans_by_word: dict[int, list[tuple[int, int]]] = defaultdict(list)
+    groups: dict[tuple[int, int], list[tuple[KoreanMorphemeEvidence, int, int]]] = defaultdict(list)
 
     for token in tokens:
         form = getattr(token, "form", None)
         lemma = getattr(token, "lemma", None)
         raw_pos = getattr(token, "tag", None)
         word_position = getattr(token, "word_position", None)
+        sentence_position = getattr(token, "sent_position", None)
         oov = getattr(token, "oov", None)
         start = getattr(token, "start", None)
         length = getattr(token, "len", None)
         if (
             not isinstance(form, str)
             or not isinstance(lemma, str)
-            or not isinstance(word_position, int)
+            or type(word_position) is not int
             or word_position < 0
+            or type(sentence_position) is not int
+            or sentence_position < 0
             or not isinstance(oov, bool)
-            or not isinstance(start, int)
-            or not isinstance(length, int)
+            or type(start) is not int
+            or type(length) is not int
             or start < 0
-            or length <= 0
+            or length < 0
             or start + length > len(canonical_text)
         ):
             raise _ProjectionError("malformed_token")
@@ -394,12 +402,31 @@ def _project_alternative(
             )
         except (KoreanTextError, ValueError) as exc:
             raise _ProjectionError("malformed_token") from exc
-        evidence_by_word[word_position].append(evidence)
-        spans_by_word[word_position].append((start, start + length))
+        groups[(sentence_position, word_position)].append((evidence, start, start + length))
 
     words: list[KoreanWordAnalysis] = []
-    for word_position in sorted(evidence_by_word):
-        morphemes = tuple(evidence_by_word[word_position])
+    surface_spans: list[KoreanSurfaceSpan] = []
+    bounded_groups = sorted(
+        ((*_source_bounds(group), key, group) for key, group in groups.items()),
+        key=lambda item: item[0],
+    )
+    previous_end = 0
+    for word_position, (surface_start, surface_end, _key, group) in enumerate(bounded_groups):
+        remaining_spans = _MAX_SURFACE_SPANS - len(surface_spans)
+        if remaining_spans <= 0:
+            raise _ProjectionError("surface_span_limit")
+        if surface_start < previous_end:
+            raise _ProjectionError("overlapping_word_groups")
+        previous_end = surface_end
+        morphemes = tuple(item for item, _start, _end in group)
+        surface_spans.extend(
+            _project_surface_spans(
+                group,
+                word_position=word_position,
+                canonical_text=canonical_text,
+                max_spans=remaining_spans,
+            )
+        )
         signature = tuple(
             KoreanSignatureItem(form=item.form, pos=item.pos)
             for item in morphemes
@@ -407,9 +434,6 @@ def _project_alternative(
         )
         if not signature:
             continue
-        spans = spans_by_word[word_position]
-        surface_start = min(start for start, _end in spans)
-        surface_end = max(end for _start, end in spans)
         try:
             words.append(
                 KoreanWordAnalysis(
@@ -427,7 +451,7 @@ def _project_alternative(
     observed_oov = any(bool(getattr(token, "oov", False)) for token in tokens)
     projected_oov = any(
         morpheme.oov
-        for word in words
+        for word in surface_spans
         for morpheme in word.morphemes
     )
     if observed_oov != projected_oov:
@@ -438,9 +462,95 @@ def _project_alternative(
             score=score,
             words=tuple(words),
             has_oov=projected_oov,
+            surface_spans=tuple(surface_spans),
         )
     except ValueError as exc:
         raise _ProjectionError("malformed_alternative") from exc
+
+
+def _source_bounds(
+    group: list[tuple[KoreanMorphemeEvidence, int, int]],
+) -> tuple[int, int]:
+    """Allow overlapping/zero-width morphology, never an invented source range."""
+    positive = sorted((start, end) for _item, start, end in group if start < end)
+    if not positive:
+        raise _ProjectionError("empty_source_group")
+    lower, upper = positive[0]
+    for start, end in positive[1:]:
+        if start > upper:
+            raise _ProjectionError("uncovered_group_source")
+        upper = max(upper, end)
+    if any(not lower <= start <= upper for _item, start, end in group if start == end):
+        raise _ProjectionError("unanchored_zero_width_morpheme")
+    return lower, upper
+
+
+def _project_surface_spans(
+    group: list[tuple[KoreanMorphemeEvidence, int, int]],
+    *,
+    word_position: int,
+    canonical_text: str,
+    max_spans: int = _MAX_SURFACE_SPANS,
+) -> tuple[KoreanSurfaceSpan, ...]:
+    """Separate only exact, non-overlapping vendor punctuation boundaries."""
+    # Kiwi's lexical spans may overlap or arrive out of source order. A single
+    # ordered sweep finds overlaps without rescanning the group per punctuation.
+    positive = sorted(
+        (start, end, index)
+        for index, (_item, start, end) in enumerate(group)
+        if start < end
+    )
+    overlapping: set[int] = set()
+    previous_end = 0
+    for position, (start, end, index) in enumerate(positive):
+        if start < previous_end or (
+            position + 1 < len(positive) and positive[position + 1][0] < end
+        ):
+            overlapping.add(index)
+        previous_end = max(previous_end, end)
+    spans: list[KoreanSurfaceSpan] = []
+    run: list[tuple[KoreanMorphemeEvidence, int, int]] = []
+
+    def retain(items: list[tuple[KoreanMorphemeEvidence, int, int]]) -> None:
+        if not items:
+            return
+        if len(spans) >= max_spans:
+            raise _ProjectionError("surface_span_limit")
+        start, end = _source_bounds(items)
+        try:
+            spans.append(
+                KoreanSurfaceSpan(
+                    surface_form=canonical_text[start:end],
+                    start=start,
+                    end=end,
+                    word_position=word_position,
+                    morphemes=tuple(item for item, _start, _end in items),
+                )
+            )
+        except ValueError as exc:
+            raise _ProjectionError("malformed_surface_span") from exc
+
+    for index, (item, start, end) in enumerate(group):
+        punctuation = False
+        if item.pos in _PUNCTUATION_POS:
+            source = canonical_text[start:end]
+            if not source or source != item.form:
+                raise _ProjectionError("unproven_punctuation_span")
+            punctuation = is_kiwi_punctuation(item.pos, source)
+            if not punctuation and item.pos != "SW" and any(
+                not unicodedata.category(character).startswith("S") for character in source
+            ):
+                raise _ProjectionError("unproven_punctuation_category")
+        if punctuation:
+            if index in overlapping:
+                raise _ProjectionError("overlapping_punctuation_span")
+            retain(run)
+            run = []
+            retain([(item, start, end)])
+        else:
+            run.append((item, start, end))
+    retain(run)
+    return tuple(spans)
 
 
 __all__ = ["KiwiKoreanMorphologyService"]

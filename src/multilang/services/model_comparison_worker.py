@@ -12,7 +12,6 @@ from typing import Literal
 
 from pydantic import BaseModel, ConfigDict, Field
 
-from multilang.domain.lexical_identity import canonical_sha256
 from multilang.services.model_comparison import ModelComparisonDataset, _analysis_outcome
 
 _REASON = re.compile(r"^[a-z][a-z0-9_]{0,63}$")
@@ -50,7 +49,10 @@ def _deny_network(event: str, args: tuple[object, ...]) -> None:
 
 
 def _execute(request: _WorkerRequest) -> dict:
-    from multilang.services.contextual_morphology import LocalContextualMorphologyService
+    from multilang.services.contextual_morphology import (
+        LocalContextualMorphologyService,
+        contextual_model_fingerprint,
+    )
     from multilang.services.language_models import available_model_profiles, model_status
     from multilang.services.vocabulary_evaluation import (
         evaluate_corpus,
@@ -95,15 +97,13 @@ def _execute(request: _WorkerRequest) -> dict:
         equivalent_to = option.get("equivalent_to")
     except (OSError, ValueError):
         equivalent_to = None
-    fingerprint = canonical_sha256({"policy": "contextual-morphology-2", **status})
+    fingerprint = contextual_model_fingerprint(status)
     analyzer = LocalContextualMorphologyService(
         model_root=request.model_root,
         model_profiles={request.dataset.language.value: request.profile},
         threads=request.threads,
     )
-    evaluator = (
-        evaluate_development_corpus if request.dataset.split == "dev" else evaluate_corpus
-    )
+    evaluator = evaluate_development_corpus if request.dataset.split == "dev" else evaluate_corpus
     evaluation = evaluator(
         language=request.dataset.language.value,
         corpus=request.dataset.corpus,
