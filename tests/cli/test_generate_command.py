@@ -259,7 +259,7 @@ def test_generate_frequency_resume_accepts_max_items() -> None:
             "--rate-limit-per-minute",
             "30",
             "--concurrency",
-            "2",
+            "1",
         ],
     )
 
@@ -268,7 +268,7 @@ def test_generate_frequency_resume_accepts_max_items() -> None:
     assert captured[0].resume_job_id == "job-123"
     assert captured[0].max_items == 25
     assert captured[0].rate_limit_per_minute == 30
-    assert captured[0].concurrency == 2
+    assert captured[0].concurrency == 1
 
 
 
@@ -910,3 +910,17 @@ def test_export_greek_phonemes_command_writes_limited_deck(tmp_path: Path, monke
     assert output_path.exists()
     assert f"artifact_path={output_path}" in result.output
     assert "card_count=2" in result.output
+
+
+def test_generate_rejects_parallel_workers_before_executor_construction() -> None:
+    captured: list[GenerationRequest] = []
+    app = create_app(generate_executor=lambda request: captured.append(request))
+
+    result = runner.invoke(
+        app,
+        ["generate", "--language", "pl", "--source", "frequency", "--concurrency", "2"],
+    )
+
+    assert result.exit_code == 2
+    assert "--concurrency" in result.output
+    assert captured == []

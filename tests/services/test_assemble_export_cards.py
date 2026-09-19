@@ -19,24 +19,6 @@ from multilang.domain.audio import (
     AudioSynthesisStatus,
     NormalizedTtsInput,
 )
-from multilang.domain.jobs import SupportedLanguage
-from multilang.domain.korean import KoreanAnalyzerFingerprint, KoreanLexicalIdentity, KoreanSignatureItem
-from multilang.domain.lexicon import (
-    DefinitionRecord,
-    GroundingStatus,
-    KoreanFrequencyLexicalEvidence,
-    LexicalCardCandidate,
-    LexicalProvenance,
-)
-from multilang.domain.text_quality import (
-    ConfidenceLabel,
-    KoreanAdaptiveIPlusOneEvidence,
-    ReviewStatus,
-    TextGenerationStatus,
-    TextProvenance,
-    TextQualityRecord,
-    ValidationStatus,
-)
 from multilang.domain.exporting import (
     FREQUENCY_EXPORT_CARD_FIELD_NAMES,
     HIGHLIGHT_EXPORT_CARD_FIELD_NAMES,
@@ -46,13 +28,37 @@ from multilang.domain.exporting import (
     MANUAL_EXPORT_CARD_FIELD_NAMES,
     ExportCardIdentity,
     ExportCardRow,
-    export_field_names_for_rows,
     export_field_names_for_language_and_source,
+    export_field_names_for_rows,
+)
+from multilang.domain.jobs import SupportedLanguage
+from multilang.domain.korean import (
+    KoreanAnalyzerFingerprint,
+    KoreanLexicalIdentity,
+    KoreanSignatureItem,
+)
+from multilang.domain.lexicon import (
+    DefinitionRecord,
+    GroundingStatus,
+    KoreanFrequencyLexicalEvidence,
+    LexicalCardCandidate,
+    LexicalProvenance,
 )
 from multilang.domain.source_profiles import get_source_profile
-from multilang.services.assemble_export_cards import AssembleExportCardsError, AssembleExportCardsService
+from multilang.domain.text_quality import (
+    ConfidenceLabel,
+    KoreanAdaptiveIPlusOneEvidence,
+    ReviewStatus,
+    TextGenerationStatus,
+    TextProvenance,
+    TextQualityRecord,
+    ValidationStatus,
+)
+from multilang.services.assemble_export_cards import (
+    AssembleExportCardsError,
+    AssembleExportCardsService,
+)
 from multilang.services.mandarin_orthography import MandarinOrthography, MandarinOrthographyError
-
 
 _HASH_A = "a" * 64
 _HASH_B = "b" * 64
@@ -142,9 +148,8 @@ def make_asset(*, item_key: str, asset_kind: AudioAssetKind, storage_path: str) 
     )
 
 
-def test_phase33_grammar_layout_uses_normal_fields_without_public_source_mode() -> None:
-    with pytest.raises(ValueError):
-        get_source_profile("korean-grammar")
+def test_korean_grammar_registered_source_preserves_normal_fields() -> None:
+    assert get_source_profile("korean-grammar").source_type == "korean-grammar"
 
     field_names = export_field_names_for_language_and_source(
         language=SupportedLanguage.KO,
@@ -1200,3 +1205,19 @@ def test_assemble_leaves_gramatica_blank_without_structured_metadata() -> None:
     result = service.execute(job_id="job-1", deck_language=SupportedLanguage.EN)
 
     assert result.cards[0].gramatica is None
+
+
+@pytest.mark.parametrize("source_type", ["word-list", "kindle-highlights"])
+def test_korean_personal_export_cannot_use_generic_accepted_flag_without_current_ai_evidence(source_type):
+    candidate = SimpleNamespace(**{**make_korean_candidate().model_dump(), "source_type": source_type})
+    text = make_korean_text_record()
+    service, repository = build_service(accepted_records=[text], candidates={"학교": candidate}, assets={
+        ("학교", kind.value): make_korean_asset(item_key="학교", asset_kind=kind,
+            storage_path=f"{kind.value}.mp3", artifact_sha256=_HASH_A,
+            display_text="학교" if kind is AudioAssetKind.WORD else text.example_sentence)
+        for kind in AudioAssetKind
+    })
+
+    with pytest.raises(AssembleExportCardsError, match="Korean personal export requires current"):
+        service.execute(job_id="job-1", deck_language=SupportedLanguage.KO)
+    assert repository.saved_rows == []

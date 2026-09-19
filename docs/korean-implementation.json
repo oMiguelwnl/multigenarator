@@ -1,0 +1,401 @@
+{
+  "schema_version": "korean-implementation-coverage-v1",
+  "date": "2026-09-19",
+  "scope": "Implementation and automated regression coverage; not a production release receipt.",
+  "production_release_verified": false,
+  "linguistic_quality_measured": false,
+  "anki_desktop_mobile_acceptance_verified": false,
+  "requirements": [
+    {
+      "id": "KMODE-01",
+      "implementation": [
+        "src/multilang/domain/jobs.py",
+        "src/multilang/runtime.py"
+      ],
+      "tests": [
+        "tests/domain/test_jobs.py",
+        "tests/integration/test_korean_modern_flow.py"
+      ]
+    },
+    {
+      "id": "KMODE-02",
+      "implementation": [
+        "src/multilang/domain/jobs.py",
+        "src/multilang/runtime.py"
+      ],
+      "tests": [
+        "tests/domain/test_jobs.py",
+        "tests/integration/test_korean_modern_flow.py"
+      ]
+    },
+    {
+      "id": "KNLP-01",
+      "implementation": [
+        "src/multilang/services/korean_morphology.py"
+      ],
+      "tests": [
+        "tests/services/test_korean_morphology.py"
+      ]
+    },
+    {
+      "id": "KNLP-02",
+      "implementation": [
+        "src/multilang/services/korean_morphology.py"
+      ],
+      "tests": [
+        "tests/services/test_korean_morphology.py"
+      ]
+    },
+    {
+      "id": "KHAN-01",
+      "implementation": [
+        "src/multilang/services/korean_foundation_export.py",
+        "src/multilang/services/korean_curriculum.py"
+      ],
+      "tests": [
+        "tests/services/test_korean_foundation_export.py",
+        "tests/integration/test_korean_foundations_flow.py"
+      ]
+    },
+    {
+      "id": "KHAN-02",
+      "implementation": [
+        "src/multilang/services/korean_foundation_export.py",
+        "src/multilang/services/korean_curriculum.py"
+      ],
+      "tests": [
+        "tests/services/test_korean_foundation_export.py",
+        "tests/integration/test_korean_foundations_flow.py"
+      ]
+    },
+    {
+      "id": "KPRO-01",
+      "implementation": [
+        "src/multilang/services/korean_foundation_export.py",
+        "src/multilang/services/korean_curriculum.py"
+      ],
+      "tests": [
+        "tests/services/test_korean_foundation_export.py",
+        "tests/integration/test_korean_foundations_flow.py"
+      ]
+    },
+    {
+      "id": "KPRO-02",
+      "implementation": [
+        "src/multilang/services/korean_foundation_export.py",
+        "src/multilang/services/korean_curriculum.py"
+      ],
+      "tests": [
+        "tests/services/test_korean_foundation_export.py",
+        "tests/integration/test_korean_foundations_flow.py"
+      ]
+    },
+    {
+      "id": "KFREQ-01",
+      "implementation": [
+        "src/multilang/services/korean_frequency.py"
+      ],
+      "tests": [
+        "tests/services/test_korean_frequency.py",
+        "tests/integration/test_korean_frequency_apkg_smoke.py"
+      ]
+    },
+    {
+      "id": "KFREQ-02",
+      "implementation": [
+        "src/multilang/services/korean_frequency.py"
+      ],
+      "tests": [
+        "tests/services/test_korean_frequency.py",
+        "tests/integration/test_korean_frequency_apkg_smoke.py"
+      ]
+    },
+    {
+      "id": "KFREQ-03",
+      "implementation": [
+        "src/multilang/services/korean_text_generation.py",
+        "src/multilang/services/korean_text_quality.py"
+      ],
+      "tests": [
+        "tests/services/test_korean_text_generation.py",
+        "tests/services/test_korean_text_quality.py"
+      ]
+    },
+    {
+      "id": "KTXT-01",
+      "implementation": [
+        "src/multilang/services/korean_text_generation.py",
+        "src/multilang/services/korean_text_quality.py"
+      ],
+      "tests": [
+        "tests/services/test_korean_text_generation.py",
+        "tests/services/test_korean_text_quality.py"
+      ]
+    },
+    {
+      "id": "KAUD-01",
+      "implementation": [
+        "src/multilang/services/korean_audio_runtime.py",
+        "src/multilang/services/korean_audio_review.py"
+      ],
+      "tests": [
+        "tests/services/test_korean_audio_runtime.py",
+        "tests/services/test_korean_audio_review_application.py"
+      ]
+    },
+    {
+      "id": "KGRAM-01",
+      "implementation": [
+        "src/multilang/services/korean_grammar.py",
+        "src/multilang/services/korean_grammar_export.py",
+        "src/multilang/domain/korean_grammar_bootstrap.py",
+        "src/multilang/services/korean_grammar_delivery.py",
+        "src/multilang/services/korean_learning_runtime.py"
+      ],
+      "tests": [
+        "tests/services/test_korean_grammar.py",
+        "tests/integration/test_korean_export_families.py"
+      ]
+    },
+    {
+      "id": "KGRAM-02",
+      "implementation": [
+        "src/multilang/services/korean_grammar.py",
+        "src/multilang/services/korean_grammar_export.py",
+        "src/multilang/domain/korean_grammar_bootstrap.py",
+        "src/multilang/services/korean_grammar_delivery.py",
+        "src/multilang/services/korean_learning_runtime.py"
+      ],
+      "tests": [
+        "tests/services/test_korean_grammar.py",
+        "tests/integration/test_korean_export_families.py"
+      ]
+    },
+    {
+      "id": "KPERS-01",
+      "implementation": [
+        "src/multilang/services/korean_personal_sources.py",
+        "src/multilang/services/korean_learning_runtime.py"
+      ],
+      "tests": [
+        "tests/services/test_korean_personal_sources.py",
+        "tests/services/test_korean_learning_runtime.py",
+        "tests/services/test_private_context.py"
+      ]
+    },
+    {
+      "id": "KPERS-02",
+      "implementation": [
+        "src/multilang/services/korean_personal_sources.py",
+        "src/multilang/services/korean_learning_runtime.py",
+        "src/multilang/cli_commands/phase33.py"
+      ],
+      "tests": [
+        "tests/services/test_korean_personal_sources.py",
+        "tests/services/test_korean_learning_runtime.py",
+        "tests/services/test_private_context.py"
+      ]
+    },
+    {
+      "id": "KEXP-01",
+      "implementation": [
+        "src/multilang/services/export_anki_package.py",
+        "src/multilang/services/export_tabular_bundle.py",
+        "src/multilang/services/card_template_loader.py",
+        "src/multilang/services/korean_tabular_media.py",
+        "src/multilang/services/assemble_export_cards.py"
+      ],
+      "tests": [
+        "tests/integration/test_korean_export_families.py",
+        "tests/services/test_export_anki_package.py",
+        "tests/services/test_card_template_loader.py",
+        "tests/services/test_korean_personal_export_gate.py"
+      ]
+    },
+    {
+      "id": "KEXP-02",
+      "implementation": [
+        "src/multilang/services/export_anki_package.py",
+        "src/multilang/services/export_tabular_bundle.py",
+        "src/multilang/services/card_template_loader.py"
+      ],
+      "tests": [
+        "tests/integration/test_korean_export_families.py",
+        "tests/services/test_export_anki_package.py",
+        "tests/services/test_card_template_loader.py"
+      ]
+    },
+    {
+      "id": "KQA-01",
+      "implementation": [
+        "src/multilang/services/korean_learning_runtime.py",
+        "src/multilang/services/korean_release_safety.py",
+        "src/multilang/services/korean_personal_text_review.py",
+        "src/multilang/services/assemble_export_cards.py"
+      ],
+      "tests": [
+        "tests/services/test_korean_learning_runtime.py",
+        "tests/services/test_korean_release_safety.py",
+        "tests/services/test_korean_personal_export_gate.py",
+        "tests/services/test_korean_personal_text_review.py"
+      ]
+    },
+    {
+      "id": "KQA-02",
+      "implementation": [
+        "docs/korean-implementation.json",
+        "src/multilang/services/generation_report.py"
+      ],
+      "tests": [
+        "tests/services/test_generation_report.py",
+        "tests/integration/test_korean_modern_flow.py"
+      ]
+    },
+    {
+      "id": "GLEX-01",
+      "implementation": [
+        "src/multilang/services/frequency_decks.py",
+        "src/multilang/services/lexical_grounding.py"
+      ],
+      "tests": [
+        "tests/services/test_frequency_decks.py",
+        "tests/services/test_lexical_grounding.py"
+      ]
+    },
+    {
+      "id": "GLEX-02",
+      "implementation": [
+        "src/multilang/services/frequency_decks.py",
+        "src/multilang/services/lexical_grounding.py"
+      ],
+      "tests": [
+        "tests/services/test_frequency_decks.py",
+        "tests/services/test_lexical_grounding.py"
+      ]
+    },
+    {
+      "id": "GMOR-01",
+      "implementation": [
+        "src/multilang/services/morphology.py",
+        "src/multilang/services/korean_morphology.py"
+      ],
+      "tests": [
+        "tests/services/test_contextual_morphology.py",
+        "tests/services/test_korean_morphology.py"
+      ]
+    },
+    {
+      "id": "GTXT-01",
+      "implementation": [
+        "src/multilang/services/text_generation.py",
+        "src/multilang/services/batch_text_generation.py"
+      ],
+      "tests": [
+        "tests/services/test_text_generation.py",
+        "tests/services/test_batch_text_generation.py"
+      ]
+    },
+    {
+      "id": "GPRO-01",
+      "implementation": [
+        "src/multilang/services/provider_retry.py",
+        "src/multilang/repositories/provider_call_log_repository.py"
+      ],
+      "tests": [
+        "tests/services/test_provider_retry.py",
+        "tests/repositories/test_provider_call_log_repository.py"
+      ]
+    },
+    {
+      "id": "GJOB-01",
+      "implementation": [
+        "src/multilang/services/phase33_jobs.py",
+        "src/multilang/services/item_outcomes.py"
+      ],
+      "tests": [
+        "tests/services/test_phase33_jobs.py",
+        "tests/services/test_item_outcomes.py"
+      ]
+    },
+    {
+      "id": "GAUD-01",
+      "implementation": [
+        "src/multilang/services/korean_audio_runtime.py",
+        "src/multilang/services/audio_integrity.py",
+        "src/multilang/services/korean_personal_audio.py"
+      ],
+      "tests": [
+        "tests/services/test_korean_audio_runtime.py",
+        "tests/services/test_audio_integrity.py",
+        "tests/services/test_korean_personal_audio.py"
+      ]
+    },
+    {
+      "id": "GREV-01",
+      "implementation": [
+        "src/multilang/repositories/review_repository.py",
+        "src/multilang/services/korean_learning_runtime.py",
+        "src/multilang/services/korean_field_regeneration.py",
+        "src/multilang/services/korean_personal_audio.py",
+        "src/multilang/services/korean_personal_text_review.py"
+      ],
+      "tests": [
+        "tests/repositories/test_review_repository.py",
+        "tests/services/test_korean_learning_runtime.py",
+        "tests/services/test_korean_personal_audio.py",
+        "tests/services/test_korean_personal_text_review.py"
+      ]
+    },
+    {
+      "id": "GEXP-01",
+      "implementation": [
+        "src/multilang/services/export_anki_package.py",
+        "src/multilang/services/anki_id_registry.py"
+      ],
+      "tests": [
+        "tests/integration/test_korean_export_families.py",
+        "tests/services/test_anki_id_registry.py"
+      ]
+    },
+    {
+      "id": "GOPS-01",
+      "implementation": [
+        "src/multilang/services/generation_leases.py",
+        "src/multilang/services/generate_text_items.py",
+        "src/multilang/db/provisioning.py",
+        "alembic/versions/20260913_21_generation_leases.py",
+        "alembic/versions/20260914_22_merge_native_and_generation_leases.py"
+      ],
+      "tests": [
+        "tests/services/test_generation_leases.py",
+        "tests/services/test_generate_text_items.py",
+        "tests/test_migration_schema_parity.py"
+      ]
+    },
+    {
+      "id": "GEVAL-01",
+      "implementation": [
+        "src/multilang/services/generation_report.py",
+        "docs/korean-implementation.json"
+      ],
+      "tests": [
+        "tests/services/test_generation_report.py",
+        "tests/services/test_polish_function_words.py",
+        "tests/services/test_batch_text_generation.py",
+        "tests/repositories/test_provider_call_log_repository.py"
+      ]
+    }
+  ],
+  "remaining_production_work": [
+    "Generate and independently review the 3000 frequency cards and their Portuguese text.",
+    "Synthesize, inspect and review 6000 exact-text word/sentence audio artifacts.",
+    "Produce reviewed grammar curriculum and learner-visible lexical bootstrap cards.",
+    "Run authorized personal-source samples without exposing private context.",
+    "Verify actual Anki Desktop/mobile import, rendering and playback of the final artifacts."
+  ],
+  "remaining_implementation_work": [],
+  "compatibility_limits": [
+    "Existing approved personal audio without a versioned personal generation/review journal is preserved and cannot be replaced automatically.",
+    "Personal highlights use context-free generation; this implementation does not enable optional disclosure of private reading excerpts."
+  ]
+}

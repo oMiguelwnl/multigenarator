@@ -2,10 +2,12 @@
 
 from __future__ import annotations
 
+from contextlib import contextmanager
 from uuid import uuid4
 
 from sqlalchemy import or_, select
-from sqlalchemy.orm import Session
+from sqlalchemy.engine import Engine
+from sqlalchemy.orm import Session, SessionTransactionOrigin
 
 from multilang.db.models import LexicalCandidate, ProviderResponseCacheModel, TextQualityRecordModel
 from multilang.domain.lexicon import GroundingStatus
@@ -18,7 +20,9 @@ from multilang.domain.text_quality import (
     ValidationFlag,
     ValidationStatus,
 )
-from multilang.services.provider_response_cache import ProviderCacheKey, ProviderCachedResponse
+from multilang.repositories.transactions import commit_repository_changes, repository_transaction
+from multilang.services.generation_leases import GenerationLeaseManager
+from multilang.services.provider_response_cache import ProviderCachedResponse, ProviderCacheKey
 
 
 class TextRepository:
@@ -26,8 +30,55 @@ class TextRepository:
 
     def __init__(self, session: Session) -> None:
         self.session = session
+        self._generation_lease = None
+
+    @contextmanager
+    def generation_lease(self, job_id: str):
+        transaction = self.session.get_transaction()
+        if self._generation_lease is not None:
+            raise ValueError("text repository is already executing a generation job")
+        if (
+            (transaction is not None and transaction.origin is not SessionTransactionOrigin.AUTOBEGIN)
+            or "multilang.repository_transaction" in self.session.info
+            or self.session.new or self.session.dirty or self.session.deleted
+        ):
+            raise ValueError("generation requires an independent session without pending writes")
+        engine = self.session.get_bind()
+        if not isinstance(engine, Engine):
+            raise ValueError("generation requires an engine-bound independent session")
+        with GenerationLeaseManager(engine).hold(job_id) as lease:
+            self._generation_lease = lease
+            try:
+                yield lease
+            except BaseException:
+                self.session.rollback()
+                raise
+            finally:
+                self._generation_lease = None
+
+    def begin_generation_item(self, job_id: str, item_key: str) -> None:
+        self._require_generation_lease(job_id).begin_item(item_key)
+
+    @contextmanager
+    def generation_item_transaction(self, job_id: str, *, complete_item: bool = True):
+        lease = self._require_generation_lease(job_id)
+        with repository_transaction(self.session):
+            lease.fence(self.session)
+            yield
+            if complete_item:
+                lease.finish_item(self.session)
+        if complete_item:
+            lease.current_item_sha256 = None
+
+    def _require_generation_lease(self, job_id: str):
+        lease = self._generation_lease
+        if lease is None or lease.job_id != job_id:
+            raise ValueError("text generation requires its acquired job lease")
+        return lease
 
     def upsert_text_record(self, record: TextQualityRecord) -> TextQualityRecord:
+        if self._generation_lease is not None:
+            self._require_generation_lease(record.job_id).fence(self.session)
         row = self.session.scalar(
             select(TextQualityRecordModel).where(
                 TextQualityRecordModel.job_id == record.job_id,
@@ -77,7 +128,7 @@ class TextRepository:
             for field, value in payload.items():
                 setattr(row, field, value)
 
-        self.session.commit()
+        commit_repository_changes(self.session)
         self.session.refresh(row)
         return self._to_domain(row)
 
@@ -188,6 +239,7 @@ class TextRepository:
         return list(self.session.scalars(statement))
 
     def claim_generation_candidates(self, job_id: str, *, missing_only: bool = False, limit: int | None = None) -> list[LexicalCandidate]:
+        """Select a sequential batch under the orchestration service's job lease."""
         candidates = self.list_generation_candidates(job_id, missing_only=missing_only)
         return candidates if limit is None else candidates[:limit]
 
@@ -240,7 +292,7 @@ class TextRepository:
         else:
             for field, value in payload.items():
                 setattr(row, field, value)
-        self.session.commit()
+        commit_repository_changes(self.session)
         return record
 
     def _resolve_run_key(self, job_id: str, lexical_candidate_id: str) -> str:

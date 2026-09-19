@@ -2,16 +2,19 @@
 
 from __future__ import annotations
 
-from datetime import timedelta
 import importlib
 import json
-from pathlib import Path
+import math
 import re
+from contextlib import suppress
+from datetime import timedelta
+from pathlib import Path
+from threading import Event
 from types import ModuleType
 from typing import Any
+from urllib.request import Request, urlopen
 from xml.etree import ElementTree
 from xml.sax.saxutils import escape
-from urllib.request import Request, urlopen
 
 from multilang.domain.audio import AudioFormat, AudioProvider
 from multilang.services.audio_synthesis import AudioSynthesisResponse
@@ -88,7 +91,10 @@ class AzureSpeechAdapter:
         locale: str,
         output_path: Path,
         audio_format: str,
+        timeout_seconds: float | None = None,
     ) -> AudioSynthesisResponse:
+        if timeout_seconds is not None and (not math.isfinite(timeout_seconds) or timeout_seconds <= 0):
+            raise ValueError("Azure synthesis timeout must be finite and positive")
         self._require_credentials()
         speechsdk = self._speechsdk
         output_path.parent.mkdir(parents=True, exist_ok=True)
@@ -103,19 +109,50 @@ class AzureSpeechAdapter:
             getattr(speechsdk.SpeechSynthesisOutputFormat, _OUTPUT_FORMATS[audio_format])
         )
 
-        audio_config = speechsdk.audio.AudioOutputConfig(filename=str(output_path))
+        audio_config = (
+            speechsdk.audio.AudioOutputConfig(filename=str(output_path))
+            if timeout_seconds is None else None
+        )
         synthesizer = speechsdk.SpeechSynthesizer(
             speech_config=speech_config,
             audio_config=audio_config,
         )
-        result = synthesizer.speak_ssml_async(
-            build_azure_ssml(text=ssml_text, locale=locale, voice_id=voice_id)
-        ).get()
+        ssml = build_azure_ssml(text=ssml_text, locale=locale, voice_id=voice_id)
+        if timeout_seconds is None:
+            result = synthesizer.speak_ssml_async(ssml).get()
+        else:
+            completed = Event()
+            results = []
+
+            def on_result(event):
+                results.append(event.result)
+                completed.set()
+
+            synthesizer.synthesis_completed.connect(on_result)
+            synthesizer.synthesis_canceled.connect(on_result)
+            try:
+                future = synthesizer.speak_ssml_async(ssml)
+                if not completed.wait(timeout_seconds):
+                    # Never wait indefinitely on either SDK future. Timeout is an
+                    # ambiguous provider outcome, so callers must not auto-retry it.
+                    with suppress(Exception):
+                        synthesizer.stop_speaking_async()
+                    raise TimeoutError("Azure Speech synthesis timed out")
+                result = results[0]
+                del future
+            finally:
+                # Cleanup must not replace an unknown provider outcome with a
+                # local SDK error, or discard an already completed result.
+                for signal in (synthesizer.synthesis_completed, synthesizer.synthesis_canceled):
+                    with suppress(Exception):
+                        signal.disconnect(on_result)
         completed_reason = getattr(speechsdk.ResultReason, "SynthesizingAudioCompleted", None)
         if getattr(result, "reason", None) != completed_reason:
             raise AzureSpeechAdapterError(self._build_cancellation_message(result))
 
         byte_size = len(getattr(result, "audio_data", b""))
+        if timeout_seconds is not None:
+            output_path.write_bytes(getattr(result, "audio_data", b""))
         if byte_size == 0 and output_path.exists():
             byte_size = output_path.stat().st_size
         return AudioSynthesisResponse(
@@ -171,10 +208,11 @@ def build_azure_ssml(*, text: str, locale: str, voice_id: str) -> str:
     if safe_ssml is None:
         plain_text = _extract_spoken_text(text)
         safe_ssml = escape(plain_text, {'"': '&quot;', "'": '&apos;'})
+    attributes = {'"': '&quot;', "'": '&apos;'}
     return (
         f'<speak version="1.0" xmlns="http://www.w3.org/2001/10/synthesis" '
-        f'xml:lang="{escape(locale)}">'
-        f'<voice name="{escape(voice_id)}">{safe_ssml}</voice>'
+        f'xml:lang="{escape(locale, attributes)}">'
+        f'<voice name="{escape(voice_id, attributes)}">{safe_ssml}</voice>'
         "</speak>"
     )
 

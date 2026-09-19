@@ -19,7 +19,6 @@ from multilang.db.models import (
     ItemTerminalStatusEventModel,
     ProviderCallLogModel,
 )
-from multilang.domain.korean import KoreanFrequencyJobAuthority, canonical_json_sha256
 from multilang.domain.jobs import (
     ControlledReasonCode,
     FieldObligationSummary,
@@ -31,9 +30,10 @@ from multilang.domain.jobs import (
     JobStatus,
     ResumeDiagnostic,
 )
+from multilang.domain.korean import KoreanFrequencyJobAuthority, canonical_json_sha256
 from multilang.repositories.highlight_import_repository import HighlightImportRepository
 from multilang.repositories.korean_personal_source_repository import KoreanPersonalSourceRepository
-
+from multilang.repositories.transactions import commit_repository_changes
 
 _KOREAN_OPERATION_STAGE: dict[str, str] = {
     "pilot_text": "pilot_base",
@@ -127,7 +127,7 @@ class JobRepository:
             resume_state={},
         )
         self.session.add(job)
-        self.session.commit()
+        commit_repository_changes(self.session)
         self.session.refresh(job)
         return job
 
@@ -209,7 +209,7 @@ class JobRepository:
         )
         if created:
             try:
-                self.session.commit()
+                commit_repository_changes(self.session)
             except IntegrityError as exc:
                 self.session.rollback()
                 replay = self._phase33_attempt_fact(job_id, item_id, stage, attempt_count)
@@ -254,7 +254,7 @@ class JobRepository:
         )
         if fact_created or event_created:
             try:
-                self.session.commit()
+                commit_repository_changes(self.session)
             except IntegrityError as exc:
                 self.session.rollback()
                 replay_fact = self._phase33_attempt_fact(job_id, item_id, stage, attempt_count)
@@ -484,7 +484,7 @@ class JobRepository:
             job.last_completed_stage = completed_stage.value
             self.session.add(item)
             self.session.add(job)
-            self.session.commit()
+            commit_repository_changes(self.session)
             self._sync_job_counters(job)
             self.session.refresh(job)
             return self._snapshot(job)
@@ -507,7 +507,7 @@ class JobRepository:
 
         job.current_stage = completed_stage.value
         job.last_completed_stage = completed_stage.value
-        self.session.commit()
+        commit_repository_changes(self.session)
         self._sync_job_counters(job)
         self.session.refresh(job)
         return self._snapshot(job)
@@ -569,7 +569,7 @@ class JobRepository:
         job.current_stage = completed_stage.value
         job.last_completed_stage = completed_stage.value
         self.session.add(job)
-        self.session.commit()
+        commit_repository_changes(self.session)
         self._sync_job_counters(job)
         self.session.refresh(job)
         return self._snapshot(job)
@@ -605,7 +605,7 @@ class JobRepository:
 
         job.retrying_items = retry_count
         job.current_stage = failed_stage.value
-        self.session.commit()
+        commit_repository_changes(self.session)
         self._sync_job_counters(job)
         self.session.refresh(job)
         return self._snapshot(job)
@@ -659,7 +659,7 @@ class JobRepository:
         job = self._require_job(job_id)
         job.current_stage = stage.value
         self.session.add(job)
-        self.session.commit()
+        commit_repository_changes(self.session)
         self.session.refresh(job)
         return self._snapshot(job)
 
@@ -678,7 +678,7 @@ class JobRepository:
         if failed_items is not None:
             job.failed_items = failed_items
         self.session.add(job)
-        self.session.commit()
+        commit_repository_changes(self.session)
         self.session.refresh(job)
         return self._snapshot(job)
 
@@ -871,7 +871,15 @@ class JobRepository:
         )
         if existing is not None:
             if existing.denominator_sha256 != denominator_sha256:
-                raise ValueError("phase33 denominator conflict")
+                if existing.expected_count != report.total_eligible:
+                    raise ValueError("phase33 denominator inventory conflict")
+                # Counts are a current projection of immutable attempt facts. A
+                # resumed batch must be able to advance this projection.
+                existing.accepted_count = report.accepted
+                existing.review_required_count = report.review_required
+                existing.failed_count = report.failed
+                existing.denominator_sha256 = denominator_sha256
+                commit_repository_changes(self.session)
             return
         self.session.add(
             GenerationRunDenominatorModel(
@@ -886,7 +894,7 @@ class JobRepository:
             )
         )
         try:
-            self.session.commit()
+            commit_repository_changes(self.session)
         except IntegrityError as exc:
             self.session.rollback()
             replay = self.session.scalar(
@@ -916,7 +924,7 @@ class JobRepository:
                 raise ValueError("Korean frequency authority drift")
         self._store_korean_authority_columns(job, authority, payload)
         self.session.add(job)
-        self.session.commit()
+        commit_repository_changes(self.session)
         self.session.refresh(job)
         return self.load_korean_authority(job_id)
 
@@ -988,7 +996,7 @@ class JobRepository:
         job.completed_items = self._count_items(job.run_key, [JobStatus.COMPLETED.value])
         job.failed_items = self._count_items(job.run_key, [JobStatus.FAILED.value])
         self.session.add(job)
-        self.session.commit()
+        commit_repository_changes(self.session)
 
     def _latest_stage(self, stages: Iterable[str]) -> JobStage | None:
         ordered_stages = {stage.value: index for index, stage in enumerate(JobStage)}

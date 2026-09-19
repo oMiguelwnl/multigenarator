@@ -1,7 +1,10 @@
 # Migração, backup e recuperação
 
 A revisão `20260912_20` acrescenta o schema nativo à revisão legada
-`20260828_19`. O processo usa o banco existente, preserva suas tabelas e não
+`20260828_19`. A revisão irmã `20260913_21` acrescenta os leases de geração
+ao runtime comum, sem provisionar tabelas nativas. A migração nativa autorizada
+parte da revisão 21 e chega ao merge `20260914_22`; a prévia vincula os hashes
+das três migrations. O processo usa o banco existente, preserva suas tabelas e não
 reescreve GUIDs de decks já exportados. A implementação foi exercitada em
 bancos temporários; nenhuma instalação de produção foi migrada.
 
@@ -56,7 +59,7 @@ ou dados invalida o processo. Não use `alembic upgrade head` como atalho.
 Algumas instalações antigas criavam tabelas por SQLAlchemy `create_all`.
 `MigrationService.adoption_preview()` compara o schema inteiro com o baseline
 legado esperado. `adopt_legacy_schema()` aceita somente esse caso, com snapshot
-e confirmação de hash, e adiciona o stamp 19 sem modificar linhas existentes.
+e confirmação de hash, e adiciona o stamp 21 sem modificar linhas existentes.
 Schema divergente precisa ser reconciliado explicitamente. Depois do stamp,
 crie outro snapshot: o fingerprint mudou.
 
@@ -70,7 +73,9 @@ origem. Os programas `pg_dump`/`pg_restore` precisam estar instalados.
 
 `BackupService.restore_to()` recusa origem/destino iguais e destino populado;
 verifica também os assets selecionados. O ensaio aplica a revisão nativa,
-confere preservação do legado, volta à revisão 19 e compara com o snapshot.
+confere preservação do legado, volta à revisão 21 e compara com o snapshot.
+O rollback mantém a tabela de leases. O merge exige autorização antes de
+remover qualquer ramo, inclusive quando o destino solicitado é anterior à revisão 21.
 
 `MigrationService.rollback_preview()` e `rollback()` exigem o journal concluído,
 o backup original, integridade atual e confirmação vinculada ao estado. Se

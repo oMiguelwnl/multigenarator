@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-from typing import Any
 from uuid import uuid4
 
 from pydantic import BaseModel, ConfigDict, Field, field_validator
@@ -13,6 +12,7 @@ from sqlalchemy.orm import Session
 from multilang.db.models import PersonalSourceDecisionModel, PersonalSourceRowModel
 from multilang.domain.korean import canonical_json_sha256
 from multilang.domain.personal_sources import PersonalSourceRow
+from multilang.repositories.transactions import commit_repository_changes
 
 
 class PersonalSourceConflict(ValueError):
@@ -114,7 +114,7 @@ class KoreanPersonalSourceRepository:
                 )
             )
         try:
-            self.session.commit()
+            commit_repository_changes(self.session)
         except IntegrityError as exc:
             self.session.rollback()
             existing_after_conflict = self._row_models(job_id, source_type)
@@ -202,7 +202,7 @@ class KoreanPersonalSourceRepository:
         )
         self.session.add(model)
         try:
-            self.session.commit()
+            commit_repository_changes(self.session)
         except IntegrityError as exc:
             self.session.rollback()
             raise PersonalSourceCASConflict("personal source decision revision conflict") from exc

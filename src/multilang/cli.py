@@ -2,12 +2,12 @@
 
 from __future__ import annotations
 
+import json
+import subprocess
 from collections.abc import Callable
 from dataclasses import dataclass
 from hashlib import sha256
-import json
 from pathlib import Path
-import subprocess
 from typing import Annotated, Any
 
 import typer
@@ -15,11 +15,12 @@ from sqlalchemy import create_engine
 from sqlalchemy.engine import make_url
 from sqlalchemy.orm import Session
 
+from multilang.cli_commands import phase33
 from multilang.db.models import GenerationJob
 from multilang.db.provisioning import ensure_database_schema
 from multilang.domain.audio import AudioAssetRecord
-from multilang.domain.korean import KoreanFrequencyJobAuthority
-from multilang.domain.korean_provider import KoreanProviderPolicy, KoreanProviderTask
+from multilang.domain.deck_audit import audit_deck_package
+from multilang.domain.exporting import ExportArtifactFormat
 from multilang.domain.jobs import (
     GenerationRequest,
     JobProgressSnapshot,
@@ -27,12 +28,18 @@ from multilang.domain.jobs import (
     JobStatus,
     SupportedLanguage,
 )
+from multilang.domain.korean import KoreanFrequencyJobAuthority
+from multilang.domain.korean_provider import KoreanProviderPolicy, KoreanProviderTask
 from multilang.domain.latin import LatinGenerationRequest
-from multilang.domain.exporting import ExportArtifactFormat
-from multilang.domain.deck_audit import audit_deck_package
-from multilang.domain.webdav import WebDAVError, WebDAVFailureCode, WebDAVFetchResult, WebDAVRemoteCandidate
+from multilang.domain.webdav import (
+    WebDAVError,
+    WebDAVFailureCode,
+    WebDAVFetchResult,
+    WebDAVRemoteCandidate,
+)
 from multilang.progress import ProgressRenderer
 from multilang.repositories.audio_repository import AudioRepository
+from multilang.repositories.job_repository import JobRepository
 from multilang.repositories.lexical_repository import LexicalRepository
 from multilang.repositories.provider_call_log_repository import ProviderCallLogRepository
 from multilang.repositories.text_repository import TextRepository
@@ -41,39 +48,16 @@ from multilang.runtime import (
     build_korean_frequency_text_runtime_service,
     build_runtime_service,
 )
-from multilang.repositories.job_repository import JobRepository
+from multilang.services.anki_id_registry import assert_anki_id_registry_clean
+from multilang.services.azure_speech_adapter import AzureSpeechAdapter
+from multilang.services.deck_audit_reader import read_apkg_cards
+from multilang.services.deck_audit_reports import write_deck_audit_reports
 from multilang.services.execution_report import JobExecutionReport
+from multilang.services.frequency_decks import build_frequency_level
 from multilang.services.generate_job import GenerateJobResult, GenerateJobService
 from multilang.services.generate_text_items import GenerateTextProgress
 from multilang.services.highlight_import_preview import build_highlight_import_preview
 from multilang.services.ingest_lexical_items import IngestLexicalItemsService
-from multilang.services.korean_morphology import KiwiKoreanMorphologyService
-from multilang.services.rate_limit import SimpleRateLimiter
-from multilang.services.deck_audit_reader import read_apkg_cards
-from multilang.services.deck_audit_reports import write_deck_audit_reports
-from multilang.services.lexical_grounding import LexicalGroundingService
-from multilang.services.lexical_lookup import LexicalLookup, normalize_lexical_key
-from multilang.services.job_summary import JobLifecycleSummary, JobSummaryBuilder
-from multilang.services.latin_mvp import LatinMvpGenerationService
-from multilang.services.latin_export import LATIN_DECK_NAME, export_latin_mvp_bundle
-from multilang.services.latin_review import (
-    DEFAULT_LATIN_MVP_CURATION_PATH,
-    load_latin_curated_records,
-    summarize_latin_review_records,
-    update_latin_review_gate,
-    write_latin_curated_records,
-)
-from multilang.services.russian_phoneme_deck import (
-    DEFAULT_GREEK_PHONEME_DECK_NAME,
-    DEFAULT_POLISH_PHONEME_DECK_NAME,
-    DEFAULT_RUSSIAN_PHONEME_DECK_NAME,
-    GREEK_PHONEME_CARDS,
-    POLISH_PHONEME_CARDS,
-    RUSSIAN_PHONEME_CARDS,
-    export_greek_phoneme_deck,
-    export_polish_phoneme_deck,
-    export_russian_phoneme_deck,
-)
 from multilang.services.japanese_frequency_deck import (
     DEFAULT_JAPANESE_DECK_NAME,
     JAPANESE_FREQUENCY_CARDS,
@@ -84,6 +68,25 @@ from multilang.services.japanese_kana_deck import (
     export_kana_deck,
 )
 from multilang.services.japanese_kana_generated_deck import export_generated_kana_deck
+from multilang.services.job_summary import JobLifecycleSummary, JobSummaryBuilder
+from multilang.services.korean_audio import (
+    KoreanAudioAuthority,
+    build_korean_voice_profile_from_authority,
+    capture_korean_azure_catalog_pilot,
+    synthesize_korean_frequency_audio,
+)
+from multilang.services.korean_audio_pilot_evidence import (
+    KoreanAudioPilotAuthority,
+    validate_korean_audio_pilot_result,
+)
+from multilang.services.korean_audio_review import (
+    KoreanAudioReviewAggregate,
+    KoreanAudioReviewApplicationAuthority,
+    KoreanAudioReviewApplicationService,
+    KoreanAudioReviewBatch,
+    KoreanAudioReviewImportLedger,
+)
+from multilang.services.korean_checkpoint_authority import validate_korean_checkpoint_authority
 from multilang.services.korean_curriculum import KoreanFoundationFamily
 from multilang.services.korean_foundation_evidence import (
     check_korean_foundation_validation_receipt_continuity,
@@ -107,62 +110,38 @@ from multilang.services.korean_foundation_snapshot import (
 from multilang.services.korean_foundation_snapshot_fallback import (
     verify_active_korean_foundation_snapshot_provenance_with_approved_fallback,
 )
-from multilang.services.korean_checkpoint_authority import validate_korean_checkpoint_authority
 from multilang.services.korean_frequency import (
     KoreanFrequencySourceRetriever,
     load_korean_final_frequency_entries,
     validate_korean_source_build_result,
     validate_korean_source_retrieval_result,
 )
-from multilang.services.azure_speech_adapter import AzureSpeechAdapter
-from multilang.services.frequency_decks import build_frequency_level
-from multilang.services.korean_audio import (
-    KoreanAudioAuthority,
-    build_korean_voice_profile_from_authority,
-    capture_korean_azure_catalog_pilot,
-    synthesize_korean_frequency_audio,
-)
-from multilang.services.korean_audio_pilot_evidence import (
-    KoreanAudioPilotAuthority,
-    validate_korean_audio_pilot_result,
+from multilang.services.korean_morphology import KiwiKoreanMorphologyService
+from multilang.services.korean_production_evidence import (
+    KoreanProductionEvidenceAuthority,
+    build_korean_production_audit_payload,
+    load_korean_production_evidence_rows,
+    render_korean_production_audit_markdown,
+    validate_korean_production_final_evidence,
+    validate_korean_production_review_batches,
+    validate_korean_production_run_result,
 )
 from multilang.services.korean_provider_pilot_evidence import (
     KoreanProviderCatalogPilotAuthority,
     validate_korean_provider_catalog_pilot_result,
-)
-from multilang.services.korean_production_evidence import (
-    KoreanProductionEvidenceAuthority,
-    build_korean_production_audit_payload,
-    validate_korean_production_review_batches,
-    load_korean_production_evidence_rows,
-    render_korean_production_audit_markdown,
-    validate_korean_production_final_evidence,
-    validate_korean_production_run_result,
-)
-from multilang.services.korean_release_safety import (
-    KoreanReleaseBuildResult,
-    KoreanReleaseAuthorization,
-    KoreanReleaseSafetyReport,
-    build_korean_release_safety,
-    promote_korean_release_bundle,
-    validate_korean_release_authorization,
 )
 from multilang.services.korean_release_delivery import (
     KoreanReleaseDeliveryActionResult,
     execute_korean_release_delivery,
     validate_korean_release_delivery,
 )
-from multilang.services.phase33_authority import (
-    Phase33AuthorityError,
-    build_phase33_authority_preflight,
-    validate_phase33_authority,
-)
-from multilang.services.korean_audio_review import (
-    KoreanAudioReviewAggregate,
-    KoreanAudioReviewApplicationAuthority,
-    KoreanAudioReviewApplicationService,
-    KoreanAudioReviewBatch,
-    KoreanAudioReviewImportLedger,
+from multilang.services.korean_release_safety import (
+    KoreanReleaseAuthorization,
+    KoreanReleaseBuildResult,
+    KoreanReleaseSafetyReport,
+    build_korean_release_safety,
+    promote_korean_release_bundle,
+    validate_korean_release_authorization,
 )
 from multilang.services.korean_source_review import (
     import_korean_bundle_review_batch,
@@ -175,9 +154,31 @@ from multilang.services.korean_text_review import (
     KoreanTextReviewBatch,
     KoreanTextReviewImportLedger,
 )
+from multilang.services.latin_export import LATIN_DECK_NAME, export_latin_mvp_bundle
+from multilang.services.latin_mvp import LatinMvpGenerationService
+from multilang.services.latin_review import (
+    DEFAULT_LATIN_MVP_CURATION_PATH,
+    load_latin_curated_records,
+    summarize_latin_review_records,
+    update_latin_review_gate,
+    write_latin_curated_records,
+)
+from multilang.services.lexical_grounding import LexicalGroundingService
+from multilang.services.lexical_lookup import LexicalLookup, normalize_lexical_key
+from multilang.services.rate_limit import SimpleRateLimiter
+from multilang.services.russian_phoneme_deck import (
+    DEFAULT_GREEK_PHONEME_DECK_NAME,
+    DEFAULT_POLISH_PHONEME_DECK_NAME,
+    DEFAULT_RUSSIAN_PHONEME_DECK_NAME,
+    GREEK_PHONEME_CARDS,
+    POLISH_PHONEME_CARDS,
+    RUSSIAN_PHONEME_CARDS,
+    export_greek_phoneme_deck,
+    export_polish_phoneme_deck,
+    export_russian_phoneme_deck,
+)
 from multilang.services.text_review import ReviewReport, TextReviewService
 from multilang.services.webdav_highlight_fetch import WebDAVHighlightFetchService
-from multilang.services.anki_id_registry import assert_anki_id_registry_clean
 from multilang.settings import Settings
 
 app = typer.Typer(help="Multilang operator CLI.")
@@ -1408,6 +1409,7 @@ def _local_smoke_lexical_rows() -> dict[str, dict[str, object]]:
             "display_form": term,
             "lemma": term,
             "definitions": [definition],
+            "definition_language": "en",
             "ipa": ipa,
             "source": "manual",
         }
@@ -1439,6 +1441,7 @@ def create_app(
     review_report_builder: ReviewReportBuilder | None = None,
     webdav_service_factory: WebDAVServiceFactory | None = None,
     latin_mvp_service: LatinMvpGenerationService | None = None,
+    korean_learning_service: object | None = None,
 ) -> typer.Typer:
     """Build the CLI application with injectable collaborators for tests."""
 
@@ -1447,11 +1450,6 @@ def create_app(
         help="Operate the fixed Korean foundation evidence and export workflow."
     )
     cli.add_typer(korean_foundations, name="korean-foundations")
-    phase33 = typer.Typer(help="Operate Phase 33 grammar and personal-source contracts.")
-    phase33_review = typer.Typer(help="Operate Phase 33 audited review reads.")
-    phase33.add_typer(phase33_review, name="review")
-    cli.add_typer(phase33, name="phase33")
-    phase33_access_events: dict[tuple[str, str, str], tuple[str, str]] = {}
     korean_morphology: KiwiKoreanMorphologyService | None = None
     korean_preview_resolver: object | None = None
 
@@ -1500,183 +1498,73 @@ def create_app(
     def resolve_latin_mvp_service() -> LatinMvpGenerationService:
         return latin_mvp_service or LatinMvpGenerationService()
 
+    phase33.register_commands(cli, phase33.Dependencies(
+        _validate_foundation_sha256=lambda value: _validate_foundation_sha256(value),
+        resolve_learning_runtime=((lambda: korean_learning_service) if korean_learning_service is not None
+            else phase33.build_korean_learning_runtime),
+    ))
+
+    @cli.command("generation-lease-status")
+    def generation_lease_status(job_id: Annotated[str, typer.Option("--job-id")]) -> None:
+        """Inspect active or interrupted generation without calling providers."""
+        import json
+
+        from sqlalchemy import create_engine
+
+        from multilang.services.generation_leases import GenerationLeaseManager
+
+        engine = create_engine(Settings().database_url)
+        try:
+            typer.echo(json.dumps(GenerationLeaseManager(engine).status(job_id), sort_keys=True))
+        finally:
+            engine.dispose()
+
+    @cli.command("recover-generation-lease")
+    def recover_generation_lease(
+        job_id: Annotated[str, typer.Option("--job-id")],
+        expected_item_sha256: Annotated[str, typer.Option("--expected-item-sha256")],
+        acknowledge_unknown_outcome: Annotated[
+            bool, typer.Option("--acknowledge-unknown-outcome", help="Acknowledge the interrupted provider outcome; this command does not retry it."),
+        ] = False,
+    ) -> None:
+        """Clear one exact expired reservation after operator reconciliation."""
+        import json
+
+        from sqlalchemy import create_engine
+
+        from multilang.services.generation_leases import (
+            GenerationLeaseError,
+            GenerationLeaseManager,
+        )
+
+        if not acknowledge_unknown_outcome:
+            raise typer.BadParameter("--acknowledge-unknown-outcome is required")
+        engine = create_engine(Settings().database_url)
+        try:
+            result = GenerationLeaseManager(engine).recover(
+                job_id, expected_item_sha256=expected_item_sha256,
+                acknowledge_unknown_outcome=acknowledge_unknown_outcome,
+            )
+            typer.echo(json.dumps(result, sort_keys=True))
+        except GenerationLeaseError as exc:
+            typer.echo(str(exc))
+            raise typer.Exit(code=1) from exc
+        finally:
+            engine.dispose()
+
     @cli.callback()
     def main() -> None:
         """Root command group for Multilang."""
 
         return None
 
-    def _write_phase33_json(payload: dict[str, Any], output: Path | None = None) -> None:
-        rendered = json.dumps(payload, ensure_ascii=False) + "\n"
-        if output is not None:
-            output.parent.mkdir(parents=True, exist_ok=True)
-            output.write_text(rendered, encoding="utf-8")
-            return
-        typer.echo(rendered, nl=False)
 
-    def _phase33_error(message: str) -> None:
-        typer.echo(message)
-        raise typer.Exit(code=1)
 
-    def _parse_phase33_path_pairs(values: list[str]) -> dict[str, Path]:
-        pairs: dict[str, Path] = {}
-        for value in values:
-            if "=" not in value:
-                raise ValueError("phase33 path pair must use name=path")
-            name, raw_path = value.split("=", 1)
-            if not name or not raw_path or name in pairs:
-                raise ValueError("phase33 path pair must be unique and nonempty")
-            pairs[name] = Path(raw_path)
-        return pairs
 
-    @phase33.command("status")
-    def phase33_status(
-        job_id: Annotated[str, typer.Option("--job-id")],
-        output_format: Annotated[str, typer.Option("--format")] = "json",
-        require_exact_authority: Annotated[bool, typer.Option("--require-exact-authority")] = False,
-        no_private_values: Annotated[bool, typer.Option("--no-private-values")] = False,
-        output: Annotated[Path | None, typer.Option("--output", exists=False, dir_okay=False)] = None,
-    ) -> None:
-        if output_format != "json" or not require_exact_authority or not no_private_values:
-            _phase33_error("phase33_status_error=exact_json_authority_required")
-        payload = {
-            "job_id": job_id,
-            "status": "blocked_without_authority",
-            "denominators": {
-                "attempted": {"count": 0, "ids": []},
-                "processed": {"count": 0, "ids": []},
-                "accepted": {"count": 0, "ids": []},
-                "review_required": {"count": 0, "ids": []},
-                "failed": {"count": 0, "ids": []},
-                "skipped_current": {"count": 0, "ids": []},
-                "not_attempted": {"count": 0, "ids": []},
-            },
-            "safe_sources": {
-                "grammar": {"eligible_count": 0, "ready_count": 0},
-                "custom": {"eligible_count": 0, "ready_count": 0},
-                "highlight": {"eligible_count": 0, "ready_count": 0},
-            },
-        }
-        _write_phase33_json(payload, output)
 
-    @phase33.command("process")
-    def phase33_process(
-        job_id: Annotated[str, typer.Option("--job-id")],
-        source: Annotated[str, typer.Option("--source")],
-        mode: Annotated[str, typer.Option("--mode")],
-        max_items: Annotated[int | None, typer.Option("--max-items")] = None,
-    ) -> None:
-        if source not in {"grammar", "custom", "highlight"}:
-            _phase33_error("phase33_process_error=invalid_source")
-        if mode not in {"start", "resume"}:
-            _phase33_error("phase33_process_error=invalid_mode")
-        if max_items is not None and max_items < 1:
-            _phase33_error("phase33_process_error=invalid_max_items")
-        _write_phase33_json(
-            {
-                "job_id": job_id,
-                "source": source,
-                "mode": mode,
-                "max_items": max_items,
-                "attempted": 0,
-                "processed": 0,
-                "accepted": 0,
-                "review_required": 0,
-                "failed": 0,
-                "skipped_current": 0,
-                "not_attempted": 0,
-                "no_server": True,
-                "no_fallback": True,
-            }
-        )
 
-    @phase33.command("authority-preflight")
-    def phase33_authority_preflight(
-        job_id: Annotated[str, typer.Option("--job-id")],
-        policy_sha256: Annotated[str, typer.Option("--policy-sha256", callback=_validate_foundation_sha256)],
-        curriculum_sha256: Annotated[str, typer.Option("--curriculum-sha256", callback=_validate_foundation_sha256)],
-        profile_sha256: Annotated[str, typer.Option("--profile-sha256", callback=_validate_foundation_sha256)],
-        source_sha256: Annotated[str, typer.Option("--source-sha256", callback=_validate_foundation_sha256)],
-        target_sha256: Annotated[str, typer.Option("--target-sha256", callback=_validate_foundation_sha256)],
-        output_pairs: Annotated[list[str], typer.Option("--output-pair")],
-        audio_roots: Annotated[list[str], typer.Option("--audio-root")],
-        custom_safe_ids: Annotated[list[str], typer.Option("--custom-safe-id")],
-        highlight_safe_ids: Annotated[list[str], typer.Option("--highlight-safe-id")],
-        migration_revision: Annotated[str, typer.Option("--migration-revision")],
-        output: Annotated[Path, typer.Option("--output", exists=False, dir_okay=False)],
-    ) -> None:
-        try:
-            audio_root_map = _parse_phase33_path_pairs(audio_roots)
-            result = build_phase33_authority_preflight(
-                job_id=job_id,
-                policy_sha256=policy_sha256,
-                curriculum_sha256=curriculum_sha256,
-                profile_sha256=profile_sha256,
-                source_sha256=source_sha256,
-                target_sha256=target_sha256,
-                output_pairs=tuple(output_pairs),
-                audio_roots=audio_root_map,
-                custom_safe_ids=tuple(custom_safe_ids),
-                highlight_safe_ids=tuple(highlight_safe_ids),
-                migration_revision=migration_revision,
-                private_capability="phase33-private-token-v1",
-                max_private_tokens=24,
-            )
-        except (Phase33AuthorityError, ValueError) as exc:
-            typer.echo("phase33_authority_error=preflight_failed")
-            raise typer.Exit(code=1) from exc
-        _write_phase33_json(result.model_dump(mode="json"), output)
-        typer.echo("phase33_authority_preflight_status=ready")
 
-    @phase33.command("validate-authority")
-    def phase33_validate_authority(
-        authority_file: Annotated[Path, typer.Option("--authority-file", exists=True, dir_okay=False, readable=True)],
-        expected_kind: Annotated[str, typer.Option("--expected-kind")],
-    ) -> None:
-        try:
-            result = validate_phase33_authority(authority_file, expected_kind=expected_kind)
-        except (Phase33AuthorityError, ValueError) as exc:
-            typer.echo("phase33_authority_error=validation_failed")
-            raise typer.Exit(code=1) from exc
-        typer.echo("phase33_authority_status=valid")
-        typer.echo(f"authority_kind={result.kind}")
-        typer.echo(f"authority_sha256={result.authority_sha256}")
 
-    @phase33_review.command("list")
-    def phase33_review_list(
-        job_id: Annotated[str, typer.Option("--job-id")],
-        actor_id: Annotated[str, typer.Option("--actor-id")],
-        request_id: Annotated[str, typer.Option("--request-id")],
-        status: Annotated[str, typer.Option("--status")],
-        field: Annotated[str, typer.Option("--field")],
-        source: Annotated[str, typer.Option("--source")],
-        output_format: Annotated[str, typer.Option("--format")] = "json",
-    ) -> None:
-        if output_format != "json":
-            _phase33_error("phase33_review_error=json_required")
-        command_sha256 = sha256(
-            json.dumps(
-                {
-                    "job_id": job_id,
-                    "status": status,
-                    "field": field,
-                    "source": source,
-                    "format": output_format,
-                },
-                sort_keys=True,
-                separators=(",", ":"),
-            ).encode("utf-8")
-        ).hexdigest()
-        key = (actor_id, request_id, "list")
-        existing = phase33_access_events.get(key)
-        if existing is not None and existing[0] != command_sha256:
-            _phase33_error("phase33_review_error=access_event_conflict")
-        if existing is None:
-            event_id = "phase33-access-" + sha256("|".join(key).encode("utf-8")).hexdigest()[:24]
-            phase33_access_events[key] = (command_sha256, event_id)
-        else:
-            event_id = existing[1]
-        _write_phase33_json({"access_event_id": event_id, "rows": []})
 
     @cli.command("check-anki-id-registry")
     def check_anki_id_registry(
@@ -3559,6 +3447,7 @@ def create_app(
         heard_review_authority_sha256: Annotated[str, typer.Option("--heard-review-authority-sha256", callback=_validate_foundation_sha256)],
         catalog_result_file: Annotated[Path, typer.Option("--catalog-result-file", exists=False, dir_okay=False)],
         voice_profile_file: Annotated[Path, typer.Option("--voice-profile-file", exists=False, dir_okay=False)],
+        provider_policy_file: Annotated[Path, typer.Option("--provider-policy-file", exists=False, dir_okay=False)],
         max_items: Annotated[int | None, typer.Option("--max-items", min=1)] = None,
         missing_only: Annotated[bool, typer.Option("--missing-only")] = False,
     ) -> None:
@@ -3575,17 +3464,41 @@ def create_app(
                 catalog_content_sha256=catalog_content_sha256,
                 profile_sample_authority_sha256=profile_sample_authority_sha256,
             )
+            job_authority = _build_korean_frequency_job_authority(
+                stage="full",
+                phase31_active_pointer_sha256=phase31_active_pointer_sha256,
+                phase31_active_pointer_content_sha256=phase31_active_pointer_content_sha256,
+                phase31_validation_receipt_sha256=phase31_validation_receipt_sha256,
+                phase31_snapshot_manifest_sha256=phase31_snapshot_manifest_sha256,
+                phase31_snapshot_root_sha256=phase31_snapshot_root_sha256,
+                frequency_bundle_manifest_sha256=frequency_bundle_manifest_sha256,
+                frequency_bundle_content_sha256=frequency_bundle_content_sha256,
+                source_retrieval_sha256=source_retrieval_sha256,
+                source_build_result_sha256=source_build_result_sha256,
+                source_review_aggregate_sha256=source_review_aggregate_sha256,
+                provider_policy_sha256=provider_policy_sha256,
+                pilot_authority_sha256=pilot_authority_sha256,
+                catalog_locator_sha256=catalog_locator_sha256,
+                catalog_content_sha256=catalog_content_sha256,
+                profile_sample_authority_sha256=profile_sample_authority_sha256,
+                provider_review_authority_sha256=provider_review_authority_sha256,
+                heard_review_authority_sha256=heard_review_authority_sha256,
+            )
             result = synthesize_korean_frequency_audio(
                 database_url=database_url,
                 authority=authority,
                 catalog_result_file=catalog_result_file,
                 voice_profile_file=voice_profile_file,
+                provider_policy_file=provider_policy_file,
+                frequency_bundle_root=frequency_bundle_root,
+                job_authority=job_authority,
                 max_items=max_items,
                 missing_only=missing_only,
             )
         except ValueError as exc:
             _fail_korean_frequency_text_operation(exc)
-        typer.echo("korean_frequency_audio_status=synthesized")
+        status = "failed" if result.failed_items else "synthesized_pending_review"
+        typer.echo(f"korean_frequency_audio_status={status}")
         typer.echo(f"audio_processed_items={result.processed_items}")
         typer.echo(f"audio_reused_items={result.reused_items}")
         typer.echo(f"fallback_audio_items={result.fallback_items}")
@@ -3853,7 +3766,8 @@ def create_app(
             typer.Option(
                 "--concurrency",
                 min=1,
-                help="Generation workers to claim text items for; default 1. SQLite is conservative, Postgres is recommended for real concurrency.",
+                max=1,
+                help="Text generation workers per job; currently only 1 is supported.",
             ),
         ] = 1,
         review_report_file: Annotated[

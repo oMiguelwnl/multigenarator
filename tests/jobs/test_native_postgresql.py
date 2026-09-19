@@ -26,7 +26,7 @@ def test_postgresql_native_upgrade_backup_restore_and_downgrade(tmp_path):
         assert source.dialect.name == clone.dialect.name == "postgresql"
         assert not inspect(source).get_table_names(), "source must be an empty disposable database"
         assert not inspect(clone).get_table_names(), "clone must be an empty disposable database"
-        command.upgrade(native_alembic_config(source), "20260828_19")
+        command.upgrade(native_alembic_config(source), "20260913_21")
         with source.begin() as connection:
             connection.execute(
                 text(

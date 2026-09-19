@@ -4,18 +4,17 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from alembic import command
+import pytest
 from alembic.config import Config
 from alembic.script import ScriptDirectory
-import pytest
 from sqlalchemy import MetaData, Table, create_engine, inspect, select
 from sqlalchemy.exc import IntegrityError
 
-from multilang.db.base import Base
+from alembic import command
 
 # Import models so SQLAlchemy metadata contains every mapped table.
 from multilang.db import models as _models  # noqa: F401
-
+from multilang.db.base import Base
 
 _PROJECT_ROOT = Path(__file__).resolve().parents[2]
 _PHASE32_REVISION = "20260821_18"
@@ -580,9 +579,13 @@ def test_phase33_schema_upgrades_to_one_head_and_round_trips(tmp_path: Path) -> 
         engine.dispose()
 
 
-def test_phase33_revision_is_preserved_in_the_linear_native_history() -> None:
+def test_phase33_revision_is_preserved_below_the_native_and_lease_branches() -> None:
     scripts = ScriptDirectory.from_config(_alembic_config("sqlite://"))
-    assert scripts.get_heads() == ["20260912_20"]
+    assert scripts.get_heads() == ["20260914_22"]
+    assert set(scripts.get_revision("20260914_22").down_revision) == {
+        "20260912_20", "20260913_21",
+    }
+    assert scripts.get_revision("20260913_21").down_revision == _PHASE33_REVISION
     assert scripts.get_revision("20260912_20").down_revision == _PHASE33_REVISION
     assert scripts.get_revision(_PHASE33_REVISION).down_revision == _PHASE32_REVISION
 

@@ -4,7 +4,7 @@ A aplicação mantém SQLAlchemy 2 e Alembic. PostgreSQL é o destino de produç
 SQLite continua útil em desenvolvimento e ensaios. Não existe segundo banco
 operacional para a arquitetura nativa.
 
-A revisão linear `20260912_20`, filha de `20260828_19`, acrescenta 18 tabelas:
+A revisão `20260912_20`, filha de `20260828_19`, acrescenta 18 tabelas nativas:
 
 | Grupo | Tabelas |
 |---|---|
@@ -34,5 +34,8 @@ Eventos contêm apenas identificadores e hashes. Payloads de jobs e estado do
 usuário podem ser privados: o banco e seus backups precisam de acesso restrito.
 A API projeta apenas status e metadados permitidos, sem expor esses payloads.
 
-O startup legado continua no schema 19. A revisão 20 não deve ser executada com
-um `alembic upgrade head` não autorizado. Siga [migração](migration.md).
+O startup comum usa a revisão `20260913_21`, também filha de `20260828_19`,
+que acrescenta `generation_leases` sem passar pelo ramo nativo. A revisão
+`20260914_22` reúne os dois ramos. A aplicação do schema nativo exige o fluxo
+autorizado; não use `alembic upgrade head` como atalho. Siga
+[migração](migration.md) e [operação da geração](generation-operations.md).

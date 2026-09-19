@@ -12,6 +12,7 @@ from sqlalchemy.orm import Session
 
 from multilang.db.models import KoreanGrammarBundleModel, KoreanGrammarMemberModel
 from multilang.domain.korean import canonical_json_sha256
+from multilang.repositories.transactions import commit_repository_changes
 
 
 class KoreanGrammarRepositoryError(ValueError):
@@ -136,7 +137,7 @@ class KoreanGrammarRepository:
                 )
             )
         try:
-            self.session.commit()
+            commit_repository_changes(self.session)
         except IntegrityError as exc:
             self.session.rollback()
             replay = self.load_bundle(record.bundle_id, require_exists=False)

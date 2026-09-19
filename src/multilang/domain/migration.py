@@ -13,7 +13,7 @@ class MigrationPreview(NativeContract):
     target_sha256: str = Field(pattern=r"^[a-f0-9]{64}$")
     backup_sha256: str = Field(pattern=r"^[a-f0-9]{64}$")
     source_locator_sha256: str = Field(pattern=r"^[a-f0-9]{64}$")
-    target_revision: Literal["20260912_20"] = "20260912_20"
+    target_revision: Literal["20260914_22"] = "20260914_22"
     policy: Literal["additive-preserve-legacy"] = "additive-preserve-legacy"
     topology_sha256: str | None = Field(default=None, pattern=r"^[a-f0-9]{64}$")
     rehearsal_sha256: str | None = Field(default=None, pattern=r"^[a-f0-9]{64}$")

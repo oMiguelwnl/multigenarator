@@ -5,7 +5,7 @@ from __future__ import annotations
 from datetime import UTC, datetime
 from uuid import uuid4
 
-from sqlalchemy import func, select, update
+from sqlalchemy import select, update
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
@@ -27,6 +27,7 @@ from multilang.domain.private_processing import (
     PrivateProviderIdempotency,
     private_text_sha256,
 )
+from multilang.repositories.transactions import commit_repository_changes
 from multilang.services.private_context import PrivateDisclosureCasConflict
 
 
@@ -155,7 +156,7 @@ class PrivateProcessingRepository:
             )
         )
         try:
-            self.session.commit()
+            commit_repository_changes(self.session)
         except IntegrityError as exc:
             self.session.rollback()
             existing_after_conflict = self._existing_idempotent_capability(idempotency_key_sha256)
@@ -216,7 +217,7 @@ class PrivateProcessingRepository:
         )
         self.session.add(attempt)
         try:
-            self.session.commit()
+            commit_repository_changes(self.session)
         except IntegrityError as exc:
             self.session.rollback()
             raise PrivateProcessingRepositoryConflict("private disclosure reservation conflict") from exc
@@ -269,7 +270,7 @@ class PrivateProcessingRepository:
         )
         self.session.add(attempt)
         try:
-            self.session.commit()
+            commit_repository_changes(self.session)
         except IntegrityError as exc:
             self.session.rollback()
             raise PrivateProcessingRepositoryConflict("private disclosure finalization conflict") from exc
@@ -312,7 +313,7 @@ class PrivateProcessingRepository:
         )
         self.session.add(attempt)
         try:
-            self.session.commit()
+            commit_repository_changes(self.session)
         except IntegrityError as exc:
             self.session.rollback()
             raise PrivateProcessingRepositoryConflict("private disclosure finalization conflict") from exc

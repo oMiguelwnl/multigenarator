@@ -19,6 +19,7 @@ from multilang.domain.audio import (
     AudioSynthesisStatus,
     NormalizedTtsInput,
 )
+from multilang.repositories.transactions import commit_repository_changes
 
 
 class AudioRepository:
@@ -78,7 +79,7 @@ class AudioRepository:
             self._apply_payload(row, payload)
 
         try:
-            self.session.commit()
+            commit_repository_changes(self.session)
         except IntegrityError:
             self.session.rollback()
             row = self.session.scalar(
@@ -91,7 +92,7 @@ class AudioRepository:
             if row is None:
                 raise
             self._apply_payload(row, payload)
-            self.session.commit()
+            commit_repository_changes(self.session)
         self.session.refresh(row)
         return self._to_domain(row)
 
@@ -169,6 +170,7 @@ class AudioRepository:
             ssml_text=row.ssml_text,
             text_hash=row.text_hash,
             ssml_hash=row.ssml_hash,
+            synthesis_request_sha256=row.synthesis_request_sha256,
         )
         return AudioAssetRecord(
             job_id=row.job_id,

@@ -17,6 +17,7 @@ from multilang.domain.exporting import (
     build_export_note_guid,
 )
 from multilang.domain.jobs import SupportedLanguage
+from multilang.repositories.transactions import commit_repository_changes
 
 
 class ExportRepository:
@@ -58,7 +59,7 @@ class ExportRepository:
                     setattr(row, field, value)
             ordered_rows.append(row)
 
-        self.session.commit()
+        commit_repository_changes(self.session)
         for row in ordered_rows:
             self.session.refresh(row)
         return [self._to_card_domain(row) for row in ordered_rows]
@@ -99,7 +100,7 @@ class ExportRepository:
             for field, value in payload.items():
                 setattr(row, field, value)
 
-        self.session.commit()
+        commit_repository_changes(self.session)
         self.session.refresh(row)
         return self._to_artifact_domain(row)
 

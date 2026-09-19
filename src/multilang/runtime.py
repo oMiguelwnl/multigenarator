@@ -462,7 +462,9 @@ class RuntimeGenerateService(IngestLexicalItemsService):
         if job is None:
             raise ValueError(f"unknown job_id: {job_id}")
 
-        rows = [] if refresh_snapshots else self.export_repository.list_card_snapshots(job_id)
+        # Korean review receipts bind the current text and media. A saved export
+        # snapshot cannot bypass a later rejection or a changed artifact.
+        rows = [] if refresh_snapshots or job.language == "ko" else self.export_repository.list_card_snapshots(job_id)
         if not rows:
             rows = self.assemble_export_cards_service.execute(
                 job_id=job_id,
@@ -514,6 +516,10 @@ class RuntimeGenerateService(IngestLexicalItemsService):
             )
             card_count = package_result.card_count
         else:
+            if job.language == "ko":
+                from multilang.services.korean_tabular_media import copy_korean_tabular_media
+
+                copy_korean_tabular_media(media_index, output_dir)
             tabular_result = write_export_tabular_bundle(
                 rows=rows,
                 export_format=export_format,
@@ -706,6 +712,19 @@ class RuntimeGenerateService(IngestLexicalItemsService):
         media_index: dict[str, Path] = {}
         asset_index = self._preload_audio_assets(rows)
         for row in rows:
+            if row.identity.language is SupportedLanguage.KO and row.identity.source_type in {"word-list", "kindle-highlights"}:
+                # Repositories are refreshed here after assembly. Bind these
+                # exact assets to the reviewed snapshot, including word audio
+                # required for readiness even when the note only plays a sentence.
+                for kind, expected_hash in (
+                    (AudioAssetKind.WORD, row.word_audio_artifact_sha256),
+                    (AudioAssetKind.SENTENCE, row.sentence_audio_artifact_sha256),
+                ):
+                    asset = self._get_audio_asset(asset_index=asset_index, job_id=row.identity.job_id,
+                        item_key=row.identity.item_key, asset_kind=kind)
+                    if (asset is None or not asset.ready_for_korean_final_export or not expected_hash
+                            or asset.provenance.artifact_sha256 != expected_hash):
+                        raise ValueError("Korean personal export media review drift")
             field_names = export_field_names_for_language_and_source(
                 language=row.identity.language,
                 source_type=row.identity.source_type,
@@ -1171,6 +1190,10 @@ def _note_type_name_for_rows(rows: list[object]) -> str:
     # even in dynamic flows (non frozen). This keeps Latin card style.
     # If using legacy latin-mvp source, it already maps to it.
     deck_language = getattr(rows[0].identity, 'language', None) if rows else None
+    if deck_language == SupportedLanguage.KO:
+        from multilang.services.export_anki_package import build_multilang_model
+
+        return build_multilang_model(source_type=source_type, language=SupportedLanguage.KO).name
     if deck_language == "zh" or (hasattr(deck_language, 'value') and deck_language.value == "zh"):
         if source_type in {"frequency", "word-list"}:
             return MANDARIN_NOTE_TYPE_NAME

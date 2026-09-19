@@ -2,16 +2,15 @@
 
 from __future__ import annotations
 
+import json
 from copy import deepcopy
 from hashlib import sha256
 from importlib import import_module, util
-import json
 from types import SimpleNamespace
 
 import pytest
 
 from multilang.domain.korean import KoreanConcept
-
 
 SHA = "a" * 64
 SHA_B = "b" * 64
@@ -209,6 +208,280 @@ def _snapshot(*, source_kind: str = "active-approved-snapshot") -> SimpleNamespa
         concept_registry=registry,
         members=members,
     )
+
+
+def _exportable_bundle(tmp_path, *, ready_state="learner_ready", bad_text=False):
+    from support.audio import SILENT_MP3
+
+    from multilang.services.korean_grammar import KoreanGrammarBundleBuilder
+
+    entry = _grammar_entry(prerequisites=("orthography.hangul", "phonology.basic"), ready_state=ready_state)
+    payload = entry.model_dump(mode="json", by_alias=True)
+    payload["source_binding"] = _sealed(payload["source_binding"])
+    paths = {}
+    for role, text in (("word", entry.spoken_sample), ("sentence", entry.example_sentence)):
+        path = tmp_path / f"{role}.mp3"
+        path.write_bytes(SILENT_MP3 * (1 if role == "word" else 2))
+        digest = sha256(path.read_bytes()).hexdigest()
+        paths[digest] = path
+        binding = payload[f"{role}_media_binding"]
+        binding["artifact_sha256"] = digest
+        binding["text_sha256"] = sha256(("stale" if bad_text else text).encode()).hexdigest()
+        payload[f"{role}_media_binding"] = _sealed(binding)
+    entry = _grammar_domain().KoreanGrammarEntry(**_sealed(payload))
+    bundle = KoreanGrammarBundleBuilder(active_snapshot_resolver=_snapshot).build_bundle(
+        lexical_bootstrap=(), grammar_entries=(entry,),
+    )
+    return _seal_export_reviews(bundle), paths
+
+
+def _seal_export_reviews(bundle):
+    from multilang.services.korean_grammar_export import (
+        grammar_candidate_sha256,
+        grammar_review_curriculum_sha256,
+    )
+    entries = []
+    for entry in bundle.grammar_entries:
+        payload = entry.model_dump(mode="json", by_alias=True)
+        review = payload["review_binding"]
+        review.update(candidate_sha256=grammar_candidate_sha256(entry),
+            source_sha256=entry.source_binding.content_hash,
+            curriculum_sha256=grammar_review_curriculum_sha256(bundle),
+            media_sha256=_canonical_hash([entry.word_media_binding.content_hash, entry.sentence_media_binding.content_hash]))
+        payload["review_binding"] = _sealed(review)
+        entries.append(_grammar_domain().KoreanGrammarEntry(**_sealed(payload)))
+    return _grammar_service().KoreanGrammarBundleBuilder(active_snapshot_resolver=_snapshot).build_bundle(
+        lexical_bootstrap=bundle.lexical_bootstrap, grammar_entries=tuple(entries))
+
+
+def test_grammar_export_assembles_reviewed_content_with_all_teaching_fields(tmp_path):
+    from multilang.services.korean_grammar_export import assemble_korean_grammar_export_rows
+
+    bundle, paths = _exportable_bundle(tmp_path)
+    result = assemble_korean_grammar_export_rows(
+        bundle=bundle, job_id="grammar-export", media_paths=paths, active_snapshot_resolver=_snapshot,
+    )
+    assert len(result.rows) == 1
+    row = result.rows[0]
+    entry = bundle.grammar_entries[0]
+    assert row.word == entry.form
+    assert all(value in row.definitions for value in (entry.function, entry.attachment_rule, entry.register, entry.spoken_sample))
+    assert row.translation == entry.portuguese_translation
+    assert row.image == ""
+    assert set(result.media_index.values()) == set(paths.values())
+
+
+def test_grammar_export_rejects_undecodable_media_even_with_matching_receipts(tmp_path):
+    from multilang.services.korean_grammar import KoreanGrammarBundleBuilder
+    from multilang.services.korean_grammar_export import assemble_korean_grammar_export_rows
+
+    bundle, paths = _exportable_bundle(tmp_path)
+    payload = bundle.grammar_entries[0].model_dump(mode="json", by_alias=True)
+    path = paths.pop(payload["word_media_binding"]["artifact_sha256"])
+    path.write_bytes(b"ID3 invalid MP3")
+    digest = sha256(path.read_bytes()).hexdigest()
+    paths[digest] = path
+    payload["word_media_binding"]["artifact_sha256"] = digest
+    payload["word_media_binding"] = _sealed(payload["word_media_binding"])
+    bundle = KoreanGrammarBundleBuilder(active_snapshot_resolver=_snapshot).build_bundle(
+        lexical_bootstrap=(), grammar_entries=(_grammar_domain().KoreanGrammarEntry(**_sealed(payload)),))
+    bundle = _seal_export_reviews(bundle)
+
+    with pytest.raises(ValueError, match="audio must be decodable MP3"):
+        assemble_korean_grammar_export_rows(bundle=bundle, job_id="grammar-export", media_paths=paths,
+            active_snapshot_resolver=_snapshot)
+
+
+def test_grammar_changed_text_cannot_reuse_linguistic_review(tmp_path):
+    from multilang.services.korean_grammar_export import assemble_korean_grammar_export_rows
+    bundle, paths = _exportable_bundle(tmp_path)
+    payload = bundle.grammar_entries[0].model_dump(mode="json", by_alias=True)
+    payload["portuguese_translation"] = "Outra tradução sem revisão."
+    entry = _grammar_domain().KoreanGrammarEntry(**_sealed(payload))
+    changed = _grammar_service().KoreanGrammarBundleBuilder(active_snapshot_resolver=_snapshot).build_bundle(
+        lexical_bootstrap=(), grammar_entries=(entry,))
+    with pytest.raises(ValueError, match="review"):
+        assemble_korean_grammar_export_rows(bundle=changed, job_id="grammar-export", media_paths=paths,
+            active_snapshot_resolver=_snapshot)
+
+
+@pytest.mark.parametrize("name", ['bad".mp3', "<script>.mp3", "bad\\path.mp3"])
+def test_grammar_media_names_cannot_inject_sound_field_markup(tmp_path, name):
+    from multilang.services.korean_grammar_export import assemble_korean_grammar_export_rows
+    bundle, paths = _exportable_bundle(tmp_path)
+    digest = next(iter(paths))
+    renamed = tmp_path / name
+    paths[digest].rename(renamed)
+    paths[digest] = renamed
+    with pytest.raises(ValueError, match="basename"):
+        assemble_korean_grammar_export_rows(bundle=bundle, job_id="grammar-export", media_paths=paths,
+            active_snapshot_resolver=_snapshot)
+
+
+def test_grammar_delivery_ids_cannot_collide(tmp_path):
+    from multilang.services.korean_grammar_export import assemble_korean_grammar_export_rows
+    bundle, paths = _exportable_bundle(tmp_path)
+    bundle = bundle.model_copy(update={"grammar_entries": bundle.grammar_entries * 2})
+    with pytest.raises(ValueError, match="identifiers"):
+        assemble_korean_grammar_export_rows(bundle=bundle, job_id="grammar-export", media_paths=paths,
+            active_snapshot_resolver=_snapshot)
+
+
+def _bootstrap_teaching_fixture(tmp_path):
+    from support.audio import SILENT_MP3
+
+    from multilang.domain.korean_grammar import korean_grammar_canonical_json_sha256
+    from multilang.domain.korean_grammar_bootstrap import (
+        KoreanGrammarBootstrapCard,
+        bootstrap_candidate_sha256,
+    )
+    from multilang.services.korean_grammar import KoreanGrammarBundleBuilder
+
+    simple, paths = _exportable_bundle(tmp_path)
+    bootstrap = _bootstrap(source=_sealed(_source_binding()))
+    bundle = KoreanGrammarBundleBuilder(active_snapshot_resolver=_snapshot).build_bundle(
+        lexical_bootstrap=(bootstrap,), grammar_entries=simple.grammar_entries)
+    bundle = _seal_export_reviews(bundle)
+    payload = dict(entry_id=bootstrap.entry_id, bootstrap_sha256=bootstrap.content_hash,
+        definitions="saudação formal", ipa="", example_sentence=bootstrap.canonical_nfc + ".",
+        portuguese_translation="Olá.")
+    media_hashes = []
+    for role, text in (("word", bootstrap.canonical_nfc), ("sentence", payload["example_sentence"])):
+        path = tmp_path / f"bootstrap-{role}.mp3"
+        path.write_bytes(SILENT_MP3 * (3 if role == "word" else 4))
+        digest = sha256(path.read_bytes()).hexdigest()
+        paths[digest] = path
+        binding = simple.grammar_entries[0].word_media_binding.model_dump(mode="json")
+        binding.update(text_sha256=sha256(text.encode()).hexdigest(), artifact_sha256=digest)
+        payload[f"{role}_media_binding"] = _sealed(binding)
+        media_hashes.append(payload[f"{role}_media_binding"]["content_hash"])
+    review = _review_binding()
+    review.update(source_sha256=bootstrap.source_binding.content_hash,
+        candidate_sha256=bootstrap_candidate_sha256(payload), curriculum_sha256=bundle.bundle_sha256,
+        media_sha256=korean_grammar_canonical_json_sha256(media_hashes))
+    payload["review_binding"] = _sealed(review)
+    return bundle, paths, KoreanGrammarBootstrapCard(**_sealed(payload))
+
+
+def test_bootstrap_cards_are_reviewed_and_delivered_before_grammar(tmp_path):
+    from multilang.services.korean_grammar_export import assemble_korean_grammar_export_rows
+    bundle, paths, teaching = _bootstrap_teaching_fixture(tmp_path)
+    result = assemble_korean_grammar_export_rows(bundle=bundle, job_id="grammar-export", media_paths=paths,
+        bootstrap_cards=(teaching,), active_snapshot_resolver=_snapshot)
+    assert [row.identity.item_key for row in result.rows] == [bundle.lexical_bootstrap[0].entry_id, bundle.grammar_entries[0].entry_id]
+    assert [row.sort_index for row in result.rows] == [1, 2]
+    assert len(result.media_index) == 4
+    assert result.rows[0].translation == teaching.portuguese_translation
+
+
+def test_bootstrap_export_rejects_resealed_bundle_with_stale_metadata_hash(tmp_path):
+    from multilang.domain.korean_grammar_bootstrap import KoreanGrammarBootstrapCard
+    from multilang.services.korean_grammar import KoreanGrammarBundleBuilder
+    from multilang.services.korean_grammar_export import assemble_korean_grammar_export_rows
+
+    bundle, paths, teaching = _bootstrap_teaching_fixture(tmp_path)
+    changed = bundle.lexical_bootstrap[0].model_copy(update={"lexical_identity_sha256": SHA_B})
+    bundle = KoreanGrammarBundleBuilder(active_snapshot_resolver=_snapshot).build_bundle(
+        lexical_bootstrap=(changed,), grammar_entries=bundle.grammar_entries)
+    bundle = _seal_export_reviews(bundle)
+    payload = teaching.model_dump(mode="json")
+    payload["review_binding"]["curriculum_sha256"] = bundle.bundle_sha256
+    payload["review_binding"] = _sealed(payload["review_binding"])
+    teaching = KoreanGrammarBootstrapCard(**_sealed(payload))
+
+    with pytest.raises(ValueError, match="bootstrap source or curriculum review drift"):
+        assemble_korean_grammar_export_rows(bundle=bundle, job_id="grammar-export", media_paths=paths,
+            bootstrap_cards=(teaching,), active_snapshot_resolver=_snapshot)
+
+
+@pytest.mark.parametrize("failure", ["missing", "duplicate", "content", "review", "bytes", "curriculum"])
+def test_bootstrap_delivery_rejects_incomplete_or_stale_evidence(tmp_path, failure):
+    from multilang.services.korean_grammar_export import assemble_korean_grammar_export_rows
+    bundle, paths, teaching = _bootstrap_teaching_fixture(tmp_path)
+    if failure == "content":
+        teaching = teaching.model_copy(update={"definitions": "changed"})
+    if failure in {"review", "curriculum"}:
+        review = teaching.review_binding.model_copy(update={
+            "consensus_status": "stale"} if failure == "review" else {"curriculum_sha256": "f" * 64})
+        teaching = teaching.model_copy(update={"review_binding": review})
+    if failure == "bytes":
+        paths[teaching.word_media_binding.artifact_sha256].write_bytes(b"changed")
+    cards = () if failure == "missing" else (teaching, teaching) if failure == "duplicate" else (teaching,)
+    with pytest.raises(ValueError):
+        assemble_korean_grammar_export_rows(bundle=bundle, job_id="grammar-export", media_paths=paths,
+            bootstrap_cards=cards, active_snapshot_resolver=_snapshot)
+
+
+@pytest.mark.parametrize("export_format", ["apkg", "csv", "tsv"])
+@pytest.mark.parametrize("with_bootstrap", [False, True])
+def test_runtime_grammar_export_updates_readiness_only_while_evidence_is_current(tmp_path, monkeypatch, export_format, with_bootstrap):
+    import json
+
+    from sqlalchemy import create_engine
+    from sqlalchemy.orm import Session
+
+    from multilang.db.base import Base
+    from multilang.services import korean_foundation_snapshot, korean_grammar_export
+    from multilang.services.korean_learning_runtime import KoreanLearningRuntime
+
+    media_dir = tmp_path / "media"
+    media_dir.mkdir()
+    bootstrap_file = None
+    if with_bootstrap:
+        bundle, paths, teaching = _bootstrap_teaching_fixture(media_dir)
+        bootstrap_file = tmp_path / "bootstrap.json"
+        bootstrap_file.write_text(json.dumps([teaching.model_dump(mode="json")]), encoding="utf-8")
+    else:
+        bundle, paths = _exportable_bundle(media_dir)
+    expected_cards = 2 if with_bootstrap else 1
+    assembler = korean_grammar_export.assemble_korean_grammar_export_rows
+    monkeypatch.setattr(korean_grammar_export, "assemble_korean_grammar_export_rows",
+        lambda **kwargs: assembler(**kwargs, active_snapshot_resolver=_snapshot))
+    monkeypatch.setattr(korean_foundation_snapshot, "resolve_active_korean_foundation_snapshot", _snapshot)
+    engine = create_engine(f"sqlite+pysqlite:///{tmp_path / 'grammar.sqlite'}")
+    Base.metadata.create_all(engine)
+    with Session(engine) as session:
+        runtime = KoreanLearningRuntime(session)
+        job_id = runtime.import_grammar_bundle(bundle=bundle)["job_id"]
+        assert runtime.process(job_id=job_id, source="grammar", mode="start")["review_required"] == expected_cards
+        exported = runtime.export_grammar(job_id=job_id, media_dir=media_dir,
+            output_dir=tmp_path / "export", export_format=export_format, bootstrap_cards_file=bootstrap_file)
+        assert exported["card_count"] == expected_cards
+        if export_format != "apkg":
+            assert {p.name for p in (tmp_path / "export" / "collection.media").iterdir()} == {p.name for p in paths.values()}
+    with Session(engine) as session:
+        reopened = KoreanLearningRuntime(session)
+        assert reopened.status(job_id)["safe_sources"]["grammar"]["ready_count"] == expected_cards
+        assert reopened.process(job_id=job_id, source="grammar", mode="resume")["accepted"] == expected_cards
+        if export_format != "apkg":
+            delivered = next((tmp_path / "export" / "collection.media").iterdir())
+            original = delivered.read_bytes()
+            delivered.write_bytes(b"changed copy")
+            assert reopened.status(job_id)["safe_sources"]["grammar"]["ready_count"] == 0
+            delivered.write_bytes(original)
+            assert reopened.status(job_id)["safe_sources"]["grammar"]["ready_count"] == expected_cards
+        next(iter(paths.values())).write_bytes(b"changed")
+        assert reopened.status(job_id)["safe_sources"]["grammar"]["ready_count"] == 0
+
+
+@pytest.mark.parametrize("failure", ["text", "bytes", "review", "bundle", "snapshot", "empty"])
+def test_grammar_export_blocks_stale_content_or_missing_review(tmp_path, failure):
+    from multilang.services.korean_grammar_export import assemble_korean_grammar_export_rows
+
+    bundle, paths = _exportable_bundle(
+        tmp_path, ready_state="needs_review" if failure == "review" else "learner_ready", bad_text=failure == "text",
+    )
+    if failure == "bytes":
+        next(iter(paths.values())).write_bytes(b"changed")
+    if failure == "bundle":
+        bundle = bundle.model_copy(update={"bundle_sha256": "f" * 64})
+    if failure == "empty":
+        bundle = _grammar_service().KoreanGrammarBundleBuilder(active_snapshot_resolver=_snapshot).build_bundle(lexical_bootstrap=(), grammar_entries=())
+    snapshot = _snapshot()
+    if failure == "snapshot":
+        snapshot.bundle_sha256 = "d" * 64
+    with pytest.raises(ValueError):
+        assemble_korean_grammar_export_rows(bundle=bundle, job_id="grammar-export", media_paths=paths, active_snapshot_resolver=lambda: snapshot)
 
 
 def test_resolve_once_binds_active_root_and_imported_concepts_are_immutable() -> None:

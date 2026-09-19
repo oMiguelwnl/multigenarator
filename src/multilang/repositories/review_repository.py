@@ -3,11 +3,9 @@
 from __future__ import annotations
 
 from hashlib import sha256
-from typing import Any
-from uuid import uuid4
 
 from pydantic import BaseModel, ConfigDict, Field, field_validator
-from sqlalchemy import func, select
+from sqlalchemy import func, select, update
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
@@ -22,6 +20,7 @@ from multilang.db.models import (
     ReviewFieldRevisionModel,
 )
 from multilang.domain.korean import canonical_json_sha256
+from multilang.repositories.transactions import commit_repository_changes
 
 
 class ReviewRepositoryConflict(ValueError):
@@ -114,8 +113,13 @@ class ReviewRepository:
         generator_version: str,
         route_id: str | None,
         expected_pointer_version: int,
+        previous_revision_sha256: str | None = None,
     ) -> ReviewMutationResult:
         _require_sha256(value_sha256, "value_sha256")
+        history_binding = {}
+        if previous_revision_sha256 is not None:
+            _require_sha256(previous_revision_sha256, "previous_revision_sha256")
+            history_binding["previous_revision_sha256"] = previous_revision_sha256
         command_sha256 = _command_sha256(
             "create_candidate_revision",
             actor_id=actor_id,
@@ -128,6 +132,7 @@ class ReviewRepository:
             generator_version=generator_version,
             route_id=route_id,
             expected_pointer_version=expected_pointer_version,
+            **history_binding,
         )
         revision_id = _stable_id("rev", command_sha256)
         replay = self._candidate_replay(
@@ -157,7 +162,7 @@ class ReviewRepository:
             generator_id=generator_id,
             generator_version=generator_version,
             route_id=route_id,
-            previous_revision_sha256=None,
+            previous_revision_sha256=previous_revision_sha256,
         )
         self.session.add(revision)
         if pointer is None:
@@ -172,12 +177,17 @@ class ReviewRepository:
             )
             self.session.add(pointer)
         else:
-            pointer.current_revision_id = revision_id
-            pointer.pointer_version = expected_pointer_version + 1
-            pointer.review_status = "needs_review"
-            self.session.add(pointer)
+            changed = self.session.execute(update(ReviewCurrentPointerModel).where(
+                ReviewCurrentPointerModel.id == pointer.id,
+                ReviewCurrentPointerModel.pointer_version == expected_pointer_version,
+            ).values(current_revision_id=revision_id, pointer_version=expected_pointer_version + 1,
+                     review_status="needs_review").returning(ReviewCurrentPointerModel.id)
+              .execution_options(synchronize_session=False)).scalar_one_or_none()
+            if changed is None:
+                raise ReviewRepositoryCASConflict("review pointer version conflict")
+            self.session.expire(pointer)
         try:
-            self.session.commit()
+            commit_repository_changes(self.session)
         except IntegrityError as exc:
             self.session.rollback()
             replay_after_conflict = self._candidate_replay(
@@ -242,7 +252,7 @@ class ReviewRepository:
         pointer.pointer_version = expected_pointer_version + 1
         self.session.add(pointer)
         try:
-            self.session.commit()
+            commit_repository_changes(self.session)
         except IntegrityError as exc:
             self.session.rollback()
             raise ReviewRepositoryConflict("review decision conflict") from exc
@@ -306,7 +316,7 @@ class ReviewRepository:
         )
         self.session.add(event)
         try:
-            self.session.commit()
+            commit_repository_changes(self.session)
         except IntegrityError as exc:
             self.session.rollback()
             raise ReviewRepositoryConflict("review access event conflict") from exc
@@ -382,7 +392,7 @@ class ReviewRepository:
         )
         self.session.add(reservation)
         try:
-            self.session.commit()
+            commit_repository_changes(self.session)
         except IntegrityError as exc:
             self.session.rollback()
             raise ReviewRepositoryConflict("audio reservation conflict") from exc
@@ -417,7 +427,7 @@ class ReviewRepository:
         reservation.reservation_version = next_version
         self.session.add(reservation)
         try:
-            self.session.commit()
+            commit_repository_changes(self.session)
         except IntegrityError as exc:
             self.session.rollback()
             raise ReviewRepositoryConflict("audio transition conflict") from exc
@@ -500,7 +510,7 @@ class ReviewRepository:
             pointer.pointer_version += 1
             self.session.add(pointer)
         try:
-            self.session.commit()
+            commit_repository_changes(self.session)
         except IntegrityError as exc:
             self.session.rollback()
             raise ReviewRepositoryConflict("audio finalization conflict") from exc

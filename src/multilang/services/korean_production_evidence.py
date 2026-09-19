@@ -2,21 +2,21 @@
 
 from __future__ import annotations
 
+import json
+import math
+import sqlite3
+import zipfile
 from collections import Counter
 from dataclasses import dataclass
 from hashlib import sha256
-import json
 from pathlib import Path
-import sqlite3
 from tempfile import TemporaryDirectory
 from typing import Iterable, Mapping
-import zipfile
 
 from pydantic import BaseModel, ConfigDict, Field, field_validator
-from sqlalchemy import select
+from sqlalchemy import create_engine, select
 from sqlalchemy.engine import make_url
 from sqlalchemy.orm import Session
-from sqlalchemy import create_engine
 
 from multilang.db.models import (
     AudioAssetModel,
@@ -28,14 +28,21 @@ from multilang.db.models import (
     TextQualityRecordModel,
 )
 from multilang.domain.audio import AudioAssetKind, AudioReviewStatus, AudioSynthesisStatus
-from multilang.domain.exporting import FREQUENCY_EXPORT_CARD_FIELD_NAMES, ExportCardIdentity, build_export_note_guid
-from multilang.domain.korean import KOREAN_PROVIDER_LOCALE
+from multilang.domain.exporting import (
+    FREQUENCY_EXPORT_CARD_FIELD_NAMES,
+    ExportCardIdentity,
+    build_export_note_guid,
+)
 from multilang.domain.jobs import SupportedLanguage
+from multilang.domain.korean import KOREAN_PROVIDER_LOCALE
+from multilang.domain.korean_provider import KoreanProviderPolicy, KoreanProviderTask
 from multilang.domain.text_quality import ReviewStatus, ValidationStatus
 from multilang.repositories.provider_call_log_repository import summarize_provider_call_records
 from multilang.services.anki_id_registry import AnkiIdKind, registry_id
-from multilang.services.korean_foundation_snapshot import verify_active_korean_foundation_snapshot_provenance
-
+from multilang.services.korean_audio import KoreanVoiceProfile
+from multilang.services.korean_foundation_snapshot import (
+    verify_active_korean_foundation_snapshot_provenance,
+)
 
 _HEX = frozenset("0123456789abcdef")
 _EXPECTED_LEVELS = (1, 2, 3)
@@ -157,6 +164,8 @@ class KoreanProductionEvidence(_FrozenModel):
     audio_artifact_hash_count: int = Field(ge=0)
     provider_call_count: int = Field(ge=0)
     provider_attempt_count: int = Field(ge=0)
+    provider_failure_count: int = Field(default=0, ge=0)
+    provider_unknown_outcome_count: int = Field(default=0, ge=0)
     retry_attempt_count: int = Field(ge=0)
     cache_hit_count: int = Field(ge=0)
     synthesis_attempt_count: int = Field(ge=0)
@@ -296,6 +305,8 @@ def validate_korean_production_run_result(
     rows: KoreanProductionEvidenceRows,
     expected_item_count: int,
     protected_hashes: Mapping[str, tuple[str, str]],
+    voice_profile: Mapping[str, object],
+    provider_policy: KoreanProviderPolicy | Mapping[str, object],
     phase31_verifier=verify_active_korean_foundation_snapshot_provenance,
 ) -> KoreanProductionEvidence:
     """Recompute pre-review production evidence without applying reviews or mutating rows."""
@@ -320,8 +331,11 @@ def validate_korean_production_run_result(
         rows.audio_assets,
         authority=authority,
         expected_item_count=expected_item_count,
+        voice_profile=voice_profile,
     )
-    provider_counts = _validate_provider_rows(tuple(rows.provider_call_records), authority=authority)
+    provider_counts = _validate_provider_rows(
+        tuple(rows.provider_call_records), authority=authority, provider_policy=provider_policy,
+    )
     payload = {
         "mode": "run_result",
         "job_id": authority.job_id,
@@ -331,7 +345,7 @@ def validate_korean_production_run_result(
         **text_counts,
         **audio_counts,
         **provider_counts,
-        "authority": _authority_hash_payload(authority),
+        "authority": {**_authority_hash_payload(authority), "voice_profile_sha256": str(voice_profile["profile_sha256"])},
     }
     return KoreanProductionEvidence(
         **payload,
@@ -359,6 +373,8 @@ def validate_korean_production_final_evidence(
     generation_report_json: Path,
     generation_report_markdown: Path,
     protected_hashes: Mapping[str, tuple[str, str]],
+    voice_profile: Mapping[str, object],
+    provider_policy: KoreanProviderPolicy | Mapping[str, object],
     phase31_verifier=verify_active_korean_foundation_snapshot_provenance,
 ) -> KoreanProductionEvidence:
     """Recompute final production evidence from persisted rows and exact files."""
@@ -404,8 +420,11 @@ def validate_korean_production_final_evidence(
         require_review_receipts=True,
         audio_review_application_sha256=audio_review_application_sha256,
         heard_review_receipt_sha256=authority.heard_review_authority_sha256,
+        voice_profile=voice_profile,
     )
-    provider_counts = _validate_provider_rows(tuple(rows.provider_call_records), authority=authority)
+    provider_counts = _validate_provider_rows(
+        tuple(rows.provider_call_records), authority=authority, provider_policy=provider_policy,
+    )
     export_counts = _validate_final_export_rows(
         rows.card_exports,
         rows.deck_exports,
@@ -446,7 +465,7 @@ def validate_korean_production_final_evidence(
         "text_review_application_sha256": text_review_application_sha256,
         "audio_review_aggregate_sha256": audio_review_aggregate_sha256,
         "audio_review_application_sha256": audio_review_application_sha256,
-        "authority": _authority_hash_payload(authority),
+        "authority": {**_authority_hash_payload(authority), "voice_profile_sha256": str(voice_profile["profile_sha256"])},
     }
     return KoreanProductionEvidence(
         **payload,
@@ -977,6 +996,7 @@ def _validate_run_audio_assets(
     *,
     authority: KoreanProductionEvidenceAuthority,
     expected_item_count: int,
+    voice_profile: Mapping[str, object],
 ) -> dict[str, int]:
     return _validate_audio_assets(
         assets,
@@ -984,6 +1004,7 @@ def _validate_run_audio_assets(
         expected_item_count=expected_item_count,
         expected_review_status=AudioReviewStatus.SYNTHESIZED_PENDING.value,
         require_review_receipts=False,
+        voice_profile=voice_profile,
     )
 
 
@@ -994,9 +1015,17 @@ def _validate_audio_assets(
     expected_item_count: int,
     expected_review_status: str,
     require_review_receipts: bool,
+    voice_profile: Mapping[str, object],
     audio_review_application_sha256: str | None = None,
     heard_review_receipt_sha256: str | None = None,
 ) -> dict[str, int]:
+    profile = KoreanVoiceProfile.model_validate(voice_profile)
+    if (
+        _canonical_sha256(profile.model_dump(mode="json", exclude={"profile_sha256"})) != profile.profile_sha256
+        or profile.profile_authority_sha256 != authority.profile_sample_authority_sha256
+        or profile.catalog_receipt_sha256 != authority.catalog_content_sha256
+    ):
+        raise ValueError("Korean production evidence audio profile authority drift")
     if len(assets) != expected_item_count * 2:
         raise ValueError("Korean production evidence audio denominator drift")
     kind_counts = Counter(str(getattr(asset, "asset_kind", "")) for asset in assets)
@@ -1018,7 +1047,7 @@ def _validate_audio_assets(
             raise ValueError("Korean production evidence audio fallback drift")
         if getattr(asset, "locale", None) != KOREAN_PROVIDER_LOCALE or getattr(asset, "provider", None) != "azure":
             raise ValueError("Korean production evidence audio provider drift")
-        if getattr(asset, "voice_profile_sha256", None) != authority.profile_sample_authority_sha256:
+        if getattr(asset, "voice_profile_sha256", None) != profile.profile_sha256:
             raise ValueError("Korean production evidence audio profile drift")
         if getattr(asset, "catalog_receipt_sha256", None) != authority.catalog_content_sha256:
             raise ValueError("Korean production evidence audio catalog drift")
@@ -1065,10 +1094,19 @@ def _validate_provider_rows(
     records: tuple[object, ...],
     *,
     authority: KoreanProductionEvidenceAuthority,
+    provider_policy: KoreanProviderPolicy | Mapping[str, object],
 ) -> dict[str, object]:
+    policy = KoreanProviderPolicy.model_validate(
+        provider_policy.model_dump(mode="json")
+        if isinstance(provider_policy, KoreanProviderPolicy) else provider_policy
+    )
+    if policy.policy_sha256 != authority.provider_policy_sha256:
+        raise ValueError("Korean production evidence provider policy authority drift")
     if not records:
         raise ValueError("Korean production evidence requires provider call rows")
     provider_attempt_count = 0
+    provider_failure_count = 0
+    provider_unknown_outcome_count = 0
     retry_attempt_count = 0
     cache_hit_count = 0
     synthesis_attempt_count = 0
@@ -1081,38 +1119,103 @@ def _validate_provider_rows(
             raise ValueError("Korean production evidence provider job drift")
         provider = str(getattr(record, "provider", ""))
         operation = str(getattr(record, "operation", ""))
+        try:
+            route = policy.route_for(KoreanProviderTask(operation))
+        except ValueError:
+            raise ValueError("Korean production evidence provider task drift") from None
+        if (
+            not route.enabled or provider != route.provider
+            or getattr(record, "model", None) != route.model
+            or (operation in _AUDIO_SYNTHESIS_OPERATIONS
+                and getattr(record, "voice_id", None) != route.model)
+        ):
+            raise ValueError("Korean production evidence provider route drift")
         if provider.casefold() == "fallback" or getattr(record, "fallback_from", None):
             fallback_attempt_count += 1
         if operation in _AUDIO_SYNTHESIS_OPERATIONS:
             synthesis_attempt_count += 1
         for field, expected in {
-            "route_policy_sha256": authority.provider_policy_sha256,
-            "budget_snapshot_sha256": authority.budget_authority_sha256,
+            "route_policy_sha256": route.route_policy_sha256,
+            "budget_snapshot_sha256": route.budget_snapshot_sha256,
+            "response_schema_sha256": route.response_schema_sha256,
         }.items():
             value = getattr(record, field, None)
             if value != expected:
                 raise ValueError("Korean production evidence provider authority drift")
-        for field in ("prompt_hash", "response_hash", "cache_key_sha256", "response_schema_sha256"):
+        for field in ("prompt_hash", "cache_key_sha256"):
             _sha256_identifier(str(getattr(record, field, "")), field_name=field)
         status = str(getattr(record, "status", ""))
+        if status not in {"success", "failure", "cache_hit"}:
+            raise ValueError("Korean production evidence provider status drift")
+        response_hash = getattr(record, "response_hash", None)
+        if status != "failure" or response_hash is not None:
+            _sha256_identifier(str(response_hash or ""), field_name="response_hash")
         attempt = int(getattr(record, "attempt", 0) or 0)
+        if attempt < (0 if status == "cache_hit" else 1) or attempt > route.budget.max_attempts:
+            raise ValueError("Korean production evidence provider attempt budget exceeded")
+        if status == "failure":
+            provider_failure_count += 1
+            provider_unknown_outcome_count += getattr(record, "error_code", None) in {
+                "timeout", "network_error", "server_error",
+            }
         if status == "cache_hit":
             cache_hit_count += 1
         elif attempt > 0:
             provider_attempt_count += 1
         retry_attempt_count += max(0, attempt - 1)
-        latency_ms_total += int(getattr(record, "latency_ms", 0) or 0)
-        if not any(getattr(record, field, None) is not None for field in ("input_tokens", "output_tokens", "total_tokens")):
+        latency = int(getattr(record, "latency_ms", 0) or 0)
+        if latency < 0 or (status == "success" and latency > route.budget.max_latency_ms):
+            raise ValueError("Korean production evidence provider latency budget exceeded")
+        latency_ms_total += latency
+        token_values = [getattr(record, field, None) for field in (
+            "input_tokens", "output_tokens", "total_tokens",
+        )]
+        for value, ceiling in zip(token_values, (
+            route.budget.max_input_tokens, route.budget.max_output_tokens, route.budget.max_total_tokens,
+        )):
+            if value is not None and (not isinstance(value, int) or value < 0 or value > ceiling):
+                raise ValueError("Korean production evidence provider token budget exceeded")
+        if all(value is not None for value in token_values) and sum(token_values[:2]) != token_values[2]:
+            raise ValueError("Korean production evidence provider token usage drift")
+        missing_tokens = any(value is None for value in token_values)
+        if missing_tokens:
             missing_token_denominator_count += 1
-        if getattr(record, "estimated_cost", None) is None:
+        cost = getattr(record, "estimated_cost", None)
+        if cost is not None and (
+            not isinstance(cost, (int, float)) or not math.isfinite(cost)
+            or cost < 0 or cost > route.budget.max_estimated_cost_usd
+        ):
+            raise ValueError("Korean production evidence provider cost budget exceeded")
+        if cost is None:
             missing_cost_denominator_count += 1
+        # Speech reports characters/audio, not LLM tokens or an invoiced price.
+        # Failed requests can also have an unknown billable outcome. Preserve
+        # that uncertainty while still requiring usage on successful LLM calls.
+        is_azure_audio = provider == "azure-speech" and operation in _AUDIO_SYNTHESIS_OPERATIONS
+        if status != "failure" and not is_azure_audio and (missing_tokens or cost is None):
+            raise ValueError("Korean production evidence provider denominator drift")
     if fallback_attempt_count:
         raise ValueError("Korean production evidence provider fallback drift")
-    if missing_token_denominator_count or missing_cost_denominator_count:
-        raise ValueError("Korean production evidence provider denominator drift")
+    summaries = summarize_provider_call_records(list(records))
+    for summary in summaries:
+        calls = int(summary["calls"])
+        for usage, fields in (
+            ("token", ("input_tokens", "output_tokens", "total_tokens")),
+            ("cost", ("estimated_cost",)),
+        ):
+            known_count = int(summary.get(f"{usage}_value_count", 0))
+            summary[f"{usage}_usage_status"] = (
+                "known" if known_count == calls else "partial" if known_count else "unknown"
+            )
+            if known_count < calls:
+                for field in fields:
+                    summary[f"known_{field}"] = summary[field]
+                    summary[field] = None
     return {
         "provider_call_count": len(records),
         "provider_attempt_count": provider_attempt_count,
+        "provider_failure_count": provider_failure_count,
+        "provider_unknown_outcome_count": provider_unknown_outcome_count,
         "retry_attempt_count": retry_attempt_count,
         "cache_hit_count": cache_hit_count,
         "synthesis_attempt_count": synthesis_attempt_count,
@@ -1120,7 +1223,7 @@ def _validate_provider_rows(
         "missing_token_denominator_count": missing_token_denominator_count,
         "missing_cost_denominator_count": missing_cost_denominator_count,
         "latency_ms_total": latency_ms_total,
-        "provider_summaries": tuple(summarize_provider_call_records(list(records))),
+        "provider_summaries": tuple(summaries),
     }
 
 

@@ -14,7 +14,7 @@ from multilang.services.native_migration import (
 
 def database(path: Path):
     engine = create_engine(f"sqlite:///{path}")
-    command.upgrade(native_alembic_config(engine), "20260828_19")
+    command.upgrade(native_alembic_config(engine), "20260913_21")
     with engine.begin() as connection:
         connection.execute(
             text(
@@ -37,6 +37,12 @@ def test_native_migration_requires_explicit_backup_and_authorization(tmp_path):
 def test_snapshot_restore_rehearsal_roundtrip_preserves_legacy_rows(tmp_path):
     engine = database(tmp_path / "source.db")
     try:
+        with engine.begin() as connection:
+            connection.execute(text(
+                "INSERT INTO generation_leases "
+                "(scope_key,job_id,token,expires_at,inflight_item_sha256) "
+                "VALUES ('job:existing','existing','preserved-token',1,:digest)"
+            ), {"digest": "a" * 64})
         before = database_fingerprint(engine)
         backup = BackupService(engine).snapshot(tmp_path / "backup")
         assert BackupService(engine).verify(backup)
@@ -45,6 +51,44 @@ def test_snapshot_restore_rehearsal_roundtrip_preserves_legacy_rows(tmp_path):
         assert result["legacy_rows_preserved"]
         assert database_fingerprint(engine) == before
         assert "lexical_identities" not in inspect(engine).get_table_names()
+        clone = create_engine(f"sqlite:///{tmp_path / 'clone.db'}")
+        try:
+            assert "lexical_identities" not in inspect(clone).get_table_names()
+            with clone.connect() as connection:
+                assert list(connection.scalars(text("SELECT version_num FROM alembic_version"))) == ["20260913_21"]
+                assert connection.scalar(text("SELECT inflight_item_sha256 FROM generation_leases")) == "a" * 64
+        finally:
+            clone.dispose()
+    finally:
+        engine.dispose()
+
+
+def test_native_preview_binds_the_lease_and_merge_migrations(tmp_path, monkeypatch):
+    import multilang.services.native_migration as migration_module
+
+    engine = create_engine(f"sqlite:///{tmp_path / 'source.db'}")
+    try:
+        backup = migration_module.BackupManifest(
+            backend="sqlite", artifact_path=str(tmp_path / "snapshot.db"),
+            artifact_sha256="a" * 64, database_sha256="b" * 64,
+            legacy_sha256="c" * 64, source_locator_sha256="d" * 64,
+        )
+        service = MigrationService(engine)
+        original_hash = migration_module.file_sha256
+        baseline = service._preview_contract(backup, topology=None, rehearsal=None).target_sha256
+        for migration_name in (
+            "20260912_20_native_architecture.py",
+            "20260913_21_generation_leases.py",
+            "20260914_22_merge_native_and_generation_leases.py",
+        ):
+            monkeypatch.setattr(
+                migration_module,
+                "file_sha256",
+                lambda path, changed=migration_name: (
+                    "f" * 64 if Path(path).name == changed else original_hash(path)
+                ),
+            )
+            assert service._preview_contract(backup, topology=None, rehearsal=None).target_sha256 != baseline
     finally:
         engine.dispose()
 
@@ -443,7 +487,7 @@ def test_existing_create_all_schema_requires_exact_parity_and_confirmed_adoption
         )
         with engine.connect() as connection:
             assert (
-                connection.scalar(text("SELECT version_num FROM alembic_version")) == "20260828_19"
+                connection.scalar(text("SELECT version_num FROM alembic_version")) == "20260913_21"
             )
         assert "lexical_identities" not in inspect(engine).get_table_names()
     finally:

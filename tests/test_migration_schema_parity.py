@@ -12,19 +12,19 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from alembic import command
+import pytest
 from alembic.config import Config
 from alembic.script import ScriptDirectory
-import pytest
 from sqlalchemy import JSON, MetaData, Table, create_engine, inspect, select
 
-from multilang.db.base import Base
-from multilang.db.provisioning import ensure_database_schema, find_project_root
+from alembic import command
 
 # Import the models module so every table is registered on Base.metadata.
 from multilang.db import models as _models  # noqa: F401
 from multilang.db import native_models as _native_models  # noqa: F401
 from multilang.db import task_models as _task_models  # noqa: F401
+from multilang.db.base import Base
+from multilang.db.provisioning import ensure_database_schema, find_project_root, run_migrations
 
 _PROJECT_ROOT = Path(__file__).resolve().parents[1]
 _KOREAN_IDENTITY_REVISION = "20260804_17"
@@ -188,12 +188,13 @@ def test_card_exports_mandarin_columns_are_migrated(tmp_path: Path) -> None:
     } <= columns
 
 
-def test_native_revision_is_the_sole_linear_head() -> None:
-    heads = ScriptDirectory.from_config(_alembic_config("sqlite://")).get_heads()
-
-    assert heads == ["20260912_20"]
-    revision = ScriptDirectory.from_config(_alembic_config("sqlite://")).get_revision(heads[0])
-    assert revision.down_revision == _GRAMMAR_PERSONAL_REVISION
+def test_generation_lease_branch_has_a_single_native_merge_head() -> None:
+    scripts = ScriptDirectory.from_config(_alembic_config("sqlite://"))
+    assert scripts.get_heads() == ["20260914_22"]
+    assert set(scripts.get_revision("20260914_22").down_revision) == {
+        "20260912_20", "20260913_21",
+    }
+    assert scripts.get_revision("20260913_21").down_revision == _GRAMMAR_PERSONAL_REVISION
 
 
 def test_frequency_text_audio_schema_has_expected_evidence_columns_without_sensitive_names() -> None:
@@ -437,3 +438,41 @@ def test_project_root_is_locatable_for_alembic() -> None:
     root = find_project_root()
     assert root is not None
     assert (root / "alembic.ini").is_file()
+
+
+def test_unauthorized_merge_downgrade_preserves_both_branches(tmp_path: Path) -> None:
+    database_url = _migrate(tmp_path, "merge_downgrade.db")
+    engine = create_engine(database_url)
+    try:
+        from multilang.services.native_migration import database_fingerprint
+
+        before = database_fingerprint(engine)
+        config = _alembic_config(database_url)
+        config.attributes["explicit_database_url"] = True
+        with pytest.raises(ValueError, match="authorization|preview"):
+            command.downgrade(config, _GRAMMAR_PERSONAL_REVISION)
+        assert database_fingerprint(engine) == before
+        assert {"generation_leases", "lexical_identities"} <= set(inspect(engine).get_table_names())
+    finally:
+        engine.dispose()
+
+
+def test_legacy_provisioning_migrates_leases_without_authorizing_native_schema(tmp_path: Path) -> None:
+    database_url = f"sqlite:///{tmp_path / 'legacy_lease_provisioning.db'}"
+    run_migrations(database_url)
+    engine = create_engine(database_url)
+    try:
+        tables = set(inspect(engine).get_table_names())
+        assert "generation_leases" in tables
+        assert "lexical_identities" not in tables
+        metadata = MetaData()
+        version = Table("alembic_version", metadata, autoload_with=engine)
+        with engine.connect() as connection:
+            assert list(connection.scalars(select(version.c.version_num))) == ["20260913_21"]
+        config = _alembic_config(database_url)
+        config.attributes["explicit_database_url"] = True
+        with pytest.raises(ValueError, match="authorization|preview"):
+            command.upgrade(config, "head")
+        assert "lexical_identities" not in inspect(engine).get_table_names()
+    finally:
+        engine.dispose()

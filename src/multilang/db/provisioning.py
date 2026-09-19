@@ -9,9 +9,10 @@ nobody would notice until a migration-based deploy failed at runtime.
 This module centralises provisioning:
 
 - **SQLite** (local dev and tests): use ``create_all`` for zero-setup speed.
-- **Everything else** (Postgres in production): run ``alembic upgrade head`` so
-  the migrations are the authoritative schema definition. A schema-parity test
-  guards that every ORM table/column has a corresponding migration.
+- **Everything else** (Postgres in production): migrate through the latest
+  ordinary-runtime revision. Native tables require their separate authorized
+  migration workflow. A schema-parity test guards that every ORM table/column
+  has a corresponding migration.
 """
 
 from __future__ import annotations
@@ -20,12 +21,11 @@ from pathlib import Path
 
 from sqlalchemy.engine import Engine
 
-from multilang.db.base import Base
-
 # Import the models module so every table is registered on ``Base.metadata``.
 from multilang.db import models as _models  # noqa: F401
+from multilang.db.base import Base
 
-LEGACY_SCHEMA_REVISION = "20260828_19"
+LEGACY_SCHEMA_REVISION = "20260913_21"
 
 
 class SchemaProvisioningError(RuntimeError):
@@ -51,12 +51,13 @@ def _alembic_config(database_url: str, project_root: Path):
 
 
 def run_migrations(database_url: str) -> None:
-    """Upgrade *database_url* to the latest Alembic revision."""
+    """Upgrade *database_url* to the ordinary-runtime revision."""
 
     project_root = find_project_root()
     if project_root is None:
         raise SchemaProvisioningError(
-            "Alembic migrations directory not found; run 'alembic upgrade head' "
+            "Alembic migrations directory not found; run "
+            f"'alembic upgrade {LEGACY_SCHEMA_REVISION}' "
             "against the target database before starting the service."
         )
     from alembic import command

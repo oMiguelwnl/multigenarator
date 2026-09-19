@@ -684,7 +684,7 @@ def test_generate_text_items_limits_eligible_candidates_after_missing_only_selec
     assert all(snapshot.elapsed_seconds >= 0 for snapshot in progress)
 
 
-def test_generate_text_items_uses_claim_boundary_for_concurrency_without_duplicates() -> None:
+def test_generate_text_items_selects_a_bounded_sequential_batch() -> None:
     repository = FakeTextRepository(
         candidates=[PersistedCandidate(id="lex-1", item_key="line-1", candidate=make_candidate(item_key="line-1"))]
     )
@@ -699,7 +699,7 @@ def test_generate_text_items_uses_claim_boundary_for_concurrency_without_duplica
         tatoeba_sentence_source=FakeTatoebaSentenceSource(fallback=None),
     )
 
-    result = service.execute(job_id="job-1", deck_language=SupportedLanguage.EN, concurrency=2, max_items=1)
+    result = service.execute(job_id="job-1", deck_language=SupportedLanguage.EN, concurrency=1, max_items=1)
 
     assert result.processed_item_keys == ["line-1"]
     assert repository.claim_calls == [{"job_id": "job-1", "missing_only": False, "limit": 1}]
@@ -1737,6 +1737,21 @@ def test_korean_generation_persists_hash_only_two_plus_one_selector_history() ->
     assert bad_translation not in str(history)
     assert saved.repair_attempt_count == 1
     assert tatoeba.calls == []
+
+
+@pytest.mark.parametrize("concurrency", [0, 2, 100])
+def test_generate_text_items_rejects_unsupported_concurrency_before_database_or_provider_work(concurrency) -> None:
+    service = GenerateTextItemsService(
+        job_repository=None,
+        lexical_repository=None,
+        text_repository=None,
+        text_generation_service=None,
+        text_validation_service=None,
+        tatoeba_sentence_source=None,
+    )
+
+    with pytest.raises(ValueError, match="concurrency=1"):
+        service.execute(job_id="job-1", deck_language=SupportedLanguage.EN, concurrency=concurrency)
 
 
 @pytest.fixture(autouse=True)

@@ -2,8 +2,8 @@
 
 from __future__ import annotations
 
-from collections.abc import Iterable
 from collections import Counter
+from collections.abc import Iterable
 from uuid import uuid4
 
 from sqlalchemy import func, or_, select
@@ -17,6 +17,7 @@ from multilang.domain.lexicon import (
     LexicalCardCandidate,
     LexicalProvenance,
 )
+from multilang.repositories.transactions import commit_repository_changes
 
 
 class LexicalRepository:
@@ -65,7 +66,7 @@ class LexicalRepository:
             for field, value in payload.items():
                 setattr(row, field, value)
 
-        self.session.commit()
+        commit_repository_changes(self.session)
         self.session.refresh(row)
         return self._to_domain(row)
 
@@ -111,7 +112,7 @@ class LexicalRepository:
             for field, value in payload.items():
                 setattr(row, field, value)
 
-        self.session.commit()
+        commit_repository_changes(self.session)
 
     def list_candidates(self, job_id: str) -> list[LexicalCardCandidate]:
         rows = self.session.scalars(

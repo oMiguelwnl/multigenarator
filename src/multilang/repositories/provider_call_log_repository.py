@@ -2,14 +2,15 @@
 
 from __future__ import annotations
 
-from dataclasses import dataclass
 import re
+from dataclasses import dataclass
 from uuid import uuid4
 
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from multilang.db.models import ProviderCallLogModel
+from multilang.repositories.transactions import commit_repository_changes
 from multilang.security.redaction import redact_sensitive_text
 
 
@@ -70,7 +71,7 @@ class ProviderCallLogRepository:
             estimated_cost=record.estimated_cost,
         )
         self.session.add(row)
-        self.session.commit()
+        commit_repository_changes(self.session)
         self.session.refresh(row)
         return row
 

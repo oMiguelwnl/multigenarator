@@ -73,6 +73,18 @@ ANKI_ID_REGISTRY: tuple[AnkiIdRegistration, ...] = (
     AnkiIdRegistration("korean_frequency", "level_1_deck", AnkiIdKind.DECK, 1_762_801_103, reserved=True),
     AnkiIdRegistration("korean_frequency", "level_2_deck", AnkiIdKind.DECK, 1_762_801_104, reserved=True),
     AnkiIdRegistration("korean_frequency", "level_3_deck", AnkiIdKind.DECK, 1_762_801_105, reserved=True),
+    AnkiIdRegistration("korean_grammar", "model", AnkiIdKind.MODEL, 1_762_801_201),
+    AnkiIdRegistration("korean_grammar", "deck", AnkiIdKind.DECK, 1_762_801_202),
+    AnkiIdRegistration("korean_custom", "model", AnkiIdKind.MODEL, 1_762_801_203),
+    AnkiIdRegistration("korean_custom", "deck", AnkiIdKind.DECK, 1_762_801_204),
+    AnkiIdRegistration("korean_highlight", "model", AnkiIdKind.MODEL, 1_762_801_205),
+    AnkiIdRegistration("korean_highlight", "deck", AnkiIdKind.DECK, 1_762_801_206),
+    *(
+        AnkiIdRegistration("frequency_levels", f"{language}:level_{level}", AnkiIdKind.DECK,
+            1_762_850_000 + language_index * 10 + level, reserved=True)
+        for language_index, language in enumerate(("pt", "es", "en", "fr", "de", "el", "it", "pl", "tr", "ro", "ru", "nl", "da", "nb", "sv", "fi", "hu", "cs", "hr", "la", "ja", "zh"))
+        for level in (1, 2, 3)
+    ),
     AnkiIdRegistration("native_prototype", "family_model", AnkiIdKind.MODEL, 1_762_802_001),
     AnkiIdRegistration("native_prototype", "separate_model", AnkiIdKind.MODEL, 1_762_802_002),
     *(
@@ -192,6 +204,15 @@ def registry_id(*, family: str, role: str, kind: AnkiIdKind) -> int:
     raise ValueError(f"unregistered Anki ID: {family}/{role}/{kind.value}")
 
 
+def frequency_level_deck_id(language: str, level: int) -> int:
+    """Resolve a preallocated level deck without changing existing note identities."""
+    role = f"{language}:level_{level}"
+    for entry in ANKI_ID_REGISTRY:
+        if entry.family == "frequency_levels" and entry.kind is AnkiIdKind.DECK and entry.role == role:
+            return entry.value
+    raise ValueError("unregistered frequency language or level")
+
+
 def native_anki_model_id(*, language: str, source_type: str, role: str) -> int:
     """Resolve only preallocated exact field/template contracts."""
     key = f"{language}:{source_type}:{role}"
@@ -303,9 +324,12 @@ def _iter_scannable_files(roots: tuple[Path, ...]) -> Iterable[Path]:
             continue
         if not root.exists():
             continue
-        for path in root.rglob("*"):
-            if path.is_file() and _should_scan_file(path):
-                yield path
+        for directory, subdirectories, filenames in root.walk(follow_symlinks=False):
+            subdirectories[:] = [name for name in subdirectories if name not in _EXCLUDED_PARTS]
+            for filename in filenames:
+                path = directory / filename
+                if _should_scan_file(path) and path.is_file():
+                    yield path
 
 
 def _should_scan_file(path: Path) -> bool:

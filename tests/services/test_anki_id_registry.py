@@ -42,6 +42,12 @@ EXPECTED_BASELINE = {
     ("korean_frequency", "level_1_deck", "deck"): 1_762_801_103,
     ("korean_frequency", "level_2_deck", "deck"): 1_762_801_104,
     ("korean_frequency", "level_3_deck", "deck"): 1_762_801_105,
+    ("korean_grammar", "model", "model"): 1_762_801_201,
+    ("korean_grammar", "deck", "deck"): 1_762_801_202,
+    ("korean_custom", "model", "model"): 1_762_801_203,
+    ("korean_custom", "deck", "deck"): 1_762_801_204,
+    ("korean_highlight", "model", "model"): 1_762_801_205,
+    ("korean_highlight", "deck", "deck"): 1_762_801_206,
 }
 
 
@@ -51,7 +57,7 @@ def test_baseline_contains_every_current_production_declaration_once() -> None:
     actual = {
         (entry.family, entry.role, entry.kind.value): entry.value
         for entry in ANKI_ID_REGISTRY
-        if entry.family not in {"native_prototype", "native_fields"}
+        if entry.family not in {"native_prototype", "native_fields", "frequency_levels"}
     }
 
     assert actual == EXPECTED_BASELINE
@@ -149,6 +155,22 @@ def test_scanner_excludes_non_production_roots(tmp_path: Path) -> None:
     result = scan_anki_id_registry_paths((tmp_path,))
 
     assert result.passed
+
+
+def test_scanner_does_not_traverse_excluded_subtrees(tmp_path: Path, monkeypatch) -> None:
+    import os
+
+    excluded = tmp_path / "private"
+    excluded.mkdir()
+    (excluded / "large-tree").mkdir()
+    original = os.scandir
+
+    def guarded(path):
+        assert Path(path) != excluded, "excluded trees must be pruned before traversal"
+        return original(path)
+
+    monkeypatch.setattr(os, "scandir", guarded)
+    assert scan_anki_id_registry_paths((tmp_path,)).passed
 
 
 def test_scanner_reports_unused_unreserved_registrations(tmp_path: Path) -> None:

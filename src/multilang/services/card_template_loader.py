@@ -2,10 +2,10 @@
 
 from __future__ import annotations
 
+import re
 from dataclasses import dataclass
 from importlib.resources import files
 from importlib.resources.abc import Traversable
-import re
 
 from multilang.domain.exporting import (
     JAPANESE_EXPORT_CARD_FIELD_NAMES,
@@ -44,6 +44,9 @@ class CardTemplate:
 
 def load_card_template(source_type: str, *, language: SupportedLanguage | None = None) -> CardTemplate:
     """Load and validate the card template selected by a source profile."""
+
+    if source_type == "korean-grammar" and language != SupportedLanguage.KO:
+        raise ValueError("Korean grammar requires language ko")
 
     # For Latin (la), always use the dedicated template (supports Definition + Grammar).
     # This works for both legacy latin-mvp and dynamic flows (word-list etc.),
@@ -102,6 +105,15 @@ def load_card_template(source_type: str, *, language: SupportedLanguage | None =
     )
     if profile.source_type == "frequency" and language is SupportedLanguage.EN:
         template = _localize_english_frequency_labels(template)
+    if language == SupportedLanguage.KO:
+        template = CardTemplate(
+            front=template.front,
+            back=template.back,
+            css=template.css + '\n\n.card, .card * {\n'
+            '  font-family: "Noto Sans KR", "Apple SD Gothic Neo", "Malgun Gothic", sans-serif;\n'
+            '  word-break: keep-all;\n  overflow-wrap: anywhere;\n}\n',
+            source_template_name=template.source_template_name,
+        )
     field_names = export_field_names_for_language_and_source(
         language=SupportedLanguage.LA if is_la else language or SupportedLanguage.EN,
         source_type=profile.source_type,

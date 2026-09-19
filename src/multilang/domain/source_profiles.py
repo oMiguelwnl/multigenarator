@@ -5,7 +5,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 from typing import Literal
 
-SourceType = Literal["frequency", "word-list", "kindle-highlights", "latin-mvp"]
+SourceType = Literal["frequency", "word-list", "kindle-highlights", "latin-mvp", "korean-grammar"]
 
 
 @dataclass(frozen=True, slots=True)
@@ -20,6 +20,15 @@ class SourceProfile:
 
 
 SOURCE_PROFILES: dict[SourceType, SourceProfile] = {
+    "korean-grammar": SourceProfile(
+        source_type="korean-grammar",
+        requires_translation_validation=True,
+        exports_translation_field=True,
+        min_sentence_tokens=1,
+        max_sentence_tokens=20,
+        note_type_name="Multilang::Korean Particles & Endings",
+        template_name="normal_card",
+    ),
     "frequency": SourceProfile(
         source_type="frequency",
         requires_translation_validation=True,

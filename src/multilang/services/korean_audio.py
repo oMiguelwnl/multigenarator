@@ -2,14 +2,14 @@
 
 from __future__ import annotations
 
+import json
+import unicodedata
 from hashlib import sha256
 from html import escape
-import json
 from pathlib import Path
 from time import perf_counter
 from typing import Callable, Literal, Mapping
 from urllib.parse import urlparse
-import unicodedata
 
 from pydantic import BaseModel, ConfigDict, Field, field_validator
 
@@ -17,8 +17,8 @@ from multilang.domain.audio import (
     AudioAssetKind,
     AudioAssetRecord,
     AudioFormat,
-    AudioProvider,
     AudioProvenance,
+    AudioProvider,
     AudioReviewStatus,
     AudioSynthesisStatus,
     NormalizedTtsInput,
@@ -26,8 +26,10 @@ from multilang.domain.audio import (
 from multilang.domain.korean import KOREAN_PROVIDER_LOCALE, KoreanFrequencyJobAuthority
 from multilang.domain.korean_provider import KoreanProviderPolicy, KoreanProviderTask
 from multilang.repositories.provider_call_log_repository import ProviderCallLogCreate
-from multilang.services.korean_foundation_snapshot import verify_active_korean_foundation_snapshot_provenance
-
+from multilang.services.azure_speech_adapter import build_azure_ssml
+from multilang.services.korean_foundation_snapshot import (
+    verify_active_korean_foundation_snapshot_provenance,
+)
 
 _HEX = frozenset("0123456789abcdef")
 _KOREAN_VOICE_PROFILE_SCHEMA_VERSION = "korean-voice-profile-v1"
@@ -557,11 +559,12 @@ def build_korean_tts_input(
     if not normalized:
         raise ValueError("Korean TTS text must not be blank")
     escaped = escape(normalized, quote=True)
-    ssml_text = (
-        f'<speak version="1.0" xmlns="http://www.w3.org/2001/10/synthesis" '
-        f'xml:lang="{KOREAN_PROVIDER_LOCALE}">'
-        f'<voice name="{escape(profile.voice_id, quote=True)}">{escaped}</voice>'
-        "</speak>"
+    # Escape the source as literal spoken text, then use the same serializer as
+    # the adapter so the persisted SSML hash covers the exact submitted bytes.
+    ssml_text = build_azure_ssml(
+        text=f"<speak>{escaped}</speak>",
+        locale=KOREAN_PROVIDER_LOCALE,
+        voice_id=profile.voice_id,
     )
     request_payload = {
         "asset_kind": asset_kind.value,
@@ -666,9 +669,11 @@ def korean_audio_asset_reusable(prepared_asset: AudioAssetRecord, reusable_asset
 
 
 def synthesize_korean_frequency_audio(**kwargs: object) -> object:
-    """CLI seam for later authority-bound runtime synthesis implementation."""
+    """Run synthesis through the explicit profile and persisted authority boundary."""
 
-    raise ValueError("Korean frequency audio synthesis requires an authorized runtime")
+    from multilang.services.korean_audio_runtime import synthesize_korean_frequency_audio as execute
+
+    return execute(**kwargs)
 
 
 def _validate_profile_authority_contract(

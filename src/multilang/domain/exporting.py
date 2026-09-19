@@ -2,12 +2,12 @@
 
 from __future__ import annotations
 
+import re
+import unicodedata
 from collections import Counter
 from dataclasses import dataclass, field
 from enum import Enum
 from hashlib import sha256
-import re
-import unicodedata
 
 from pydantic import BaseModel, ConfigDict, Field, model_validator
 
@@ -274,7 +274,9 @@ def export_field_names_for_language_and_source(
     """Resolve one export schema from both dimensions that determine card shape."""
 
     language_value = language.value if isinstance(language, SupportedLanguage) else str(language)
-    if language_value == SupportedLanguage.KO.value and source_type == "korean-grammar":
+    if source_type == "korean-grammar":
+        if language_value != SupportedLanguage.KO.value:
+            raise ValueError("Korean grammar requires language ko")
         return FREQUENCY_EXPORT_CARD_FIELD_NAMES
     normalized_source_type = get_source_profile(source_type).source_type
     if language_value == SupportedLanguage.LA.value:

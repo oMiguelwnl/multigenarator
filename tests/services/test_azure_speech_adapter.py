@@ -2,14 +2,18 @@
 
 from __future__ import annotations
 
-from datetime import timedelta
 import json
+from datetime import timedelta
 from pathlib import Path
 from types import SimpleNamespace
 
 import pytest
 
-from multilang.services.azure_speech_adapter import AzureSpeechAdapter, AzureSpeechAdapterError, build_azure_ssml
+from multilang.services.azure_speech_adapter import (
+    AzureSpeechAdapter,
+    AzureSpeechAdapterError,
+    build_azure_ssml,
+)
 from multilang.settings import Settings
 
 
@@ -96,6 +100,65 @@ _FAKE_SPEECHSDK = SimpleNamespace(
     ),
     audio=SimpleNamespace(AudioOutputConfig=_FakeAudioOutputConfig),
 )
+
+
+@pytest.mark.parametrize("completes,cleanup_failure", [
+    (True, None), (False, None), (False, "stop"),
+    (False, "disconnect"), (True, "disconnect"),
+])
+def test_azure_synthesis_obeys_explicit_timeout_without_unbounded_future_get(
+    tmp_path, completes, cleanup_failure,
+):
+    class Signal:
+        def __init__(self):
+            self.callback = None
+
+        def connect(self, callback):
+            self.callback = callback
+
+        def disconnect(self, callback):
+            self.callback = None
+            if cleanup_failure == "disconnect":
+                raise RuntimeError("SDK cleanup failed")
+
+    class BoundedSynthesizer:
+        latest = None
+
+        def __init__(self, *, speech_config, audio_config):
+            assert audio_config is None
+            self.synthesis_completed = Signal()
+            self.synthesis_canceled = Signal()
+            self.stopped = False
+            BoundedSynthesizer.latest = self
+
+        def speak_ssml_async(self, ssml):
+            if completes:
+                self.synthesis_completed.callback(SimpleNamespace(result=_FakeSpeechSynthesizer.next_result))
+            return SimpleNamespace(get=lambda: pytest.fail("unbounded future get"))
+
+        def stop_speaking_async(self):
+            self.stopped = True
+            if cleanup_failure == "stop":
+                raise RuntimeError("SDK cleanup failed")
+            return SimpleNamespace(get=lambda: pytest.fail("unbounded cancellation get"))
+
+    sdk = SimpleNamespace(**{**vars(_FAKE_SPEECHSDK), "SpeechSynthesizer": BoundedSynthesizer})
+    adapter = AzureSpeechAdapter(Settings(_env_file=None, azure_speech_key="fixture", azure_speech_region="eastus"),
+        speechsdk_module=sdk)
+    path = tmp_path / "bounded.mp3"
+    kwargs = dict(ssml_text="<speak>Test</speak>", voice_id="en-US-JennyNeural", locale="en-US",
+        output_path=path, audio_format="audio-24khz-48kbitrate-mono-mp3", timeout_seconds=0.01)
+    if completes:
+        result = adapter.synthesize(**kwargs)
+        assert path.read_bytes() == _FakeSpeechSynthesizer.next_result.audio_data
+        assert result.byte_size == path.stat().st_size
+    else:
+        with pytest.raises(TimeoutError, match="timed out"):
+            adapter.synthesize(**kwargs)
+        assert BoundedSynthesizer.latest.stopped
+        assert not path.exists()
+    assert BoundedSynthesizer.latest.synthesis_completed.callback is None
+    assert BoundedSynthesizer.latest.synthesis_canceled.callback is None
 
 
 def test_azure_speech_adapter_lists_available_voice_ids_once() -> None:
@@ -194,6 +257,15 @@ def test_build_azure_ssml_preserves_safe_prosody_from_legacy_speak() -> None:
     )
 
     assert '<voice name="en-US-JennyNeural"><prosody rate="-10%" pitch="+8%" volume="+20%">run</prosody></voice>' in ssml
+
+
+def test_build_azure_ssml_escapes_attribute_quotes() -> None:
+    from xml.etree import ElementTree
+
+    voice = 'ko-KR-Voice" injected="value'
+    ssml = build_azure_ssml(text="학교", locale="ko-KR", voice_id=voice)
+    root = ElementTree.fromstring(ssml)
+    assert list(root)[0].attrib == {"name": voice}
 
 
 def test_azure_speech_adapter_surfaces_cancellation_details(tmp_path: Path) -> None:

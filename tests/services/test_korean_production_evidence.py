@@ -2,14 +2,14 @@
 
 from __future__ import annotations
 
+import json
+import sqlite3
+import zipfile
 from dataclasses import replace
 from hashlib import sha256
-import json
 from pathlib import Path
-import sqlite3
 from types import SimpleNamespace
 from uuid import uuid4
-import zipfile
 
 import pytest
 from sqlalchemy import create_engine, func, select
@@ -25,8 +25,20 @@ from multilang.db.models import (
     TextQualityRecordModel,
 )
 from multilang.db.provisioning import ensure_database_schema
-from multilang.domain.exporting import FREQUENCY_EXPORT_CARD_FIELD_NAMES, ExportCardIdentity, build_export_note_guid
+from multilang.domain.exporting import (
+    FREQUENCY_EXPORT_CARD_FIELD_NAMES,
+    ExportCardIdentity,
+    build_export_note_guid,
+)
 from multilang.domain.jobs import SupportedLanguage
+from multilang.domain.korean import canonical_json_sha256
+from multilang.domain.korean_provider import (
+    KoreanProviderBudget,
+    KoreanProviderPolicy,
+    KoreanProviderRoute,
+    KoreanProviderTask,
+)
+from multilang.services.korean_audio import KoreanVoiceProfile
 from multilang.services.korean_production_evidence import (
     KoreanProductionEvidenceAuthority,
     KoreanProductionEvidenceRows,
@@ -34,8 +46,8 @@ from multilang.services.korean_production_evidence import (
     korean_production_review_identity_hash,
     load_korean_production_evidence_rows,
     render_korean_production_audit_markdown,
-    validate_korean_production_review_batches,
     validate_korean_production_final_evidence,
+    validate_korean_production_review_batches,
     validate_korean_production_run_result,
 )
 
@@ -60,6 +72,22 @@ KOREAN_FREQUENCY_PARENT_DECK_ID = 1_762_801_102
 KOREAN_FREQUENCY_LEVEL_DECK_IDS = {1: 1_762_801_103, 2: 1_762_801_104, 3: 1_762_801_105}
 
 
+def _provider_policy() -> KoreanProviderPolicy:
+    budget = KoreanProviderBudget(
+        max_attempts=2, max_input_tokens=4096, max_output_tokens=4096,
+        max_total_tokens=8192, max_estimated_cost_usd=1, max_latency_ms=60000,
+        timeout_seconds=60, max_batch_items=3000, max_concurrency=1,
+    )
+    return KoreanProviderPolicy(routes=tuple(
+        KoreanProviderRoute(
+            task=task, provider="azure-speech" if task.value.endswith("audio") else "openai",
+            model="ko-KR-SunHiNeural" if task.value.endswith("audio") else "fixture-model",
+            budget=budget, cache_namespace=f"fixture-{task.value}",
+            response_schema_sha256=_hash(f"schema-{task.value}"),
+        ) for task in KoreanProviderTask
+    ))
+
+
 def _authority(**overrides: str) -> KoreanProductionEvidenceAuthority:
     payload = {
         "job_id": "job-ko-production",
@@ -76,7 +104,7 @@ def _authority(**overrides: str) -> KoreanProductionEvidenceAuthority:
         "source_build_result_sha256": _hash("source-build"),
         "source_review_aggregate_sha256": _hash("source-review-aggregate"),
         "final_bundle_authority_sha256": _hash("final-bundle-authority"),
-        "provider_policy_sha256": _hash("provider-policy"),
+        "provider_policy_sha256": _provider_policy().policy_sha256,
         "provider_review_authority_sha256": _hash("provider-review-authority"),
         "budget_authority_sha256": _hash("budget-authority"),
         "retry_policy_sha256": _hash("retry-policy"),
@@ -97,6 +125,39 @@ def _phase31_report(authority: KoreanProductionEvidenceAuthority) -> SimpleNames
         snapshot_manifest_sha256=authority.phase31_snapshot_manifest_sha256,
         snapshot_root_sha256=authority.phase31_snapshot_root_sha256,
     )
+
+
+def _voice_profile(authority):
+    payload = KoreanVoiceProfile(
+        voice_id="ko-KR-SunHiNeural", locale="ko-KR", region="koreacentral",
+        provider_sdk_version="fixture", catalog_receipt_sha256=authority.catalog_content_sha256,
+        catalog_content_sha256=authority.catalog_content_sha256,
+        profile_authority_sha256=authority.profile_sample_authority_sha256,
+        profile_sha256="0" * 64,
+    ).model_dump(mode="json", exclude={"profile_sha256"})
+    return {**payload, "profile_sha256": canonical_json_sha256(payload)}
+
+
+def test_audio_evidence_distinguishes_profile_content_from_its_authority():
+    from multilang.services.korean_production_evidence import _validate_audio_assets
+
+    authority = _authority()
+    profile = _voice_profile(authority)
+    assert profile["profile_sha256"] != authority.profile_sample_authority_sha256
+    assets = tuple(SimpleNamespace(
+        job_id=authority.job_id, asset_kind=kind, status="synthesized", fallback_used=False,
+        provider="azure", locale="ko-KR", voice_profile_sha256=profile["profile_sha256"],
+        catalog_receipt_sha256=authority.catalog_content_sha256,
+        audio_review_status="synthesized_pending", text_hash=_hash("text"), ssml_hash=_hash("ssml"),
+        synthesis_request_sha256=_hash(kind), artifact_sha256=_hash("media"), byte_size=500,
+    ) for kind in ("word", "sentence"))
+    counts = _validate_audio_assets(assets, authority=authority, expected_item_count=1,
+        expected_review_status="synthesized_pending", require_review_receipts=False, voice_profile=profile)
+    assert counts["word_pending_audio_review_count"] == 1
+    with pytest.raises(ValueError, match="profile.*drift"):
+        _validate_audio_assets(assets, authority=authority, expected_item_count=1,
+            expected_review_status="synthesized_pending", require_review_receipts=False,
+            voice_profile={**profile, "voice_id": "ko-KR-OtherNeural"})
 
 
 def _insert_fake_production_run_database(
@@ -263,7 +324,7 @@ def _insert_fake_production_run_database(
                         status="synthesized",
                         fallback_used=False,
                         provider_sdk_version="1.49.1",
-                        voice_profile_sha256=authority.profile_sample_authority_sha256,
+                        voice_profile_sha256=_voice_profile(authority)["profile_sha256"],
                         catalog_receipt_sha256=authority.catalog_content_sha256,
                         synthesis_request_sha256=_hash(f"{kind}-request-{rank}"),
                         artifact_sha256=_hash(f"{kind}-artifact-{rank}"),
@@ -333,7 +394,7 @@ def _insert_fake_production_run_database(
                 _provider_row(authority, operation="translation", item_key="provider-translation"),
                 _provider_row(
                     authority,
-                    operation="audio_synthesis",
+                    operation="word_audio",
                     item_key="provider-audio",
                     fallback_from="forbidden" if provider_fallback else None,
                 ),
@@ -354,14 +415,15 @@ def _provider_row(
     attempt: int = 1,
     fallback_from: str | None = None,
 ) -> ProviderCallLogModel:
+    route = _provider_policy().route_for(KoreanProviderTask(operation))
     return ProviderCallLogModel(
         id=str(uuid4()),
         job_id=authority.job_id,
         item_key=item_key,
         operation=operation,
-        provider="azure" if operation == "audio_synthesis" else "openai",
-        model="fixture-model",
-        voice_id="ko-KR-SunHiNeural" if operation == "audio_synthesis" else None,
+        provider=route.provider,
+        model=route.model,
+        voice_id=route.model if operation.endswith("audio") else None,
         attempt=attempt,
         latency_ms=120,
         status="success",
@@ -370,10 +432,10 @@ def _provider_row(
         fallback_from=fallback_from,
         prompt_hash=_hash(f"prompt-{operation}"),
         response_hash=_hash(f"response-{operation}"),
-        route_policy_sha256=authority.provider_policy_sha256,
-        budget_snapshot_sha256=authority.budget_authority_sha256,
+        route_policy_sha256=route.route_policy_sha256,
+        budget_snapshot_sha256=route.budget_snapshot_sha256,
         cache_key_sha256=_hash(f"cache-{operation}"),
-        response_schema_sha256=_hash(f"schema-{operation}"),
+        response_schema_sha256=route.response_schema_sha256,
         input_tokens=10,
         output_tokens=20,
         total_tokens=30,
@@ -527,6 +589,8 @@ def test_run_result_reconciles_exact_db_rows_phase31_denominators_and_pending_au
     rows = load_korean_production_evidence_rows(database_url=database_url, job_id=authority.job_id)
     evidence = validate_korean_production_run_result(
         authority=authority,
+        voice_profile=_voice_profile(authority),
+        provider_policy=_provider_policy(),
         rows=rows,
         expected_item_count=3000,
         protected_hashes={"frequency_manifest": (_hash("protected"), _hash("protected"))},
@@ -569,6 +633,8 @@ def test_run_result_rejects_one_fact_drift_without_mutating_rows(tmp_path: Path)
     with pytest.raises(ValueError, match="text history"):
         validate_korean_production_run_result(
             authority=authority,
+            voice_profile=_voice_profile(authority),
+            provider_policy=_provider_policy(),
             rows=rows,
             expected_item_count=3000,
             protected_hashes={"frequency_manifest": (_hash("protected"), _hash("protected"))},
@@ -579,6 +645,8 @@ def test_run_result_rejects_one_fact_drift_without_mutating_rows(tmp_path: Path)
     with pytest.raises(ValueError, match="protected input drift"):
         validate_korean_production_run_result(
             authority=authority,
+            voice_profile=_voice_profile(authority),
+            provider_policy=_provider_policy(),
             rows=rows,
             expected_item_count=3000,
             protected_hashes={"frequency_manifest": (_hash("before"), _hash("after"))},
@@ -593,6 +661,8 @@ def test_run_result_blocks_phase31_provider_fallback_and_audio_review_drift(tmp_
     with pytest.raises(ValueError, match="Phase 31"):
         validate_korean_production_run_result(
             authority=authority,
+            voice_profile=_voice_profile(authority),
+            provider_policy=_provider_policy(),
             rows=rows,
             expected_item_count=3000,
             protected_hashes={},
@@ -606,6 +676,8 @@ def test_run_result_blocks_phase31_provider_fallback_and_audio_review_drift(tmp_
     with pytest.raises(ValueError, match="fallback"):
         validate_korean_production_run_result(
             authority=authority,
+            voice_profile=_voice_profile(authority),
+            provider_policy=_provider_policy(),
             rows=rows,
             expected_item_count=3000,
             protected_hashes={},
@@ -620,6 +692,8 @@ def test_run_result_blocks_phase31_provider_fallback_and_audio_review_drift(tmp_
     with pytest.raises(ValueError, match="pending-review audio"):
         validate_korean_production_run_result(
             authority=other_authority,
+            voice_profile=_voice_profile(other_authority),
+            provider_policy=_provider_policy(),
             rows=other_rows,
             expected_item_count=3000,
             protected_hashes={},
@@ -646,6 +720,8 @@ def test_final_evidence_reconciles_review_apkg_report_and_hash_only_audits_read_
     rows = load_korean_production_evidence_rows(database_url=database_url, job_id=authority.job_id)
     evidence = validate_korean_production_final_evidence(
         authority=authority,
+        voice_profile=_voice_profile(authority),
+        provider_policy=_provider_policy(),
         rows=rows,
         expected_item_count=3000,
         expected_word_assets=3000,
@@ -709,6 +785,8 @@ def test_final_evidence_one_fact_mutations_fail_read_only_for_review_apkg_and_re
     with pytest.raises(ValueError, match="reviewed text"):
         validate_korean_production_final_evidence(
             authority=authority,
+            voice_profile=_voice_profile(authority),
+            provider_policy=_provider_policy(),
             rows=replace(rows, text_records=(text_mutation, *rows.text_records[1:])),
             expected_item_count=3000,
             expected_word_assets=3000,
@@ -731,6 +809,8 @@ def test_final_evidence_one_fact_mutations_fail_read_only_for_review_apkg_and_re
     with pytest.raises(ValueError, match="APKG"):
         validate_korean_production_final_evidence(
             authority=authority,
+            voice_profile=_voice_profile(authority),
+            provider_policy=_provider_policy(),
             rows=load_korean_production_evidence_rows(database_url=database_url, job_id=authority.job_id),
             expected_item_count=3000,
             expected_word_assets=3000,
@@ -757,6 +837,8 @@ def test_final_evidence_one_fact_mutations_fail_read_only_for_review_apkg_and_re
     with pytest.raises(ValueError, match="report"):
         validate_korean_production_final_evidence(
             authority=authority,
+            voice_profile=_voice_profile(authority),
+            provider_policy=_provider_policy(),
             rows=load_korean_production_evidence_rows(database_url=database_url, job_id=authority.job_id),
             expected_item_count=3000,
             expected_word_assets=3000,

@@ -11,7 +11,12 @@ from pathlib import Path
 
 from pydantic import ValidationError
 
-from multilang.domain.audio import AudioAssetKind, AudioAssetRecord, AudioSynthesisStatus
+from multilang.domain.audio import (
+    AudioAssetKind,
+    AudioAssetRecord,
+    AudioProvider,
+    AudioSynthesisStatus,
+)
 from multilang.domain.exporting import (
     MANDARIN_EXPORT_CARD_FIELD_NAMES,
     ExportCardIdentity,
@@ -76,6 +81,9 @@ class AssembleExportCardsService:
 
             source_type = _candidate_source_type(lexical_candidate)
             korean_final = _uses_korean_frequency_final(deck_language=deck_language, source_type=source_type)
+            korean_personal = deck_language is SupportedLanguage.KO and source_type in {"word-list", "kindle-highlights"}
+            if korean_personal:
+                self._require_korean_personal_text(job_id, text_record.item_key)
             row_sort_index = self._row_sort_index(
                 fallback_sort_index=sort_index,
                 lexical_candidate=lexical_candidate,
@@ -92,7 +100,7 @@ class AssembleExportCardsService:
                     asset_kind=AudioAssetKind.WORD,
                     audio_index=audio_index,
                 )
-                if "word_audio" in field_names
+                if "word_audio" in field_names or korean_personal
                 else None
             )
             if word_audio is not None:
@@ -130,6 +138,8 @@ class AssembleExportCardsService:
                 sentence_audio=sentence_audio,
                 enabled=korean_final,
             )
+            if korean_personal:
+                korean_metadata = self._korean_personal_metadata(text_record, lexical_candidate, word_audio, sentence_audio)
             row = ExportCardRow(
                 identity=ExportCardIdentity(
                     language=deck_language,
@@ -145,7 +155,7 @@ class AssembleExportCardsService:
                 text_review_receipt_sha256=korean_metadata.get("text_review_receipt_sha256"),
                 word_audio_artifact_sha256=korean_metadata.get("word_audio_artifact_sha256"),
                 sentence_audio_artifact_sha256=korean_metadata.get("sentence_audio_artifact_sha256"),
-                word=escape(lexical_candidate.lemma),
+                word=escape(lexical_candidate.display_form if korean_personal else lexical_candidate.lemma),
                 front_of_card=escape(lexical_candidate.display_form),
                 ipa=self._render_ipa(lexical_candidate.ipa, lexical_candidate.spoken_form) if "IPA" in field_names else None,
                 definitions=self._render_definitions(lexical_candidate, deck_language=deck_language),
@@ -224,8 +234,21 @@ class AssembleExportCardsService:
     def _persist_cards(self, cards: list[ExportCardRow]) -> list[ExportCardRow]:
         bulk_upsert = getattr(self.export_repository, "upsert_card_snapshots", None)
         if callable(bulk_upsert):
-            return list(bulk_upsert(cards))
-        return [self.export_repository.upsert_card_snapshot(row) for row in cards]
+            saved = list(bulk_upsert(cards))
+        else:
+            saved = [self.export_repository.upsert_card_snapshot(row) for row in cards]
+        # Display snapshots do not store these review bindings. Keep the freshly
+        # validated evidence on this result; Korean exports always reassemble
+        # instead of treating a loaded display snapshot as review authority.
+        validated = {(row.identity.job_id, row.identity.item_key): row for row in cards}
+        result = []
+        for row in saved:
+            if row.identity.language is SupportedLanguage.KO:
+                original = validated[(row.identity.job_id, row.identity.item_key)]
+                row = row.model_copy(update={name: getattr(original, name) for name in (
+                    "text_review_receipt_sha256", "word_audio_artifact_sha256", "sentence_audio_artifact_sha256")})
+            result.append(row)
+        return result
 
     def _render_definitions(self, candidate: LexicalCardCandidate, *, deck_language: SupportedLanguage) -> str:
         try:
@@ -377,6 +400,45 @@ class AssembleExportCardsService:
             metadata=metadata,
         )
         return metadata
+
+    def _require_korean_personal_text(self, job_id: str, item_key: str) -> None:
+        session = getattr(self.text_repository, "session", None)
+        if session is None:
+            raise AssembleExportCardsError("Korean personal export requires current persisted AI evidence")
+        from multilang.services.korean_personal_text_review import personal_text_review_current
+
+        if not personal_text_review_current(session, job_id, item_key):
+            raise AssembleExportCardsError("Korean personal export requires current persisted AI evidence")
+        from multilang.repositories.korean_personal_source_repository import (
+            KoreanPersonalSourceRepository,
+        )
+
+        inventory = KoreanPersonalSourceRepository(session).list_inventory(job_id, "word-list")
+        matching = [row for row in inventory.rows if row.item_key == item_key and row.duplicate_of_position is None]
+        if any(row.latest_decision is None or row.latest_decision.decision_state not in {"accepted", "bridge"}
+               for row in matching):
+            raise AssembleExportCardsError("Korean personal export requires a current prerequisite decision")
+
+    def _korean_personal_metadata(self, text_record, candidate, word_audio, sentence_audio) -> dict[str, object]:
+        from multilang.services.audio.media_validation import inspect_local_mp3
+
+        if word_audio is None:
+            raise AssembleExportCardsError("Korean personal export requires reviewed word audio")
+        if word_audio.provenance.voice_profile_sha256 != sentence_audio.provenance.voice_profile_sha256:
+            raise AssembleExportCardsError("Korean personal export audio profile drift")
+        for asset, kind, text in ((word_audio, AudioAssetKind.WORD, candidate.lemma),
+                                  (sentence_audio, AudioAssetKind.SENTENCE, text_record.example_sentence or "")):
+            self._require_korean_final_audio(asset=asset, asset_kind=kind, expected_text=text)
+            provenance = asset.provenance
+            measured = inspect_local_mp3(provenance.storage_path, expected_byte_size=provenance.byte_size,
+                artifact_hash_prefix=b"artifact:")
+            if (provenance.provider is not AudioProvider.AZURE or provenance.locale != "ko-KR"
+                    or measured is None or measured.artifact_sha256 != provenance.artifact_sha256
+                    or measured.duration_ms != provenance.duration_ms):
+                raise AssembleExportCardsError("Korean personal export audio integrity drift")
+        return {"text_review_receipt_sha256": text_record.text_review_receipt_sha256,
+                "word_audio_artifact_sha256": word_audio.provenance.artifact_sha256,
+                "sentence_audio_artifact_sha256": sentence_audio.provenance.artifact_sha256}
 
     def _require_korean_final_audio(
         self,

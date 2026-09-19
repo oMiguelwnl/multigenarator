@@ -2,13 +2,13 @@
 
 from __future__ import annotations
 
-from dataclasses import dataclass
 import json
-from pathlib import Path
 import re
 import sqlite3
-from tempfile import TemporaryDirectory
 import zipfile
+from dataclasses import dataclass
+from pathlib import Path
+from tempfile import TemporaryDirectory
 
 import genanki
 
@@ -19,7 +19,12 @@ from multilang.domain.exporting import (
 )
 from multilang.domain.jobs import SupportedLanguage
 from multilang.domain.source_profiles import get_source_profile
-from multilang.services.anki_id_registry import AnkiIdKind, assert_anki_id_registry_clean, registry_id
+from multilang.services.anki_id_registry import (
+    AnkiIdKind,
+    assert_anki_id_registry_clean,
+    frequency_level_deck_id,
+    registry_id,
+)
 from multilang.services.card_template_loader import load_card_template
 from multilang.services.japanese_frequency_deck import JAPANESE_NOTE_TYPE_NAME
 
@@ -43,6 +48,23 @@ KOREAN_FREQUENCY_LEVEL_DECK_IDS = {
 }
 
 _SOUND_TAG_RE = re.compile(r"^\[sound:(?P<name>[^\]]+)\]$")
+_KOREAN_SOURCE_FAMILIES = {
+    "korean-grammar": (
+        registry_id(family="korean_grammar", role="model", kind=AnkiIdKind.MODEL),
+        registry_id(family="korean_grammar", role="deck", kind=AnkiIdKind.DECK),
+        "Multilang::Korean Particles & Endings",
+    ),
+    "word-list": (
+        registry_id(family="korean_custom", role="model", kind=AnkiIdKind.MODEL),
+        registry_id(family="korean_custom", role="deck", kind=AnkiIdKind.DECK),
+        "Multilang::Korean Custom",
+    ),
+    "kindle-highlights": (
+        registry_id(family="korean_highlight", role="model", kind=AnkiIdKind.MODEL),
+        registry_id(family="korean_highlight", role="deck", kind=AnkiIdKind.DECK),
+        "Multilang::Korean Highlight",
+    ),
+}
 
 
 class ExportAnkiPackageError(ValueError):
@@ -76,7 +98,11 @@ def build_multilang_model(
         "frequency": MODEL_ID,
         "word-list": MANUAL_MODEL_ID,
         "kindle-highlights": HIGHLIGHT_MODEL_ID,
+        "korean-grammar": registry_id(family="korean_grammar", role="model", kind=AnkiIdKind.MODEL),
     }[profile.source_type]
+    note_type_name = profile.note_type_name
+    if language == SupportedLanguage.KO and source_type in _KOREAN_SOURCE_FAMILIES:
+        model_id, _, note_type_name = _KOREAN_SOURCE_FAMILIES[source_type]
     # For la use Latin fields (Definition + Grammar) even if source_type is not latin-mvp
     # Note: caller passes rows or we decide here; for simplicity if la force
     is_la = language is not None and (language == "la" or getattr(language, "value", None) == "la")
@@ -103,7 +129,7 @@ def build_multilang_model(
         if is_ja
         else "Multilang::Classical Latin MVP"
         if is_la
-        else profile.note_type_name,
+        else note_type_name,
         fields=[{"name": field_name} for field_name in fields_for_model],
         templates=[
             {
@@ -164,18 +190,23 @@ def export_anki_package(
             raise ExportAnkiPackageError(f"Korean frequency export gate failed: {gate_result.message()}")
     media_files = _resolve_media_files(rows=rows, media_index=media_index)
 
-    if is_korean_frequency:
-        package_decks, expected_decks = _build_korean_frequency_decks(deck_name)
+    if source_type == "frequency" and rows:
+        package_decks, expected_decks = _build_frequency_decks(deck_name, language)
         child_decks = {level: deck for level, deck in package_decks[1:]}
         for row in sorted(rows, key=lambda item: (item.sort_index or 0, item.identity.item_key)):
-            assert row.frequency_level is not None
-            child_decks[row.frequency_level].add_note(build_multilang_note(row, model=model))
+            level = _frequency_level(row)
+            if level not in child_decks:
+                raise ExportAnkiPackageError("frequency row requires a rank in levels 1 through 3")
+            child_decks[level].add_note(build_multilang_note(row, model=model))
         package: genanki.Package = genanki.Package([deck for _, deck in package_decks])
     else:
-        deck = genanki.Deck(DECK_ID, deck_name)
+        deck_id = DECK_ID
+        if language == SupportedLanguage.KO and source_type in _KOREAN_SOURCE_FAMILIES:
+            _, deck_id, _ = _KOREAN_SOURCE_FAMILIES[source_type]
+        deck = genanki.Deck(deck_id, deck_name)
         for row in rows:
             deck.add_note(build_multilang_note(row, model=model))
-        expected_decks = {DECK_ID: deck_name}
+        expected_decks = {deck_id: deck_name}
         package = genanki.Package(deck)
 
     output_path.parent.mkdir(parents=True, exist_ok=True)
@@ -281,6 +312,21 @@ def _build_korean_frequency_decks(deck_name: str) -> tuple[list[tuple[int, genan
     return [(0, parent), *children], expected_decks
 
 
+def _frequency_level_deck_id(language: SupportedLanguage, level: int) -> int:
+    if language == SupportedLanguage.KO:
+        return KOREAN_FREQUENCY_LEVEL_DECK_IDS[level]
+    return frequency_level_deck_id(language.value, level)
+
+
+def _build_frequency_decks(deck_name: str, language: SupportedLanguage) -> tuple[list[tuple[int, genanki.Deck]], dict[int, str]]:
+    if language == SupportedLanguage.KO:
+        return _build_korean_frequency_decks(deck_name)
+    parent = genanki.Deck(DECK_ID, deck_name)
+    children = [(level, genanki.Deck(_frequency_level_deck_id(language, level), f"{deck_name}::Level {level}")) for level in (1, 2, 3)]
+    decks = [(0, parent), *children]
+    return decks, {deck.deck_id: deck.name for _, deck in decks}
+
+
 def _write_validated_package(
     *,
     package: genanki.Package,
@@ -361,9 +407,8 @@ def _inspect_staged_package(
     }
     expected_deck_by_guid = {
         row.note_guid: (
-            KOREAN_FREQUENCY_LEVEL_DECK_IDS[row.frequency_level]
-            if _is_korean_frequency(language=row.identity.language, source_type=row.identity.source_type)
-            and row.frequency_level is not None
+            _frequency_level_deck_id(row.identity.language, _frequency_level(row))
+            if row.identity.source_type == "frequency" and _frequency_level(row) is not None
             else next(iter(expected_decks))
         )
         for row in rows

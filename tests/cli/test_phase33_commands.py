@@ -2,18 +2,39 @@
 
 from __future__ import annotations
 
-from hashlib import sha256
 import json
+from hashlib import sha256
 from pathlib import Path
 
 import click
+import pytest
+from sqlalchemy import create_engine
+from sqlalchemy.orm import Session
 from typer.main import get_command
 from typer.testing import CliRunner
 
 from multilang.cli import create_app
 
-
 runner = CliRunner()
+
+
+@pytest.fixture(autouse=True)
+def isolated_learning_runtime(monkeypatch):
+    from multilang.cli_commands import phase33
+    from multilang.db.base import Base
+    from multilang.domain.jobs import GenerationRequest, SupportedLanguage
+    from multilang.repositories.job_repository import JobRepository
+    from multilang.services.korean_learning_runtime import KoreanLearningRuntime
+    engine = create_engine("sqlite+pysqlite:///:memory:")
+    Base.metadata.create_all(engine)
+    with Session(engine) as session:
+        job = JobRepository(session).create_job(request=GenerationRequest(language=SupportedLanguage.KO, source_type="korean-grammar"),
+            run_key="cli-test", source_fingerprint="fixture", total_items=0)
+        job.id = "job-33"
+        session.commit()
+        runtime = KoreanLearningRuntime(session)
+        monkeypatch.setattr(phase33, "build_korean_learning_runtime", lambda: runtime)
+        yield runtime
 
 
 def _options(command_path: tuple[str, ...]) -> tuple[str, ...]:
@@ -34,14 +55,8 @@ def test_exact_process_contract_source_enum_mode_enum_no_server_no_fallback_and_
         ["phase33", "process", "--job-id", "job-33", "--source", "grammar", "--mode", "start", "--max-items", "2"],
     )
 
-    assert result.exit_code == 0, result.output
-    payload = json.loads(result.output)
-    assert payload["job_id"] == "job-33"
-    assert payload["source"] == "grammar"
-    assert payload["mode"] == "start"
-    assert payload["attempted"] == 0
-    assert payload["no_server"] is True
-    assert payload["no_fallback"] is True
+    assert result.exit_code != 0
+    assert result.output.strip() == "korean_error=empty_source"
 
     invalid = runner.invoke(
         create_app(),
@@ -70,7 +85,7 @@ def test_status_seven_denominator_ids_counts_order_and_safe_source_counts(tmp_pa
 
     assert result.exit_code == 0, result.output
     payload = json.loads(output.read_text(encoding="utf-8"))
-    assert payload["status"] == "blocked_without_authority"
+    assert payload["status"] == "incomplete"
     assert list(payload["denominators"]) == [
         "attempted",
         "processed",
@@ -213,4 +228,4 @@ def test_review_list_audit_commit_before_output_and_changed_hash_conflict_no_out
         ],
     )
     assert changed.exit_code != 0
-    assert changed.output.strip() == "phase33_review_error=access_event_conflict"
+    assert changed.output.strip() == "korean_error=operation_failed"

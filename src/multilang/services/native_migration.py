@@ -43,8 +43,11 @@ __all__ = [
     "require_schema_authorization",
 ]
 
-LEGACY_REVISION = "20260828_19"
-NATIVE_REVISION = "20260912_20"
+LEGACY_REVISION = "20260913_21"
+NATIVE_REVISION = "20260914_22"
+# A downgrade to revision 21 alone only unmerges 22, leaving native head 20.
+# Restrict the downgrade to the native branch, preserving the sibling lease head.
+NATIVE_ROLLBACK_TARGET = "20260912_20@20260828_19"
 
 
 def file_sha256(path: Path) -> str:
@@ -166,7 +169,7 @@ class LegacyAdoptionPreview(NativeContract):
     schema_sha256: Sha256
     source_locator_sha256: Sha256
     backup_sha256: Sha256
-    target_revision: Literal["20260828_19"] = LEGACY_REVISION
+    target_revision: Literal["20260913_21"] = LEGACY_REVISION
     baseline: Literal["legacy-sqlalchemy-create-all"] = "legacy-sqlalchemy-create-all"
 
     @property
@@ -730,13 +733,22 @@ class MigrationService:
         topology: TopologyDecision | None,
         rehearsal: dict | None,
     ) -> MigrationPreview:
-        migration_file = (
+        migration_directory = (
             Path(native_alembic_config(self.engine).get_main_option("script_location"))
             / "versions"
-            / "20260912_20_native_architecture.py"
         )
         target = canonical_hash(
-            {"revision": NATIVE_REVISION, "migration": file_sha256(migration_file)}
+            {
+                "revision": NATIVE_REVISION,
+                "migrations": {
+                    filename: file_sha256(migration_directory / filename)
+                    for filename in (
+                        "20260912_20_native_architecture.py",
+                        "20260913_21_generation_leases.py",
+                        "20260914_22_merge_native_and_generation_leases.py",
+                    )
+                },
+            }
         )
         return MigrationPreview(
             source_sha256=backup.database_sha256,
@@ -774,7 +786,7 @@ class MigrationService:
             command.upgrade(config, NATIVE_REVISION)
             preserved = database_fingerprint(clone, exclude_native=True) == backup.legacy_sha256
             upgraded = "lexical_identities" in inspect(clone).get_table_names()
-            command.downgrade(config, LEGACY_REVISION)
+            command.downgrade(config, NATIVE_ROLLBACK_TARGET)
             rollback = database_fingerprint(clone) == backup.database_sha256
             if not (preserved and upgraded and rollback):
                 raise ValueError("migration rehearsal parity failed")
@@ -1004,7 +1016,7 @@ class MigrationService:
                 if database_fingerprint(connection) != preview.source_sha256:
                     raise ValueError("rollback data drift before transaction")
                 config.attributes["connection"] = connection
-                command.downgrade(config, LEGACY_REVISION)
+                command.downgrade(config, NATIVE_ROLLBACK_TARGET)
                 if database_fingerprint(connection) != backup.database_sha256:
                     raise ValueError("rollback restore verification failed")
                 connection.commit()

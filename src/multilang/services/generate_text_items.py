@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import re
 from collections.abc import Callable
+from contextlib import nullcontext
 from dataclasses import dataclass, field
 from hashlib import sha256
 from time import monotonic
@@ -482,12 +483,28 @@ class GenerateTextItemsService:
     ) -> GenerateTextItemsResult:
         if max_items is not None and max_items < 1:
             raise ValueError("max_items must be greater than or equal to 1")
+        if concurrency != 1:
+            raise ValueError(
+                "text generation currently requires concurrency=1 per job"
+            )
+        lease_context = getattr(self.text_repository, "generation_lease", None)
+        with lease_context(job_id) if callable(lease_context) else nullcontext():
+            return self._execute_sequential(
+                job_id=job_id, deck_language=deck_language, missing_only=missing_only,
+                max_items=max_items, progress_callback=progress_callback,
+                rate_limiter=rate_limiter, repair_only=repair_only,
+            )
+
+    def _execute_sequential(
+        self, *, job_id: str, deck_language: SupportedLanguage,
+        missing_only: bool, max_items: int | None,
+        progress_callback: GenerateTextProgressCallback | None,
+        rate_limiter: RateLimiter | None, repair_only: bool,
+    ) -> GenerateTextItemsResult:
 
         started_at = monotonic()
         result = GenerateTextItemsResult()
         seen_sentences = self._normalize_sentences(self.text_repository.list_example_sentences_for_job(job_id))
-        if concurrency < 1:
-            raise ValueError("concurrency must be greater than or equal to 1")
 
         if repair_only:
             lister = getattr(self.text_repository, "list_repair_candidates")
@@ -516,6 +533,7 @@ class GenerateTextItemsService:
         # For dynamic Latin (la), use the LatinCardGenerationService + model so the AI fills
         # gramatica (and definition/sentence) using the structured schema + gramatica template.
         latin_cards_by_index: dict[int, Any] = {}
+        latin_batch_reserved = False
         if deck_language == SupportedLanguage.LA and self.latin_card_service is not None and candidates:
             seeds = []
             for i, c in enumerate(candidates):
@@ -530,17 +548,25 @@ class GenerateTextItemsService:
                 except Exception:
                     pass
             if seeds:
-                try:
-                    # Generate for all candidates (structured + gramatica rules + internal validation+retry)
-                    _cards = self.latin_card_service.generate(seeds)
-                    for idx, card in enumerate(_cards):
-                        latin_cards_by_index[idx] = card
-                except Exception:
-                    pass  # fall back to general mapping
+                begin_batch = getattr(self.text_repository, "begin_generation_item", None)
+                if callable(begin_batch):
+                    batch_key = "latin-structured-batch:" + canonical_json_sha256(
+                        [str(getattr(candidate, "item_key")) for candidate in candidates]
+                    )
+                    begin_batch(job_id, batch_key)
+                    latin_batch_reserved = True
+                # Keep the batch reservation until EVERY generated item commits;
+                # provider failure must not silently launch a second paid route.
+                _cards = self.latin_card_service.generate(seeds)
+                for idx, card in enumerate(_cards):
+                    latin_cards_by_index[idx] = card
 
         for candidate_index, persisted_candidate in enumerate(candidates):
             candidate_id = getattr(persisted_candidate, "id")
             item_key = getattr(persisted_candidate, "item_key")
+            begin_item = getattr(self.text_repository, "begin_generation_item", None)
+            if callable(begin_item) and not latin_batch_reserved:
+                begin_item(job_id, item_key)
             lexical_candidate = self._to_candidate(persisted_candidate)
             source_type = self._resolve_source_type(
                 getattr(persisted_candidate, "source_type", None),
@@ -668,16 +694,22 @@ class GenerateTextItemsService:
             )
             if korean_selection is not None:
                 record = with_korean_selector_history(record, korean_selection.history)
-            self.text_repository.upsert_text_record(record)
+            item_transaction = getattr(self.text_repository, "generation_item_transaction", None)
+            complete_item = not latin_batch_reserved or candidate_index == len(candidates) - 1
+            transaction = (
+                item_transaction(job_id, complete_item=complete_item)
+                if callable(item_transaction) else nullcontext()
+            )
+            with transaction:
+                self.text_repository.upsert_text_record(record)
+                self.job_repository.record_item_success(
+                    job_id,
+                    item_key=item_key,
+                    completed_stage=JobStage.GENERATE_TEXT,
+                )
             normalized_sentence = self._normalize_sentence_text(record.example_sentence)
             if normalized_sentence:
                 seen_sentences.add(normalized_sentence)
-            self.job_repository.record_item_success(
-                job_id,
-                item_key=item_key,
-                completed_stage=JobStage.GENERATE_TEXT,
-            )
-
             result.processed_items += 1
             result.processed_item_keys.append(item_key)
             if record.review_status is ReviewStatus.ACCEPTED:

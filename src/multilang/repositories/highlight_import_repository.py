@@ -18,6 +18,7 @@ from multilang.db.models import (
 )
 from multilang.domain.highlights import HighlightImportManifest, NormalizedHighlight
 from multilang.domain.korean import canonical_json_sha256
+from multilang.repositories.transactions import commit_repository_changes
 
 
 class _Record(BaseModel):
@@ -114,7 +115,7 @@ class HighlightImportRepository:
             for field, value in payload.items():
                 setattr(row, field, value)
 
-        self.session.commit()
+        commit_repository_changes(self.session)
         return len(records)
 
     def list_korean_safe_inventory(self, job_id: str) -> KoreanHighlightSafeInventory:
@@ -200,7 +201,7 @@ class HighlightImportRepository:
             for field, value in payload.items():
                 setattr(row, field, value)
 
-        self.session.commit()
+        commit_repository_changes(self.session)
         self.session.refresh(row)
         return self._to_manifest(row)
 
@@ -285,7 +286,7 @@ class HighlightImportRepository:
                 )
             )
         try:
-            self.session.commit()
+            commit_repository_changes(self.session)
         except IntegrityError as exc:
             self.session.rollback()
             raise ValueError("korean private highlight revision conflict") from exc

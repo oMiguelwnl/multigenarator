@@ -132,10 +132,15 @@ class Settings(BaseSettings):
         default=None,
         validation_alias=AliasChoices("MULTILANG_DEEPL_API_KEY", "DEEPL_API_KEY"),
     )
+    deepl_cost_per_character_usd: float | None = Field(default=None, ge=0, allow_inf_nan=False)
     audio_provider: AudioProviderName = "azure"
     azure_speech_key: str | None = None
     azure_speech_region: str | None = None
     azure_speech_output_format: AudioOutputFormat = "audio-24khz-48kbitrate-mono-mp3"
+    korean_azure_tts_usd_per_million_characters: float | None = Field(
+        default=None, gt=0, allow_inf_nan=False
+    )
+    korean_azure_tts_pricing_voice_id: str | None = Field(default=None, min_length=1)
     audio_fallback_providers: list[AudioProviderName] = Field(default_factory=list)
     elevenlabs_api_key: str | None = Field(
         default=None,
