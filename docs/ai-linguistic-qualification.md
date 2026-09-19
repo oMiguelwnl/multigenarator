@@ -2,6 +2,8 @@
 
 O fluxo automatiza a preparação e a revisão de vocabulário usando fontes verificáveis. A IA propõe a interpretação dos registros; outra execução confere as propostas contra os mesmos trechos. Os resultados são rascunhos identificados como avaliações de máquina, com decisões aproveitáveis e uma fila de dúvidas. Nenhum campo dos cards muda.
 
+A [entrega do piloto completo](machine-pilot-completion.md) documenta as revisões dirigidas, as correções por ocorrência, os dez conteúdos PT, a execução limitada de áudio e os comandos de expansão por idioma.
+
 ```mermaid
 flowchart LR
   A[Fontes reais congeladas] --> B[Registros e ocorrências verificadas]
