@@ -279,3 +279,7 @@ Ruff, distribuição wheel/sdist e construção estrita da documentação també
 verificados. O resumo e os relatórios completos ficam em
 `.multilang/verification/qualification/verification-summary.json`; resultados de
 software e preparação de dados permanecem distintos da qualificação linguística.
+
+## Revisão por IA
+
+O [fluxo de qualificação por IA](ai-linguistic-qualification.md) conecta os pacotes deste guia a propostas, julgamento em contexto separado, rascunhos de vocabulário e calibração com rótulos de máquina. Inclui modo por arquivos, execução limitada por API e retomada verificável.
