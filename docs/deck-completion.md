@@ -1,5 +1,9 @@
 # Qualificação executada após a aprovação do piloto
 
+Este é o registro da rodada anterior. A continuação, com avaliação por partições
+documentais, revisão das 44 pendências e expansão das fontes, está em
+[Avaliação documental e expansão lexical](independent-evaluation.md).
+
 Esta entrega executa revisões reais e corrige dois pontos do fluxo: recuperação dos qualificadores do dicionário original e consolidação verificável dos resultados por idioma. Os decks completos de 3 × 1000 ainda dependem de cobertura lexical, ranking, conteúdo, áudio e qualificação; as listas antigas de 3000 linhas não satisfazem essas condições.
 
 ## Português
