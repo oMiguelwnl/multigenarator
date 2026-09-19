@@ -241,12 +241,16 @@ def read_conllu(
     code = _modern_language(language)
     rows, metadata = [], {}
     document_id, sequence = f"source-{expected_sha256}", 0
+    declared_document = None
     for line in _verified_lines(path, expected_sha256, limits):
         line = line.rstrip("\r\n")
         if line.startswith("#"):
             key, separator, value = line[1:].strip().partition(" = ")
             if separator:
-                if key == "newdoc id":
+                if key in {"newdoc id", "newdoc_id"}:
+                    if declared_document is not None and declared_document != value:
+                        raise ValueError("conflicting CoNLL-U document headers")
+                    declared_document = value
                     document_id = value
                 else:
                     metadata[key] = value
@@ -273,6 +277,7 @@ def read_conllu(
                 limits=limits,
             )
             rows, metadata = [], {}
+            declared_document = None
     if rows:
         yield _sentence(
             rows,

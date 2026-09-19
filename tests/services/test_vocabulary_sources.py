@@ -56,6 +56,50 @@ def test_conllu_preserves_forms_features_and_source_document(tmp_path):
     assert rows[0].tokens[1].sense_id is None
 
 
+@pytest.mark.parametrize("header", ["newdoc id", "newdoc_id"])
+def test_conllu_document_headers_persist_until_next_document(tmp_path, header):
+    from multilang.services.vocabulary_sources import read_conllu
+
+    sentence = "# text = casa\n1\tcasa\tcasa\tNOUN\t_\t_\t0\troot\t_\t_\n\n"
+    data = f"# {header} = first\n{sentence}{sentence}# {header} = second\n{sentence}"
+    path, digest = source(tmp_path, "documents.conllu", data.encode())
+    rows = tuple(read_conllu(path, language="pt", expected_sha256=digest))
+    assert [row.document_id for row in rows] == ["first", "first", "second"]
+
+
+def test_conllu_absent_document_headers_keep_unknown_source_container(tmp_path):
+    from multilang.services.vocabulary_sources import read_conllu
+
+    data = b"# text = casa\n1\tcasa\tcasa\tNOUN\t_\t_\t0\troot\t_\t_\n\n"
+    path, digest = source(tmp_path, "unknown.conllu", data + data)
+    rows = tuple(read_conllu(path, language="pt", expected_sha256=digest))
+    assert [row.document_id for row in rows] == [f"source-{digest}"] * 2
+
+
+@pytest.mark.parametrize("second_header", ["newdoc id", "newdoc_id"])
+def test_conllu_conflicting_document_headers_fail_closed(tmp_path, second_header):
+    from multilang.services.vocabulary_sources import read_conllu
+
+    data = (
+        f"# newdoc id = first\n# {second_header} = second\n"
+        "# text = casa\n1\tcasa\tcasa\tNOUN\t_\t_\t0\troot\t_\t_\n\n"
+    )
+    path, digest = source(tmp_path, "conflict.conllu", data.encode())
+    with pytest.raises(ValueError, match="conflicting CoNLL-U document headers"):
+        tuple(read_conllu(path, language="pt", expected_sha256=digest))
+
+
+def test_conllu_matching_document_aliases_do_not_conflict(tmp_path):
+    from multilang.services.vocabulary_sources import read_conllu
+
+    data = (
+        "# newdoc id = first\n# newdoc_id = first\n"
+        "# text = casa\n1\tcasa\tcasa\tNOUN\t_\t_\t0\troot\t_\t_\n\n"
+    )
+    path, digest = source(tmp_path, "same.conllu", data.encode())
+    assert tuple(read_conllu(path, language="pt", expected_sha256=digest))[0].document_id == "first"
+
+
 def test_conllu_does_not_invent_character_spans_for_contractions(tmp_path):
     from multilang.services.vocabulary_sources import read_conllu
 

@@ -23,11 +23,15 @@ from multilang.services.qualification_machine_followup import (
     build_machine_followup_from_previous,
     validate_machine_followup,
 )
+from multilang.services.qualification_machine_revision import (
+    MachineRevisionPlan,
+    validate_machine_revision,
+)
 from multilang.services.vocabulary_review import VocabularyReview
 
 
 class MachineCampaignRound(NativeContract):
-    plan: MachineFollowupPlan
+    plan: MachineFollowupPlan | MachineRevisionPlan
     qualifications: tuple[MachineQualificationResult, ...] = Field(min_length=1, max_length=100)
 
 
@@ -76,12 +80,11 @@ def _project(base, rounds):
     ):
         raise ValueError("machine campaign item history limit exceeded")
     base = replay_machine_result(base)
-    results = {base.result_sha256: base}
+    base_sha = base.result_sha256
+    results = {base_sha: base}
     outcomes = {row.item_id: row for row in base.decisions}
     entries = {
-        item.item_id: _entry(
-            item, outcomes[item.item_id], base.result_sha256, "initial", item.item_sha256
-        )
+        item.item_id: _entry(item, outcomes[item.item_id], base_sha, "initial", item.item_sha256)
         for item in base.packet.items
     }
     contexts = {base.proposal.request.actor.context_id, base.judgment.request.actor.context_id}
@@ -90,21 +93,26 @@ def _project(base, rounds):
         plan = row.plan
         if plan.round_id in round_ids:
             raise ValueError("duplicate machine campaign round")
-        parent = results.get(plan.base_result_sha256)
-        if parent is None:
-            raise ValueError("machine followup parent is not in campaign history")
-        validate_machine_followup(parent, plan)
-        expected = {item.item_id: item for item in plan.enrichment.packet.items}
-        for item_id in expected:
-            if (
-                item_id not in entries
-                or entries[item_id].source_result_sha256 != parent.result_sha256
-            ):
-                raise ValueError("stale machine followup cannot replace a newer decision")
+        if isinstance(plan, MachineRevisionPlan):
+            validate_machine_revision(base_sha, tuple(entries.values()), results, plan)
+            expected = {item.item_id: item for item in plan.packet.items}
+        else:
+            parent = results.get(plan.base_result_sha256)
+            if parent is None:
+                raise ValueError("machine followup parent is not in campaign history")
+            validate_machine_followup(parent, plan)
+            expected = {item.item_id: item for item in plan.enrichment.packet.items}
+            for item_id in expected:
+                if (
+                    item_id not in entries
+                    or entries[item_id].source_result_sha256 != plan.base_result_sha256
+                ):
+                    raise ValueError("stale machine followup cannot replace a newer decision")
         seen, next_contexts = set(), set()
         for result in row.qualifications:
             result = replay_machine_result(result)
-            if result.result_sha256 in results:
+            result_sha = result.result_sha256
+            if result_sha in results:
                 raise ValueError("duplicate machine result in campaign")
             packet = result.packet
             if (packet.language, packet.profile_sha256, packet.rubric_sha256, packet.split) != (
@@ -131,14 +139,14 @@ def _project(base, rounds):
                 prior = entries[item.item_id]
                 outcome = decisions[item.item_id]
                 entries[item.item_id] = _entry(
-                    item, outcome, result.result_sha256, plan.round_id, prior.original_item_sha256
+                    item, outcome, result_sha, plan.round_id, prior.original_item_sha256
                 )
                 changes.append(
                     MachineCampaignChange(
                         item_id=item.item_id,
                         round_id=plan.round_id,
                         previous_result_sha256=prior.source_result_sha256,
-                        result_sha256=result.result_sha256,
+                        result_sha256=result_sha,
                         before_status=prior.status,
                         after_status=outcome.status,
                         removed_reason_codes=tuple(
@@ -149,7 +157,7 @@ def _project(base, rounds):
                         ),
                     )
                 )
-            results[result.result_sha256] = result
+            results[result_sha] = result
         if seen != set(expected):
             raise ValueError("machine followup result coverage is incomplete")
         round_ids.add(plan.round_id)
@@ -158,7 +166,7 @@ def _project(base, rounds):
 
 
 class MachineCampaign(NativeContract):
-    schema_version: Literal[1] = 1
+    schema_version: Literal[1, 2] = 1
     campaign_id: Identifier
     base_result: MachineQualificationResult
     rounds: tuple[MachineCampaignRound, ...] = Field(default=(), max_length=25)
@@ -169,6 +177,9 @@ class MachineCampaign(NativeContract):
 
     @model_validator(mode="after")
     def checked_projection(self):
+        version = 2 if any(isinstance(row.plan, MachineRevisionPlan) for row in self.rounds) else 1
+        if self.schema_version != version:
+            raise ValueError("machine campaign schema version does not match its review plans")
         if (self.entries, self.changes) != _project(self.base_result, self.rounds):
             raise ValueError("machine campaign effective projection drift")
         return self
@@ -184,6 +195,7 @@ def build_machine_campaign(base_result, *, campaign_id, rounds=()) -> MachineCam
     rounds = tuple(MachineCampaignRound.model_validate(row) for row in rounds)
     entries, changes = _project(base_result, rounds)
     return MachineCampaign(
+        schema_version=2 if any(isinstance(row.plan, MachineRevisionPlan) for row in rounds) else 1,
         campaign_id=campaign_id,
         base_result=base_result,
         rounds=rounds,
@@ -236,6 +248,10 @@ def prepare_campaign_followup(
     cursor = parent_result_sha256
     while cursor in producers:
         plan = producers[cursor]
+        if isinstance(plan, MachineRevisionPlan):
+            raise ValueError(
+                "use prepare-revision for pending decisions with targeted revision ancestry"
+            )
         ancestor = results[plan.base_result_sha256]
         ancestry.append((ancestor, plan))
         cursor = ancestor.result_sha256
