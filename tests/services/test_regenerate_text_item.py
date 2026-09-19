@@ -16,7 +16,12 @@ from multilang.domain.korean import (
     KoreanReasonCode,
     KoreanSignatureItem,
 )
-from multilang.domain.lexicon import DefinitionRecord, GroundingStatus, LexicalCardCandidate, LexicalProvenance
+from multilang.domain.lexicon import (
+    DefinitionRecord,
+    GroundingStatus,
+    LexicalCardCandidate,
+    LexicalProvenance,
+)
 from multilang.domain.text_quality import (
     ConfidenceLabel,
     ReviewStatus,
@@ -27,11 +32,24 @@ from multilang.domain.text_quality import (
     ValidationFlagCode,
     ValidationStatus,
 )
-from multilang.services.regenerate_text_item import RegenerateTextItemService
 from multilang.services.korean_text_generation import KOREAN_TEXT_GENERATION_SELECTOR_VERSION
 from multilang.services.language_identifier import LanguageDetectionResult
-from multilang.services.text_generation import GeneratedSentence, GeneratedTextBundle, GeneratedTranslation
+from multilang.services.regenerate_text_item import RegenerateTextItemService
+from multilang.services.text_generation import (
+    GeneratedSentence,
+    GeneratedTextBundle,
+    GeneratedTranslation,
+)
 from multilang.services.text_validation import TextValidationResult, TextValidationService
+
+
+@pytest.fixture(autouse=True)
+def unavailable_optional_morphology(monkeypatch):
+    """Orchestration tests do not load optional NLP models."""
+    monkeypatch.setattr(
+        "multilang.services.text_validation.OptionalStanzaMorphologicalAnalyzer",
+        lambda: SimpleNamespace(contains_target_lemma=lambda **_: SimpleNamespace(reliable=False)),
+    )
 
 
 def make_candidate(*, lemma: str = "wash", item_key: str = "line-1") -> LexicalCardCandidate:
@@ -449,6 +467,9 @@ def test_regenerate_text_item_keeps_failed_item_flagged_in_place() -> None:
     assert regenerated.review_reason == "translation_mismatch"
     assert len(text_repository.records) == 1
     assert len(text_repository.upserted) == 1
+    assert [(call["job_id"], call["item_key"]) for call in validation.calls] == [
+        ("job-1", "line-1"), ("job-1", "line-1"),
+    ]
 
 
 def test_regenerate_text_item_flags_duplicate_sentence_against_other_cards() -> None:

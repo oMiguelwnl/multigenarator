@@ -3,8 +3,8 @@
 from __future__ import annotations
 
 import json
-from pathlib import Path
 import unicodedata
+from pathlib import Path
 
 import pytest
 
@@ -84,7 +84,7 @@ def test_lookup_candidates_returns_ordered_source_backed_senses(tmp_path: Path) 
         LexicalRecord.model_validate(noun),
         LexicalRecord.model_validate(verb),
     )
-    assert lookup.lookup(language_code="ko", term="배우") == candidates[0]
+    assert lookup.lookup(language_code="ko", term="배우") is None
 
 
 def test_korean_lookup_rejects_record_without_source_backed_sense(tmp_path: Path) -> None:

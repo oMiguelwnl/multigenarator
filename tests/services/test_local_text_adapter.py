@@ -3,7 +3,12 @@
 from __future__ import annotations
 
 from multilang.domain.jobs import SupportedLanguage
-from multilang.domain.lexicon import DefinitionRecord, GroundingStatus, LexicalCardCandidate, LexicalProvenance
+from multilang.domain.lexicon import (
+    DefinitionRecord,
+    GroundingStatus,
+    LexicalCardCandidate,
+    LexicalProvenance,
+)
 from multilang.services.local_text_adapter import LocalSentenceAdapter, LocalTranslationAdapter
 from multilang.services.text_generation import (
     SentenceGenerationRequest,
@@ -324,7 +329,8 @@ def test_text_generation_service_accepts_representative_grounded_candidates() ->
         sentence_adapter=LocalSentenceAdapter(),
         translation_adapter=LocalTranslationAdapter(),
     )
-    validator = TextValidationService()
+    # Local fixtures exercise mechanical validation; semantic fidelity has its own tests.
+    validator = TextValidationService(require_translation_fidelity=False)
 
     cases = [
         (make_candidate("alpha"), SupportedLanguage.EN),
@@ -357,7 +363,8 @@ def test_service_generates_accepted_spanish_verb_with_english_translation() -> N
     )
 
     bundle = service.generate_bundle(candidate=candidate, deck_language=SupportedLanguage.ES)
-    result = TextValidationService().validate(
+    # This fixture checks structure and target inclusion, without an LLM judge.
+    result = TextValidationService(require_translation_fidelity=False).validate(
         sentence=bundle.sentence,
         translation=bundle.translation,
         display_form=candidate.display_form,

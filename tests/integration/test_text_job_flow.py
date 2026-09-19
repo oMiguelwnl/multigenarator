@@ -5,8 +5,10 @@ from __future__ import annotations
 import json
 from pathlib import Path
 
+import pytest
 from sqlalchemy import create_engine, func, select
 from sqlalchemy.orm import Session
+from support.text import use_mechanical_text_validation
 from typer.testing import CliRunner
 
 from multilang.cli import create_app
@@ -15,6 +17,12 @@ from multilang.runtime import build_runtime_service
 from multilang.settings import Settings
 
 runner = CliRunner()
+
+
+@pytest.fixture(autouse=True)
+def offline_text_validation(monkeypatch):
+    # These synthetic jobs exercise resume/counters; semantic review has dedicated tests.
+    use_mechanical_text_validation(monkeypatch)
 
 
 def write_word_list(tmp_path: Path, *items: str) -> Path:
@@ -39,7 +47,8 @@ def write_lookup_index(tmp_path: Path, *terms: str, language_code: str = "en") -
                     "term": term,
                     "display_form": term,
                     "lemma": term,
-                    "definitions": [f"definition for {term}"],
+                    "definitions": ["emplear algo para un fin" if language_code == "es" else f"a synthetic test item identified as {term}"],
+                    "definition_language": "es" if language_code == "es" else "en",
                     "ipa": f"/{term}/",
                     "source": "manual",
                 }

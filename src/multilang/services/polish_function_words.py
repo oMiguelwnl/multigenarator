@@ -29,6 +29,7 @@ def lookup_polish_function_word(term: str) -> LexicalRecord | None:
         display_form=key,
         lemma=key,
         definitions=[definition],
+        definition_language="en",
         part_of_speech=pos,
         ipa=ipa,
         source=POLISH_FUNCTION_WORDS_VERSION,

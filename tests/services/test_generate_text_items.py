@@ -16,7 +16,12 @@ from multilang.domain.korean import (
     KoreanReasonCode,
     KoreanSignatureItem,
 )
-from multilang.domain.lexicon import DefinitionRecord, GroundingStatus, LexicalCardCandidate, LexicalProvenance
+from multilang.domain.lexicon import (
+    DefinitionRecord,
+    GroundingStatus,
+    LexicalCardCandidate,
+    LexicalProvenance,
+)
 from multilang.domain.text_quality import (
     ConfidenceLabel,
     ReviewStatus,
@@ -762,7 +767,12 @@ def test_generate_text_items_repairs_once_then_accepts() -> None:
         ),
     )
 
-    result = service.execute(job_id="job-1", deck_language=SupportedLanguage.EN)
+    limiter = SimpleNamespace(wait=lambda: None)
+    result = service.execute(job_id="job-1", deck_language=SupportedLanguage.EN, rate_limiter=limiter)
+
+    assert [(call["job_id"], call["item_key"], call["rate_limiter"]) for call in validation.calls] == [
+        ("job-1", "line-1", limiter), ("job-1", "line-1", limiter),
+    ]
 
     assert result.processed_items == 1
     assert result.accepted_items == 1
@@ -859,6 +869,17 @@ def test_generate_text_items_routes_isolated_word_translation_to_review() -> Non
 
 
 def test_generate_text_items_accepts_repaired_full_sentence_translation() -> None:
+    from multilang.domain.translation_quality import TranslationFidelityVerdict
+
+    def review_pair(request, **_):
+        equivalent = (
+            request.sentence == "Он хочет достичь цели завтра."
+            and request.translation == "He wants to achieve the goal tomorrow."
+            and request.source_language == "ru"
+            and request.target_language == "en"
+        )
+        return TranslationFidelityVerdict(decision="equivalent" if equivalent else "mismatch")
+
     candidate = make_candidate(lemma="достичь", item_key="ru-1", translation_target_language="en").model_copy(
         update={"definitions_html": "verb: to achieve, to attain, to reach"}
     )
@@ -882,7 +903,7 @@ def test_generate_text_items_accepts_repaired_full_sentence_translation() -> Non
         lexical_repository=None,
         text_repository=repository,
         text_generation_service=generation,
-        text_validation_service=TextValidationService(),
+        text_validation_service=TextValidationService(translation_fidelity_checker=review_pair),
         tatoeba_sentence_source=FakeTatoebaSentenceSource(fallback=None),
     )
 
@@ -1716,3 +1737,12 @@ def test_korean_generation_persists_hash_only_two_plus_one_selector_history() ->
     assert bad_translation not in str(history)
     assert saved.repair_attempt_count == 1
     assert tatoeba.calls == []
+
+
+@pytest.fixture(autouse=True)
+def unavailable_optional_morphology(monkeypatch):
+    """Orchestration tests do not load optional NLP models."""
+    monkeypatch.setattr(
+        "multilang.services.text_validation.OptionalStanzaMorphologicalAnalyzer",
+        lambda: SimpleNamespace(contains_target_lemma=lambda **_: SimpleNamespace(reliable=False)),
+    )

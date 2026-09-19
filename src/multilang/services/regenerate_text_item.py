@@ -3,13 +3,20 @@
 from __future__ import annotations
 
 from multilang.domain.jobs import JobStage, SupportedLanguage
-from multilang.domain.text_quality import ReviewStatus, TextGenerationStatus, TextQualityRecord, ValidationStatus
+from multilang.domain.source_profiles import get_source_profile
+from multilang.domain.text_quality import (
+    ReviewStatus,
+    TextGenerationStatus,
+    TextQualityRecord,
+    ValidationStatus,
+)
 from multilang.services.generate_text_items import GenerateTextItemsService
 from multilang.services.korean_text_generation import (
     KoreanTextGenerationSelector,
     korean_selector_history_from_record,
     with_korean_selector_history,
 )
+from multilang.services.rate_limit import RateLimiter
 from multilang.services.text_generation import GeneratedTextBundle
 from multilang.services.text_validation import TextValidationResult
 
@@ -38,6 +45,7 @@ class RegenerateTextItemService:
         job_id: str,
         item_key: str,
         deck_language: SupportedLanguage,
+        rate_limiter: RateLimiter | None = None,
     ) -> TextQualityRecord:
         existing_record = self.text_repository.get_text_record(job_id, item_key)
         if existing_record is None:
@@ -75,15 +83,21 @@ class RegenerateTextItemService:
             generation_status = korean_selection.generation_status
             repair_attempt_count = korean_selection.repair_attempt_count
         else:
-            generated_bundle = self.text_generation_service.generate_bundle(
-                candidate=candidate,
-                deck_language=deck_language,
+            regenerate = getattr(self.text_generation_service, "regenerate_bundle", None)
+            generated_bundle = (
+                regenerate(candidate=candidate, deck_language=deck_language,
+                           previous_sentence=existing_record.example_sentence or "", source_type=source_type)
+                if callable(regenerate)
+                else self.text_generation_service.generate_bundle(candidate=candidate, deck_language=deck_language)
             )
             validation = self._validate_bundle(
                 bundle=generated_bundle,
                 candidate=candidate,
                 seen_sentences=seen_sentences,
                 source_type=source_type,
+                job_id=job_id,
+                item_key=item_key,
+                rate_limiter=rate_limiter,
             )
             generation_status = TextGenerationStatus.GENERATED
             repair_attempt_count = 0
@@ -91,15 +105,22 @@ class RegenerateTextItemService:
             if validation.validation_status is ValidationStatus.FAILED:
                 repair_attempt_count = 1
                 generation_status = TextGenerationStatus.REPAIRED
-                generated_bundle = self.text_generation_service.generate_bundle(
-                    candidate=candidate,
-                    deck_language=deck_language,
+                repair = getattr(self.text_generation_service, "repair_bundle", None)
+                generated_bundle = (
+                    repair(candidate=candidate, deck_language=deck_language, source_type=source_type,
+                           rejected_bundle=generated_bundle,
+                           rejection_codes=tuple(flag.code.value for flag in validation.validation_flags))
+                    if callable(repair)
+                    else self.text_generation_service.generate_bundle(candidate=candidate, deck_language=deck_language)
                 )
                 validation = self._validate_bundle(
                     bundle=generated_bundle,
                     candidate=candidate,
                     seen_sentences=seen_sentences,
                     source_type=source_type,
+                    job_id=job_id,
+                    item_key=item_key,
+                    rate_limiter=rate_limiter,
                 )
 
         regenerated_record = self._build_record(
@@ -127,16 +148,27 @@ class RegenerateTextItemService:
         seen_sentences: set[str] | None = None,
         source_type: str | None = None,
         deck_language: SupportedLanguage | None = None,
+        job_id: str | None = None,
+        item_key: str | None = None,
+        rate_limiter: RateLimiter | None = None,
     ) -> TextValidationResult:
+        profile = get_source_profile(GenerateTextItemsService._resolve_source_type(source_type, candidate=candidate))
         return self.text_validation_service.validate(
             sentence=bundle.sentence,
             translation=bundle.translation,
             display_form=getattr(candidate, "display_form"),
             lemma=getattr(candidate, "lemma"),
             definitions_html=getattr(candidate, "definitions_html"),
+            definition_language=getattr(candidate, "definition_language", None),
             disallowed_sentence_texts=set(seen_sentences or set()),
-            require_translation=source_type != "word-list",
+            require_translation=(profile.requires_translation_validation
+                                 and bundle.sentence.target_language != bundle.translation.target_language),
+            min_sentence_tokens=profile.min_sentence_tokens,
+            max_sentence_tokens=profile.max_sentence_tokens,
             korean_identity=getattr(candidate, "korean_identity"),
+            job_id=job_id,
+            item_key=item_key,
+            rate_limiter=rate_limiter,
         )
 
     def _build_record(

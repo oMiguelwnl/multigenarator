@@ -7,19 +7,51 @@ import json
 from pathlib import Path
 from typing import ClassVar
 
+import pytest
 from sqlalchemy import create_engine, func, select
 from sqlalchemy.orm import Session
+from support.text import use_mechanical_text_validation
 from typer.testing import CliRunner
 
-from multilang.cli import create_app
-from multilang.db.models import AudioAssetModel, CardExportModel, DeckExportModel, GenerationJob, TextQualityRecordModel
 import multilang.runtime as runtime_module
+from multilang.cli import create_app
+from multilang.db.models import (
+    AudioAssetModel,
+    CardExportModel,
+    DeckExportModel,
+    GenerationJob,
+    TextQualityRecordModel,
+)
+from multilang.domain.translation_quality import TranslationFidelityVerdict
 from multilang.runtime import build_runtime_service
 from multilang.services import frequency_decks
 from multilang.services.audio_synthesis import AudioSynthesisAdapter, AudioSynthesisResponse
+from multilang.services.local_text_adapter import LocalSentenceAdapter
 from multilang.settings import Settings
 
+
+@pytest.fixture(autouse=True)
+def offline_morphology(monkeypatch):
+    use_mechanical_text_validation(monkeypatch)
+
+
 runner = CliRunner()
+
+
+class FixtureSentenceAdapter(LocalSentenceAdapter):
+    """Exact fixture-pair verdicts for the export data flow, without a live judge."""
+
+    def review_translation(self, request):
+        pairs = {
+            "The fishing boats returned to the harbor before sunset.":
+                "Os barcos de pesca voltaram ao porto antes do pôr do sol.",
+            "She hung the lantern beside the cabin door.":
+                "Ela pendurou a lanterna ao lado da porta da cabana.",
+            "Wildflowers covered the meadow in early spring.":
+                "Flores silvestres cobriam o prado no início da primavera.",
+        }
+        equivalent = (request.source_language, request.target_language) == ("en", "pt") and pairs.get(request.sentence) == request.translation
+        return TranslationFidelityVerdict(decision="equivalent" if equivalent else "uncertain")
 
 
 class FakeAzureSpeechAdapter(AudioSynthesisAdapter):
@@ -57,7 +89,8 @@ def write_lookup_index(tmp_path: Path, *terms: str) -> Path:
                     "term": term,
                     "display_form": term,
                     "lemma": term,
-                    "definitions": [f"definition for {term}"],
+                    "definitions": [f"um item sintético identificado como {term}"],
+                    "definition_language": "pt",
                     "part_of_speech": "noun",
                     "ipa": f"/{term}/",
                     "source": "manual",
@@ -72,19 +105,20 @@ def write_lookup_index(tmp_path: Path, *terms: str) -> Path:
 
 def fake_frequency_wordlist(language: str):
     words = [f"junk{rank}" for rank in range(1, 2002)]
-    words[0] = "alpha"
-    words[1000] = "bravo"
-    words[2000] = "charlie"
+    words[0] = "harbor"
+    words[1000] = "lantern"
+    words[2000] = "meadow"
     return iter(words)
 
 
 def test_frequency_sample_generates_audio_and_exports_all_formats(tmp_path: Path, monkeypatch) -> None:
     database_path = tmp_path / "frequency-e2e.db"
-    lexicon_dir = write_lookup_index(tmp_path, "alpha", "bravo", "charlie")
+    lexicon_dir = write_lookup_index(tmp_path, "harbor", "lantern", "meadow")
     output_dir = tmp_path / "exports"
     FakeAzureSpeechAdapter.instances.clear()
     monkeypatch.setattr(runtime_module, "AzureSpeechAdapter", FakeAzureSpeechAdapter)
     monkeypatch.setattr(frequency_decks, "iter_wordlist", fake_frequency_wordlist)
+    monkeypatch.setattr(runtime_module, "_build_sentence_adapter", lambda _: FixtureSentenceAdapter())
     service = build_runtime_service(
         Settings(
             _env_file=None,

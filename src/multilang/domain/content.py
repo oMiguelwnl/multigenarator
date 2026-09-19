@@ -16,6 +16,7 @@ from pydantic import (
     model_validator,
 )
 
+from multilang.domain.definitions import DefinitionEvidence
 from multilang.domain.language_profiles import NativeContract
 
 
@@ -51,9 +52,16 @@ class ContentRequest(FrozenContentModel):
     render_policy_version: str = "plain-text-1"
     content_policy_version: str = "1"
     explanation_language: str = Field(default="en", min_length=2, max_length=8)
+    definition_evidence: DefinitionEvidence | None = Field(default=None, exclude_if=lambda value: value is None)
 
     @model_validator(mode="after")
     def namespace_policy(self) -> ContentRequest:
+        evidence = self.definition_evidence
+        if evidence is not None and (
+            evidence.lemma != self.lemma or evidence.source_language != self.language
+            or evidence.sense_id != self.sense_id
+        ):
+            raise ValueError("definition evidence does not match the content identity")
         if self.namespace == "core":
             if self.known_concept_ids or self.private_context or self.private_context_authorized:
                 raise ValueError("Core content cannot use personal knowledge or context")
@@ -62,6 +70,36 @@ class ContentRequest(FrozenContentModel):
         if self.private_context and not self.private_context_authorized:
             raise ValueError("private context requires explicit authorization")
         return self
+
+
+class ProviderContentContext(FrozenContentModel):
+    """Bounded, readable content sent to a generation provider.
+
+    Local identity, ownership, grounding, and known-concept identifiers remain on
+    ``ContentRequest`` for authorization and post-generation validation.
+    """
+
+    language: str = Field(min_length=2, max_length=8)
+    lemma: str = Field(min_length=1, max_length=255)
+    display_text: str = Field(min_length=1, max_length=1000)
+    sense: str = Field(min_length=1, max_length=255)
+    morphology: str | None = Field(default=None, min_length=1, max_length=255)
+    context: str = Field(min_length=1, max_length=4000)
+    private_context: str | None = Field(default=None, max_length=4000)
+    i_plus_one_mode: Literal["strict", "adaptive", "contextual"]
+    language_profile_version: str = Field(min_length=1, max_length=128)
+    render_policy_version: str = Field(min_length=1, max_length=128)
+    content_policy_version: str = Field(min_length=1, max_length=128)
+    explanation_language: str = Field(min_length=2, max_length=8)
+    definition_evidence: DefinitionEvidence | None = Field(default=None, exclude_if=lambda value: value is None)
+
+    @model_serializer(mode="wrap")
+    def serialize_optional_context(self, handler: SerializerFunctionWrapHandler) -> dict:
+        payload = handler(self)
+        for field_name in ("morphology", "private_context"):
+            if payload.get(field_name) is None:
+                payload.pop(field_name, None)
+        return payload
 
 
 class GeneratedContent(FrozenContentModel):

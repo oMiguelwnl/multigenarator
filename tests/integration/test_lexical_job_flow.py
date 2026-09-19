@@ -9,7 +9,6 @@ from sqlalchemy import create_engine, func, select
 from sqlalchemy.orm import Session
 from typer.testing import CliRunner
 
-import multilang.cli as cli_module
 from multilang.cli import create_app
 from multilang.db.base import Base
 from multilang.db.models import GenerationJob, LexicalCandidate
@@ -34,7 +33,7 @@ def write_word_list(tmp_path: Path, *items: str) -> Path:
     return path
 
 
-def write_lookup_index(tmp_path: Path, *, language_code: str, terms: list[str]) -> Path:
+def write_lookup_index(tmp_path: Path, *, language_code: str, terms: list[str], definition_language: str = "en") -> Path:
     """Write a small cached lexical index for runtime lookups."""
 
     index_path = tmp_path / "lexicon" / language_code / "lexical-index.json"
@@ -44,7 +43,8 @@ def write_lookup_index(tmp_path: Path, *, language_code: str, terms: list[str]) 
             "term": term,
             "display_form": term,
             "lemma": term,
-            "definitions": [f"definition for {term}"],
+            "definitions": [f"um item sintético identificado como {term}" if definition_language == "pt" else f"a synthetic test item identified as {term}"],
+            "definition_language": definition_language,
             "ipa": f"/{term}/",
             "source": "manual",
         }
@@ -72,7 +72,7 @@ def test_generate_frequency_deck_persists_three_grounded_levels(monkeypatch, tmp
     database_path = str(tmp_path / "lexical-flow.db")
     missing_ranks = {17, 1013, 2400, 2600}
     all_terms = [f"word-{rank}" for rank in range(1, 3005) if rank not in missing_ranks]
-    lexicon_dir = write_lookup_index(tmp_path, language_code="en", terms=all_terms)
+    lexicon_dir = write_lookup_index(tmp_path, language_code="en", terms=all_terms, definition_language="pt")
 
     monkeypatch.setenv("MULTILANG_DATABASE_URL", f"sqlite+pysqlite:///{database_path}")
     monkeypatch.setenv("MULTILANG_LEXICON_DATA_DIR", str(lexicon_dir))
@@ -122,7 +122,7 @@ def test_generate_frequency_deck_persists_three_grounded_levels(monkeypatch, tmp
 def test_generate_frequency_deck_uses_manual_lexicon_cache(monkeypatch, tmp_path: Path) -> None:
     database_path = str(tmp_path / "manual-cache-flow.db")
     all_terms = [f"word-{rank}" for rank in range(1, 3001)]
-    lexicon_dir = write_lookup_index(tmp_path, language_code="en", terms=all_terms)
+    lexicon_dir = write_lookup_index(tmp_path, language_code="en", terms=all_terms, definition_language="pt")
 
     monkeypatch.setenv("MULTILANG_DATABASE_URL", f"sqlite+pysqlite:///{database_path}")
     monkeypatch.setenv("MULTILANG_LEXICON_DATA_DIR", str(lexicon_dir))
@@ -156,7 +156,7 @@ def test_generate_frequency_deck_uses_manual_lexicon_cache(monkeypatch, tmp_path
 def test_generate_frequency_deck_persists_custom_cards_per_level(monkeypatch, tmp_path: Path) -> None:
     database_path = str(tmp_path / "custom-frequency-count.db")
     all_terms = [f"word-{rank}" for rank in range(1, 3010)]
-    lexicon_dir = write_lookup_index(tmp_path, language_code="en", terms=all_terms)
+    lexicon_dir = write_lookup_index(tmp_path, language_code="en", terms=all_terms, definition_language="pt")
 
     monkeypatch.setenv("MULTILANG_DATABASE_URL", f"sqlite+pysqlite:///{database_path}")
     monkeypatch.setenv("MULTILANG_LEXICON_DATA_DIR", str(lexicon_dir))
@@ -209,7 +209,7 @@ def test_generate_frequency_deck_persists_custom_cards_per_level(monkeypatch, tm
         session.close()
 
 
-def test_generate_frequency_deck_can_run_without_lexicon_data(
+def test_generate_frequency_deck_requires_lexical_evidence(
     monkeypatch, tmp_path: Path
 ) -> None:
     database_path = str(tmp_path / "frequency-without-lexicon.db")
@@ -245,9 +245,8 @@ def test_generate_frequency_deck_can_run_without_lexicon_data(
         ],
     )
 
-    assert result.exit_code == 0
-    assert "grounded_candidates=9" in result.output
-    assert "pending_groundings=0" in result.output
+    assert result.exit_code != 0
+    assert "could not build level 1 with 3 curated candidates" in str(result.exception)
     assert not (lexicon_dir / "en" / "lexical-index.json").exists()
 
     session = build_session(database_path)
@@ -256,7 +255,7 @@ def test_generate_frequency_deck_can_run_without_lexicon_data(
         candidate_count = session.scalar(select(func.count(LexicalCandidate.id)))
 
         assert job_count == 1
-        assert candidate_count == 9
+        assert candidate_count == 0
     finally:
         session.close()
 

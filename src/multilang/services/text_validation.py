@@ -3,11 +3,13 @@
 from __future__ import annotations
 
 import re
-from dataclasses import dataclass
 import unicodedata
+from collections.abc import Callable
+from dataclasses import dataclass
 
 from pydantic import BaseModel, Field
 
+from multilang.domain.definitions import DefinitionConsistencyRequest, DefinitionConsistencyVerdict
 from multilang.domain.korean import (
     KOREAN_LANGUAGE_CODE,
     KoreanAnalyzerFingerprint,
@@ -23,15 +25,21 @@ from multilang.domain.text_quality import (
     ValidationFlagCode,
     ValidationStatus,
 )
-from multilang.services.language_identifier import CorpusLanguageIdentifier, LanguageIdentifier
+from multilang.domain.translation_quality import (
+    TranslationFidelityRequest,
+    TranslationFidelityVerdict,
+    looks_like_invalid_translation,
+)
 from multilang.services.korean_frequency import project_korean_match_status
+from multilang.services.korean_morphology import KiwiKoreanMorphologyService
+from multilang.services.language_identifier import CorpusLanguageIdentifier, LanguageIdentifier
 from multilang.services.mandarin_orthography import (
     MandarinOrthographyError,
     script_counts,
     validate_simplified_mandarin,
 )
-from multilang.services.korean_morphology import KiwiKoreanMorphologyService
 from multilang.services.morphology import MorphologicalAnalyzer, OptionalStanzaMorphologicalAnalyzer
+from multilang.services.rate_limit import RateLimiter
 from multilang.services.text_generation import GeneratedSentence, GeneratedTranslation
 
 _TOKEN_RE = re.compile(r"\b[\w'-]+\b", re.UNICODE)
@@ -53,17 +61,6 @@ _META_SENTENCE_PREFIXES = (
     "le mot",
     "the word",
     "слово",
-)
-_RAW_HTML_RE = re.compile(r"<\s*/?\s*(?:!doctype|html|head|body|title|script|style|div|span|p|br|h[1-6])\b|&lt;\s*html\b", re.IGNORECASE)
-_INVALID_TRANSLATION_PATTERNS = (
-    re.compile(r"\berror\s*500\b", re.IGNORECASE),
-    re.compile(r"\bserver\s+error\b", re.IGNORECASE),
-    re.compile(r"that's\s+an\s+error", re.IGNORECASE),
-    re.compile(r"there\s+was\s+an\s+error", re.IGNORECASE),
-    re.compile(r"quota\s+(?:exceeded|for this billing period)", re.IGNORECASE),
-    re.compile(r"captcha|recaptcha", re.IGNORECASE),
-    re.compile(r"request\s+(?:blocked|forbidden|denied)", re.IGNORECASE),
-    re.compile(r"temporarily\s+blocked", re.IGNORECASE),
 )
 # Deterministic fallback used ONLY when the morphological analyzer is
 # unavailable/unreliable (Stanza is an optional, usually-absent dependency, so
@@ -186,7 +183,7 @@ class _ValidationContext:
 
 
 class TextValidationService:
-    """Apply deterministic sentence and translation quality checks."""
+    """Apply mechanical checks and, when required, an advisory fidelity check."""
 
     min_sentence_tokens = 4
     max_sentence_tokens = 12
@@ -197,10 +194,18 @@ class TextValidationService:
         language_identifier: LanguageIdentifier | None = None,
         morphological_analyzer: MorphologicalAnalyzer | None = None,
         korean_matcher: KiwiKoreanMorphologyService | None = None,
+        translation_fidelity_checker: Callable[..., TranslationFidelityVerdict] | None = None,
+        require_translation_fidelity: bool = True,
+        definition_consistency_checker: Callable[..., DefinitionConsistencyVerdict] | None = None,
+        require_definition_consistency: bool = False,
     ) -> None:
         self.language_identifier = language_identifier or CorpusLanguageIdentifier()
         self.morphological_analyzer = morphological_analyzer or OptionalStanzaMorphologicalAnalyzer()
         self.korean_matcher = korean_matcher or KiwiKoreanMorphologyService()
+        self.translation_fidelity_checker = translation_fidelity_checker
+        self.require_translation_fidelity = require_translation_fidelity
+        self.definition_consistency_checker = definition_consistency_checker
+        self.require_definition_consistency = require_definition_consistency
 
     def validate(
         self,
@@ -210,12 +215,16 @@ class TextValidationService:
         display_form: str,
         lemma: str,
         definitions_html: str | None,
+        definition_language: str | None = None,
         uncertainty_notes: list[str] | None = None,
         disallowed_sentence_texts: set[str] | None = None,
         require_translation: bool = True,
         min_sentence_tokens: int | None = None,
         max_sentence_tokens: int | None = None,
         korean_identity: KoreanLexicalIdentity | None = None,
+        job_id: str | None = None,
+        item_key: str | None = None,
+        rate_limiter: RateLimiter | None = None,
     ) -> TextValidationResult:
         context = _ValidationContext(
             sentence_text=sentence.text.strip(),
@@ -259,6 +268,33 @@ class TextValidationService:
         self._check_language(flags, context=context, translation=translation, require_translation=require_translation)
         if require_translation:
             self._check_translation(flags, context=context, display_form=display_form, lemma=lemma)
+            if not flags:
+                self._check_translation_fidelity(
+                    flags, context=context, translation=translation,
+                    job_id=job_id, item_key=item_key, rate_limiter=rate_limiter,
+                )
+
+        if not flags and self.require_definition_consistency and context.target_language not in {"ko", "la"}:
+            decision = "uncertain"
+            try:
+                if self.definition_consistency_checker is not None:
+                    request = DefinitionConsistencyRequest(
+                        lemma=lemma, display_form=display_form, source_language=context.target_language,
+                        definition_language=definition_language or "und",
+                        definition=definitions_html or "", sentence=context.sentence_text,
+                    )
+                    call_context = {key: value for key, value in (
+                        ("job_id", job_id), ("item_key", item_key), ("rate_limiter", rate_limiter),
+                    ) if value is not None}
+                    verdict = self.definition_consistency_checker(request, **call_context)
+                    decision = DefinitionConsistencyVerdict.model_validate(verdict).decision
+            except Exception:
+                decision = "uncertain"
+            if decision != "consistent":
+                flags.append(ValidationFlag(
+                    code=ValidationFlagCode.DEFINITION_MISMATCH,
+                    detail="definition/example sense mismatch" if decision == "mismatch" else "definition/example consistency requires review",
+                ))
 
         validation_status = ValidationStatus.FAILED if flags else ValidationStatus.PASSED
         confidence_score = self._score(flags=flags, uncertainty_count=len(context.uncertainty_notes))
@@ -596,6 +632,41 @@ class TextValidationService:
                 )
             )
 
+    def _check_translation_fidelity(
+        self, flags, *, context, translation,
+        job_id: str | None = None,
+        item_key: str | None = None,
+        rate_limiter: RateLimiter | None = None,
+    ) -> None:
+        # Korean has a separate identity-bound judge and mandatory final human
+        # review. Never route its text through the generic provider/budget here.
+        if (not self.require_translation_fidelity or context.target_language == "ko"
+                or context.target_language == translation.target_language):
+            return
+        decision = "uncertain"
+        if self.translation_fidelity_checker is not None:
+            try:
+                request = TranslationFidelityRequest(
+                    sentence=context.sentence_text, translation=context.translation_text,
+                    source_language=context.target_language, target_language=translation.target_language,
+                )
+                call_context = {
+                    key: value for key, value in (
+                        ("job_id", job_id), ("item_key", item_key), ("rate_limiter", rate_limiter),
+                    ) if value is not None
+                }
+                verdict = self.translation_fidelity_checker(request, **call_context)
+                decision = TranslationFidelityVerdict.model_validate(verdict).decision
+            except Exception:
+                # Unavailability and malformed model output require review, never
+                # silent acceptance or raw provider errors in learner metadata.
+                decision = "uncertain"
+        if decision != "equivalent":
+            flags.append(ValidationFlag(
+                code=ValidationFlagCode.TRANSLATION_MISMATCH,
+                detail="translation fidelity mismatch" if decision == "mismatch" else "translation fidelity requires review",
+            ))
+
     def _check_language(
         self,
         flags: list[ValidationFlag],
@@ -647,13 +718,6 @@ def _tokenize(value: str) -> list[str]:
     return _TOKEN_RE.findall(value.casefold())
 
 
-def looks_like_invalid_translation(value: str) -> bool:
-    text = " ".join(str(value or "").strip().split())
-    if not text:
-        return False
-    if _RAW_HTML_RE.search(text):
-        return True
-    return any(pattern.search(text) for pattern in _INVALID_TRANSLATION_PATTERNS)
 
 
 _DEFAULT_LANGUAGE_IDENTIFIER = CorpusLanguageIdentifier()

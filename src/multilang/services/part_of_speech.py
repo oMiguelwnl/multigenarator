@@ -51,6 +51,12 @@ _PART_OF_SPEECH_ALIASES = {
     "pron": "pronoun",
     "pronoun": "pronoun",
     "proper": "proper noun",
+    "propn": "proper noun",
+    "adp": "preposition",
+    "cconj": "conjunction",
+    "sconj": "conjunction",
+    "part": "particle",
+    "intj": "interjection",
     "proper noun": "proper noun",
     "verb": "verb",
 }

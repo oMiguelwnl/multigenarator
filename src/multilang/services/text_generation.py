@@ -2,23 +2,34 @@
 
 from __future__ import annotations
 
-from hashlib import sha256
 import re
+from hashlib import sha256
 from time import perf_counter
 from typing import Any, Callable, Literal, Protocol
+from uuid import uuid4
 
-from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator
+from pydantic import BaseModel, ConfigDict, Field, ValidationError, field_validator, model_validator
 
+from multilang.domain.definitions import DefinitionConsistencyRequest, DefinitionConsistencyVerdict
+from multilang.domain.jobs import SupportedLanguage
 from multilang.domain.korean import KoreanLexicalIdentity, KoreanTextError, canonicalize_korean
+from multilang.domain.korean_provider import (
+    KoreanProviderPolicy,
+    KoreanProviderRoute,
+    KoreanProviderTask,
+)
+from multilang.domain.lexicon import GroundingStatus, LexicalCardCandidate
 from multilang.domain.private_processing import (
     PrivateProcessingReceipt,
     PrivateProcessingRefusalReason,
     private_text_sha256,
 )
 from multilang.domain.text_quality import TextProvenance
-from multilang.domain.jobs import SupportedLanguage
-from multilang.domain.lexicon import GroundingStatus, LexicalCardCandidate
-from multilang.domain.korean_provider import KoreanProviderPolicy, KoreanProviderRoute, KoreanProviderTask
+from multilang.domain.translation_quality import (
+    TranslationFidelityRequest,
+    TranslationFidelityVerdict,
+)
+from multilang.repositories.provider_call_log_repository import ProviderCallLogCreate
 from multilang.security.redaction import redact_sensitive_text
 from multilang.services.private_context import (
     PrivateContextBroker,
@@ -26,10 +37,16 @@ from multilang.services.private_context import (
     PrivateProviderCallbackResult,
     PrivateProviderContextRequest,
 )
+from multilang.services.provider_response_cache import (
+    ProviderCacheKey,
+    ProviderResponseCacheService,
+)
+from multilang.services.provider_retry import (
+    ProviderCircuitBreaker,
+    ProviderRetryContext,
+    retry_provider_call,
+)
 from multilang.services.rate_limit import RateLimiter
-from multilang.services.provider_response_cache import ProviderCacheKey, ProviderResponseCacheService
-from multilang.services.provider_retry import ProviderCircuitBreaker, ProviderRetryContext, retry_provider_call
-from multilang.repositories.provider_call_log_repository import ProviderCallLogCreate
 
 _CONTEXT_TOKEN_RE = re.compile(r"\b[\w'-]+\b", re.UNICODE)
 _PRIVATE_PATH_RE = re.compile(
@@ -100,6 +117,22 @@ class KoreanSelectorAttemptContext(BaseModel):
         return value
 
 
+class SentenceRepairContext(BaseModel):
+    """A bounded, distinct attempt; rejected output is data, never instructions."""
+
+    model_config = ConfigDict(extra="forbid", frozen=True, hide_input_in_errors=True)
+    attempt_id: str = Field(default_factory=lambda: uuid4().hex, min_length=1, max_length=128)
+    rejected_sentence: str = Field(max_length=4000)
+    rejection_codes: tuple[str, ...] = Field(min_length=1, max_length=16)
+
+    @field_validator("rejection_codes")
+    @classmethod
+    def controlled_codes(cls, values: tuple[str, ...]) -> tuple[str, ...]:
+        if any(not re.fullmatch(r"[a-z0-9_]{1,64}", value) for value in values):
+            raise ValueError("repair feedback requires controlled validation codes")
+        return values
+
+
 class SentenceGenerationRequest(BaseModel):
     display_form: str = Field(min_length=1)
     lemma: str = Field(min_length=1)
@@ -108,6 +141,7 @@ class SentenceGenerationRequest(BaseModel):
     translation_target_language: str = Field(min_length=2)
     source_type: str | None = None
     highlight_context: str | None = None
+    repair_context: SentenceRepairContext | None = Field(default=None, exclude_if=lambda value: value is None)
     korean_identity: KoreanLexicalIdentity | None = Field(
         default=None,
         exclude_if=lambda value: value is None,
@@ -142,6 +176,8 @@ class SentenceGenerationRequest(BaseModel):
     @model_validator(mode="after")
     def korean_identity_must_match_language(self) -> "SentenceGenerationRequest":
         if self.target_language == SupportedLanguage.KO.value:
+            if self.repair_context is not None:
+                raise ValueError("Korean requests require the identity-bound selector attempt")
             if self.korean_identity is None:
                 raise ValueError("Korean sentence request requires a persisted Korean identity")
             if self.lemma != self.korean_identity.lemma:
@@ -173,6 +209,7 @@ class SentenceGenerationRequest(BaseModel):
         source_type: str | None = None,
         highlight_context: str | None = None,
         korean_selector_attempt: KoreanSelectorAttemptContext | None = None,
+        repair_context: SentenceRepairContext | None = None,
     ) -> "SentenceGenerationRequest":
         if candidate.grounding_status is not GroundingStatus.GROUNDED:
             raise ValueError("sentence generation requires a grounded lexical candidate")
@@ -186,15 +223,30 @@ class SentenceGenerationRequest(BaseModel):
             highlight_context=highlight_context,
             korean_identity=candidate.korean_identity,
             korean_selector_attempt=korean_selector_attempt,
+            repair_context=repair_context,
         )
 
 
 class DefinitionGenerationRequest(BaseModel):
-    display_form: str = Field(min_length=1)
-    lemma: str = Field(min_length=1)
-    source_language: str = Field(min_length=2)
-    target_language: str = Field(min_length=2)
-    part_of_speech: str | None = None
+    display_form: str = Field(min_length=1, max_length=512)
+    lemma: str = Field(min_length=1, max_length=512)
+    source_language: str = Field(min_length=2, max_length=16)
+    target_language: str = Field(min_length=2, max_length=16)
+    part_of_speech: str | None = Field(default=None, max_length=64)
+    source_definitions: tuple[str, ...] = Field(default=(), max_length=8, exclude_if=lambda value: not value)
+    source_definition_language: str | None = Field(default=None, min_length=2, max_length=16, exclude_if=lambda value: value is None)
+    evidence_source: str | None = Field(default=None, max_length=256, exclude_if=lambda value: value is None)
+    source_sense_id: str | None = Field(default=None, max_length=128, exclude_if=lambda value: value is None)
+
+    @field_validator("source_definitions")
+    @classmethod
+    def evidence_must_be_bounded(cls, values: tuple[str, ...]) -> tuple[str, ...]:
+        if any(not value.strip() or len(value) > 2000 for value in values):
+            raise ValueError("source definitions must contain 1..2000 characters each")
+        if sum(len(value.encode("utf-8")) for value in values) > 12000:
+            raise ValueError("source definitions exceed evidence byte budget")
+        return values
+
     korean_identity: KoreanLexicalIdentity | None = Field(
         default=None,
         exclude_if=lambda value: value is None,
@@ -219,7 +271,7 @@ class DefinitionGenerationRequest(BaseModel):
 
 
 class DefinitionGenerationResult(BaseModel):
-    definitions_html: str = Field(min_length=1)
+    definitions_html: str = Field(min_length=1, max_length=4096)
     provenance: dict[str, Any] = Field(default_factory=dict)
 
 
@@ -258,8 +310,32 @@ class SentenceTranslationResult(BaseModel):
     provenance: dict[str, Any] = Field(default_factory=dict)
 
 
+class TranslationFidelityResult(BaseModel):
+    """Adapter envelope: usage is transport metadata, outside the strict verdict."""
+
+    model_config = ConfigDict(extra="forbid", frozen=True, hide_input_in_errors=True)
+    verdict: TranslationFidelityVerdict
+    input_tokens: int | None = Field(default=None, ge=0, le=2**31 - 1, strict=True)
+    output_tokens: int | None = Field(default=None, ge=0, le=2**31 - 1, strict=True)
+    total_tokens: int | None = Field(default=None, ge=0, le=2**31 - 1, strict=True)
+
+    @property
+    def decision(self) -> str:
+        return self.verdict.decision
+
+    @property
+    def provenance(self) -> dict[str, int]:
+        return self.model_dump(exclude={"verdict"}, exclude_none=True)
+
+
 class SentenceGenerationFallback(BaseModel):
     sentence_result: SentenceGenerationResult
+
+
+class DefinitionConsistencyResult(TranslationFidelityResult):
+    """Same transport usage envelope, with a strict definition verdict."""
+
+    verdict: DefinitionConsistencyVerdict
 
 
 class GeneratedSentence(BaseModel):
@@ -324,6 +400,7 @@ class TextGenerationService:
         job_id: str | None = None,
         korean_selector_attempt: KoreanSelectorAttemptContext | None = None,
         private_context_request: PrivateContextDisclosureRequest | None = None,
+        repair_context: SentenceRepairContext | None = None,
     ) -> GeneratedTextBundle:
         if _requires_korean_private_context(
             deck_language=deck_language,
@@ -347,6 +424,7 @@ class TextGenerationService:
                 source_type=source_type,
                 highlight_context=highlight_context,
                 korean_selector_attempt=korean_selector_attempt,
+                repair_context=repair_context,
             )
             if rate_limiter is not None:
                 rate_limiter.wait()
@@ -363,6 +441,36 @@ class TextGenerationService:
             translation_request=translation_request,
             rate_limiter=rate_limiter,
             job_id=job_id,
+        )
+
+    def repair_bundle(
+        self, *, candidate: LexicalCardCandidate, deck_language: SupportedLanguage,
+        rejected_bundle: GeneratedTextBundle, rejection_codes: tuple[str, ...],
+        source_type: str | None = None, highlight_context: str | None = None,
+        rate_limiter: RateLimiter | None = None,
+    ) -> GeneratedTextBundle:
+        if deck_language is SupportedLanguage.KO:
+            raise ValueError("Korean repairs require the identity-bound Korean selector")
+        return self.generate_bundle(
+            candidate=candidate, deck_language=deck_language, source_type=source_type,
+            highlight_context=highlight_context, rate_limiter=rate_limiter,
+            repair_context=SentenceRepairContext(
+                rejected_sentence=rejected_bundle.sentence.text[:4000],
+                rejection_codes=tuple(dict.fromkeys(rejection_codes))[:16] or ("validation_failed",),
+            ),
+        )
+
+    def regenerate_bundle(
+        self, *, candidate: LexicalCardCandidate, deck_language: SupportedLanguage,
+        previous_sentence: str, source_type: str | None = None,
+    ) -> GeneratedTextBundle:
+        if deck_language is SupportedLanguage.KO:
+            raise ValueError("Korean regeneration requires the identity-bound Korean selector")
+        return self.generate_bundle(
+            candidate=candidate, deck_language=deck_language, source_type=source_type,
+            repair_context=SentenceRepairContext(
+                rejected_sentence=previous_sentence[:4000], rejection_codes=("manual_regeneration",),
+            ),
         )
 
     def generate_bundle_from_fallback(
@@ -489,6 +597,85 @@ class TextGenerationService:
                 provenance=_normalize_provenance(translation_result.provenance),
             ),
         )
+
+    def review_translation(
+        self,
+        request: TranslationFidelityRequest,
+        *,
+        job_id: str | None = None,
+        item_key: str | None = None,
+        rate_limiter: RateLimiter | None = None,
+    ) -> TranslationFidelityVerdict:
+        request = TranslationFidelityRequest.model_validate(request.model_dump())
+        reviewer = getattr(self._sentence_adapter, "review_translation", None)
+        if not callable(reviewer):
+            return TranslationFidelityVerdict(decision="uncertain")
+        key = _cache_key_for_request(
+            "translation_fidelity", request, adapter=self._sentence_adapter,
+            prompt_version="translation-fidelity-v1",
+        )
+        if self._provider_cache is not None:
+            cached = self._provider_cache.get(key)
+            if cached is not None:
+                try:
+                    return TranslationFidelityVerdict.model_validate(cached.response)
+                except ValidationError:
+                    pass
+        def review_live_pair():
+            if rate_limiter is not None:
+                rate_limiter.wait()
+            return reviewer(request)
+
+        response = self._call_with_telemetry(
+            review_live_pair, operation="translation_fidelity",
+            adapter=self._sentence_adapter, request_payload=request.model_dump(mode="json"),
+            job_id=job_id, item_key=item_key,
+        )
+        result = TranslationFidelityVerdict.model_validate(
+            response.verdict if isinstance(response, TranslationFidelityResult) else response
+        )
+        # An inconclusive response must not permanently poison future attempts.
+        if self._provider_cache is not None and result.decision != "uncertain":
+            self._provider_cache.put(key, result.model_dump(mode="json"), metadata={"advisory": True})
+        return result
+
+    def review_definition(
+        self, request: DefinitionConsistencyRequest, *, job_id: str | None = None,
+        item_key: str | None = None, rate_limiter: RateLimiter | None = None,
+    ) -> DefinitionConsistencyVerdict:
+        request = DefinitionConsistencyRequest.model_validate(request.model_dump())
+        reviewer = getattr(self._sentence_adapter, "review_definition", None)
+        if not callable(reviewer):
+            return DefinitionConsistencyVerdict(decision="uncertain")
+        key = _cache_key_for_request(
+            "definition_consistency", request, adapter=self._sentence_adapter,
+            prompt_version="definition-consistency-v1",
+        )
+        if self._provider_cache is not None:
+            cached = self._provider_cache.get(key)
+            if cached is not None:
+                try:
+                    verdict = DefinitionConsistencyVerdict.model_validate(cached.response)
+                    if verdict.decision != "uncertain":
+                        return verdict
+                except ValidationError:
+                    pass
+
+        def review_live_pair():
+            if rate_limiter is not None:
+                rate_limiter.wait()
+            return reviewer(request)
+
+        response = self._call_with_telemetry(
+            review_live_pair, operation="definition_consistency", adapter=self._sentence_adapter,
+            request_payload=request.model_dump(mode="json"), job_id=job_id, item_key=item_key,
+        )
+        verdict = DefinitionConsistencyVerdict.model_validate(
+            response.verdict if isinstance(response, DefinitionConsistencyResult) else response
+        )
+        if self._provider_cache is not None and verdict.decision != "uncertain":
+            self._provider_cache.put(key, verdict.model_dump(mode="json"), metadata={"advisory": True})
+        return verdict
 
     def _generate_sentence(self, request: SentenceGenerationRequest, *, job_id: str | None = None, item_key: str | None = None) -> SentenceGenerationResult:
         key = _cache_key_for_request("sentence", request, adapter=self._sentence_adapter, prompt_version=self._prompt_version)

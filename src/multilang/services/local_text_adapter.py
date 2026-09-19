@@ -169,7 +169,7 @@ class LocalSentenceAdapter:
         label = _definition_label(request.part_of_speech)
         return DefinitionGenerationResult(
             definitions_html=f"{label}: learner definition for {request.lemma}",
-            provenance={"source": "runtime-local-definition-generator", "provider": "local"},
+            provenance={"source": "runtime-local-definition-generator", "provider": "local", "synthetic": True, "quality_decision": "review_required"},
         )
 
     def generate_sentence(self, request: SentenceGenerationRequest) -> SentenceGenerationResult:

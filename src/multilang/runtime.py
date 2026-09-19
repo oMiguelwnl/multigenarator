@@ -13,14 +13,6 @@ from sqlalchemy import create_engine
 from sqlalchemy.orm import Session
 
 from multilang.db.provisioning import ensure_database_schema
-from multilang.repositories.audio_repository import AudioRepository
-from multilang.repositories.export_repository import ExportRepository
-from multilang.repositories.highlight_import_repository import HighlightImportRepository
-from multilang.repositories.job_repository import JobRepository
-from multilang.repositories.lexical_repository import LexicalRepository
-from multilang.repositories.provider_call_log_repository import ProviderCallLogRepository
-from multilang.repositories.text_repository import TextRepository
-from multilang.services.provider_response_cache import ProviderResponseCacheService
 from multilang.domain.audio import AudioAssetKind
 from multilang.domain.exporting import (
     ExportArtifactFormat,
@@ -29,39 +21,59 @@ from multilang.domain.exporting import (
     evaluate_export_quality_gate,
     export_field_names_for_language_and_source,
 )
-from multilang.domain.jobs import JobStage, JobStatus
+from multilang.domain.jobs import JobStage, JobStatus, SupportedLanguage
 from multilang.domain.korean import KoreanFrequencyEntry, KoreanFrequencyJobAuthority
 from multilang.domain.korean_provider import KoreanProviderPolicy
 from multilang.domain.lexicon import GroundingStatus, LexicalCardCandidate
-from multilang.services.azure_speech_adapter import AzureSpeechAdapter
-from multilang.services.elevenlabs_speech_adapter import ElevenLabsSpeechAdapter
-from multilang.services.fallback_audio_adapter import FallbackAudioAdapter
-from multilang.services.google_translate_speech_adapter import GoogleTranslateSpeechAdapter
+from multilang.domain.source_profiles import get_source_profile
+from multilang.repositories.audio_repository import AudioRepository
+from multilang.repositories.export_repository import ExportRepository
+from multilang.repositories.highlight_import_repository import HighlightImportRepository
+from multilang.repositories.job_repository import JobRepository
+from multilang.repositories.lexical_repository import LexicalRepository
+from multilang.repositories.provider_call_log_repository import ProviderCallLogRepository
+from multilang.repositories.text_repository import TextRepository
+from multilang.services.anki_id_registry import assert_anki_id_registry_clean
+from multilang.services.assemble_export_cards import AssembleExportCardsService
+from multilang.services.audio_integrity import assert_word_audio_matches_word
 from multilang.services.audio_synthesis import (
     AudioSynthesisAdapter,
     AudioSynthesisService,
 )
-from multilang.services.anki_id_registry import assert_anki_id_registry_clean
-from multilang.services.assemble_export_cards import AssembleExportCardsService
-from multilang.services.audio_integrity import assert_word_audio_matches_word
+from multilang.services.azure_speech_adapter import AzureSpeechAdapter
+from multilang.services.content.definition_generation import DefinitionGenerationService
+from multilang.services.elevenlabs_speech_adapter import ElevenLabsSpeechAdapter
 from multilang.services.export_anki_package import MANDARIN_NOTE_TYPE_NAME, export_anki_package
-from multilang.services.export_tabular_bundle import ExportTabularBundleResult, write_export_tabular_bundle
+from multilang.services.export_tabular_bundle import (
+    write_export_tabular_bundle,
+)
+from multilang.services.fallback_audio_adapter import FallbackAudioAdapter
 from multilang.services.frequency_decks import build_frequency_level
-from multilang.services.generate_job import GenerateJobService
 from multilang.services.generate_audio_items import GenerateAudioItemsService
+from multilang.services.generate_job import GenerateJobService
 from multilang.services.generate_text_items import GenerateTextItemsService, GenerateTextProgress
+from multilang.services.generation_report import (
+    build_korean_frequency_export_evidence,
+    write_generation_report,
+    write_korean_frequency_generation_report,
+)
+from multilang.services.google_translate_speech_adapter import GoogleTranslateSpeechAdapter
 from multilang.services.ingest_lexical_items import IngestLexicalItemsService
-from multilang.services.korean_morphology import KiwiKoreanMorphologyService
+from multilang.services.korean_foundation_snapshot import (
+    verify_active_korean_foundation_snapshot_provenance,
+)
 from multilang.services.korean_frequency import load_korean_final_frequency_entries
-from multilang.services.korean_foundation_snapshot import verify_active_korean_foundation_snapshot_provenance
-from multilang.services.lexical_lookup import LexicalLookup
+from multilang.services.korean_morphology import KiwiKoreanMorphologyService
 from multilang.services.lexical_grounding import LexicalGroundingService
-from multilang.services.rate_limit import RateLimiter
-from multilang.services.local_text_adapter import LocalSentenceAdapter, LocalTranslationAdapter
+from multilang.services.lexical_lookup import LexicalLookup
 from multilang.services.library_pronunciation_adapters import (
     FallbackPronunciationAdapter,
     LibraryPronunciationAdapter,
 )
+from multilang.services.local_text_adapter import LocalSentenceAdapter, LocalTranslationAdapter
+from multilang.services.provider_pronunciation_adapters import LiteLLMPronunciationAdapter
+from multilang.services.provider_response_cache import ProviderResponseCacheService
+from multilang.services.provider_retry import ProviderCircuitBreaker
 from multilang.services.provider_text_adapters import (
     DeepLTranslationAdapter,
     GoogleTranslateAdapter,
@@ -70,13 +82,7 @@ from multilang.services.provider_text_adapters import (
     can_use_google_translate,
     can_use_litellm,
 )
-from multilang.services.generation_report import (
-    build_korean_frequency_export_evidence,
-    write_generation_report,
-    write_korean_frequency_generation_report,
-)
-from multilang.services.provider_pronunciation_adapters import LiteLLMPronunciationAdapter
-from multilang.services.provider_retry import ProviderCircuitBreaker
+from multilang.services.rate_limit import RateLimiter
 from multilang.services.regenerate_text_item import RegenerateTextItemService
 from multilang.services.tatoeba_sentence_source import (
     StaticTatoebaCandidateProvider,
@@ -87,8 +93,6 @@ from multilang.services.text_generation import TextGenerationService
 from multilang.services.text_review import ReviewReport, TextReviewService
 from multilang.services.text_validation import TextValidationService, looks_like_invalid_translation
 from multilang.settings import Settings
-from multilang.domain.jobs import SupportedLanguage
-from multilang.domain.source_profiles import get_source_profile
 
 _LANGUAGE_NAMES = {
     SupportedLanguage.PT: "Portuguese",
@@ -1017,7 +1021,11 @@ def build_runtime_service(
         else KiwiKoreanMorphologyService()
     )
     text_validation_service = TextValidationService(
-        korean_matcher=korean_morphology
+        korean_matcher=korean_morphology,
+        translation_fidelity_checker=text_generation_service.review_translation,
+        require_translation_fidelity=True,
+        definition_consistency_checker=text_generation_service.review_definition,
+        require_definition_consistency=True,
     )
     tatoeba_sentence_source = TatoebaSentenceSource(
         candidate_provider=(
@@ -1040,8 +1048,16 @@ def build_runtime_service(
         grounding_service=LexicalGroundingService(
             lookup=LexicalLookup(data_dir=runtime_settings.lexicon_data_dir),
             pronunciation_generator=_build_pronunciation_adapter(runtime_settings),
-            definition_generator=sentence_adapter,
-            allow_frequency_seed_fallback=True,
+            definition_generator=DefinitionGenerationService(
+                adapter=sentence_adapter,
+                provider_cache=ProviderResponseCacheService(text_repository),
+                provider_call_logger=provider_call_log_repository,
+                circuit_breaker=circuit_breaker,
+                retry_attempts=max(1, min(runtime_settings.default_retry_attempts, 5)),
+                retry_base_delay_seconds=runtime_settings.provider_retry_base_delay_seconds,
+                retry_max_delay_seconds=runtime_settings.provider_retry_max_delay_seconds,
+                retry_jitter_ratio=runtime_settings.provider_retry_jitter_ratio,
+            ),
             korean_morphology=korean_morphology,
         ),
         text_repository=text_repository,

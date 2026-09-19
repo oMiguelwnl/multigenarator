@@ -3,7 +3,10 @@ from __future__ import annotations
 from multilang.domain.jobs import SupportedLanguage
 from multilang.domain.lexicon import GroundingStatus, LexicalCardCandidate, LexicalProvenance
 from multilang.services.lexical_grounding import LexicalGroundingService
-from multilang.services.polish_function_words import POLISH_FUNCTION_WORDS_VERSION, lookup_polish_function_word
+from multilang.services.polish_function_words import (
+    POLISH_FUNCTION_WORDS_VERSION,
+    lookup_polish_function_word,
+)
 
 
 class EmptyLookup:
@@ -16,6 +19,7 @@ def test_polish_function_word_data_is_versioned() -> None:
     assert record is not None
     assert record.source == POLISH_FUNCTION_WORDS_VERSION
     assert record.part_of_speech == "particle"
+    assert record.definition_language == "en"
     assert record.ipa == "/ɲɛ/"
 
 

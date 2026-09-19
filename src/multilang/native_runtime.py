@@ -528,6 +528,7 @@ class NativeFacade:
 
     def generate_content(self, payload: dict, actor: str) -> dict:
         request, profile = self._content_context(payload, actor)
+        request = self._definition_context(request)
         service = self._content_service(profile)
         version = service.generate(request)
         return self._save_content(version, actor)
@@ -536,9 +537,26 @@ class NativeFacade:
         from multilang.services.content_drafts import ContentDraftStore
 
         request, profile = self._content_context(payload, actor)
+        request = self._definition_context(request)
         draft = self._content_service(profile).prepare(request)
         ContentDraftStore(self.settings.native_content_drafts_dir).put(draft)
         return draft.model_dump(mode="json")
+
+    def _definition_context(self, request: ContentRequest) -> ContentRequest:
+        # Injected services retain their own contracts; real generic generation
+        # resolves source meaning locally before any paid provider request.
+        if request.language in {"ko", "la"} or (
+            self.content_service is not None and request.definition_evidence is None
+        ):
+            return request
+        from multilang.services.content.definition_policy import resolve_definition_evidence
+        from multilang.services.lexical_lookup import LexicalLookup
+
+        identity, _ = self._identity(request.lexical_identity_id)
+        evidence = resolve_definition_evidence(identity, LexicalLookup(self.settings.lexicon_data_dir))
+        if request.definition_evidence is not None and request.definition_evidence != evidence:
+            raise ValueError("definition evidence differs from the canonical local source")
+        return ContentRequest.model_validate(request.model_dump() | {"definition_evidence": evidence})
 
     def complete_content_draft(self, payload: dict, actor: str) -> dict:
         from multilang.domain.content import ContentDraft

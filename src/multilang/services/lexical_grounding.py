@@ -2,8 +2,8 @@
 
 from __future__ import annotations
 
-from dataclasses import dataclass
 import re
+from dataclasses import dataclass
 from html import escape
 from pathlib import Path
 from typing import Literal, Protocol, Self
@@ -30,13 +30,26 @@ from multilang.domain.lexicon import (
     PronunciationRecord,
     policy_for_language,
 )
+from multilang.services.content.definition_evidence import (
+    DefinitionDecision,
+    IndependentDefinitionReviewer,
+    decide_definition,
+)
 from multilang.services.lexical_lookup import LexicalLookup, LexicalRecord, normalize_lexical_key
-from multilang.services.part_of_speech import canonical_part_of_speech_label, resolve_part_of_speech_label
+from multilang.services.part_of_speech import (
+    canonical_part_of_speech_label,
+    resolve_part_of_speech_label,
+)
 from multilang.services.polish_function_words import lookup_polish_function_word
-from multilang.services.provider_pronunciation_adapters import PronunciationGenerationRequest
+from multilang.services.provider_pronunciation_adapters import (
+    PronunciationGenerationRequest,
+)
 from multilang.services.rate_limit import RateLimiter
-from multilang.services.text_field_remediation import remediate_definition_html
-from multilang.services.text_generation import DefinitionGenerationRequest, DefinitionGenerationResult
+from multilang.services.text_field_remediation import builtin_definition_correction
+from multilang.services.text_generation import (
+    DefinitionGenerationRequest,
+    DefinitionGenerationResult,
+)
 from multilang.services.word_list_parser import ParsedWordListItem
 
 _GERMAN_LEXICAL_OVERRIDES = {
@@ -197,11 +210,14 @@ class LexicalGroundingService:
         definition_generator: DefinitionGenerator | None = None,
         allow_frequency_seed_fallback: bool = False,
         korean_morphology: KoreanSourceMorphology | None = None,
+        definition_reviewer: IndependentDefinitionReviewer | None = None,
     ) -> None:
         self._lookup = lookup
         self._pronunciation_generator = pronunciation_generator
         self._definition_generator = definition_generator
-        self._allow_frequency_seed_fallback = allow_frequency_seed_fallback
+        self._definition_reviewer = definition_reviewer
+        # Kept in the signature for callers; frequency rank is never lexical evidence.
+        # The historical seed-trust escalation is intentionally no longer supported.
         self._korean_morphology = korean_morphology
         self._korean_source_signature_cache: dict[
             tuple[KoreanAnalyzerFingerprint, str, str, str],
@@ -696,7 +712,6 @@ class LexicalGroundingService:
         )
         return candidate.model_copy(
             update={
-                "definition_language": word_list_output_language,
                 "translation_target_language": (
                     policy.translation_target_language
                     if language is SupportedLanguage.ZH
@@ -748,12 +763,6 @@ class LexicalGroundingService:
             )
         record = self._lookup_record(language=language, term=candidate.lemma_key)
         if record is None:
-            if self._should_use_frequency_seed_fallback(language):
-                return self._ground_frequency_seed_candidate(
-                    language=language,
-                    candidate=candidate,
-                    rate_limiter=rate_limiter,
-                )
             return self._backfill_required_candidate(
                 candidate,
                 warning_detail=f"no authoritative lexical match for '{candidate.lemma}'",
@@ -973,42 +982,6 @@ class LexicalGroundingService:
                 return fixed
         return self._lookup.lookup(language_code=language.value, term=term)
 
-    def _should_use_frequency_seed_fallback(self, language: SupportedLanguage) -> bool:
-        if not self._allow_frequency_seed_fallback:
-            return False
-        has_index = getattr(self._lookup, "has_index", None)
-        if not callable(has_index):
-            return False
-        return not bool(has_index(language_code=language.value))
-
-    def _ground_frequency_seed_candidate(
-        self,
-        *,
-        language: SupportedLanguage,
-        candidate: LexicalCardCandidate,
-        rate_limiter: RateLimiter | None = None,
-    ) -> LexicalCardCandidate:
-        record = LexicalRecord(
-            term=candidate.display_form,
-            display_form=candidate.display_form,
-            lemma=candidate.lemma,
-            definitions=[],
-            source="wordfreq",
-        )
-        grounded = self._grounded_candidate(
-            language=language,
-            submitted_form=candidate.submitted_form,
-            display_form=candidate.display_form,
-            record=record,
-            rate_limiter=rate_limiter,
-        )
-        return grounded.model_copy(
-            update={
-                "frequency_rank": candidate.frequency_rank,
-                "frequency_level": candidate.frequency_level,
-            }
-        )
-
     def _grounded_candidate(
         self,
         *,
@@ -1029,23 +1002,16 @@ class LexicalGroundingService:
             display_form=learner_display_form,
             lemma=record.lemma,
         )
-        definition_result = self._generate_definition(
+        definition = self._definition_decision(
             display_form=learner_display_form,
             lemma=record.lemma,
             source_language=language.value,
             target_language=resolved_definition_language,
             part_of_speech=resolved_part_of_speech,
+            record=record,
             rate_limiter=rate_limiter,
         )
-        generated_definitions_html = definition_result.definitions_html if definition_result is not None else None
-        definitions_html = remediate_definition_html(
-            display_form=learner_display_form,
-            lemma=record.lemma,
-            part_of_speech=resolved_part_of_speech,
-            generated_html=generated_definitions_html,
-            source_definitions=record.definitions,
-            source_language=language.value,
-        )
+        definitions_html = definition.definitions_html
         ipa = record.ipa.strip() if record.ipa else None
         spoken_form: str | None = learner_display_form if ipa else None
         pronunciation_source = record.source if ipa else f"{record.source}_missing"
@@ -1085,28 +1051,25 @@ class LexicalGroundingService:
             pronunciation_authoritative = False
             notes.append("word fallback used because authoritative IPA was missing")
 
+        warning_code = "definition_review_required" if definition.review_required else None
+        warning_detail = definition.record.fallback_reason if definition.review_required else None
+
         return LexicalCardCandidate(
             submitted_form=submitted_form,
             display_form=learner_display_form,
             lemma=record.lemma,
             lemma_key=normalize_lexical_key(record.lemma),
             definitions_html=definitions_html,
-            definition_language=resolved_definition_language,
+            definition_language=definition.actual_language or "und",
             ipa=ipa,
             spoken_form=spoken_form,
             translation_target_language=policy.translation_target_language,
-            grounding_status=GroundingStatus.GROUNDED,
+            grounding_status=GroundingStatus.PENDING if warning_code else GroundingStatus.GROUNDED,
+            warning_code=warning_code,
+            warning_detail=warning_detail,
             provenance=LexicalProvenance(
                 source=record.source,
-                definition=(
-                    DefinitionRecord(
-                        source=str(definition_result.provenance.get("source", "definition-generator")),
-                        value=definitions_html,
-                        fallback_used=False,
-                    )
-                    if definition_result is not None
-                    else None
-                ),
+                definition=definition.record,
                 pronunciation=PronunciationRecord(
                     source=pronunciation_source,
                     value=ipa,
@@ -1141,6 +1104,73 @@ class LexicalGroundingService:
                 korean_identity=korean_identity,
             )
         )
+
+
+    def _definition_decision(
+        self,
+        *,
+        display_form: str,
+        lemma: str,
+        source_language: str,
+        target_language: str,
+        part_of_speech: str | None,
+        record: LexicalRecord | None = None,
+        korean_identity: KoreanLexicalIdentity | None = None,
+        rate_limiter: RateLimiter | None = None,
+    ) -> DefinitionDecision:
+        correction = builtin_definition_correction(
+            display_form=display_form, lemma=lemma, source_language=source_language
+        )
+        if record is not None and correction is not None:
+            # This changes definition evidence only; lexical/IPA provenance stays intact.
+            label, _, meaning = correction.partition(": ")
+            record = record.model_copy(update={
+                "definitions": [meaning], "definition_language": "en",
+                "definition_senses": (),
+                "source": "builtin-definition-corrections-v1",
+            })
+            part_of_speech = label
+        try:
+            meanings = tuple(record.definitions) if record else ()
+            meaning_language = record.definition_language if record else None
+            if record is not None and record.definition_senses and source_language != "ko":
+                from multilang.services.content.definition_policy import select_source_meaning
+
+                meaning, meaning_language = select_source_meaning(record)
+                meanings = (meaning,)
+            request = DefinitionGenerationRequest(
+                display_form=display_form, lemma=lemma,
+                source_language=source_language, target_language=target_language,
+                part_of_speech=part_of_speech, korean_identity=korean_identity,
+                source_definitions=meanings,
+                source_definition_language=meaning_language,
+                evidence_source=record.source if record else None,
+                source_sense_id=record.sense_id if record else None,
+            )
+        except ValueError:
+            # Keep the row reviewable without truncating away source ambiguity.
+            language = record.definition_language if record is not None else None
+            return DefinitionDecision(
+                definitions_html=None, actual_language=language, review_required=True,
+                record=DefinitionRecord(
+                    source="unresolved", value=None, fallback_used=False,
+                    actual_language=language, quality_decision="review_required",
+                    fallback_reason="source_evidence_invalid",
+                ),
+            )
+        result = None
+        failure_reason = None
+        if self._definition_generator is not None and self._definition_reviewer is not None:
+            if rate_limiter is not None:
+                rate_limiter.wait()
+            try:
+                result = DefinitionGenerationResult.model_validate(
+                    self._definition_generator.generate_definition(request), from_attributes=True
+                )
+            except Exception:
+                # No raw provider errors or private inputs enter learner metadata.
+                failure_reason = "provider_failure"
+        return decide_definition(request, result, failure_reason=failure_reason, reviewer=self._definition_reviewer)
 
     def _pending_candidate(
         self,

@@ -16,13 +16,28 @@ from multilang.domain.korean import (
 )
 from multilang.domain.text_quality import ConfidenceLabel, ValidationFlagCode, ValidationStatus
 from multilang.services.language_identifier import LanguageDetectionResult
-from multilang.services.morphology import MorphologyValidationResult
+from multilang.services.morphology import (
+    MorphologyValidationResult,
+    OptionalStanzaMorphologicalAnalyzer,
+)
 from multilang.services.text_generation import GeneratedSentence, GeneratedTranslation
 from multilang.services.text_validation import TextValidationService, detect_language_mismatch
 
 
+@pytest.fixture(autouse=True)
+def deterministic_optional_morphology(monkeypatch: pytest.MonkeyPatch) -> None:
+    # Exercise fallback mechanics regardless of locally installed Stanza models.
+    # Tests that inject an analyzer keep their explicit morphology results.
+    monkeypatch.setattr(
+        OptionalStanzaMorphologicalAnalyzer,
+        "_pipeline_for",
+        lambda self, language: None,
+    )
+
+
 def build_service() -> TextValidationService:
-    return TextValidationService()
+    # This module exercises mechanical checks; fidelity has its own tests.
+    return TextValidationService(require_translation_fidelity=False)
 
 
 class FakeLanguageIdentifier:
@@ -571,6 +586,7 @@ def test_validation_uses_injected_language_identifier_for_wrong_language() -> No
 
 def test_validation_accepts_target_lemma_from_morphological_analyzer() -> None:
     result = TextValidationService(
+        require_translation_fidelity=False,
         morphological_analyzer=FakeMorphologicalAnalyzer(
             MorphologyValidationResult(matched=True, reliable=True, provider="fake-morph", detail="lemma match")
         ),

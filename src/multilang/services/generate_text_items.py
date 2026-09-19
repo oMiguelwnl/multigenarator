@@ -2,10 +2,10 @@
 
 from __future__ import annotations
 
-from collections.abc import Callable
-from hashlib import sha256
 import re
+from collections.abc import Callable
 from dataclasses import dataclass, field
+from hashlib import sha256
 from time import monotonic
 from typing import Any, Protocol
 
@@ -13,7 +13,6 @@ from multilang.domain.jobs import JobStage, SupportedLanguage
 from multilang.domain.korean import KoreanLexicalIdentity, canonical_json_sha256
 from multilang.domain.lexicon import GroundingStatus, LexicalCardCandidate, LexicalProvenance
 from multilang.domain.source_profiles import get_source_profile
-from multilang.security.redaction import redact_sensitive_text
 from multilang.domain.text_quality import (
     ConfidenceLabel,
     ReviewStatus,
@@ -24,6 +23,13 @@ from multilang.domain.text_quality import (
     ValidationFlagCode,
     ValidationStatus,
 )
+from multilang.security.redaction import redact_sensitive_text
+from multilang.services.korean_text_generation import (
+    KoreanTextGenerationSelector,
+    korean_selector_history_from_record,
+    with_korean_selector_history,
+)
+from multilang.services.rate_limit import RateLimiter
 from multilang.services.text_generation import (
     DefinitionGenerationRequest,
     DefinitionGenerationResult,
@@ -36,17 +42,15 @@ from multilang.services.text_generation import (
     SentenceTranslationResult,
     TextGenerationService,
 )
-from multilang.services.korean_text_generation import (
-    KoreanTextGenerationSelector,
-    korean_selector_history_from_record,
-    with_korean_selector_history,
-)
-from multilang.services.rate_limit import RateLimiter
 from multilang.services.text_validation import TextValidationResult, TextValidationService
 
 # For dynamic Latin structured generation (using the model for gramatica etc.)
 try:
-    from multilang.services.latin_card_generation import LatinCardGenerationSeed, LatinCardGenerationService, LatinGeneratedCard
+    from multilang.services.latin_card_generation import (
+        LatinCardGenerationSeed,
+        LatinCardGenerationService,
+        LatinGeneratedCard,
+    )
 except Exception:
     LatinCardGenerationSeed = None  # type: ignore
     LatinCardGenerationService = None  # type: ignore
@@ -633,6 +637,9 @@ class GenerateTextItemsService:
                     seen_sentences=seen_sentences,
                     source_type=source_type,
                     deck_language=deck_language,
+                    job_id=job_id,
+                    item_key=item_key,
+                    rate_limiter=rate_limiter,
                 )
 
             if deck_language is not SupportedLanguage.KO and validation.validation_status is ValidationStatus.FAILED:
@@ -646,6 +653,8 @@ class GenerateTextItemsService:
                     source_type=source_type,
                     highlight_context=highlight_context,
                     rate_limiter=rate_limiter,
+                    job_id=job_id,
+                    item_key=item_key,
                 )
 
             record = self._build_record(
@@ -699,6 +708,9 @@ class GenerateTextItemsService:
         seen_sentences: set[str] | None = None,
         source_type: str | None = None,
         deck_language: SupportedLanguage,
+        job_id: str | None = None,
+        item_key: str | None = None,
+        rate_limiter: RateLimiter | None = None,
     ) -> TextValidationResult:
         source_profile = get_source_profile(self._resolve_source_type(source_type, candidate=candidate))
         is_same_language_translation = candidate.translation_target_language == deck_language.value
@@ -712,11 +724,15 @@ class GenerateTextItemsService:
             display_form=candidate.display_form,
             lemma=candidate.lemma,
             definitions_html=candidate.definitions_html,
+            definition_language=candidate.definition_language,
             disallowed_sentence_texts=set(seen_sentences or set()),
             require_translation=require_translation,
             min_sentence_tokens=source_profile.min_sentence_tokens,
             max_sentence_tokens=source_profile.max_sentence_tokens,
             korean_identity=candidate.korean_identity,
+            job_id=job_id,
+            item_key=item_key,
+            rate_limiter=rate_limiter,
         )
         return _gate_local_templates(
             validation=validation,
@@ -774,13 +790,17 @@ class GenerateTextItemsService:
         source_type: str | None,
         highlight_context: str | None = None,
         rate_limiter: RateLimiter | None = None,
+        job_id: str | None = None,
+        item_key: str | None = None,
     ) -> tuple[GeneratedTextBundle, TextValidationResult, int]:
-        retry_bundle = self.text_generation_service.generate_bundle(
-            candidate=candidate,
-            deck_language=deck_language,
-            source_type=source_type,
-            highlight_context=highlight_context,
-            rate_limiter=rate_limiter,
+        repair = getattr(self.text_generation_service, "repair_bundle", None)
+        arguments = dict(candidate=candidate, deck_language=deck_language, source_type=source_type,
+                         highlight_context=highlight_context, rate_limiter=rate_limiter)
+        retry_bundle = (
+            repair(**arguments, rejected_bundle=generated_bundle,
+                   rejection_codes=tuple(flag.code.value for flag in validation.validation_flags))
+            if callable(repair)
+            else self.text_generation_service.generate_bundle(**arguments)
         )
         retry_validation = self._validate_bundle(
             bundle=retry_bundle,
@@ -788,6 +808,9 @@ class GenerateTextItemsService:
             seen_sentences=seen_sentences,
             source_type=source_type,
             deck_language=deck_language,
+            job_id=job_id,
+            item_key=item_key,
+            rate_limiter=rate_limiter,
         )
         if retry_validation.validation_status is ValidationStatus.PASSED:
             return retry_bundle, retry_validation, 1
@@ -801,6 +824,8 @@ class GenerateTextItemsService:
             source_type=source_type,
             highlight_context=highlight_context,
             rate_limiter=rate_limiter,
+            job_id=job_id,
+            item_key=item_key,
         )
         fallback_used = fallback_bundle is not retry_bundle
         return fallback_bundle, fallback_validation, 2 if fallback_used else 1
@@ -816,6 +841,8 @@ class GenerateTextItemsService:
         source_type: str | None,
         highlight_context: str | None = None,
         rate_limiter: RateLimiter | None = None,
+        job_id: str | None = None,
+        item_key: str | None = None,
     ) -> tuple[GeneratedTextBundle, TextValidationResult]:
         if deck_language is SupportedLanguage.KO:
             return generated_bundle, validation
@@ -843,6 +870,9 @@ class GenerateTextItemsService:
             seen_sentences=seen_sentences,
             source_type=source_type,
             deck_language=deck_language,
+            job_id=job_id,
+            item_key=item_key,
+            rate_limiter=rate_limiter,
         )
         return repaired_bundle, repaired_validation
 

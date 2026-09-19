@@ -6,29 +6,36 @@ import json
 from pathlib import Path
 from typing import ClassVar
 
+import pytest
 from sqlalchemy import create_engine, func, select
 from sqlalchemy.orm import Session
+from support.text import use_mechanical_text_validation
 from typer.testing import CliRunner
 
+import multilang.runtime as runtime_module
+import multilang.services.russian_phoneme_deck as phoneme_deck_module
 from multilang.cli import create_app
 from multilang.db.base import Base
-from multilang.services.audio_synthesis import AudioSynthesisAdapter, AudioSynthesisResponse
-from multilang.domain.jobs import GenerationRequest, SupportedLanguage
 from multilang.db.models import AudioAssetModel, GenerationJob
+from multilang.domain.jobs import GenerationRequest, SupportedLanguage
 from multilang.repositories.highlight_import_repository import HighlightImportRepository
 from multilang.repositories.job_repository import JobRepository
 from multilang.repositories.lexical_repository import LexicalRepository
-import multilang.runtime as runtime_module
-from multilang.runtime import build_runtime_service
-from multilang.runtime import RuntimeTextResult
+from multilang.runtime import RuntimeTextResult, build_runtime_service
+from multilang.services.audio_synthesis import AudioSynthesisAdapter, AudioSynthesisResponse
 from multilang.services.generate_job import GenerateJobService
-from multilang.services.input_fingerprint import build_run_key
 from multilang.services.ingest_lexical_items import IngestLexicalItemsService
-from multilang.services.lexical_lookup import LexicalRecord
+from multilang.services.input_fingerprint import build_run_key
 from multilang.services.lexical_grounding import LexicalGroundingService
-import multilang.services.russian_phoneme_deck as phoneme_deck_module
+from multilang.services.lexical_lookup import LexicalRecord
 from multilang.services.text_review import ReviewReport, ReviewReportItem
 from multilang.settings import Settings
+
+
+@pytest.fixture(autouse=True)
+def offline_morphology(monkeypatch):
+    use_mechanical_text_validation(monkeypatch)
+
 
 runner = CliRunner()
 
@@ -115,7 +122,7 @@ class StubLookup:
         return self._mapping.get(term.casefold())
 
 
-def build_ingest_service(*, lookup_terms: list[str]) -> tuple[IngestLexicalItemsService, Session]:
+def build_ingest_service(*, lookup_terms: list[str], definition_language: str = "en") -> tuple[IngestLexicalItemsService, Session]:
     engine = create_engine("sqlite+pysqlite:///:memory:")
     Base.metadata.create_all(engine)
     session = Session(engine)
@@ -125,7 +132,8 @@ def build_ingest_service(*, lookup_terms: list[str]) -> tuple[IngestLexicalItems
                 term=term,
                 display_form=term,
                 lemma=term,
-                definitions=[f"definition for {term}"],
+                definitions=[f"um item sintético identificado como {term}" if definition_language == "pt" else f"a synthetic test item identified as {term}"],
+                definition_language=definition_language,
                 ipa=f"/{term}/",
             )
             for term in lookup_terms
@@ -162,7 +170,8 @@ def write_lookup_index(tmp_path: Path, *terms: str) -> Path:
                     "term": term,
                     "display_form": term,
                     "lemma": term,
-                    "definitions": [f"definition for {term}"],
+                    "definitions": [f"a synthetic test item identified as {term}"],
+                    "definition_language": "en",
                     "ipa": f"/{term}/",
                     "source": "manual",
                 }
@@ -260,6 +269,8 @@ def test_generate_frequency_resume_accepts_max_items() -> None:
     assert captured[0].max_items == 25
     assert captured[0].rate_limit_per_minute == 30
     assert captured[0].concurrency == 2
+
+
 
 
 def test_repair_text_command_uses_repair_only_without_audio() -> None:
@@ -535,6 +546,7 @@ def test_generate_command_aborts_on_inconsistent_resume_state(tmp_path: Path) ->
 
 def test_generate_frequency_command_reports_grounded_candidate_counts(monkeypatch) -> None:
     service, session = build_ingest_service(
+        definition_language="pt",
         lookup_terms=[f"word-{rank}" for rank in range(1, 3005) if rank not in {17, 1013, 2400}],
     )
     app = create_app(service=service)
@@ -564,6 +576,7 @@ def test_generate_frequency_command_reports_grounded_candidate_counts(monkeypatc
 
 def test_generate_frequency_command_supports_test_mode(monkeypatch) -> None:
     service, session = build_ingest_service(
+        definition_language="pt",
         lookup_terms=[f"word-{rank}" for rank in range(1, 3010)],
     )
     app = create_app(service=service)
@@ -592,6 +605,7 @@ def test_generate_frequency_command_supports_test_mode(monkeypatch) -> None:
 
 def test_generate_frequency_command_supports_cards_per_level_override(monkeypatch) -> None:
     service, session = build_ingest_service(
+        definition_language="pt",
         lookup_terms=[f"word-{rank}" for rank in range(1, 2010)],
     )
     app = create_app(service=service)
@@ -710,10 +724,13 @@ def test_generate_command_regenerates_single_flagged_item(tmp_path: Path) -> Non
     source = write_word_list(tmp_path, "wash", "flag-beta")
     service = build_runtime_service(
         Settings(
+            _env_file=None,
             database_url=f"sqlite+pysqlite:///{database_path}",
             lexicon_data_dir=lexicon_dir,
+            audio_storage_dir=tmp_path / "audio",
             tatoeba_enabled=False,
-        )
+        ),
+        audio_adapter=FileWritingAudioAdapter(),
     )
     app = create_app(service=service)
     review_report = tmp_path / "review.json"

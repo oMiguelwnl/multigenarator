@@ -6,7 +6,10 @@ import re
 import unicodedata
 from html import escape
 
-from multilang.services.part_of_speech import canonical_part_of_speech_label, resolve_part_of_speech_label
+from multilang.services.part_of_speech import (
+    canonical_part_of_speech_label,
+    resolve_part_of_speech_label,
+)
 
 _KNOWN_DEFINITION_CORRECTIONS = {
     "достичь": "verb: to achieve, to attain, to reach",
@@ -39,6 +42,14 @@ _GRAMMAR_ONLY_TERMS = {
 }
 
 
+def builtin_definition_correction(*, display_form: str, lemma: str, source_language: str) -> str | None:
+    """Return existing code-owned Russian editorial evidence, not human approval."""
+    if source_language != "ru":
+        return None
+    return (_KNOWN_DEFINITION_CORRECTIONS.get(_normalize_key(lemma))
+            or _KNOWN_DEFINITION_CORRECTIONS.get(_normalize_key(display_form)))
+
+
 def remediate_definition_html(
     *,
     display_form: str,
@@ -48,7 +59,11 @@ def remediate_definition_html(
     source_definitions: list[str],
     source_language: str | None = None,
 ) -> str | None:
-    """Return learner-safe definition HTML when deterministic remediation is possible."""
+    """Repair formatting only; this function cannot approve semantic truth or language.
+
+    Production grounding uses content.definition_evidence for evidence admission.
+    This compatibility helper is not an alternative to that admission boundary.
+    """
 
     known = _KNOWN_DEFINITION_CORRECTIONS.get(_normalize_key(lemma)) or _KNOWN_DEFINITION_CORRECTIONS.get(
         _normalize_key(display_form)

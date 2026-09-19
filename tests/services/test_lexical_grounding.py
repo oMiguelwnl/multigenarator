@@ -3,7 +3,10 @@
 from __future__ import annotations
 
 import unicodedata
+from hashlib import sha256
 
+from multilang.domain.highlights import HighlightCandidate
+from multilang.domain.jobs import SupportedLanguage
 from multilang.domain.korean import (
     KoreanAnalysisAlternative,
     KoreanAnalyzerFingerprint,
@@ -16,17 +19,16 @@ from multilang.domain.korean import (
     KoreanWordAnalysis,
     canonicalize_korean,
 )
-from multilang.domain.jobs import SupportedLanguage
-from multilang.domain.highlights import HighlightCandidate
 from multilang.domain.lexicon import (
     GroundingStatus,
     KoreanFrequencyLexicalEvidence,
     LexicalCardCandidate,
     LexicalProvenance,
 )
-from multilang.services.lexical_lookup import LexicalRecord
-from multilang.services.lexical_grounding import LexicalGroundingService
+from multilang.services.content.definition_evidence import DefinitionReviewVerdict, evidence_digest
 from multilang.services.korean_morphology import KiwiKoreanMorphologyService
+from multilang.services.lexical_grounding import LexicalGroundingService
+from multilang.services.lexical_lookup import LexicalRecord
 from multilang.services.text_generation import DefinitionGenerationResult
 from multilang.services.word_list_parser import ParsedWordListItem
 
@@ -42,6 +44,16 @@ class StubLookup:
 class MissingIndexLookup(StubLookup):
     def has_index(self, *, language_code: str) -> bool:
         return False
+
+
+class AdvisoryDefinitionReviewer:
+    """Enable drafting policy tests without giving model text approval authority."""
+
+    def review(self, request, draft):
+        return DefinitionReviewVerdict(
+            decision="advisory", evidence_sha256=evidence_digest(request),
+            draft_sha256=sha256(draft.encode()).hexdigest(), reference="synthetic-review-only",
+        )
 
 
 class StubPronunciationGenerator:
@@ -68,6 +80,10 @@ class FailingPronunciationGenerator:
     def generate_pronunciation(self, request: object) -> object:
         self.calls.append(request)
         raise ValueError("all pronunciation adapters failed")
+
+
+
+
 
 
 class StubDefinitionGenerator:
@@ -114,6 +130,7 @@ def test_grounding_prefers_study_form_and_manual_language_policy() -> None:
                     display_form="lavarse",
                     lemma="lavar",
                     definitions=["to wash something or clean it with water", "to wash oneself"],
+                    definition_language="en",
                     part_of_speech="verb",
                     grammar_tags=["infinitive"],
                     ipa="/laˈβaɾ/",
@@ -121,6 +138,7 @@ def test_grounding_prefers_study_form_and_manual_language_policy() -> None:
             }
         ),
         definition_generator=generator,
+        definition_reviewer=AdvisoryDefinitionReviewer(),
     )
 
     candidate = service.ground_word_list_item(
@@ -136,14 +154,15 @@ def test_grounding_prefers_study_form_and_manual_language_policy() -> None:
     assert candidate.display_form == "lavarse"
     assert candidate.lemma == "lavar"
     assert candidate.lemma_key == "lavar"
-    assert candidate.definitions_html == "verb: LLM definition for lavar"
-    assert candidate.definition_language == "es"
+    assert candidate.definitions_html is None
+    assert candidate.definition_language == "en"
     assert candidate.translation_target_language == "es"
-    assert candidate.grounding_status is GroundingStatus.GROUNDED
+    assert candidate.grounding_status is GroundingStatus.PENDING
     assert generator.calls
     assert generator.calls[0].target_language == "es"
     assert candidate.provenance.definition is not None
-    assert candidate.provenance.definition.source == "stub-llm-definition-generator"
+    assert candidate.provenance.definition.source == "manual"
+    assert candidate.provenance.definition.fallback_reason == "ambiguous_source_meanings"
 
 
 def test_grounding_rate_limits_definition_and_pronunciation_provider_calls() -> None:
@@ -158,12 +177,14 @@ def test_grounding_rate_limits_definition_and_pronunciation_provider_calls() -> 
                     display_form="wash",
                     lemma="wash",
                     definitions=[],
+                    definition_language="en",
                     part_of_speech="verb",
                     ipa=None,
                 )
             }
         ),
         definition_generator=definition_generator,
+        definition_reviewer=AdvisoryDefinitionReviewer(),
         pronunciation_generator=pronunciation_generator,
     )
 
@@ -187,6 +208,7 @@ def test_grounding_uses_canonical_display_when_lookup_resolves_source_form() -> 
                     display_form="remercier",
                     lemma="remercier",
                     definitions=["to thank someone"],
+                    definition_language="en",
                     part_of_speech="verb",
                     ipa="/ʁə.mɛʁ.sje/",
                 )
@@ -220,12 +242,14 @@ def test_frequency_grounding_keeps_default_english_definition_policy() -> None:
                     display_form="casa",
                     lemma="casa",
                     definitions=["a building where people live"],
+                    definition_language="en",
                     part_of_speech="noun",
                     ipa="/casa/",
                 )
             }
         ),
         definition_generator=generator,
+        definition_reviewer=AdvisoryDefinitionReviewer(),
     )
     seed = LexicalCardCandidate(
         submitted_form="casa",
@@ -241,7 +265,7 @@ def test_frequency_grounding_keeps_default_english_definition_policy() -> None:
 
     candidate = service.ground_frequency_candidate(language=SupportedLanguage.ES, candidate=seed)
 
-    assert candidate.definitions_html == "noun: LLM definition for casa"
+    assert candidate.definitions_html == "noun: a building where people live"
     assert candidate.definition_language == "en"
     assert generator.calls[0].target_language == "en"
 
@@ -256,12 +280,14 @@ def test_highlight_grounding_localizes_definition_to_deck_language() -> None:
                     display_form="lavar",
                     lemma="lavar",
                     definitions=["to wash"],
+                    definition_language="en",
                     part_of_speech="verb",
                     ipa="/laˈβaɾ/",
                 )
             }
         ),
         definition_generator=generator,
+        definition_reviewer=AdvisoryDefinitionReviewer(),
     )
 
     candidate = service.ground_highlight_candidate(
@@ -277,12 +303,12 @@ def test_highlight_grounding_localizes_definition_to_deck_language() -> None:
         ),
     )
 
-    assert candidate.definitions_html == "verb: LLM definition for lavar"
-    assert candidate.definition_language == "es"
+    assert candidate.definitions_html == "verb: to wash"
+    assert candidate.definition_language == "en"
     assert generator.calls[0].target_language == "es"
 
 
-def test_grounding_uses_llm_definition_generator_instead_of_cache_definitions() -> None:
+def test_grounding_rejects_unverified_llm_rewrites_and_preserves_source() -> None:
     generator = StubDefinitionGenerator()
     service = LexicalGroundingService(
         lookup=StubLookup(
@@ -292,6 +318,7 @@ def test_grounding_uses_llm_definition_generator_instead_of_cache_definitions() 
                     display_form="casa",
                     lemma="casa",
                     definitions=["a building where people live"],
+                    definition_language="en",
                     part_of_speech="noun",
                 ),
                 "bonito": LexicalRecord(
@@ -299,6 +326,7 @@ def test_grounding_uses_llm_definition_generator_instead_of_cache_definitions() 
                     display_form="bonito",
                     lemma="bonito",
                     definitions=["beautiful; pleasant to look at or experience"],
+                    definition_language="en",
                     part_of_speech="adj",
                 ),
                 "em": LexicalRecord(
@@ -306,17 +334,19 @@ def test_grounding_uses_llm_definition_generator_instead_of_cache_definitions() 
                     display_form="em",
                     lemma="em",
                     definitions=["used to show location, time, or position inside something"],
+                    definition_language="en",
                     part_of_speech="prep",
                 ),
             }
         ),
         definition_generator=generator,
+        definition_reviewer=AdvisoryDefinitionReviewer(),
     )
 
     expected = {
-        "casa": "noun: LLM definition for casa",
-        "bonito": "adjective: LLM definition for bonito",
-        "em": "preposition: LLM definition for em",
+        "casa": "noun: a building where people live",
+        "bonito": "adjective: beautiful; pleasant to look at or experience",
+        "em": "preposition: used to show location, time, or position inside something",
     }
     for item_key, definition in expected.items():
         candidate = service.ground_word_list_item(
@@ -330,7 +360,8 @@ def test_grounding_uses_llm_definition_generator_instead_of_cache_definitions() 
         )
 
         assert candidate.definitions_html == definition
-        assert "building where people live" not in candidate.definitions_html
+        assert candidate.provenance.definition.fallback_used
+        assert candidate.provenance.definition.generated_draft is not None
 
 
 def test_grounding_omits_verb_tense_from_definition_template() -> None:
@@ -343,6 +374,7 @@ def test_grounding_omits_verb_tense_from_definition_template() -> None:
                     display_form="lava",
                     lemma="lavar",
                     definitions=["washes; cleans something with water"],
+                    definition_language="en",
                     part_of_speech="verb",
                     grammar_tags=["present", "third", "singular"],
                 )
@@ -361,7 +393,7 @@ def test_grounding_omits_verb_tense_from_definition_template() -> None:
         ),
     )
 
-    assert candidate.definitions_html == "verb: LLM definition for lavar"
+    assert candidate.definitions_html == "verb: washes; cleans something with water"
     assert "present" not in candidate.definitions_html
     assert "third" not in candidate.definitions_html
     assert "singular" not in candidate.definitions_html
@@ -467,7 +499,7 @@ def test_frequency_failures_are_flagged_for_backfill() -> None:
     assert candidate.frequency_level == 1
 
 
-def test_frequency_can_fallback_to_wordfreq_seed_when_lookup_index_is_missing() -> None:
+def test_frequency_missing_index_remains_backfill_without_provider_calls() -> None:
     generator = StubDefinitionGenerator()
     pronunciation_generator = StubPronunciationGenerator()
     service = LexicalGroundingService(
@@ -493,19 +525,13 @@ def test_frequency_can_fallback_to_wordfreq_seed_when_lookup_index_is_missing() 
         candidate=seed,
     )
 
-    assert candidate.grounding_status is GroundingStatus.GROUNDED
+    assert candidate.grounding_status is GroundingStatus.BACKFILL_REQUIRED
     assert candidate.frequency_rank == 12
     assert candidate.frequency_level == 1
-    assert candidate.definitions_html == "term: LLM definition for perro"
-    assert candidate.ipa == "/right/"
-    assert candidate.spoken_form == "RYT"
+    assert candidate.definitions_html is None
     assert candidate.provenance.source == "wordfreq"
-    assert candidate.provenance.pronunciation is not None
-    assert candidate.provenance.pronunciation.source == "provider-pronunciation-generator"
-    assert generator.calls[0].lemma == "perro"
-    assert generator.calls[0].source_language == "es"
-    assert generator.calls[0].target_language == "en"
-    assert pronunciation_generator.calls
+    assert generator.calls == []
+    assert pronunciation_generator.calls == []
 
 
 def test_frequency_uses_lexical_lookup_without_cache_definition_for_card_definition() -> None:
@@ -518,11 +544,13 @@ def test_frequency_uses_lexical_lookup_without_cache_definition_for_card_definit
                     display_form="casas",
                     lemma="casas",
                     definitions=["nominative plural of casa"],
+                    definition_language="en",
                     ipa="/casas/",
                 )
             }
         ),
         definition_generator=generator,
+        definition_reviewer=AdvisoryDefinitionReviewer(),
     )
     seed = LexicalCardCandidate(
         submitted_form="casas",
@@ -541,8 +569,9 @@ def test_frequency_uses_lexical_lookup_without_cache_definition_for_card_definit
         candidate=seed,
     )
 
-    assert candidate.grounding_status is GroundingStatus.GROUNDED
-    assert candidate.definitions_html == "term: LLM definition for casas"
+    assert candidate.grounding_status is GroundingStatus.PENDING
+    assert candidate.definitions_html is None
+    assert candidate.provenance.definition.quality_decision == "review_required"
     assert generator.calls[0].lemma == "casas"
 
 
@@ -555,6 +584,7 @@ def test_grounding_standardizes_german_article_definition_label() -> None:
                     display_form="die",
                     lemma="die",
                     definitions=[],
+                    definition_language="en",
                     part_of_speech="unknown",
                     ipa=None,
                     source="wordfreq",
@@ -577,7 +607,8 @@ def test_grounding_standardizes_german_article_definition_label() -> None:
 
     candidate = service.ground_frequency_candidate(language=SupportedLanguage.DE, candidate=seed)
 
-    assert candidate.definitions_html == "article: the definite article used for feminine nouns in German"
+    assert candidate.definitions_html is None
+    assert candidate.provenance.definition.quality_decision == "review_required"
 
 
 def test_grounding_preserves_provider_verb_label_when_asset_pos_is_unknown() -> None:
@@ -589,6 +620,7 @@ def test_grounding_preserves_provider_verb_label_when_asset_pos_is_unknown() -> 
                     display_form="blieb",
                     lemma="blieb",
                     definitions=[],
+                    definition_language="en",
                     part_of_speech="unknown",
                     ipa=None,
                     source="wordfreq",
@@ -612,7 +644,8 @@ def test_grounding_preserves_provider_verb_label_when_asset_pos_is_unknown() -> 
     candidate = service.ground_frequency_candidate(language=SupportedLanguage.DE, candidate=seed)
 
     assert candidate.display_form == "blieb"
-    assert candidate.definitions_html == "verb: remained"
+    assert candidate.definitions_html is None
+    assert candidate.provenance.definition.quality_decision == "review_required"
 
 
 def test_grounding_passes_inferred_function_word_pos_to_definition_generator() -> None:
@@ -625,6 +658,7 @@ def test_grounding_passes_inferred_function_word_pos_to_definition_generator() -
                     display_form="et",
                     lemma="et",
                     definitions=[],
+                    definition_language="en",
                     part_of_speech="unknown",
                     ipa=None,
                     source="wordfreq",
@@ -632,6 +666,7 @@ def test_grounding_passes_inferred_function_word_pos_to_definition_generator() -
             }
         ),
         definition_generator=generator,
+        definition_reviewer=AdvisoryDefinitionReviewer(),
     )
 
     candidate = service.ground_word_list_item(
@@ -639,7 +674,8 @@ def test_grounding_passes_inferred_function_word_pos_to_definition_generator() -
         item=ParsedWordListItem(line_number=1, submitted_form="et", display_form="et", item_key="et"),
     )
 
-    assert candidate.definitions_html == "conjunction: LLM definition for et"
+    assert candidate.definitions_html is None
+    assert candidate.provenance.definition.quality_decision == "review_required"
     assert generator.calls[0].part_of_speech == "conjunction"
 
 
@@ -653,6 +689,7 @@ def test_grounding_normalizes_german_pause_display_and_definition_label() -> Non
                     display_form="pause",
                     lemma="pause",
                     definitions=[],
+                    definition_language="en",
                     part_of_speech="unknown",
                     ipa=None,
                     source="wordfreq",
@@ -660,6 +697,7 @@ def test_grounding_normalizes_german_pause_display_and_definition_label() -> Non
             }
         ),
         definition_generator=generator,
+        definition_reviewer=AdvisoryDefinitionReviewer(),
     )
     seed = LexicalCardCandidate(
         submitted_form="pause",
@@ -678,7 +716,8 @@ def test_grounding_normalizes_german_pause_display_and_definition_label() -> Non
     assert candidate.display_form == "Pause"
     assert candidate.lemma == "Pause"
     assert candidate.lemma_key == "pause"
-    assert candidate.definitions_html == "noun: a temporary stop or break in activity"
+    assert candidate.definitions_html is None
+    assert candidate.provenance.definition.quality_decision == "review_required"
     assert generator.calls[0].display_form == "Pause"
     assert generator.calls[0].lemma == "Pause"
     assert generator.calls[0].part_of_speech == "noun"
@@ -693,6 +732,7 @@ def test_grounding_remediates_morphology_only_definition_from_source_meaning() -
                     display_form="большую",
                     lemma="большой",
                     definitions=["feminine accusative singular of большой", "big; large; important"],
+                    definition_language="en",
                     part_of_speech="adjective",
                     ipa="[bɐlʲˈʂuju]",
                 )
@@ -706,7 +746,8 @@ def test_grounding_remediates_morphology_only_definition_from_source_meaning() -
         item=ParsedWordListItem(line_number=1, submitted_form="большую", display_form="большую", item_key="большую"),
     )
 
-    assert candidate.definitions_html == "adjective: big; large; important"
+    assert candidate.definitions_html is None
+    assert candidate.provenance.definition.quality_decision == "review_required"
 
 
 def test_russian_frequency_rejects_uppercase_duplicate_records() -> None:
@@ -718,6 +759,7 @@ def test_russian_frequency_rejects_uppercase_duplicate_records() -> None:
                     display_form="И",
                     lemma="И",
                     definitions=["The name of the Cyrillic script letter И."],
+                    definition_language="en",
                     ipa="[i]",
                 )
             }
@@ -753,6 +795,7 @@ def test_grounding_preserves_authoritative_ipa_for_custom_word_list() -> None:
                     display_form="casa",
                     lemma="casa",
                     definitions=["house"],
+                    definition_language="en",
                     ipa="/authoritative/",
                 )
             }
@@ -844,6 +887,7 @@ def test_grounding_preserves_authoritative_ipa_for_frequency_candidates() -> Non
                     display_form="casa",
                     lemma="casa",
                     definitions=["house"],
+                    definition_language="en",
                     ipa="/authoritative/",
                 )
             }
@@ -2051,6 +2095,7 @@ def test_non_korean_grounding_never_invokes_korean_selector() -> None:
                     display_form="casa",
                     lemma="casa",
                     definitions=["house"],
+                    definition_language="en",
                     part_of_speech="noun",
                     source="manual",
                 )
@@ -2070,5 +2115,6 @@ def test_non_korean_grounding_never_invokes_korean_selector() -> None:
     )
 
     assert candidate.lemma == "casa"
-    assert candidate.grounding_status is GroundingStatus.GROUNDED
+    assert candidate.grounding_status is GroundingStatus.PENDING
+    assert candidate.provenance.definition.fallback_reason == "target_language_evidence_unavailable"
     assert morphology.calls == []

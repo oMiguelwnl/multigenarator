@@ -2,8 +2,8 @@
 
 from __future__ import annotations
 
-from enum import Enum
 import math
+from enum import Enum
 from typing import Any, Literal, Self
 
 from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator
@@ -39,6 +39,7 @@ class ValidationFlagCode(str, Enum):
     BANNED_PATTERN = "banned_pattern"
     DUPLICATE_SENTENCE = "duplicate_sentence"
     TRANSLATION_MISMATCH = "translation_mismatch"
+    DEFINITION_MISMATCH = "definition_mismatch"
     LANGUAGE_MISMATCH = "language_mismatch"
     MORPHOLOGY_MISMATCH = "morphology_mismatch"
     LOW_CONFIDENCE = "low_confidence"

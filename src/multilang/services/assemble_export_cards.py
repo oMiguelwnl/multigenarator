@@ -2,12 +2,14 @@
 
 from __future__ import annotations
 
-from dataclasses import dataclass
-from html import escape
-from hashlib import sha256
 import json
-from pathlib import Path
 import re
+from dataclasses import dataclass
+from hashlib import sha256
+from html import escape
+from pathlib import Path
+
+from pydantic import ValidationError
 
 from multilang.domain.audio import AudioAssetKind, AudioAssetRecord, AudioSynthesisStatus
 from multilang.domain.exporting import (
@@ -17,7 +19,7 @@ from multilang.domain.exporting import (
     export_field_names_for_language_and_source,
 )
 from multilang.domain.jobs import SupportedLanguage
-from multilang.domain.lexicon import LexicalCardCandidate
+from multilang.domain.lexicon import LexicalCardCandidate, LexicalProvenance
 from multilang.domain.text_quality import ReviewStatus, TextQualityRecord, ValidationStatus
 from multilang.services.audio_integrity import AudioIntegrityError, assert_word_audio_matches_word
 from multilang.services.japanese_furigana import JapaneseFuriganaError, format_japanese_furigana
@@ -226,6 +228,19 @@ class AssembleExportCardsService:
         return [self.export_repository.upsert_card_snapshot(row) for row in cards]
 
     def _render_definitions(self, candidate: LexicalCardCandidate, *, deck_language: SupportedLanguage) -> str:
+        try:
+            provenance = LexicalProvenance.model_validate(
+                getattr(candidate, "provenance", None), from_attributes=True
+            )
+        except ValidationError as exc:
+            raise AssembleExportCardsError(
+                f"invalid lexical provenance for item {candidate.lemma_key}"
+            ) from exc
+        evidence = provenance.definition
+        if evidence is not None and evidence.quality_decision == "review_required":
+            raise AssembleExportCardsError(
+                f"definition for {candidate.lemma_key} requires review: {evidence.fallback_reason or 'unverified evidence'}"
+            )
         raw = candidate.definitions_html or ""
         cleaned = raw.replace("</ul>", "").replace("<ul>", "\n").replace("</li>", "\n").replace("<li>", "")
         raw_parts = [part.strip() for part in re.split(r"(?:<br\s*/?>|\n)+", cleaned) if part.strip()]

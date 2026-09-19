@@ -29,6 +29,12 @@ class DefinitionRecord(BaseModel):
     source: str = Field(min_length=1)
     value: str | None = None
     fallback_used: bool = False
+    actual_language: str | None = Field(default=None, exclude_if=lambda value: value is None)
+    quality_decision: Literal["source_verified", "source_fallback", "review_required", "independently_reviewed"] | None = Field(default=None, exclude_if=lambda value: value is None)
+    fallback_reason: str | None = Field(default=None, exclude_if=lambda value: value is None)
+    evidence_source: str | None = Field(default=None, exclude_if=lambda value: value is None)
+    generated_draft: str | None = Field(default=None, max_length=4096, exclude_if=lambda value: value is None)
+    review_reference: str | None = Field(default=None, max_length=256, exclude_if=lambda value: value is None)
 
 
 class PronunciationRecord(BaseModel):

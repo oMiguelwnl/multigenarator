@@ -13,7 +13,7 @@ from multilang.domain.korean import (
     KoreanSignatureItem,
     KoreanTextError,
 )
-
+from multilang.runtime import _build_translation_adapter
 from multilang.services.provider_text_adapters import (
     DeepLTranslationAdapter,
     FallbackTranslationAdapter,
@@ -23,10 +23,12 @@ from multilang.services.provider_text_adapters import (
     can_use_google_translate,
     can_use_litellm,
 )
-from multilang.services.text_generation import SentenceGenerationRequest, SentenceTranslationRequest
-from multilang.services.text_generation import DefinitionGenerationRequest
+from multilang.services.text_generation import (
+    DefinitionGenerationRequest,
+    SentenceGenerationRequest,
+    SentenceTranslationRequest,
+)
 from multilang.settings import Settings
-from multilang.runtime import _build_translation_adapter
 
 
 def _korean_fingerprint(
@@ -140,7 +142,7 @@ def test_litellm_sentence_adapter_uses_openrouter_key_and_json_response() -> Non
     assert "Study form: в" in calls[0]["messages"][1]["content"]
 
 
-def test_litellm_definition_adapter_generates_definition_without_cache_definition() -> None:
+def test_litellm_definition_adapter_marks_drafts_for_evidence_review() -> None:
     calls: list[dict[str, object]] = []
 
     def fake_completion(**kwargs: object) -> dict[str, object]:
@@ -179,7 +181,7 @@ def test_litellm_definition_adapter_generates_definition_without_cache_definitio
     assert result.provenance["source"] == "provider-definition-generator"
     assert "Source word language: English (en)" in prompt
     assert "Definition output language: English (en)" in prompt
-    assert "Generate the definition from your language knowledge" in prompt
+    assert "Preserve the supplied source meaning and sense" in prompt
     assert "a sheltered place" not in prompt
 
 
@@ -867,3 +869,22 @@ def test_explicit_google_provider_still_uses_google_adapter() -> None:
     adapter = _build_translation_adapter(Settings(_env_file=None, translation_provider="google"))
 
     assert isinstance(adapter, GoogleTranslateAdapter)
+
+
+@pytest.mark.parametrize("source_text", [unicodedata.normalize("NFD", "uma pessoa que atua em uma produção"), "uma pessoa\x00que atua"])
+def test_korean_source_definition_output_is_nfc_or_review_required(source_text):
+    from multilang.services.content.definition_evidence import decide_definition
+    request = DefinitionGenerationRequest(
+        display_form="배우", lemma="배우", source_language="ko", target_language="pt",
+        part_of_speech="NNG", korean_identity=_korean_identity(),
+        source_definitions=(source_text,), source_definition_language="pt",
+        evidence_source="synthetic-test-source",
+    )
+    decision = decide_definition(request, None)
+    if "\x00" in source_text:
+        assert decision.review_required
+        assert decision.definitions_html is None
+        assert decision.record.fallback_reason == "invalid_definition_text"
+    else:
+        assert decision.definitions_html == "term: " + unicodedata.normalize("NFC", source_text)
+        assert decision.record.value == decision.definitions_html

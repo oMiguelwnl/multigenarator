@@ -3,10 +3,12 @@
 from __future__ import annotations
 
 import json
-from pathlib import Path
 import unicodedata
+from pathlib import Path
 
 from pydantic import BaseModel, ConfigDict, Field, field_validator
+
+from multilang.domain.definitions import SourceDefinitionSense
 
 
 def normalize_lexical_key(value: str) -> str:
@@ -25,6 +27,10 @@ class LexicalRecord(BaseModel):
     display_form: str = Field(min_length=1)
     lemma: str = Field(min_length=1)
     definitions: list[str] = Field(default_factory=list)
+    definition_senses: tuple[SourceDefinitionSense, ...] = Field(
+        default=(), max_length=32, exclude_if=lambda value: not value,
+    )
+    definition_language: str | None = Field(default=None, min_length=2, max_length=16, exclude_if=lambda value: value is None)
     part_of_speech: str | None = None
     sense_id: str | None = Field(default=None, min_length=1)
     usage_register: str | None = Field(
@@ -36,6 +42,8 @@ class LexicalRecord(BaseModel):
     grammar_tags: list[str] = Field(default_factory=list)
     ipa: str | None = None
     source: str = Field(min_length=1, default="manual")
+    source_version: str | None = Field(default=None, min_length=1, max_length=128, exclude_if=lambda value: value is None)
+    source_sha256: str | None = Field(default=None, pattern=r"^[0-9a-f]{64}$", exclude_if=lambda value: value is None)
 
     @field_validator("term", "display_form", "lemma")
     @classmethod
@@ -68,7 +76,9 @@ class LexicalLookup:
         """Query the cached index for a normalized term."""
 
         candidates = self.lookup_candidates(language_code=language_code, term=term)
-        return candidates[0] if candidates else None
+        # Repeated identical records are harmless; distinct senses/evidence are not.
+        unique = {record.model_dump_json(): record for record in candidates}
+        return next(iter(unique.values())) if len(unique) == 1 else None
 
     def lookup_candidates(
         self,
