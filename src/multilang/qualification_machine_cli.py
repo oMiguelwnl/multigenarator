@@ -329,6 +329,7 @@ def create_machine_qualification_app(*, settings=None):
             }
         )
 
+    from multilang.qualification_evaluation_cli import create_partition_evaluation_app
     from multilang.qualification_followup_cli import register_followup_commands
     from multilang.qualification_languages_cli import register_language_commands
     from multilang.qualification_pilot_cli import register_pilot_commands
@@ -338,4 +339,5 @@ def create_machine_qualification_app(*, settings=None):
     register_language_commands(cli)
     register_pilot_commands(cli)
     register_revision_commands(cli)
+    cli.add_typer(create_partition_evaluation_app(), name="evaluation")
     return cli
