@@ -62,7 +62,7 @@ A regressão desta correção passou em **66 casos distintos** no checkout isola
 
 ## Comandos adicionados
 
-Os comandos ficam em `multilang vocabulary qualification ai`:
+Os comandos ficam em `multilang native vocabulary qualification ai`:
 
 | Comando | Função |
 |---|---|
@@ -94,6 +94,8 @@ PT exige a variante brasileira. ZH exige as marcações de mandarim e chinês pa
 Ausência de fonte, incompatibilidade da variante ou ausência de IPA admitida bloqueiam o lote. Ter um lote preparado não significa que seus dez itens foram revisados, nem que existem três mil cards prontos naquela língua. As capacidades de produção e a permissão de redistribuição permanecem desligadas.
 
 ## Verificação e trabalho restante
+
+A execução posterior à aprovação do piloto está documentada em [Qualificação e decks completos](deck-completion.md), incluindo resolução das três pendências PT, revisão dos 210 itens e evolução da política de importância.
 
 As verificações isoladas cobrem **179 casos distintos**, usando a execução mais recente de cada caso nas suítes de regressão. Foram verificados revisão dirigida, proveniência, projeção por ocorrência, importação de conteúdo, mídia, exportação e preparação multilíngue, inclusive a rejeição de mudanças no catálogo entre preparação e exportação. Ruff e formatação passaram, assim como o build de wheel/sdist e a documentação em modo estrito. A revisão independente também conferiu o APKG e as evidências reais do português. Esses testes não representam a suíte completa das alterações concorrentes do repositório.
 
