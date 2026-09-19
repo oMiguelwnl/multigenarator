@@ -39,7 +39,9 @@ v1.3 Phase 20 Word Audio Integrity Gate was completed on 2026-05-13. Word-audio 
 
 v1.3 was completed on 2026-05-16 after Phases 17-21. Generated-card quality defects can now be audited, IPA/Definition/Translation defects are remediated before export, normal generated-card exports use the revised field/template contract, word-audio mismatches are regenerated or blocked, and shared v1.3 validators plus scanner-readable evidence prove the known defects do not recur across normal, custom word-list, highlight, and phonetics deck paths.
 
-## Current Milestone: v3.0 Korean Learning System
+## Completed Implementation: v3.0 Korean Learning System
+
+**2026-09-19:** implementation complete at `3c7c91a` (`repo_closeout`). Production content and Anki acceptance remain pending in `.planning/KOREAN-PRODUCTION-BACKLOG.md`; canonical completion is in SPEC/ROADMAP/STATE.
 
 **Goal:** Add complete modern-standard Korean support with Hangul foundations, strict-i+1 pronunciation, three 1000-card frequency levels, strict-i+1 particles/endings, custom lists, highlights, Portuguese text, approved `ko-KR` audio, and APKG/CSV/TSV export.
 
@@ -83,9 +85,9 @@ After v1.2, candidate directions from the archived v1 requirement seeds remain:
 - [x] Correct IPA, Definition, Translation, and audio-field alignment defects before export. _(v1.3 Phases 18 and 20)_
 - [x] Add validation and regression evidence that prevents recurrence of the normalized issue catalog. _(v1.3 Phase 21)_
 
-### Active
+### Completed implementation
 
-- [ ] Implement v3.0 Korean Learning System requirements `KMODE-01` through `KQA-02` across Phases 30-34.
+- [x] Implement v3.0 Korean Learning System and shared hardening across Phases 30-34 — repository implementation completed 2026-09-19. Original production/delivery acceptance remains pending.
 
 ### Out of Scope
 

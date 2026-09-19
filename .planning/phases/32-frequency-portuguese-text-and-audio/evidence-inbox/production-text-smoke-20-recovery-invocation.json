@@ -1,0 +1,23 @@
+{
+  "audio_synthesis_enabled": false,
+  "authority_sha256": "51b5a74ec8ed2f983fa81d03eaf647e3fbb2dd9fb6ed68f6000470fbdb04cdeb",
+  "candidate_identity_root_sha256": "21c02058e99b1ccec31bfbaff6430797d6f2f4d6d2ca882dbc424521f22ca9aa",
+  "created_at_utc": "2026-09-09T12:53:33Z",
+  "database_state_root_sha256": "d74bf27ded40d8d9b6692a2d21c47898083ada2428bcf5a165e68d7af19f8be1",
+  "full_run_authorized": false,
+  "historical_provider_row_id_root_sha256": "4105b18c36da380e1f29a79f8da9e3646d29bcbc448909b741d422000ff5bcb3",
+  "invocation_ordinal": 1,
+  "job_id": "phase32-prod-text-smoke-20",
+  "max_attempts_per_operation": 2,
+  "max_concurrency": 1,
+  "protected_plan_32_54_sha256": {
+    "authorization": "af26bd4e93a11020de01093403f04aa9f66c9804e8aac45662d548f0c32fbdab",
+    "preflight": "3d4e1392289ba0228ae27354fcb6701e3362e095de6b1c837a53f98b468038b4",
+    "result": "d512dd36cf528eb7d6904a0e1459b44d7b4916e5895ac7cd48f5f1433be914e8",
+    "summary": "5bad3bf992c0cd788b77334d9174bd5831e71792cdcee5d9ac27cf613a500125"
+  },
+  "provider_policy_sha256": "6174ebd73b7e2963285bb2e44205dde10ef9d3917e50c90850b483b3c8a6fc79",
+  "recovery_authorization_sha256": "44b338c71decfab25ec4bf46374a6d28fdc188f85d49730eb1f963dacdcdf330",
+  "schema_version": "phase32-production-text-smoke-20-recovery-invocation-v1",
+  "status": "claimed"
+}

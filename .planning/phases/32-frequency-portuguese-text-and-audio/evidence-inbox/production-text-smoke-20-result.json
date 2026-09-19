@@ -1,0 +1,49 @@
+{
+  "accepted_items": 0,
+  "audio_asset_count": 0,
+  "audio_synthesis_enabled": false,
+  "azure_call_count": 0,
+  "blocked_reason": "sanitized_worker_failure",
+  "candidate_count": 20,
+  "captured_log_scan_status": "passed",
+  "captured_logs_removed": true,
+  "card_export_count": 0,
+  "completed_units": [],
+  "created_at_utc": "2026-09-09T11:48:17Z",
+  "deck_export_count": 0,
+  "evidence_refreshed_at_utc": "2026-09-09T12:06:57Z",
+  "external_provider_attempt_count": 2,
+  "failure_stage": "execute",
+  "full_run_attempted": false,
+  "job_id": "phase32-prod-text-smoke-20",
+  "model_identifiers": [
+    "gpt-4.1-mini"
+  ],
+  "outer_aggregate_failure_log_count": 1,
+  "processed_items": 0,
+  "provider_attempt_count": 3,
+  "provider_attempt_status_counts": {
+    "failure": 3
+  },
+  "provider_calls_occurred": true,
+  "provider_error_code_sha256s": [
+    "6bd8d9ee79d486f950481bd8e126006aa620bb4e8437c992532d1be65c83979a",
+    "86225aa74257218b8bfd199c108f5ddc44c967f59f9d4f8f442437c7c626d12c"
+  ],
+  "provider_failure_classifications": [
+    "rate_limited",
+    "ProviderRetryError"
+  ],
+  "provider_identifiers": [
+    "litellm"
+  ],
+  "provider_log_shape_supported": true,
+  "review_required_items": 0,
+  "schema_version": "phase32-production-text-smoke-20-failure-v1",
+  "status": "failed",
+  "terminal_state": "blocked_before_3000_item_execution",
+  "text_record_count": 0,
+  "total_items": 20,
+  "unit_1_complete": false,
+  "unit_2_attempted": false
+}

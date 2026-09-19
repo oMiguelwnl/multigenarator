@@ -2,6 +2,30 @@
 
 Entries are kept newest first.
 
+## ✅ v3.0 — Korean Learning System and Shared Generation Hardening (Implementation completed: 2026-09-19)
+
+- Status: completed — repository implementation only (`repo_closeout`).
+- Phases: 30–34, five implementation phases; 32/32 implementation contracts.
+- Commit: `3c7c91a`.
+- Verification: 452 distinct passed cases, two skipped; 89 passed in the final
+  integration rerun. Focused results, not a whole-repository or production run.
+
+**Delivered:** Korean contracts and morphology, foundations, frequency/text/audio
+gates, persisted grammar and personal sources, per-field review, six-family
+exports, real level subdecks, leases and migration safety.
+
+**Production/delivery deferred:** 3000 reviewed cards, 6000 reviewed audio assets,
+grammar content, authorized personal samples, actual environment and Anki
+Desktop/mobile acceptance. See `KOREAN-PRODUCTION-BACKLOG.md`.
+
+**Archives:** `milestones/v3.0-ROADMAP.md`, `milestones/v3.0-REQUIREMENTS.md`,
+`milestones/v3.0-IMPLEMENTATION-EVIDENCE.json`.
+**Audit:** `v3.0-MILESTONE-AUDIT.md` (passed for implementation only).
+Historical failed/waived plans retain their outcomes. No tag, push, publication
+or public delivery is claimed.
+
+---
+
 ## ✅ v2.1 — Latin Google TTS Finalization (Shipped: 2026-06-22)
 
 - Status: shipped
