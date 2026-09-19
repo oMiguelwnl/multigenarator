@@ -36,10 +36,56 @@ def evaluate_corpus(
     max_sentences: int = 200,
     limits: SourceLimits | None = None,
 ) -> dict:
-    limits = limits or SourceLimits()
-    catalog = source_catalog(language)
     if split != "test":
         raise ValueError("held-out diagnostics require the declared test split")
+    return _evaluate_corpus(
+        language=language,
+        corpus=corpus,
+        corpus_sha256=corpus_sha256,
+        output=output,
+        analyzer=analyzer,
+        split=split,
+        max_sentences=max_sentences,
+        limits=limits,
+    )
+
+
+def evaluate_development_corpus(
+    *,
+    language: str,
+    corpus: Path,
+    corpus_sha256: str,
+    output: Path,
+    analyzer: ContextualAnalyzer,
+    max_sentences: int = 200,
+    limits: SourceLimits | None = None,
+) -> dict:
+    """Evaluate a declared development corpus without weakening held-out rules."""
+    return _evaluate_corpus(
+        language=language,
+        corpus=corpus,
+        corpus_sha256=corpus_sha256,
+        output=output,
+        analyzer=analyzer,
+        split="dev",
+        max_sentences=max_sentences,
+        limits=limits,
+    )
+
+
+def _evaluate_corpus(
+    *,
+    language: str,
+    corpus: Path,
+    corpus_sha256: str,
+    output: Path,
+    analyzer: ContextualAnalyzer,
+    split: str,
+    max_sentences: int,
+    limits: SourceLimits | None,
+) -> dict:
+    limits = limits or SourceLimits()
+    catalog = source_catalog(language)
     if not 1 <= max_sentences <= 5000:
         raise ValueError("evaluation sentence count is outside bounds")
     output = Path(output).absolute()

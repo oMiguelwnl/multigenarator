@@ -19,7 +19,7 @@ class MeasurementRequest(NativeContract):
     occurrences: tuple[EvidenceOccurrence, ...] = Field(max_length=1000000)
 
 
-def _json(path, digest):
+def _json(path, digest, *, limit=128 * 1024**2):
     def unique_pairs(pairs):
         result = {}
         for key, value in pairs:
@@ -28,9 +28,7 @@ def _json(path, digest):
             result[key] = value
         return result
 
-    return json.loads(
-        _read_bytes(path, digest, limit=128 * 1024**2), object_pairs_hook=unique_pairs
-    )
+    return json.loads(_read_bytes(path, digest, limit=limit), object_pairs_hook=unique_pairs)
 
 
 def _write(output, value):
@@ -61,7 +59,6 @@ def create_qualification_app(*, settings=None):
         help="Measure, review and calibrate linguistic qualification locally.",
         pretty_exceptions_show_locals=False,
     )
-
     from multilang.qualification_machine_cli import create_machine_qualification_app
 
     cli.add_typer(create_machine_qualification_app(settings=settings), name="ai")
@@ -71,6 +68,12 @@ def create_qualification_app(*, settings=None):
         from multilang.settings import Settings
 
         return _evidence_store(settings or Settings())
+
+    def analyzer_options():
+        from multilang.settings import Settings
+
+        profiles = (settings or Settings()).native_language_model_profiles
+        return {"model_profiles": profiles} if profiles else {}
 
     def review_inputs(packet, packet_sha256, submission, submission_sha256):
         from multilang.services.qualification_review import (
@@ -359,7 +362,7 @@ def create_qualification_app(*, settings=None):
             observe_document_corpus(
                 corpus,
                 corpus_sha256,
-                LocalContextualMorphologyService(model_root=model_root),
+                LocalContextualMorphologyService(model_root=model_root, **analyzer_options()),
                 limits=ObservationLimits(max_units=max_units),
             ),
         )
@@ -388,7 +391,7 @@ def create_qualification_app(*, settings=None):
                 corpus,
                 corpus_sha256,
                 language,
-                LocalContextualMorphologyService(model_root=model_root),
+                LocalContextualMorphologyService(model_root=model_root, **analyzer_options()),
                 acquisition_receipt=_json(receipt, receipt_sha256),
                 limits=ObservationLimits(max_units=max_units),
             ),

@@ -47,6 +47,23 @@ def create_vocabulary_app(*, settings: Settings | None = None) -> typer.Typer:
     def configuration():
         return settings or Settings()
 
+    def model_options_for(language, profile):
+        selected = (
+            profile
+            if profile is not None
+            else configuration().native_language_model_profiles.get(language, "fast")
+        )
+        if selected not in ("fast", "balanced", "accurate"):
+            raise ValueError("unsupported model profile")
+        return {"profile": selected} if selected != "fast" else {}
+
+    def analyzer_options_for(language, profile):
+        profiles = dict(configuration().native_language_model_profiles)
+        if profile is not None:
+            model_options_for(language, profile)
+            profiles[language] = profile
+        return {"model_profiles": profiles} if profiles else {}
+
     def load_profile(path):
         from multilang.domain.language_profiles import LanguageProfile
         from multilang.services.vocabulary_review import _read_bytes
@@ -66,14 +83,44 @@ def create_vocabulary_app(*, settings: Settings | None = None) -> typer.Typer:
 
     @cli.command("models")
     @_guard
-    def models(language: str | None = None, root: Path = Path(".multilang/models/stanza-1.10.0")):
+    def models(
+        language: str | None = None,
+        root: Path = Path(".multilang/models/stanza-1.10.0"),
+        profile: str | None = None,
+    ):
         codes = [language] if language else [item["language"] for item in source_catalog()]
-        _print([model_status(code, root) for code in codes])
+        _print([model_status(code, root, **model_options_for(code, profile)) for code in codes])
+
+    @cli.command("model-options")
+    @_guard
+    def model_options(
+        language: str | None = None,
+        root: Path = Path(".multilang/models/stanza-1.10.0"),
+    ):
+        from multilang.services.language_models import available_model_profiles
+
+        codes = [language] if language else [item["language"] for item in source_catalog()]
+        _print([available_model_profiles(code, root) for code in codes])
+
+    @cli.command("compare-models")
+    @_guard
+    def compare_models_command(request: Path, request_sha256: str, output: Path):
+        from multilang.qualification_cli import _json
+        from multilang.services.model_comparison import ModelComparisonRequest, compare_models
+
+        inputs = ModelComparisonRequest.model_validate(
+            _json(request, request_sha256, limit=1024**2)
+        )
+        _print(compare_models(inputs, output=output))
 
     @cli.command("prepare-model")
     @_guard
-    def model(language: str, root: Path = Path(".multilang/models/stanza-1.10.0")):
-        _print(prepare_model(language, root))
+    def model(
+        language: str,
+        root: Path = Path(".multilang/models/stanza-1.10.0"),
+        profile: str | None = None,
+    ):
+        _print(prepare_model(language, root, **model_options_for(language, profile)))
 
     @cli.command("acquire")
     @_guard
@@ -156,6 +203,7 @@ def create_vocabulary_app(*, settings: Settings | None = None) -> typer.Typer:
         output: Path,
         model_root: Path = Path(".multilang/models/stanza-1.10.0"),
         max_sentences: Annotated[int, typer.Option(min=1, max=5000)] = 200,
+        profile: str | None = None,
     ):
         from multilang.services.contextual_morphology import LocalContextualMorphologyService
         from multilang.services.vocabulary_evaluation import evaluate_corpus
@@ -166,20 +214,25 @@ def create_vocabulary_app(*, settings: Settings | None = None) -> typer.Typer:
                 corpus=corpus,
                 corpus_sha256=corpus_sha256,
                 output=output,
-                analyzer=LocalContextualMorphologyService(model_root=model_root),
+                analyzer=LocalContextualMorphologyService(
+                    model_root=model_root, **analyzer_options_for(language, profile)
+                ),
                 max_sentences=max_sentences,
             )
         )
 
     @cli.command("analyze")
     @_guard
-    def analyze(language: str, text_file: Path):
+    def analyze(language: str, text_file: Path, profile: str | None = None):
         from multilang.services.contextual_morphology import LocalContextualMorphologyService
         from multilang.services.vocabulary_review import _read_bytes
 
         text = _read_bytes(text_file, limit=64000).decode("utf-8").rstrip("\r\n")
         _print(
-            LocalContextualMorphologyService(model_root=configuration().native_language_models_dir)
+            LocalContextualMorphologyService(
+                model_root=configuration().native_language_models_dir,
+                **analyzer_options_for(language, profile),
+            )
             .analyze(language, text)
             .model_dump(mode="json")
         )

@@ -1002,7 +1002,12 @@ def build_native_facade(session: Session, settings: Settings) -> NativeFacade:
         version="1",
         plugin=StoredContextualTargetMatcher(
             analyzer=LocalContextualMorphologyService(
-                model_root=settings.native_language_models_dir
+                model_root=settings.native_language_models_dir,
+                **(
+                    {"model_profiles": settings.native_language_model_profiles}
+                    if settings.native_language_model_profiles
+                    else {}
+                ),
             ),
             store=ReviewedBindingStore(
                 settings.native_contextual_bindings_dir, verifier=store.verify

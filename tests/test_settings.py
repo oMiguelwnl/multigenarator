@@ -2,8 +2,8 @@
 
 from pathlib import Path
 
-from pydantic import ValidationError
 import pytest
+from pydantic import ValidationError
 
 import multilang.settings as settings_module
 from multilang.settings import Settings

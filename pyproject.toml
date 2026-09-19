@@ -58,6 +58,7 @@ dev = [
 nlp = [
     "stanza>=1.11,<2",
     "torch>=2.6,<3",
+    "transformers[sentencepiece]>=4.57,<5",
 ]
 
 [tool.uv.sources]

@@ -43,6 +43,10 @@ Estão fixados o manifest Stanza 1.10.0, seu SHA-256, processadores e dependênc
 Os bytes instalados também recebem hashes. Disponibilidade local não ativa um
 perfil. A análise normal não baixa modelos e recusa modelos ausentes ou alterados.
 
+A [seleção e comparação de modelos](morphology-model-comparison.md) permite
+preparar alternativas por idioma e medir seus resultados na mesma amostra antes
+de alterar a configuração.
+
 ## Fontes reais e preparação
 
 O [catálogo pesquisado](multilingual-source-research.md) contém URLs e condições

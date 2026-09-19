@@ -155,6 +155,24 @@ def test_training_split_cannot_be_reported_as_held_out_and_output_is_immutable(t
         )
 
 
+def test_development_evaluation_has_a_distinct_truthful_entry_point(tmp_path):
+    from multilang.services.vocabulary_evaluation import evaluate_development_corpus
+
+    path, digest = corpus(tmp_path)
+    result = evaluate_development_corpus(
+        language="en",
+        corpus=path,
+        corpus_sha256=digest,
+        output=tmp_path / "development-evaluation",
+        analyzer=Analyzer(),
+        max_sentences=2,
+    )
+
+    assert result["corpus_split"] == "dev"
+    assert result["evaluator_version"] == "3"
+    assert result["metrics"]["lemma_accuracy"] == 1.0
+
+
 @pytest.mark.parametrize("language", ["ko", "ja"])
 def test_native_annotation_inventory_is_not_reported_as_ud_accuracy(tmp_path, language):
     from multilang.services.vocabulary_evaluation import evaluate_corpus

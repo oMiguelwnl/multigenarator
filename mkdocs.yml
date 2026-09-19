@@ -10,6 +10,7 @@ nav:
   - Database: database.md
   - Content, audio and Anki contracts: native-content-audio-anki-contracts.md
   - Preparação linguística: vocabulary-preparation.md
+  - Comparação de modelos: morphology-model-comparison.md
   - Resultados por língua: multilingual-readiness.md
   - HTTP API and jobs: api.md
   - Migration: migration.md

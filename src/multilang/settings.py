@@ -99,6 +99,9 @@ class Settings(BaseSettings):
     native_evidence_dir: Path = Path(".multilang/evidence")
     native_evidence_signing_key: SecretStr | None = None
     native_language_models_dir: Path = Path(".multilang/models/stanza-1.10.0")
+    native_language_model_profiles: dict[
+        SupportedLanguageCode, Literal["fast", "balanced", "accurate"]
+    ] = Field(default_factory=dict, max_length=22)
     native_contextual_bindings_dir: Path = Path(".multilang/contextual-bindings")
     native_content_drafts_dir: Path = Path(".multilang/content-drafts")
     native_max_provider_items: int = Field(default=100, ge=1, le=10000)
@@ -157,6 +160,15 @@ class Settings(BaseSettings):
     supported_languages: Annotated[list[SupportedLanguageCode], NoDecode] = Field(
         default_factory=lambda: list(DEFAULT_SUPPORTED_LANGUAGES)
     )
+
+    @field_validator("native_language_model_profiles")
+    @classmethod
+    def validate_model_profiles(cls, value):
+        if "la" in value:
+            raise ValueError("Classical Latin uses its separate analysis pipeline")
+        if any(value.get(language, "fast") != "fast" for language in ("ko", "ja")):
+            raise ValueError("native Korean and Japanese analyzers only support fast")
+        return value
 
     @field_validator("supported_languages", mode="before")
     @classmethod

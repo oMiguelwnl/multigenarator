@@ -9,8 +9,10 @@ from __future__ import annotations
 import hashlib
 import json
 import unicodedata
+from collections.abc import Mapping
 from pathlib import Path
 from threading import RLock
+from types import MappingProxyType
 from typing import Literal, Protocol
 
 from pydantic import Field, model_validator
@@ -228,8 +230,27 @@ class LocalContextualMorphologyService:
     caller may explicitly normalize a source before creating its source hash.
     """
 
-    def __init__(self, *, model_root: Path) -> None:
+    def __init__(
+        self,
+        *,
+        model_root: Path,
+        model_profiles: Mapping[str, str] | None = None,
+        threads: int = 1,
+    ) -> None:
+        if type(threads) is not int or not 1 <= threads <= 8:
+            raise ValueError("CPU model threads must be between 1 and 8")
+        profiles = dict(model_profiles or {})
+        if len(profiles) > 22:
+            raise ValueError("too many language model profiles")
+        for language, profile in profiles.items():
+            spec = model_spec(language)
+            if profile not in ("fast", "balanced", "accurate"):
+                raise ValueError("unsupported language model profile")
+            if spec.backend != "stanza" and profile != "fast":
+                raise ValueError("native analyzer only supports the fast profile")
         self.model_root = Path(model_root)
+        self.model_profiles = MappingProxyType(profiles)
+        self.threads = threads
         self._pipelines: dict[tuple[str, str], object] = {}
         self._lock = RLock()
 
@@ -261,14 +282,21 @@ class LocalContextualMorphologyService:
         fingerprint = empty
         with self._lock:
             try:
-                status = model_status(language, self.model_root)
+                selected = self.model_profiles.get(language, "fast")
+                profile_kwargs = {"profile": selected} if selected != "fast" else {}
+                status = model_status(language, self.model_root, **profile_kwargs)
                 if not status.get("available"):
                     raise RuntimeError("model unavailable")
                 fingerprint = canonical_sha256({"policy": _ANALYZER_VERSION, **status})
                 key = (language, fingerprint)
                 if key not in self._pipelines:
                     if spec.backend == "stanza":
-                        pipeline = load_stanza_pipeline(language, self.model_root)
+                        pipeline = load_stanza_pipeline(
+                            language,
+                            self.model_root,
+                            **profile_kwargs,
+                            **({"threads": self.threads} if self.threads != 1 else {}),
+                        )
                     elif spec.backend == "kiwi":
                         from multilang.services.korean_morphology import KiwiKoreanMorphologyService
 
