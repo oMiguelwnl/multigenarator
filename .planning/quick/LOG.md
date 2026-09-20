@@ -50,3 +50,4 @@
 | 058 | Recover Phase 31 AI candidate-data lane evidence after lost temporary worktrees | 2026-08-30 | human_needed | [058-phase31-ai-data-lane-recovery](./058-phase31-ai-data-lane-recovery/) |
 | 059 | Implement real Azure Speech generation for Phase 31 Korean foundation media | 2026-09-01 | passed | [059-implement-phase31-azure-media-generation](./059-implement-phase31-azure-media-generation/) |
 | 060 | Recover Phase 32 pre-source full-suite harness without source retrieval | 2026-09-03 | passed_with_blocked_phase_gate | [060-phase32-pre-source-harness-recovery](./060-phase32-pre-source-harness-recovery/) |
+| 061 | Lógica e protótipo visual de decks de produção oral com perguntas em inglês | 2026-09-20 | passed_design_only | [061-output-deck-design](./061-output-deck-design/) |

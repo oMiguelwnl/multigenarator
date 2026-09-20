@@ -1,0 +1,221 @@
+<div id="multilang-output-preview" lang="en" aria-label="Multilang output card">
+  <style>
+    #multilang-output-preview { color-scheme:light dark; --op-bg:light-dark(#fafbf8,#171b19); --op-text:light-dark(#202b25,#edf4ef); --op-muted:light-dark(#5c6961,#b0beb4); --op-line:light-dark(#dde4dd,#36413a); --op-accent:light-dark(#315f43,#bedfc7); --op-on-accent:light-dark(#fff,#183221); --op-soft:light-dark(#eaf1ea,#27372c); --op-size:44px; --op-radius:18px; width:100%; max-width:780px; margin:auto; color:var(--op-text); font-family:Inter,"Segoe UI",Arial,sans-serif; text-align:left; }
+    #multilang-output-preview * { box-sizing:border-box; }
+    #multilang-output-preview [hidden] { display:none!important; }
+    #multilang-output-preview .op-window { background:var(--op-bg); border:1px solid var(--op-line); border-radius:var(--op-radius); overflow:hidden; }
+    #multilang-output-preview .op-chrome { display:flex; align-items:center; justify-content:space-between; gap:16px; padding:18px 26px; border-bottom:1px solid var(--op-line); }
+    #multilang-output-preview .op-brand { margin:0; font-size:12px; font-weight:600; letter-spacing:.09em; }
+    #multilang-output-preview select { min-width:0; max-width:55%; font:inherit; font-size:14px; color:var(--op-muted); background:var(--op-bg); border:1px solid var(--op-line); border-radius:8px; padding:10px; }
+    #multilang-output-preview button { font:inherit; font-size:14px; color:var(--op-text); background:transparent; border:1px solid var(--op-line); border-radius:9px; min-height:44px; padding:10px 18px; cursor:pointer; }
+    #multilang-output-preview button:hover { background:var(--op-soft); }
+    #multilang-output-preview :is(button,select,summary):focus-visible { outline:3px solid var(--op-accent); outline-offset:3px; }
+    #multilang-output-preview .op-body { padding:30px 32px; }
+    #multilang-output-preview .op-meta { display:flex; justify-content:space-between; gap:12px; color:var(--op-muted); font-size:12px; }
+    #multilang-output-preview .op-prompt { margin:36px 0 20px; font-size:var(--op-size); line-height:1.24; letter-spacing:-.025em; font-weight:500; overflow-wrap:anywhere; }
+    #multilang-output-preview .op-context { margin:0 0 8px; color:var(--op-muted); font-size:14px; line-height:1.6; }
+    #multilang-output-preview .op-focus { margin:0; color:var(--op-muted); font-size:13px; line-height:1.6; }
+    #multilang-output-preview .op-hints { display:flex; flex-wrap:wrap; gap:8px 26px; margin-top:20px; }
+    #multilang-output-preview .op-hints details { flex:1 1 210px; }
+    #multilang-output-preview summary { cursor:pointer; color:var(--op-muted); font-size:13px; min-height:44px; padding:12px 0; }
+    #multilang-output-preview details p { margin:2px 0 12px; font-size:14px; line-height:1.6; overflow-wrap:anywhere; }
+    #multilang-output-preview .op-primary { display:block; width:100%; margin-top:28px; color:var(--op-on-accent); background:var(--op-accent); border-color:var(--op-accent); }
+    #multilang-output-preview .op-primary:hover { color:var(--op-on-accent); background:var(--op-accent); filter:brightness(.96); }
+    #multilang-output-preview .op-answer { border-top:1px solid var(--op-line); margin-top:28px; padding-top:28px; }
+    #multilang-output-preview .op-answer-line { display:flex; gap:16px; align-items:center; }
+    #multilang-output-preview .op-target { flex:1; min-width:0; font-size:calc(var(--op-size) + 2px); line-height:1.4; letter-spacing:-.015em; font-weight:500; margin:0; overflow-wrap:anywhere; }
+    #multilang-output-preview .op-replay { flex-shrink:0; width:48px; height:48px; padding:0; border-radius:50%; color:var(--op-accent); font-size:19px; }
+    #multilang-output-preview .op-replay[aria-busy="true"] { background:var(--op-soft); }
+    #multilang-output-preview .op-audio-status { color:var(--op-muted); font-size:12px; line-height:1.5; margin:10px 0 0; }
+    #multilang-output-preview .op-extras { margin-top:16px; }
+    #multilang-output-preview .op-grades { display:flex; gap:8px; margin-top:26px; }
+    #multilang-output-preview .op-grades button { flex:1; padding:10px 5px; font-size:13px; color:var(--op-muted); }
+    #multilang-output-preview .op-grades button[aria-pressed="true"] { color:var(--op-text); border-color:var(--op-accent); background:var(--op-soft); }
+    #multilang-output-preview .op-footer { display:flex; justify-content:space-between; align-items:center; gap:10px; padding:8px 26px; border-top:1px solid var(--op-line); color:var(--op-muted); font-size:11px; }
+    #multilang-output-preview .op-footer button { padding:8px 0; border:0; color:var(--op-muted); font-size:12px; }
+    #multilang-output-preview .op-sr-only { position:absolute; width:1px; height:1px; padding:0; margin:-1px; overflow:hidden; clip:rect(0,0,0,0); white-space:nowrap; border:0; }
+    #multilang-output-preview.op-showing-answer .op-prompt { font-size:calc(var(--op-size) - 8px); margin-bottom:0; }
+    #multilang-output-preview.op-showing-answer .op-guidance { display:none; }
+    @media(max-width:440px) {
+      #multilang-output-preview .op-chrome { padding:14px 18px; gap:8px; }
+      #multilang-output-preview select { font-size:16px; max-width:58%; }
+      #multilang-output-preview .op-body { padding:24px 20px; }
+      #multilang-output-preview .op-prompt { font-size:calc(var(--op-size) - 10px); margin-top:28px; }
+      #multilang-output-preview.op-showing-answer .op-prompt { font-size:calc(var(--op-size) - 14px); }
+      #multilang-output-preview .op-target { font-size:calc(var(--op-size) - 8px); }
+      #multilang-output-preview .op-answer-line { gap:10px; align-items:flex-start; }
+      #multilang-output-preview .op-replay { width:44px; height:44px; margin-top:3px; }
+      #multilang-output-preview .op-hints { gap:0; }
+      #multilang-output-preview .op-grades { gap:6px; }
+      #multilang-output-preview .op-footer { padding:8px 18px; }
+    }
+  </style>
+  <section class="op-window">
+    <header class="op-chrome">
+      <p class="op-brand">MULTILANG OUTPUT</p>
+      <select id="op-example" aria-label="Example language">
+        <option value="de">German</option><option value="es">Spanish</option>
+        <option value="fr">French</option><option value="ko">Korean</option>
+        <option value="ja">Japanese</option><option value="zh">Mandarin</option>
+      </select>
+    </header>
+    <main class="op-body">
+      <div class="op-meta"><span id="op-topic">Food &amp; drink · L1</span><span id="op-direction">English → German</span></div>
+      <h2 class="op-prompt" id="op-prompt">I'd like a coffee, please.</h2>
+      <div class="op-guidance">
+        <p class="op-context" id="op-context">At a café.</p>
+        <p class="op-focus" id="op-focus">Polite request · Konjunktiv II of haben</p>
+      </div>
+      <div id="op-front">
+        <div class="op-hints">
+          <details id="op-structure"><summary>Structure hint</summary><p id="op-structure-text"></p></details>
+          <details id="op-word"><summary>Key word</summary><p id="op-word-text"></p></details>
+        </div>
+        <button class="op-primary" id="op-reveal" type="button">Show answer</button>
+      </div>
+      <section class="op-answer" id="op-answer" aria-label="Answer" hidden>
+        <div class="op-answer-line">
+          <h3 class="op-target" id="op-target" lang="de"></h3>
+          <button class="op-replay" id="op-replay" type="button" aria-label="Replay sentence" aria-busy="false">▶</button>
+        </div>
+        <p class="op-audio-status" id="op-audio-status" role="status" hidden></p>
+        <div class="op-extras">
+          <details id="op-variant-details"><summary>Alternative</summary><p id="op-variant"></p></details>
+          <details id="op-reading-details" hidden><summary>Reading</summary><p id="op-reading"></p></details>
+        </div>
+        <div class="op-grades" role="group" aria-label="Self-rating preview">
+          <button type="button" data-grade="Again" aria-pressed="false">Again</button>
+          <button type="button" data-grade="Hard" aria-pressed="false">Hard</button>
+          <button type="button" data-grade="Good" aria-pressed="false">Good</button>
+          <button type="button" data-grade="Easy" aria-pressed="false">Easy</button>
+        </div>
+        <p class="op-sr-only" id="op-rating-status" role="status"></p>
+      </section>
+    </main>
+    <footer class="op-footer"><span>Preview</span><button id="op-reset" type="button">Back to front</button></footer>
+  </section>
+  <script>
+    (() => {
+      const root = document.getElementById('multilang-output-preview');
+      const find = id => root.querySelector('#' + id);
+      const examples = {
+        de:{language:'German',locale:'de-DE',tag:'Food & drink',level:1,prompt:"I'd like a coffee, please.",context:'At a café.',focus:'Polite request · Konjunktiv II of haben',structure:'Conjugated verb second; drink as the direct object.',word:'Coffee: der Kaffee.',answer:'Ich hätte gern einen Kaffee, bitte.',variant:'Ich hätte gerne einen Kaffee, bitte.',reading:''},
+        es:{language:'Spanish',locale:'es-ES',tag:'Body & health',level:1,prompt:'My head hurts.',context:'Tell a friend how you feel.',focus:'Present tense · doler',structure:'The body part is the subject.',word:'Head: la cabeza.',answer:'Me duele la cabeza.',variant:'',reading:''},
+        fr:{language:'French',locale:'fr-FR',tag:'Economy',level:3,prompt:'Prices have risen this year.',context:'Discussing this year’s prices.',focus:'Passé composé · augmenter',structure:'Auxiliary avoir + past participle.',word:'Prices: les prix.',answer:'Les prix ont augmenté cette année.',variant:'Cette année, les prix ont augmenté.',reading:''},
+        ko:{language:'Korean',locale:'ko-KR',tag:'Food & drink',level:1,prompt:'One Americano, please.',context:'Ordering at a café.',focus:'Polite request · cup counter',structure:'Drink + quantity + counter + request.',word:'Americano: 아메리카노. Cup counter: 잔.',answer:'아메리카노 한 잔 주세요.',variant:'아메리카노 한 잔 주시겠어요?',reading:''},
+        ja:{language:'Japanese',locale:'ja-JP',tag:'Travel',level:1,prompt:'Where is the station?',context:'Asking for directions.',focus:'Polite location question · です',structure:'Station as topic + where + polite question.',word:'Station: 駅 (えき). Where: どこ.',answer:'駅はどこですか。',variant:'',reading:'駅（えき）はどこですか。'},
+        zh:{language:'Mandarin',locale:'zh-CN',tag:'Business',level:2,prompt:'Can we have the meeting tomorrow?',context:'Suggesting a time to a colleague.',focus:'Possibility · final question particle',structure:'Who + possibility + time + activity + question particle.',word:'Meeting: 开会. Tomorrow: 明天.',answer:'我们可以明天开会吗？',variant:'我们明天可以开会吗？',reading:'Wǒmen kěyǐ míngtiān kāihuì ma?'}
+      };
+      let revealed = false;
+      let assisted = false;
+      let audioVersion = 0;
+      let currentUtterance = null;
+      let waitingForVoice = false;
+      const synth = globalThis.speechSynthesis;
+      const setText = (id, value) => { find(id).textContent = value; };
+      function audioStatus(message) {
+        setText('op-audio-status',message);
+        find('op-audio-status').hidden = !message;
+      }
+      function stopAudio() {
+        audioVersion += 1;
+        waitingForVoice = false;
+        if (synth) synth.cancel();
+        currentUtterance = null;
+        find('op-replay').setAttribute('aria-busy','false');
+        audioStatus('');
+      }
+      function playSentence() {
+        if (!revealed) return;
+        stopAudio();
+        const version = audioVersion;
+        const item = examples[find('op-example').value];
+        if (!synth || !globalThis.SpeechSynthesisUtterance) {
+          audioStatus('Speech is unavailable in this browser.');
+          return;
+        }
+        const voices = synth.getVoices();
+        const locale = item.locale.toLowerCase();
+        const sameLanguage = voices.filter(voice => voice.lang.toLowerCase().replaceAll('_','-').split('-')[0] === locale.split('-')[0]);
+        const voice = sameLanguage.find(voice => voice.lang.toLowerCase().replaceAll('_','-') === locale) || sameLanguage[0];
+        if (!voice) { waitingForVoice = true; audioStatus('No ' + item.language + ' voice available in this browser.'); return; }
+        const utterance = new SpeechSynthesisUtterance(item.answer);
+        currentUtterance = utterance;
+        utterance.lang = item.locale;
+        utterance.voice = voice;
+        utterance.rate = 0.95;
+        utterance.onstart = () => { if(version === audioVersion) find('op-replay').setAttribute('aria-busy','true'); };
+        utterance.onend = () => {
+          if(version !== audioVersion) return;
+          currentUtterance = null;
+          find('op-replay').setAttribute('aria-busy','false');
+        };
+        utterance.onerror = event => {
+          if(version !== audioVersion) return;
+          currentUtterance = null;
+          find('op-replay').setAttribute('aria-busy','false');
+          if(event.error === 'canceled' || event.error === 'interrupted') return;
+          audioStatus(event.error === 'not-allowed' ? 'Click ▶ to play.' : 'Audio unavailable. Try ▶ again.');
+        };
+        try { synth.speak(utterance); }
+        catch { currentUtterance = null; audioStatus('Click ▶ to play.'); }
+      }
+      function reset() {
+        stopAudio();
+        revealed = false;
+        assisted = false;
+        root.classList.remove('op-showing-answer');
+        find('op-front').hidden = false;
+        find('op-answer').hidden = true;
+        root.querySelectorAll('details').forEach(item => { item.open = false; });
+        root.querySelectorAll('[data-grade]').forEach(item => item.setAttribute('aria-pressed','false'));
+        setText('op-rating-status','');
+      }
+      function renderExample() {
+        const code = find('op-example').value;
+        const item = examples[code];
+        if(!item) return;
+        reset();
+        const values = {'op-topic':item.tag + ' · L' + item.level,'op-direction':'English → ' + item.language,'op-prompt':item.prompt,'op-context':item.context,'op-focus':item.focus,'op-structure-text':item.structure,'op-word-text':item.word,'op-target':item.answer,'op-variant':item.variant,'op-reading':item.reading};
+        Object.entries(values).forEach(([id,value]) => setText(id,value));
+        find('op-target').lang = code;
+        find('op-variant-details').hidden = !item.variant;
+        find('op-reading-details').hidden = !item.reading;
+      }
+      ['op-structure','op-word'].forEach(id => find(id).addEventListener('toggle',() => {
+        if(find(id).open && !revealed) assisted = true;
+      }));
+      find('op-example').addEventListener('change',renderExample);
+      find('op-reveal').addEventListener('click',() => {
+        if(revealed) return;
+        revealed = true;
+        root.classList.add('op-showing-answer');
+        find('op-front').hidden = true;
+        find('op-answer').hidden = false;
+        playSentence();
+      });
+      find('op-replay').addEventListener('click',playSentence);
+      find('op-reset').addEventListener('click',reset);
+      root.querySelectorAll('[data-grade]').forEach(button => button.addEventListener('click',() => {
+        root.querySelectorAll('[data-grade]').forEach(item => item.setAttribute('aria-pressed',String(item === button)));
+        setText('op-rating-status',assisted ? 'Hint used. Suggested rating: Again. Preview only.' : button.dataset.grade + '. Preview only.');
+      }));
+      if(synth) synth.addEventListener('voiceschanged',() => { if(waitingForVoice && revealed) playSentence(); });
+      globalThis.addEventListener('pagehide',stopAudio);
+      renderExample();
+      const design = {appearance:'system',sentenceSize:44,corners:18};
+      function applyDesign() {
+        root.style.colorScheme = design.appearance === 'system' ? 'light dark' : design.appearance;
+        root.style.setProperty('--op-size',design.sentenceSize + 'px');
+        root.style.setProperty('--op-radius',design.corners + 'px');
+      }
+      applyDesign();
+      if(globalThis.Tweak) {
+        const tweak = new Tweak({container:root,onChange:applyDesign});
+        tweak.addSelect(design,'appearance',{label:'Appearance',options:['system','light','dark']});
+        tweak.addSlider(design,'sentenceSize',{label:'Sentence size',min:38,max:52,unit:'px'});
+        tweak.addSlider(design,'corners',{label:'Corner radius',min:0,max:24,unit:'px'});
+      }
+    })();
+  </script>
+</div>
