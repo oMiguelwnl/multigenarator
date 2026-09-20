@@ -233,7 +233,9 @@ def export_anki_package(
 
 
 def _row_fields(row: ExportCardRow, *, field_names: tuple[str, ...]) -> list[str]:
-    mapping = row.ordered_field_mapping(field_names=field_names)
+    from multilang.services.exporting.presentation import rendered_field_mapping
+
+    mapping = rendered_field_mapping(row, field_names=field_names)
     return [str(mapping[field_name]) if mapping[field_name] is not None else "" for field_name in field_names]
 
 

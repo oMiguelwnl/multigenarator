@@ -137,7 +137,10 @@ def test_mandarin_tabular_exports_exact_utf8_contract(
         "zhōng guó",
         "中國",
         "proper noun: China",
-        "我去银行。",
+        '<ruby class="mandarin-ruby tone-3">我<rt>wǒ</rt></ruby>'
+        '<ruby class="mandarin-ruby tone-4">去<rt>qù</rt></ruby>'
+        '<ruby class="mandarin-ruby tone-2">银<rt>yín</rt></ruby>'
+        '<ruby class="mandarin-ruby tone-2">行<rt>háng</rt></ruby>。',
         "wǒ qù yín háng。",
         "我去銀行。",
         "I go to the bank.",

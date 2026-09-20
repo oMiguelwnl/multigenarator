@@ -11,6 +11,7 @@ from multilang.domain.anki_semantics import SemanticCard
 from multilang.domain.exporting import ExportCardIdentity, ExportCardRow
 from multilang.services.anki_id_registry import native_anki_model_id
 from multilang.services.card_template_loader import load_card_template
+from multilang.services.exporting.presentation import rendered_field_mapping
 from multilang.services.native_audio import reusable_audio_version
 from multilang.services.native_content import render_plain_content as _render_plain_content
 from multilang.services.native_content import validate_target_span
@@ -108,6 +109,7 @@ def semantic_field_note(
         **readings,
     )
     qfmt = template.front
+    cloze_span = None
     definition_field = "Definitions" if "Definitions" in names else "Definition"
     if card.role == "reverse":
         if "word_audio" not in names:
@@ -135,11 +137,15 @@ def semantic_field_note(
             + "</span>"
             + render_plain_content(content.example_sentence[end:])
         )
-        row = row.model_copy(update={"example_sentence": marked_sentence})
+        if "Sentence Pinyin" in names:
+            cloze_span = span
+        else:
+            row = row.model_copy(update={"example_sentence": marked_sentence})
         sentence_field = "Example Sentence" if "Example Sentence" in names else "Sentence"
         qfmt = (
             '<div class="semantic-cloze-prompt">{{' + sentence_field + "}}</div>"
             "<style>.semantic-cloze-prompt .semantic-cloze-target{font-size:0}"
+            ".semantic-cloze-prompt .semantic-cloze-target rt{display:none}"
             '.semantic-cloze-prompt .semantic-cloze-target::after{content:"[…]";font-size:22px}</style>'
         )
     role = card.role if card.role in {"reverse", "listening", "cloze"} else "recognition"
@@ -155,4 +161,5 @@ def semantic_field_note(
         templates=[{"name": "Card 1", "qfmt": qfmt, "afmt": afmt}],
         css=template.css,
     )
-    return model, [str(value) for value in row.ordered_field_mapping().values()], media
+    mapping = rendered_field_mapping(row, cloze_span=cloze_span)
+    return model, [str(value) for value in mapping.values()], media

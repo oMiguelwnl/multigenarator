@@ -2,12 +2,17 @@
 
 from __future__ import annotations
 
+import re
 import unicodedata
 from dataclasses import dataclass
 from functools import lru_cache
+from html import escape
 
 from opencc import OpenCC
 from pypinyin import Style, lazy_pinyin
+from pypinyin.contrib.tone_convert import to_tone, to_tone3
+
+_PINYIN_LETTERS = re.compile(r"[A-Za-z\u00c0-\u024f\u1e00-\u1eff]+")
 
 
 class MandarinOrthographyError(ValueError):
@@ -122,6 +127,83 @@ def tonal_pinyin(text: str) -> str:
     return rendered
 
 
+def render_mandarin_sentence(
+    *, sentence: str, sentence_pinyin: str, cloze_span: tuple[int, int] | None = None
+) -> str:
+    """Render saved readings as safe ruby, without deriving new pronunciations.
+
+    Walk both strings together: punctuation and literal numbers are alignment
+    anchors, and each Han character consumes exactly one separated syllable.
+    A misaligned reading fails closed. Input offsets and visible source
+    characters are preserved; normalization is only used to compare punctuation.
+    """
+    if not sentence or not sentence_pinyin or max(len(sentence), len(sentence_pinyin)) > 4000:
+        raise MandarinOrthographyError("Mandarin annotation requires bounded non-empty text")
+    if any(unicodedata.category(c).startswith("C") and c not in "\n\r\t"
+           for c in sentence + sentence_pinyin):
+        raise MandarinOrthographyError("Mandarin annotation contains control characters")
+    counts = script_counts(sentence)
+    if not counts.han or counts.kana or counts.latin or counts.unsupported_letter:
+        raise MandarinOrthographyError("Mandarin annotation requires Han source text")
+    if cloze_span is not None and not 0 <= cloze_span[0] < cloze_span[1] <= len(sentence):
+        raise MandarinOrthographyError("Mandarin cloze span is out of bounds")
+    reading = unicodedata.normalize("NFC", sentence_pinyin)
+    cursor = 0
+    output: list[str] = []
+    for index, character in enumerate(sentence):
+        if cloze_span is not None and index == cloze_span[0]:
+            output.append('<span class="semantic-cloze-target">')
+        while cursor < len(reading) and reading[cursor].isspace():
+            cursor += 1
+        if character.isspace():
+            output.append(escape(character))
+        elif _is_han(character):
+            if index and _is_han(sentence[index - 1]) and reading[cursor:cursor + 1] in {"'", "’"}:
+                cursor += 1
+            match = _PINYIN_LETTERS.match(reading, cursor)
+            if match is None:
+                raise MandarinOrthographyError("Mandarin pinyin does not align with the sentence")
+            syllable = match.group()
+            cursor = match.end()
+            # Source numbers disambiguate neutral syllables (了2 -> le2).
+            # Accented syllables cannot carry a second numeric tone marker.
+            numbered = to_tone3(syllable.lower())
+            marked_tone = next((c for c in numbered if c in "1234"), None)
+            source_number = re.match(r"\d+", sentence[index + 1:].lstrip())
+            reading_number = re.match(r"\d+", reading[cursor:])
+            literal_number = (
+                source_number is not None and reading_number is not None
+                and unicodedata.normalize("NFKC", source_number.group())
+                == unicodedata.normalize("NFKC", reading_number.group())
+            )
+            if (
+                marked_tone is None and not literal_number
+                and reading[cursor:cursor + 1] in {"1", "2", "3", "4", "5"}
+            ):
+                syllable += reading[cursor]
+                cursor += 1
+            tone = marked_tone or (syllable[-1] if syllable[-1] in "12345" else "5")
+            annotation = to_tone(syllable)
+            output.append(
+                f'<ruby class="mandarin-ruby tone-{tone}">{escape(character)}'
+                f'<rt>{escape(annotation)}</rt></ruby>'
+            )
+        else:
+            if cursor >= len(reading) or _comparable_punctuation(character) != _comparable_punctuation(reading[cursor]):
+                raise MandarinOrthographyError("Mandarin pinyin punctuation does not align with the sentence")
+            cursor += 1
+            output.append(escape(character))
+        if cloze_span is not None and index + 1 == cloze_span[1]:
+            output.append("</span>")
+    if reading[cursor:].strip():
+        raise MandarinOrthographyError("Mandarin pinyin has extra text after the sentence")
+    return "".join(output)
+
+
+def _comparable_punctuation(value: str) -> str:
+    return unicodedata.normalize("NFKC", value).replace("。", ".")
+
+
 def script_counts(text: str) -> ScriptCounts:
     """Count Han, kana, and Latin letters after NFKC normalization."""
 
@@ -196,5 +278,6 @@ __all__ = [
     "derive_mandarin_orthography",
     "script_counts",
     "tonal_pinyin",
+    "render_mandarin_sentence",
     "validate_simplified_mandarin",
 ]

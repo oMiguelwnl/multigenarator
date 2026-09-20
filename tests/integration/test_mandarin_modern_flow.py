@@ -14,6 +14,7 @@ from typing import ClassVar
 import pytest
 from sqlalchemy import create_engine, func, select
 from sqlalchemy.orm import Session
+from support.audio import SILENT_MP3, SILENT_MP3_DURATION_MS
 from typer.testing import CliRunner
 
 import multilang.runtime as runtime_module
@@ -40,13 +41,26 @@ from multilang.services.export_anki_package import (
 )
 from multilang.services.mandarin_orthography import MandarinOrthographyService
 from multilang.services.text_generation import (
+    DefinitionConsistencyResult,
     DefinitionGenerationResult,
     SentenceGenerationResult,
     SentenceTranslationResult,
+    TranslationFidelityResult,
 )
 from multilang.settings import Settings
 
 runner = CliRunner()
+
+_FIXTURE_TRANSLATIONS = {
+    "朋友们在晚饭时讨论中国。": "Os amigos conversam sobre a China durante o jantar.",
+    "朋友们在晚饭时讨论银行。": "Os amigos conversam sobre o banco durante o jantar.",
+    "朋友们在晚饭时讨论学习。": "Os amigos conversam sobre os estudos durante o jantar.",
+}
+_FIXTURE_MEANINGS = {
+    "中国": ("proper noun", "país do leste da Ásia"),
+    "银行": ("noun", "instituição que recebe depósitos"),
+    "学习": ("verb", "adquirir conhecimentos por meio do estudo"),
+}
 
 
 class FakeMandarinAzureSpeechAdapter(AudioSynthesisAdapter):
@@ -69,9 +83,11 @@ class FakeMandarinAzureSpeechAdapter(AudioSynthesisAdapter):
     ) -> AudioSynthesisResponse:
         type(self).calls.append((voice_id, locale, ssml_text))
         output_path.parent.mkdir(parents=True, exist_ok=True)
-        payload = b"ID3" + f":{voice_id}:{locale}:{audio_format}:{ssml_text}".encode("utf-8")
+        payload = SILENT_MP3
         output_path.write_bytes(payload)
-        return AudioSynthesisResponse(storage_path=output_path, byte_size=len(payload), duration_ms=800)
+        return AudioSynthesisResponse(
+            storage_path=output_path, byte_size=len(payload), duration_ms=SILENT_MP3_DURATION_MS,
+        )
 
 
 class CountingMandarinOrthographyService:
@@ -85,6 +101,24 @@ class CountingMandarinOrthographyService:
 
 
 class FakeMandarinSentenceAdapter:
+    def review_definition(self, request) -> DefinitionConsistencyResult:
+        label, meaning = _FIXTURE_MEANINGS.get(request.display_form, (None, None))
+        consistent = (
+            request.definition == f"{label}: {meaning}"
+            and request.sentence == f"朋友们在晚饭时讨论{request.display_form}。"
+            and request.source_language == "zh" and request.definition_language == "pt"
+        )
+        return DefinitionConsistencyResult(verdict={"decision": "consistent" if consistent else "mismatch"})
+
+    def review_translation(self, request) -> TranslationFidelityResult:
+        # A bounded, exact fixture oracle exercises the real fidelity gate.
+        # Unknown or altered pairs are not automatically approved.
+        equivalent = (
+            request.source_language == "zh" and request.target_language == "pt"
+            and _FIXTURE_TRANSLATIONS.get(request.sentence) == request.translation
+        )
+        return TranslationFidelityResult(verdict={"decision": "equivalent" if equivalent else "mismatch"})
+
     def generate_definition(self, request) -> DefinitionGenerationResult:
         return DefinitionGenerationResult(
             definitions_html=f"noun: learner meaning for {request.lemma}",
@@ -107,7 +141,7 @@ class FakeMandarinSentenceAdapter:
 class FakeMandarinTranslationAdapter:
     def translate_sentence(self, request) -> SentenceTranslationResult:
         return SentenceTranslationResult(
-            translation="Friends discuss the target term during dinner.",
+            translation=_FIXTURE_TRANSLATIONS[request.sentence],
             provenance={"source": "mandarin-e2e-fixture", "provider": "fixture"},
         )
 
@@ -122,9 +156,9 @@ def write_lookup_index(tmp_path: Path, *terms: str) -> Path:
                     "term": term,
                     "display_form": term,
                     "lemma": term,
-                    "definitions": [{"中国": "China", "银行": "a bank", "学习": "to study"}[term]],
-                    "definition_language": "en",
-                    "part_of_speech": "noun",
+                    "definitions": [_FIXTURE_MEANINGS[term][1]],
+                    "definition_language": "pt",
+                    "part_of_speech": _FIXTURE_MEANINGS[term][0],
                     "ipa": f"/{term}/",
                     "source": "manual",
                 }
@@ -215,6 +249,7 @@ def _assert_tabular_contract(path: Path, *, delimiter: str, expected_cards: int)
     assert len(rows) == expected_cards
     assert all(row[-1] == "" for row in rows)
     assert all(row[9].startswith("[sound:") and row[10].startswith("[sound:") for row in rows)
+    assert all('<ruby class="mandarin-ruby tone-' in row[5] and "<rt>" in row[5] for row in rows)
 
 
 def _inspect_mandarin_apkg(path: Path, *, expected_notes: int) -> dict[str, object]:
@@ -223,7 +258,7 @@ def _inspect_mandarin_apkg(path: Path, *, expected_notes: int) -> dict[str, obje
         with zipfile.ZipFile(path) as archive:
             media_manifest = json.loads(archive.read("media").decode("utf-8"))
             assert len(media_manifest) == expected_notes * 2
-            assert all(archive.read(archived_name).startswith(b"ID3") for archived_name in media_manifest)
+            assert all(archive.read(archived_name) == SILENT_MP3 for archived_name in media_manifest)
             collection_path.write_bytes(archive.read("collection.anki2"))
         with closing(sqlite3.connect(collection_path)) as connection:
             models = json.loads(connection.execute("select models from col").fetchone()[0])
@@ -237,6 +272,7 @@ def _inspect_mandarin_apkg(path: Path, *, expected_notes: int) -> dict[str, obje
     assert len(notes) == expected_notes
     assert all(" zh " in tags for _, tags in notes)
     assert all(fields.split("\x1f")[-1] == "" for fields, _ in notes)
+    assert all('<ruby class="mandarin-ruby tone-' in fields.split("\x1f")[5] for fields, _ in notes)
     return {"model": model, "notes": notes, "media": media_manifest}
 
 
@@ -263,7 +299,7 @@ def test_mandarin_frequency_cli_exports_frozen_rows_and_all_formats(
         app,
         ["generate", "--language", "zh", "--source", "frequency", "--cards-per-level", "1"],
     )
-    assert generated.exit_code == 0, generated.output
+    assert generated.exit_code == 0, f"{generated.output}\n{generated.exception}"
     assert "accepted_text_items=3" in generated.output
     assert "audio_processed_items=6" in generated.output
     assert len(FakeMandarinAzureSpeechAdapter.calls) == 6
@@ -374,8 +410,8 @@ def write_mandarin_proof_artifact(output_path: Path) -> None:
         media_root = Path(directory)
         word_media = media_root / "mandarin-proof-word.mp3"
         sentence_media = media_root / "mandarin-proof-sentence.mp3"
-        word_media.write_bytes(b"ID3-offline-word-proof")
-        sentence_media.write_bytes(b"ID3-offline-sentence-proof")
+        word_media.write_bytes(SILENT_MP3)
+        sentence_media.write_bytes(SILENT_MP3)
         export_anki_package(
             rows=[row],
             media_index={row.word_audio: word_media, row.sentence_audio: sentence_media},

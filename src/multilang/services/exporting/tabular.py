@@ -14,6 +14,7 @@ from multilang.domain.exporting import (
     validate_korean_frequency_export_rows,
 )
 from multilang.domain.jobs import SupportedLanguage
+from multilang.services.exporting.presentation import rendered_field_mapping
 
 
 @dataclass(frozen=True)
@@ -61,7 +62,7 @@ def write_export_tabular_bundle(
     buffer.write(f"#columns:{delimiter.join(field_names)}\n")
 
     for row in sorted_rows:
-        mapping = row.ordered_field_mapping(field_names=field_names)
+        mapping = rendered_field_mapping(row, field_names=field_names)
         writer.writerow([
             _serialize_field(mapping[field_name]) for field_name in field_names
         ])

@@ -175,8 +175,11 @@ def test_build_mandarin_model_uses_dedicated_identity_fields_and_template(source
     qfmt = model.templates[0]["qfmt"]
     afmt = model.templates[0]["afmt"]
     assert qfmt.index("{{word}}") < qfmt.index("{{Pinyin}}") < qfmt.index("{{Traditional}}")
-    assert qfmt.index("{{Example Sentence}}") < qfmt.index("{{Sentence Pinyin}}")
-    assert qfmt.index("{{Sentence Pinyin}}") < qfmt.index("{{Traditional Sentence}}")
+    assert qfmt.index("{{Example Sentence}}") < qfmt.index("{{Traditional Sentence}}")
+    assert qfmt.index("{{Traditional}}") < qfmt.index("{{Definitions}}")
+    assert qfmt.index("{{Definitions}}") < qfmt.index("{{Image}}") < qfmt.index("{{Example Sentence}}")
+    assert "{{Sentence Pinyin}}" not in qfmt
+    assert qfmt.index("{{Example Sentence}}") < qfmt.index("{{Translation}}") < qfmt.index("{{Traditional Sentence}}")
     assert 'id="translation"' in qfmt and 'style="display:none;"' in qfmt
     assert 'document.getElementById("translation").style.display = "block";' in afmt
 

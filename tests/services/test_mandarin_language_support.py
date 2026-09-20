@@ -229,7 +229,7 @@ def test_tatoeba_serializes_cmn_and_accepts_matching_unspaced_han(monkeypatch) -
     assert selected.sentence == "我每天去中国银行。"
 
 
-def test_mandarin_word_list_grounding_uses_english_policy() -> None:
+def test_mandarin_word_list_grounding_uses_portuguese_source_policy() -> None:
     class Lookup:
         def lookup(self, *, language_code: str, term: str):
             assert language_code == "zh"
@@ -237,8 +237,8 @@ def test_mandarin_word_list_grounding_uses_english_policy() -> None:
                 term=term,
                 display_form="中国",
                 lemma="中国",
-                definitions=["China"],
-                definition_language="en",
+                definitions=["país do leste da Ásia"],
+                definition_language="pt",
                 part_of_speech="proper noun",
                 ipa="zhong guo",
                 source="fixture",
@@ -271,10 +271,12 @@ def test_mandarin_word_list_grounding_uses_english_policy() -> None:
         ),
     )
 
-    assert candidate.definition_language == "en"
-    assert candidate.translation_target_language == "en"
-    assert calls[0].source_language == "zh"
-    assert calls[0].target_language == "en"
+    assert candidate.definition_language == "pt"
+    assert candidate.translation_target_language == "pt"
+    assert candidate.definitions_html == "proper noun: país do leste da Ásia"
+    # No independent reviewer is supplied: preserve verified source evidence,
+    # rather than treating an unreviewed generated definition as authoritative.
+    assert calls == []
 
 
 @pytest.mark.parametrize(

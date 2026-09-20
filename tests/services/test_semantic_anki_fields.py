@@ -70,7 +70,7 @@ def family(language="en", *, inventory="core", presentation=None):
             request=request,
             content=GeneratedContent(
                 definition="Contextual meaning & use.",
-                example_sentence=f"Context {word}.",
+                example_sentence=f"{word}。" if language == "zh" else f"Context {word}.",
                 translation="Translated context.",
                 explanation="Past tense in this context." if index else "Base form.",
             ),
@@ -201,6 +201,33 @@ def test_presentation_is_hash_bound_without_changing_old_content_hashes():
     assert old.version_id != new.version_id
     with pytest.raises(ValueError):
         ContentVersion.model_validate(old.model_dump() | {"presentation": {"ipa": "invented"}})
+
+
+@pytest.mark.parametrize("inventory", ["core", "custom"])
+def test_mandarin_semantic_export_keeps_saved_readings_and_cloze_ruby(tmp_path, inventory):
+    head = family("zh", inventory=inventory, presentation={
+        "mandarin_word_pinyin": "kàn", "mandarin_word_traditional": "看",
+        "mandarin_sentence_pinyin": "kàn。", "mandarin_sentence_traditional": "看。",
+        "source_id": "fixture", "source_sha256": "a" * 64,
+    })[0]
+    card = SemanticCard.model_validate(head.model_dump() | {
+        "role": "cloze", "content": None, "prerequisite_card_id": head.card_id,
+    })
+    content = head.content.model_dump()
+    content["request"]["card_id"] = card.card_id
+    content["target_evidence"]["target_span"] = (0, 1)
+    card = SemanticCard.model_validate(card.model_dump() | {"content": content})
+    path = tmp_path / "mandarin-ruby.apkg"
+    export_semantic_anki(cards=(head, card), output_path=path, model="B", prototype=True)
+    notes = inspect_package(path, tmp_path)
+    for item in (head, card):
+        model, values = notes[item.note_guid]
+        fields = dict(zip((f["name"] for f in model["flds"]), values, strict=True))
+        assert '<ruby class="mandarin-ruby tone-4">看<rt>kàn</rt></ruby>' in fields["Example Sentence"]
+        assert fields["Sentence Pinyin"] == "kàn。"
+        if item.role == "cloze":
+            assert fields["Example Sentence"].startswith('<span class="semantic-cloze-target"><ruby')
+            assert '.semantic-cloze-target rt{display:none}' in model["tmpls"][0]["qfmt"]
 
 
 @pytest.mark.parametrize("language", ["ja", "zh"])

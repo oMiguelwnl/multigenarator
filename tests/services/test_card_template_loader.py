@@ -956,13 +956,19 @@ def test_mandarin_template_preserves_base_css_and_pedagogical_field_order() -> N
     from multilang.domain.jobs import SupportedLanguage
     from multilang.services.card_template_loader import load_card_template
 
-    base = load_card_template(source_type="frequency")
+    template_dir = Path(__file__).parents[2] / "src" / "multilang" / "templates"
+    base_source = (template_dir / "normal_card.md").read_text(encoding="utf-8")
+    base_match = re.search(r"## Styling \(CSS\)\s+```css\n(?P<css>.*?)```", base_source, flags=re.DOTALL)
+    assert base_match is not None
+    base_css = base_match.group("css").strip()
     frequency = load_card_template(source_type="frequency", language=SupportedLanguage.ZH)
     word_list = load_card_template(source_type="word-list", language=SupportedLanguage.ZH)
 
-    assert frequency == word_list
+    assert frequency.front == word_list.front
+    assert frequency.back == word_list.back
+    assert frequency.css == word_list.css
     assert frequency.source_template_name == "mandarin_card"
-    assert frequency.css.startswith(base.css)
+    assert frequency.css.startswith(base_css)
     mandarin_source = (
         Path(__file__).parents[2] / "src" / "multilang" / "templates" / "mandarin_card.md"
     ).read_text(encoding="utf-8")
@@ -972,53 +978,34 @@ def test_mandarin_template_preserves_base_css_and_pedagogical_field_order() -> N
         flags=re.DOTALL,
     )
     assert css_match is not None
-    assert frequency.css == f"{base.css}\n\n{css_match.group('css').strip()}"
-    references = re.findall(r"{{[#/]?([^{}]+)}}", frequency.front + frequency.back)
-    assert references == [
-        "word",
-        "Pinyin",
-        "Pinyin",
-        "Pinyin",
-        "Traditional",
-        "Traditional",
-        "Traditional",
-        "word_audio",
-        "Definitions",
-        "Image",
-        "Image",
-        "Image",
-        "Example Sentence",
-        "sentence_audio",
-        "Sentence Pinyin",
-        "Sentence Pinyin",
-        "Sentence Pinyin",
-        "Traditional Sentence",
-        "Traditional Sentence",
-        "Traditional Sentence",
-        "Translation",
-        "FrontSide",
-    ]
+    assert frequency.css == f"{base_css}\n\n{css_match.group('css').strip()}"
+    references = set(re.findall(r"{{[#/]?([^{}]+)}}", frequency.front + frequency.back))
+    assert references == {
+        "word", "Pinyin", "Traditional", "word_audio", "Definitions", "Image",
+        "Example Sentence", "sentence_audio", "Traditional Sentence",
+        "Translation", "FrontSide",
+    }
     assert frequency.front.index("{{word}}") < frequency.front.index("{{Pinyin}}")
     assert frequency.front.index("{{Pinyin}}") < frequency.front.index("{{Traditional}}")
-    assert frequency.front.index("{{Example Sentence}}") < frequency.front.index("{{Sentence Pinyin}}")
-    assert frequency.front.index("{{Sentence Pinyin}}") < frequency.front.index("{{Traditional Sentence}}")
+    assert "{{Sentence Pinyin}}" not in frequency.front
+    assert frequency.front.index("{{Traditional}}") < frequency.front.index("{{Definitions}}")
+    assert frequency.front.index("{{Definitions}}") < frequency.front.index("{{Image}}")
+    assert frequency.front.index("{{Image}}") < frequency.front.index("{{Example Sentence}}")
     assert '{{#Image}}' in frequency.front and '{{/Image}}' in frequency.front
     assert 'id="translation"' in frequency.front
     assert 'style="display:none;"' in frequency.front
     assert 'document.getElementById("translation").style.display = "block";' in frequency.back
-    for selector in (".traditional", ".sentencePinyin", ".traditionalSentence"):
-        assert selector in frequency.css
-        assert f".nightMode {selector}" in frequency.css
-    assert ".ipa {" in frequency.css
-    assert "color: #7f9bc4;" in frequency.css
-    assert ".traditional {\n  color: #93c5fd;" in frequency.css
-    assert ".sentencePinyin {\n  color: #7f9bc4;" in frequency.css
-    assert ".traditionalSentence {\n  color: #93c5fd;" in frequency.css
-    example_panel = _balanced_div(frequency.front, class_name="examplePanel")
-    assert example_panel.index("{{Example Sentence}}") < example_panel.index("{{sentence_audio}}")
-    assert example_panel.index("{{sentence_audio}}") < example_panel.index("{{Sentence Pinyin}}")
-    assert example_panel.index("{{Sentence Pinyin}}") < example_panel.index("{{Traditional Sentence}}")
-    assert example_panel.index("{{Traditional Sentence}}") < example_panel.index("{{Translation}}")
+    assert "ruby-position: over" in frequency.css
+    for tone in range(1, 6):
+        assert f".tone-{tone}" in frequency.css
+    assert "Definição:" in frequency.front and "Exemplo:" in frequency.front
+    assert frequency.front.index("{{Example Sentence}}") < frequency.front.index("{{sentence_audio}}")
+    assert (
+        frequency.front.index("{{sentence_audio}}")
+        < frequency.front.index("{{Translation}}")
+        < frequency.front.index('class="horizontalPadding mandarinTraditionalSection"')
+        < frequency.front.index("{{Traditional Sentence}}")
+    )
     markup = "\n".join((frequency.front, frequency.back, frequency.css)).casefold()
-    assert "tone" not in markup
+    assert "https://" not in markup and "http://" not in markup
     assert "migaku" not in markup
