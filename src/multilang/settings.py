@@ -7,6 +7,7 @@ from typing import Annotated, Literal
 from pydantic import AliasChoices, Field, SecretStr, field_validator
 from pydantic_settings import BaseSettings, NoDecode, SettingsConfigDict
 
+from multilang.output_paths import DEFAULT_OUTPUT_DIR
 from multilang.services.audio_voice_registry import VOICE_REGISTRY_VERSION
 
 SupportedLanguageCode = Literal[
@@ -154,7 +155,10 @@ class Settings(BaseSettings):
     elevenlabs_model_id: str = "eleven_multilingual_v2"
     elevenlabs_output_format: ElevenLabsOutputFormat = "mp3_44100_128"
     audio_storage_dir: Path = Path(".multilang/audio")
-    export_output_dir: Path = Path(".multilang/exports")
+    output_dir: Path = DEFAULT_OUTPUT_DIR
+    export_output_dir: Path = Field(
+        default_factory=lambda values: values["output_dir"] / "decks"
+    )
     webdav_url: str | None = None
     webdav_username: str | None = None
     webdav_secret: str | None = None
@@ -165,6 +169,18 @@ class Settings(BaseSettings):
     supported_languages: Annotated[list[SupportedLanguageCode], NoDecode] = Field(
         default_factory=lambda: list(DEFAULT_SUPPORTED_LANGUAGES)
     )
+
+    @property
+    def preview_output_dir(self) -> Path:
+        return self.output_dir / "previews"
+
+    @property
+    def example_output_dir(self) -> Path:
+        return self.output_dir / "examples"
+
+    @property
+    def report_output_dir(self) -> Path:
+        return self.output_dir / "reports"
 
     @field_validator("native_language_model_profiles")
     @classmethod

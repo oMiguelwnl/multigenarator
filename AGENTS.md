@@ -155,6 +155,13 @@ Rules:
 If `.planning/` is missing, run `npx -y gsdd-cli init` then `gsdd-new-project`; bare `gsdd init` is equivalent only when globally installed.
 <!-- END GSDD -->
 
+
+## Working Practices
+
+- Put generated card previews, examples, decks and delivery reports under the single `output/` root: `previews/`, `examples/`, `decks/` and `reports/`. Use the output directory properties in `Settings`; respect an explicit user-supplied destination.
+- Keep each example's HTML, images, audio and supporting files together. Do not create new deliverables in the repository root, `docs/`, `work/`, `exports/` or `.multilang/verification/`. See `output/README.md` for the directory convention.
+- Templates belong in `src/multilang/templates/`, reusable generators in `scripts/`, and runtime databases/caches in `.multilang/`. Historical compatibility links are not new output destinations.
+
 # ai/orchestration
 # language + export
 # testing

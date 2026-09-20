@@ -11,7 +11,7 @@ from typing import Annotated, Any
 
 import typer
 
-from multilang.cli_commands.common import LOCAL_SMOKE_FIXTURE_DIR, TEST_MODE_CARDS_PER_LEVEL
+from multilang.cli_commands.common import TEST_MODE_CARDS_PER_LEVEL
 from multilang.domain.deck_audit import audit_deck_package
 from multilang.domain.exporting import ExportArtifactFormat
 from multilang.domain.highlights import HighlightInputMode
@@ -134,7 +134,7 @@ def register_commands(cli: typer.Typer, dependencies: Dependencies) -> None:
                 writable=True,
                 help="Directory where the local English smoke assets will be written.",
             ),
-        ] = LOCAL_SMOKE_FIXTURE_DIR,
+        ] = dependencies.settings_factory().example_output_dir / "local-smoke",
     ) -> None:
         words_path, index_path = dependencies._write_local_smoke_assets(output_dir)
         typer.echo(f"words={words_path}")
@@ -525,7 +525,7 @@ def register_commands(cli: typer.Typer, dependencies: Dependencies) -> None:
                 dir_okay=True,
                 help="Directory where deck-audit.json and deck-audit.md will be written.",
             ),
-        ] = Path(".multilang/audits"),
+        ] = dependencies.settings_factory().report_output_dir / "audits",
     ) -> None:
         try:
             read_result = read_apkg_cards(input_apkg)

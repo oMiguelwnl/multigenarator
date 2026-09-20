@@ -95,7 +95,7 @@ CANONICAL_STATE_PATHS = (
     Path("data/korean_foundations/validation-receipt.json"),
     Path("data/korean_foundations/snapshots"),
     Path("data/korean_foundations/active-foundations.json"),
-    Path(".multilang/exports/korean-foundations"),
+    Path("output/decks/korean-foundations"),
 )
 
 

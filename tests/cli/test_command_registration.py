@@ -117,12 +117,40 @@ def test_export_uses_settings_patched_after_app_creation(monkeypatch, tmp_path) 
 
 
 def test_phonetics_defaults_use_legacy_settings_factory(monkeypatch, tmp_path) -> None:
-    monkeypatch.setattr(cli_module, "Settings", lambda **kwargs: SimpleNamespace(export_output_dir=tmp_path))
+    monkeypatch.setattr(cli_module, "Settings", lambda **kwargs: SimpleNamespace(
+        export_output_dir=tmp_path,
+        example_output_dir=tmp_path / "examples",
+        report_output_dir=tmp_path / "reports",
+    ))
 
     command = get_command(cli_module.create_app()).commands["export-russian-phonemes"]
 
     output = next(parameter for parameter in command.params if parameter.name == "output_path")
     assert output.default == tmp_path / "russian-phonemes.apkg"
+
+
+def test_examples_decks_and_audits_follow_configured_output_root(monkeypatch, tmp_path) -> None:
+    monkeypatch.setenv("MULTILANG_OUTPUT_DIR", str(tmp_path))
+    monkeypatch.delenv("MULTILANG_EXPORT_OUTPUT_DIR", raising=False)
+    commands = get_command(cli_module.create_app()).commands
+    for command_name, parameter_name, expected in (
+        ("prepare-local-smoke", "output_dir", tmp_path / "examples/local-smoke"),
+        ("export-russian-phonemes", "output_path", tmp_path / "decks/russian-phonemes.apkg"),
+        ("audit-deck", "output_dir", tmp_path / "reports/audits"),
+    ):
+        option = next(p for p in commands[command_name].params if p.name == parameter_name)
+        assert option.default == expected
+
+
+def test_fixed_foundation_inspection_uses_central_deck_directory() -> None:
+    assert cli_module._KOREAN_FOUNDATION_EXPORT_ROOT == Path("output/decks/korean-foundations")
+
+
+def test_review_report_uses_configured_output_root(monkeypatch, tmp_path) -> None:
+    monkeypatch.setenv("MULTILANG_OUTPUT_DIR", str(tmp_path))
+    assert cli_module._default_review_report_path("fixture-job") == (
+        tmp_path / "reports/reviews/fixture-job.json"
+    )
 
 
 def test_generated_local_smoke_index_is_usable_as_english_evidence(tmp_path) -> None:

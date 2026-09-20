@@ -91,7 +91,7 @@ PROTECTED_PATHS: tuple[str, ...] = (
     "data/korean_foundations",
     f"{PHASE_RELPATH}/evidence-inbox/README.md",
     f"{PHASE_RELPATH}/execution-handoffs/curation-selection.json",
-    ".multilang/exports/korean-foundations",
+    "output/decks/korean-foundations",
 )
 PROTECTED_ALLOW_CATEGORIES: Mapping[str, tuple[str, ...]] = {
     "ai-candidate-data": (
@@ -103,7 +103,7 @@ PROTECTED_ALLOW_CATEGORIES: Mapping[str, tuple[str, ...]] = {
     "receipt": (f"{PHASE_RELPATH}/evidence-inbox/validation-receipt.json",),
     "snapshot": ("data/korean_foundations/snapshots",),
     "pointer": ("data/korean_foundations/active-foundations.json",),
-    "exports": (".multilang/exports/korean-foundations",),
+    "exports": ("output/decks/korean-foundations",),
 }
 LANE_PROTECTED_ALLOW_CATEGORIES: Mapping[str, tuple[str, ...]] = {
     "ai": ("ai-candidate-data",),

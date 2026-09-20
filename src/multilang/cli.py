@@ -54,6 +54,7 @@ from multilang.domain.korean_provider import KoreanProviderPolicy, KoreanProvide
 from multilang.domain.webdav import (
     WebDAVError,
 )
+from multilang.output_paths import DEFAULT_OUTPUT_DIR
 from multilang.progress import ProgressRenderer
 from multilang.repositories.job_repository import JobRepository
 from multilang.repositories.lexical_repository import LexicalRepository
@@ -130,7 +131,7 @@ from multilang.services.text_review import ReviewReport, TextReviewService
 from multilang.services.webdav_highlight_fetch import WebDAVHighlightFetchService
 from multilang.settings import Settings
 
-_KOREAN_FOUNDATION_EXPORT_ROOT = Path(".multilang/exports/korean-foundations")
+_KOREAN_FOUNDATION_EXPORT_ROOT = DEFAULT_OUTPUT_DIR / "decks/korean-foundations"
 
 _KOREAN_FOUNDATION_EXPORT_NAMES = (
     "hangul.apkg",
@@ -1228,7 +1229,7 @@ def _print_resume_diagnostic(report: JobExecutionReport) -> None:
 
 
 def _default_review_report_path(job_id: str) -> Path:
-    return Path(".multilang") / "review-reports" / f"{job_id}.json"
+    return Settings().report_output_dir / "reviews" / f"{job_id}.json"
 
 
 def _build_review_report(

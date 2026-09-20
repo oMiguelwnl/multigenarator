@@ -54,3 +54,12 @@ kindle-highlights*.txt
 
 # Generated documentation
 site/
+
+# Generated deliverables. Historical HTML/TSV examples remain versioned.
+/output/decks/
+/output/examples/*
+!/output/examples/anki-previews/
+/output/reports/
+/output/previews/mandarin/
+/output/previews/frequency/artifacts/
+/output/previews/output-deck/verification/

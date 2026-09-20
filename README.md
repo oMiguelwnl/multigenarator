@@ -41,6 +41,29 @@ cliente. Chamadas pagas também exigem
 `MULTILANG_NATIVE_PROVIDER_CALLS_ENABLED=true`; habilitar a arquitetura não
 habilita automaticamente providers.
 
+## Arquivos gerados
+
+Prévias, exemplos, decks e relatórios ficam em **`output/`**. Abra o
+[índice local](output/index.html) ou consulte a [organização das saídas](output/README.md).
+
+| Pasta | Conteúdo |
+|---|---|
+| `output/previews/` | Prévias HTML dos cards e suas imagens |
+| `output/examples/` | Amostras, pilotos e decks demonstrativos com seus arquivos de apoio |
+| `output/decks/` | Exportações APKG, CSV e TSV |
+| `output/reports/` | Relatórios de revisão, auditoria e verificação das entregas |
+
+`MULTILANG_OUTPUT_DIR` muda a raiz comum. `MULTILANG_EXPORT_OUTPUT_DIR` continua
+disponível para escolher apenas a pasta de decks; um caminho explícito no comando
+tem prioridade. Templates e scripts permanecem no código-fonte.
+
+```bash
+uv run python scripts/preview_mandarin_card.py
+# output/previews/mandarin/front.html e back.html
+uv run multilang prepare-local-smoke
+# output/examples/local-smoke/
+```
+
 ## Verificação
 
 ```bash

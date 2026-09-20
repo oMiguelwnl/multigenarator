@@ -9,6 +9,37 @@ import multilang.settings as settings_module
 from multilang.settings import Settings
 
 
+def test_generated_artifacts_share_one_default_root(monkeypatch) -> None:
+    monkeypatch.delenv("MULTILANG_OUTPUT_DIR", raising=False)
+    monkeypatch.delenv("MULTILANG_EXPORT_OUTPUT_DIR", raising=False)
+    settings = Settings(_env_file=None)
+
+    assert settings.export_output_dir == Path("output/decks")
+    assert settings.preview_output_dir == Path("output/previews")
+    assert settings.example_output_dir == Path("output/examples")
+    assert settings.report_output_dir == Path("output/reports")
+
+
+def test_generated_artifact_root_can_be_configured_together(monkeypatch, tmp_path) -> None:
+    monkeypatch.setenv("MULTILANG_OUTPUT_DIR", str(tmp_path / "generated"))
+    monkeypatch.delenv("MULTILANG_EXPORT_OUTPUT_DIR", raising=False)
+    settings = Settings(_env_file=None)
+
+    assert settings.export_output_dir == tmp_path / "generated/decks"
+    assert settings.preview_output_dir == tmp_path / "generated/previews"
+    assert settings.example_output_dir == tmp_path / "generated/examples"
+    assert settings.report_output_dir == tmp_path / "generated/reports"
+
+
+def test_explicit_export_directory_still_overrides_shared_root(monkeypatch, tmp_path) -> None:
+    monkeypatch.setenv("MULTILANG_OUTPUT_DIR", str(tmp_path / "generated"))
+    monkeypatch.setenv("MULTILANG_EXPORT_OUTPUT_DIR", str(tmp_path / "custom-decks"))
+    settings = Settings(_env_file=None)
+
+    assert settings.export_output_dir == tmp_path / "custom-decks"
+    assert getattr(settings, "preview_output_dir", None) == tmp_path / "generated/previews"
+
+
 def test_default_supported_languages_preserve_existing_values_and_add_korean_once(
     settings: Settings,
 ) -> None:
