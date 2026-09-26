@@ -5,6 +5,7 @@ from __future__ import annotations
 import json
 from datetime import timedelta
 from pathlib import Path
+from threading import Event
 from types import SimpleNamespace
 
 import pytest
@@ -29,6 +30,65 @@ class _FakeVoiceResponse:
 
     def __exit__(self, exc_type, exc, tb) -> None:
         return None
+
+
+def test_locale_voice_inventory_uses_sdk_without_global_catalog():
+    calls = []
+
+    class Synth:
+        def __init__(self, *, speech_config, audio_config):
+            assert audio_config is None
+
+        def get_voices_async(self, locale):
+            calls.append(locale)
+            return SimpleNamespace(get=lambda: SimpleNamespace(reason="voices", voices=[
+                SimpleNamespace(short_name="zh-CN-XiaoxiaoNeural", locale="zh-CN")]))
+
+    sdk = SimpleNamespace(SpeechConfig=_FakeSpeechConfig, SpeechSynthesizer=Synth,
+                          ResultReason=SimpleNamespace(VoicesListRetrieved="voices"))
+    adapter = AzureSpeechAdapter(Settings(_env_file=None, azure_speech_key="fixture", azure_speech_region="eastus"),
+                                 speechsdk_module=sdk)
+    assert adapter.fetch_voice_inventory_for_locale("zh-CN") == [
+        {"ShortName": "zh-CN-XiaoxiaoNeural", "Locale": "zh-CN"}]
+    assert calls == ["zh-CN"]
+
+
+def test_synthesis_cancellation_uses_result_details_from_real_sdk():
+    adapter = AzureSpeechAdapter(Settings(_env_file=None), speechsdk_module=SimpleNamespace())
+    result = SimpleNamespace(cancellation_details=SimpleNamespace(
+        reason="Error", error_code="ConnectionFailure", error_details=None,
+    ))
+    assert "error_code=ConnectionFailure" in adapter._build_cancellation_message(result)
+
+
+def test_locale_voice_inventory_times_out_without_waiting_on_sdk_future():
+    release = Event()
+
+    class Synth:
+        def __init__(self, **kwargs):
+            pass
+
+        def get_voices_async(self, locale):
+            return SimpleNamespace(get=lambda: release.wait(2))
+
+    sdk = SimpleNamespace(SpeechConfig=_FakeSpeechConfig, SpeechSynthesizer=Synth)
+    adapter = AzureSpeechAdapter(
+        Settings(_env_file=None, azure_speech_key="fixture", azure_speech_region="eastus"),
+        speechsdk_module=sdk,
+    )
+    try:
+        with pytest.raises(TimeoutError, match="voice inventory"):
+            adapter.fetch_voice_inventory_for_locale("zh-CN", timeout_seconds=0.01)
+    finally:
+        release.set()
+
+
+@pytest.mark.parametrize("locale,timeout", [("", 1), ("zh-CN", 0), ("zh-CN", float("inf"))])
+def test_locale_voice_inventory_rejects_invalid_arguments_before_credentials(locale, timeout):
+    with pytest.raises(ValueError):
+        AzureSpeechAdapter(Settings(_env_file=None)).fetch_voice_inventory_for_locale(
+            locale, timeout_seconds=timeout
+        )
 
 
 class _FakeSpeechConfig:

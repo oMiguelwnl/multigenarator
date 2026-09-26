@@ -38,7 +38,10 @@ def export(root: Path, deck: Path) -> dict:
         front = _render(template.front, values)
         back = _render(template.back.replace("{{FrontSide}}", front), values)
         back = re.sub(r"\[sound:([a-f0-9]{64}\.mp3)\]",
-                      r'<audio controls preload="none" src="media/\1"></audio>', back)
+                      r'<audio hidden preload="none" src="media/\1"></audio>'
+                      '<button type="button" class="pilot-play" aria-label="Ouvir áudio" '
+                      'onclick="this.previousElementSibling.currentTime=0;'
+                      'this.previousElementSibling.play()">▶</button>', back)
         identifier = f"card-{index + 1:03d}.html"
         previous = f"card-{(index - 1) % len(rows) + 1:03d}.html"
         following = f"card-{(index + 1) % len(rows) + 1:03d}.html"
@@ -47,7 +50,10 @@ def export(root: Path, deck: Path) -> dict:
                 f'<title>Mandarim · {escape(row.word)}</title><style>{template.css}'
                 '.card{flex-direction:column;align-items:center;justify-content:flex-start}'
                 '.pilot-nav{font:14px/1.5 system-ui;margin:12px;text-align:center}'
-                '.pilot-nav a{color:#9dc2ff;margin:0 10px}audio{max-width:100%;height:32px}'
+                '.pilot-nav a{color:#9dc2ff;margin:0 10px}audio[hidden]{display:none}'
+                '.pilot-play{display:inline-flex;align-items:center;justify-content:center;'
+                'width:34px;height:34px;padding:0;border:1px solid #777;border-radius:50%;'
+                'background:transparent;color:#c1c7d3;font-size:17px;cursor:pointer}'
                 '</style></head><body class="card nightMode">'
                 f'<nav class="pilot-nav">Piloto revisado por IA · {index + 1}/{len(rows)}<br>'
                 f'<a href="{previous}">Anterior</a><a href="index.html">Lista</a>'

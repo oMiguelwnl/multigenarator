@@ -96,6 +96,9 @@ def _record_refs(evidence: dict) -> dict[str, dict]:
                 "pos": pos,
                 "source_record_sha256": record["source_record_sha256"],
                 "source_kind": "wiktextract",
+                "source_sense_key": canonical_sha256({
+                    "source_sense_id": sense.get("source_sense_id"), "glosses": glosses,
+                }),
             }
     return refs
 
@@ -119,11 +122,14 @@ def _validate_word(value: object, label: str) -> str:
 
 
 def _identity(*, word: str, pos: str, pinyin: str,
-              source_hash: str, gloss_indices: list[int]) -> LexicalIdentity:
-    sense_id = "zh-sense-" + canonical_sha256({
+              source_hash: str, gloss_indices: list[int], source_sense_key: str | None = None) -> LexicalIdentity:
+    binding = {
         "word": word, "pos": pos, "source_record_sha256": source_hash,
         "pinyin": pinyin_key(pinyin), "gloss_indices": sorted(gloss_indices),
-    })[:48]
+    }
+    if source_sense_key is not None:
+        binding["source_sense_key"] = source_sense_key
+    sense_id = "zh-sense-" + canonical_sha256(binding)[:48]
     return LexicalIdentity(
         language=SupportedLanguage.ZH,
         normalized_lemma=word,
@@ -131,7 +137,7 @@ def _identity(*, word: str, pos: str, pinyin: str,
         sense_id=sense_id,
         profile_version="mandarin-standard-v1",
         normalizer_version="nfc-preserve-1",
-        analyzer_version="source-bound-v2",
+        analyzer_version="source-bound-v3" if source_sense_key is not None else "source-bound-v2",
         source_id="mandarin-qualification",
         source_version="2026-09-20",
         source_sha256=source_hash,
@@ -225,13 +231,14 @@ def qualify_decision(evidence: dict, decision: dict, *, reviewer: str) -> dict:
         if not isinstance(pinyin, str) or pinyin_key(pinyin) != source["pinyin_key"]:
             raise ValueError("sense pinyin is not source-attested")
         identity = _identity(word=word, pos=pos, pinyin=pinyin,
-                             source_hash=source["source_record_sha256"], gloss_indices=indices)
+                             source_hash=source["source_record_sha256"], gloss_indices=indices,
+                             source_sense_key=source.get("source_sense_key"))
         senses.append({
             "identity": identity.model_dump(mode="json"), "source_ref": source_ref,
             "source_kind": source["source_kind"], "source_record_sha256": source["source_record_sha256"],
             "traditional": source["traditional"], "pinyin": pinyin, "pos": pos,
             "glosses": glosses, "gloss_indices": sorted(indices),
-            "label_en": _validate_word(raw.get("label_en", glosses[0])[:512], "sense label"),
+            "label_en": _validate_word(raw.get("label_en", glosses[0]), "sense label"),
             "usage": _validate_word(raw.get("usage", "general"), "usage"),
             "frequency_rank": rank, "frequency_level": level,
         })

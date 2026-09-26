@@ -77,7 +77,19 @@ def _input(root: Path) -> dict:
     data = read_json(root / "input/pilot.json")
     if canonical_sha256(data) != manifest["binding_sha256"] or not 1 <= len(data["requests"]) <= 80:
         raise ValueError("pilot input binding drift")
-    if data["summary"]["spoken_characters"] > 12000:
+    requests = data["requests"]
+    if any(canonical_sha256(item["asset"]) != item["id"] for item in requests):
+        raise ValueError("pilot audio request binding drift")
+    rows = [ExportCardRow.model_validate(row) for row in data["rows"]]
+    expected = {(row.note_guid, kind) for row in rows for kind in ("word", "sentence")}
+    actual = {(item["note_guid"], item["kind"]) for item in requests}
+    if (not 1 <= len(rows) <= 40 or len({r.note_guid for r in rows}) != len(rows)
+            or actual != expected or len(requests) != len(expected)
+            or data["summary"]["audio_request_count"] != len(requests)
+            or data["summary"]["note_count"] != len(rows)):
+        raise ValueError("pilot requests must match each note's word and sentence")
+    characters = sum(len(item["asset"]["display_text"]) for item in requests)
+    if not 1 <= characters <= 12000 or data["summary"]["spoken_characters"] != characters:
         raise ValueError("pilot exceeds speech character limit")
     return data
 
@@ -89,7 +101,7 @@ def synthesize_pilot(*, root: Path, settings: Settings) -> dict:
     root = _plain_path(root)
     data = _input(root)
     adapter = AzureSpeechAdapter(settings)
-    voices = adapter.fetch_voice_inventory()
+    voices = adapter.fetch_voice_inventory_for_locale("zh-CN")
     selected = [v for v in voices if v.get("ShortName") == VOICE and v.get("Locale") == "zh-CN"]
     if len(selected) != 1:
         raise ValueError("reviewed Mandarin voice is unavailable")

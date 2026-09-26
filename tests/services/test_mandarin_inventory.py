@@ -178,3 +178,35 @@ def test_batch_validates_every_sense_instead_of_only_word_membership():
     value["senses"][0]["gloss_indices"] = [999]
     with pytest.raises(ValueError, match="gloss_indices"):
         validate_batch([evidence()], {"decisions": [value]})
+
+
+def test_wiktionary_senses_with_same_gloss_index_retain_distinct_stable_identities():
+    from multilang.services.mandarin_inventory import qualify_decision, source_choices
+
+    row = {**evidence(), "cedict": [], "wiktextract": [{
+        "source_word": "长", "source_record_sha256": "d" * 64,
+        "source_pos": "verb", "record_pinyin": ["zhǎng"],
+        "senses": [
+            {"scope": "mandarin-candidate", "source_sense_id": "grow", "glosses": ["grow"]},
+            {"scope": "mandarin-candidate", "source_sense_id": "increase", "glosses": ["increase"]},
+        ],
+    }]}
+    value = {**decision(), "senses": [
+        {"source_ref": choice["source_ref"], "gloss_indices": [0], "pos": "VERB"}
+        for choice in source_choices(row)
+    ]}
+    first = qualify_decision(row, value, reviewer="test")
+    assert len({s["identity"]["lexical_identity_id"] for s in first["senses"]}) == 2
+    row["wiktextract"][0]["senses"].reverse()
+    second = qualify_decision(row, value, reviewer="test")
+    assert [s["identity"] for s in first["senses"]] == [s["identity"] for s in second["senses"]]
+
+
+@pytest.mark.parametrize("label", [None, 123, "x" * 513])
+def test_sense_labels_must_be_bounded_text_without_silent_truncation(label):
+    from multilang.services.mandarin_inventory import qualify_decision
+
+    value = decision()
+    value["senses"][0]["label_en"] = label
+    with pytest.raises(ValueError, match="sense label"):
+        qualify_decision(evidence(), value, reviewer="test")

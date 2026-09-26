@@ -9,7 +9,7 @@ import re
 from contextlib import suppress
 from datetime import timedelta
 from pathlib import Path
-from threading import Event
+from threading import Event, Thread
 from types import ModuleType
 from typing import Any
 from urllib.request import Request, urlopen
@@ -94,6 +94,42 @@ class AzureSpeechAdapter:
         if not isinstance(payload, list):
             raise AzureSpeechAdapterError("Azure Speech voice inventory payload is invalid")
         return [item for item in payload if isinstance(item, dict)]
+
+    def fetch_voice_inventory_for_locale(
+        self, locale: str, *, timeout_seconds: float = 30
+    ) -> list[dict[str, str]]:
+        """Query one locale through the SDK, with a bounded read-only wait."""
+        if (len(locale) > 35 or not re.fullmatch(r"[a-z]{2,3}(?:-[A-Za-z0-9]{2,8})+", locale)
+                or not math.isfinite(timeout_seconds) or timeout_seconds <= 0):
+            raise ValueError("Voice inventory requires a locale and a finite positive timeout")
+        self._require_credentials()
+        speechsdk = self._speechsdk
+        completed = Event()
+        results = []
+
+        def query():
+            try:
+                config = speechsdk.SpeechConfig(
+                    subscription=self.settings.azure_speech_key,
+                    region=self.settings.azure_speech_region,
+                )
+                synthesizer = speechsdk.SpeechSynthesizer(speech_config=config, audio_config=None)
+                results.append(synthesizer.get_voices_async(locale).get())
+            except Exception:
+                # SDK messages may include provider details; do not expose them.
+                pass
+            finally:
+                completed.set()
+
+        Thread(target=query, daemon=True).start()
+        if not completed.wait(timeout_seconds):
+            raise TimeoutError("Azure Speech voice inventory timed out")
+        if not results or results[0].reason != speechsdk.ResultReason.VoicesListRetrieved:
+            raise AzureSpeechAdapterError("Azure Speech voice inventory query failed")
+        return [
+            {"ShortName": voice.short_name, "Locale": voice.locale}
+            for voice in results[0].voices if voice.locale == locale
+        ]
 
     def synthesize(
         self,
@@ -193,12 +229,13 @@ class AzureSpeechAdapter:
             )
 
     def _build_cancellation_message(self, result: object) -> str:
-        details = getattr(self._speechsdk, "CancellationDetails", None)
-        from_result = getattr(details, "from_result", None)
-        if not callable(from_result):
-            return "Azure Speech synthesis failed"
-
-        cancellation = from_result(result)
+        cancellation = getattr(result, "cancellation_details", None)
+        if cancellation is None:
+            details = getattr(self._speechsdk, "CancellationDetails", None)
+            from_result = getattr(details, "from_result", None)
+            if not callable(from_result):
+                return "Azure Speech synthesis failed"
+            cancellation = from_result(result)
         parts = ["Azure Speech synthesis failed"]
 
         reason = getattr(cancellation, "reason", None)

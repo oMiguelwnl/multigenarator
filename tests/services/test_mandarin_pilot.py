@@ -36,3 +36,32 @@ def test_pilot_export_refuses_missing_or_unverified_audio(tmp_path):
     prepare_pilot(rows=[row()], bundle_path=path, bundle_sha256=digest, output=root)
     with pytest.raises(ValueError, match="audio"):
         verified_pilot_rows(root)
+
+
+@pytest.mark.parametrize('mutation', ['path', 'characters', 'duplicate'])
+def test_pilot_rejects_internally_inconsistent_input_before_network_or_media(tmp_path, mutation):
+    from test_mandarin_pronunciation_store import bundle, save
+
+    from multilang.domain.lexical_identity import canonical_sha256
+    from multilang.services.mandarin_pilot import _input, prepare_pilot
+    from multilang.services.qualification_machine_runner import (
+        json_bytes,
+        persist_artifact,
+        read_json,
+    )
+
+    path, digest = save(tmp_path, bundle())
+    original = tmp_path / 'original'
+    prepare_pilot(rows=[row()], bundle_path=path, bundle_sha256=digest, output=original)
+    payload = read_json(original / 'input/pilot.json')
+    if mutation == 'path':
+        payload['requests'][0]['id'] = '../outside'
+    elif mutation == 'characters':
+        payload['summary']['spoken_characters'] = 0
+    else:
+        payload['requests'][1] = payload['requests'][0]
+    root = tmp_path / 'mutated'
+    persist_artifact(root / 'input', kind='mandarin-audio-pilot-input', binding=canonical_sha256(payload),
+                     files={'pilot.json': json_bytes(payload)})
+    with pytest.raises(ValueError, match='pilot'):
+        _input(root)
