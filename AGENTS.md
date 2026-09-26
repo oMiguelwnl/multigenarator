@@ -12,7 +12,10 @@ The product generates structured Anki-ready cards with word data, phonetics, def
 ### Constraints
 
 - **Languages**: v1 supports Portuguese, Spanish, English, French, German, Italian, Polish, Turkish, Romanian, Russian, and Dutch; v3.0 adds modern standard Korean with canonical code `ko` and provider locale `ko-KR`.
-- **Deck Structure**: Cards must be separated into 3 levels with 1000 cards per level — this defines the core content structure.
+- **Deck Size — all languages**: 3,000 is an initial frequency reference, not a maximum number of cards per language. A language may have more than 3,000 cards when useful vocabulary, distinct senses or pedagogically important forms justify them. Preserve quality, lexical identity, provenance and deduplication; do not discard valid content or generate redundant conjugations merely to meet a number. The existing three levels of 1,000 core entries are the initial organization, not a ceiling on total cards. Foundation, custom-list and highlight decks follow their own content needs.
+- **Frequency organization**: Count lexical identities separately from cards. Keep useful cards for an existing identity with its parent frequency level, even when that level exceeds 1,000 cards. Put additional lexical identities beyond the initial core in frequency expansions, retaining their source/rank metadata. Prefer a small deck hierarchy and tags for detailed classification; frequency bands are not proficiency certificates.
+- **Vocabulary coverage — all languages**: The user's target is at least 90% lexical occurrence coverage in representative general-use material, expanding the vocabulary when needed rather than stopping at 3,000 cards. Measure the finalized inventory against independent, versioned evaluation corpora with language-appropriate normalization/morphology; report spoken and written coverage separately, the counting unit and exclusions. Card count and literature estimates do not prove achieved coverage or comprehension. This is a target until the exact inventory has been evaluated.
+- **Current preparation scope**: The user requested vocabulary files and reports for every language now, with deck generation deferred until a later explicit instruction. Notify the user before resuming card text, translation, audio or deck generation. Offline preparation and tests may proceed; do not interpret completed preparation as authorization to run generation.
 - **Korean Decks**: Korean includes Hangul foundations, strict-i+1 pronunciation, three frequency levels, strict-i+1 Particles & Endings, custom lists, and privacy-safe highlights.
 - **Korean Linguistics**: Korean content must use NFC normalization, morphology-aware lemma/POS/sense identity, and fail-closed target matching rather than whitespace or suffix heuristics.
 - **Korean Licensing**: A redistributed 3000-entry Korean frequency asset requires an approved source, attribution, and redistribution decision before it is committed.
@@ -132,32 +135,12 @@ The product generates structured Anki-ready cards with word data, phonetics, def
 ## Installation baseline
 # project/runtime
 
-<!-- BEGIN GSDD -->
-## GSDD Governance (Generated)
-
-Managed by `gsdd`; edit the framework template, not this block.
-
-Lifecycle: `new-project -> plan -> execute -> verify -> audit-milestone`.
-
-Core skills: `gsdd-new-project`, `gsdd-plan`, `gsdd-execute`, `gsdd-verify`, `gsdd-progress`.
-Planning state: `.planning/`. Portable workflows: `.agents/skills/gsdd-*/SKILL.md`.
-
-Invoke: `/gsdd-plan` (Claude, OpenCode; Cursor/Copilot/Gemini when skill discovery is available) · `$gsdd-plan` (Codex CLI, plan-only until `$gsdd-execute`) · open SKILL.md directly elsewhere.
-
-Rules:
-1. Read before writing roadmap work: `.planning/SPEC.md`, `.planning/ROADMAP.md`, `.planning/config.json`, and the relevant phase plan when one exists.
-2. Stay in scope. Implement only what the approved plan or direct user request says. Record unrelated ideas as TODOs.
-3. Verify before claiming done: artifact exists, content is substantive, and it is wired into the system.
-4. Research unfamiliar domains from real docs and code; never hallucinate paths or APIs.
-5. Do not pollute core workflows with vendor-specific syntax; workflow entry lives in `.agents/skills/`, helpers in `.planning/bin/`, and native adapters in their tool-specific directories.
-6. Git guidance in `.planning/config.json` -> `gitProtocol` is advisory; follow the repo's own conventions first.
-
-If `.planning/` is missing, run `npx -y gsdd-cli init` then `gsdd-new-project`; bare `gsdd init` is equivalent only when globally installed.
-<!-- END GSDD -->
-
-
 ## Working Practices
 
+- Implement the user's requested scope and follow existing codebase conventions.
+- Verify changes before claiming completion.
+- Research unfamiliar domains from real documentation and code.
+- Existing `.planning/` documents remain available as project history and context.
 - Put generated card previews, examples, decks and delivery reports under the single `output/` root: `previews/`, `examples/`, `decks/` and `reports/`. Use the output directory properties in `Settings`; respect an explicit user-supplied destination.
 - Keep each example's HTML, images, audio and supporting files together. Do not create new deliverables in the repository root, `docs/`, `work/`, `exports/` or `.multilang/verification/`. See `output/README.md` for the directory convention.
 - Templates belong in `src/multilang/templates/`, reusable generators in `scripts/`, and runtime databases/caches in `.multilang/`. Historical compatibility links are not new output destinations.
@@ -223,25 +206,5 @@ Architecture not yet mapped. Follow existing patterns found in the codebase.
 <!-- GSD:skills-start source:skills/ -->
 ## Project Skills
 
-No project skills found. Add skills to any of: `.claude/skills/`, `.agents/skills/`, `.cursor/skills/`, `.github/skills/`, or `.codex/skills/` with a `SKILL.md` index file.
+Project skills are stored in `.agents/skills/`. Use relevant skills when they help fulfill the user's request.
 <!-- GSD:skills-end -->
-
-<!-- GSD:workflow-start source:GSD defaults -->
-## GSD Workflow Enforcement
-
-Before using Edit, Write, or other file-changing tools, start work through a GSD command so planning artifacts and execution context stay in sync.
-
-Use these entry points:
-- `/gsd-quick` for small fixes, doc updates, and ad-hoc tasks
-- `/gsd-debug` for investigation and bug fixing
-- `/gsd-execute-phase` for planned phase work
-
-Do not make direct repo edits outside a GSD workflow unless the user explicitly asks to bypass it.
-<!-- GSD:workflow-end -->
-
-<!-- GSD:profile-start -->
-## Developer Profile
-
-> Profile not yet configured. Run `/gsd-profile-user` to generate your developer profile.
-> This section is managed by `generate-claude-profile` -- do not edit manually.
-<!-- GSD:profile-end -->

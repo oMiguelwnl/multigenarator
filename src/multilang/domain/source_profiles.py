@@ -36,7 +36,7 @@ SOURCE_PROFILES: dict[SourceType, SourceProfile] = {
         min_sentence_tokens=4,
         max_sentence_tokens=12,
         note_type_name="Multilang::Card",
-        template_name="normal_card",
+        template_name="frequency_card",
     ),
     "word-list": SourceProfile(
         source_type="word-list",

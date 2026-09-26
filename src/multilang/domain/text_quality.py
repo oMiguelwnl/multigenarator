@@ -42,6 +42,7 @@ class ValidationFlagCode(str, Enum):
     DEFINITION_MISMATCH = "definition_mismatch"
     LANGUAGE_MISMATCH = "language_mismatch"
     MORPHOLOGY_MISMATCH = "morphology_mismatch"
+    CURRICULUM_MISMATCH = "curriculum_mismatch"
     LOW_CONFIDENCE = "low_confidence"
 
 

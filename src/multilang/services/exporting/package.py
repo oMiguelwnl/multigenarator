@@ -103,6 +103,9 @@ def build_multilang_model(
     note_type_name = profile.note_type_name
     if language == SupportedLanguage.KO and source_type in _KOREAN_SOURCE_FAMILIES:
         model_id, _, note_type_name = _KOREAN_SOURCE_FAMILIES[source_type]
+    if language == SupportedLanguage.JA and source_type == "kindle-highlights":
+        model_id = registry_id(family="japanese_highlight", role="model", kind=AnkiIdKind.MODEL)
+        note_type_name = "Multilang::Japanese Highlights v2"
     # For la use Latin fields (Definition + Grammar) even if source_type is not latin-mvp
     # Note: caller passes rows or we decide here; for simplicity if la force
     is_la = language is not None and (language == "la" or getattr(language, "value", None) == "la")

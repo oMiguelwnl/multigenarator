@@ -11,6 +11,9 @@ Generate reliable, high-quality Anki cards for real vocabulary the learner needs
 - Reuse stable deck contracts and templates unless a language has a concrete pedagogical need.
 - Keep generated artifacts reproducible, versioned, auditable, and safe to export.
 - Preserve existing language and source-mode behavior while adding language-specific capabilities.
+- For every language, 3,000 is an initial frequency reference, never a maximum total card count. Useful additional vocabulary, distinct senses and important forms may increase the deck size; quality, provenance and deduplication determine inclusion. A core lexical-entry count must not be confused with the total number of study cards.
+- Organize the initial core by stable frequency bands; useful extra cards for a lexical identity stay with their parent level. Additional identities beyond the core use frequency expansions. Keep the deck hierarchy small and use metadata/tags for detailed classifications. Frequency bands do not establish CEFR proficiency.
+- Target at least 90% lexical occurrence coverage per language on representative general-use material. Evaluate the final inventory on independent, versioned corpora with an explicit counting unit, language-specific normalization/morphology and separate spoken/written results. Expand beyond the initial core as necessary. This user target is not an achieved benchmark or a claim of equivalent comprehension.
 
 ## Current State
 

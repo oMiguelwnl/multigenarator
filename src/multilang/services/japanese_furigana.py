@@ -3,14 +3,21 @@
 from __future__ import annotations
 
 import unicodedata
-from functools import lru_cache
+
+from multilang.services.japanese_analysis import (
+    JapaneseAnalysisError,
+    analyze_japanese,
+    japanese_tagger,
+    katakana_to_hiragana,
+    validate_japanese_reading,
+)
 
 
 class JapaneseFuriganaError(ValueError):
     """Raised when a kanji-bearing Japanese string cannot be annotated."""
 
 
-def format_japanese_furigana(text: str) -> str:
+def format_japanese_furigana(text: str, *, reading: str | None = None) -> str:
     """Return text with Anki furigana brackets for kanji tokens.
 
     Example: ``学校に行く。`` -> ``学校[がっこう]に行[い]く。``.
@@ -19,34 +26,24 @@ def format_japanese_furigana(text: str) -> str:
     value = str(text or "").strip()
     if not value:
         return ""
+    if reading is not None:
+        return _annotate_token(surface=value, reading=validate_japanese_reading(reading))
 
-    rendered = ""
-    for token in _tagger()(value):
-        surface = str(token.surface)
-        reading = _token_reading(token)
-        rendered_token = _annotate_token(surface=surface, reading=reading)
-        rendered += rendered_token
-    return rendered
-
-
-def katakana_to_hiragana(value: str) -> str:
-    """Convert full-width katakana to hiragana, preserving other characters."""
-
-    chars: list[str] = []
-    for character in value:
-        codepoint = ord(character)
-        if 0x30A1 <= codepoint <= 0x30F6:
-            chars.append(chr(codepoint - 0x60))
-        else:
-            chars.append(character)
-    return "".join(chars)
+    rendered, cursor = "", 0
+    try:
+        for token in analyze_japanese(value):
+            if not token.known and _contains_kanji(token.surface):
+                raise JapaneseFuriganaError("unresolved Japanese kanji reading")
+            rendered += value[cursor:token.start]
+            rendered += _annotate_token(surface=token.surface, reading=token.reading)
+            cursor = token.end
+    except JapaneseAnalysisError as exc:
+        raise JapaneseFuriganaError("Japanese reading analysis unavailable") from exc
+    return rendered + value[cursor:]
 
 
-@lru_cache(maxsize=1)
 def _tagger():
-    from fugashi import Tagger
-
-    return Tagger()
+    return japanese_tagger()
 
 
 def _token_reading(token: object) -> str:

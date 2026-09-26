@@ -81,6 +81,14 @@ def create_vocabulary_app(*, settings: Settings | None = None) -> typer.Typer:
         codes = [language] if language else [item["language"] for item in source_catalog()]
         _print([audit_legacy_frequency(assets, code) for code in codes])
 
+    @cli.command("prepare-deck-inputs")
+    @_guard
+    def prepare_deck_inputs_command(request: Path, request_sha256: str, output: Path):
+        """Consolidate existing vocabulary locally; never generate cards, audio or decks."""
+        from multilang.services.deck_preparation import prepare_deck_inputs_file
+
+        _print(prepare_deck_inputs_file(request, request_sha256, output=output))
+
     @cli.command("models")
     @_guard
     def models(
@@ -201,6 +209,62 @@ def create_vocabulary_app(*, settings: Settings | None = None) -> typer.Typer:
                 limits=SourceLimits(max_bytes=max_bytes),
             )
         )
+
+    @cli.command("prepare-japanese")
+    @_guard
+    def prepare_japanese(
+        dictionary: Path, dictionary_sha256: str, frequency: Path, frequency_sha256: str,
+        output: Path,
+        candidate_limit: Annotated[int, typer.Option(min=1, max=30000)] = 6000,
+        frequency_variant: str = "unidic310-base",
+    ):
+        """Prepare JMdict evidence and TUBELEX/wordfreq comparison for review."""
+        from multilang.services.japanese_preparation import prepare_japanese_vocabulary
+
+        _print(prepare_japanese_vocabulary(dictionary=dictionary, dictionary_sha256=dictionary_sha256,
+            frequency=frequency, frequency_sha256=frequency_sha256, output=output,
+            candidate_limit=candidate_limit, frequency_variant=frequency_variant))
+
+    def japanese_bundle(path, digest, profile_path):
+        from multilang.native_runtime import _evidence_store
+        from multilang.services.vocabulary_review import load_compiled_vocabulary
+        profile = load_profile(profile_path)
+        verifier = _evidence_store(configuration())
+        bundle = load_compiled_vocabulary(path, expected_sha256=digest, profile=profile, verifier=verifier)
+        return bundle, profile, verifier
+
+    @cli.command("export-japanese-cache")
+    @_guard
+    def export_japanese_cache(bundle: Path, bundle_sha256: str, profile: Path, output: Path):
+        """Export reviewed JMdict readings/senses for the existing generation pipeline."""
+        from multilang.services.japanese_runtime_assets import export_japanese_lexical_cache
+        verified, selected_profile, verifier = japanese_bundle(bundle, bundle_sha256, profile)
+        _print(export_japanese_lexical_cache(bundle=verified, profile=selected_profile, verifier=verifier, output=output))
+
+    @cli.command("japanese-frequency-review-payload")
+    @_guard
+    def japanese_frequency_payload(bundle: Path, bundle_sha256: str, profile: Path,
+        selection: Path, selection_sha256: str, frequency_sha256: str, version: str = "tubelex-jmdict-v1"):
+        """Display the exact source-redistribution review payload; never signs it."""
+        from multilang.services.japanese_runtime_assets import japanese_frequency_release_payload
+        from multilang.services.vocabulary_review import _read_bytes
+        verified, _, _ = japanese_bundle(bundle, bundle_sha256, profile)
+        _print(japanese_frequency_release_payload(bundle=verified, frequency_sha256=frequency_sha256,
+            selection=json.loads(_read_bytes(selection, selection_sha256)), version=version))
+
+    @cli.command("freeze-japanese")
+    @_guard
+    def freeze_japanese(bundle: Path, bundle_sha256: str, profile: Path, selection: Path,
+        selection_sha256: str, frequency: Path, frequency_sha256: str, source_receipt_id: str,
+        output: Path, version: str = "tubelex-jmdict-v1"):
+        """Freeze exactly 3 x 1000 reviewed Japanese entries and the lexical cache."""
+        from multilang.services.japanese_runtime_assets import freeze_japanese_frequency
+        from multilang.services.vocabulary_review import _read_bytes
+        verified, selected_profile, verifier = japanese_bundle(bundle, bundle_sha256, profile)
+        report = freeze_japanese_frequency(bundle=verified, profile=selected_profile, verifier=verifier,
+            selection=json.loads(_read_bytes(selection, selection_sha256)), frequency=frequency,
+            frequency_sha256=frequency_sha256, source_receipt_id=source_receipt_id, output=output, version=version)
+        _print({key: value for key, value in report.items() if key != "selection"})
 
     @cli.command("evaluate")
     @_guard

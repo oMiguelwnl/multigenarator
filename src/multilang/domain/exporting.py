@@ -50,6 +50,9 @@ JAPANESE_EXPORT_CARD_FIELD_NAMES = (
     "sentence_audio",
     "Image",
 )
+JAPANESE_HIGHLIGHT_EXPORT_CARD_FIELD_NAMES = tuple(
+    name for name in JAPANESE_EXPORT_CARD_FIELD_NAMES if name != "Sentence Translation"
+)
 MANDARIN_EXPORT_CARD_FIELD_NAMES = (
     "SortIndex",
     "word",
@@ -285,6 +288,8 @@ def export_field_names_for_language_and_source(
         return MANDARIN_EXPORT_CARD_FIELD_NAMES
     if language_value == SupportedLanguage.JA.value and normalized_source_type == "frequency":
         return JAPANESE_EXPORT_CARD_FIELD_NAMES
+    if language_value == SupportedLanguage.JA.value and normalized_source_type == "kindle-highlights":
+        return JAPANESE_HIGHLIGHT_EXPORT_CARD_FIELD_NAMES
     return export_field_names_for_source_type(normalized_source_type)
 
 
@@ -310,7 +315,7 @@ def _uses_mandarin_fields(*, language: SupportedLanguage | str, source_type: str
 def _uses_japanese_fields(*, language: SupportedLanguage | str, source_type: str) -> bool:
     return (
         export_field_names_for_language_and_source(language=language, source_type=source_type)
-        == JAPANESE_EXPORT_CARD_FIELD_NAMES
+        in (JAPANESE_EXPORT_CARD_FIELD_NAMES, JAPANESE_HIGHLIGHT_EXPORT_CARD_FIELD_NAMES)
     )
 
 

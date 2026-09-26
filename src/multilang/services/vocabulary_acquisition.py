@@ -43,6 +43,13 @@ def _catalog_source(language: str, kind: str, index: int) -> tuple[dict, str]:
     elif kind == "dictionary":
         source = catalog["lexical_sources"][0]
         urls = [source["url"]]
+    elif kind == "frequency":
+        sources = catalog.get("frequency_sources", [])
+        if not 0 <= index < len(sources):
+            raise ValueError("no catalogued frequency source at this index")
+        source = sources[index]
+        urls = [source["url"]]
+        index = 0
     elif kind == "lexical-supplement":
         if len(catalog["lexical_sources"]) < 2:
             raise ValueError("no lexical supplement is registered for this language")
@@ -64,7 +71,10 @@ def _catalog_source(language: str, kind: str, index: int) -> tuple[dict, str]:
         or parsed.username
         or parsed.password
         or parsed.hostname
-        not in {"kaikki.org", "raw.githubusercontent.com", "wordnetcode.princeton.edu"}
+        not in {
+            "kaikki.org", "raw.githubusercontent.com", "wordnetcode.princeton.edu",
+            "www.edrdg.org", "www.mdbg.net",
+        }
         or parsed.port not in {None, 443}
     ):
         raise ValueError("catalog source is not an approved public download origin")
@@ -85,6 +95,11 @@ def acquire_source(
     Redirects are rejected, including redirects returned by otherwise trusted
     hosts. Content-addressed files and receipts permit frozen reproducible reuse.
     """
+    if language == "ja" and kind == "kana-strokes":
+        from multilang.services.japanese_kana_strokes import acquire_kana_strokes
+        if index != 0:
+            raise ValueError("kana strokes have a single source")
+        return acquire_kana_strokes(root, max_bytes=max_bytes, client=client)
     source, url = _catalog_source(language, kind, index)
     if not 1 <= max_bytes <= 8 * 1024**3:
         raise ValueError("download byte limit must be between 1 byte and 8 GiB")
@@ -121,7 +136,7 @@ def acquire_source(
         if declared is not None and int(declared) != size:
             raise ValueError("download length mismatch")
         digest = hasher.hexdigest()
-        suffix = (
+        suffix = ".tsv.xz" if url.endswith(".tsv.xz") else ".xml.gz" if source.get("format") == "jmdict-xml.gz" else (
             ".jsonl.gz"
             if url.endswith(".jsonl.gz")
             else (
@@ -129,6 +144,8 @@ def acquire_source(
                 if url.endswith(".tar.gz")
                 else ".conllu"
                 if url.endswith(".conllu")
+                else ".txt.gz"
+                if url.endswith(".txt.gz")
                 else ".txt"
             )
         )

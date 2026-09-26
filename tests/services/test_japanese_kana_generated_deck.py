@@ -63,11 +63,11 @@ def test_export_generated_kana_deck_writes_apkg(tmp_path: Path, monkeypatch) -> 
     )
     output_path = tmp_path / "japanese-kana-generated.apkg"
 
-    result = export_generated_kana_deck(output_path=output_path)
+    result = export_generated_kana_deck(output_path=output_path, prototype=True)
 
     assert result.output_path == output_path
-    assert result.card_count == len(GENERATED_KANA_CARDS)
-    assert result.hiragana_count == 104
-    assert result.katakana_count == 104
+    assert result.card_count == 218
+    assert result.hiragana_count == 109
+    assert result.katakana_count == 109
     with zipfile.ZipFile(output_path) as archive:
         assert "collection.anki2" in archive.namelist()

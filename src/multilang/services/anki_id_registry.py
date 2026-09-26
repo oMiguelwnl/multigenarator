@@ -60,6 +60,12 @@ ANKI_ID_REGISTRY: tuple[AnkiIdRegistration, ...] = (
     AnkiIdRegistration("latin", "mvp_deck", AnkiIdKind.DECK, 1_602_300_702),
     AnkiIdRegistration("japanese_frequency", "model", AnkiIdKind.MODEL, 1_762_800_701),
     AnkiIdRegistration("japanese_frequency", "deck", AnkiIdKind.DECK, 1_762_800_702),
+    AnkiIdRegistration("japanese_highlight", "model", AnkiIdKind.MODEL, 1_762_800_703),
+    *(
+        AnkiIdRegistration("native_japanese_highlight_v2", role, AnkiIdKind.MODEL,
+                           1_762_803_200 + index, reserved=True)
+        for index, role in enumerate(("recognition", "reverse", "listening", "cloze"), start=1)
+    ),
     AnkiIdRegistration("japanese_kana", "model", AnkiIdKind.MODEL, 1_762_800_801),
     AnkiIdRegistration("japanese_kana", "hiragana_deck", AnkiIdKind.DECK, 1_762_800_802),
     AnkiIdRegistration("japanese_kana", "katakana_deck", AnkiIdKind.DECK, 1_762_800_803),
@@ -215,6 +221,11 @@ def frequency_level_deck_id(language: str, level: int) -> int:
 
 def native_anki_model_id(*, language: str, source_type: str, role: str) -> int:
     """Resolve only preallocated exact field/template contracts."""
+    if language == "ja" and source_type == "kindle-highlights":
+        for entry in ANKI_ID_REGISTRY:
+            if entry.family == "native_japanese_highlight_v2" and entry.kind is AnkiIdKind.MODEL and entry.role == role:
+                return entry.value
+        raise ValueError("unregistered native Anki model contract")
     key = f"{language}:{source_type}:{role}"
     for entry in ANKI_ID_REGISTRY:
         if entry.family == "native_fields" and entry.kind is AnkiIdKind.MODEL and entry.role == key:

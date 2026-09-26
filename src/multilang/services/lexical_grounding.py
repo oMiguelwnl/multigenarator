@@ -786,6 +786,11 @@ class LexicalGroundingService:
             update={
                 "frequency_rank": candidate.frequency_rank,
                 "frequency_level": candidate.frequency_level,
+                **({"lemma_key": candidate.lemma_key,
+                    "provenance": grounded.provenance.model_copy(update={"notes": [
+                        *grounded.provenance.notes, *candidate.provenance.notes,
+                        f"japanese_sense_id={record.sense_id}",
+                    ]})} if language is SupportedLanguage.JA else {}),
             }
         )
 
@@ -829,7 +834,20 @@ class LexicalGroundingService:
                 submitted_form=binding.identity.canonical_nfc,
                 rate_limiter=rate_limiter,
             )
-        record = self._lookup_record(language=language, term=candidate.lemma_key)
+        evidence = candidate.japanese_evidence if language is SupportedLanguage.JA else None
+        if evidence is not None:
+            from multilang.services.japanese_analysis import katakana_to_hiragana
+
+            reader = getattr(self._lookup, "lookup_candidates", None)
+            records = (reader(language_code="ja", term=candidate.display_form) if reader else
+                       (self._lookup_record(language=language, term=candidate.display_form),))
+            matches = {record.model_dump_json(): record for record in records
+                       if record is not None and record.japanese_reading
+                       and (record.part_of_speech or "").upper() == evidence.pos
+                       and katakana_to_hiragana(record.japanese_reading) == evidence.reading}
+            record = next(iter(matches.values())) if len(matches) == 1 else None
+        else:
+            record = self._lookup_record(language=language, term=candidate.lemma_key)
         if record is None:
             policy = policy_for_language(language)
             return LexicalCardCandidate(
@@ -844,7 +862,7 @@ class LexicalGroundingService:
                 warning_detail="no authoritative lexical match for highlight candidate",
                 provenance=LexicalProvenance(source="kindle_highlight"),
             )
-        return self._grounded_candidate(
+        grounded = self._grounded_candidate(
             language=language,
             submitted_form=candidate.display_form,
             display_form=candidate.display_form,
@@ -852,6 +870,17 @@ class LexicalGroundingService:
             definition_language=language.value,
             rate_limiter=rate_limiter,
         )
+        if evidence is not None:
+            grounded = grounded.model_copy(update={
+                "lemma_key": candidate.lemma_key, "spoken_form": evidence.reading,
+                "provenance": grounded.provenance.model_copy(update={"notes": [
+                    *grounded.provenance.notes,
+                    f"japanese_reading={evidence.reading}", f"japanese_pos={evidence.pos}",
+                    f"japanese_source_span={evidence.start}:{evidence.end}",
+                    f"japanese_model_sha256={evidence.model_sha256}",
+                ]}),
+            })
+        return grounded
 
     def _bind_existing_korean_source_identity(
         self,
@@ -1061,6 +1090,9 @@ class LexicalGroundingService:
         )
         if pronunciation_review_required:
             notes.append("pronunciation requires review before export")
+        if language is SupportedLanguage.JA and record.japanese_reading:
+            spoken_form = record.japanese_reading
+            notes.append(f"japanese_reading={record.japanese_reading}")
         warning_code = "definition_review_required" if definition.review_required else (
             "pronunciation_review_required" if pronunciation_review_required else None
         )

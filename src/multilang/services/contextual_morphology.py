@@ -292,10 +292,9 @@ class LocalContextualMorphologyService:
 
                         pipeline = KiwiKoreanMorphologyService()
                     else:
-                        import unidic_lite
-                        from fugashi import Tagger
+                        from multilang.services.japanese_analysis import japanese_tagger
 
-                        pipeline = Tagger(f'-d "{unidic_lite.DICDIR}"')
+                        pipeline = japanese_tagger()
                     self._pipelines[key] = pipeline
                 pipeline = self._pipelines[key]
             except Exception:

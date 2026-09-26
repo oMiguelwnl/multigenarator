@@ -85,10 +85,15 @@ class KanaCard:
     strokes: str = ""
     gif: str = ""
     audio: str = ""
+    identity_romaji: str | None = None
+    lesson_id: str | None = None
+    audio_text: str | None = None
 
     @property
     def guid(self) -> str:
-        payload = f"ja-kana|{self.script}|{self.kana}|{self.romaji}"
+        payload = f"ja-kana|{self.script}|{self.kana}|{self.identity_romaji or self.romaji}"
+        if self.lesson_id:
+            payload = f"ja-kana-lesson-v1|{self.script}|{self.lesson_id}"
         return sha256(payload.encode("utf-8")).hexdigest()[:32]
 
     def referenced_media(self) -> set[str]:

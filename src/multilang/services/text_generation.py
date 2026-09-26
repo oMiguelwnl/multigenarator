@@ -12,6 +12,7 @@ from pydantic import BaseModel, ConfigDict, Field, ValidationError, field_valida
 
 from multilang.domain.definitions import DefinitionConsistencyRequest, DefinitionConsistencyVerdict
 from multilang.domain.jobs import SupportedLanguage
+from multilang.domain.sentence_curriculum import SentenceCurriculum
 from multilang.domain.korean import KoreanLexicalIdentity, KoreanTextError, canonicalize_korean
 from multilang.domain.korean_provider import (
     KoreanProviderPolicy,
@@ -141,6 +142,9 @@ class SentenceGenerationRequest(BaseModel):
     translation_target_language: str = Field(min_length=2)
     source_type: str | None = None
     highlight_context: str | None = None
+    sentence_curriculum: SentenceCurriculum | None = Field(
+        default=None, exclude_if=lambda value: value is None,
+    )
     repair_context: SentenceRepairContext | None = Field(default=None, exclude_if=lambda value: value is None)
     korean_identity: KoreanLexicalIdentity | None = Field(
         default=None,
@@ -175,6 +179,11 @@ class SentenceGenerationRequest(BaseModel):
 
     @model_validator(mode="after")
     def korean_identity_must_match_language(self) -> "SentenceGenerationRequest":
+        if self.sentence_curriculum is not None and (
+            self.sentence_curriculum.language.value != self.target_language
+            or self.sentence_curriculum.target.lemma != self.lemma
+        ):
+            raise ValueError("sentence curriculum does not match the lexical target")
         if self.target_language == SupportedLanguage.KO.value:
             if self.repair_context is not None:
                 raise ValueError("Korean requests require the identity-bound selector attempt")
@@ -221,6 +230,7 @@ class SentenceGenerationRequest(BaseModel):
             translation_target_language=candidate.translation_target_language,
             source_type=source_type,
             highlight_context=highlight_context,
+            sentence_curriculum=candidate.provenance.sentence_curriculum,
             korean_identity=candidate.korean_identity,
             korean_selector_attempt=korean_selector_attempt,
             repair_context=repair_context,

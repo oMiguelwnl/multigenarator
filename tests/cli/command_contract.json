@@ -7096,6 +7096,20 @@
           "is_flag": false
         },
         {
+          "name": "prototype",
+          "opts": [
+            "--prototype"
+          ],
+          "secondary_opts": [],
+          "required": false,
+          "default": "False",
+          "help": "Explicit preview without audio.",
+          "type": "BOOL",
+          "nargs": 1,
+          "multiple": false,
+          "is_flag": true
+        },
+        {
           "name": "limit",
           "opts": [
             "--limit"
@@ -7152,6 +7166,62 @@
           "required": false,
           "default": "Multilang Japanese::Kana",
           "help": "Top-level deck name for the kana package.",
+          "type": "STRING",
+          "nargs": 1,
+          "multiple": false,
+          "is_flag": false
+        },
+        {
+          "name": "prototype",
+          "opts": [
+            "--prototype"
+          ],
+          "secondary_opts": [],
+          "required": false,
+          "default": "False",
+          "help": "Explicit preview without audio.",
+          "type": "BOOL",
+          "nargs": 1,
+          "multiple": false,
+          "is_flag": true
+        },
+        {
+          "name": "base_only",
+          "opts": [
+            "--base-only"
+          ],
+          "secondary_opts": [],
+          "required": false,
+          "default": "False",
+          "help": "Omit the ten supplemental reading lessons.",
+          "type": "BOOL",
+          "nargs": 1,
+          "multiple": false,
+          "is_flag": true
+        },
+        {
+          "name": "stroke_dir",
+          "opts": [
+            "--stroke-dir"
+          ],
+          "secondary_opts": [],
+          "required": false,
+          "default": "None",
+          "help": "Verified local KanjiVG source directory.",
+          "type": "path",
+          "nargs": 1,
+          "multiple": false,
+          "is_flag": false
+        },
+        {
+          "name": "stroke_manifest_sha256",
+          "opts": [
+            "--stroke-manifest-sha256"
+          ],
+          "secondary_opts": [],
+          "required": false,
+          "default": "None",
+          "help": null,
           "type": "STRING",
           "nargs": 1,
           "multiple": false,

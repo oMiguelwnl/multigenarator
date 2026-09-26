@@ -33,6 +33,8 @@ class LexicalRecord(BaseModel):
     definition_language: str | None = Field(default=None, min_length=2, max_length=16, exclude_if=lambda value: value is None)
     part_of_speech: str | None = None
     sense_id: str | None = Field(default=None, min_length=1)
+    japanese_reading: str | None = Field(default=None, min_length=1, max_length=512,
+                                        exclude_if=lambda value: value is None)
     usage_register: str | None = Field(
         default=None,
         validation_alias="register",
@@ -49,6 +51,14 @@ class LexicalRecord(BaseModel):
     @classmethod
     def stable_text_must_be_nfc(cls, value: str) -> str:
         return unicodedata.normalize("NFC", value)
+
+    @field_validator("japanese_reading")
+    @classmethod
+    def reading_must_be_kana(cls, value: str | None) -> str | None:
+        if value is None:
+            return None
+        from multilang.services.japanese_analysis import validate_japanese_reading
+        return validate_japanese_reading(value)
 
     @property
     def register(self) -> str | None:

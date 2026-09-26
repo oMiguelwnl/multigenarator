@@ -11,7 +11,7 @@ from multilang.domain.source_profiles import (
 )
 
 
-def test_frequency_source_profile_exports_translation_with_normal_template() -> None:
+def test_frequency_source_profile_exports_translation_with_frequency_template() -> None:
     profile = get_source_profile("frequency")
 
     assert profile.source_type == "frequency"
@@ -20,7 +20,7 @@ def test_frequency_source_profile_exports_translation_with_normal_template() -> 
     assert profile.min_sentence_tokens == 4
     assert profile.max_sentence_tokens == 12
     assert profile.note_type_name == "Multilang::Card"
-    assert profile.template_name == "normal_card"
+    assert profile.template_name == "frequency_card"
 
 
 def test_word_list_source_profile_uses_highlight_template_with_manual_note_type() -> None:

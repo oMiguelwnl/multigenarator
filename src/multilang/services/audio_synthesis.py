@@ -72,11 +72,15 @@ class AudioSynthesisBundle:
 class AudioSynthesisService:
     """Build and validate separate word and sentence audio assets."""
 
-    def __init__(self, *, adapter: AudioSynthesisAdapter, settings: Settings | None = None, provider_call_logger: object | None = None, circuit_breaker: ProviderCircuitBreaker | None = None) -> None:
+    def __init__(self, *, adapter: AudioSynthesisAdapter, settings: Settings | None = None, provider_call_logger: object | None = None, circuit_breaker: ProviderCircuitBreaker | None = None, mandarin_review_service: object | None = None) -> None:
         self.adapter = adapter
         self.settings = settings or Settings()
         self.provider_call_logger = provider_call_logger
         self.circuit_breaker = circuit_breaker
+        from multilang.services.mandarin_pronunciation_store import load_pronunciation_store
+        self.mandarin_review_service = mandarin_review_service or load_pronunciation_store(
+            self.settings.mandarin_review_bundle_path, self.settings.mandarin_review_bundle_sha256,
+        )
 
     def synthesize_item(
         self,
@@ -100,7 +104,18 @@ class AudioSynthesisService:
         language: SupportedLanguage,
         display_word: str,
         text_record: TextQualityRecord,
+        japanese_reading: str | None = None,
     ) -> AudioSynthesisBundle:
+        spoken = (None, None)
+        if language is SupportedLanguage.ZH:
+            spoken = self.mandarin_review_service.spoken(
+                word=display_word, sentence=text_record.example_sentence or "",
+            )
+        if japanese_reading is not None:
+            from multilang.services.japanese_analysis import validate_japanese_reading
+            if language is not SupportedLanguage.JA:
+                raise ValueError("Japanese reading requires Japanese audio")
+            japanese_reading = validate_japanese_reading(japanese_reading)
         if not self._is_accepted(text_record):
             return AudioSynthesisBundle(
                 word_asset=self._failed_asset(
@@ -126,6 +141,8 @@ class AudioSynthesisService:
                 item_key=text_record.item_key,
                 asset_kind=AudioAssetKind.WORD,
                 display_text=display_word,
+                japanese_reading=japanese_reading,
+                mandarin_spoken_pinyin=spoken[0],
             ),
             sentence_asset=self._prepare_asset(
                 language=language,
@@ -133,6 +150,7 @@ class AudioSynthesisService:
                 item_key=text_record.item_key,
                 asset_kind=AudioAssetKind.SENTENCE,
                 display_text=text_record.example_sentence or "",
+                mandarin_spoken_pinyin=spoken[1],
             ),
         )
 
@@ -255,8 +273,11 @@ class AudioSynthesisService:
         item_key: str,
         asset_kind: AudioAssetKind,
         display_text: str,
+        japanese_reading: str | None = None,
+        mandarin_spoken_pinyin: str | None = None,
     ) -> AudioAssetRecord:
-        normalized_input = self._normalize_input(display_text, asset_kind=asset_kind)
+        normalized_input = self._normalize_input(display_text, asset_kind=asset_kind,
+            japanese_reading=japanese_reading, mandarin_spoken_pinyin=mandarin_spoken_pinyin)
         try:
             voice = self._select_voice(language)
         except VoiceSelectionError:
@@ -379,9 +400,19 @@ class AudioSynthesisService:
     def _audio_format(self) -> AudioFormat:
         return AudioFormat(getattr(self.adapter, "audio_format", self.settings.azure_speech_output_format))
 
-    def _normalize_input(self, display_text: str, *, asset_kind: AudioAssetKind) -> NormalizedTtsInput:
+    def _normalize_input(self, display_text: str, *, asset_kind: AudioAssetKind,
+                         japanese_reading: str | None = None,
+                         mandarin_spoken_pinyin: str | None = None) -> NormalizedTtsInput:
         normalized = normalize_tts_text(display_text)
         escaped = escape(normalized, quote=True)
+        if mandarin_spoken_pinyin is not None:
+            from multilang.services.mandarin_pronunciation_store import mandarin_phoneme_body
+            escaped = mandarin_phoneme_body(normalized, mandarin_spoken_pinyin)
+        if japanese_reading is not None:
+            from multilang.services.japanese_analysis import validate_japanese_reading
+            reading = validate_japanese_reading(japanese_reading)
+            katakana = "".join(chr(ord(c) + 0x60) if 'ぁ' <= c <= 'ゖ' else c for c in reading)
+            escaped = f'<phoneme alphabet="sapi" ph="{katakana}">{escaped}</phoneme>'
         if asset_kind is AudioAssetKind.WORD:
             ssml_text = (
                 '<speak version="1.0"><prosody rate="-10%" pitch="+8%" volume="+20%">'

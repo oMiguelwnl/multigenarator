@@ -306,6 +306,23 @@ class HighlightMicroexampleRevisionReference(_HighlightContract):
         return self.review_state == "approved"
 
 
+class JapaneseHighlightEvidence(_HighlightContract):
+    """Local morphology and source offsets, without the private passage."""
+
+    lemma: str = Field(min_length=1, max_length=256)
+    reading: str = Field(min_length=1, max_length=256)
+    pos: str = Field(min_length=1, max_length=16)
+    start: int = Field(ge=0)
+    end: int = Field(ge=1)
+    model_sha256: str = Field(pattern=r"^[0-9a-f]{64}$")
+
+    @model_validator(mode="after")
+    def ordered_span(self):
+        if self.end <= self.start:
+            raise ValueError("Japanese highlight span must be ordered")
+        return self
+
+
 class HighlightCandidate(_HighlightContract):
     """A reviewable vocabulary candidate extracted from normalized highlights."""
 
@@ -316,6 +333,9 @@ class HighlightCandidate(_HighlightContract):
     first_highlight_id: str = Field(min_length=1, max_length=_IDENTIFIER_MAX_LENGTH)
     first_source_index: int = Field(ge=0)
     occurrence_count: int = Field(ge=1, le=1_000_000)
+    japanese_evidence: JapaneseHighlightEvidence | None = Field(
+        default=None, exclude_if=lambda value: value is None,
+    )
     korean_identity: KoreanLexicalIdentity | None = Field(
         default=None,
         exclude_if=lambda value: value is None,
@@ -391,6 +411,8 @@ class HighlightExtractionError(_HighlightContract):
         "korean_resolver_required",
         "korean_resolution_failed",
         "korean_resolution_unavailable",
+        "japanese_analysis_unavailable",
+        "japanese_unknown_token",
     ]
 
 

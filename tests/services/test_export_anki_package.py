@@ -242,7 +242,15 @@ def test_build_multilang_model_uses_exact_fields_and_hides_translation_on_front(
 
 
 def test_build_multilang_model_uses_project_card_template_sections() -> None:
+    from multilang.services.card_template_loader import load_card_template
+
     model = build_multilang_model()
+    template = load_card_template("frequency")
+
+    assert template.source_template_name == "frequency_card"
+    assert model.templates[0]["qfmt"] == template.front
+    assert model.templates[0]["afmt"] == template.back
+    assert model.css == template.css
 
     assert '<div class="customCard cardBack">' in model.templates[0]["qfmt"]
     assert '<div id="translation" class="sentenceTranslation" style="display:none;">' in model.templates[0]["qfmt"]
@@ -251,36 +259,6 @@ def test_build_multilang_model_uses_project_card_template_sections() -> None:
     assert model.templates[0]["qfmt"].index('definitionsList') < model.templates[0]["qfmt"].index('{{Image}}')
     assert model.templates[0]["qfmt"].index('{{Image}}') < model.templates[0]["qfmt"].index('<div class="header">example:</div>')
     assert 'document.getElementById("translation").style.display = "block";' in model.templates[0]["afmt"]
-    assert "--max-width-card: 680px;" in model.css
-    assert "--color-page-background: #121212;" in model.css
-    assert "--color-card-background: #1E1E1E;" in model.css
-    assert "--color-text-primary: #EAEAEA;" in model.css
-    assert "--color-text-muted: #A0A0A0;" in model.css
-    assert "--color-divider: #333333;" in model.css
-    assert "border-radius: 8px;" in model.css
-    assert "border: 1px solid var(--color-divider);" in model.css
-    assert "box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5);" in model.css
-    assert "--font-size-targetWord: 38px;" in model.css
-    assert "background: transparent;" in model.css
-    assert ".card {\n  display: flex;\n  justify-content: center;\n  align-items: flex-start;" in model.css
-    assert "padding: 16px 12px 12px;" in model.css
-    assert "#qa {\n  width: 100%;\n  max-width: 680px;\n  min-width: 0;\n}" in model.css
-    assert "margin: 0 auto;\n  max-width: 680px;\n  width: 100%;\n  min-height: 0;" in model.css
-    assert "padding: 32px 40px;" in model.css
-    assert "max-width: 680px;" in model.css
-    assert "min-height: 100vh;" in model.css
-    assert "min-height: 0;" in model.css
-    assert "@media (max-width: 720px)" in model.css
-    assert "min-height: calc(100vh - 24px);" not in model.css
-    assert "min-height: calc(100vh - 16px);" not in model.css
-    assert "width: calc(100vw - 24px);" in model.css
-    assert "padding: 24px 20px;" in model.css
-    assert "overflow-x: hidden;" in model.css
-    assert "overflow-x: auto" not in model.css
-    assert "white-space: nowrap" not in model.css
-    assert "overflow-wrap: anywhere;" in model.css
-    assert "grid-template-columns: minmax(0, 1fr) 32px;" in model.css
-    assert "width: 32px;" in model.css
 
 
 def test_build_english_frequency_model_localizes_visual_labels_only() -> None:
@@ -290,6 +268,8 @@ def test_build_english_frequency_model_localizes_visual_labels_only() -> None:
 
     assert '<div class="header">Definição:</div>' in qfmt
     assert '<div class="header">Exemplo:</div>' in qfmt
+    assert 'translationLabel' not in qfmt
+    assert 'translationLabel' not in spanish_model.templates[0]["qfmt"]
     assert "{{Definitions}}" in qfmt
     assert "{{Translation}}" in qfmt
     assert '<div class="header">Definition:</div>' in spanish_model.templates[0]["qfmt"]

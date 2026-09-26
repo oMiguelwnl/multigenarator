@@ -31,13 +31,18 @@ from multilang.services.audio_integrity import (
     assert_sentence_audio_matches_sentence,
     assert_word_audio_matches_word,
 )
+from multilang.services.japanese_analysis import (
+    JapaneseAnalysisError,
+    candidate_japanese_reading,
+    japanese_target_spans,
+)
 from multilang.services.japanese_furigana import JapaneseFuriganaError, format_japanese_furigana
 from multilang.services.japanese_romaji import JapaneseRomajiError, romanize_japanese
 from multilang.services.mandarin_orthography import (
     MandarinOrthography,
     MandarinOrthographyError,
-    MandarinOrthographyService,
 )
+from multilang.services.mandarin_review import ReviewedMandarinOrthographyService
 from multilang.services.part_of_speech import CANONICAL_PART_OF_SPEECH_LABELS
 from multilang.services.text_field_remediation import validate_definition_html
 
@@ -67,7 +72,7 @@ class AssembleExportCardsService:
         self.lexical_repository = lexical_repository
         self.audio_repository = audio_repository
         self.export_repository = export_repository
-        self.mandarin_orthography_service = mandarin_orthography_service or MandarinOrthographyService()
+        self.mandarin_orthography_service = mandarin_orthography_service or ReviewedMandarinOrthographyService([])
 
     def execute(self, *, job_id: str, deck_language: SupportedLanguage) -> AssembleExportCardsResult:
         accepted_records = list(self.text_repository.list_accepted_records(job_id))
@@ -134,6 +139,8 @@ class AssembleExportCardsService:
                 display_word=lexical_candidate.display_form,
                 sentence=text_record.example_sentence or "",
                 enabled=_uses_japanese_frequency_fields(deck_language=deck_language, source_type=source_type),
+                reading=candidate_japanese_reading(lexical_candidate)
+                if deck_language is SupportedLanguage.JA else None,
             )
             mandarin_orthography = self._mandarin_orthography(
                 item_key=text_record.item_key,
@@ -332,17 +339,20 @@ class AssembleExportCardsService:
         display_word: str,
         sentence: str,
         enabled: bool,
+        reading: str | None = None,
     ) -> tuple[str, str, str, str] | None:
         if not enabled:
             return None
         try:
+            if reading and not japanese_target_spans(sentence, display_word, reading=reading):
+                raise JapaneseFuriganaError("sentence does not support the reviewed Japanese target reading")
             return (
-                format_japanese_furigana(display_word),
-                romanize_japanese(display_word),
+                format_japanese_furigana(display_word, **({"reading": reading} if reading else {})),
+                romanize_japanese(display_word, **({"reading": reading} if reading else {})),
                 format_japanese_furigana(sentence),
                 romanize_japanese(sentence),
             )
-        except (JapaneseFuriganaError, JapaneseRomajiError) as exc:
+        except (JapaneseAnalysisError, JapaneseFuriganaError, JapaneseRomajiError) as exc:
             raise AssembleExportCardsError(
                 f"unable to generate Japanese readings for item {item_key}: {exc}"
             ) from exc
@@ -572,7 +582,7 @@ def _candidate_source_type(candidate: object) -> str:
 
 
 def _uses_japanese_frequency_fields(*, deck_language: SupportedLanguage, source_type: str) -> bool:
-    return deck_language is SupportedLanguage.JA and source_type == "frequency"
+    return deck_language is SupportedLanguage.JA and source_type in {"frequency", "kindle-highlights"}
 
 
 def _uses_korean_frequency_final(*, deck_language: SupportedLanguage, source_type: str) -> bool:

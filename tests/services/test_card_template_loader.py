@@ -156,6 +156,7 @@ def _write_templates(root: Path) -> Path:
     template_dir = root / "src" / "multilang" / "templates"
     template_dir.mkdir(parents=True)
     (template_dir / "normal_card.md").write_text(NORMAL_TEMPLATE, encoding="utf-8")
+    (template_dir / "frequency_card.md").write_text(NORMAL_TEMPLATE, encoding="utf-8")
     (template_dir / "highlight_card.md").write_text(HIGHLIGHT_TEMPLATE, encoding="utf-8")
     return template_dir
 
@@ -183,7 +184,7 @@ def _load_hangul_template_contract() -> tuple[tuple[str, ...], str, str, str, st
     )
 
 
-def test_load_card_template_keeps_normal_template_and_translation_field(
+def test_load_card_template_keeps_frequency_template_and_translation_field(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
     template_dir = _write_templates(tmp_path)
@@ -191,7 +192,7 @@ def test_load_card_template_keeps_normal_template_and_translation_field(
 
     template = load_card_template(source_type="frequency")
 
-    assert template.source_template_name == "normal_card"
+    assert template.source_template_name == "frequency_card"
     assert "{{Translation}}" in template.front
     assert "{{FrontSide}}" in template.back
     validate_template_references(
@@ -254,19 +255,16 @@ def test_project_normal_template_css_keeps_sentence_audio_beside_text_responsive
 
     assert ".exampleSentenceLine" in template.css
     assert "display: grid;" in template.css
-    assert "grid-template-columns: minmax(0, 1fr) 32px;" in template.css
-    assert "gap: 10px;" in template.css
+    assert "grid-template-columns: minmax(0, 1fr) 44px;" in template.css
     assert ".exampleSentenceText" in template.css
-    assert "flex: 1 1 auto;" in template.css
     assert "min-width: 0;" in template.css
     assert ".sentenceAudioButton" in template.css
-    assert "width: 32px;" in template.css
-    assert "min-width: 32px;" in template.css
-    assert "max-width: 32px;" in template.css
+    assert "width: 44px;" in template.css
+    assert "min-width: 44px;" in template.css
 
 
-def test_normal_frequency_template_uses_production_dark_layout_contract() -> None:
-    template = load_card_template(source_type="frequency")
+def test_korean_grammar_preserves_legacy_dark_layout_contract() -> None:
+    template = load_card_template(source_type="korean-grammar", language=SupportedLanguage.KO)
     references = re.findall(r"{{[#/]?([^{}]+)}}", template.front + template.back)
 
     assert references == [
@@ -435,17 +433,14 @@ def test_normal_frequency_template_uses_production_dark_layout_contract() -> Non
     assert _last_css_value(mobile_css, "padding", selector=".customCard") == "24px 20px"
 
 
-def test_normal_and_mandarin_panels_use_approved_q054_width_contract() -> None:
-    normal = load_card_template(source_type="frequency")
-    mandarin_frequency = load_card_template(
-        source_type="frequency", language=SupportedLanguage.ZH
-    )
+def test_legacy_grammar_and_mandarin_keep_q054_width_contract() -> None:
+    normal = load_card_template(source_type="korean-grammar", language=SupportedLanguage.KO)
     mandarin_word_list = load_card_template(
         source_type="word-list", language=SupportedLanguage.ZH
     )
-
-    assert mandarin_frequency == mandarin_word_list
-    assert mandarin_frequency.css.startswith(normal.css)
+    mandarin_frequency = load_card_template(
+        source_type="frequency", language=SupportedLanguage.ZH
+    )
 
     css_blocks = list(re.finditer(r"([^{}]+)\{([^{}]*)\}", normal.css))
     universal_blocks = [
@@ -456,7 +451,7 @@ def test_normal_and_mandarin_panels_use_approved_q054_width_contract() -> None:
     assert universal_blocks
     assert _last_css_value(universal_blocks[-1].group(2), "box-sizing") == "border-box"
 
-    for template in (normal, mandarin_frequency, mandarin_word_list):
+    for template in (normal, mandarin_word_list, mandarin_frequency):
         css = template.css
         desktop_css = css.split("@media", maxsplit=1)[0]
         assert _last_css_value(desktop_css, "display", selector=".card") == "flex"

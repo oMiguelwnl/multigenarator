@@ -555,6 +555,47 @@ def test_assemble_mandarin_wraps_orthography_errors_with_item_context() -> None:
         service.execute(job_id="job-1", deck_language=SupportedLanguage.ZH)
 
 
+@pytest.mark.parametrize("changed_context", [False, True])
+def test_assemble_mandarin_uses_context_review_and_blocks_unreviewed_sentence(changed_context):
+    from multilang.services.mandarin_review import (
+        MandarinPronunciationReview,
+        ReviewedMandarinOrthographyService,
+    )
+
+    review = MandarinPronunciationReview(
+        word="长", sentence="这条路很长。",
+        orthography=MandarinOrthography(
+            word_pinyin="cháng", word_traditional="長",
+            sentence_pinyin="zhè tiáo lù hěn cháng。", sentence_traditional="這條路很長。",
+        ), evidence_record_sha256=("a" * 64,),
+    )
+    sentence = "孩子长高了。" if changed_context else review.sentence
+    service, repository = build_service(
+        accepted_records=[make_text_record(item_key="长", example_sentence=sentence,
+                                           translation_text="Esta estrada é longa.")],
+        candidates={"长": make_mandarin_candidate(item_key="长", source_type="word-list")},
+        assets={
+            ("长", AudioAssetKind.WORD.value): make_asset(
+                item_key="长", asset_kind=AudioAssetKind.WORD, storage_path="audio/word/zh-long.mp3",
+            ),
+            ("长", AudioAssetKind.SENTENCE.value): make_asset(
+                item_key="长", asset_kind=AudioAssetKind.SENTENCE,
+                storage_path="audio/sentence/zh-long.mp3", display_text=sentence,
+            ),
+        },
+        mandarin_orthography_service=ReviewedMandarinOrthographyService([review]),
+    )
+    if changed_context:
+        with pytest.raises(AssembleExportCardsError, match="pronunciation review"):
+            service.execute(job_id="job-1", deck_language=SupportedLanguage.ZH)
+        assert repository.saved_rows == []
+    else:
+        row = service.execute(job_id="job-1", deck_language=SupportedLanguage.ZH).cards[0]
+        assert row.mandarin_word_pinyin == "cháng"
+        assert row.mandarin_sentence_pinyin == review.orthography.sentence_pinyin
+        assert repository.saved_rows == [row]
+
+
 def test_assemble_korean_frequency_rows_require_reviewed_manifest_text_audio_and_preserve_identity() -> None:
     candidate = make_korean_candidate(rank=1001, level=2)
     text_record = make_korean_text_record()
@@ -666,7 +707,7 @@ def test_assemble_korean_frequency_rejects_stale_or_unreviewed_final_evidence(
     assert repository.saved_rows == []
 
 
-def test_assemble_mandarin_rejects_invalid_pinyin_before_persisting_snapshot() -> None:
+def test_assemble_mandarin_requires_review_before_persisting_snapshot() -> None:
     service, repository = build_service(
         accepted_records=[make_text_record(item_key="㐂", example_sentence="我用㐂。", translation_text="I use the target.")],
         candidates={"㐂": make_mandarin_candidate(item_key="㐂", source_type="frequency")},
@@ -680,7 +721,7 @@ def test_assemble_mandarin_rejects_invalid_pinyin_before_persisting_snapshot() -
         },
     )
 
-    with pytest.raises(AssembleExportCardsError, match="㐂.*pinyin"):
+    with pytest.raises(AssembleExportCardsError, match="㐂.*pronunciation review"):
         service.execute(job_id="job-1", deck_language=SupportedLanguage.ZH)
     assert repository.saved_rows == []
 

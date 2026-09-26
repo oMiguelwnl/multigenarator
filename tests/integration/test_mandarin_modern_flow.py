@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import csv
+import hashlib
 import json
 import sqlite3
 import zipfile
@@ -39,7 +40,6 @@ from multilang.services.export_anki_package import (
     MANDARIN_NOTE_TYPE_NAME,
     export_anki_package,
 )
-from multilang.services.mandarin_orthography import MandarinOrthographyService
 from multilang.services.text_generation import (
     DefinitionConsistencyResult,
     DefinitionGenerationResult,
@@ -91,9 +91,9 @@ class FakeMandarinAzureSpeechAdapter(AudioSynthesisAdapter):
 
 
 class CountingMandarinOrthographyService:
-    def __init__(self) -> None:
+    def __init__(self, delegate) -> None:
         self.calls: list[tuple[str, str]] = []
-        self._delegate = MandarinOrthographyService()
+        self._delegate = delegate
 
     def derive(self, *, word: str, sentence: str):
         self.calls.append((word, sentence))
@@ -192,6 +192,22 @@ def _build_service(tmp_path: Path, monkeypatch: pytest.MonkeyPatch, *terms: str)
     monkeypatch.setattr(runtime_module, "AzureSpeechAdapter", FakeMandarinAzureSpeechAdapter)
     monkeypatch.setattr(runtime_module, "LocalSentenceAdapter", FakeMandarinSentenceAdapter)
     monkeypatch.setattr(runtime_module, "LocalTranslationAdapter", FakeMandarinTranslationAdapter)
+    # Frozen test readings, explicitly distinct from provider output or automatic
+    # Pinyin derivation. Synthetic source hashes are only for this offline test.
+    readings = {"中国": ("zhōng guó", "中國"), "银行": ("yín háng", "銀行"), "学习": ("xué xí", "學習")}
+    contexts = []
+    for word in terms:
+        pinyin, traditional = readings[word]
+        sentence = f"朋友们在晚饭时讨论{word}。"
+        sentence_pinyin = f"péng you men zài wǎn fàn shí tǎo lùn {pinyin}。"
+        contexts.append({"word": word, "sentence": sentence,
+            "orthography": {"word_pinyin": pinyin, "word_traditional": traditional,
+                "sentence_pinyin": sentence_pinyin, "sentence_traditional": f"朋友們在晚飯時討論{traditional}。"},
+            "word_spoken_pinyin": pinyin, "sentence_spoken_pinyin": sentence_pinyin,
+            "evidence_record_sha256": ["a" * 64]})
+    review_path = tmp_path / "mandarin-reviews.json"
+    review_path.write_text(json.dumps({"schema_version": "mandarin-pronunciation-1",
+        "reviewer": "offline synthetic fixture", "independent_human_review": False, "contexts": contexts}), encoding="utf-8")
     service = build_runtime_service(
         Settings(
             _env_file=None,
@@ -204,9 +220,11 @@ def _build_service(tmp_path: Path, monkeypatch: pytest.MonkeyPatch, *terms: str)
             azure_speech_key="offline-key",
             azure_speech_region="eastus",
             tatoeba_enabled=False,
+            mandarin_review_bundle_path=review_path,
+            mandarin_review_bundle_sha256=hashlib.sha256(review_path.read_bytes()).hexdigest(),
         )
     )
-    orthography = CountingMandarinOrthographyService()
+    orthography = CountingMandarinOrthographyService(service.generate_audio_items_service.audio_synthesis_service.mandarin_review_service)
     service.assemble_export_cards_service.mandarin_orthography_service = orthography
     return service, database_path, orthography
 

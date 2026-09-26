@@ -8,6 +8,7 @@ from typing import Any, Literal, Self
 from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator
 
 from multilang.domain.jobs import SupportedLanguage
+from multilang.domain.sentence_curriculum import SentenceCurriculum
 from multilang.domain.korean import (
     KOREAN_FREQUENCY_EXPECTED_ENTRY_COUNT,
     KOREAN_FREQUENCY_EXPECTED_SOURCE_COUNT,
@@ -50,6 +51,9 @@ class LexicalProvenance(BaseModel):
     definition: DefinitionRecord | None = None
     pronunciation: PronunciationRecord | None = None
     notes: list[str] = Field(default_factory=list)
+    sentence_curriculum: SentenceCurriculum | None = Field(
+        default=None, exclude_if=lambda value: value is None,
+    )
 
 
 _HEX = frozenset("0123456789abcdef")

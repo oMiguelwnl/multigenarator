@@ -11,6 +11,7 @@ output/
     output-deck/            Protótipo do deck de produção de frases
     legacy/                 Prévias históricas preservadas
   examples/                 Amostras, pilotos e testes de exportação
+    mandarin/               Piloto de revisão de pronúncia e sentidos
     japanese/               Kana e validação de frequência
     pt/                     Pilotos em português
     quality/                Amostras de qualidade
@@ -21,7 +22,9 @@ output/
 
 ## Abrir os cards
 
+- Vocabulário: [preparação dos 22 idiomas modernos e latim](reports/vocabulary-preparation/README.md), com geração de conteúdo e decks adiada.
 - Mandarim: [frente](previews/mandarin/front.html), [verso](previews/mandarin/back.html), [imagem no celular](previews/mandarin/back-390.png).
+- Revisão de mandarim: [36 contextos revisados por IA](examples/mandarin/review-pilot/index.html), [relatório](reports/mandarin/linguistic-review-20260920/review.md).
 - Frequência: [prévia interativa](previews/frequency/index.html), [proposta anterior](previews/frequency/proposal.html), [deck demonstrativo](previews/frequency/artifacts/multilang-frequency-minimal-dark-demo.apkg).
 - Produção de frases: [protótipo](previews/output-deck/prototype.html), [prévia do card](previews/output-deck/card.html).
 - Português: [piloto](examples/pt/pilot/pilot.apkg).

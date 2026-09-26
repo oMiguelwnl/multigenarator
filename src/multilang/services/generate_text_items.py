@@ -25,6 +25,7 @@ from multilang.domain.text_quality import (
     ValidationStatus,
 )
 from multilang.security.redaction import redact_sensitive_text
+from multilang.services.japanese_analysis import candidate_japanese_reading
 from multilang.services.korean_text_generation import (
     KoreanTextGenerationSelector,
     korean_selector_history_from_record,
@@ -765,6 +766,10 @@ class GenerateTextItemsService:
             job_id=job_id,
             item_key=item_key,
             rate_limiter=rate_limiter,
+            **({"sentence_curriculum": candidate.provenance.sentence_curriculum}
+               if candidate.provenance.sentence_curriculum is not None else {}),
+            **({"japanese_reading": candidate_japanese_reading(candidate)}
+               if deck_language is SupportedLanguage.JA and candidate_japanese_reading(candidate) else {}),
         )
         return _gate_local_templates(
             validation=validation,
@@ -946,6 +951,7 @@ class GenerateTextItemsService:
             definitions_html=getattr(persisted_candidate, "definitions_html"),
             definition_language=getattr(persisted_candidate, "definition_language"),
             ipa=getattr(persisted_candidate, "ipa"),
+            spoken_form=getattr(persisted_candidate, "spoken_form", None),
             translation_target_language=getattr(persisted_candidate, "translation_target_language"),
             grounding_status=GroundingStatus(getattr(persisted_candidate, "grounding_status")),
             warning_code=getattr(persisted_candidate, "warning_code"),

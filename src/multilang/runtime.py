@@ -1068,6 +1068,7 @@ def build_runtime_service(
         require_translation_fidelity=True,
         definition_consistency_checker=text_generation_service.review_definition,
         require_definition_consistency=True,
+        contextual_model_root=runtime_settings.native_language_models_dir,
     )
     tatoeba_sentence_source = TatoebaSentenceSource(
         candidate_provider=(
@@ -1136,6 +1137,7 @@ def build_runtime_service(
             lexical_repository=lexical_repository,
             audio_repository=audio_repository,
             export_repository=export_repository,
+            mandarin_orthography_service=audio_synthesis_service.mandarin_review_service,
         ),
         runtime_settings=runtime_settings,
         korean_final_frequency_entries=korean_final_frequency_entries,

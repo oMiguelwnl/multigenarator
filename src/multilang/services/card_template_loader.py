@@ -9,6 +9,7 @@ from importlib.resources.abc import Traversable
 
 from multilang.domain.exporting import (
     JAPANESE_EXPORT_CARD_FIELD_NAMES,
+    JAPANESE_HIGHLIGHT_EXPORT_CARD_FIELD_NAMES,
     MANDARIN_EXPORT_CARD_FIELD_NAMES,
     export_field_names_for_language_and_source,
 )
@@ -27,6 +28,7 @@ _ANKI_REFERENCE_RE = re.compile(r"{{\s*(?P<prefix>[#/^]?)(?P<name>[^{}]+?)\s*}}"
 _ALLOWED_NON_FIELD_HELPERS = frozenset({"FrontSide"})
 _TEMPLATE_FILES = {
     "normal_card": "normal_card.md",
+    "frequency_card": "frequency_card.md",
     "highlight_card": "highlight_card.md",
     "latin_mvp_card": "latin_mvp_card.md",
     "japanese_card": "japanese_card.md",
@@ -53,7 +55,7 @@ def load_card_template(source_type: str, *, language: SupportedLanguage | None =
     # allowing drop of frozen data dependency while preserving Latin card structure.
     is_la = language is not None and (language == "la" or getattr(language, "value", None) == "la")
     is_ja = (
-        source_type == "frequency"
+        source_type in {"frequency", "kindle-highlights"}
         and language is not None
         and (language == "ja" or getattr(language, "value", None) == "ja")
     )
@@ -91,7 +93,17 @@ def load_card_template(source_type: str, *, language: SupportedLanguage | None =
             template_path=template_path,
             source_template_name="japanese_card",
         )
-        validate_template_references(template, field_names=JAPANESE_EXPORT_CARD_FIELD_NAMES)
+        if source_type == "kindle-highlights":
+            # Shared visual shell; highlights intentionally have no translation
+            # field. The separate schema/model prevents changing other languages.
+            template = CardTemplate(
+                front=template.front.replace("{{Sentence Translation}}", ""),
+                back=template.back.replace("{{Sentence Translation}}", ""),
+                css=template.css, source_template_name="japanese_highlight_card",
+            )
+        validate_template_references(template, field_names=(
+            JAPANESE_HIGHLIGHT_EXPORT_CARD_FIELD_NAMES if source_type == "kindle-highlights"
+            else JAPANESE_EXPORT_CARD_FIELD_NAMES))
         return template
     if is_la:
         source_type = "latin-mvp"
@@ -166,6 +178,9 @@ def _localize_english_frequency_labels(template: CardTemplate) -> CardTemplate:
         ).replace(
             '<div class="header">example:</div>',
             '<div class="header">Exemplo:</div>',
+        ).replace(
+            '<div class="translationLabel">Translation</div>',
+            '<div class="translationLabel">Tradução</div>',
         ),
         back=template.back,
         css=template.css,

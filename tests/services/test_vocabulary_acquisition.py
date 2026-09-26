@@ -6,6 +6,27 @@ import httpx
 import pytest
 
 
+def test_mandarin_supplement_uses_catalogued_bulk_download_and_keeps_gzip(tmp_path):
+    from multilang.services.vocabulary_acquisition import acquire_source
+
+    content = gzip.compress('銀行 银行 [yin2 hang2] /bank/\n'.encode())
+    requests = []
+
+    def serve(request):
+        requests.append(request)
+        return httpx.Response(200, stream=httpx.ByteStream(content))
+
+    with httpx.Client(transport=httpx.MockTransport(serve)) as client:
+        result = acquire_source('zh', 'lexical-supplement', tmp_path, client=client)
+    assert str(requests[0].url) == (
+        'https://www.mdbg.net/chinese/export/cedict/cedict_1_0_ts_utf-8_mdbg.txt.gz'
+    )
+    assert result['file'].endswith('.txt.gz')
+    assert gzip.decompress((tmp_path / result['file']).read_bytes()).decode().startswith('銀行 银行')
+    assert result['source_id'] == 'cc-cedict'
+    assert result['linguistic_review_approved'] is False
+
+
 def test_catalog_download_is_bounded_and_content_addressed(tmp_path):
     from multilang.services.vocabulary_acquisition import acquire_source
 

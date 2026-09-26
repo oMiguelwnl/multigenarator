@@ -2329,6 +2329,30 @@
     {
       "language": "ja",
       "name": "Japanese",
+      "frequency_sources": [
+        {
+          "source_id": "tubelex-ja-unidic310-base",
+          "url": "https://raw.githubusercontent.com/naist-nlp/tubelex/main/frequencies/tubelex-ja-310-base-pos.tsv.xz",
+          "format": "tubelex-tsv.xz",
+          "normalization": "upstream NFKC and lowercase; orthographic base; UniDic 3.1.0",
+          "license": "Aggregate data distribution requires a recorded source-specific decision; repository software BSD-3-Clause",
+          "license_url": "https://github.com/naist-nlp/tubelex/blob/main/LICENSE",
+          "attribution": "Adam Nohejl et al., TUBELEX, COLING 2025, https://aclanthology.org/2025.coling-main.641/",
+          "restrictions": ["Aggregate counts are not occurrences or sense frequencies.", "Retain snapshot hash and normalization; do not redistribute raw subtitles."],
+          "redistribution_approved": false
+        },
+        {
+          "source_id": "tubelex-ja-unidic310-lemma",
+          "url": "https://raw.githubusercontent.com/naist-nlp/tubelex/main/frequencies/tubelex-ja-310-lemma-pos.tsv.xz",
+          "format": "tubelex-tsv.xz",
+          "normalization": "upstream NFKC and lowercase; lemma; UniDic 3.1.0",
+          "license": "Aggregate data distribution requires a recorded source-specific decision; repository software BSD-3-Clause",
+          "license_url": "https://github.com/naist-nlp/tubelex/blob/main/LICENSE",
+          "attribution": "Adam Nohejl et al., TUBELEX, COLING 2025, https://aclanthology.org/2025.coling-main.641/",
+          "restrictions": ["Compare separately with base-form ranks; do not add overlapping corpus counts."],
+          "redistribution_approved": false
+        }
+      ],
       "lexical_sources": [
         {
           "source_id": "kaikki-enwiktionary-raw",

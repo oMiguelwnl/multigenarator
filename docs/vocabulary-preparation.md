@@ -4,6 +4,88 @@ Os nomes e a ordem dos fields Anki são preservados. A entrada linguística é u
 registro interno que distingue idioma, lema, classe gramatical, sentido e formas
 observadas. Ela não acrescenta campos ao cartão.
 
+## Preparar arquivos sem gerar cartões
+
+Para consolidar preparados existentes e deixar a geração para depois:
+
+```bash
+uv run --no-sync multilang native vocabulary prepare-deck-inputs \
+  REQUEST.json REQUEST_SHA256 output/reports/vocabulary-preparation/NEW_RUN
+```
+
+O request declara todos os idiomas esperados, arquivos de candidatos e hashes,
+prioridades de preparação e, opcionalmente, corpora apenas para diagnóstico.
+O contrato está em `services/deck_preparation.py`. A saída precisa ser nova;
+somente é publicada quando todos os idiomas terminam sem erro.
+
+Cada idioma recebe `vocabulary.json`, `forms.jsonl` e `report.json`. O pacote
+inclui resumo, request reproduzível e manifesto de integridade. Os lemas e
+classes são agrupados preservando caixa, acentos e sentidos alternativos.
+Prioridade de superfície não é frequência de um sentido nem currículo revisado;
+bandas propostas não aprovam automaticamente 3.000 entradas. Formas candidatas
+não são cartões selecionados. O latim mantém seu percurso clássico separado.
+
+O comando não chama LLM, tradução, áudio, banco ou exportador Anki e não lê o
+`.env` para executar provedores. A disponibilidade literal de lemas num corpus
+de diagnóstico, quando calculada, usa toda a base candidata e não certifica a
+meta de 90% em fala ou escrita. Anotações ausentes entram como não cobertas.
+
+### Revisar pela sessão atual, sem API de provedor
+
+O script `scripts/review_vocabulary_in_session.py` permite ao assistente revisar
+os arquivos pela sessão atual do ChatGPT/Codex. Ele não lê o `.env`, não executa
+outro agente e não chama OpenRouter, OpenAI API, tradução, áudio ou geração.
+O processamento do assistente continua sujeito aos limites da sessão/plano;
+a assinatura não é convertida em chave de API do projeto.
+
+O comando `next` verifica o manifesto dos pacotes, reutiliza um pedido pendente
+ou exporta o próximo subconjunto ainda não revisado. O assistente lê as evidências
+em `request.json` e produz uma resposta com os índices exatos de sentidos e
+formas. O comando `import` valida essa resposta e grava uma proposta imutável.
+Uma correção usa `--supersedes DIRETORIO_DA_REVISAO_ANTERIOR`, preservando o
+histórico e exigindo o mesmo pedido e as mesmas fontes. Correções concorrentes
+não são resolvidas silenciosamente pela data do arquivo.
+
+```bash
+.venv/bin/python scripts/review_vocabulary_in_session.py next \
+  --packets CAMINHO_DOS_PACOTES --manifest-sha256 HASH_DO_MANIFESTO \
+  --requests PEDIDOS --reviews REVISOES --language ja --batch-size 8
+
+.venv/bin/python scripts/review_vocabulary_in_session.py import \
+  --request PEDIDO --request-sha256 HASH_DO_PEDIDO --response RESPOSTA.json \
+  --context-id IDENTIFICADOR_DA_SESSAO --output NOVA_REVISAO
+
+.venv/bin/python scripts/review_vocabulary_in_session.py report \
+  --packets CAMINHO_DOS_PACOTES --manifest-sha256 HASH_DO_MANIFESTO \
+  --requests PEDIDOS --reviews REVISOES --output NOVO_RELATORIO
+```
+
+`report` reconstrói as decisões a partir das respostas, confere os pedidos
+contra os pacotes originais e conta cada unidade apenas uma vez. Mantém separados
+grupos de lema/classe, fragmentos de revisão, candidatos de sentido e pares de
+forma/sentido. Não converte esses números em cartões finais ou porcentagem de
+cobertura. As propostas possuem `production_eligible=false` e não substituem
+a importação de um inventário validado. A geração permanece adiada.
+
+### Validação de dificuldade antes da geração futura
+
+`SentenceCurriculum`, quando anexado à proveniência de uma entrada, acompanha
+tanto geração como regeneração. A validação usa análise contextual local, com
+hash do modelo e da frase, lema/classe do alvo, vocabulário previamente
+introduzido, características morfológicas permitidas e limites de unidades
+lexicais. Uma análise ausente, alterada ou incompleta reprova essa validação.
+Espaços ou caracteres japoneses não substituem a contagem de unidades analisadas.
+
+O contrato não certifica domínio do aluno, desambiguação de sentidos ou
+naturalidade. A sequência preparatória ainda usa ordem provisória de fontes;
+não ativa automaticamente o currículo em todos os cartões. É necessário concluir
+a curadoria e qualificar as análises e os limites por idioma antes dessa ativação.
+
+Esses arquivos são uma entrada para revisão; não substituem o bundle aprovado
+de `import-reviewed-vocabulary`. A proposta de política de frases é registrada
+com ativação desligada. Na solicitação atual, conteúdo e decks ficam adiados até
+o usuário retomar explicitamente a geração.
+
 O [fluxo de qualificação](linguistic-qualification.md) acrescenta medição de
 frequência/dispersão, revisão em HTML local, calibração com decisões autenticadas
 e pilotos por língua. O formulário permite salvar decisões e retomá-las depois.

@@ -63,6 +63,8 @@ def extract_highlight_candidates(
     """Return first-seen ordered candidate forms with duplicate/noise counters."""
 
     input_mode = HighlightInputMode(input_mode)
+    if language is SupportedLanguage.JA:
+        return _extract_japanese_highlight_candidates(highlights, input_mode=input_mode)
     if input_mode is HighlightInputMode.VOCABULARY:
         if language is SupportedLanguage.KO:
             raise ValueError("Korean highlights require the existing morphology-based text mode")
@@ -147,6 +149,78 @@ def extract_highlight_candidates(
         duplicate_count=duplicate_count,
         rejected_token_count=rejected_token_count,
     )
+
+
+def _extract_japanese_highlight_candidates(highlights, *, input_mode):
+    from multilang.domain.highlights import JapaneseHighlightEvidence
+    from multilang.services.japanese_analysis import (
+        JapaneseAnalysisError,
+        analyze_japanese,
+        japanese_dictionary_identity,
+    )
+
+    candidates = {}
+    duplicates = rejected = 0
+    errors = []
+    for highlight in sorted(highlights, key=lambda item: item.provenance.source_index):
+        try:
+            tokens = analyze_japanese(highlight.text)
+            # UniDic may emit U+3000 as an unknown node. Layout whitespace and
+            # decimal dates/numbers are not lexical failures or study entries.
+            lexical_tokens = tuple(token for token in tokens if token.surface.strip() and not token.surface.isdecimal())
+            rejected += len(tokens) - len(lexical_tokens)
+            tokens = lexical_tokens
+            fingerprint = japanese_dictionary_identity()["model_artifact_sha256"]
+        except JapaneseAnalysisError:
+            errors.append(HighlightExtractionError(source_index=highlight.provenance.source_index,
+                                                   reason_code="japanese_analysis_unavailable"))
+            rejected += 1
+            continue
+        vocabulary = input_mode is HighlightInputMode.VOCABULARY
+        if vocabulary:
+            lexical = [t for t in tokens if t.pos not in {"AUX", "PUNCT", "SYM"}]
+            if len(lexical) != 1:
+                # Expressions remain intentional vocabulary entries. Unknown
+                # morphology cannot turn arbitrary passages into a headword.
+                if any(not t.known and t.pos != "PUNCT" for t in tokens):
+                    errors.append(HighlightExtractionError(source_index=highlight.provenance.source_index,
+                        reason_code="japanese_unknown_token"))
+                    rejected += 1
+                else:
+                    explicit = _extract_vocabulary_candidates([highlight], language=SupportedLanguage.JA)
+                    for candidate in explicit.candidates:
+                        key = ("vocabulary", candidate.lemma_key)
+                        if key in candidates:
+                            duplicates += 1
+                            candidates[key] = candidates[key].model_copy(update={
+                                "occurrence_count": candidates[key].occurrence_count + candidate.occurrence_count})
+                        else:
+                            candidates[key] = candidate
+                continue
+            tokens = tuple(lexical)
+        for token in tokens:
+            if not vocabulary and token.pos in {"PART", "AUX", "PUNCT", "SYM"}:
+                rejected += 1
+                continue
+            if not token.known or not token.lemma_reading:
+                rejected += 1
+                errors.append(HighlightExtractionError(source_index=highlight.provenance.source_index,
+                                                       reason_code="japanese_unknown_token"))
+                continue
+            # Spelling alone must not merge distinct readings or POS. The source
+            # hash in _record_candidate keeps contexts separate for sense review.
+            key = "ja:" + sha256("|".join((token.lemma, token.lemma_reading, token.pos)).encode()).hexdigest()
+            duplicates += _record_candidate(candidates, language=SupportedLanguage.JA, highlight=highlight,
+                                            display_form=token.orthographic_base, lemma_key=key)
+            stored_key = (highlight.provenance.content_hash, key)
+            if candidates[stored_key].japanese_evidence is None:
+                candidates[stored_key] = candidates[stored_key].model_copy(update={
+                    "japanese_evidence": JapaneseHighlightEvidence(lemma=token.lemma,
+                        reading=token.lemma_reading, pos=token.pos, start=token.start, end=token.end,
+                        model_sha256=fingerprint),
+                })
+    return HighlightCandidateExtractionResult(candidates=list(candidates.values()),
+        duplicate_count=duplicates, rejected_token_count=rejected, errors=errors)
 
 
 def _extract_vocabulary_candidates(

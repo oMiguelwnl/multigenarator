@@ -4,18 +4,17 @@
 from __future__ import annotations
 
 import argparse
-from hashlib import sha256
 import importlib.util
 import json
 import os
-from pathlib import Path
 import re
 import stat
 import subprocess
 import sys
 import tempfile
+from hashlib import sha256
+from pathlib import Path
 from typing import Final, Iterable, Mapping, Sequence
-
 
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
 TMP_ROOT = Path("/tmp")

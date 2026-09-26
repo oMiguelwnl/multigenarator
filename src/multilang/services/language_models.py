@@ -283,6 +283,15 @@ def model_status(language: str, root: Path, *, profile: str = "fast") -> dict:
             **profile_fields,
         }
     if spec.backend != "stanza":
+        if language == "ja":
+            from multilang.services.japanese_analysis import japanese_dictionary_identity
+
+            try:
+                return {"language": language, "backend": spec.backend, "available": True,
+                        "package_version": version, **japanese_dictionary_identity(), "qualified": False}
+            except (ImportError, OSError, ValueError):
+                return {"language": language, "backend": spec.backend, "available": False,
+                        "reason": "dictionary_or_model_package_missing"}
         auxiliary = "kiwipiepy-model" if language == "ko" else "unidic-lite"
         try:
             auxiliary_version = importlib.metadata.version(auxiliary)

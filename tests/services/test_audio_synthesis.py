@@ -49,6 +49,48 @@ def make_text_record(**overrides: object) -> TextQualityRecord:
     return TextQualityRecord(**payload)
 
 
+def test_mandarin_audio_blocks_unreviewed_context_before_provider_lookup(tmp_path):
+    service = AudioSynthesisService(adapter=FakeAudioAdapter(tmp_path),
+        settings=Settings(_env_file=None, audio_storage_dir=tmp_path))
+    with pytest.raises(ValueError, match="review"):
+        service.prepare_item_assets(language=SupportedLanguage.ZH, display_word="长",
+            text_record=make_text_record(example_sentence="这条路很长。"))
+    assert service.adapter.calls == []
+
+
+def test_mandarin_audio_binds_saved_readings_to_word_and_sentence(tmp_path):
+    from multilang.services.mandarin_pronunciation_store import load_pronunciation_store
+    from test_mandarin_pronunciation_store import bundle, save
+
+    path, digest = save(tmp_path, bundle())
+    service = AudioSynthesisService(adapter=FakeAudioAdapter(tmp_path),
+        settings=Settings(_env_file=None, audio_storage_dir=tmp_path),
+        mandarin_review_service=load_pronunciation_store(path, digest))
+    result = service.prepare_item_assets(language=SupportedLanguage.ZH, display_word="长",
+        text_record=make_text_record(example_sentence="这条路很长。"))
+    assert 'ph="chang 2"' in result.word_asset.normalized_input.ssml_text
+    assert 'chang 2' in result.sentence_asset.normalized_input.ssml_text
+    assert result.word_asset.normalized_input.tts_text == "长"
+    assert result.sentence_asset.normalized_input.tts_text == "这条路很长。"
+
+
+def test_japanese_reviewed_reading_changes_audio_identity_and_preserves_display(tmp_path):
+    from multilang.services.audio.integrity import assert_word_audio_matches_word
+
+    service = AudioSynthesisService(adapter=FakeAudioAdapter(tmp_path),
+        settings=Settings(_env_file=None, audio_storage_dir=tmp_path))
+    args = dict(language=SupportedLanguage.JA, display_word="人気", text_record=make_text_record())
+    a = service.prepare_item_assets(**args, japanese_reading="ひとけ").word_asset
+    b = service.prepare_item_assets(**args, japanese_reading="にんき").word_asset
+    assert a.normalized_input.tts_text == "人気"
+    assert 'alphabet="sapi"' in a.normalized_input.ssml_text
+    assert 'ph="ヒトケ"' in a.normalized_input.ssml_text
+    assert a.provenance.storage_path != b.provenance.storage_path
+    assert_word_audio_matches_word(a, "人気", item_key=a.item_key)
+    with pytest.raises(ValueError):
+        service.prepare_item_assets(**args, japanese_reading='<sub alias="x">')
+
+
 class FakeAudioAdapter(AudioSynthesisAdapter):
     def __init__(self, base_dir: Path, *, available_voice_ids: set[str] | None = None) -> None:
         self.base_dir = base_dir

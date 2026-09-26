@@ -11,7 +11,6 @@ from __future__ import annotations
 
 import re
 from dataclasses import dataclass, replace
-from datetime import datetime
 from functools import cached_property
 from hashlib import sha256
 from importlib.resources import files
@@ -21,6 +20,11 @@ import genanki
 
 from multilang.services.anki_id_registry import AnkiIdKind, registry_id
 from multilang.services.azure_speech_adapter import AzureSpeechAdapter
+from multilang.services.japanese_analysis import validate_japanese_reading
+from multilang.services.japanese_deck_audio import (
+    synthesize_cached_japanese,
+    write_japanese_package,
+)
 from multilang.services.japanese_romaji import romanize_japanese
 from multilang.settings import Settings
 
@@ -67,7 +71,7 @@ class JapaneseCard:
 
     @cached_property
     def word_romaji(self) -> str:
-        return romanize_japanese(self.target_word)
+        return romanize_japanese(self.target_word, reading=_plain_reading(self.word_reading))
 
     @cached_property
     def sentence_romaji(self) -> str:
@@ -143,18 +147,19 @@ def export_japanese_frequency_deck(
     deck_name: str = DEFAULT_JAPANESE_DECK_NAME,
     cards: tuple[JapaneseCard, ...] = JAPANESE_FREQUENCY_CARDS,
     settings: Settings | None = None,
+    prototype: bool = False,
 ) -> JapaneseDeckExportResult:
     settings = settings or Settings()
     model = build_japanese_model()
     deck = genanki.Deck(JAPANESE_DECK_ID, deck_name)
 
-    synthesizer = AzureSpeechAdapter(settings)
-    audio_dir = Path(settings.audio_storage_dir) / "japanese" / datetime.now().strftime("%Y-%m-%d")
+    synthesizer = None if prototype else AzureSpeechAdapter(settings)
+    audio_dir = Path(settings.audio_storage_dir) / "japanese"
     media_files: list[Path] = []
 
     for card in cards:
         card = card if card.language_code == "ja" else replace(card, language_code="ja")
-        card_with_audio = _synthesize_card_audio(
+        card_with_audio = replace(card, word_audio="", sentence_audio="") if prototype else _synthesize_card_audio(
             card=card,
             synthesizer=synthesizer,
             audio_dir=audio_dir,
@@ -165,7 +170,11 @@ def export_japanese_frequency_deck(
     output_path.parent.mkdir(parents=True, exist_ok=True)
     package = genanki.Package(deck)
     package.media_files = [str(path) for path in media_files]
-    package.write_to_file(str(output_path))
+    write_japanese_package(package=package, output_path=output_path, manifest={
+        "schema_version": 1, "kind": "japanese-example-frequency", "prototype": prototype,
+        "card_count": len(cards), "audio_count": 0 if prototype else len(cards) * 2,
+        "voice": None if prototype else JAPANESE_VOICE_ID, "complete_frequency_release": False,
+    })
     return JapaneseDeckExportResult(output_path=output_path, card_count=len(cards))
 
 
@@ -176,66 +185,20 @@ def _synthesize_card_audio(
     audio_dir: Path,
     media_files: list[Path],
 ) -> JapaneseCard:
-    """Synthesize word and sentence audio, skipping silently on failure."""
-
-    word_audio = ""
-    sentence_audio = ""
-
-    try:
-        word_audio_path = _synthesize_text(
-            text=card.target_word,
-            item_id=f"word-{card.sort_index}",
-            synthesizer=synthesizer,
-            audio_dir=audio_dir,
-        )
-        if word_audio_path:
-            word_audio = f"[sound:{word_audio_path.name}]"
-            media_files.append(word_audio_path)
-    except Exception:
-        pass
-
-    try:
-        sentence_audio_path = _synthesize_text(
-            text=card.sentence,
-            item_id=f"sentence-{card.sort_index}",
-            synthesizer=synthesizer,
-            audio_dir=audio_dir,
-        )
-        if sentence_audio_path:
-            sentence_audio = f"[sound:{sentence_audio_path.name}]"
-            media_files.append(sentence_audio_path)
-    except Exception:
-        pass
-
-    return replace(card, word_audio=word_audio, sentence_audio=sentence_audio)
+    """Require validated word and sentence audio before creating a package."""
+    paths = []
+    for text in (_plain_reading(card.word_reading), card.sentence):
+        path = synthesize_cached_japanese(text=text, synthesizer=synthesizer,
+            audio_dir=audio_dir, voice_id=JAPANESE_VOICE_ID, locale=JAPANESE_LOCALE)
+        paths.append(path)
+        media_files.append(path)
+    return replace(card, word_audio=f"[sound:{paths[0].name}]",
+                   sentence_audio=f"[sound:{paths[1].name}]")
 
 
-def _synthesize_text(
-    *,
-    text: str,
-    item_id: str,
-    synthesizer: AzureSpeechAdapter,
-    audio_dir: Path,
-) -> Path | None:
-    content_hash = sha256(text.encode("utf-8")).hexdigest()[:16]
-    filename = f"ja-{item_id}-{content_hash}.mp3"
-    output_path = audio_dir / filename
-
-    if output_path.exists():
-        return output_path
-
-    response = synthesizer.synthesize(
-        ssml_text=text,
-        voice_id=JAPANESE_VOICE_ID,
-        locale=JAPANESE_LOCALE,
-        output_path=output_path,
-        audio_format="audio-24khz-48kbitrate-mono-mp3",
-    )
-
-    if response.storage_path and response.storage_path.exists():
-        return response.storage_path
-
-    return None
+def _plain_reading(annotated: str) -> str:
+    reading = re.sub(r"[^\s\[\]ぁ-ゖァ-ヶー]+\[([ぁ-ゖァ-ヶー]+)\]", r"\1", annotated)
+    return validate_japanese_reading(reading)
 
 
 def _japanese_card_fields(card: JapaneseCard) -> list[str]:

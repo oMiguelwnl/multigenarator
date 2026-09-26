@@ -1,0 +1,119 @@
+{
+  "observations": [
+    {
+      "width": 320,
+      "side": "back",
+      "overflow": false,
+      "clipped": false,
+      "translationVisible": true,
+      "sentenceEdges": [
+        29,
+        201
+      ],
+      "translationEdges": [
+        29,
+        201
+      ],
+      "photoLoaded": true,
+      "renderedAudioIcons": 2
+    },
+    {
+      "width": 320,
+      "side": "front",
+      "overflow": false,
+      "clipped": false,
+      "translationVisible": false,
+      "sentenceEdges": [
+        29,
+        201
+      ],
+      "translationEdges": [
+        0,
+        0
+      ],
+      "photoLoaded": true,
+      "renderedAudioIcons": 2
+    },
+    {
+      "width": 360,
+      "side": "back",
+      "overflow": false,
+      "clipped": false,
+      "translationVisible": true,
+      "sentenceEdges": [
+        29,
+        241
+      ],
+      "translationEdges": [
+        29,
+        241
+      ],
+      "photoLoaded": true,
+      "renderedAudioIcons": 2
+    },
+    {
+      "width": 360,
+      "side": "front",
+      "overflow": false,
+      "clipped": false,
+      "translationVisible": false,
+      "sentenceEdges": [
+        29,
+        241
+      ],
+      "translationEdges": [
+        0,
+        0
+      ],
+      "photoLoaded": true,
+      "renderedAudioIcons": 2
+    },
+    {
+      "width": 736,
+      "side": "back",
+      "overflow": false,
+      "clipped": false,
+      "translationVisible": true,
+      "sentenceEdges": [
+        61,
+        585
+      ],
+      "translationEdges": [
+        61,
+        585
+      ],
+      "photoLoaded": true,
+      "renderedAudioIcons": 2
+    },
+    {
+      "width": 736,
+      "side": "front",
+      "overflow": false,
+      "clipped": false,
+      "translationVisible": false,
+      "sentenceEdges": [
+        61,
+        585
+      ],
+      "translationEdges": [
+        0,
+        0
+      ],
+      "photoLoaded": true,
+      "renderedAudioIcons": 2
+    }
+  ],
+  "errors": [],
+  "externalRequests": [
+    "https://unpkg.com/@floating-ui/core@1.7.3/dist/floating-ui.core.umd.min.js",
+    "https://unpkg.com/@floating-ui/dom@1.7.4/dist/floating-ui.dom.umd.min.js",
+    "https://unpkg.com/lucide@1.17.0/dist/umd/lucide.js",
+    "https://unpkg.com/@floating-ui/core@1.7.3/dist/floating-ui.core.umd.min.js",
+    "https://unpkg.com/@floating-ui/dom@1.7.4/dist/floating-ui.dom.umd.min.js",
+    "https://unpkg.com/lucide@1.17.0/dist/umd/lucide.js",
+    "https://unpkg.com/@floating-ui/core@1.7.3/dist/floating-ui.core.umd.min.js",
+    "https://unpkg.com/@floating-ui/dom@1.7.4/dist/floating-ui.dom.umd.min.js",
+    "https://unpkg.com/lucide@1.17.0/dist/umd/lucide.js"
+  ],
+  "allowedResource": "Lucide from standalone preview helper; all other HTTP requests blocked"
+}

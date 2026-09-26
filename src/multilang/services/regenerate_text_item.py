@@ -153,6 +153,7 @@ class RegenerateTextItemService:
         rate_limiter: RateLimiter | None = None,
     ) -> TextValidationResult:
         profile = get_source_profile(GenerateTextItemsService._resolve_source_type(source_type, candidate=candidate))
+        curriculum = getattr(getattr(candidate, "provenance", None), "sentence_curriculum", None)
         return self.text_validation_service.validate(
             sentence=bundle.sentence,
             translation=bundle.translation,
@@ -169,6 +170,7 @@ class RegenerateTextItemService:
             job_id=job_id,
             item_key=item_key,
             rate_limiter=rate_limiter,
+            **({"sentence_curriculum": curriculum} if curriculum is not None else {}),
         )
 
     def _build_record(

@@ -152,6 +152,7 @@ def register_commands(cli: typer.Typer, dependencies: Dependencies) -> None:
             str,
             typer.Option("--deck-name", help="Deck name for the Japanese frequency package."),
         ] = DEFAULT_JAPANESE_DECK_NAME,
+        prototype: Annotated[bool, typer.Option("--prototype", help="Explicit preview without audio.")] = False,
         limit: Annotated[
             int | None,
             typer.Option("--limit", min=1, help="Export only the first N Japanese frequency cards."),
@@ -161,7 +162,7 @@ def register_commands(cli: typer.Typer, dependencies: Dependencies) -> None:
         settings = dependencies.settings_factory()
         try:
             dependencies._require_clean_anki_id_registry_for_export()
-            result = export_japanese_frequency_deck(output_path=output_path, deck_name=deck_name, cards=cards, settings=settings)
+            result = export_japanese_frequency_deck(output_path=output_path, deck_name=deck_name, cards=cards, settings=settings, prototype=prototype)
         except ValueError as exc:
             typer.echo(str(exc))
             raise typer.Exit(code=1) from exc
@@ -196,10 +197,16 @@ def register_commands(cli: typer.Typer, dependencies: Dependencies) -> None:
             str,
             typer.Option("--deck-name", help="Top-level deck name for the kana package."),
         ] = DEFAULT_KANA_DECK_NAME,
+        prototype: Annotated[bool, typer.Option("--prototype", help="Explicit preview without audio.")] = False,
+        base_only: Annotated[bool, typer.Option("--base-only", help="Omit the ten supplemental reading lessons.")] = False,
+        stroke_dir: Annotated[Path | None, typer.Option("--stroke-dir", help="Verified local KanjiVG source directory.")] = None,
+        stroke_manifest_sha256: Annotated[str | None, typer.Option("--stroke-manifest-sha256")] = None,
     ) -> None:
         try:
             dependencies._require_clean_anki_id_registry_for_export()
             if source_apkg is not None:
+                if prototype or base_only or stroke_dir is not None or stroke_manifest_sha256 is not None:
+                    raise ValueError("generated kana options cannot be combined with --from")
                 if not source_apkg.is_file():
                     typer.echo(f"error: source package not found: {source_apkg}")
                     raise typer.Exit(code=1)
@@ -208,7 +215,11 @@ def register_commands(cli: typer.Typer, dependencies: Dependencies) -> None:
                 )
                 typer.echo("mode=import")
             else:
-                result = export_generated_kana_deck(output_path=output_path, deck_name=deck_name)
+                from multilang.services.japanese_kana_generated_deck import KANA_FOUNDATION_CARDS
+                cards = tuple(card for card in KANA_FOUNDATION_CARDS if not base_only or not card.lesson_id)
+                result = export_generated_kana_deck(output_path=output_path, deck_name=deck_name,
+                    settings=dependencies.settings_factory(), cards=cards, prototype=prototype,
+                    stroke_dir=stroke_dir, stroke_manifest_sha256=stroke_manifest_sha256)
                 typer.echo("mode=generated")
         except ValueError as exc:
             typer.echo(str(exc))

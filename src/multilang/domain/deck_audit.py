@@ -130,7 +130,9 @@ def _detect_incomplete_frequency_deck(cards: list[AuditCard]) -> list[AuditIssue
     if not _looks_like_frequency_deck(cards):
         return []
     issues: list[AuditIssue] = []
-    if len(cards) != 3000:
+    # The initial frequency core is a minimum coverage target, not a card ceiling.
+    # Reviewed forms can share a parent's rank and increase a level's card count.
+    if len(cards) < 3000:
         issues.append(
             _package_issue(
                 cards,
@@ -146,14 +148,14 @@ def _detect_incomplete_frequency_deck(cards: list[AuditCard]) -> list[AuditIssue
         if level in level_counts:
             level_counts[level] += 1
     for level, count in level_counts.items():
-        if count != 1000:
+        if count < 1000:
             issues.append(
                 _package_issue(
                     cards,
                     issue_type=AuditIssueType.INCOMPLETE_LEVEL,
                     message=f"level_{level} has {count}/1000 cards.",
                     evidence=f"level_{level}={count}",
-                    recommended_action="Export only complete 1000-card frequency levels or use an explicit partial workflow.",
+                    recommended_action="Complete the initial frequency coverage for this level or use an explicit partial workflow; additional useful cards are allowed.",
                 )
             )
     return issues

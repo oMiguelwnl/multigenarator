@@ -19,6 +19,7 @@ from multilang.domain.translation_quality import (
     TranslationFidelityVerdict,
 )
 from multilang.security.redaction import redact_exception, redact_sensitive_text
+from multilang.services.sentence_curriculum import curriculum_prompt_lines
 from multilang.services.content.definition_policy import (
     definition_prompt_rules,
     validate_definition,
@@ -549,7 +550,8 @@ def _sentence_prompt(request: SentenceGenerationRequest) -> str:
                 "- Base the sentence on the card word/lemma; use the source study form only if it is the same normal word form.",
                 "- Include the card word exactly when natural; otherwise use a normal inflection of the lemma.",
                 "- Do not copy title-cased list input into the middle of the sentence; lowercase ordinary words unless the language normally capitalizes them.",
-                "- Keep the sentence between 6 and 16 words.",
+                ("- Keep the sentence within the curriculum limits below."
+                 if request.sentence_curriculum else "- Keep the sentence between 6 and 16 words."),
                 "- Use the highlight context only to choose the sense; do not copy private text wholesale.",
                 "- Do not write a dictionary definition, translation, grammar note, or meta sentence.",
                 "- Do not use generic discussion templates, placeholder text, or phrases like 'the word'.",
@@ -559,6 +561,7 @@ def _sentence_prompt(request: SentenceGenerationRequest) -> str:
         lines.extend(_korean_authority_rules(request.korean_identity))
         lines.extend(_vocabulary_entry_rules(request))
         lines.extend(_repair_prompt_lines(request))
+        lines.extend(curriculum_prompt_lines(request.sentence_curriculum))
         return "\n".join(lines)
     lines = [
         f"Target language: {target_name} ({request.target_language})",
@@ -576,7 +579,8 @@ def _sentence_prompt(request: SentenceGenerationRequest) -> str:
             "- Base the sentence on the card word/lemma; use the source study form only if it is the same normal word form.",
             "- Include the card word exactly when natural; otherwise use a normal inflected form of the lemma.",
             "- Do not copy title-cased list input into the middle of the sentence; lowercase ordinary words unless the language normally capitalizes them.",
-            "- Keep the sentence between 4 and 12 words.",
+            ("- Keep the sentence within the curriculum limits below."
+             if request.sentence_curriculum else "- Keep the sentence between 4 and 12 words."),
             "- Do not write a dictionary definition, translation, grammar note, or meta sentence.",
             "- Do not use generic discussion templates, placeholder text, or phrases like 'the word'.",
             "- Set uncertainty_notes to an empty array unless there is a real ambiguity.",
@@ -593,6 +597,7 @@ def _sentence_prompt(request: SentenceGenerationRequest) -> str:
             ]
         )
     lines.extend(_repair_prompt_lines(request))
+    lines.extend(curriculum_prompt_lines(request.sentence_curriculum))
     return "\n".join(lines)
 
 

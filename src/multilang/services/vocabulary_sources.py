@@ -9,6 +9,7 @@ from __future__ import annotations
 import gzip
 import hashlib
 import json
+import lzma
 import os
 import re
 import stat
@@ -100,7 +101,9 @@ def _modern_language(language: str) -> SupportedLanguage:
     return code
 
 
-def _verified_lines(path: Path, expected_sha256: str, limits: SourceLimits) -> Iterator[str]:
+def _verified_lines(
+    path: Path, expected_sha256: str, limits: SourceLimits, *, max_lines: int | None = None
+) -> Iterator[str]:
     path = Path(path).absolute()
     if any(part.is_symlink() for part in (path, *path.parents)):
         raise ValueError("source symlink is not permitted")
@@ -117,7 +120,8 @@ def _verified_lines(path: Path, expected_sha256: str, limits: SourceLimits) -> I
         if digest != expected_sha256:
             raise ValueError("source checksum mismatch")
         raw.seek(0)
-        stream = gzip.GzipFile(fileobj=raw) if path.suffix == ".gz" else raw
+        stream = (gzip.GzipFile(fileobj=raw) if path.suffix == ".gz"
+                  else lzma.LZMAFile(raw) if path.suffix == ".xz" else raw)
         expanded = lines = 0
         try:
             while data := stream.readline(limits.max_line_bytes + 1):
@@ -127,7 +131,7 @@ def _verified_lines(path: Path, expected_sha256: str, limits: SourceLimits) -> I
                     raise ValueError("source line byte limit exceeded")
                 if expanded > limits.max_expanded_bytes:
                     raise ValueError("expanded source byte limit exceeded")
-                if lines > limits.max_records:
+                if lines > (max_lines if max_lines is not None else limits.max_records):
                     raise ValueError("source record limit exceeded")
                 yield data.decode("utf-8")
             after = os.fstat(raw.fileno())

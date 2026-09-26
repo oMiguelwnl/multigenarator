@@ -6,6 +6,12 @@ from functools import lru_cache
 
 import cutlet
 
+from multilang.services.japanese_analysis import (
+    japanese_mecab_arguments,
+    japanese_tagger,
+    validate_japanese_reading,
+)
+
 
 class JapaneseRomajiError(ValueError):
     """Raised when Japanese text cannot be safely converted to romaji."""
@@ -17,10 +23,11 @@ def _get_converter() -> cutlet.Cutlet:
         "hepburn",
         use_foreign_spelling=False,
         ensure_ascii=True,
+        mecab_args=japanese_mecab_arguments(),
     )
 
 
-def romanize_japanese(value: str) -> str:
+def romanize_japanese(value: str, *, reading: str | None = None) -> str:
     """Convert Japanese text to validated ASCII Modified-Hepburn romaji."""
 
     source = value.strip()
@@ -28,7 +35,12 @@ def romanize_japanese(value: str) -> str:
         raise JapaneseRomajiError("Japanese source text must not be blank")
 
     try:
-        converted = _get_converter().romaji(source)
+        # Use the same explicitly selected tokenizer as furigana and validation.
+        if reading is not None:
+            converted = _get_converter().map_kana(validate_japanese_reading(reading)).capitalize()
+        else:
+            tokens = _get_converter().romaji_tokens(japanese_tagger()(source))
+            converted = "".join(str(token) for token in tokens)
     except Exception as exc:
         raise JapaneseRomajiError("Japanese text could not be romanized") from exc
 

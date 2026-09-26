@@ -1,0 +1,227 @@
+<style>
+  #ml-frequency-proposal {
+    --mf-page: #101315;
+    --mf-surface: #191d20;
+    --mf-text: #f0f1ee;
+    --mf-muted: #a4acae;
+    --mf-line: #30373a;
+    --mf-accent: #9fcbb6;
+    --mf-padding: 32px;
+    --mf-gap: 28px;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Noto Sans", Arial, sans-serif;
+    color: var(--mf-text);
+    color-scheme: dark;
+    width: 100%;
+    min-width: 0;
+  }
+  #ml-frequency-proposal * { box-sizing: border-box; }
+  #ml-frequency-proposal .mf-stage {
+    background: var(--mf-page);
+    border-radius: 16px;
+    padding: 24px;
+  }
+  #ml-frequency-proposal .mf-chrome {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 12px;
+    max-width: 620px;
+    margin: 0 auto 20px;
+    color: var(--mf-muted);
+    font-size: 12px;
+    line-height: 1.5;
+    letter-spacing: .03em;
+  }
+  #ml-frequency-proposal .mf-side { color: var(--mf-accent); }
+  #ml-frequency-proposal .mf-study {
+    background: var(--mf-surface);
+    border: 1px solid var(--mf-line);
+    border-radius: 12px;
+    padding: var(--mf-padding);
+    max-width: 620px;
+    margin: 0 auto;
+    text-align: left;
+    overflow-wrap: anywhere;
+  }
+  #ml-frequency-proposal .mf-word-row,
+  #ml-frequency-proposal .mf-example-row {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) 44px;
+    align-items: center;
+    gap: 16px;
+  }
+  #ml-frequency-proposal .mf-word {
+    color: var(--mf-text);
+    font-family: inherit;
+    font-size: clamp(32px, 5vw, 42px);
+    line-height: 1.15;
+    letter-spacing: -.035em;
+    font-weight: 500;
+    margin: 0 0 9px;
+  }
+  #ml-frequency-proposal .mf-ipa {
+    font-size: 16px;
+    line-height: 1.5;
+    font-weight: 400;
+    color: var(--mf-muted);
+  }
+  #ml-frequency-proposal .mf-audio {
+    display: inline-flex;
+    width: 44px;
+    height: 44px;
+    align-items: center;
+    justify-content: center;
+    padding: 0;
+    color: var(--mf-accent);
+    border: 1px solid var(--mf-line);
+    background: var(--mf-surface);
+    border-radius: 50%;
+    opacity: 1;
+  }
+  #ml-frequency-proposal .mf-audio svg { width: 18px; height: 18px; }
+  #ml-frequency-proposal .mf-definition {
+    border-top: 1px solid var(--mf-line);
+    margin-top: var(--mf-gap);
+    padding-top: var(--mf-gap);
+  }
+  #ml-frequency-proposal .mf-label {
+    margin: 0 0 9px;
+    color: var(--mf-muted);
+    font-weight: 500;
+    font-size: 12px;
+    line-height: 1.5;
+    letter-spacing: .075em;
+    text-transform: uppercase;
+  }
+  #ml-frequency-proposal .mf-copy,
+  #ml-frequency-proposal .mf-sentence {
+    margin: 0;
+    font-size: 18px;
+    line-height: 1.65;
+    font-weight: 400;
+    color: var(--mf-text);
+  }
+  #ml-frequency-proposal .mf-example { margin-top: var(--mf-gap); }
+  #ml-frequency-proposal .mf-translation {
+    margin-top: 20px;
+    border-left: 2px solid var(--mf-accent);
+    padding: 2px 0 2px 14px;
+  }
+  #ml-frequency-proposal .mf-translation[hidden] { display: none; }
+  #ml-frequency-proposal .mf-translation p {
+    color: var(--mf-muted);
+    font-size: 16px;
+    line-height: 1.6;
+    margin: 0;
+  }
+  #ml-frequency-proposal .mf-translation .mf-label {
+    color: var(--mf-accent);
+    font-size: 11px;
+    line-height: 1.5;
+    margin: 0 0 5px;
+  }
+  #ml-frequency-proposal .mf-actions {
+    display: flex;
+    justify-content: center;
+    margin-top: 22px;
+  }
+  #ml-frequency-proposal .mf-flip {
+    color: var(--mf-text);
+    background: var(--mf-surface);
+    border: 1px solid var(--mf-line);
+    border-radius: 8px;
+    padding: 10px 22px;
+    min-height: 44px;
+    font: 500 14px/1.5 -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    cursor: pointer;
+  }
+  #ml-frequency-proposal .mf-flip:hover { border-color: var(--mf-accent); }
+  @media (max-width: 480px) {
+    #ml-frequency-proposal .mf-stage { padding: 16px 12px; }
+    #ml-frequency-proposal .mf-study { padding: min(var(--mf-padding), 22px); }
+    #ml-frequency-proposal .mf-word-row,
+    #ml-frequency-proposal .mf-example-row { gap: 12px; }
+  }
+</style>
+<div id="ml-frequency-proposal" aria-label="Proposta de template de frequência">
+  <div class="mf-stage">
+    <div class="mf-chrome">
+      <span>Frequência · prévia visual</span>
+      <span class="mf-side" aria-live="polite">Frente</span>
+    </div>
+    <article class="mf-study" aria-label="Cartão demonstrativo da palavra gather">
+      <div class="mf-word-row">
+        <div>
+          <h2 class="mf-word" lang="en">gather</h2>
+          <div class="mf-ipa">/ˈɡæðər/</div>
+        </div>
+        <button type="button" class="mf-audio" disabled aria-label="Áudio da palavra, ilustrativo nesta prévia">
+          <i data-lucide="volume-2" aria-hidden="true"></i>
+        </button>
+      </div>
+      <section class="mf-definition" aria-label="Definição">
+        <h3 class="mf-label">Definição</h3>
+        <p class="mf-copy">Reunir pessoas ou coisas em um mesmo lugar.</p>
+      </section>
+      <section class="mf-example" aria-label="Exemplo">
+        <h3 class="mf-label">Exemplo</h3>
+        <div class="mf-example-row">
+          <p class="mf-sentence" lang="en">We gather in the kitchen every morning.</p>
+          <button type="button" class="mf-audio" disabled aria-label="Áudio da frase, ilustrativo nesta prévia">
+            <i data-lucide="volume-2" aria-hidden="true"></i>
+          </button>
+        </div>
+        <div class="mf-translation" id="mf-answer" hidden>
+          <h3 class="mf-label">Tradução</h3>
+          <p>Nós nos reunimos na cozinha todas as manhãs.</p>
+        </div>
+      </section>
+    </article>
+    <div class="mf-actions">
+      <button type="button" class="mf-flip" aria-controls="mf-answer" aria-expanded="false">Mostrar resposta</button>
+    </div>
+  </div>
+</div>
+<script>
+  (() => {
+    const root = document.getElementById("ml-frequency-proposal");
+    const answer = root.querySelector(".mf-translation");
+    const side = root.querySelector(".mf-side");
+    const flip = root.querySelector(".mf-flip");
+    const state = { accent: "#9fcbb6", spacing: "comfortable", back: false };
+    const render = () => {
+      root.style.setProperty("--mf-accent", state.accent);
+      root.style.setProperty("--mf-padding", state.spacing === "compact" ? "24px" : "32px");
+      root.style.setProperty("--mf-gap", state.spacing === "compact" ? "20px" : "28px");
+      answer.hidden = !state.back;
+      side.textContent = state.back ? "Verso" : "Frente";
+      flip.textContent = state.back ? "Voltar à frente" : "Mostrar resposta";
+      flip.setAttribute("aria-expanded", String(state.back));
+    };
+    flip.addEventListener("click", () => {
+      state.back = !state.back;
+      render();
+    });
+    render();
+    if (globalThis.Tweak) {
+      const tweak = new Tweak({ container: root, onChange: render });
+      tweak.addSelect(state, "accent", {
+        label: "Cor de destaque",
+        options: [
+          { label: "Sálvia", value: "#9fcbb6" },
+          { label: "Azul suave", value: "#9fc5e3" },
+          { label: "Lavanda", value: "#c4b5e4" }
+        ],
+        reference: "--mf-accent"
+      });
+      tweak.addSelect(state, "spacing", {
+        label: "Espaçamento",
+        options: [
+          { label: "Confortável", value: "comfortable" },
+          { label: "Compacto", value: "compact" }
+        ]
+      });
+    }
+  })();
+</script>

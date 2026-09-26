@@ -11,7 +11,7 @@ from multilang.domain.language_profiles import NativeContract
 
 class DatasetMember(NativeContract):
     identity_id: str = Field(min_length=1, max_length=128)
-    rank: int = Field(ge=1, le=6000)
+    rank: int = Field(ge=1)
     identity_sha256: str | None = Field(default=None, pattern=r"^[a-f0-9]{64}$")
 
 
@@ -27,7 +27,8 @@ class DatasetManifest(NativeContract):
     approval_sha256: str | None = Field(default=None, pattern=r"^[a-f0-9]{64}$")
     attribution: str = Field(default="", max_length=4000)
     owner_id: str = Field(default="", max_length=128)
-    members: tuple[DatasetMember, ...] = Field(max_length=6000)
+    # Bound one manifest's resource use; this is not a per-language card quota.
+    members: tuple[DatasetMember, ...] = Field(max_length=100000)
     metadata: dict[str, str] = Field(default_factory=dict)
 
     @model_validator(mode="after")
@@ -45,8 +46,6 @@ class DatasetManifest(NativeContract):
             raise ValueError("duplicate rank")
         if self.redistribution_approved and (not self.approval_sha256 or not self.attribution):
             raise ValueError("redistribution requires source approval and attribution")
-        if self.namespace == "expansion" and len(self.members) > 3000:
-            raise ValueError("expansion cannot exceed 3000 additional identities")
         return self
 
     @computed_field

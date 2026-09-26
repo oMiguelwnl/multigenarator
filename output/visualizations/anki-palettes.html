@@ -1,0 +1,217 @@
+<style>
+  #ml-anki-palettes {
+    width: 100%;
+    --ml-page: #0e191b;
+    --ml-surface: #193035;
+    --ml-surface-top: #16383c;
+    --ml-surface-bottom: #182b30;
+    --ml-text: #f0f3e9;
+    --ml-muted: #adc2c0;
+    --ml-word: #e8d9ad;
+    --ml-label: #d5c799;
+    --ml-translation: #afd5cd;
+    --ml-line: #365457;
+    --ml-audio: #b5d5c5;
+    --ml-audio-border: #557a7a;
+    --ml-audio-background: #213e40;
+  }
+  #ml-anki-palettes .ml-stage,
+  #ml-anki-palettes .ml-stage * { box-sizing: border-box; }
+  #ml-anki-palettes .ml-stage {
+    padding: 24px;
+    background: var(--ml-page);
+    border-radius: 16px;
+    color: var(--ml-text);
+    font: 400 18px/1.65 -apple-system, BlinkMacSystemFont, "Segoe UI", "Noto Sans", Arial, sans-serif;
+    text-align: left;
+    overflow-wrap: anywhere;
+  }
+  #ml-anki-palettes .ml-note {
+    width: 100%;
+    max-width: 620px;
+    min-width: 0;
+    margin: 0 auto;
+    padding: 32px;
+    border: 1px solid var(--ml-line);
+    border-radius: 12px;
+    background: var(--ml-surface);
+    background-image: linear-gradient(145deg, var(--ml-surface-top), var(--ml-surface) 55%, var(--ml-surface-bottom));
+  }
+  #ml-anki-palettes .ml-word-row,
+  #ml-anki-palettes .ml-sentence-row {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) 44px;
+    align-items: center;
+    gap: 16px;
+  }
+  #ml-anki-palettes .ml-word-block {
+    display: flex;
+    flex-direction: column;
+    gap: 9px;
+    min-width: 0;
+  }
+  #ml-anki-palettes .ml-word {
+    font-size: clamp(32px, 5vw, 42px);
+    font-weight: 500;
+    line-height: 1.15;
+    letter-spacing: -0.035em;
+    color: var(--ml-word);
+  }
+  #ml-anki-palettes .ml-ipa {
+    font-size: 16px;
+    line-height: 1.5;
+    color: var(--ml-muted);
+  }
+  #ml-anki-palettes .ml-definition {
+    margin-top: 28px;
+    padding-top: 28px;
+    border-top: 1px solid var(--ml-line);
+  }
+  #ml-anki-palettes .ml-heading {
+    color: var(--ml-label);
+    font-size: 12px;
+    font-weight: 500;
+    line-height: 1.5;
+    letter-spacing: 0.075em;
+    text-transform: uppercase;
+    margin: 0 0 9px;
+  }
+  #ml-anki-palettes .ml-example { margin-top: 28px; }
+  #ml-anki-palettes .ml-pair {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) 44px;
+    column-gap: 16px;
+    min-width: 0;
+  }
+  #ml-anki-palettes .ml-sentence-row { grid-column: 1 / -1; }
+  #ml-anki-palettes .ml-sentence { min-width: 0; }
+  #ml-anki-palettes .ml-translation {
+    grid-column: 1;
+    min-width: 0;
+    margin-top: 8px;
+    color: var(--ml-translation);
+    font-size: 16px;
+    line-height: 1.6;
+  }
+  #ml-anki-palettes .ml-audio {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 44px;
+    height: 44px;
+    border: 1px solid var(--ml-audio-border);
+    border-radius: 50%;
+    background: var(--ml-audio-background);
+    color: var(--ml-audio);
+    line-height: 1;
+  }
+  #ml-anki-palettes .ml-audio svg { width: 18px; height: 18px; fill: currentColor; }
+  #ml-anki-palettes .ml-palette-switcher { margin-bottom: 12px; }
+  #ml-anki-palettes .ml-selection { margin-top: 12px; }
+  @media (max-width: 480px) {
+    #ml-anki-palettes .ml-stage { padding: 16px 12px; }
+    #ml-anki-palettes .ml-note { padding: 22px; }
+    #ml-anki-palettes .ml-word-row,
+    #ml-anki-palettes .ml-sentence-row { gap: 12px; }
+    #ml-anki-palettes .ml-pair { column-gap: 12px; }
+  }
+</style>
+<div id="ml-anki-palettes" aria-label="Paletas do cartão de frequência">
+  <div class="ml-palette-switcher">
+    <div class="viz-controls" role="group" aria-label="Paletas">
+      <button class="btn" type="button" data-palette="petroleum" aria-pressed="true">Petróleo</button>
+      <button class="btn" type="button" data-palette="olive" aria-pressed="false">Oliva</button>
+      <button class="btn" type="button" data-palette="charcoal" aria-pressed="false">Carvão</button>
+    </div>
+  </div>
+  <div class="ml-stage">
+    <article class="ml-note" aria-label="Verso do cartão de frequência">
+      <div class="ml-word-row">
+        <div class="ml-word-block">
+          <span class="ml-word">gather</span>
+          <span class="ml-ipa">/ˈɡæðər/</span>
+        </div>
+        <span class="ml-audio" role="img" aria-label="Áudio da palavra, ilustrativo"><i data-lucide="play" aria-hidden="true"></i></span>
+      </div>
+      <div class="ml-definition">
+        <div class="ml-heading">Definição:</div>
+        <div>Reunir pessoas ou coisas em um mesmo lugar.</div>
+      </div>
+      <div class="ml-example">
+        <div class="ml-heading">Exemplo:</div>
+        <div class="ml-pair">
+          <div class="ml-sentence-row">
+            <span class="ml-sentence">We gather in the kitchen every morning.</span>
+            <span class="ml-audio" role="img" aria-label="Áudio da frase, ilustrativo"><i data-lucide="play" aria-hidden="true"></i></span>
+          </div>
+          <div class="ml-translation">Nós nos reunimos na cozinha todas as manhãs.</div>
+        </div>
+      </div>
+    </article>
+  </div>
+  <div class="ml-selection">
+    <button class="btn" id="ml-select-palette" type="button">Usar a paleta Petróleo</button>
+    <span id="ml-palette-status" class="text-small" aria-live="polite"></span>
+  </div>
+</div>
+<script>
+(() => {
+  const root = document.getElementById('ml-anki-palettes');
+  const choice = document.getElementById('ml-select-palette');
+  const status = document.getElementById('ml-palette-status');
+  const paletteButtons = Array.from(root.querySelectorAll('[data-palette]'));
+  const state = { palette: 'petroleum' };
+  const palettes = {
+    petroleum: {
+      name: 'Petróleo',
+      colors: { page: '#0e191b', surface: '#193035', 'surface-top': '#16383c', 'surface-bottom': '#182b30', text: '#f0f3e9', muted: '#adc2c0', word: '#e8d9ad', label: '#d5c799', translation: '#afd5cd', line: '#365457', audio: '#b5d5c5', 'audio-border': '#557a7a', 'audio-background': '#213e40' }
+    },
+    olive: {
+      name: 'Oliva',
+      colors: { page: '#181c16', surface: '#303827', 'surface-top': '#39452e', 'surface-bottom': '#292f23', text: '#f5efe0', muted: '#b8c1aa', word: '#dce5b0', label: '#d7cda0', translation: '#c6d0b4', line: '#505c3e', audio: '#cfdaa9', 'audio-border': '#737f59', 'audio-background': '#3b442f' }
+    },
+    charcoal: {
+      name: 'Carvão',
+      colors: { page: '#151719', surface: '#252a2f', 'surface-top': '#2c3137', 'surface-bottom': '#21262a', text: '#edf3f5', muted: '#aebac0', word: '#b6dbe3', label: '#a8c9d0', translation: '#c6d4d8', line: '#434d53', audio: '#abd1d8', 'audio-border': '#6c7f89', 'audio-background': '#303b42' }
+    }
+  };
+  function render() {
+    const palette = palettes[state.palette] || palettes.petroleum;
+    for (const [name, value] of Object.entries(palette.colors)) {
+      root.style.setProperty('--ml-' + name, value);
+    }
+    choice.textContent = 'Usar a paleta ' + palette.name;
+    for (const button of paletteButtons) {
+      button.setAttribute('aria-pressed', String(button.dataset.palette === state.palette));
+    }
+    status.textContent = '';
+  }
+  render();
+  for (const button of paletteButtons) {
+    button.addEventListener('click', () => {
+      const palette = button.dataset.palette;
+      if (!Object.hasOwn(palettes, palette)) return;
+      state.palette = palette;
+      render();
+    });
+  }
+  choice.addEventListener('click', async () => {
+    const palette = palettes[state.palette] || palettes.petroleum;
+    if (window.openai && typeof window.openai.sendFollowUpMessage === 'function') {
+      choice.disabled = true;
+      try {
+        await window.openai.sendFollowUpMessage({
+          prompt: 'Aplique a paleta ' + palette.name + ' da comparação ao template de frequência do Anki, mantendo o layout, o rótulo Exemplo na posição original e a frase alinhada com a tradução, sem rótulo Tradução.',
+          title: 'Aplicar a paleta ' + palette.name
+        });
+      } catch (error) {
+        status.textContent = 'Não foi possível enviar. Diga no chat: quero a paleta ' + palette.name + '.';
+      } finally {
+        choice.disabled = false;
+      }
+    } else {
+      status.textContent = 'Diga no chat: quero a paleta ' + palette.name + '.';
+    }
+  });
+})();
+</script>

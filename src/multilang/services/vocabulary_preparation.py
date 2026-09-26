@@ -118,6 +118,7 @@ def prepare_vocabulary(
         raise ValueError("corpus split must be declared")
     if (corpus is None) != (corpus_sha256 is None):
         raise ValueError("corpus path and checksum must be supplied together")
+    source_diagnostics: list[dict] = []
     if dictionary_format == "wiktextract":
         if glosses is not None or glosses_sha256 is not None:
             raise ValueError("Wiktextract does not accept a separate gloss source")
@@ -128,6 +129,13 @@ def prepare_vocabulary(
             lemmas=lemmas,
             limits=limits,
         )
+    elif dictionary_format == "jmdict":
+        from multilang.services.japanese_sources import read_jmdict
+
+        if language != "ja" or glosses is not None or glosses_sha256 is not None:
+            raise ValueError("JMdict requires Japanese and its embedded English glosses")
+        source = read_jmdict(dictionary, expected_sha256=dictionary_sha256,
+                             lemmas=lemmas, limits=limits, diagnostics=source_diagnostics)
     elif dictionary_format == "croatian-wordnet":
         from multilang.services.wordnet_sources import read_croatian_wordnet
 
@@ -270,6 +278,11 @@ def prepare_vocabulary(
             },
         }
         budget.dump(staging / "sources.json", catalog)
+        if dictionary_format == "jmdict":
+            budget.dump(staging / "source-diagnostics.json", source_diagnostics)
+            result["source_diagnostic_count"] = len(source_diagnostics)
+            if source_diagnostics:
+                result["blockers"].append("quarantined_source_restrictions")
         result["files"] = {
             path.name: _file_hash(path) for path in sorted(staging.iterdir()) if path.is_file()
         }

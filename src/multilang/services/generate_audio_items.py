@@ -66,10 +66,13 @@ class GenerateAudioItemsService:
             if lexical_candidate is None:
                 continue
 
+            from multilang.services.japanese_analysis import candidate_japanese_reading
+            reading = candidate_japanese_reading(lexical_candidate) if deck_language is SupportedLanguage.JA else None
             prepared_bundle = self.audio_synthesis_service.prepare_item_assets(
                 language=deck_language,
                 display_word=getattr(lexical_candidate, "display_form"),
                 text_record=text_record,
+                **({"japanese_reading": reading} if reading else {}),
             )
             field_names = export_field_names_for_language_and_source(
                 language=deck_language,

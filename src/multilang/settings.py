@@ -155,6 +155,8 @@ class Settings(BaseSettings):
     elevenlabs_model_id: str = "eleven_multilingual_v2"
     elevenlabs_output_format: ElevenLabsOutputFormat = "mp3_44100_128"
     audio_storage_dir: Path = Path(".multilang/audio")
+    mandarin_review_bundle_path: Path | None = None
+    mandarin_review_bundle_sha256: str | None = Field(default=None, pattern=r"^[0-9a-f]{64}$")
     output_dir: Path = DEFAULT_OUTPUT_DIR
     export_output_dir: Path = Field(
         default_factory=lambda values: values["output_dir"] / "decks"

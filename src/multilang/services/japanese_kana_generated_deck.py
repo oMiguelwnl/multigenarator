@@ -10,13 +10,15 @@ yōon -- and reuses the shared kana note type and template.
 from __future__ import annotations
 
 from dataclasses import replace
-from datetime import datetime
-from hashlib import sha256
 from pathlib import Path
 
 import genanki
 
 from multilang.services.azure_speech_adapter import AzureSpeechAdapter
+from multilang.services.japanese_deck_audio import (
+    synthesize_cached_japanese,
+    write_japanese_package,
+)
 from multilang.services.japanese_kana_deck import (
     DEFAULT_KANA_DECK_NAME,
     KANA_HIRAGANA_DECK_ID,
@@ -170,20 +172,66 @@ def _build_generated_cards() -> tuple[KanaCard, ...]:
 GENERATED_KANA_CARDS: tuple[KanaCard, ...] = _build_generated_cards()
 
 
+def _foundation_cards() -> tuple[KanaCard, ...]:
+    cards = []
+    for card in GENERATED_KANA_CARDS:
+        if card.kana in {"ん", "ン"}:
+            example = "あん" if card.script == "Hiragana" else "アン"
+            card = replace(card, audio_text=example + "。",
+                mnemonic=card.mnemonic + f" No áudio, ouça a nasal no final de {example} (an); ela ocupa uma mora.")
+        if card.romaji in {"dji", "dzu"}:
+            corrected = {"dji": "ji", "dzu": "zu"}[card.romaji]
+            card = replace(card, identity_romaji=card.romaji, romaji=corrected,
+                mnemonic=f"{card.kana}: '{corrected}' no japonês padrão. A escrita conserva a origem em ち/つ; não pronuncie um d separado.")
+        cards.append(card)
+    lessons = (
+        ("Hiragana", "sokuon", "っ", "kitte", "O っ pequeno ocupa uma mora e prepara a consoante seguinte: きて (kite) → きって (kitte). Não se lê tsu isoladamente.", "きて。きって。"),
+        ("Hiragana", "small-vowels", "ぁぃぅぇぉ", "chiisai kana", "As vogais pequenas combinam-se com o kana anterior em grafias especiais. Compare あ e ぁ; não são uma nova série de sílabas independentes.", "あ。い。う。え。お。"),
+        ("Hiragana", "small-yoon", "ゃゅょ", "kya kyu kyo", "きや tem duas moras; きゃ tem uma. ゃ・ゅ・ょ pequenos combinam-se com a sílaba anterior.", "きや。きゃ。きゅ。きょ。"),
+        ("Hiragana", "vowel-length", "おばさん・おばあさん", "obasan / obaasan", "A duração muda a palavra: おばさん (tia) e おばあさん (avó). Conte a vogal longa como duas moras. Em muitas palavras, おう e えい realizam vogais longas.", "おばさん。おばあさん。"),
+        ("Hiragana", "particles", "は・へ・を", "wa / e / o", "Como partículas, は lê-se wa, へ lê-se e, を lê-se o. Dentro de palavras, は e へ normalmente mantêm ha e he.", "わたしは、学校へ、本を持っていく。"),
+        ("Katakana", "sokuon", "ッ", "kitto", "O ッ pequeno prepara a consoante seguinte por uma mora. Compare キット (kitto) e キト (kito); não acrescente uma vogal u.", "キト。キット。"),
+        ("Katakana", "long-vowel", "ー", "koohii", "O traço prolonga a vogal anterior por mais uma mora: コーヒー. Ele não tem um som fixo próprio.", "コーヒー。スーパー。"),
+        ("Katakana", "small-vowels", "ァィゥェォ", "fa ti fi fe fo", "Vogais pequenas adaptam sons em empréstimos: ファ・ティ・フィ・フェ・フォ. Leia cada combinação como uma unidade.", "ファ。ティ。フィ。フェ。フォ。"),
+        ("Katakana", "shi-tsu", "シ・ツ", "shi / tsu", "Em シ, os dois traços curtos ficam mais à esquerda e o longo sobe; em ツ, ficam no topo e o longo desce. Observe a direção dos traços.", "シ。ツ。"),
+        ("Katakana", "so-n", "ソ・ン", "so / n", "Em ソ, o traço longo desce; em ン, sobe da esquerda para a direita. Compare também a posição do traço curto.", "ソ。ン。"),
+    )
+    orders = {"Hiragana": 104, "Katakana": 104}
+    for script, lesson, glyph, romaji, explanation, audio in lessons:
+        orders[script] += 1
+        cards.append(KanaCard(sort_index=orders[script], script=script, kana=glyph, romaji=romaji,
+            mnemonic=explanation, lesson_id=lesson, audio_text=audio))
+    return tuple(sorted(cards, key=lambda card: (card.script, card.sort_index)))
+
+
+KANA_FOUNDATION_CARDS = _foundation_cards()
+
+
 def export_generated_kana_deck(
     *,
     output_path: Path,
     deck_name: str = DEFAULT_KANA_DECK_NAME,
-    cards: tuple[KanaCard, ...] = GENERATED_KANA_CARDS,
+    cards: tuple[KanaCard, ...] = KANA_FOUNDATION_CARDS,
     settings: Settings | None = None,
+    prototype: bool = False,
+    stroke_dir: Path | None = None,
+    stroke_manifest_sha256: str | None = None,
 ) -> KanaDeckExportResult:
     """Export a fully self-generated kana deck with Azure ja-JP audio."""
 
     settings = settings or Settings()
     model = build_kana_model()
-    synthesizer = AzureSpeechAdapter(settings)
-    audio_dir = Path(settings.audio_storage_dir) / "kana" / datetime.now().strftime("%Y-%m-%d")
+    synthesizer = None if prototype else AzureSpeechAdapter(settings)
+    audio_dir = Path(settings.audio_storage_dir) / "kana"
     media_files: list[Path] = []
+    stroke_report = {"covered_cards": 0, "requested_cards": len(cards)}
+    if (stroke_dir is None) != (stroke_manifest_sha256 is None):
+        raise ValueError("stroke directory and manifest checksum must be supplied together")
+    if stroke_dir is not None:
+        from multilang.services.japanese_kana_strokes import build_kana_stroke_media
+        cards, strokes, stroke_report = build_kana_stroke_media(cards, source=stroke_dir,
+            output=audio_dir / "strokes", manifest_sha256=stroke_manifest_sha256)
+        media_files.extend(strokes)
 
     hiragana_deck = genanki.Deck(KANA_HIRAGANA_DECK_ID, f"{deck_name}::Hiragana")
     katakana_deck = genanki.Deck(KANA_KATAKANA_DECK_ID, f"{deck_name}::Katakana")
@@ -191,9 +239,12 @@ def export_generated_kana_deck(
     hiragana_count = 0
     katakana_count = 0
     for card in cards:
-        card = _synthesize_card_audio(
-            card=card, synthesizer=synthesizer, audio_dir=audio_dir, media_files=media_files
-        )
+        if prototype:
+            card = replace(card, audio="")
+        else:
+            card = _synthesize_card_audio(
+                card=card, synthesizer=synthesizer, audio_dir=audio_dir, media_files=media_files
+            )
         note = build_kana_note(card, model=model)
         if card.script == "Katakana":
             katakana_deck.add_note(note)
@@ -204,8 +255,14 @@ def export_generated_kana_deck(
 
     output_path.parent.mkdir(parents=True, exist_ok=True)
     package = genanki.Package([hiragana_deck, katakana_deck])
-    package.media_files = [str(path) for path in media_files]
-    package.write_to_file(str(output_path))
+    package.media_files = [str(path) for path in dict.fromkeys(media_files)]
+    write_japanese_package(package=package, output_path=output_path, manifest={
+        "schema_version": 1, "kind": "japanese-kana", "prototype": prototype,
+        "card_count": len(cards), "base_card_count": sum(not card.lesson_id for card in cards),
+        "lesson_count": sum(bool(card.lesson_id) for card in cards),
+        "audio_count": 0 if prototype else len(cards), "voice": None if prototype else KANA_VOICE_ID,
+        "stroke_coverage": stroke_report, "content_source": "Multilang original Portuguese kana explanations",
+    })
     return KanaDeckExportResult(
         output_path=output_path,
         card_count=len(cards),
@@ -221,28 +278,15 @@ def _synthesize_card_audio(
     audio_dir: Path,
     media_files: list[Path],
 ) -> KanaCard:
-    try:
-        content_hash = sha256(f"{card.script}-{card.kana}".encode("utf-8")).hexdigest()[:16]
-        filename = f"kana-{card.romaji}-{content_hash}.mp3"
-        output_path = audio_dir / filename
-        if not output_path.exists():
-            response = synthesizer.synthesize(
-                ssml_text=card.kana,
-                voice_id=KANA_VOICE_ID,
-                locale=KANA_LOCALE,
-                output_path=output_path,
-                audio_format="audio-24khz-48kbitrate-mono-mp3",
-            )
-            if not (response.storage_path and response.storage_path.exists()):
-                return card
-        media_files.append(output_path)
-        return replace(card, audio=f"[sound:{output_path.name}]")
-    except Exception:
-        return card
+    output_path = synthesize_cached_japanese(text=card.audio_text or card.kana,
+        synthesizer=synthesizer, audio_dir=audio_dir, voice_id=KANA_VOICE_ID, locale=KANA_LOCALE)
+    media_files.append(output_path)
+    return replace(card, audio=f"[sound:{output_path.name}]")
 
 
 __all__ = [
     "GENERATED_KANA_CARDS",
+    "KANA_FOUNDATION_CARDS",
     "KANA_LOCALE",
     "KANA_VOICE_ID",
     "export_generated_kana_deck",

@@ -6,10 +6,12 @@ import re
 import unicodedata
 from collections.abc import Callable
 from dataclasses import dataclass
+from pathlib import Path
 
 from pydantic import BaseModel, Field
 
 from multilang.domain.definitions import DefinitionConsistencyRequest, DefinitionConsistencyVerdict
+from multilang.domain.sentence_curriculum import SentenceCurriculum
 from multilang.domain.korean import (
     KOREAN_LANGUAGE_CODE,
     KoreanAnalyzerFingerprint,
@@ -203,6 +205,8 @@ class TextValidationService:
         require_translation_fidelity: bool = True,
         definition_consistency_checker: Callable[..., DefinitionConsistencyVerdict] | None = None,
         require_definition_consistency: bool = False,
+        contextual_analyzer=None,
+        contextual_model_root: Path = Path(".multilang/models/stanza-1.10.0"),
     ) -> None:
         self.language_identifier = language_identifier or CorpusLanguageIdentifier()
         self.morphological_analyzer = morphological_analyzer or OptionalStanzaMorphologicalAnalyzer()
@@ -211,6 +215,8 @@ class TextValidationService:
         self.require_translation_fidelity = require_translation_fidelity
         self.definition_consistency_checker = definition_consistency_checker
         self.require_definition_consistency = require_definition_consistency
+        self.contextual_analyzer = contextual_analyzer
+        self.contextual_model_root = contextual_model_root
 
     def validate(
         self,
@@ -227,6 +233,8 @@ class TextValidationService:
         min_sentence_tokens: int | None = None,
         max_sentence_tokens: int | None = None,
         korean_identity: KoreanLexicalIdentity | None = None,
+        japanese_reading: str | None = None,
+        sentence_curriculum: SentenceCurriculum | None = None,
         job_id: str | None = None,
         item_key: str | None = None,
         rate_limiter: RateLimiter | None = None,
@@ -251,13 +259,17 @@ class TextValidationService:
             display_form=display_form,
             lemma=lemma,
             korean_identity=korean_identity,
+            japanese_reading=japanese_reading,
         )
-        self._check_sentence_length(
-            flags,
-            context=context,
-            min_sentence_tokens=min_sentence_tokens,
-            max_sentence_tokens=max_sentence_tokens,
-        )
+        if sentence_curriculum is None:
+            self._check_sentence_length(
+                flags,
+                context=context,
+                min_sentence_tokens=min_sentence_tokens,
+                max_sentence_tokens=max_sentence_tokens,
+            )
+        else:
+            self._check_curriculum(flags, context=context, policy=sentence_curriculum, lemma=lemma)
         self._check_duplicate_sentence(
             flags,
             context=context,
@@ -334,6 +346,7 @@ class TextValidationService:
         display_form: str,
         lemma: str,
         korean_identity: KoreanLexicalIdentity | None,
+        japanese_reading: str | None = None,
     ) -> None:
         if context.target_language == KOREAN_LANGUAGE_CODE:
             self._check_korean_target(
@@ -342,11 +355,12 @@ class TextValidationService:
                 korean_identity=korean_identity,
             )
             return
-        if context.target_language == "ja" and _japanese_contains_target(
-            context.sentence_text,
-            display_form=display_form,
-            lemma=lemma,
-        ):
+        if context.target_language == "ja":
+            if not _japanese_contains_target(context.sentence_text, display_form=display_form, lemma=lemma, reading=japanese_reading):
+                flags.append(ValidationFlag(
+                    code=ValidationFlagCode.MORPHOLOGY_MISMATCH,
+                    detail="Japanese target lacks exact lexical morphology evidence",
+                ))
             return
         if context.target_language == "zh" and _mandarin_contains_target(
             context.sentence_text,
@@ -465,6 +479,28 @@ class TextValidationService:
                 status=result.status.value,
                 reason=result.reason_code.value,
             )
+
+    def _check_curriculum(self, flags, *, context, policy, lemma):
+        from multilang.services.contextual_morphology import LocalContextualMorphologyService
+        from multilang.services.sentence_curriculum import check_sentence_curriculum
+
+        if policy.language.value != context.target_language or policy.target.lemma != lemma:
+            codes = ("curriculum_target_mismatch",)
+        else:
+            try:
+                if self.contextual_analyzer is None:
+                    self.contextual_analyzer = LocalContextualMorphologyService(
+                        model_root=self.contextual_model_root,
+                    )
+                analysis = self.contextual_analyzer.analyze(context.target_language, context.sentence_text)
+                codes = check_sentence_curriculum(context.sentence_text, policy, analysis).codes
+            except Exception:
+                codes = ("unqualified_curriculum_analysis",)
+        if codes:
+            flags.append(ValidationFlag(
+                code=ValidationFlagCode.CURRICULUM_MISMATCH,
+                detail=";".join(codes),
+            ))
 
     def _check_sentence_length(
         self,
@@ -827,12 +863,10 @@ def _is_modern_hangul(character: str) -> bool:
     )
 
 
-def _japanese_contains_target(value: str, *, display_form: str, lemma: str) -> bool:
-    normalized_sentence = _normalize_japanese_lookup(value)
-    return any(
-        target and target in normalized_sentence
-        for target in {_normalize_japanese_lookup(display_form), _normalize_japanese_lookup(lemma)}
-    )
+def _japanese_contains_target(value: str, *, display_form: str, lemma: str, reading: str | None = None) -> bool:
+    from multilang.services.japanese_analysis import japanese_target_spans
+
+    return any(japanese_target_spans(value, target, reading=reading) for target in {display_form, lemma} if target)
 
 
 def _mandarin_contains_target(value: str, *, display_form: str, lemma: str) -> bool:

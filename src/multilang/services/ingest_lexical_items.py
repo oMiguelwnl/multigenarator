@@ -146,7 +146,7 @@ class IngestLexicalItemsService:
             "extracted_candidates": len(extraction.candidates),
             "duplicate_candidates": extraction.duplicate_count,
         }
-        if request.language is SupportedLanguage.KO:
+        if request.language in {SupportedLanguage.KO, SupportedLanguage.JA}:
             manifest_counts["resolution_errors"] = len(extraction.errors)
         self.highlight_import_repo.upsert_import_manifest(
             orchestration.job_id,

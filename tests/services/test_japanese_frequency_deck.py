@@ -224,7 +224,7 @@ def test_export_japanese_frequency_deck_writes_apkg(tmp_path: Path, monkeypatch)
     )
     output_path = tmp_path / "japanese-frequency.apkg"
 
-    result = export_japanese_frequency_deck(output_path=output_path)
+    result = export_japanese_frequency_deck(output_path=output_path, prototype=True)
 
     assert result.output_path == output_path
     assert result.card_count == len(JAPANESE_FREQUENCY_CARDS)
@@ -240,8 +240,15 @@ def test_export_japanese_frequency_deck_can_write_subset(tmp_path: Path, monkeyp
     output_path = tmp_path / "japanese-frequency-subset.apkg"
     cards = JAPANESE_FREQUENCY_CARDS[:3]
 
-    result = export_japanese_frequency_deck(output_path=output_path, cards=cards)
+    result = export_japanese_frequency_deck(output_path=output_path, cards=cards, prototype=True)
 
     assert result.card_count == 3
     with zipfile.ZipFile(output_path) as archive:
         assert "collection.anki2" in archive.namelist()
+
+
+def test_japanese_standalone_export_requires_real_audio(tmp_path, monkeypatch):
+    monkeypatch.setattr("multilang.services.japanese_frequency_deck.AzureSpeechAdapter", NoOpAzureSpeechAdapter)
+    with pytest.raises(ValueError, match="audio"):
+        export_japanese_frequency_deck(output_path=tmp_path / "failed.apkg", cards=JAPANESE_FREQUENCY_CARDS[:1])
+    assert not (tmp_path / "failed.apkg").exists()
