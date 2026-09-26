@@ -2,8 +2,9 @@
 
 This template preserves the original Multilang normal-card layout. Sentence ruby
 and tone classes are rendered at export from saved pinyin; field names and model
-identity remain unchanged. Saved sentence pinyin supplies ruby only; Traditional
-Sentence appears in its own section below the example and translation.
+identity remain unchanged. Saved sentence pinyin stays visible above every
+character. Traditional Sentence appears in its own section below the example
+and translation.
 
 ---
 
@@ -134,6 +135,7 @@ Sentence appears in its own section below the example and translation.
   text-align: center;
 }
 
+/* 1: red, 2: yellow, 3: green, 4: blue, 5 (neutral): gray. */
 .mandarin-ruby.tone-1 { color: #ff8591; }
 .mandarin-ruby.tone-2 { color: #f1d178; }
 .mandarin-ruby.tone-3 { color: #82dbab; }
