@@ -41,6 +41,12 @@ cliente. Chamadas pagas também exigem
 `MULTILANG_NATIVE_PROVIDER_CALLS_ENABLED=true`; habilitar a arquitetura não
 habilita automaticamente providers.
 
+## Seleção de vocabulário
+
+A [exportação e persistência da seleção](docs/vocabulary-selection-storage.md)
+salva todos os idiomas em arquivos versionados e no PostgreSQL, preservando
+sentidos, formas, fontes e pendências. Esse processo não gera cartões ou decks.
+
 ## Arquivos gerados
 
 Prévias, exemplos, decks e relatórios ficam em **`output/`**. Abra o

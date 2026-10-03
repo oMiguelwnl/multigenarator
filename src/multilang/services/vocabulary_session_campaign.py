@@ -81,6 +81,12 @@ def _artifacts(root: Path):
 
 def _state(*, packets: Path, manifest_sha256: str, requests: Path, reviews: Path):
     summary, refs, packet = _catalog(packets, manifest_sha256)
+    request_map, reviewed = _review_state(packet=packet, requests=requests, reviews=reviews)
+    return summary, refs, packet, request_map, reviewed
+
+
+def _review_state(*, packet, requests: Path, reviews: Path):
+    """Replay artifacts using a caller-supplied, source-bound packet loader."""
     request_map, reviewed, saved_reviews = {}, {}, {}
     for path in _artifacts(requests):
         manifest = verify_artifact(path, kind="vocabulary-session-request")
@@ -138,7 +144,7 @@ def _state(*, packets: Path, manifest_sha256: str, requests: Path, reviews: Path
             reviewed[key] = {**row, "request_sha256": result["request_sha256"],
                              "review_sha256": digest,
                              "packet_sha256": result["packet_sha256"]}
-    return summary, refs, packet, request_map, reviewed
+    return request_map, reviewed
 
 
 def prepare_next_session_review(
