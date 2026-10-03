@@ -7,6 +7,25 @@ Cada entrada precisa de correspondência no cache lexical configurado.
 A definição é gerada com as evidências disponíveis, e o exemplo precisa
 corresponder ao sentido escolhido e passar pelas validações de texto.
 
+Nos highlights e nas listas manuais (`word-list`), prefira frases de
+**4 a 12 palavras**, como nos decks de
+frequência. A margem é de até **14 palavras**, somente quando necessária
+para expressar o sentido com naturalidade. Use uma ideia simples, sem
+reproduzir o tamanho ou a complexidade do trecho destacado. A validação
+aplica o intervalo de 4 a 14; currículos com análise morfológica mantêm
+seus próprios limites e unidades de contagem.
+
+No fluxo geral de highlights e listas manuais, `Definition` segue o mesmo
+padrão textual da frequência:
+`classe gramatical: significado curto`, em uma linha, com um único sentido,
+vocabulário simples e sem repetir a palavra como definição. O rótulo
+gramatical permanece em inglês; o significado fica no idioma estudado.
+Exemplos: `noun: a building where people live` e
+`noun: un edificio donde viven personas`. O fluxo especializado de coreano
+mantém sua política própria de explicações em português.
+As listas manuais de mandarim também mantêm sua política específica de
+idioma para definições.
+
 Nos cards de inglês, `Definition` fica em inglês tanto no modo normal
 quanto nas listas e highlights. No modo normal, `Translation` continua
 em português: o idioma da tradução da frase é independente da definição.

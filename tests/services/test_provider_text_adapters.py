@@ -307,7 +307,9 @@ def test_litellm_highlight_prompt_uses_redacted_context_and_rules() -> None:
     assert result.provenance["source_type"] == "kindle-highlights"
     assert "Highlight context hint" in prompt
     assert "Readers wash every cup before dawn REDACTED" in prompt
-    assert "between 6 and 16 words" in prompt
+    assert "Prefer 4-12 words, as in frequency cards" in prompt
+    assert "at most 14 words" in prompt
+    assert "only when needed" in prompt
     assert "Base the sentence on the card word/lemma" in prompt
     assert "Do not copy title-cased list input" in prompt
     assert "dav/private-export" not in prompt
@@ -888,3 +890,19 @@ def test_korean_source_definition_output_is_nfc_or_review_required(source_text):
     else:
         assert decision.definitions_html == "term: " + unicodedata.normalize("NFC", source_text)
         assert decision.record.value == decision.definitions_html
+
+
+@pytest.mark.parametrize('source_type', ['word-list', 'kindle-highlights'])
+def test_personal_deck_sentence_prompt_uses_frequency_base_with_small_margin(source_type):
+    from multilang.services.provider_text_adapters import _sentence_prompt
+
+    prompt = _sentence_prompt(SentenceGenerationRequest(
+        display_form='take off', lemma='take off', target_language='en',
+        translation_target_language='en', source_type=source_type,
+        definitions_html='verb: to leave the ground',
+    ))
+    assert 'Prefer 4-12 words, as in frequency cards' in prompt
+    assert 'at most 14 words only when needed' in prompt
+    assert 'Keep one simple idea' in prompt
+    assert 'whole expression' in prompt
+    assert 'Keep the sentence between 4 and 12 words' not in prompt

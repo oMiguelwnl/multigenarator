@@ -200,4 +200,5 @@ def test_new_sentence_policy_does_not_reuse_previous_vocabulary_cache():
             translation_target_language="pt", source_type=source,
         ))
     assert keys[0].prompt_version == "text-generation-v1"
-    assert keys[1].prompt_version == keys[2].prompt_version != keys[0].prompt_version
+    assert keys[1].prompt_version == "text-generation-v1/vocabulary-entry-v1/word-list-short-sentence-v1"
+    assert keys[2].prompt_version == "text-generation-v1/vocabulary-entry-v1/highlight-short-sentence-v1"

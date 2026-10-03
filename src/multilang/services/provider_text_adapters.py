@@ -14,6 +14,7 @@ from multilang.domain.korean import (
     KoreanLexicalIdentity,
     canonicalize_korean,
 )
+from multilang.domain.source_profiles import get_source_profile
 from multilang.domain.translation_quality import (
     TranslationFidelityRequest,
     TranslationFidelityVerdict,
@@ -550,8 +551,8 @@ def _sentence_prompt(request: SentenceGenerationRequest) -> str:
                 "- Base the sentence on the card word/lemma; use the source study form only if it is the same normal word form.",
                 "- Include the card word exactly when natural; otherwise use a normal inflection of the lemma.",
                 "- Do not copy title-cased list input into the middle of the sentence; lowercase ordinary words unless the language normally capitalizes them.",
-                ("- Keep the sentence within the curriculum limits below."
-                 if request.sentence_curriculum else "- Keep the sentence between 6 and 16 words."),
+                _sentence_length_rule(request),
+                "- Keep one simple idea; do not imitate the length or complexity of the source highlight.",
                 "- Use the highlight context only to choose the sense; do not copy private text wholesale.",
                 "- Do not write a dictionary definition, translation, grammar note, or meta sentence.",
                 "- Do not use generic discussion templates, placeholder text, or phrases like 'the word'.",
@@ -579,14 +580,15 @@ def _sentence_prompt(request: SentenceGenerationRequest) -> str:
             "- Base the sentence on the card word/lemma; use the source study form only if it is the same normal word form.",
             "- Include the card word exactly when natural; otherwise use a normal inflected form of the lemma.",
             "- Do not copy title-cased list input into the middle of the sentence; lowercase ordinary words unless the language normally capitalizes them.",
-            ("- Keep the sentence within the curriculum limits below."
-             if request.sentence_curriculum else "- Keep the sentence between 4 and 12 words."),
+            _sentence_length_rule(request),
             "- Do not write a dictionary definition, translation, grammar note, or meta sentence.",
             "- Do not use generic discussion templates, placeholder text, or phrases like 'the word'.",
             "- Set uncertainty_notes to an empty array unless there is a real ambiguity.",
         ]
     )
     lines.extend(_korean_authority_rules(request.korean_identity))
+    if request.source_type == "word-list":
+        lines.append("- Keep one simple idea.")
     lines.extend(_vocabulary_entry_rules(request))
     if request.target_language == "zh":
         lines.extend(
@@ -599,6 +601,19 @@ def _sentence_prompt(request: SentenceGenerationRequest) -> str:
     lines.extend(_repair_prompt_lines(request))
     lines.extend(curriculum_prompt_lines(request.sentence_curriculum))
     return "\n".join(lines)
+
+
+def _sentence_length_rule(request: SentenceGenerationRequest) -> str:
+    if request.sentence_curriculum is not None:
+        return "- Keep the sentence within the curriculum limits below."
+    if request.source_type in {"word-list", "kindle-highlights"}:
+        frequency = get_source_profile("frequency")
+        profile = get_source_profile(request.source_type)
+        return (
+            f"- Prefer {frequency.min_sentence_tokens}-{frequency.max_sentence_tokens} words, as in frequency cards; "
+            f"allow at most {profile.max_sentence_tokens} words only when needed for natural phrasing or the selected sense."
+        )
+    return "- Keep the sentence between 4 and 12 words."
 
 
 def _vocabulary_entry_rules(request: SentenceGenerationRequest) -> list[str]:
@@ -727,12 +742,18 @@ def _korean_selector_attempt_prompt_lines(
 def _definition_format_rules(request: DefinitionGenerationRequest) -> list[str]:
     if request.source_language != "ja":
         return []
-    return [
+    rules = [
         "- For Japanese cards, keep the part-of-speech label in English, not Japanese.",
         "- Do not use Japanese labels such as 名詞, 動詞, 形容詞, or 副詞.",
-        "- Use examples like 'noun: father', 'verb: to eat', 'adjective: cold', or 'particle: topic marker'.",
-        "- The meaning after the colon must also be in English.",
     ]
+    if request.target_language == "en":
+        rules.extend([
+            "- Use examples like 'noun: father', 'verb: to eat', 'adjective: cold', or 'particle: topic marker'.",
+            "- The meaning after the colon must also be in English.",
+        ])
+    else:
+        rules.append("- Write the meaning after the colon in the requested definition output language.")
+    return rules
 
 
 def _clean_definition(value: str | None) -> str:

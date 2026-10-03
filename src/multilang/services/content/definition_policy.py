@@ -12,7 +12,7 @@ from multilang.services.text_field_remediation import _is_learner_safe_definitio
 if TYPE_CHECKING:
     from multilang.services.lexical_lookup import LexicalRecord
 
-DEFINITION_POLICY_VERSION = "definition-single-sense-v2"
+DEFINITION_POLICY_VERSION = "definition-single-sense-v3"
 _ACTIVE = re.compile(r"<|>|\{\{|\[(?:sound|anki):|(?:javascript|vbscript|data)\s*:", re.I)
 _LABEL = re.compile(r"^([a-z][a-z ]{1,30}): (\S.*)$")
 

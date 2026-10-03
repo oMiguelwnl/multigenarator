@@ -1249,8 +1249,8 @@ def test_generate_text_items_uses_highlight_profile_validation_rules() -> None:
 
     assert result.accepted_items == 1
     assert validation.calls[0]["require_translation"] is False
-    assert validation.calls[0]["min_sentence_tokens"] == 6
-    assert validation.calls[0]["max_sentence_tokens"] == 16
+    assert validation.calls[0]["min_sentence_tokens"] == 4
+    assert validation.calls[0]["max_sentence_tokens"] == 14
 
 
 def test_generate_text_items_preserves_frequency_and_word_list_profile_validation_rules() -> None:
@@ -1300,7 +1300,7 @@ def test_generate_text_items_preserves_frequency_and_word_list_profile_validatio
 
     assert [call["require_translation"] for call in validation.calls] == [True, True]
     assert [call["min_sentence_tokens"] for call in validation.calls] == [4, 4]
-    assert [call["max_sentence_tokens"] for call in validation.calls] == [12, 12]
+    assert [call["max_sentence_tokens"] for call in validation.calls] == [12, 14]
 
 
 def test_generate_text_items_skips_same_language_translation_validation() -> None:
@@ -1399,7 +1399,7 @@ def test_generate_text_items_infers_source_profile_when_source_type_is_absent() 
 
     assert [call["require_translation"] for call in validation.calls] == [True, True]
     assert [call["min_sentence_tokens"] for call in validation.calls] == [4, 4]
-    assert [call["max_sentence_tokens"] for call in validation.calls] == [12, 12]
+    assert [call["max_sentence_tokens"] for call in validation.calls] == [12, 14]
 
 
 def test_generate_text_items_sends_bounded_redacted_highlight_context() -> None:

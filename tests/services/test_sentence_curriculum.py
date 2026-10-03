@@ -116,7 +116,8 @@ def test_japanese_units_are_not_han_or_whitespace_counts():
     assert check_sentence_curriculum(text,policy,analysis).passed
 
 
-def test_context_survives_provenance_and_sentence_request_and_prompt():
+@pytest.mark.parametrize("source_type", ["frequency", "word-list", "kindle-highlights"])
+def test_context_survives_provenance_and_sentence_request_and_prompt(source_type):
     from multilang.domain.jobs import SupportedLanguage
     from multilang.domain.lexicon import LexicalCardCandidate, LexicalProvenance
     from multilang.services.provider_text_adapters import _sentence_prompt
@@ -126,11 +127,12 @@ def test_context_survives_provenance_and_sentence_request_and_prompt():
     restored = LexicalProvenance.model_validate_json(provenance.model_dump_json())
     candidate = LexicalCardCandidate(submitted_form="went",display_form="went",lemma="go",lemma_key="go",
                                      translation_target_language="pt",grounding_status="grounded",provenance=restored)
-    request = SentenceGenerationRequest.from_candidate(candidate=candidate,deck_language=SupportedLanguage.EN,source_type="frequency")
+    request = SentenceGenerationRequest.from_candidate(candidate=candidate,deck_language=SupportedLanguage.EN,source_type=source_type)
     assert request.sentence_curriculum == _policy()
     prompt = _sentence_prompt(request)
     assert "analyzer lexical units" in prompt
     assert "between 4 and 12 words" not in prompt
+    assert "at most 14 words" not in prompt
     assert "previously introduced" in prompt
     assert "sentence_curriculum" not in LexicalProvenance(source="legacy").model_dump()
 

@@ -954,3 +954,34 @@ def test_korean_language_check_rejects_non_nfc_hangul_without_echo() -> None:
     assert detail is not None
     assert "non-canonical" in detail
     assert unsafe_text not in detail
+
+
+@pytest.mark.parametrize(
+    ('text', 'expected_flag'),
+    [
+        ('I wash cups.', ValidationFlagCode.SENTENCE_TOO_SHORT),
+        ('I wash my cups.', None),
+        ('I wash all the cups in our small kitchen carefully before breakfast every single morning.', ValidationFlagCode.SENTENCE_TOO_LONG),
+        ('I wash the cups in our small kitchen carefully before breakfast every single morning.', None),
+    ],
+)
+@pytest.mark.parametrize('source_type', ['kindle-highlights', 'word-list'])
+def test_personal_deck_length_uses_frequency_base_with_small_margin(text, expected_flag, source_type):
+    from multilang.domain.source_profiles import get_source_profile
+
+    profile = get_source_profile(source_type)
+    result = TextValidationService(
+        language_identifier=FakeLanguageIdentifier('en'),
+        require_translation_fidelity=False,
+    ).validate(
+        sentence=build_sentence(text=text),
+        translation=build_translation(text='unused'),
+        display_form='wash', lemma='wash', definitions_html='verb: to clean with water',
+        require_translation=False,
+        min_sentence_tokens=profile.min_sentence_tokens,
+        max_sentence_tokens=profile.max_sentence_tokens,
+    )
+    length_flags = {flag.code for flag in result.validation_flags} & {
+        ValidationFlagCode.SENTENCE_TOO_SHORT, ValidationFlagCode.SENTENCE_TOO_LONG,
+    }
+    assert length_flags == ({expected_flag} if expected_flag else set())

@@ -30,7 +30,7 @@ def test_word_list_source_profile_uses_highlight_template_with_manual_note_type(
     assert profile.requires_translation_validation is True
     assert profile.exports_translation_field is False
     assert profile.min_sentence_tokens == 4
-    assert profile.max_sentence_tokens == 12
+    assert profile.max_sentence_tokens == get_source_profile("kindle-highlights").max_sentence_tokens
     assert profile.note_type_name == "Multilang::Manual Card"
     assert profile.template_name == "highlight_card"
 
@@ -41,8 +41,8 @@ def test_kindle_highlights_source_profile_omits_translation_with_highlight_templ
     assert profile.source_type == "kindle-highlights"
     assert profile.requires_translation_validation is False
     assert profile.exports_translation_field is False
-    assert profile.min_sentence_tokens == 6
-    assert profile.max_sentence_tokens == 16
+    assert profile.min_sentence_tokens == get_source_profile("frequency").min_sentence_tokens
+    assert profile.max_sentence_tokens == get_source_profile("frequency").max_sentence_tokens + 2
     assert profile.note_type_name == "Multilang::Highlight Card"
     assert profile.template_name == "highlight_card"
 

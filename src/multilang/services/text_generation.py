@@ -717,6 +717,10 @@ class TextGenerationService:
         prompt_version = self._prompt_version
         if request.source_type in {"word-list", "kindle-highlights"} and request.target_language not in {"ko", "la"}:
             prompt_version += "/vocabulary-entry-v1"
+        if request.source_type == "kindle-highlights":
+            prompt_version += "/highlight-short-sentence-v1"
+        elif request.source_type == "word-list":
+            prompt_version += "/word-list-short-sentence-v1"
         key = _cache_key_for_request("sentence", request, adapter=self._sentence_adapter, prompt_version=prompt_version)
         if self._provider_cache is not None:
             cached = self._provider_cache.get(key)

@@ -237,7 +237,7 @@ def test_native_generation_uses_common_template_and_checks_exact_definition_exam
     )
     result = adapter(content_request(definition_evidence=evidence()))
     assert result.definition == payload["definition"]
-    assert "definition-single-sense-v2" in calls[0]["messages"][0]["content"]
+    assert "definition-single-sense-v3" in calls[0]["messages"][0]["content"]
     assert reviews[0].definition == payload["definition"]
     assert reviews[0].sentence == payload["example_sentence"]
     payload["definition"] = "noun: a quick movement"

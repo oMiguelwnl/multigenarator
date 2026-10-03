@@ -128,7 +128,7 @@ def test_legacy_provider_uses_shared_policy_and_rejects_wrong_pos():
     with pytest.raises(ValueError, match="part of speech"):
         adapter.generate_definition(request)
     prompt = calls[0]["messages"][1]["content"]
-    assert "definition-single-sense-v2" in prompt
+    assert "definition-single-sense-v3" in prompt
     assert "<br> between multiple senses" not in prompt
     assert "circular" in prompt
 
@@ -183,3 +183,63 @@ def test_legacy_source_must_also_obey_the_shared_definition_contract(meaning):
     decision = decide_definition(request, None)
     assert decision.review_required
     assert decision.definitions_html is None
+
+
+def test_japanese_highlight_definition_uses_shared_style_in_study_language():
+    from multilang.services.provider_text_adapters import _definition_prompt
+    from multilang.services.text_generation import DefinitionGenerationRequest
+
+    prompt = _definition_prompt(DefinitionGenerationRequest(
+        display_form='父', lemma='父', source_language='ja', target_language='ja',
+        part_of_speech='noun', source_definitions=('男の親',),
+        source_definition_language='ja', evidence_source='synthetic-fixture',
+    ))
+    assert 'Definition output language: Japanese (ja)' in prompt
+    assert 'definition-single-sense-v3' in prompt
+    assert 'exactly ONE selected source sense' in prompt
+    assert 'Prefer a short phrase' in prompt
+    assert 'meaning after the colon must also be in English' not in prompt
+    assert 'keep the part-of-speech label in English' in prompt
+
+
+@pytest.mark.parametrize(
+    ('language', 'word', 'meaning'),
+    [('en', 'house', 'a building where people live'),
+     ('es', 'casa', 'un edificio donde viven personas'),
+     ('fr', 'maison', 'un bâtiment où des personnes habitent')],
+)
+@pytest.mark.parametrize('source_type', ['kindle-highlights', 'word-list'])
+def test_personal_deck_definition_reuses_single_sense_contract_in_study_language(language, word, meaning, source_type):
+    from types import SimpleNamespace
+
+    from multilang.domain.highlights import HighlightCandidate
+    from multilang.domain.jobs import SupportedLanguage
+    from multilang.services.lexical_grounding import LexicalGroundingService
+    from multilang.services.lexical_lookup import LexicalRecord
+    from multilang.services.word_list_parser import ParsedWordListItem
+
+    record = LexicalRecord(
+        term=word, display_form=word, lemma=word, part_of_speech='noun',
+        definitions=[meaning], definition_language=language, ipa='/x/',
+        source='synthetic-fixture',
+    )
+    service = LexicalGroundingService(lookup=SimpleNamespace(lookup=lambda **_: record))
+    if source_type == 'word-list':
+        result = service.ground_word_list_item(
+            language=SupportedLanguage(language),
+            item=ParsedWordListItem(
+                line_number=1, submitted_form=word, display_form=word, item_key=word,
+            ),
+        )
+    else:
+        result = service.ground_highlight_candidate(
+            language=SupportedLanguage(language),
+            candidate=HighlightCandidate(
+                item_key='highlight-fixture', source_content_hash='a' * 64,
+                display_form=word, lemma_key=word, first_highlight_id='fixture-1',
+                first_source_index=0, occurrence_count=1,
+            ),
+        )
+    assert result.definition_language == language
+    assert result.definitions_html == f'noun: {meaning}'
+    assert result.provenance.definition.quality_decision == 'source_verified'
