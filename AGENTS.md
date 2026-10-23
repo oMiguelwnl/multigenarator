@@ -238,3 +238,21 @@ Do not make direct repo edits outside a GSD workflow unless the user explicitly 
 > Profile not yet configured. Run `/gsd-profile-user` to generate your developer profile.
 > This section is managed by `generate-claude-profile` -- do not edit manually.
 <!-- GSD:profile-end -->
+
+## Gitflow and worktrees
+
+
+- Follow [the Gitflow + worktree workflow](docs/gitflow-worktrees.md) for branch creation, integration, releases and cleanup. Use native Git; the `git-flow` extension is not required.
+- `main` holds stable releases; `develop` is the integration branch. Start `feature/<slug>` and `fix/<slug>` from `develop`, `release/<version>` from `develop`, and `hotfix/<slug>` from `main`. Merge features/fixes into `develop`; merge releases/hotfixes into `main` and back into `develop`, tagging the resulting release commit on `main`.
+- Use one dedicated worktree per task under the ignored `.worktrees/` directory. Inspect `git status`, `git branch -a` and `git worktree list` before creating one. Never check out the same branch in two worktrees or use `--force` to bypass Git protections.
+- Preserve existing dirty worktrees and unrelated changes. A new worktree contains committed files only; do not silently stash, copy secrets, move unfinished work, reset branches or include another task's files in a commit.
+- During migration, do not infer a stable baseline from the current feature branch or from the legacy `Monarch` name. Establish a reviewed baseline before creating `main`/`develop`; until then, explicitly identify the existing integration branch used as the task base.
+- Keep each worktree's virtual environment, runtime state, output and test database isolated. Run the relevant offline checks before integration; worktree creation does not authorize provider calls or deck generation.
+- Prefer reviewed PRs and merge commits (`--no-ff` for local integration). Do not force-push shared branches. Remove a worktree only after checking tracked, untracked and ignored files for useful data, and delete its branch only after confirming integration. Never use forced cleanup by default.
+
+
+### Adopted local baseline
+
+- `main` was initialized from local `Monarch` at `1b5e528`, as explicitly requested by the user; `develop` starts from that base. Preserve `Monarch`.
+- `feature/roadmap-4-0-native-architecture` is still in progress and must remain untouched by Gitflow setup. Do not use it as the integration branch or merge it into `develop`/`main` until completion and an explicit integration request.
+- Use `.worktrees/main` and `.worktrees/develop` for the permanent branches. Keep the current root checkout on its existing Roadmap 4 feature.
