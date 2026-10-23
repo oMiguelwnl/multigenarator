@@ -1,0 +1,164 @@
+<!doctype html><html lang="pt-BR"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>07 · Gemini — original</title><style>
+    /* PALETA: ERGONOMIC STUDY DARK */
+    :root {
+      --bg-page: #121212;
+      --bg-card: #1E1E1E;
+      --text-main: #EAEAEA;
+      --text-muted: #A0A0A0;
+      --border-line: #333333;
+    }
+
+    body {
+      background: var(--bg-page);
+      color: var(--text-main);
+      font-family: Georgia, Cambria, "Times New Roman", Times, serif;
+      margin: 0;
+      padding: 40px 16px;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      min-height: 100vh;
+      box-sizing: border-box;
+    }
+
+    .customCard {
+      max-width: 460px;
+      width: 100%;
+      background: var(--bg-card);
+      padding: 28px 24px;
+      border-radius: 8px;
+      border: 1px solid var(--border-line);
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5);
+      box-sizing: border-box;
+    }
+
+    /* Cabeçalho da Palavra */
+    .targetWordContainer {
+      margin-bottom: 20px;
+      display: flex;
+      align-items: baseline;
+      flex-wrap: wrap;
+      gap: 10px;
+    }
+
+    .targetWord {
+      font-size: 38px;
+      font-weight: 600;
+      color: var(--text-main);
+      letter-spacing: -0.5px;
+      line-height: 1.1;
+    }
+
+    .ipa {
+      font-size: 16px;
+      color: var(--text-muted);
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      font-weight: 400;
+    }
+
+    .wordAudioButtonBack {
+      margin-left: 4px;
+      cursor: pointer;
+      opacity: 0.8;
+    }
+
+    /* Linhas Divisórias */
+    .dividerLine {
+      height: 1px;
+      background: var(--border-line);
+      margin: 20px 0;
+      width: 100%;
+    }
+
+    /* Seções e Rótulos */
+    .header {
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--text-muted);
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      margin-bottom: 8px;
+    }
+
+    .definitionsList {
+      padding-left: 0;
+      list-style: none;
+      font-size: 16px;
+      line-height: 1.6;
+      color: var(--text-main);
+      margin: 0;
+    }
+
+    .definitionsList li {
+      margin-bottom: 6px;
+    }
+
+    /* Painel de Exemplo Texto Puro */
+    .examplePanel {
+      padding: 0;
+      margin-top: 6px;
+    }
+
+    .exampleSentenceLine {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      font-size: 16px;
+      line-height: 1.5;
+    }
+
+    .exampleSentenceText {
+      color: var(--text-main);
+    }
+
+    .sentenceTranslation {
+      margin-top: 8px;
+      font-size: 16px;
+      line-height: 1.5;
+      color: var(--text-muted);
+      font-family: Georgia, Cambria, "Times New Roman", Times, serif;
+    }
+
+    .sentenceAudioButton {
+      cursor: pointer;
+      opacity: 0.8;
+    }
+  
+html,body.card,body.card.nightMode{margin:0;min-height:100%;}
+body.card{padding:16px;box-sizing:border-box;}
+#qa{width:100%;max-width:760px;margin:0 auto;min-width:0;}
+.mock-style-label{font:12px/1.5 -apple-system,BlinkMacSystemFont,"Segoe UI",Arial,sans-serif;text-align:center;opacity:.65;margin:0 auto 14px;}
+#mock-translation[hidden]{display:none!important;}
+#mock-translation:not([hidden]){display:block!important;}
+.replay-button{display:inline-flex;align-items:center;justify-content:center;vertical-align:middle;}
+.replay-button svg{width:20px;height:20px;flex-shrink:0;}
+</style><body class="card"><main id="qa"><div class="mock-style-label">07 · Gemini — original</div><div class="customCard cardBack">
+<!-- PALAVRA CHAVE E PRONÚNCIA -->
+<div class="targetWordContainer">
+<span class="targetWord">quiet</span>
+<span class="ipa">/ˈkwaɪət/</span>
+<span class="wordAudioButtonBack">🔊</span>
+</div>
+<div class="dividerLine"></div>
+<!-- DEFINIÇÃO -->
+<div class="horizontalPadding">
+<div class="header">Definition:</div>
+<div class="indent">
+<ul class="definitionsList"><li>adjective: making little or no noise</li></ul>
+</div>
+</div>
+<div class="dividerLine"></div>
+<!-- EXEMPLO -->
+<div class="horizontalPadding">
+<div class="header">Example:</div>
+<div class="examplePanel">
+<div class="exampleSentenceLine">
+<span class="exampleSentenceText">The room is quiet after lunch.</span>
+<span class="sentenceAudioButton"><span class="replay-button" role="img" title="Ícone ilustrativo — sem áudio" aria-label="Áudio ilustrativo"><svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true"><path fill="currentColor" d="M7 4v16l14-8z"/></svg></span></span>
+</div>
+<div aria-hidden="true" class="sentenceTranslation" hidden="" id="mock-translation" style="display:none">O quarto fica silencioso depois do almoço.</div>
+</div>
+</div>
+</div><script>var t=document.getElementById("mock-translation");if(t){t.hidden=false;t.style.display="block";t.setAttribute("aria-hidden","false");}</script></main></body></html>

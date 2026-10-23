@@ -1,0 +1,177 @@
+<!doctype html><html lang="pt-BR"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>04 · Minimalista sálvia</title><style>
+  #ml-frequency-proposal {
+    --mf-page: #101315;
+    --mf-surface: #191d20;
+    --mf-text: #f0f1ee;
+    --mf-muted: #a4acae;
+    --mf-line: #30373a;
+    --mf-accent: #9fcbb6;
+    --mf-padding: 32px;
+    --mf-gap: 28px;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Noto Sans", Arial, sans-serif;
+    color: var(--mf-text);
+    color-scheme: dark;
+    width: 100%;
+    min-width: 0;
+  }
+  #ml-frequency-proposal * { box-sizing: border-box; }
+  #ml-frequency-proposal .mf-stage {
+    background: var(--mf-page);
+    border-radius: 16px;
+    padding: 24px;
+  }
+  #ml-frequency-proposal .mf-chrome {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 12px;
+    max-width: 620px;
+    margin: 0 auto 20px;
+    color: var(--mf-muted);
+    font-size: 12px;
+    line-height: 1.5;
+    letter-spacing: .03em;
+  }
+  #ml-frequency-proposal .mf-side { color: var(--mf-accent); }
+  #ml-frequency-proposal .mf-study {
+    background: var(--mf-surface);
+    border: 1px solid var(--mf-line);
+    border-radius: 12px;
+    padding: var(--mf-padding);
+    max-width: 620px;
+    margin: 0 auto;
+    text-align: left;
+    overflow-wrap: anywhere;
+  }
+  #ml-frequency-proposal .mf-word-row,
+  #ml-frequency-proposal .mf-example-row {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) 44px;
+    align-items: center;
+    gap: 16px;
+  }
+  #ml-frequency-proposal .mf-word {
+    color: var(--mf-text);
+    font-family: inherit;
+    font-size: clamp(32px, 5vw, 42px);
+    line-height: 1.15;
+    letter-spacing: -.035em;
+    font-weight: 500;
+    margin: 0 0 9px;
+  }
+  #ml-frequency-proposal .mf-ipa {
+    font-size: 16px;
+    line-height: 1.5;
+    font-weight: 400;
+    color: var(--mf-muted);
+  }
+  #ml-frequency-proposal .mf-audio {
+    display: inline-flex;
+    width: 44px;
+    height: 44px;
+    align-items: center;
+    justify-content: center;
+    padding: 0;
+    color: var(--mf-accent);
+    border: 1px solid var(--mf-line);
+    background: var(--mf-surface);
+    border-radius: 50%;
+    opacity: 1;
+  }
+  #ml-frequency-proposal .mf-audio svg { width: 18px; height: 18px; }
+  #ml-frequency-proposal .mf-definition {
+    border-top: 1px solid var(--mf-line);
+    margin-top: var(--mf-gap);
+    padding-top: var(--mf-gap);
+  }
+  #ml-frequency-proposal .mf-label {
+    margin: 0 0 9px;
+    color: var(--mf-muted);
+    font-weight: 500;
+    font-size: 12px;
+    line-height: 1.5;
+    letter-spacing: .075em;
+    text-transform: uppercase;
+  }
+  #ml-frequency-proposal .mf-copy,
+  #ml-frequency-proposal .mf-sentence {
+    margin: 0;
+    font-size: 18px;
+    line-height: 1.65;
+    font-weight: 400;
+    color: var(--mf-text);
+  }
+  #ml-frequency-proposal .mf-example { margin-top: var(--mf-gap); }
+  #ml-frequency-proposal .mf-translation {
+    margin-top: 20px;
+    border-left: 2px solid var(--mf-accent);
+    padding: 2px 0 2px 14px;
+  }
+  #ml-frequency-proposal .mf-translation[hidden] { display: none; }
+  #ml-frequency-proposal .mf-translation p {
+    color: var(--mf-muted);
+    font-size: 16px;
+    line-height: 1.6;
+    margin: 0;
+  }
+  #ml-frequency-proposal .mf-translation .mf-label {
+    color: var(--mf-accent);
+    font-size: 11px;
+    line-height: 1.5;
+    margin: 0 0 5px;
+  }
+  #ml-frequency-proposal .mf-actions {
+    display: flex;
+    justify-content: center;
+    margin-top: 22px;
+  }
+  #ml-frequency-proposal .mf-flip {
+    color: var(--mf-text);
+    background: var(--mf-surface);
+    border: 1px solid var(--mf-line);
+    border-radius: 8px;
+    padding: 10px 22px;
+    min-height: 44px;
+    font: 500 14px/1.5 -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    cursor: pointer;
+  }
+  #ml-frequency-proposal .mf-flip:hover { border-color: var(--mf-accent); }
+  @media (max-width: 480px) {
+    #ml-frequency-proposal .mf-stage { padding: 16px 12px; }
+    #ml-frequency-proposal .mf-study { padding: min(var(--mf-padding), 22px); }
+    #ml-frequency-proposal .mf-word-row,
+    #ml-frequency-proposal .mf-example-row { gap: 12px; }
+  }
+body.card{background:#101315;color:#f0f1ee;}
+html,body.card,body.card.nightMode{margin:0;min-height:100%;}
+body.card{padding:16px;box-sizing:border-box;}
+#qa{width:100%;max-width:760px;margin:0 auto;min-width:0;}
+.mock-style-label{font:12px/1.5 -apple-system,BlinkMacSystemFont,"Segoe UI",Arial,sans-serif;text-align:center;opacity:.65;margin:0 auto 14px;}
+#mock-translation[hidden]{display:none!important;}
+#mock-translation:not([hidden]){display:block!important;}
+.replay-button{display:inline-flex;align-items:center;justify-content:center;vertical-align:middle;}
+.replay-button svg{width:20px;height:20px;flex-shrink:0;}
+</style><body class="card"><main id="qa"><div class="mock-style-label">04 · Minimalista sálvia</div><div id="ml-frequency-proposal"><div class="mf-stage"><article class="mf-study">
+<div class="mf-word-row">
+<div>
+<h2 class="mf-word">gather</h2>
+<div class="mf-ipa">/ˈɡæðər/</div>
+</div>
+<span class="mf-audio">
+<i aria-hidden="true" data-lucide="volume-2"></i>
+</span>
+</div>
+<section class="mf-definition">
+<h3 class="mf-label">Definição</h3>
+<p class="mf-copy">verb: to come together in one place</p>
+</section>
+<section class="mf-example">
+<h3 class="mf-label">Exemplo</h3>
+<div class="mf-example-row">
+<p class="mf-sentence">We gather in the kitchen every morning.</p>
+<span class="mf-audio"><span class="replay-button" role="img" title="Ícone ilustrativo — sem áudio" aria-label="Áudio ilustrativo"><svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true"><path fill="currentColor" d="M7 4v16l14-8z"/></svg></span></span>
+</div>
+<div aria-hidden="true" class="mf-translation" hidden="" id="mock-translation" style="display:none">Nós nos reunimos na cozinha todas as manhãs.</div>
+</section>
+</article></div></div></main></body></html>
