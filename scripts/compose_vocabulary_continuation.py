@@ -13,7 +13,7 @@ import json
 from pathlib import Path
 
 from multilang.services.vocabulary_adjudication import _hash
-from multilang.services.vocabulary_continuation_composition import apply_proposal
+from multilang.services.vocabulary_continuation_composition import apply_addition, apply_proposal
 from multilang.services.vocabulary_finalization import publish_inventory
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -94,7 +94,7 @@ def _round_rows(round_spec: dict) -> tuple[list[tuple[dict, str, str]], dict]:
             ):
                 raise ValueError("envelope review unit differs")
             result.append((row, envelope["baseline_row_sha256"], digest))
-    elif mode == "rows":
+    elif mode in {"rows", "additions"}:
         bindings_path = manifest_file(path, manifest, round_spec["bindings"])
         bindings = _binding_map(json.loads(bindings_path.read_text(encoding="utf-8")))
         result = []
@@ -103,7 +103,17 @@ def _round_rows(round_spec: dict) -> tuple[list[tuple[dict, str, str]], dict]:
             binding = bindings.pop(key, None)
             if binding is None:
                 raise ValueError("proposal has no sealed binding")
-            result.append((row, binding["baseline_row_sha256"], binding.get("proposal_row_sha256") or binding.get("replacement_row_sha256")))
+            if mode == "additions":
+                source = row.get("source_binding") or {}
+                pinned(dict(path=source["recovery_manifest_path"], sha256=binding["recovery_manifest_sha256"]))
+                prior = dict(
+                    addition=True,
+                    source_record_sha256=binding["source_record_sha256"],
+                    recovery_manifest_sha256=binding["recovery_manifest_sha256"],
+                )
+            else:
+                prior = binding["baseline_row_sha256"]
+            result.append((row, prior, binding.get("proposal_row_sha256") or binding.get("replacement_row_sha256")))
         if bindings:
             raise ValueError("sealed binding has no proposal")
     else:
@@ -146,9 +156,18 @@ def compose(config_path: Path) -> dict:
             if row["language"] != language:
                 continue
             uid = row["review_unit_id"]
-            if uid not in inventory:
-                raise ValueError("proposal is outside frozen inventory")
-            inventory[uid] = apply_proposal(inventory[uid], row, prior_sha, proposal_sha)
+            if isinstance(prior_sha, dict) and prior_sha.get("addition"):
+                if uid in inventory:
+                    raise ValueError("supplemental parent already exists")
+                inventory[uid] = apply_addition(
+                    row, proposal_sha,
+                    prior_sha["source_record_sha256"],
+                    prior_sha["recovery_manifest_sha256"],
+                )
+            else:
+                if uid not in inventory:
+                    raise ValueError("proposal is outside frozen inventory")
+                inventory[uid] = apply_proposal(inventory[uid], row, prior_sha, proposal_sha)
             changed[language].add(uid)
         output_counts[language] = len(inventory)
         path = composition / f"{language}.jsonl"
