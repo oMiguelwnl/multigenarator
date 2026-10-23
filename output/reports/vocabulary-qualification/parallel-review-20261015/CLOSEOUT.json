@@ -1,0 +1,188 @@
+{
+  "schema_version": "vocabulary-review-closeout-1",
+  "verified_at": "2026-10-22T23:14:20.549351+00:00",
+  "implementation_commit": "c9633c3",
+  "scope": "First review and consolidation of the 111 sessions assigned to parallel-review-20261015; not final linguistic qualification.",
+  "manifest": {
+    "path": "output/reports/vocabulary-qualification/parallel-review-20261015/manifest.json",
+    "sha256": "ae5bd091c68f27ed0358108b781d65c4796956e8ab041ddb47a11c388bac38c6"
+  },
+  "groups": {
+    "korean": {
+      "status": "consolidated",
+      "completed_at": "2026-10-22T21:26:59.222465+00:00",
+      "completed_sessions": 54,
+      "remaining_units": 0,
+      "pending_requests": 0,
+      "sessions_by_language": {
+        "ko": 54
+      },
+      "session_ids": [
+        "ko-0034",
+        "ko-0035",
+        "ko-0036",
+        "ko-0037",
+        "ko-0038",
+        "ko-0039",
+        "ko-0040",
+        "ko-0041",
+        "ko-0042",
+        "ko-0043",
+        "ko-0044",
+        "ko-0045",
+        "ko-0046",
+        "ko-0047",
+        "ko-0048",
+        "ko-0049",
+        "ko-0050",
+        "ko-0051",
+        "ko-0052",
+        "ko-0053",
+        "ko-0054",
+        "ko-0055",
+        "ko-0056",
+        "ko-0057",
+        "ko-0058",
+        "ko-0059",
+        "ko-0060",
+        "ko-0061",
+        "ko-0062",
+        "ko-0063",
+        "ko-0064",
+        "ko-0065",
+        "ko-0066",
+        "ko-0067",
+        "ko-0068",
+        "ko-0069",
+        "ko-0070",
+        "ko-0071",
+        "ko-0072",
+        "ko-0073",
+        "ko-0074",
+        "ko-0075",
+        "ko-0076",
+        "ko-0077",
+        "ko-0078",
+        "ko-0079",
+        "ko-0080",
+        "ko-0081",
+        "ko-0082",
+        "ko-0083",
+        "ko-0084",
+        "ko-0085",
+        "ko-0086",
+        "ko-0087"
+      ],
+      "evidence": {
+        "queue": {
+          "path": "output/reports/vocabulary-qualification/parallel-review-20261015/groups/korean/queue/status.json",
+          "sha256": "f0a8042f8181f57531c48fa9c0d16556594b5b603302ce49508b959947cbfcc4"
+        },
+        "execution": {
+          "path": "output/reports/vocabulary-qualification/parallel-review-20261015/groups/korean/execution.json",
+          "sha256": "d3e89db946b01ecbba1b4c6d34c7fc0b3f0db7bccfed66d049c6c28dda44bd03"
+        },
+        "merge": {
+          "path": "output/reports/vocabulary-qualification/parallel-review-20261015/groups/korean/merge/merge.json",
+          "sha256": "1ca8a5d446da9dea3ec4ac3fc787e5a869113b41bdd79e8392ba24ddbbcae75c"
+        }
+      }
+    },
+    "other-five": {
+      "status": "consolidated",
+      "completed_at": "2026-10-22T22:02:21.175612+00:00",
+      "completed_sessions": 57,
+      "remaining_units": 0,
+      "pending_requests": 0,
+      "sessions_by_language": {
+        "cs": 3,
+        "fi": 9,
+        "ja": 16,
+        "ro": 11,
+        "zh": 18
+      },
+      "session_ids": [
+        "cs-0034",
+        "cs-0035",
+        "cs-0036",
+        "fi-0034",
+        "fi-0035",
+        "fi-0036",
+        "fi-0037",
+        "fi-0038",
+        "fi-0039",
+        "fi-0040",
+        "fi-0041",
+        "fi-0042",
+        "ja-0034",
+        "ja-0035",
+        "ja-0036",
+        "ja-0037",
+        "ja-0038",
+        "ja-0039",
+        "ja-0040",
+        "ja-0041",
+        "ja-0042",
+        "ja-0043",
+        "ja-0044",
+        "ja-0045",
+        "ja-0046",
+        "ja-0047",
+        "ja-0048",
+        "ja-0049",
+        "ro-0034",
+        "ro-0035",
+        "ro-0036",
+        "ro-0037",
+        "ro-0038",
+        "ro-0039",
+        "ro-0040",
+        "ro-0041",
+        "ro-0042",
+        "ro-0043",
+        "ro-0044",
+        "zh-0034",
+        "zh-0035",
+        "zh-0036",
+        "zh-0037",
+        "zh-0038",
+        "zh-0039",
+        "zh-0040",
+        "zh-0041",
+        "zh-0042",
+        "zh-0043",
+        "zh-0044",
+        "zh-0045",
+        "zh-0046",
+        "zh-0047",
+        "zh-0048",
+        "zh-0049",
+        "zh-0050",
+        "zh-0051"
+      ],
+      "evidence": {
+        "queue": {
+          "path": "output/reports/vocabulary-qualification/parallel-review-20261015/groups/other-five/queue/status.json",
+          "sha256": "f614f9f25e58670c4a13bf81acc53a9d6436a70a7bc5eadaac3857e3c207d43f"
+        },
+        "execution": {
+          "path": "output/reports/vocabulary-qualification/parallel-review-20261015/groups/other-five/execution.json",
+          "sha256": "d1a18f3f588850d72c69d333121567384f8e0dc9639df1605619c7f0451d908f"
+        },
+        "merge": {
+          "path": "output/reports/vocabulary-qualification/parallel-review-20261015/groups/other-five/merge/merge.json",
+          "sha256": "d254062d19c37e528ff1c386833ada1dacf9d3acbcfcbbe23de2279b1bbfd051"
+        }
+      }
+    }
+  },
+  "generation_status": "deferred_by_user",
+  "production_eligible": false,
+  "remaining_work": [
+    "Resolve or explicitly retain linguistic uncertainties with evidence.",
+    "Finalize frequency ordering and independently evaluate lexical coverage."
+  ],
+  "evidence_note": "Source reports and lexical artifacts remain local and are not bundled in this summary. Hashes identify the exact reports checked.",
+  "completed_sessions": 111,
+  "remaining_sessions": 0
+}

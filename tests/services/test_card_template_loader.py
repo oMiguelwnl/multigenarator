@@ -250,17 +250,18 @@ def test_project_normal_template_groups_example_sentence_and_audio_in_one_row() 
     assert '{{FrontSide}}' in template.back
 
 
-def test_project_normal_template_css_keeps_sentence_audio_beside_text_responsively() -> None:
+def test_frequency_hero_dark_keeps_serif_and_full_width_translation() -> None:
     template = load_card_template(source_type="frequency")
-
-    assert ".exampleSentenceLine" in template.css
-    assert "display: grid;" in template.css
-    assert "grid-template-columns: minmax(0, 1fr) 44px;" in template.css
-    assert ".exampleSentenceText" in template.css
-    assert "min-width: 0;" in template.css
-    assert ".sentenceAudioButton" in template.css
-    assert "width: 44px;" in template.css
-    assert "min-width: 44px;" in template.css
+    assert "--max-width-card: 620px;" in template.css
+    assert "--color-card-background: #0f1b2d;" in template.css
+    assert "--color-nightMode-card-background: #0f1b2d;" in template.css
+    assert "border-top: 4px solid #3b82f6;" in template.css
+    assert "border-left: 3px solid #3b82f6;" in template.css
+    assert _last_css_value(template.css, "text-align", selector=".targetWordContainer") == "center"
+    assert _last_css_value(template.css, "display", selector=".examplePanel") == "block"
+    assert _last_css_value(template.css, "width", selector=".sentenceTranslation") == "100%"
+    assert "Georgia" in template.css
+    assert "overflow-wrap: anywhere;" in template.css
 
 
 def test_korean_grammar_preserves_legacy_dark_layout_contract() -> None:
@@ -433,13 +434,10 @@ def test_korean_grammar_preserves_legacy_dark_layout_contract() -> None:
     assert _last_css_value(mobile_css, "padding", selector=".customCard") == "24px 20px"
 
 
-def test_legacy_grammar_and_mandarin_keep_q054_width_contract() -> None:
+def test_legacy_grammar_and_mandarin_word_list_keep_q054_width_contract() -> None:
     normal = load_card_template(source_type="korean-grammar", language=SupportedLanguage.KO)
     mandarin_word_list = load_card_template(
         source_type="word-list", language=SupportedLanguage.ZH
-    )
-    mandarin_frequency = load_card_template(
-        source_type="frequency", language=SupportedLanguage.ZH
     )
 
     css_blocks = list(re.finditer(r"([^{}]+)\{([^{}]*)\}", normal.css))
@@ -451,7 +449,7 @@ def test_legacy_grammar_and_mandarin_keep_q054_width_contract() -> None:
     assert universal_blocks
     assert _last_css_value(universal_blocks[-1].group(2), "box-sizing") == "border-box"
 
-    for template in (normal, mandarin_word_list, mandarin_frequency):
+    for template in (normal, mandarin_word_list):
         css = template.css
         desktop_css = css.split("@media", maxsplit=1)[0]
         assert _last_css_value(desktop_css, "display", selector=".card") == "flex"
@@ -530,7 +528,7 @@ def test_project_japanese_template_uses_japanese_fields_and_furigana_filter() ->
     template = load_card_template(source_type="frequency", language=SupportedLanguage.JA)
     rendered = template.front + template.back
 
-    assert template.source_template_name == "japanese_card"
+    assert template.source_template_name == "japanese_frequency_card"
     assert "toggleFurigana" in rendered
     assert 'class="customCard cardBack jpFront"' in template.front
     assert 'class="customCard cardBack jpBack"' in template.back
@@ -550,7 +548,7 @@ def test_project_japanese_template_uses_japanese_fields_and_furigana_filter() ->
     validate_template_references(template, field_names=JAPANESE_EXPORT_CARD_FIELD_NAMES)
 
 
-def test_generated_japanese_frequency_model_keeps_pedagogy_and_dark_palette() -> None:
+def test_generated_japanese_frequency_model_keeps_pedagogy_and_blue_palette() -> None:
     model = build_japanese_model()
     front = model.templates[0]["qfmt"]
     back = model.templates[0]["afmt"]
@@ -581,11 +579,11 @@ def test_generated_japanese_frequency_model_keeps_pedagogy_and_dark_palette() ->
     assert "google.co.jp" not in back
     assert "weblio.jp" not in back
 
-    assert _last_css_value(model.css, "--max-width-card") == "400px"
-    assert _last_css_value(model.css, "--color-card-background") == "#0a1628"
+    assert _last_css_value(model.css, "--max-width-card") == "620px"
+    assert _last_css_value(model.css, "--color-card-background") == "#0f1b2d"
     assert _last_css_value(model.css, "--color-text-primary") == "#e8f0fe"
-    assert _last_css_value(model.css, "--color-nightMode-card-background") == "#0a1628"
-    assert "border-top: 4px solid #2563eb;" in model.css
+    assert _last_css_value(model.css, "--color-nightMode-card-background") == "#0f1b2d"
+    assert "border-top: 4px solid #3b82f6;" in model.css
 
 
 def test_generated_kana_model_keeps_media_sequence_and_dark_palette() -> None:
@@ -738,12 +736,10 @@ def test_hangul_template_has_no_japanese_identity_or_executable_markup() -> None
 
 def test_dark_templates_set_dark_anki_canvas_background() -> None:
     latin_css = load_card_template(source_type="latin-mvp").css
-    japanese_css = build_japanese_model().css
     kana_css = build_kana_model().css
 
     for template_name, css in {
         "latin_mvp_card": latin_css,
-        "japanese_card": japanese_css,
     }.items():
         assert _last_css_value(css, "--color-page-background") == "#0a1628", template_name
         for selector in ("body", "body.card", "body.nightMode", ".card"):
@@ -961,9 +957,9 @@ def test_mandarin_template_preserves_base_css_and_pedagogical_field_order() -> N
 
     assert frequency.front == word_list.front
     assert frequency.back == word_list.back
-    assert frequency.css == word_list.css
+    assert frequency.css != word_list.css
     assert frequency.source_template_name == "mandarin_card"
-    assert frequency.css.startswith(base_css)
+    assert frequency.css.startswith(load_card_template("frequency").css)
     mandarin_source = (
         Path(__file__).parents[2] / "src" / "multilang" / "templates" / "mandarin_card.md"
     ).read_text(encoding="utf-8")
@@ -973,7 +969,8 @@ def test_mandarin_template_preserves_base_css_and_pedagogical_field_order() -> N
         flags=re.DOTALL,
     )
     assert css_match is not None
-    assert frequency.css == f"{base_css}\n\n{css_match.group('css').strip()}"
+    assert word_list.css == f"{base_css}\n\n{css_match.group('css').strip()}"
+    assert css_match.group("css").strip() in frequency.css
     references = set(re.findall(r"{{[#/]?([^{}]+)}}", frequency.front + frequency.back))
     assert references == {
         "word", "Pinyin", "Traditional", "word_audio", "Definitions", "Image",

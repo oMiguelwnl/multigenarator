@@ -1,4 +1,74 @@
-# Template de frequência — Carvão
+# Template de frequência — Herói azul escuro
+
+## Seleção vigente — 2026-10-22
+
+O usuário escolheu a opção **05 — Herói azul escuro** da comparação.
+A palavra fica centralizada com o áudio abaixo; o exemplo recebe um painel
+azul com borda lateral. Mantêm-se as fontes serifadas por idioma e a tradução
+oculta na frente, revelada no verso usando toda a largura disponível.
+A base é escura nos dois modos do Anki, com largura máxima de 620 px como no mock.
+Japonês e mandarim herdam a composição com furigana/romaji e pinyin/tons/tradicional.
+Campos, IDs, GUIDs e mídia não mudam; listas pessoais e highlights mantêm seus estilos.
+
+Implementação isolada em `feature/frequency-hero-dark`, a partir da base de
+integração `feature/roadmap-4-0-native-architecture` (`c9633c3`).
+Somente os oito arquivos pendentes desta conversa foram reaproveitados; o
+checkout original foi preservado.
+
+Validação: 116 testes de templates, campos, japonês, mandarim e exportação passaram.
+Confira o [mock APKG](../output/decks/frequency-hero-dark-20261022/Multilang_Mock_Heroi_Azul_Escuro.apkg)
+e a [prévia HTML](../output/previews/frequency/hero-dark-20261022/index.html).
+São cinco exemplos existentes, com áudios ilustrativos e IDs de demonstração.
+A estrutura do pacote foi verificada; renderização e importação no Anki nativo
+não foram testadas neste ambiente.
+
+## Histórico — notedfa refinado, azul original
+
+### Seleção anterior — 2026-10-09
+
+O usuário escolheu o layout **notedfa — refinado**, opção 12 do mock de estilos,
+com a **paleta azul do original**, opção 11. O `frequency_card.md` mantém o cartão
+de 400 px, palavra de 26 px, texto de 18 px, áudio em coluna própria de 32 px e
+tradução ocupando toda a largura do painel, inclusive abaixo do áudio. A borda, os textos e as superfícies usam as
+cores originais, com variantes clara e noturna. A definição mantém
+o padrão de conteúdo do projeto; a tradução continua oculta na frente e aparece
+no verso. O CSS mantém quebra de palavras longas e cor herdada no IPA, sem
+esconder os indicadores nativos de marcação do Anki.
+
+Os campos, sua ordem, IDs, GUIDs e referências aos dois áudios permanecem iguais.
+IPA e imagem são opcionais. O inglês mantém seus rótulos em português. A frequência
+em japonês e mandarim compartilha a base azul refinada, preservando furigana/romaji
+e pinyin/tons/tradicional, respectivamente. O japonês mantém seu botão de furigana
+e espaço para as leituras. Os tons do mandarim mantêm suas categorias de cor, com
+tons mais escuros no modo claro para facilitar a leitura.
+
+A tipografia de frequência é serifada: Georgia/Cambria para texto latino,
+Noto Serif JP/Mincho para japonês, Noto Serif SC/TC/Song/Ming para mandarim e
+Noto Serif KR/Myeongjo/Batang para coreano, sempre com alternativa genérica
+`serif`. Não há download ou incorporação de fontes; a aparência depende das
+fontes instaladas no dispositivo. Latim, gramática coreana, word-list e highlights
+mantêm seus templates anteriores. A seleção vale para novas exportações; não altera
+pacotes anteriores nem coleções já importadas.
+
+As prévias, ZIPs e pacotes Carvão abaixo são **históricos** e não representam a
+seleção vigente. Os estilos de origem estão no
+[mock de comparação](../output/previews/frequency/style-mock-20261009/index.html).
+
+A versão anterior à mudança de fonte e largura da tradução tem uma
+[prévia clara/noturna](../output/previews/frequency/notedfa-refinado-azul-20261009/index.html)
+e um [mock `.apkg`](../output/decks/notedfa-refinado-azul-20261009/Multilang_Mock_Notedfa_Refinado_Azul.apkg)
+com três exemplos reaproveitados da comparação, imagem vazia e ícones de áudio
+ilustrativos, sem som. O pacote usa IDs exclusivos de demonstração e o template
+de frequência carregado pelo programa. A estrutura foi verificada; a importação
+e a renderização no Anki nativo não foram testadas neste ambiente.
+
+O [mock atualizado com serifas](../output/decks/notedfa-serif-20261009/Multilang_Mock_Notedfa_Azul_Serif_EN_JA_ZH.apkg)
+contém cinco exemplos em inglês, japonês e mandarim, com os templates vigentes,
+IDs de demonstração e áudio ilustrativo. A tradução usa o painel inteiro; ainda
+quebra naturalmente quando o texto não cabe na tela. O pacote foi verificado
+estruturalmente, sem importação ou renderização no Anki nativo.
+
+## Histórico — Carvão
 
 O cartão principal de frequência usa a paleta **Carvão**, escolhida pelo usuário na comparação: fundo cinza-carvão com degradê discreto, palavra e áudio em azul-gelo, texto principal em branco frio e tradução em cinza-azulado claro. O rótulo “Exemplo” mantém sua posição, tipografia e espaçamento originais, sem painel ou recuo extra. A frente apresenta palavra, IPA disponível, definição, imagem opcional e exemplo; o verso revela somente a frase traduzida, sem o rótulo “Tradução”. A frase original e a tradução compartilham a mesma coluna de texto, uma abaixo da outra.
 
