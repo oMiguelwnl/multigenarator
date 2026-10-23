@@ -27,6 +27,7 @@ pip-wheel-metadata/
 webdav-secrets*.json
 
 # Editor, OS, and local tool state
+.worktrees/
 .zed/
 .vscode/
 .idea/

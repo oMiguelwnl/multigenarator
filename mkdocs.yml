@@ -5,6 +5,7 @@ site_dir: site
 theme:
   name: mkdocs
 nav:
+  - Gitflow e worktrees: gitflow-worktrees.md
   - Architecture: architecture.md
   - Domain: domain-model.md
   - Database: database.md

@@ -85,6 +85,7 @@ Anki. O relatório de implementação registra os resultados efetivamente obtido
 
 ## Documentação
 
+- [Desenvolvimento com Gitflow e worktrees](docs/gitflow-worktrees.md)
 - [Cards a partir de listas de palavras e destaques Kindle](docs/highlight-vocabulary.md)
 - [Preparação do vocabulário, formas e revisão linguística](docs/vocabulary-preparation.md)
 - [Revisão local, importância e calibração](docs/linguistic-qualification.md)
