@@ -3,8 +3,8 @@
 O Multilang adota Gitflow para organizar a integração e worktrees para manter
 cada tarefa em seu próprio diretório. Os comandos usam Git nativo, sem depender
 da extensão `git-flow`. A convenção de commits e o hook local estão descritos em
-[CONTRIBUTING.md](../CONTRIBUTING.md). Proteções no servidor não são configuradas
-por este fluxo.
+[CONTRIBUTING.md](../CONTRIBUTING.md). As branches permanentes usam PRs e o check remoto
+`Conventional Commits`, com force-push e exclusão bloqueados.
 
 ## Branches e destinos
 
@@ -51,8 +51,9 @@ A feature Roadmap 4 só será integrada em `develop` quando estiver concluída,
 revisada e testada, mediante solicitação de integração. Até lá, preserve seus
 commits, arquivos pendentes e diretório. Não troque a branch do checkout principal.
 
-Esta configuração é local. Publicação, mudança da branch padrão do GitHub e
-proteções remotas ainda não foram realizadas. A escolha da base organiza o
+A publicação usa `main` como branch padrão do GitHub e `develop` para integração.
+As duas branches recebem proteção por PR e pelo check `Conventional Commits`.
+A `Monarch` remota também permanece preservada, sem renomeação ou exclusão. A escolha da base organiza o
 histórico; não representa uma nova certificação da qualidade do produto.
 
 ## Iniciar uma tarefa
