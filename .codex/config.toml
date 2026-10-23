@@ -1,0 +1,2 @@
+# Trusted project layer: loads rules/local-commits.rules.
+# Keep the existing sandbox and approval policy for other operations.

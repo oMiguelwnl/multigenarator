@@ -13,6 +13,17 @@ permanece separada das branches permanentes. A Monarch legada é preservada.
 
 ## Mensagens de commit
 
+Commits locais do trabalho solicitado estão autorizados sem confirmação repetida.
+O agente deve revisar o diff, executar as verificações aplicáveis e adicionar
+somente os arquivos da tarefa. Execute `git add` e `git commit` diretamente;
+scripts Python ou wrappers de shell não correspondem às mesmas regras de permissão.
+Essa autorização não amplia o escopo para push, merge ou reescrita de histórico.
+
+As regras do Codex ficam em `.codex/rules/local-commits.rules` e são carregadas
+em projetos confiáveis no início da sessão. Reinicie o Codex após instalá-las.
+Worktrees antigas desta máquina também têm regras com caminhos explícitos em
+`~/.codex/rules/multilang-local-commits.rules`, usando `git -C <checkout> add/commit`.
+
 Todos os novos commits, em todas as branches, seguem
 [Conventional Commits 1.0.0](https://www.conventionalcommits.org/en/v1.0.0/).
 O histórico anterior fica preservado; não reescreva commits antigos para adequá-los.

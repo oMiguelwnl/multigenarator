@@ -77,6 +77,10 @@ Project skills are stored in `.agents/skills/`. Use relevant skills when they he
 
 ## Conventional Commits
 
+- The user authorizes local staging and commits for the requested work without repeated confirmation. Review the diff, validate the change, stage only task-owned paths, then commit using Conventional Commits. This does not authorize unrelated changes, history rewrites, pushes or merges beyond the requested scope.
+- Execute `git add` and `git commit` directly with the tool's working directory set to the intended checkout. Do not wrap routine Git writes in Python, shell loops, substitutions or custom commit scripts: those wrappers do not match Git approval rules.
+- For existing worktrees without project-local Codex rules, use `git -C /absolute/path/to/checkout add ...` and `git -C /absolute/path/to/checkout commit ...`; this machine has scoped allow rules for the current Multilang checkouts. Preserve hooks and branch protections.
+
 - All new commits across this project must follow Conventional Commits 1.0.0 and the project policy in CONTRIBUTING.md. Preserve historical commits.
 - Use lowercase types: feat, fix, docs, style, refactor, perf, test, build, ci, chore, revert. Optional scopes use lowercase letters, digits, dots, underscores, slashes or hyphens. Provide a concrete description in Portuguese or English.
 - Use `feat` for features, `fix` for bug fixes; mark breaking changes with `!` or a `BREAKING CHANGE:` footer. Separate body/footer from the subject with a blank line.

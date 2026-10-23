@@ -1,0 +1,8 @@
+# Allow only direct local staging and commits in this trusted project layer.
+prefix_rule(
+    pattern = ["git", ["add", "commit"]],
+    decision = "allow",
+    justification = "User authorizes local commits for requested Multilang work without repeated confirmation.",
+    match = ["git add -- AGENTS.md", "git commit -m 'docs: update workflow'"],
+    not_match = ["git push origin main", "git reset --hard", "python3 commit.py"],
+)
