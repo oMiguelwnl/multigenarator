@@ -330,3 +330,67 @@ def test_romanian_aux_rejects_mismatched_template_or_parent(damage):
         link["source_record"]["lang_code"] = "fr"
     with pytest.raises(ValueError):
         prepare_form_resolution(row, [link], {parent["identity_id"]: parent})
+
+
+def _greek_spelling_note_case():
+    parent_raw = dict(word="τεχνολογία", lang_code="el", pos="noun", senses=[dict(glosses=["technology"])])
+    raw = dict(word="τεχνολογιών", lang_code="el", pos="noun", senses=[
+        dict(glosses=["genitive plural of τεχνολογία"], tags=["feminine", "form-of", "genitive", "plural"], form_of=[dict(word="τεχνολογία")]),
+        dict(glosses=["older spelling: τεχνολογιῶν"], tags=["feminine"], links=[["τεχνολογιῶν", "τεχνολογιῶν#Ancient_Greek"]]),
+    ])
+    parent_row = _romanian_row(parent_raw, "greek-parent", "include", [0])
+    row = _romanian_row(raw, "greek-note", "uncertain", [1])
+    for item in (parent_row, row):
+        item["language"] = "el"
+        item["source_group"]["pos"] = "NOUN"
+    parent = consolidate([parent_row], language="el")["identities"][0]
+    link = dict(
+        source_candidate_id=row["source_group"]["sense_candidates"][0]["candidate_id"],
+        source_record=raw, source_record_sha256=_hash(raw), source_sense_index=1,
+        parent_identity_id=parent["identity_id"], parent_candidate_id=parent["senses"][0]["candidate_id"],
+        parent_record=parent_raw, parent_record_sha256=_hash(parent_raw),
+        features=["genitive", "plural", "feminine", "older polytonic spelling note retained as documentary metadata"],
+        rationale="Explicit sibling form relation and spelling note in the identical Greek source record.",
+        relation_evidence=dict(
+            kind="sibling_form_of_spelling_note", support_sense_index=0,
+            support_target=raw["senses"][0]["form_of"][0],
+            support_quote=raw["senses"][0]["glosses"][0],
+            spelling_note_quote=raw["senses"][1]["glosses"][0],
+        ),
+    )
+    return parent_row, row, parent, link
+
+
+def test_greek_spelling_note_binds_existing_form_without_creating_lemma():
+    from multilang.services.vocabulary_form_association import prepare_form_resolution
+
+    parent_row, row, parent, link = _greek_spelling_note_case()
+    resolved = prepare_form_resolution(row, [link], {parent["identity_id"]: parent})
+    result = consolidate([parent_row, resolved], language="el")
+    assert len(result["identities"]) == 1
+    assert len(result["identities"][0]["retained_forms"]) == 1
+    assert not result["pending_review_units"]
+
+
+@pytest.mark.parametrize("damage", ["support_index", "support_target", "support_quote", "note", "tags", "sense", "parent"])
+def test_greek_spelling_note_rejects_unbound_sibling_evidence(damage):
+    from multilang.services.vocabulary_form_association import prepare_form_resolution
+
+    _, row, parent, link = _greek_spelling_note_case()
+    evidence = link["relation_evidence"]
+    if damage == "support_index":
+        evidence["support_sense_index"] = 1
+    elif damage == "support_target":
+        evidence["support_target"] = dict(word="other")
+    elif damage == "support_quote":
+        evidence["support_quote"] = "invented"
+    elif damage == "note":
+        evidence["spelling_note_quote"] = "invented"
+    elif damage == "tags":
+        link["features"] = ["singular", "nominative"]
+    elif damage == "sense":
+        link["source_sense_index"] = 0
+    else:
+        link["parent_candidate_id"] = "candidate:wrong"
+    with pytest.raises(ValueError):
+        prepare_form_resolution(row, [link], {parent["identity_id"]: parent})

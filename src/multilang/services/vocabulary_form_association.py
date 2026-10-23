@@ -129,6 +129,47 @@ def _validate_ro_aux(evidence, raw, target, parent_candidate_id):
         raise ValueError("Romanian auxiliary template does not attest compound perfect")
 
 
+def _validate_greek_spelling_note(link, evidence, raw, target, source_index, language, pos):
+    if language != "el" or pos != "NOUN" or source_index != 1:
+        raise ValueError("spelling-note adapter is limited to the Greek nominal source sense")
+    senses = raw.get("senses", [])
+    support_index = evidence.get("support_sense_index")
+    if type(support_index) is not int or support_index != 0 or len(senses) <= source_index:
+        raise ValueError("spelling note lacks its exact sibling relation")
+    support, note = senses[support_index], senses[source_index]
+    relation_target = evidence.get("support_target")
+    if (
+        not isinstance(relation_target, dict)
+        or relation_target not in support.get("form_of", [])
+        or _text(relation_target.get("word")) != _text(target["word"])
+    ):
+        raise ValueError("sibling form relation does not reach retained parent")
+    quote = _text(evidence.get("support_quote"))
+    if (
+        quote not in support.get("glosses", []) + support.get("raw_glosses", [])
+        or _text(target["word"]) not in quote
+        or not {"feminine", "form-of", "genitive", "plural"} <= set(support.get("tags", []))
+        or not {"feminine", "genitive", "plural"} <= set(link.get("features", []))
+    ):
+        raise ValueError("sibling form or morphology is not explicitly attested")
+    note_quote = _text(evidence.get("spelling_note_quote"))
+    if (
+        note_quote not in note.get("glosses", []) + note.get("raw_glosses", [])
+        or not note_quote.startswith("older spelling: ")
+        or note.get("form_of")
+        or note.get("alt_of")
+        or "form-of" in note.get("tags", [])
+        or not any(
+            isinstance(item, list)
+            and len(item) == 2
+            and _text(item[0]) in note_quote
+            and _text(item[1]).endswith("#Ancient_Greek")
+            for item in note.get("links", [])
+        )
+    ):
+        raise ValueError("source sense is not an attested documentary spelling note")
+
+
 def _validate_relation_evidence(link, raw, target, source_index, language, pos):
     evidence = link.get("relation_evidence")
     if evidence is None:
@@ -143,6 +184,8 @@ def _validate_relation_evidence(link, raw, target, source_index, language, pos):
         if source_index != 0 or pos != "VERB":
             raise ValueError("Romanian auxiliary source sense or part of speech differs")
         _validate_ro_aux(evidence, raw, target, link["parent_candidate_id"])
+    elif isinstance(evidence, dict) and evidence.get("kind") == "sibling_form_of_spelling_note":
+        _validate_greek_spelling_note(link, evidence, raw, target, source_index, language, pos)
     else:
         raise ValueError("unsupported form relation evidence")
 
