@@ -170,6 +170,72 @@ def _validate_greek_spelling_note(link, evidence, raw, target, source_index, lan
         raise ValueError("source sense is not an attested documentary spelling note")
 
 
+def _validate_fi_superlative(link, evidence, raw, target, source_index, language, pos):
+    if (
+        language != "fi"
+        or pos != "ADV"
+        or source_index != 0
+        or _text(raw.get("word")) != "helpoiten"
+        or _text(target.get("word")) != "helposti"
+        or len(target.get("senses", [])) != 1
+        or link.get("features") != ["superlative"]
+    ):
+        raise ValueError("official Finnish paradigm adapter is limited to this exact adverb")
+    own = raw["senses"][0]
+    synonym = evidence.get("synonym_target")
+    if (
+        not isinstance(synonym, dict)
+        or synonym not in own.get("synonyms", [])
+        or _text(synonym.get("word")) != "helpoimmin"
+        or "synonym-of" not in synonym.get("tags", [])
+        or _text(evidence.get("source_quote")) not in own.get("glosses", []) + own.get("raw_glosses", [])
+        or "helpoimmin" not in evidence["source_quote"]
+    ):
+        raise ValueError("Finnish variant does not have its exact source synonym evidence")
+    middle = evidence.get("intermediate_record")
+    if (
+        not isinstance(middle, dict)
+        or _hash(middle) != evidence.get("intermediate_record_sha256")
+        or middle.get("lang_code") != "fi"
+        or UPOS.get(middle.get("pos")) != "ADV"
+        or _text(middle.get("word")) != "helpoimmin"
+        or evidence.get("intermediate_sense_index") != 0
+        or len(middle.get("senses", [])) != 1
+    ):
+        raise ValueError("Finnish intermediate superlative record differs")
+    sense = middle["senses"][0]
+    relation = evidence.get("intermediate_target")
+    if (
+        not isinstance(relation, dict)
+        or relation not in sense.get("form_of", [])
+        or _text(relation.get("word")) != "helposti"
+        or not {"form-of", "superlative"} <= set(sense.get("tags", []))
+        or _text(evidence.get("intermediate_quote"))
+        not in sense.get("glosses", []) + sense.get("raw_glosses", [])
+    ):
+        raise ValueError("intermediate does not attest the retained base and degree")
+    observation, pin = evidence.get("primary_observation"), evidence.get("primary_research_pin")
+    if not isinstance(observation, dict) or _hash(observation) != evidence.get(
+        "primary_observation_sha256"
+    ) or not isinstance(pin, dict):
+        raise ValueError("official Finnish paradigm observation is unbound")
+    cells = ["helposti", "helpommin", "helpoimmin", "~ helpoiten"]
+    html_sha = pin.get("html_sha256")
+    if (
+        observation.get("url")
+        != "https://kielitoimistonohjepankki.fi/ohje/vertailuilmauksia-parhaiten-vai-parhaimmin-tavan-adverbit/"
+        or observation.get("exact_short_quote") != " | ".join(cells)
+        or "research" not in _text(observation.get("license_gate")).lower()
+        or "commercial" not in observation["license_gate"].lower()
+        or pin.get("exact_paradigm_row", {}).get("cells") != cells
+        or pin.get("license") != "CC BY-NC-ND 4.0"
+        or not isinstance(html_sha, str)
+        or len(html_sha) != 64
+        or any(c not in "0123456789abcdef" for c in html_sha)
+    ):
+        raise ValueError("official Finnish paradigm row or license gate differs")
+
+
 def _validate_relation_evidence(link, raw, target, source_index, language, pos):
     evidence = link.get("relation_evidence")
     if evidence is None:
@@ -186,6 +252,8 @@ def _validate_relation_evidence(link, raw, target, source_index, language, pos):
         _validate_ro_aux(evidence, raw, target, link["parent_candidate_id"])
     elif isinstance(evidence, dict) and evidence.get("kind") == "sibling_form_of_spelling_note":
         _validate_greek_spelling_note(link, evidence, raw, target, source_index, language, pos)
+    elif isinstance(evidence, dict) and evidence.get("kind") == "fi_official_superlative_variant":
+        _validate_fi_superlative(link, evidence, raw, target, source_index, language, pos)
     else:
         raise ValueError("unsupported form relation evidence")
 

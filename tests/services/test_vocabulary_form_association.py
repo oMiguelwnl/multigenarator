@@ -394,3 +394,71 @@ def test_greek_spelling_note_rejects_unbound_sibling_evidence(damage):
         link["parent_candidate_id"] = "candidate:wrong"
     with pytest.raises(ValueError):
         prepare_form_resolution(row, [link], {parent["identity_id"]: parent})
+
+
+def _finnish_superlative_case():
+    parent_raw = dict(word="helposti", lang_code="fi", pos="adv", senses=[dict(glosses=["easily"])])
+    middle = dict(word="helpoimmin", lang_code="fi", pos="adv", senses=[dict(glosses=["superlative degree of helposti"], tags=["form-of", "superlative"], form_of=[dict(word="helposti")])])
+    raw = dict(word="helpoiten", lang_code="fi", pos="adv", senses=[dict(glosses=["synonym of helpoimmin"], synonyms=[dict(word="helpoimmin", tags=["synonym", "synonym-of"])])])
+    parent_row = _romanian_row(parent_raw, "fi-parent", "include", [0])
+    row = _romanian_row(raw, "fi-form", "uncertain", [0])
+    for item in (parent_row, row):
+        item["language"] = "fi"
+        item["source_group"]["pos"] = "ADV"
+    parent = consolidate([parent_row], language="fi")["identities"][0]
+    observation = dict(url="https://kielitoimistonohjepankki.fi/ohje/vertailuilmauksia-parhaiten-vai-parhaimmin-tavan-adverbit/", exact_short_quote="helposti | helpommin | helpoimmin | ~ helpoiten", license_gate="Private research only; no commercial text export")
+    link = dict(
+        source_candidate_id=row["source_group"]["sense_candidates"][0]["candidate_id"],
+        source_record=raw, source_record_sha256=_hash(raw), source_sense_index=0,
+        parent_identity_id=parent["identity_id"], parent_candidate_id=parent["senses"][0]["candidate_id"],
+        parent_record=parent_raw, parent_record_sha256=_hash(parent_raw), features=["superlative"],
+        rationale="Pinned Finnish superlative paradigm independently relates the variant to the retained adverb.",
+        relation_evidence=dict(
+            kind="fi_official_superlative_variant", synonym_target=raw["senses"][0]["synonyms"][0],
+            source_quote=raw["senses"][0]["glosses"][0], intermediate_record=middle,
+            intermediate_record_sha256=_hash(middle), intermediate_sense_index=0,
+            intermediate_target=middle["senses"][0]["form_of"][0],
+            intermediate_quote=middle["senses"][0]["glosses"][0],
+            primary_observation=observation, primary_observation_sha256=_hash(observation),
+            primary_research_pin=dict(html_sha256="a" * 64, exact_paradigm_row=dict(cells=["helposti", "helpommin", "helpoimmin", "~ helpoiten"]), license="CC BY-NC-ND 4.0"),
+        ),
+    )
+    return parent_row, row, parent, link
+
+
+def test_finnish_official_paradigm_validates_variant_without_generic_synonym_rule():
+    from multilang.services.vocabulary_form_association import prepare_form_resolution
+
+    parent_row, row, parent, link = _finnish_superlative_case()
+    resolved = prepare_form_resolution(row, [link], {parent["identity_id"]: parent})
+    result = consolidate([parent_row, resolved], language="fi")
+    assert len(result["identities"]) == 1
+    assert len(result["identities"][0]["retained_forms"]) == 1
+
+
+@pytest.mark.parametrize("damage", ["synonym", "quote", "intermediate", "relation", "target", "observation", "table", "license", "feature"])
+def test_finnish_official_paradigm_rejects_unsupported_variant(damage):
+    from multilang.services.vocabulary_form_association import prepare_form_resolution
+
+    _, row, parent, link = _finnish_superlative_case()
+    evidence = link["relation_evidence"]
+    if damage == "synonym":
+        evidence["synonym_target"] = dict(word="other")
+    elif damage == "quote":
+        evidence["source_quote"] = "invented"
+    elif damage == "intermediate":
+        evidence["intermediate_record_sha256"] = "0" * 64
+    elif damage == "relation":
+        evidence["intermediate_sense_index"] = 1
+    elif damage == "target":
+        evidence["intermediate_target"] = dict(word="other")
+    elif damage == "observation":
+        evidence["primary_observation_sha256"] = "0" * 64
+    elif damage == "table":
+        evidence["primary_research_pin"]["exact_paradigm_row"]["cells"][-1] = "~ other"
+    elif damage == "license":
+        evidence["primary_research_pin"]["license"] = "CC0"
+    else:
+        link["features"] = ["comparative"]
+    with pytest.raises(ValueError):
+        prepare_form_resolution(row, [link], {parent["identity_id"]: parent})
