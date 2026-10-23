@@ -1,0 +1,27 @@
+/* Frequency-only serif typography, composed after Mandarin reading support. */
+.mandarinCard .targetWord,
+.mandarinCard .exampleSentenceText {
+  font-family: "Noto Serif SC", "Songti SC", SimSun, serif;
+}
+.mandarinCard .traditional,
+.mandarinCard .traditionalSentence {
+  font-family: "Noto Serif TC", "Songti TC", PMingLiU, serif;
+  color: var(--color-sentence-translation);
+}
+.nightMode .mandarinCard .traditional,
+.nightMode .mandarinCard .traditionalSentence {
+  color: var(--color-nightMode-sentence-translation);
+}
+.mandarinCard .mandarin-ruby rt { font-family: Georgia, "Times New Roman", serif; }
+.mandarinCard .examplePanel { padding: 12px 14px; }
+/* Preserve tone categories on the always-dark frequency card. */
+.mandarinCard .tone-1 { color: #ff8591; }
+.mandarinCard .tone-2 { color: #f1d178; }
+.mandarinCard .tone-3 { color: #82dbab; }
+.mandarinCard .tone-4 { color: #8ebaff; }
+.mandarinCard .tone-5 { color: #c1c7d3; }
+.nightMode .mandarinCard .tone-1 { color: #ff8591; }
+.nightMode .mandarinCard .tone-2 { color: #f1d178; }
+.nightMode .mandarinCard .tone-3 { color: #82dbab; }
+.nightMode .mandarinCard .tone-4 { color: #8ebaff; }
+.nightMode .mandarinCard .tone-5 { color: #c1c7d3; }

@@ -13,13 +13,14 @@ import re
 from dataclasses import dataclass, replace
 from functools import cached_property
 from hashlib import sha256
-from importlib.resources import files
 from pathlib import Path
 
 import genanki
 
+from multilang.domain.jobs import SupportedLanguage
 from multilang.services.anki_id_registry import AnkiIdKind, registry_id
 from multilang.services.azure_speech_adapter import AzureSpeechAdapter
+from multilang.services.card_template_loader import load_card_template
 from multilang.services.japanese_analysis import validate_japanese_reading
 from multilang.services.japanese_deck_audio import (
     synthesize_cached_japanese,
@@ -47,12 +48,6 @@ JAPANESE_FIELD_NAMES = (
     "word_audio",
     "sentence_audio",
     "Image",
-)
-_TEMPLATE_SECTION_RE = re.compile(
-    r"## Front Template\s+```html\n(?P<front>.*?)```.*?"
-    r"## Back Template\s+```html\n(?P<back>.*?)```.*?"
-    r"## Styling \(CSS\)\s+```css\n(?P<css>.*?)```",
-    re.DOTALL,
 )
 
 
@@ -220,12 +215,8 @@ def _japanese_card_fields(card: JapaneseCard) -> list[str]:
 
 
 def _load_japanese_template() -> dict[str, str]:
-    template_path = files("multilang").joinpath("templates", "japanese_card.md")
-    content = template_path.read_text(encoding="utf-8")
-    match = _TEMPLATE_SECTION_RE.search(content)
-    if match is None:
-        raise ValueError(f"unable to parse Japanese template from {template_path}")
-    return {name: match.group(name).strip() for name in ("front", "back", "css")}
+    template = load_card_template("frequency", language=SupportedLanguage.JA)
+    return {name: getattr(template, name) for name in ("front", "back", "css")}
 
 
 __all__ = [
