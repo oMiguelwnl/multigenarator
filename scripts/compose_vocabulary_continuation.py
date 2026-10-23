@@ -121,38 +121,43 @@ def compose(config_path: Path) -> dict:
     output = safe_path(config["output"])
     if output.exists():
         raise ValueError("continuation output already exists")
-    inventory = {}
-    baseline_counts = {}
-    for language in sorted(LANGUAGES):
-        path = manifest_file(baseline_path, baseline, f"snapshot/inventory/{language}.jsonl")
-        original = lines(path)
-        by_unit = {row["review_unit_id"]: row for row in original}
-        if len(by_unit) != len(original):
-            raise ValueError("duplicate baseline review unit")
-        inventory[language] = by_unit
-        baseline_counts[language] = len(original)
     rounds = []
-    changed = {language: set() for language in LANGUAGES}
+    proposed = []
     for spec in config["rounds"]:
         proposals, evidence = _round_rows(spec)
-        for row, prior_sha, proposal_sha in proposals:
-            language, uid = row["language"], row["review_unit_id"]
-            if language not in LANGUAGES or uid not in inventory[language]:
-                raise ValueError("proposal is outside frozen inventory")
-            inventory[language][uid] = apply_proposal(
-                inventory[language][uid], row, prior_sha, proposal_sha
-            )
-            changed[language].add(uid)
+        proposed.extend(proposals)
         rounds.append(evidence)
+    if any(row["language"] not in LANGUAGES for row, _, _ in proposed):
+        raise ValueError("proposal language is outside frozen inventory")
     output.mkdir(parents=True, exist_ok=False)
     composition = output / "composition"
     composition.mkdir()
+    changed = {language: set() for language in LANGUAGES}
+    baseline_counts = {}
+    output_counts = {}
     inputs = []
     for language in sorted(LANGUAGES):
+        source = manifest_file(baseline_path, baseline, f"snapshot/inventory/{language}.jsonl")
+        original = lines(source)
+        inventory = {row["review_unit_id"]: row for row in original}
+        if len(inventory) != len(original):
+            raise ValueError("duplicate baseline review unit")
+        baseline_counts[language] = len(original)
+        del original
+        for row, prior_sha, proposal_sha in proposed:
+            if row["language"] != language:
+                continue
+            uid = row["review_unit_id"]
+            if uid not in inventory:
+                raise ValueError("proposal is outside frozen inventory")
+            inventory[uid] = apply_proposal(inventory[uid], row, prior_sha, proposal_sha)
+            changed[language].add(uid)
+        output_counts[language] = len(inventory)
         path = composition / f"{language}.jsonl"
         with path.open("x", encoding="utf-8") as stream:
-            for uid in sorted(inventory[language]):
-                stream.write(json.dumps(inventory[language][uid], ensure_ascii=False, sort_keys=True, separators=(",", ":"), allow_nan=False) + "\n")
+            for uid in sorted(inventory):
+                stream.write(json.dumps(inventory[uid], ensure_ascii=False, sort_keys=True, separators=(",", ":"), allow_nan=False) + "\n")
+        del inventory
         inputs.append(dict(language=language, format="selection-snapshot", path=str(path), sha256=sha(path), source_manifest=dict(path=str(baseline_path), sha256=sha(baseline_path))))
     with (output / "publication-inputs.json").open("x", encoding="utf-8") as stream:
         json.dump(inputs, stream, ensure_ascii=False, indent=2)
@@ -165,7 +170,7 @@ def compose(config_path: Path) -> dict:
         rounds=rounds,
         changed_review_units={language: sorted(changed[language]) for language in sorted(LANGUAGES)},
         baseline_units=baseline_counts,
-        output_units={language: len(inventory[language]) for language in sorted(LANGUAGES)},
+        output_units=output_counts,
         publication_manifest_sha256=sha(output / "published" / "manifest.json"),
         generation_status="deferred_by_user",
         production_eligible=False,
