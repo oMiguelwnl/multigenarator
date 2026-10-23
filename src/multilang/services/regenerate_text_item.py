@@ -11,6 +11,7 @@ from multilang.domain.text_quality import (
     ValidationStatus,
 )
 from multilang.services.generate_text_items import GenerateTextItemsService
+from multilang.services.korean_frequency_ordering import require_candidate_frequency_ordering
 from multilang.services.korean_text_generation import (
     KoreanTextGenerationSelector,
     korean_selector_history_from_record,
@@ -55,6 +56,7 @@ class RegenerateTextItemService:
         if persisted_candidate is None:
             raise ValueError(f"unknown lexical candidate for job {job_id!r} item {item_key!r}")
 
+        require_candidate_frequency_ordering(persisted_candidate, deck_language=deck_language)
         candidate = GenerateTextItemsService._to_candidate(self, persisted_candidate)
         source_type = getattr(persisted_candidate, "source_type", None)
         seen_sentences = GenerateTextItemsService._normalize_sentences(

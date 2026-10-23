@@ -23,6 +23,7 @@ from multilang.runtime import (
 from multilang.services.audio_synthesis import AudioSynthesisResponse
 from multilang.services.fallback_audio_adapter import FallbackAudioAdapter
 from multilang.services.korean_foundation_snapshot_fallback import KoreanFoundationApprovedFallback
+from multilang.services.korean_frequency_ordering import KoreanFrequencyOrderingError
 from multilang.services.korean_morphology import KiwiKoreanMorphologyService
 from multilang.services.library_pronunciation_adapters import (
     FallbackPronunciationAdapter,
@@ -162,7 +163,10 @@ def test_local_runtime_uses_curated_smoke_sentence_and_translation_for_lantern()
     assert sentence.provenance["template_kind"] == "curated:lantern"
 
 
-def test_korean_frequency_text_runtime_verifies_phase31_before_loading_and_building(tmp_path) -> None:
+@pytest.mark.parametrize("empty_inventory", [False, True])
+def test_korean_frequency_text_runtime_blocks_before_adapter_build_after_validation(
+    tmp_path, empty_inventory: bool,
+) -> None:
     authority = _korean_runtime_authority()
     order: list[str] = []
 
@@ -184,30 +188,27 @@ def test_korean_frequency_text_runtime_verifies_phase31_before_loading_and_build
         assert kwargs["job_id"] == "job-ko"
         assert kwargs["authority"] == authority
         assert kwargs["binding_receipt_sha256"] == authority.source_review_aggregate_sha256
-        return ()
+        return () if empty_inventory else (_korean_frequency_entry(1),)
 
     def runtime_builder(**kwargs: object) -> object:
         order.append("build_runtime")
-        assert order == ["verify_active", "load_entries", "build_runtime"]
-        assert kwargs["korean_final_frequency_entries"] == ()
-        assert kwargs["korean_source_review_aggregate_sha256"] == authority.source_review_aggregate_sha256
         return object()
 
-    result = build_korean_frequency_text_runtime_service(
-        settings=Settings(_env_file=None, database_url=f"sqlite+pysqlite:///{tmp_path / 'runtime.db'}"),
-        runtime_authority=KoreanFrequencyTextRuntimeAuthority(
-            job_id="job-ko",
-            bundle_root=tmp_path / "bundle",
-            binding_receipt_sha256=authority.source_review_aggregate_sha256 or "",
-            authority=authority,
-        ),
-        phase31_provenance_verifier=verifier,
-        entry_loader=entry_loader,
-        runtime_builder=runtime_builder,
-    )
+    with pytest.raises(KoreanFrequencyOrderingError, match="Korean frequency ordering is unqualified"):
+        build_korean_frequency_text_runtime_service(
+            settings=Settings(_env_file=None, database_url=f"sqlite+pysqlite:///{tmp_path / 'runtime.db'}"),
+            runtime_authority=KoreanFrequencyTextRuntimeAuthority(
+                job_id="job-ko",
+                bundle_root=tmp_path / "bundle",
+                binding_receipt_sha256=authority.source_review_aggregate_sha256 or "",
+                authority=authority,
+            ),
+            phase31_provenance_verifier=verifier,
+            entry_loader=entry_loader,
+            runtime_builder=runtime_builder,
+        )
 
-    assert result is not None
-    assert order == ["verify_active", "load_entries", "build_runtime"]
+    assert order == ["verify_active", "load_entries"]
 
 
 def test_korean_frequency_text_runtime_blocks_phase31_drift_before_loading_entries(tmp_path) -> None:
@@ -251,7 +252,7 @@ def test_korean_frequency_text_runtime_blocks_phase31_drift_before_loading_entri
     assert order == ["verify_active"]
 
 
-def test_korean_frequency_text_runtime_accepts_injected_phase31_fallback_verifier(tmp_path) -> None:
+def test_korean_frequency_text_runtime_fallback_does_not_qualify_frequency_order(tmp_path) -> None:
     authority = _korean_runtime_authority()
     order: list[str] = []
     fallback = KoreanFoundationApprovedFallback(
@@ -287,21 +288,21 @@ def test_korean_frequency_text_runtime_accepts_injected_phase31_fallback_verifie
         order.append("build_runtime")
         return object()
 
-    result = build_korean_frequency_text_runtime_service(
-        settings=Settings(_env_file=None, database_url=f"sqlite+pysqlite:///{tmp_path / 'runtime.db'}"),
-        runtime_authority=KoreanFrequencyTextRuntimeAuthority(
-            job_id="job-ko",
-            bundle_root=tmp_path / "bundle",
-            binding_receipt_sha256=authority.source_review_aggregate_sha256 or "",
-            authority=authority,
-        ),
-        phase31_provenance_verifier=fallback_verifier,
-        entry_loader=entry_loader,
-        runtime_builder=runtime_builder,
-    )
+    with pytest.raises(KoreanFrequencyOrderingError, match="Korean frequency ordering is unqualified"):
+        build_korean_frequency_text_runtime_service(
+            settings=Settings(_env_file=None, database_url=f"sqlite+pysqlite:///{tmp_path / 'runtime.db'}"),
+            runtime_authority=KoreanFrequencyTextRuntimeAuthority(
+                job_id="job-ko",
+                bundle_root=tmp_path / "bundle",
+                binding_receipt_sha256=authority.source_review_aggregate_sha256 or "",
+                authority=authority,
+            ),
+            phase31_provenance_verifier=fallback_verifier,
+            entry_loader=entry_loader,
+            runtime_builder=runtime_builder,
+        )
 
-    assert result is not None
-    assert order == ["verify_active", "load_entries", "build_runtime"]
+    assert order == ["verify_active", "load_entries"]
 
 
 def test_runtime_fails_loudly_when_litellm_is_configured_without_credentials(tmp_path) -> None:
@@ -566,7 +567,7 @@ def test_unavailable_korean_factory_does_not_block_non_korean_runtime_startup(
     assert _default_deck_name(SupportedLanguage.EN) == "Multilang English"
 
 
-def test_korean_frequency_runtime_uses_explicit_final_entries_without_wordfreq_or_settings(
+def test_korean_frequency_runtime_blocks_before_grounding_with_explicit_entries(
     tmp_path,
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
@@ -590,21 +591,20 @@ def test_korean_frequency_runtime_uses_explicit_final_entries_without_wordfreq_o
         korean_source_review_aggregate_sha256=_hash("source-review-aggregate"),
     )
 
-    result = service.execute(
-        GenerationRequest(
-            language=SupportedLanguage.KO,
-            source_type="frequency",
-            level=1,
-            cards_per_level=1,
-        )
-    )
+    def forbidden_grounding(**kwargs: object):
+        raise AssertionError("unqualified Korean frequency must not reach grounding/providers")
 
-    [candidate] = service.lexical_repo.list_candidates(result.report.job_id)
-    assert result.grounded_candidates == 1
-    assert result.level_counts == {1: 1, 2: 0, 3: 0}
-    assert candidate.korean_identity is not None
-    assert candidate.korean_identity.lexical_key.startswith("ko:")
-    assert candidate.provenance.source == "korean-frequency-bundle"
+    monkeypatch.setattr(service.grounding_service, "ground_frequency_candidate", forbidden_grounding)
+
+    with pytest.raises(KoreanFrequencyOrderingError, match="Korean frequency ordering is unqualified"):
+        service.execute(
+            GenerationRequest(
+                language=SupportedLanguage.KO,
+                source_type="frequency",
+                level=1,
+                cards_per_level=1,
+            )
+        )
 
 
 def test_runtime_has_korean_display_name() -> None:

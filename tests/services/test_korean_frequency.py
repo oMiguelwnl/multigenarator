@@ -540,17 +540,15 @@ def test_final_runtime_loader_rehashes_locator_content_and_rejects_binding_drift
         pilot_authority_sha256=_HASH_1,
     )
 
-    entries = load_korean_final_frequency_entries(
-        job_id="job-final-runtime",
-        bundle_root=bundle_dir,
-        binding_receipt_sha256=binding_receipt,
-        authority=authority,
-        repo_root=tmp_path,
-    )
-
-    assert len(entries) == 3000
-    assert entries[0].final_rank == 1
-    assert entries[-1].final_rank == 3000
+    # Hash-valid source/build receipts do not attest the meaning of the ranks.
+    with pytest.raises(ValueError, match="Korean frequency ordering is unqualified"):
+        load_korean_final_frequency_entries(
+            job_id="job-final-runtime",
+            bundle_root=bundle_dir,
+            binding_receipt_sha256=binding_receipt,
+            authority=authority,
+            repo_root=tmp_path,
+        )
 
     drifted = authority.model_copy(
         update={"frequency_bundle_content_sha256": _HASH_2}
@@ -602,12 +600,12 @@ def test_final_runtime_loader_uses_validated_build_result_authority_not_bundle_f
         pilot_authority_sha256=_HASH_1,
     )
 
-    entries = load_korean_final_frequency_entries(
-        job_id="job-final-runtime",
-        bundle_root=bundle_dir,
-        binding_receipt_sha256=binding_receipt,
-        authority=authority,
-        repo_root=tmp_path,
-    )
-
-    assert len(entries) == 3000
+    # A formatting-equivalent build still validates, then fails rank qualification.
+    with pytest.raises(ValueError, match="Korean frequency ordering is unqualified"):
+        load_korean_final_frequency_entries(
+            job_id="job-final-runtime",
+            bundle_root=bundle_dir,
+            binding_receipt_sha256=binding_receipt,
+            authority=authority,
+            repo_root=tmp_path,
+        )

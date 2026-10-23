@@ -81,7 +81,7 @@ class FileAzure:
 
 
 @pytest.fixture
-def audio_run(tmp_path):
+def _audio_run(tmp_path):
     database_url = f"sqlite+pysqlite:///{tmp_path / 'audio.db'}"
     engine = create_engine(database_url)
     Base.metadata.create_all(engine)
@@ -251,6 +251,20 @@ def audio_run(tmp_path):
     yield SimpleNamespace(kwargs=kwargs, session=session, jobs=jobs, job_id=job.id, profile=profile)
     session.close()
     engine.dispose()
+
+
+@pytest.fixture
+def audio_run(_audio_run, monkeypatch):
+    """Exercise dormant v1 audio mechanics independently of ordering policy.
+
+    This test-only isolation does not authorize runtime v1 use. The policy tests
+    below use _audio_run directly and keep the real fail-closed guard installed.
+    """
+    monkeypatch.setattr(
+        "multilang.services.korean_audio_runtime.reject_legacy_korean_frequency_ordering",
+        lambda: None,
+    )
+    return _audio_run
 
 
 def test_authorized_audio_persists_exact_bytes_pending_review_and_reuses(audio_run):
@@ -562,3 +576,19 @@ def test_total_audio_batch_cost_blocks_before_any_synthesis(audio_run):
 def test_settings_reject_invalid_korean_audio_price(price):
     with pytest.raises(ValueError):
         Settings(_env_file=None, korean_azure_tts_usd_per_million_characters=price)
+
+
+@pytest.mark.parametrize("empty_inventory", [False, True])
+def test_v1_audio_ordering_blocks_injected_loader_before_database_or_adapter(_audio_run, monkeypatch, empty_inventory):
+    audio_run = _audio_run
+    from multilang.services.korean_frequency_ordering import KoreanFrequencyOrderingError
+
+    if empty_inventory:
+        audio_run.kwargs["entry_loader"] = lambda **_: ()
+    def forbidden_database(*args, **kwargs):
+        raise AssertionError("database creation reached before ordering qualification")
+    monkeypatch.setattr("multilang.services.korean_audio_runtime.create_engine", forbidden_database)
+    adapter = FileAzure()
+    with pytest.raises(KoreanFrequencyOrderingError):
+        synthesize_korean_frequency_audio(**audio_run.kwargs, adapter=adapter)
+    assert adapter.calls == []

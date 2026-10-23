@@ -67,6 +67,7 @@ from multilang.services.korean_foundation_snapshot import (
     verify_active_korean_foundation_snapshot_provenance,
 )
 from multilang.services.korean_frequency import load_korean_final_frequency_entries
+from multilang.services.korean_frequency_ordering import reject_legacy_korean_frequency_ordering
 from multilang.services.korean_morphology import KiwiKoreanMorphologyService
 from multilang.services.lexical_grounding import LexicalGroundingService
 from multilang.services.lexical_lookup import LexicalLookup
@@ -1178,21 +1179,15 @@ def build_korean_frequency_text_runtime_service(
         if getattr(report, field, None) != expected:
             raise ValueError("Phase 31 active authority drift")
 
-    entries = entry_loader(
+    entry_loader(
         job_id=runtime_authority.job_id,
         bundle_root=runtime_authority.bundle_root,
         binding_receipt_sha256=runtime_authority.binding_receipt_sha256,
         authority=authority,
         repo_root=Path.cwd(),
     )
-    return runtime_builder(
-        settings=settings,
-        korean_morphology_service=korean_morphology_service,
-        korean_final_frequency_entries=entries,
-        korean_source_review_receipt_sha256=runtime_authority.binding_receipt_sha256,
-        korean_source_review_aggregate_sha256=authority.source_review_aggregate_sha256,
-        korean_provider_policy=korean_provider_policy,
-    )
+    # An injected loader must not authorize provider adapters from v1 entries.
+    reject_legacy_korean_frequency_ordering()
 
 
 def _sanitize_deck_name(deck_name: str) -> str:

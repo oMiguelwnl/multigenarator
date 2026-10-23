@@ -29,6 +29,7 @@ from multilang.domain.korean import (
     raw_bytes_sha256,
     validate_korean_frequency_accounting,
 )
+from multilang.services.korean_frequency_ordering import reject_legacy_korean_frequency_ordering
 
 _MAX_LANDING_BYTES = 2_000_000
 _MAX_SOURCE_BYTES = 20_000_000
@@ -362,7 +363,11 @@ def load_korean_final_frequency_entries(
     authority: KoreanFrequencyJobAuthority,
     repo_root: Path | None = None,
 ) -> tuple[KoreanFrequencyEntry, ...]:
-    """Load final Korean entries only after rehashing the bound authority."""
+    """Rehash legacy authority, then reject its unqualified generation ordering.
+
+    Use source/build validation for historical inspection; v1 is not a qualified
+    frequency-generation contract even when all historical hashes still match.
+    """
 
     if not str(job_id or "").strip():
         raise ValueError("Korean frequency runtime requires job_id")
@@ -405,7 +410,7 @@ def load_korean_final_frequency_entries(
         raise ValueError("Korean frequency runtime authority drift")
     if any(entry.bundle_sha256 != build_result.source_bytes_sha256 for entry in entries):
         raise ValueError("Korean frequency runtime authority drift")
-    return entries
+    reject_legacy_korean_frequency_ordering()
 
 
 def _verify_korean_runtime_authority(

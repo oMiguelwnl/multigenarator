@@ -55,6 +55,7 @@ from multilang.services.korean_foundation_snapshot_fallback import (
     verify_active_korean_foundation_snapshot_provenance_with_approved_fallback,
 )
 from multilang.services.korean_frequency import load_korean_final_frequency_entries
+from multilang.services.korean_frequency_ordering import reject_legacy_korean_frequency_ordering
 from multilang.services.provider_retry import classify_provider_error
 from multilang.settings import Settings
 
@@ -521,6 +522,8 @@ def synthesize_korean_frequency_audio(
         authority=job_authority,
         repo_root=Path.cwd(),
     )
+    # Injectable loaders cannot qualify the legacy ordering or authorize Azure.
+    reject_legacy_korean_frequency_ordering()
     inventory = {entry.final_rank: entry for entry in entries}
     runtime_settings = settings or Settings(database_url=database_url)
     if runtime_settings.database_url != database_url:

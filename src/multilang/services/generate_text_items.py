@@ -26,6 +26,7 @@ from multilang.domain.text_quality import (
 )
 from multilang.security.redaction import redact_sensitive_text
 from multilang.services.japanese_analysis import candidate_japanese_reading
+from multilang.services.korean_frequency_ordering import require_candidate_frequency_ordering
 from multilang.services.korean_text_generation import (
     KoreanTextGenerationSelector,
     korean_selector_history_from_record,
@@ -178,6 +179,7 @@ class GenerateTextItemsService:
             raise ValueError("review repository is required for field regeneration")
 
         candidate = LexicalCardCandidate.model_validate(candidate)
+        require_candidate_frequency_ordering(candidate, deck_language=deck_language, source_type=source_type)
         if field_name == "definition":
             return self._regenerate_definition_field(
                 job_id=job_id,
@@ -530,6 +532,9 @@ class GenerateTextItemsService:
         remaining_missing = len(missing_item_keys)
         if max_items is not None and not repair_only and not callable(getattr(self.text_repository, "claim_generation_candidates", None)):
             candidates = candidates[:max_items]
+
+        for persisted_candidate in candidates:
+            require_candidate_frequency_ordering(persisted_candidate, deck_language=deck_language)
 
         # For dynamic Latin (la), use the LatinCardGenerationService + model so the AI fills
         # gramatica (and definition/sentence) using the structured schema + gramatica template.

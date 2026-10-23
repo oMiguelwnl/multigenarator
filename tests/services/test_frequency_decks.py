@@ -5,6 +5,8 @@ from __future__ import annotations
 import csv
 from dataclasses import replace
 
+import pytest
+
 from multilang.domain.jobs import SupportedLanguage
 from multilang.domain.korean import (
     KoreanAnalyzerFingerprint,
@@ -12,6 +14,7 @@ from multilang.domain.korean import (
     KoreanLexicalIdentity,
     KoreanSignatureItem,
 )
+from multilang.services.korean_frequency_ordering import KoreanFrequencyOrderingError
 from multilang.settings import APPROVED_FREQUENCY_ASSET_LANGUAGES
 
 _HASH_A = "a" * 64
@@ -331,31 +334,89 @@ def test_korean_build_frequency_level_requires_explicit_final_entries_and_never_
         raise AssertionError("expected Korean frozen-entry authority failure")
 
 
-def test_korean_build_frequency_level_projects_final_entries_to_persisted_candidate_evidence() -> None:
+def test_korean_build_frequency_level_rejects_v1_ordering_despite_source_receipts() -> None:
     from multilang.services import frequency_decks
 
-    candidates = frequency_decks.build_frequency_level(
-        SupportedLanguage.KO,
-        level=1,
-        required_count_per_level=1,
-        korean_final_entries=(_korean_frequency_entry(1),),
-        source_review_receipt_sha256=_HASH_A,
-        source_review_aggregate_sha256=_HASH_B,
-    )
+    with pytest.raises(KoreanFrequencyOrderingError, match="Korean frequency ordering is unqualified"):
+        frequency_decks.build_frequency_level(
+            SupportedLanguage.KO,
+            level=1,
+            required_count_per_level=1,
+            korean_final_entries=(_korean_frequency_entry(1),),
+            source_review_receipt_sha256=_HASH_A,
+            source_review_aggregate_sha256=_HASH_B,
+        )
 
-    candidate = candidates[0]
-    assert candidate.grounding_status.value == "grounded"
-    assert candidate.frequency_rank == 1
-    assert candidate.frequency_level == 1
-    assert candidate.lemma == "어휘1"
-    assert candidate.lemma_key == candidate.korean_identity.lexical_key
-    assert candidate.definition_language == "pt"
-    assert candidate.translation_target_language == "pt"
-    assert candidate.provenance.source == "korean-frequency-bundle"
-    assert candidate.korean_frequency_evidence is not None
-    assert candidate.korean_frequency_evidence.source_rank == 11
-    assert candidate.korean_frequency_evidence.source_review_receipt_sha256 == _HASH_A
-    assert candidate.korean_frequency_evidence.source_review_aggregate_sha256 == _HASH_B
+
+@pytest.mark.parametrize("version", ["fixture-v1", "claimed-qualified-v2"])
+def test_korean_direct_projection_cannot_be_qualified_by_labels(version: str) -> None:
+    from multilang.services import frequency_decks
+
+    entry = _korean_frequency_entry(1).model_copy(update={
+        "version": version,
+        "curation_flags": ("source_rank_preserved", "ordering_approved"),
+        "grounding_confidence": "reviewed-source-backed",
+        "license_decision": "approved-redistribution",
+    })
+    with pytest.raises(KoreanFrequencyOrderingError, match="Korean frequency ordering is unqualified"):
+        frequency_decks._build_korean_final_candidate(
+            entry,
+            source_review_receipt_sha256=_HASH_A,
+            source_review_aggregate_sha256=_HASH_B,
+        )
+
+
+@pytest.mark.parametrize("deck", [False, True])
+def test_empty_korean_frequency_input_cannot_succeed_as_zero_count(deck: bool) -> None:
+    from multilang.services import frequency_decks
+
+    build = frequency_decks.build_frequency_deck if deck else frequency_decks.build_frequency_level
+    with pytest.raises(KoreanFrequencyOrderingError, match="Korean frequency ordering is unqualified"):
+        build(
+            SupportedLanguage.KO,
+            **({} if deck else {"level": 1}),
+            required_count_per_level=0,
+            korean_final_entries=(),
+            source_review_receipt_sha256=_HASH_A,
+            source_review_aggregate_sha256=_HASH_B,
+        )
+
+
+def test_korean_frequency_block_does_not_consume_entries_or_seed_fallback() -> None:
+    from multilang.services import frequency_decks
+
+    def unread_entries():
+        raise AssertionError("unqualified entries must not be consumed")
+        yield  # pragma: no cover - makes the fixture a lazy iterable
+
+    with pytest.raises(KoreanFrequencyOrderingError):
+        frequency_decks.build_frequency_deck(
+            SupportedLanguage.KO,
+            korean_final_entries=unread_entries(),
+            source_review_receipt_sha256=_HASH_A,
+            source_review_aggregate_sha256=_HASH_B,
+            allow_frequency_seed_fallback=True,
+        )
+
+
+@pytest.mark.parametrize(
+    ("level", "entries", "receipt", "message"),
+    [
+        (4, None, None, "unsupported frequency level"),
+        (1, None, None, "explicit frozen Korean final entries"),
+        (1, (), None, "requires source review receipts"),
+    ],
+)
+def test_korean_frequency_preserves_validation_order(level, entries, receipt, message) -> None:
+    from multilang.services import frequency_decks
+
+    with pytest.raises(ValueError, match=message):
+        frequency_decks.build_frequency_level(
+            SupportedLanguage.KO,
+            level=level,
+            korean_final_entries=entries,
+            source_review_receipt_sha256=receipt,
+        )
 
 
 def test_build_frequency_level_skips_repeated_tokens_within_level(monkeypatch) -> None:

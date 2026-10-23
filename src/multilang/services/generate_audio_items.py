@@ -16,6 +16,7 @@ from multilang.services.audio.integrity import (
 )
 from multilang.services.audio.media_validation import inspect_local_mp3
 from multilang.services.korean_audio import korean_audio_asset_reusable
+from multilang.services.korean_frequency_ordering import require_candidate_frequency_ordering
 
 
 @dataclass(slots=True)
@@ -65,6 +66,8 @@ class GenerateAudioItemsService:
             lexical_candidate = self.lexical_repository.get_candidate_for_item(job_id, text_record.item_key)
             if lexical_candidate is None:
                 continue
+
+            require_candidate_frequency_ordering(lexical_candidate, deck_language=deck_language)
 
             from multilang.services.japanese_analysis import candidate_japanese_reading
             reading = candidate_japanese_reading(lexical_candidate) if deck_language is SupportedLanguage.JA else None
