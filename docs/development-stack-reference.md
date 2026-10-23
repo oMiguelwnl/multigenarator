@@ -58,7 +58,7 @@ Historical stack recommendations preserved verbatim from AGENTS.md during the 20
 ### 4) Translation quality
 | Technology | Version / family | Role | Why |
 |---|---|---|---|
-| DeepL API | current API | Primary sentence translation | Strong support for all target languages here and usually better literal sentence quality than generic LLM-only translation for European languages. | 
+| DeepL API | current API | Primary sentence translation | Strong support for all target languages here and usually better literal sentence quality than generic LLM-only translation for European languages. |
 | LLM judge / rewrite pass | same provider as generation | Repair/normalize edge cases | Use only as fallback or QA, not as the main translator. |
 ### 5) TTS / audio generation
 | Technology | Version / family | Role | Why |
