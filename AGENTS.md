@@ -256,3 +256,11 @@ Do not make direct repo edits outside a GSD workflow unless the user explicitly 
 - `main` was initialized from local `Monarch` at `1b5e528`, as explicitly requested by the user; `develop` starts from that base. Preserve `Monarch`.
 - `feature/roadmap-4-0-native-architecture` is still in progress and must remain untouched by Gitflow setup. Do not use it as the integration branch or merge it into `develop`/`main` until completion and an explicit integration request.
 - Use `.worktrees/main` and `.worktrees/develop` for the permanent branches. Keep the current root checkout on its existing Roadmap 4 feature.
+
+## Conventional Commits
+
+- All new commits across this project must follow Conventional Commits 1.0.0 and the project policy in CONTRIBUTING.md. Preserve historical commits.
+- Use lowercase types: feat, fix, docs, style, refactor, perf, test, build, ci, chore, revert. Optional scopes use lowercase letters, digits, dots, underscores, slashes or hyphens. Provide a concrete description in Portuguese or English.
+- Use `feat` for features, `fix` for bug fixes; mark breaking changes with `!` or a `BREAKING CHANGE:` footer. Separate body/footer from the subject with a blank line.
+- Merge messages and PR titles must also follow the format; use `chore(merge): ...`, not `merge: ...` or Git's default merge title. Reverts use `revert: ...`.
+- The local commit-msg hook is shared across worktrees through core.hooksPath. Do not bypass it with --no-verify. Check existing hooks before configuring another clone.

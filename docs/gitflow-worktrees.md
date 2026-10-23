@@ -2,8 +2,9 @@
 
 O Multilang adota Gitflow para organizar a integração e worktrees para manter
 cada tarefa em seu próprio diretório. Os comandos usam Git nativo, sem depender
-da extensão `git-flow`. Esta é uma convenção operacional; não instala hooks nem
-configura proteção de branches no servidor.
+da extensão `git-flow`. A convenção de commits e o hook local estão descritos em
+[CONTRIBUTING.md](../CONTRIBUTING.md). Proteções no servidor não são configuradas
+por este fluxo.
 
 ## Branches e destinos
 
@@ -120,13 +121,14 @@ compartilhadas; não reescreva o histórico de outros colaboradores.
 
 ## Integração e versões
 
-Abra PRs com o destino da tabela. Descreva o problema resolvido e a validação
+Use Conventional Commits em todos os novos commits, incluindo merges
+(`chore(merge): ...`), e nos títulos de PRs. Abra PRs com o destino da tabela. Descreva o problema resolvido e a validação
 executada. Prefira merge commits para preservar a relação entre branches.
 Se a integração for local, execute no worktree limpo da branch de destino:
 
 ```bash
 # No worktree de develop, após revisão e checks:
-git merge --no-ff feature/minha-tarefa
+git merge --no-ff feature/minha-tarefa -m "chore(merge): integra feature/minha-tarefa"
 ```
 
 Não troque a branch de outro worktree para executar esse comando. Caso precise
