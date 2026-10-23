@@ -582,3 +582,226 @@ def test_derived_identities_are_bound_to_their_original_source_candidates():
     row["resolved_content"]["derived_identities"][0]["source_candidate_ids"] = ["unknown"]
     with pytest.raises(ValueError, match="derived identity"):
         m.build_index([row])
+
+
+def preparation_unit(lemma="go", pos="VERB", decision="include", uid="u1", language="en"):
+    row = unit(lemma, pos, decision, uid, language)
+    row["source_group"].update(entry_id=uid, review_unit_id=uid, forms_for_review=[], readings=[])
+    row["imported_review"].update(
+        entry_id=uid, review_unit_id=uid, decision=decision, selected_forms=[]
+    )
+    return row
+
+
+def preparation_form_case():
+    from multilang.services.vocabulary_adjudication import _hash
+    from multilang.services.vocabulary_finalization import consolidate
+    from multilang.services.vocabulary_form_association import prepare_form_resolution
+
+    raw_parent = dict(word="žlutý", lang_code="cs", pos="adj", senses=[dict(glosses=["yellow"])])
+    raw_form = dict(
+        word="žlutých",
+        lang_code="cs",
+        pos="adj",
+        senses=[dict(glosses=["genitive/locative plural of žlutý"])],
+    )
+    rows = []
+    for raw, uid, decision in [(raw_parent, "parent", "include"), (raw_form, "form", "uncertain")]:
+        row = preparation_unit(raw["word"], "ADJ", decision, uid, "cs")
+        cid = "candidate:" + _hash(dict(record=_hash(raw), sense=0))
+        row["source_group"]["sense_candidates"] = [
+            dict(candidate_id=cid, source_record_sha256=_hash(raw))
+        ]
+        row["imported_review"]["selected_candidate_ids"] = [cid] if decision == "include" else []
+        rows.append(row)
+    parent = consolidate([rows[0]], language="cs")["identities"][0]
+    link = dict(
+        source_candidate_id=rows[1]["source_group"]["sense_candidates"][0]["candidate_id"],
+        source_record=raw_form,
+        source_record_sha256=_hash(raw_form),
+        source_sense_index=0,
+        parent_identity_id=parent["identity_id"],
+        parent_candidate_id=parent["senses"][0]["candidate_id"],
+        parent_record=raw_parent,
+        parent_record_sha256=_hash(raw_parent),
+        parent_relation_quote="genitive/locative plural of žlutý",
+        features=["plural", "genitive-or-locative"],
+        rationale="Explicit dictionary form relation bound to the exact retained parent sense.",
+    )
+    return rows[0], prepare_form_resolution(rows[1], [link], {parent["identity_id"]: parent})
+
+
+def preparation_api():
+    m = api()
+    assert callable(getattr(m, "build_preparation_index", None)), (
+        "Finalization-aware index is missing"
+    )
+    return m
+
+
+def test_preparation_index_validates_form_links_without_promoting_forms_to_lemmas():
+    import copy
+
+    m = preparation_api()
+    rows = list(preparation_form_case())
+    before = copy.deepcopy(rows)
+    index = m.build_preparation_index(iter(rows))
+    assert rows == before
+    assert dict(index.keys) == {("cs", "žlutý", "ADJ"): {"parent", "form"}}
+    assert ("cs", "žlutých") not in index.lemmas
+    assert index.units["cs", "include"] == 2
+    assert index.source_refs["cs", "žlutých"][0]["review_unit_id"] == "form"
+    result = m.measure(
+        index, "cs", [token("žlutých", "žlutý", "ADJ"), token("žlutých", "žlutých", "ADJ", "2")]
+    )
+    assert result["counts"]["denominator"] == 2
+    assert result["counts"]["exact_matches"] == 1
+    assert result["coverage_90_percent_verified"] is False
+
+
+@pytest.mark.parametrize("damage", ["parent_absent", "source_tampered", "duplicate_unit"])
+def test_preparation_index_rejects_broken_parent_evidence(damage):
+    m = preparation_api()
+    parent, form = preparation_form_case()
+    rows = [parent, form]
+    if damage == "parent_absent":
+        rows = [form]
+    elif damage == "source_tampered":
+        form["resolved_content"]["form_only_associations"][0]["source_record"]["word"] = "forged"
+    else:
+        rows.append(parent)
+    with pytest.raises(ValueError):
+        m.build_preparation_index(rows)
+
+
+def test_preparation_index_adapts_nordic_resolutions_and_skips_documentary_classes():
+    m = preparation_api()
+    row = preparation_unit("source", "NOUN", uid="nordic", language="da")
+    row["resolved_content"] = dict(
+        resolved_candidates=[
+            dict(
+                source_candidate_id="nordic:sense",
+                derived_candidate_id="reading-1",
+                lemma="ét",
+                pos="NOUN",
+                disposition="retained",
+                evidence=[{"type": "bound-fixture"}],
+            ),
+            dict(
+                source_candidate_id="nordic:sense",
+                derived_candidate_id="reading-2",
+                lemma="⌀",
+                pos="SYMBOL",
+                disposition="retained",
+                evidence=[{"type": "bound-fixture"}],
+            ),
+        ],
+        resolved_forms=[],
+        unresolved_questions=[],
+    )
+    index = m.build_preparation_index([row])
+    assert dict(index.keys) == {("da", "ét", "NOUN"): {"nordic"}}
+    assert ("da", "⌀") not in index.lemmas
+    result = m.measure(index, "da", [token("ét", "e\u0301t", "NOUN"), token("⌀", "⌀", "NOUN", "2")])
+    assert result["counts"]["exact_matches"] == 1
+    assert result["counts"]["lemma_matches"] == 1
+
+
+def test_preparation_index_preserves_partial_pending_units_without_inventing_pos():
+    m = preparation_api()
+    row = preparation_unit("maybe", "X", uid="partial")
+    row["resolved_content"] = dict(
+        resolved_candidates=[
+            dict(
+                source_candidate_id="partial:sense",
+                lemma="maybe",
+                pos=None,
+                disposition="retained",
+                evidence=[{"type": "bound-fixture"}],
+            )
+        ],
+        resolved_forms=[],
+        unresolved_questions=[],
+    )
+    index = m.build_preparation_index([row])
+    assert not index.keys
+    assert index.units["en", "include"] == 1
+    assert index.source_refs["en", "maybe"][0]["decision"] == "include"
+    assert index.source_refs["en", "maybe"][0]["preparation_pending"] is True
+    result = m.measure(index, "en", [token("maybe", "maybe", "ADV")])
+    assert result["gaps"][0]["category"] == "pending_review"
+
+
+def test_preparation_index_rejects_repeated_language_groups():
+    m = preparation_api()
+    rows = [
+        preparation_unit(uid="a"),
+        preparation_unit(uid="b", language="da"),
+        preparation_unit(uid="c"),
+    ]
+    with pytest.raises(ValueError, match="language.*group|group.*language"):
+        m.build_preparation_index(iter(rows))
+
+
+def test_campaign_rejects_unknown_inventory_format_before_creating_output(tmp_path):
+    m = api()
+    snapshot = tmp_path / "snapshot"
+    digest = mini_snapshot(snapshot)
+    config = tmp_path / "config.json"
+    config.write_text(
+        json.dumps(
+            dict(
+                snapshot=str(snapshot),
+                snapshot_manifest_sha256=digest,
+                corpora=[],
+                inventory_format="typo",
+            )
+        )
+    )
+    destination = tmp_path / "result"
+    with pytest.raises(ValueError, match="inventory format"):
+        m.run_campaign(config, hashlib.sha256(config.read_bytes()).hexdigest(), destination)
+    assert not destination.exists()
+
+
+def test_campaign_finalization_snapshot_uses_validated_lexical_identities(tmp_path):
+    from multilang.services.vocabulary_finalization import publish_inventory
+
+    m = api()
+    source = tmp_path / "source.jsonl"
+    source.write_text("\n".join(json.dumps(r) for r in preparation_form_case()) + "\n")
+    published = tmp_path / "published"
+    publish_inventory(
+        inputs=[
+            dict(
+                language="cs",
+                path=str(source),
+                sha256=hashlib.sha256(source.read_bytes()).hexdigest(),
+            )
+        ],
+        output=published,
+    )
+    snapshot = published / "snapshot"
+    path = tmp_path / "tokens.jsonl"
+    path.write_text(json.dumps(token("žlutých", "žlutý", "ADJ")) + "\n")
+    config = tmp_path / "config.json"
+    config.write_text(
+        json.dumps(
+            dict(
+                snapshot=str(snapshot),
+                snapshot_manifest_sha256=hashlib.sha256(
+                    (snapshot / "manifest.json").read_bytes()
+                ).hexdigest(),
+                inventory_format="finalization-snapshot",
+                corpora=[spec(path, language="cs", format="token-jsonl").model_dump(mode="json")],
+            )
+        )
+    )
+    result = m.run_campaign(
+        config, hashlib.sha256(config.read_bytes()).hexdigest(), tmp_path / "result"
+    )
+    assert result["inventory_format"] == "finalization-snapshot"
+    assert result["languages"]["cs"]["selected_lemma_pos_keys"] == 1
+    assert result["results"][0]["counts"]["exact_matches"] == 1
+    assert result["coverage_90_percent_verified"] is False
+    assert result["generation_status"] == "deferred_by_user"

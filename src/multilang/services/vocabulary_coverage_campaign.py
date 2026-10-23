@@ -11,6 +11,7 @@ import json
 import unicodedata
 from collections import Counter, defaultdict
 from dataclasses import dataclass, field
+from itertools import groupby
 from pathlib import Path
 from tempfile import TemporaryDirectory
 from typing import Literal
@@ -149,6 +150,56 @@ def build_index(rows):
             index.keys[key].add(uid)
             index.lemmas.add(key[:2])
             index.lemma_units[key[:2]].add(uid)
+    return index
+
+
+def build_preparation_index(rows):
+    """Index validated finalization identities, one contiguous language at a time.
+
+    ``snapshot_records`` emits ordered language groups. Reject a repeated group
+    rather than silently losing cross-fragment evidence. Consolidation validates
+    all parent/form bindings and adapts documentary resolutions before indexing.
+    Source-specific identities may share a lemma/POS key for this diagnostic;
+    that is not a cross-dictionary sense merge or a comprehension measurement.
+    """
+    from multilang.services.vocabulary_finalization import consolidate
+
+    index = SelectionIndex()
+    seen_languages = set()
+    for lang, language_rows in groupby(rows, key=lambda row: row["language"]):
+        if lang in seen_languages:
+            raise ValueError("preparation inventory repeats a language group")
+        seen_languages.add(lang)
+        result = consolidate(language_rows, language=lang)
+        pending = set(result["pending_review_units"]) | set(result["partially_unresolved_units"])
+        findings = {r["review_unit_id"]: r for r in result["preparation_findings"]}
+        for row in result["snapshot_rows"]:
+            uid, decision = row["review_unit_id"], row["decision"]
+            source = row.get("source_group") or row.get("supplemental_identity") or {}
+            lemma = nfc(source.get("lemma"))
+            index.units[lang, decision] += 1
+            index.dispositions[lang, lemma].add(decision)
+            if uid in pending:
+                index.dispositions[lang, lemma].add("uncertain")
+            index.source_refs[lang, lemma].append(
+                dict(
+                    review_unit_id=uid,
+                    session_id=row.get("session_id"),
+                    source_pos=source.get("pos"),
+                    decision=decision,
+                    source_binding=row.get("source_binding"),
+                    preparation_pending=uid in pending,
+                    preparation_findings=findings.get(uid),
+                )
+            )
+        for identity in result["identities"]:
+            if identity["pos"] not in LEXICAL_POS:
+                continue
+            key = (lang, nfc(identity["lemma"]), identity["pos"])
+            index.keys[key].update(identity["review_unit_ids"])
+            index.lemmas.add(key[:2])
+            index.lemma_units[key[:2]].update(identity["review_unit_ids"])
+        del result
     return index
 
 
@@ -472,6 +523,9 @@ def _write(path, value):
 def run_campaign(config_path, config_sha256, output, *, progress=None):
     """Publish a new immutable run only after every input passes validation."""
     config = json.loads(_read_bytes(_plain_path(config_path), expected=config_sha256))
+    inventory_format = config.get("inventory_format", "selection-snapshot")
+    if inventory_format not in {"selection-snapshot", "finalization-snapshot"}:
+        raise ValueError("unsupported inventory format")
     snapshot = _plain_path(Path(config["snapshot"]))
     manifest = json.loads(
         _read_bytes(snapshot / "manifest.json", expected=config["snapshot_manifest_sha256"])
@@ -484,7 +538,10 @@ def run_campaign(config_path, config_sha256, output, *, progress=None):
     for links in config.get("links", {}).values():
         if any(link.get("evidence_id") not in evidence for link in links):
             raise ValueError("annotation link requires bound evidence file")
-    index = build_index(snapshot_records(snapshot))
+    index_builder = (
+        build_preparation_index if inventory_format == "finalization-snapshot" else build_index
+    )
+    index = index_builder(snapshot_records(snapshot))
     destination = _plain_path(output)
     if destination.exists():
         raise ValueError("output already exists; choose a new version")
@@ -576,6 +633,7 @@ def run_campaign(config_path, config_sha256, output, *, progress=None):
             }
         summary = {
             "schema_version": "vocabulary-coverage-campaign-1",
+            "inventory_format": inventory_format,
             "implementation_sha256": hashlib.sha256(Path(__file__).read_bytes()).hexdigest(),
             "config_sha256": config_sha256,
             "snapshot_id": manifest["snapshot_id"],
