@@ -32,6 +32,7 @@ _TEMPLATE_FILES = {
     "highlight_card": "highlight_card.md",
     "latin_mvp_card": "latin_mvp_card.md",
     "japanese_card": "japanese_card.md",
+    "japanese_frequency_card": "japanese_frequency_card.md",
     "mandarin_card": "mandarin_card.md",
 }
 
@@ -71,28 +72,41 @@ def load_card_template(source_type: str, *, language: SupportedLanguage | None =
             template_path=template_path,
             source_template_name="mandarin_card",
         )
-        base_path = TEMPLATE_ROOT.joinpath(_TEMPLATE_FILES["normal_card"])
+        base_name = "frequency_card" if source_type == "frequency" else "normal_card"
+        base_path = TEMPLATE_ROOT.joinpath(_TEMPLATE_FILES[base_name])
         base_template = _parse_card_template(
             base_path.read_text(encoding="utf-8"),
             template_path=base_path,
-            source_template_name="normal_card",
+            source_template_name=base_name,
+        )
+        frequency_css = (
+            "\n\n" + TEMPLATE_ROOT.joinpath("mandarin_frequency.css").read_text(encoding="utf-8").strip()
+            if source_type == "frequency" else ""
         )
         template = CardTemplate(
             front=mandarin_template.front,
             back=mandarin_template.back,
-            css=f"{base_template.css}\n\n{mandarin_template.css}",
+            css=f"{base_template.css}\n\n{mandarin_template.css}{frequency_css}",
             source_template_name="mandarin_card",
         )
         validate_template_references(template, field_names=MANDARIN_EXPORT_CARD_FIELD_NAMES)
         return template
     if is_ja:
-        template_path = TEMPLATE_ROOT.joinpath(_TEMPLATE_FILES["japanese_card"])
+        template_name = "japanese_frequency_card" if source_type == "frequency" else "japanese_card"
+        template_path = TEMPLATE_ROOT.joinpath(_TEMPLATE_FILES[template_name])
         content = template_path.read_text(encoding="utf-8")
         template = _parse_card_template(
             content,
             template_path=template_path,
-            source_template_name="japanese_card",
+            source_template_name=template_name,
         )
+        if source_type == "frequency":
+            template = CardTemplate(
+                front=template.front,
+                back=template.back,
+                css=f"{load_card_template('frequency').css}\n\n{template.css}",
+                source_template_name=template.source_template_name,
+            )
         if source_type == "kindle-highlights":
             # Shared visual shell; highlights intentionally have no translation
             # field. The separate schema/model prevents changing other languages.
@@ -118,11 +132,16 @@ def load_card_template(source_type: str, *, language: SupportedLanguage | None =
     if profile.source_type == "frequency" and language is SupportedLanguage.EN:
         template = _localize_english_frequency_labels(template)
     if language == SupportedLanguage.KO:
+        korean_font = (
+            '"Noto Serif KR", "Nanum Myeongjo", Batang, serif'
+            if profile.source_type == "frequency"
+            else '"Noto Sans KR", "Apple SD Gothic Neo", "Malgun Gothic", sans-serif'
+        )
         template = CardTemplate(
             front=template.front,
             back=template.back,
             css=template.css + '\n\n.card, .card * {\n'
-            '  font-family: "Noto Sans KR", "Apple SD Gothic Neo", "Malgun Gothic", sans-serif;\n'
+            f'  font-family: {korean_font};\n'
             '  word-break: keep-all;\n  overflow-wrap: anywhere;\n}\n',
             source_template_name=template.source_template_name,
         )
