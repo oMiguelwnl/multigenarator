@@ -67,6 +67,85 @@ forma/sentido. Não converte esses números em cartões finais ou porcentagem de
 cobertura. As propostas possuem `production_eligible=false` e não substituem
 a importação de um inventário validado. A geração permanece adiada.
 
+### Dividir o inventário entre sessões
+
+Para trabalho paralelo, use `scripts/review_vocabulary_sessions.py`. O `next`
+anterior é sequencial; não serve para atribuir tarefas exclusivas a conversas.
+O novo `split` distribui todas as unidades em atribuições imutáveis e preserva
+as revisões anteriores, incluindo correções. Fragmentos de uma mesma entrada
+permanecem na mesma atribuição. Limites padrão: 256 unidades e 256.000 bytes de
+evidência compacta por sessão; uma entrada maior recebe sessão exclusiva,
+identificada como exceção. Bytes não são tokens nem estimativa de duração.
+
+```bash
+.venv/bin/python scripts/review_vocabulary_sessions.py split \
+  --packets PACOTES --manifest-sha256 HASH_DO_MANIFESTO \
+  --requests PEDIDOS_ANTERIORES --reviews REVISOES_ANTERIORES --output NOVO_PLANO
+
+.venv/bin/python scripts/review_vocabulary_sessions.py next \
+  --plan PLANO --plan-sha256 HASH_DO_PLANO --session-id ja-0001 \
+  --work TRABALHO --batch-size 8
+
+.venv/bin/python scripts/review_vocabulary_sessions.py import \
+  --plan PLANO --plan-sha256 HASH_DO_PLANO --session-id ja-0001 --work TRABALHO \
+  --request PEDIDO --request-sha256 HASH_DO_PEDIDO --response RESPOSTA.json \
+  --context-id IDENTIFICADOR_DA_CONVERSA
+
+.venv/bin/python scripts/review_vocabulary_sessions.py status \
+  --plan PLANO --plan-sha256 HASH_DO_PLANO --work TRABALHO --output NOVO_STATUS.json
+```
+
+Cada `sessions/<id>/START.md` contém a tarefa e o comando concreto. Mantenha uma
+conversa responsável por ID e use o mesmo diretório de trabalho em todas elas:
+os resultados ficam isolados em `TRABALHO/<id>/`. `next` retoma pedidos pendentes;
+`import` rejeita pedidos de outra atribuição. Correções usam `--supersedes` com
+o diretório do resultado anterior; repetir uma importação idêntica é seguro.
+`status` consolida primeira passagem, dúvidas e pendências sem aprovar produção.
+
+O modelo solicitado é GPT-6 Astra/high, selecionado na conversa. Os comandos
+organizam arquivos; não abrem conversas nem chamam provedores. Sessões lógicas
+podem ser retomadas em vários turnos. Os limites da conta continuam aplicáveis.
+Use o projeto local original: worktrees novas não recebem automaticamente os
+arquivos ignorados de `output/`, os caches nem alterações de código não commitadas.
+Não use o fluxo sequencial antigo para acrescentar revisões após congelar o plano;
+as novas propostas devem entrar nas atribuições para aparecer na consolidação.
+
+### Executar a fila pela conta ChatGPT
+
+`scripts/run_vocabulary_session_queue.py` executa as atribuições pelo `codex exec`
+local, com login ChatGPT obrigatório, modelo solicitado `gpt-6-astra` e raciocínio
+`high`. O ambiente dos revisores exclui chaves de API; não há fallback para
+OpenRouter, outro modelo ou serviços do `.env`. Esse fluxo usa os limites da
+conta ChatGPT. Requer o CLI instalado e autenticado nessa modalidade.
+
+```bash
+.venv/bin/python scripts/run_vocabulary_session_queue.py \
+  --plan PLANO --plan-sha256 HASH_DO_PLANO --work TRABALHO \
+  --output ESTADO_DA_FILA --workers 3
+```
+
+O controlador alterna idiomas, pula atribuições concluídas e mantém até três
+revisores simultâneos. Cada revisor lê a evidência e importa propostas; o replay
+das importações, conferido contra as fontes, determina a conclusão. Saída textual
+do modelo não basta. `status.json` registra progresso, erros e diretórios dos
+logs. As contagens são atualizadas ao terminar cada tentativa; o comando
+`review_vocabulary_sessions.py status` permite conferir importações intermediárias.
+
+Para reservar idiomas a outras sessões, acrescente opções repetidas como
+`--exclude-language pt --exclude-language es --exclude-language fr`. A reserva
+fica vinculada ao estado da fila; mantenha esses argumentos nas retomadas.
+
+Crie um arquivo `STOP` em `ESTADO_DA_FILA` para interromper. Erros de execução,
+limites da conta, falta de progresso ou tentativa acima de uma hora interrompem
+a fila e preservam importações válidas. Para retomar após resolver a causa, use
+os mesmos argumentos e retire apenas o `STOP` que tiver criado. Não execute
+revisores manuais sobre IDs que a fila possa assumir.
+
+O script em primeiro plano não instala um serviço. Uma execução supervisionada
+separadamente deve registrar sua unidade e estado real; não presumir persistência
+apenas por receber um identificador de terminal. Concluir a fila significa
+primeira passagem, com dúvidas ainda visíveis. Geração continua adiada.
+
 ### Validação de dificuldade antes da geração futura
 
 `SentenceCurriculum`, quando anexado à proveniência de uma entrada, acompanha
