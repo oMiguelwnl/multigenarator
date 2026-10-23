@@ -1,0 +1,223 @@
+<!doctype html><html lang="pt-BR"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Herói azul escuro</title><style>:root {
+  color-scheme: dark;
+  --max-width-card: 620px;
+  --font-size-card: 16px;
+  --font-size-targetWord: 42px;
+  --color-page-background: #0a1220;
+  --color-card-background: #0f1b2d;
+  --color-nightMode-card-background: #0f1b2d;
+  --color-text-primary: #e8f0fe;
+  --color-nightMode-text-primary: #e8f0fe;
+  --color-audio-button: #93c5fd;
+  --color-sentence-translation: #93c5fd;
+  --color-nightMode-sentence-translation: #93c5fd;
+  --color-nightMode-hint: #93c5fd;
+  --color-divider: #24405f;
+}
+* { box-sizing: border-box; }
+html,
+body,
+.card,
+body.nightMode {
+  margin: 0;
+  background: var(--color-page-background);
+  color: var(--color-text-primary);
+  font-family: Georgia, Cambria, "Times New Roman", Times, serif;
+}
+.card { padding: 16px; min-height: 100vh; }
+#qa { width: 100%; min-width: 0; margin: 0 auto; }
+.customCard {
+  width: 100%;
+  max-width: var(--max-width-card);
+  min-width: 0;
+  margin: 0 auto;
+  padding: 26px 20px 20px;
+  border-radius: 16px;
+  border-top: 4px solid #3b82f6;
+  background: var(--color-card-background);
+  color: var(--color-text-primary);
+  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.45);
+  font-size: var(--font-size-card);
+  text-align: left;
+  overflow-wrap: anywhere;
+}
+.horizontalPadding { width: 100%; min-width: 0; }
+.targetWordContainer {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  text-align: center;
+}
+.wordBlock { display: flex; flex-direction: column; gap: 4px; min-width: 0; max-width: 100%; }
+.targetWord {
+  font-size: var(--font-size-targetWord);
+  font-weight: 800;
+  letter-spacing: -0.5px;
+  line-height: 1.1;
+  color: #bfdbfe;
+  overflow-wrap: anywhere;
+}
+.ipa { font-size: 15px; font-weight: 400; color: #7f9bc4; }
+.dividerLine { border-top: 1px solid var(--color-divider); margin: 18px 0; }
+.header {
+  color: #93c5fd;
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  margin: 0 0 8px;
+}
+.indent { padding: 0; }
+.definitionsList { list-style: none; padding: 0; margin: 0; font-size: 16px; line-height: 1.55; }
+.examplePanel {
+  display: block;
+  width: 100%;
+  min-width: 0;
+  padding: 12px 14px;
+  border-left: 3px solid #3b82f6;
+  border-radius: 8px;
+  background: #12213a;
+}
+.exampleSentenceLine { display: block; min-width: 0; }
+.exampleSentenceText { font-size: 17px; line-height: 1.5; min-width: 0; overflow-wrap: anywhere; }
+.exampleSentenceText mark { background: #1e3a5f; color: #dbeafe; border-radius: 4px; padding: 0 3px; }
+.sentenceTranslation {
+  width: 100%;
+  min-width: 0;
+  margin-top: 10px;
+  padding: 0;
+  font-size: 15px;
+  line-height: 1.5;
+  font-weight: 400;
+  font-style: italic;
+  color: var(--color-sentence-translation);
+  white-space: normal;
+  overflow-wrap: anywhere;
+}
+.wordAudioButtonBack,
+.sentenceAudioButton { display: inline-flex; vertical-align: middle; }
+.sentenceAudioButton { margin-left: 6px; }
+.replay-button,
+.soundLink {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  margin: 0;
+  padding: 0;
+  border-radius: 50%;
+  background: #12213a;
+  border: 1px solid #24405f;
+  color: var(--color-audio-button);
+  text-decoration: none;
+  vertical-align: middle;
+}
+.replay-button svg { width: 18px; height: 18px; }
+.replay-button svg path { fill: var(--color-audio-button); }
+.replay-button svg circle { fill: none; stroke: none; }
+.replay-button:focus-visible,
+.soundLink:focus-visible { outline: 2px solid #93c5fd; outline-offset: 2px; }
+.image { margin: 18px 0; width: 100%; }
+.image img { display: block; object-fit: contain; max-width: 100% !important; max-height: 210px !important; height: auto !important; margin: 0 auto; }
+
+/* Composed after frequency_card.md; reading annotations retain extra room. */
+.jpFont {
+  font-family: "Noto Serif JP", "Yu Mincho", "Hiragino Mincho ProN", serif;
+}
+.targetWord.jpFont { font-size: 32px; line-height: 1.8; }
+.jpFont ruby { ruby-position: over; ruby-align: center; }
+.jpFont rt { font-size: 0.55em; line-height: 1; }
+.exampleSentenceText.jpFont { font-size: 22px; line-height: 2; }
+.wordRomaji,
+.sentenceRomaji {
+  color: var(--color-text-primary);
+  opacity: 0.7;
+  font-size: 14px;
+  font-weight: 400;
+  line-height: 1.4;
+  overflow-wrap: anywhere;
+}
+.nightMode .wordRomaji,
+.nightMode .sentenceRomaji { color: var(--color-nightMode-text-primary); }
+.sentenceRomaji { grid-column: 1; padding-top: 4px; }
+.wordControls { display: flex; align-items: center; gap: 8px; flex: 0 0 auto; }
+.targetWordContainer { flex-wrap: wrap; }
+.furiganaToggle {
+  border: 1px solid var(--color-audio-button);
+  color: var(--color-audio-button);
+  background: transparent;
+  border-radius: 999px;
+  padding: 4px 12px;
+  font-family: inherit;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+}
+.nightMode .furiganaToggle {
+  color: var(--color-nightMode-hint);
+  border-color: var(--color-nightMode-hint);
+}
+.replay-button {
+  background: transparent !important;
+  background-color: transparent !important;
+  border: 0 !important;
+  box-shadow: none !important;
+}</style><body class="card"><main id="qa"><div class="customCard cardBack jpBack" lang="ja">
+  <div class="horizontalPadding centerVertically targetWordContainer">
+    <div class="wordBlock">
+      <span class="targetWord jpFont">
+        <span class="jPlain" style="display:none;">何</span>
+        <span class="jReading"><ruby>何<rt>なに</rt></ruby></span>
+      </span>
+      <div class="wordRomaji">Nani</div>
+    </div>
+    <div class="wordControls">
+      <button type="button" class="furiganaToggle" onclick="toggleFurigana()">furigana</button>
+      <span class="wordAudioButtonBack"><span class="replay-button" role="img" title="Ícone ilustrativo — sem áudio" aria-label="Áudio ilustrativo"><svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true"><path fill="currentColor" d="M7 4v16l14-8z"/></svg></span></span>
+    </div>
+  </div>
+
+  <div class="dividerLine"></div>
+
+  <div class="horizontalPadding">
+    <div class="header">Definição:</div>
+    <div class="indent">
+      <ul class="definitionsList">
+        <li>o que</li>
+      </ul>
+    </div>
+  </div>
+
+
+
+  <div class="dividerLine"></div>
+
+  <div class="horizontalPadding">
+    <div class="header">Exemplo:</div>
+    <div class="examplePanel indent">
+      <div class="exampleSentenceLine">
+        <span class="exampleSentenceText jpFont">
+          <span class="jPlain" style="display:none;">何しているの？</span>
+          <span class="jReading"><ruby>何<rt>なに</rt></ruby>しているの？</span>
+        </span>
+        <span class="sentenceAudioButton"><span class="replay-button" role="img" title="Ícone ilustrativo — sem áudio" aria-label="Áudio ilustrativo"><svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true"><path fill="currentColor" d="M7 4v16l14-8z"/></svg></span></span>
+      </div>
+      <div class="sentenceRomaji">Nan shite iru no?</div>
+      <div id="translation" class="sentenceTranslation">
+        O que você está fazendo?
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+  function toggleFurigana() {
+    var readings = document.querySelectorAll(".jReading");
+    var plains = document.querySelectorAll(".jPlain");
+    var showing = readings.length && readings[0].style.display !== "none";
+    for (var i = 0; i < readings.length; i++) readings[i].style.display = showing ? "none" : "";
+    for (var j = 0; j < plains.length; j++) plains[j].style.display = showing ? "" : "none";
+  }
+</script></main></body></html>

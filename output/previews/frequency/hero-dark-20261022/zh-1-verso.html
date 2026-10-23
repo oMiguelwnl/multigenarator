@@ -1,0 +1,264 @@
+<!doctype html><html lang="pt-BR"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Herói azul escuro</title><style>:root {
+  color-scheme: dark;
+  --max-width-card: 620px;
+  --font-size-card: 16px;
+  --font-size-targetWord: 42px;
+  --color-page-background: #0a1220;
+  --color-card-background: #0f1b2d;
+  --color-nightMode-card-background: #0f1b2d;
+  --color-text-primary: #e8f0fe;
+  --color-nightMode-text-primary: #e8f0fe;
+  --color-audio-button: #93c5fd;
+  --color-sentence-translation: #93c5fd;
+  --color-nightMode-sentence-translation: #93c5fd;
+  --color-nightMode-hint: #93c5fd;
+  --color-divider: #24405f;
+}
+* { box-sizing: border-box; }
+html,
+body,
+.card,
+body.nightMode {
+  margin: 0;
+  background: var(--color-page-background);
+  color: var(--color-text-primary);
+  font-family: Georgia, Cambria, "Times New Roman", Times, serif;
+}
+.card { padding: 16px; min-height: 100vh; }
+#qa { width: 100%; min-width: 0; margin: 0 auto; }
+.customCard {
+  width: 100%;
+  max-width: var(--max-width-card);
+  min-width: 0;
+  margin: 0 auto;
+  padding: 26px 20px 20px;
+  border-radius: 16px;
+  border-top: 4px solid #3b82f6;
+  background: var(--color-card-background);
+  color: var(--color-text-primary);
+  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.45);
+  font-size: var(--font-size-card);
+  text-align: left;
+  overflow-wrap: anywhere;
+}
+.horizontalPadding { width: 100%; min-width: 0; }
+.targetWordContainer {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  text-align: center;
+}
+.wordBlock { display: flex; flex-direction: column; gap: 4px; min-width: 0; max-width: 100%; }
+.targetWord {
+  font-size: var(--font-size-targetWord);
+  font-weight: 800;
+  letter-spacing: -0.5px;
+  line-height: 1.1;
+  color: #bfdbfe;
+  overflow-wrap: anywhere;
+}
+.ipa { font-size: 15px; font-weight: 400; color: #7f9bc4; }
+.dividerLine { border-top: 1px solid var(--color-divider); margin: 18px 0; }
+.header {
+  color: #93c5fd;
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  margin: 0 0 8px;
+}
+.indent { padding: 0; }
+.definitionsList { list-style: none; padding: 0; margin: 0; font-size: 16px; line-height: 1.55; }
+.examplePanel {
+  display: block;
+  width: 100%;
+  min-width: 0;
+  padding: 12px 14px;
+  border-left: 3px solid #3b82f6;
+  border-radius: 8px;
+  background: #12213a;
+}
+.exampleSentenceLine { display: block; min-width: 0; }
+.exampleSentenceText { font-size: 17px; line-height: 1.5; min-width: 0; overflow-wrap: anywhere; }
+.exampleSentenceText mark { background: #1e3a5f; color: #dbeafe; border-radius: 4px; padding: 0 3px; }
+.sentenceTranslation {
+  width: 100%;
+  min-width: 0;
+  margin-top: 10px;
+  padding: 0;
+  font-size: 15px;
+  line-height: 1.5;
+  font-weight: 400;
+  font-style: italic;
+  color: var(--color-sentence-translation);
+  white-space: normal;
+  overflow-wrap: anywhere;
+}
+.wordAudioButtonBack,
+.sentenceAudioButton { display: inline-flex; vertical-align: middle; }
+.sentenceAudioButton { margin-left: 6px; }
+.replay-button,
+.soundLink {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  margin: 0;
+  padding: 0;
+  border-radius: 50%;
+  background: #12213a;
+  border: 1px solid #24405f;
+  color: var(--color-audio-button);
+  text-decoration: none;
+  vertical-align: middle;
+}
+.replay-button svg { width: 18px; height: 18px; }
+.replay-button svg path { fill: var(--color-audio-button); }
+.replay-button svg circle { fill: none; stroke: none; }
+.replay-button:focus-visible,
+.soundLink:focus-visible { outline: 2px solid #93c5fd; outline-offset: 2px; }
+.image { margin: 18px 0; width: 100%; }
+.image img { display: block; object-fit: contain; max-width: 100% !important; max-height: 210px !important; height: auto !important; margin: 0 auto; }
+
+.traditional {
+  color: #93c5fd;
+  font-size: 15px;
+  font-weight: 400;
+  line-height: 1.45;
+}
+
+.traditionalSentence {
+  color: #93c5fd;
+  font-size: 14px;
+  font-weight: 400;
+  line-height: 1.45;
+}
+
+.nightMode .traditional,
+.nightMode .traditionalSentence {
+  color: #93c5fd;
+}
+
+/* Reading support adds annotation space without replacing the original layout. */
+.mandarinCard .exampleSentenceText {
+  font-family: "Noto Sans CJK SC", "Microsoft YaHei", sans-serif;
+  font-size: 26px;
+  line-height: 2.1;
+}
+
+.mandarinCard .examplePanel {
+  padding-top: 6px;
+}
+
+.mandarinCard .sentenceTranslation {
+  font-size: 18px;
+  line-height: 1.6;
+}
+
+.mandarinCard .traditionalSentence {
+  font-family: "Noto Sans CJK TC", "Microsoft JhengHei", sans-serif;
+  font-size: 17px;
+  line-height: 1.6;
+}
+
+.mandarin-ruby {
+  display: ruby;
+  ruby-position: over;
+  ruby-align: center;
+  margin: 0 0.04em;
+}
+
+.mandarin-ruby rt {
+  color: inherit;
+  font-family: Arial, sans-serif;
+  font-size: 0.6em;
+  font-weight: 500;
+  line-height: 1.2;
+  text-align: center;
+}
+
+/* 1: red, 2: yellow, 3: green, 4: blue, 5 (neutral): gray. */
+.mandarin-ruby.tone-1 { color: #ff8591; }
+.mandarin-ruby.tone-2 { color: #f1d178; }
+.mandarin-ruby.tone-3 { color: #82dbab; }
+.mandarin-ruby.tone-4 { color: #8ebaff; }
+.mandarin-ruby.tone-5 { color: #c1c7d3; }
+
+/* Frequency-only serif typography, composed after Mandarin reading support. */
+.mandarinCard .targetWord,
+.mandarinCard .exampleSentenceText {
+  font-family: "Noto Serif SC", "Songti SC", SimSun, serif;
+}
+.mandarinCard .traditional,
+.mandarinCard .traditionalSentence {
+  font-family: "Noto Serif TC", "Songti TC", PMingLiU, serif;
+  color: var(--color-sentence-translation);
+}
+.nightMode .mandarinCard .traditional,
+.nightMode .mandarinCard .traditionalSentence {
+  color: var(--color-nightMode-sentence-translation);
+}
+.mandarinCard .mandarin-ruby rt { font-family: Georgia, "Times New Roman", serif; }
+.mandarinCard .examplePanel { padding: 12px 14px; }
+/* Preserve tone categories on the always-dark frequency card. */
+.mandarinCard .tone-1 { color: #ff8591; }
+.mandarinCard .tone-2 { color: #f1d178; }
+.mandarinCard .tone-3 { color: #82dbab; }
+.mandarinCard .tone-4 { color: #8ebaff; }
+.mandarinCard .tone-5 { color: #c1c7d3; }
+.nightMode .mandarinCard .tone-1 { color: #ff8591; }
+.nightMode .mandarinCard .tone-2 { color: #f1d178; }
+.nightMode .mandarinCard .tone-3 { color: #82dbab; }
+.nightMode .mandarinCard .tone-4 { color: #8ebaff; }
+.nightMode .mandarinCard .tone-5 { color: #c1c7d3; }</style><body class="card"><main id="qa"><div class="customCard cardBack mandarinCard" lang="zh-Hans">
+  <div class="horizontalPadding centerVertically targetWordContainer">
+    <div class="wordBlock">
+      <span class="targetWord">长</span>
+      <span class="ipa">cháng</span>
+      <span class="traditional">長</span>
+    </div>
+    <span class="wordAudioButtonBack"><span class="replay-button" role="img" title="Ícone ilustrativo — sem áudio" aria-label="Áudio ilustrativo"><svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true"><path fill="currentColor" d="M7 4v16l14-8z"/></svg></span></span>
+  </div>
+
+  <div class="dividerLine"></div>
+
+  <div class="horizontalPadding">
+    <div class="header">Definição:</div>
+    <div class="indent">
+      <ul class="definitionsList">
+        <li>adjetivo: longo</li>
+      </ul>
+    </div>
+  </div>
+
+
+
+  <div class="dividerLine"></div>
+
+  <div class="horizontalPadding">
+    <div class="header">Exemplo:</div>
+    <div class="examplePanel">
+      <div class="exampleSentenceLine">
+        <span class="exampleSentenceText"><ruby class="mandarin-ruby tone-4">这<rt>zhè</rt></ruby><ruby class="mandarin-ruby tone-2">条<rt>tiáo</rt></ruby><ruby class="mandarin-ruby tone-4">路<rt>lù</rt></ruby><ruby class="mandarin-ruby tone-3">很<rt>hěn</rt></ruby><ruby class="mandarin-ruby tone-2">长<rt>cháng</rt></ruby>。</span>
+        <span class="sentenceAudioButton"><span class="replay-button" role="img" title="Ícone ilustrativo — sem áudio" aria-label="Áudio ilustrativo"><svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true"><path fill="currentColor" d="M7 4v16l14-8z"/></svg></span></span>
+      </div>
+      <div id="translation" class="sentenceTranslation" style="display:none;">
+        Esta estrada é longa.
+      </div>
+    </div>
+  </div>
+
+
+  <div class="dividerLine"></div>
+  <div class="horizontalPadding mandarinTraditionalSection">
+    <div class="header" lang="pt-BR">Tradicional:</div>
+    <div class="traditionalSentence" lang="zh-Hant">這條路很長。</div>
+  </div>
+
+</div>
+
+<script>
+  document.getElementById("translation").style.display = "block";
+</script></main></body></html>
