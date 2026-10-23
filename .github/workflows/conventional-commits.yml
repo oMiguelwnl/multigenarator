@@ -1,0 +1,45 @@
+name: Conventional Commits
+
+on:
+  pull_request_target:
+    branches: [main, develop]
+    types: [opened, synchronize, reopened, edited, ready_for_review]
+  push:
+    branches: [main, develop]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  conventional-commits:
+    name: Conventional Commits
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      # Only trusted base code is executed. Never check out a PR's head here.
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.base.sha || github.sha }}
+          fetch-depth: 0
+          persist-credentials: false
+      - name: Test policy
+        run: python3 -m unittest discover -s tests/tooling -v
+      - name: Validate title and new commits
+        env:
+          BASE_SHA: ${{ github.event.pull_request.base.sha || github.event.before || '1b5e528fbbba42cc48e681081c57f4ffc4d5faa1' }}
+          HEAD_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
+          PR_TITLE: ${{ github.event.pull_request.title || '' }}
+        run: |
+          if [[ ! "$HEAD_SHA" =~ ^[0-9a-f]{40}$ || ! "$BASE_SHA" =~ ^[0-9a-f]{40}$ ]]; then
+            echo 'Invalid commit reference' >&2
+            exit 1
+          fi
+          if [[ "$BASE_SHA" == 0000000000000000000000000000000000000000 ]]; then
+            BASE_SHA=1b5e528fbbba42cc48e681081c57f4ffc4d5faa1
+          fi
+          git fetch --no-tags origin "$HEAD_SHA"
+          python3 scripts/check_commit_range.py \
+            --base "$BASE_SHA" --head "$HEAD_SHA" --title "$PR_TITLE" \
+            --grandfather 134fd47d63b61637f114f96a12f4a28afd90f085 \
+            --grandfather 3216a0e4f48e00ae3140ae5a7ba059156c07e373

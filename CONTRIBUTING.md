@@ -83,4 +83,22 @@ caminho absoluto. Configuração específica de worktree pode sobrepor a configu
 local; confira `git config --show-origin --get core.hooksPath` em caso de dúvida.
 Hooks locais não são transferidos automaticamente pelo clone, não validam
 commits antigos recebidos por fetch e não controlam commits feitos pela interface
-do GitHub. Checks e proteções no servidor ainda não foram configurados.
+do GitHub. O workflow `.github/workflows/conventional-commits.yml` valida títulos de PRs e
+novos commits destinados a `main` e `develop`. As proteções remotas exigem
+PR e o check `Conventional Commits`, sem force-push nem exclusão de branch.
+Não se exige aprovação de outra pessoa (repositório individual); discussões
+devem estar resolvidas e a base atualizada antes do merge.
+
+
+### Histórico anterior à adoção
+
+O check remoto não exige reescrever o histórico já existente: commits alcançáveis
+pelos snapshots `134fd47` (Roadmap 4 em andamento) e `3216a0e` (adoção local da
+política) estão isentos. Os SHAs completos estão fixados no workflow. Novos commits
+fora desses snapshots e todos os títulos de PR são validados. Não amplie essa
+isenção para encobrir novos commits inválidos.
+
+O workflow usa `pull_request_target` somente com permissão de leitura: executa
+o validador da base confiável, busca objetos Git da feature e lê suas mensagens,
+sem executar ou fazer checkout de código da feature. O mesmo check roda nos
+pushes a `main`/`develop`. Merges no GitHub devem usar o título convencional do PR.
