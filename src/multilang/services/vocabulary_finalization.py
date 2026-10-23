@@ -17,6 +17,13 @@ from pathlib import Path
 from tempfile import TemporaryDirectory
 
 from multilang.services.vocabulary_finalization_resolved import adapt_resolved
+from multilang.services.vocabulary_form_association import (
+    SCHEMA as FORM_SCHEMA,
+)
+from multilang.services.vocabulary_form_association import (
+    validate_coverage,
+    validate_form_link,
+)
 
 FLAGS = dict(human_approved=False, production_eligible=False, generation_status="deferred_by_user")
 DECISIONS = {"include", "exclude", "uncertain", "unreviewed", "quarantined"}
@@ -97,6 +104,7 @@ def consolidate(rows, *, language):
     if len({r["review_unit_id"] for r in rows}) != len(rows):
         raise ValueError("duplicate review unit")
     parents, pending, partial, findings = {}, [], [], []
+    form_rows = []
 
     def add(row, entry, lemma, pos, candidate_id, metadata, resolution=None):
         lemma, pos = _text(lemma), _text(pos)
@@ -152,6 +160,17 @@ def consolidate(rows, *, language):
         return parent
 
     for row in rows:
+        resolution = row.get("resolved_content") or {}
+        if resolution.get("schema_version") == FORM_SCHEMA:
+            if (
+                row["decision"] != "include"
+                or resolution.get("resolved_candidates")
+                or resolution.get("unresolved_questions")
+            ):
+                raise ValueError("form-only resolution cannot contain lexical decisions")
+            validate_coverage(row, resolution.get("form_only_associations", []))
+            form_rows.append(row)
+            continue
         if row.get("resolved_content"):
             row = adapt_resolved(row)
         uid = row["review_unit_id"]
@@ -291,6 +310,13 @@ def consolidate(rows, *, language):
             did = derived.get("identity_id") or derived.get("derived_identity_id") or _hash(derived)
             add(row, "derived:" + did, derived["lemma"], derived["pos"], did, derived, derived)
 
+    for row in form_rows:
+        for link in row["resolved_content"]["form_only_associations"]:
+            parent = parents.get(link.get("parent_identity_id"))
+            form = validate_form_link(row, link, parent)
+            parent["retained_forms"].append(form)
+            parent["review_unit_ids"].add(row["review_unit_id"])
+
     identities = []
     for key in sorted(parents):
         parent = parents[key]
@@ -298,6 +324,7 @@ def consolidate(rows, *, language):
             parent[field] = sorted(parent[field])
         for field in ("senses", "forms"):
             parent[field] = [parent[field][k] for k in sorted(parent[field])]
+        parent["retained_forms"].sort(key=_canonical)
         identities.append(parent)
     return dict(
         language=language,
@@ -305,6 +332,7 @@ def consolidate(rows, *, language):
         identities=identities,
         pending_review_units=pending,
         partially_unresolved_units=partial,
+        form_only_units=[r["review_unit_id"] for r in form_rows],
         preparation_findings=findings,
         counts=dict(Counter(r["decision"] for r in rows)),
         **FLAGS,
@@ -472,6 +500,10 @@ def publish_inventory(*, inputs, output):
                 included_identities=len(result["identities"]),
                 selected_sense_associations=sum(len(r["senses"]) for r in result["identities"]),
                 selected_form_associations=sum(len(r["forms"]) for r in result["identities"]),
+                retained_form_associations=sum(
+                    len(r["retained_forms"]) for r in result["identities"]
+                ),
+                form_only_units=len(result["form_only_units"]),
                 partially_unresolved_units=len(result["partially_unresolved_units"]),
                 final_frequency_ranked_identities=0,
                 **FLAGS,
