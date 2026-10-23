@@ -102,7 +102,12 @@ def _round_rows(round_spec: dict) -> tuple[list[tuple[dict, str, str]], dict]:
             result.append((row, envelope["baseline_row_sha256"], digest))
     elif mode in {"rows", "additions"}:
         bindings_path = manifest_file(path, manifest, round_spec["bindings"])
-        bindings = _binding_map(json.loads(bindings_path.read_text(encoding="utf-8")))
+        bindings_data = (
+            lines(bindings_path)
+            if bindings_path.suffix == ".jsonl"
+            else json.loads(bindings_path.read_text(encoding="utf-8"))
+        )
+        bindings = _binding_map(bindings_data)
         result = []
         for row in proposals:
             key = row["language"], row["review_unit_id"]
