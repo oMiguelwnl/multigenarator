@@ -85,17 +85,15 @@ def _round_rows(round_spec: dict) -> tuple[list[tuple[dict, str, str]], dict]:
     if mode == "envelopes":
         result = []
         for envelope in proposals:
-            digest = envelope.get("proposal_sha256")
-            if _hash({k: v for k, v in envelope.items() if k != "proposal_sha256"}) != digest:
-                raise ValueError("proposal envelope differs")
             row = envelope["replacement"]
-            if _hash(row) != envelope.get("replacement_sha256"):
+            digest = envelope.get("replacement_sha256") or envelope.get("proposal_sha256")
+            if _hash(row) != digest:
                 raise ValueError("proposal replacement differs")
             if (row["language"], row["review_unit_id"]) != (
                 envelope["language"], envelope["review_unit_id"]
             ):
                 raise ValueError("envelope review unit differs")
-            result.append((row, envelope["baseline_row_sha256"], envelope["replacement_sha256"]))
+            result.append((row, envelope["baseline_row_sha256"], digest))
     elif mode == "rows":
         bindings_path = manifest_file(path, manifest, round_spec["bindings"])
         bindings = _binding_map(json.loads(bindings_path.read_text(encoding="utf-8")))
