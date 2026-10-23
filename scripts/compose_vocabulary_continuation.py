@@ -54,7 +54,13 @@ def manifest_file(manifest_path: Path, manifest: dict, name: str) -> Path:
         if isinstance(expected, dict):
             expected = expected.get("sha256")
     elif isinstance(files, list):
-        found = [item["sha256"] for item in files if item.get("path") == name]
+        desired = (manifest_path.parent / name).resolve()
+        found = [
+            item["sha256"]
+            for item in files
+            if isinstance(item.get("path"), str)
+            and (manifest_path.parent / item["path"]).resolve() == desired
+        ]
         expected = found[0] if len(found) == 1 else None
     else:
         expected = None
