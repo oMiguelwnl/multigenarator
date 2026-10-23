@@ -49,3 +49,6 @@ webdav-secrets*.json
 # Local Kindle/WebDAV imports that may contain private reading data
 kindle-highlights*.html
 kindle-highlights*.txt
+
+# Dedicated task worktrees
+.worktrees/
