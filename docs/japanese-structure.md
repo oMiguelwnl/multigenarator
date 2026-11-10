@@ -2,7 +2,7 @@
 
 Este arquivo serve como base para discutir um novo milestone GSD sobre suporte a
 **Japonês no pipeline principal `generate`** do Multilang. Ele segue o mesmo
-espírito do `LATIN-STRUCTURE.md`: registrar direção, decisões já tomadas,
+espírito do [latin-structure.md](latin-structure.md): registrar direção, decisões já tomadas,
 desafios específicos, ferramentas candidatas e uma proposta de fases com
 requisitos e critérios de sucesso.
 

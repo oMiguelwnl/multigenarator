@@ -110,6 +110,6 @@ existing runtime integration; focused unit/CLI/integration tests.
 - Practical workflow: `docs/vocabulary-preparation.md`.
 - Per-language actual sources, model status and diagnostic hashes:
   `docs/multilingual-readiness.md` and `docs/multilingual-readiness.json`.
-- Verification evidence and domain commits: `ROADMAP_4_NATIVE_IMPLEMENTATION.md`.
+- Verification evidence and domain commits: `docs/roadmap-4-native-implementation.md`.
 - External gates are deliberately unchecked; software completion does not grant
   source redistribution, linguistic qualification or production approval.

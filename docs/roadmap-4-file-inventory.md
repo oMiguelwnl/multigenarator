@@ -9,7 +9,7 @@ Arquivos novos ou modificados pela tarefa. Não inclui os arquivos locais preexi
 - `.github/workflows/ci.yml`
 - `.gitignore`
 - `README.md`
-- `ROADMAP_4_NATIVE_IMPLEMENTATION.md`
+- `docs/roadmap-4-native-implementation.md`
 - `alembic.ini`
 - `alembic/env.py`
 - `alembic/versions/20260912_20_native_architecture.py`
@@ -137,7 +137,7 @@ locais em `.multilang`, sem inclusão no pacote ou nos commits.
 - `.env.example`
 - `.github/workflows/ci.yml`
 - `README.md`
-- `ROADMAP_4_NATIVE_IMPLEMENTATION.md`
+- `docs/roadmap-4-native-implementation.md`
 - `docs/multilingual-completion-design.md`
 - `docs/multilingual-completion-plan.md`
 - `docs/multilingual-readiness.json`

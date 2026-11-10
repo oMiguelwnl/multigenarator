@@ -17,7 +17,7 @@ REPO_ROOT = Path(__file__).resolve().parents[2]
 REVIEW_PATH = REPO_ROOT / ".planning/phases/29-latin-elevenlabs-audio-refresh/29-GOOGLE-TTS-FINAL-REVIEW.md"
 SECOND_PASS_REVIEW_PATH = REPO_ROOT / ".planning/phases/29-latin-elevenlabs-audio-refresh/29-SECOND-PASS-REVIEW.md"
 STATE_PATH = REPO_ROOT / ".planning/STATE.md"
-LATIN_STRUCTURE_PATH = REPO_ROOT / "LATIN-STRUCTURE.md"
+LATIN_STRUCTURE_PATH = REPO_ROOT / "docs/latin-structure.md"
 
 
 def _review_field(name: str) -> str:

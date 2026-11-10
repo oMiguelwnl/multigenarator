@@ -20,8 +20,13 @@ nav:
   - HTTP API and jobs: api.md
   - Migration: migration.md
   - Roadmap implementation: roadmap-4-implementation-plan.md
+  - Roadmap delivery: roadmap-4-native-implementation.md
   - Roadmap analysis: roadmap-4-analysis.md
   - Implementation file inventory: roadmap-4-file-inventory.md
+  - Language structures:
+      - Classical Latin: latin-structure.md
+      - Korean: korean-structure.md
+      - Japanese: japanese-structure.md
   - Decisions:
       - Native architecture: adr/0001-native-architecture.md
       - Semantic cards and editions: adr/0002-semantic-cards-and-editions.md

@@ -282,7 +282,7 @@ class LiteLLMSentenceAdapter:
 
     def generate_latin_cards(self, seeds: list) -> list[dict]:
         """Use structured LLM output to generate full Latin cards matching LatinGeneratedCard.
-        Ensures 'gramatica' follows the exact short format from LATIN-STRUCTURE.md.
+        Ensures 'gramatica' follows the exact short format from docs/latin-structure.md.
         Includes basic self-correction loop using LatinCardValidationService to reduce errors.
         """
         if not seeds or LatinCardGenerationSeed is None:

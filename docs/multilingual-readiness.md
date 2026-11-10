@@ -116,7 +116,7 @@ sem aprovar conteúdo nem representar os quatro aplicativos exigidos pelo plano.
 O ensaio PostgreSQL 17.11 passou em duas bases descartáveis locais, com backup,
 restauração, migração, conservação do legado e rollback. Nenhuma base existente
 do usuário foi migrada. Os resultados de testes e commits ficam no relatório
-`ROADMAP_4_NATIVE_IMPLEMENTATION.md`, na raiz do projeto.
+[roadmap-4-native-implementation.md](roadmap-4-native-implementation.md).
 
 ## Pendência que permanece
 

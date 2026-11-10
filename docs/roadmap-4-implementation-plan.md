@@ -31,7 +31,7 @@ versionadas controlam a ativação. GSDD não é usado.
    projection/export -> history -> adaptive; revisar os limites entre módulos.
    Executar suite existente, novos testes, lint, build e validação de migrations.
 6. Documentação/entrega: README, arquitetura, domínio, banco/API/migração, ADRs e
-   `ROADMAP_4_NATIVE_IMPLEMENTATION.md`, com matriz de cada requisito, comandos,
+   `docs/roadmap-4-native-implementation.md`, com matriz de cada requisito, comandos,
    evidências e bloqueios externos explícitos. Commits por domínio, somente
    arquivos da tarefa; sem incluir alterações anteriores do usuário.
 

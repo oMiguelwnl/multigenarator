@@ -28,6 +28,7 @@ webdav-secrets*.json
 
 # Editor, OS, and local tool state
 .worktrees/
+.opencode/
 .zed/
 .vscode/
 .idea/
@@ -40,6 +41,7 @@ webdav-secrets*.json
 .multilang/highlights/raw/
 .multilang/highlights/cache/
 .multilang/highlights/sync/
+/exports/
 *.apkg
 *.mp3
 *.wav

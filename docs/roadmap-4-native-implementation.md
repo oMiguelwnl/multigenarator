@@ -2,22 +2,22 @@
 
 Branch: `feature/roadmap-4-0-native-architecture`. Baseline: `c13d603`.
 Solicitações: `info1.md` e `info2.md`. Contrato detalhado:
-[plano mestre v4](docs/multilingual-lexical-adaptive-plan-v4.md).
+[plano mestre v4](multilingual-lexical-adaptive-plan-v4.md).
 
-Complemento de 2026-09-12: [preparação linguística e fluxo de revisão](docs/vocabulary-preparation.md)
-e [resultados reais por língua](docs/multilingual-readiness.md). Este complemento
+Complemento de 2026-09-12: [preparação linguística e fluxo de revisão](vocabulary-preparation.md)
+e [resultados reais por língua](multilingual-readiness.md). Este complemento
 preserva exatamente os fields Anki, acrescenta fontes/modelos locais, importação
 de sentidos e formas revisados e rascunhos de conteúdo retomáveis. O ensaio em
 PostgreSQL 17.11 foi executado e passou; a seção histórica abaixo descreve a
 validação da entrega inicial até `6149619`.
 
-Complemento de 2026-09-13: [qualificação, revisão e calibração](docs/linguistic-qualification.md)
-e [plano passo a passo](docs/superpowers/plans/2026-09-13-linguistic-qualification.md).
+Complemento de 2026-09-13: [qualificação, revisão e calibração](linguistic-qualification.md)
+e [plano passo a passo](superpowers/plans/2026-09-13-linguistic-qualification.md).
 Acrescenta medição de ocorrências/documentos, critérios propostos separados da
 política aprovada, revisão local retomável, autenticação das decisões, calibração
 com avaliação separada e preparação de pilotos reais por idioma. A integração
 reutiliza o importador, a geração, o áudio e a exportação nativos; os campos Anki
-continuam iguais. Os [resultados e limites desta etapa](docs/linguistic-qualification-results.md)
+continuam iguais. Os [resultados e limites desta etapa](linguistic-qualification-results.md)
 são registrados separadamente dos testes e aprovações históricos abaixo.
 
 Esta entrega implementa mecanismos nativos dentro do Multilang: domínio,
@@ -34,7 +34,7 @@ Antes: aplicação Python/Typer com serviços de geração, jobs e itens legados
 SQLAlchemy/Alembic, providers existentes, caches de texto/áudio e exporters
 genanki. Identidade e GUID em alguns caminhos dependem de job/ordem; policies
 linguísticas e fontes ficam distribuídas. O relatório anterior à implementação
-está em [análise](docs/roadmap-4-analysis.md).
+está em [análise](roadmap-4-analysis.md).
 
 Agora: os mesmos diretórios `domain`, `services`, `repositories` e `db` recebem
 contratos versionados, identidades semânticas, revisões imutáveis e edições.
@@ -130,7 +130,7 @@ Os testes sintéticos comprovam invariantes de software e escala, apenas.
 
 Foi criada a revisão Alembic `20260912_20`, filha de `20260828_19`, com 18
 tabelas adicionais. Os nomes, entidades e transações estão em
-[banco](docs/database.md). Foram implementados e testados snapshot, clone,
+[banco](database.md). Foram implementados e testados snapshot, clone,
 upgrade/downgrade, conservação do legado, detecção de drift, replay do journal,
 rollback sem perda silenciosa e adoção do SQLite legado sem stamp.
 
@@ -142,7 +142,7 @@ Upgrade e downgrade nativos diretos exigem autorização vinculada à prévia.
 
 Nenhuma base real foi atualizada e nenhum histórico Anki foi reescrito. O
 processo de aplicação exige evidência e confirmação vinculada à prévia.
-[Migração](docs/migration.md) documenta os comandos e as limitações.
+[Migração](migration.md) documenta os comandos e as limitações.
 
 ## Revisão e validação da entrega inicial até `6149619`
 
@@ -218,7 +218,7 @@ vínculos contextuais revisados e concluir sem repetir a chamada ao provedor.
 
 Os resultados reais são 22 modelos disponíveis, 24 lotes, 260.439 candidatos
 lexicais, 71.940 registros de possíveis flexões e 4.400 frases de diagnóstico.
-Não equivalem a cards aprovados. O [relatório por língua](docs/multilingual-readiness.md)
+Não equivalem a cards aprovados. O [relatório por língua](multilingual-readiness.md)
 expõe as recusas de alinhamento, divergências, limitações das fontes, hashes e
 entradas de revisão ainda necessárias.
 
@@ -247,7 +247,7 @@ a provedores. Nenhuma correção de produção foi feita para mascarar esse prob
 Evidências locais principais: `.multilang/verification/native-completion-tests.xml`,
 `native-completion-scale.xml`, `postgresql/run/native-postgresql.xml`,
 `anki-backend/report.json`, `wheel-completion-report.json` e
-`real-languages/`. O [guia linguístico](docs/vocabulary-preparation.md)
+`real-languages/`. O [guia linguístico](vocabulary-preparation.md)
 documenta os comandos e a distinção entre biblioteca instalada, material preparado
 e conteúdo efetivamente aprovado. Nenhuma chamada paga ou deploy foi executado.
 
@@ -310,7 +310,7 @@ precisam de novas medições antes de aumentar a carga e o número de réplicas.
 
 ## Arquivos alterados
 
-O [inventário da entrega](docs/roadmap-4-file-inventory.md) lista código, testes,
+O [inventário da entrega](roadmap-4-file-inventory.md) lista código, testes,
 configuração e o manifest integral dos assets copiados. Os arquivos `.planning`
 que já estavam modificados/staged, os planos e
 evidências locais anteriores, `tests/planning` preexistente e `info1.md`/`info2.md`
