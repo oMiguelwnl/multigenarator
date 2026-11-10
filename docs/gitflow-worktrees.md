@@ -112,8 +112,8 @@ env -u MULTILANG_DATABASE_URL MULTILANG_FORBID_NETWORK=1 MULTILANG_FORBID_PROVID
   uv run --no-sync pytest tests/services/test_frequency_decks.py -q
 git diff --check
 git diff
-git add caminho/do/arquivo
-git commit -m "feat: descreve a mudança"
+git add path/to/file
+git commit -m "feat: describe the change"
 ```
 
 Antes de integrar, atualize a branch da tarefa com a base revisada, resolva
@@ -122,14 +122,14 @@ compartilhadas; não reescreva o histórico de outros colaboradores.
 
 ## Integração e versões
 
-Use Conventional Commits em todos os novos commits, incluindo merges
+Use Conventional Commits em inglês em todos os novos commits, incluindo merges
 (`chore(merge): ...`), e nos títulos de PRs. Abra PRs com o destino da tabela. Descreva o problema resolvido e a validação
 executada. Prefira merge commits para preservar a relação entre branches.
 Se a integração for local, execute no worktree limpo da branch de destino:
 
 ```bash
 # No worktree de develop, após revisão e checks:
-git merge --no-ff feature/minha-tarefa -m "chore(merge): integra feature/minha-tarefa"
+git merge --no-ff feature/my-task -m "chore(merge): merge feature/my-task"
 ```
 
 Não troque a branch de outro worktree para executar esse comando. Caso precise

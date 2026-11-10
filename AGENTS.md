@@ -82,7 +82,7 @@ Project skills are stored in `.agents/skills/`. Use relevant skills when they he
 - For existing worktrees without project-local Codex rules, use `git -C /absolute/path/to/checkout add ...` and `git -C /absolute/path/to/checkout commit ...`; this machine has scoped allow rules for the current Multilang checkouts. Preserve hooks and branch protections.
 
 - All new commits across this project must follow Conventional Commits 1.0.0 and the project policy in CONTRIBUTING.md. Preserve historical commits.
-- Use lowercase types: feat, fix, docs, style, refactor, perf, test, build, ci, chore, revert. Optional scopes use lowercase letters, digits, dots, underscores, slashes or hyphens. Provide a concrete description in Portuguese or English.
+- Use lowercase types: feat, fix, docs, style, refactor, perf, test, build, ci, chore, revert. Optional scopes use lowercase letters, digits, dots, underscores, slashes or hyphens. Write all commit messages in English only (never in Portuguese), providing a concrete description.
 - Use `feat` for features, `fix` for bug fixes; mark breaking changes with `!` or a `BREAKING CHANGE:` footer. Separate body/footer from the subject with a blank line.
 - Merge messages and PR titles must also follow the format; use `chore(merge): ...`, not `merge: ...` or Git's default merge title. Reverts use `revert: ...`.
 - The local commit-msg hook is shared across worktrees through core.hooksPath. Do not bypass it with --no-verify. Check existing hooks before configuring another clone.

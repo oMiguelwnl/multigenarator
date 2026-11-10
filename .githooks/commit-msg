@@ -1,0 +1,73 @@
+#!/bin/sh
+""":"
+if command -v python3 >/dev/null 2>&1 && python3 -c "import sys" >/dev/null 2>&1; then
+  exec python3 "$0" "$@"
+elif command -v python >/dev/null 2>&1 && python -c "import sys" >/dev/null 2>&1; then
+  exec python "$0" "$@"
+elif [ -x "$(dirname "$0")/../.venv/Scripts/python.exe" ]; then
+  exec "$(dirname "$0")/../.venv/Scripts/python.exe" "$0" "$@"
+elif [ -x "$(dirname "$0")/../.venv/bin/python" ]; then
+  exec "$(dirname "$0")/../.venv/bin/python" "$0" "$@"
+elif command -v uv >/dev/null 2>&1; then
+  exec uv run --no-sync python "$0" "$@"
+fi
+echo "Conventional Commits: Python 3 interpreter not found." >&2
+exit 1
+":"""
+# Validate new commit messages in English; standard library only, no provider calls.
+import re
+import sys
+from pathlib import Path
+
+HEADER = re.compile(
+    r"(?P<type>feat|fix|docs|style|refactor|perf|test|build|ci|chore|revert)"
+    r"(?:\([a-z0-9][a-z0-9._/-]*\))?!?: (?P<desc>\S[^\r\n]*)"
+)
+
+PORTUGUESE_DIACRITICS = re.compile(r"[áàâãéêíóôõúçÁÀÂÃÉÊÍÓÔÕÚÇ]")
+PORTUGUESE_WORDS = re.compile(
+    r"\b("
+    r"adiciona|adicionado|corrige|corrigido|atualiza|atualizado|integra|integrado|"
+    r"configura|configurado|desfaz|altera|implementa|documenta|melhora|refatora|"
+    r"ajusta|cria|limpa|apaga|exclui|impede|exige|permite|mudanca|mudancas|"
+    r"validacao|padrao|versao|correcao|arquivo|arquivos|diretorio|idioma|idiomas|"
+    r"testes|codigo|funcionalidade"
+    r")\b",
+    re.IGNORECASE,
+)
+
+
+def main() -> int:
+    try:
+        if len(sys.argv) != 2:
+            raise ValueError("missing commit message file path")
+        with Path(sys.argv[1]).open("rb") as stream:
+            raw = stream.read(1024 * 1024 + 1)
+        if len(raw) > 1024 * 1024:
+            raise ValueError("commit message exceeds 1 MiB")
+        lines = raw.decode("utf-8").splitlines()
+        match = HEADER.fullmatch(lines[0]) if lines else None
+        if not match:
+            raise ValueError(
+                "use type(optional-scope): English description; "
+                "example: fix(audio): prevent stale cache reuse"
+            )
+        desc = match.group("desc")
+        if PORTUGUESE_DIACRITICS.search(desc) or PORTUGUESE_WORDS.search(desc):
+            raise ValueError("commit message description must be written in English")
+        if len(lines) > 1 and lines[1].strip() and not lines[1].startswith("#"):
+            raise ValueError("separate subject and body with a blank line")
+    except (OSError, UnicodeError, ValueError) as exc:
+        print(f"Conventional Commits: {exc}", file=sys.stderr)
+        print(
+            "Types: feat, fix, docs, style, refactor, perf, test, build, ci, chore, revert.",
+            file=sys.stderr,
+        )
+        print("Language: English only.", file=sys.stderr)
+        print("Merge: chore(merge): merge branch-name", file=sys.stderr)
+        return 1
+    return 0
+
+
+if __name__ == "__main__":
+    sys.exit(main())
