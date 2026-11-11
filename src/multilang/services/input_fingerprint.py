@@ -34,14 +34,19 @@ def build_input_fingerprint(
     if request.source_type == "frequency":
         cards_per_level = request.resolved_cards_per_level()
         if request.level is None:
-            return f"levels:1-3:cards:{cards_per_level}"
-        return f"level:{request.level}:cards:{cards_per_level}"
-
-    normalized = normalize_requested_item_keys(requested_item_keys)
-    digest = sha256("\n".join(normalized).encode("utf-8")).hexdigest()
-    if request.source_type == "kindle-highlights" and request.highlight_input is HighlightInputMode.VOCABULARY:
-        return f"highlight-vocabulary-v1:items:{digest}"
-    return f"items:{digest}"
+            fingerprint = f"levels:1-3:cards:{cards_per_level}"
+        else:
+            fingerprint = f"level:{request.level}:cards:{cards_per_level}"
+    else:
+        normalized = normalize_requested_item_keys(requested_item_keys)
+        digest = sha256("\n".join(normalized).encode("utf-8")).hexdigest()
+        if request.source_type == "kindle-highlights" and request.highlight_input is HighlightInputMode.VOCABULARY:
+            fingerprint = f"highlight-vocabulary-v1:items:{digest}"
+        else:
+            fingerprint = f"items:{digest}"
+    if request.support_language is not None:
+        fingerprint += f":support:{request.support_language.value}"
+    return fingerprint
 
 
 def _length_frame(value: str) -> str:

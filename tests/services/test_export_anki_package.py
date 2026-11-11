@@ -21,7 +21,7 @@ from multilang.domain.exporting import (
     ExportCardIdentity,
     ExportCardRow,
 )
-from multilang.domain.jobs import SupportedLanguage
+from multilang.domain.jobs import SupportedLanguage, SupportLanguage
 from multilang.services import card_template_loader
 from multilang.services.anki_id_registry import AnkiIdKind, registry_id
 from multilang.services.export_anki_package import (
@@ -274,6 +274,19 @@ def test_build_english_frequency_model_localizes_visual_labels_only() -> None:
     assert "{{Translation}}" in qfmt
     assert '<div class="header">Definition:</div>' in spanish_model.templates[0]["qfmt"]
     assert '<div class="header">example:</div>' in spanish_model.templates[0]["qfmt"]
+
+
+def test_explicit_support_language_localizes_template_independently_of_deck_language() -> None:
+    model = build_multilang_model(
+        language=SupportedLanguage.DE,
+        support_language=SupportLanguage.PT,
+    )
+    qfmt = model.templates[0]["qfmt"]
+
+    assert '<div class="header">Definição:</div>' in qfmt
+    assert '<div class="header">Exemplo:</div>' in qfmt
+    assert "{{Definitions}}" in qfmt
+    assert "{{Translation}}" in qfmt
 
 
 def test_build_japanese_frequency_model_uses_japanese_note_type_and_template() -> None:

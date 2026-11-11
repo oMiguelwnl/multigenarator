@@ -7,7 +7,7 @@ from dataclasses import replace
 
 import pytest
 
-from multilang.domain.jobs import SupportedLanguage
+from multilang.domain.jobs import SupportedLanguage, SupportLanguage
 from multilang.domain.korean import (
     KoreanAnalyzerFingerprint,
     KoreanFrequencyEntry,
@@ -311,6 +311,30 @@ def test_build_frequency_level_backfills_rejected_candidates(monkeypatch) -> Non
         "word-2010",
     ]
     assert all(candidate.frequency_level == 3 for candidate in level)
+
+
+def test_build_frequency_level_applies_explicit_support_language_without_changing_lemmas(
+    monkeypatch,
+) -> None:
+    from multilang.services import frequency_decks
+
+    monkeypatch.setattr(
+        frequency_decks,
+        "iter_curated_frequency_candidates",
+        lambda language, scan_limit=6000: iter([(1, "Haus")]),
+    )
+
+    level = frequency_decks.build_frequency_level(
+        SupportedLanguage.DE,
+        level=1,
+        required_count_per_level=1,
+        allow_frequency_seed_fallback=True,
+        support_language=SupportLanguage.ES,
+    )
+
+    assert level[0].lemma == "Haus"
+    assert level[0].definition_language == "es"
+    assert level[0].translation_target_language == "es"
 
 
 def test_korean_build_frequency_level_requires_explicit_final_entries_and_never_wordfreq(monkeypatch) -> None:

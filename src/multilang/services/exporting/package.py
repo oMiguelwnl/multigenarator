@@ -17,7 +17,7 @@ from multilang.domain.exporting import (
     export_field_names_for_language_and_source,
     validate_korean_frequency_export_rows,
 )
-from multilang.domain.jobs import SupportedLanguage
+from multilang.domain.jobs import SupportedLanguage, SupportLanguage
 from multilang.domain.source_profiles import get_source_profile
 from multilang.services.anki_id_registry import (
     AnkiIdKind,
@@ -88,10 +88,15 @@ def build_multilang_model(
     *,
     source_type: str = "frequency",
     language: SupportedLanguage | None = None,
+    support_language: SupportLanguage | None = None,
 ) -> genanki.Model:
     profile = get_source_profile(source_type)
     try:
-        template = load_card_template(source_type=profile.source_type, language=language)
+        template = load_card_template(
+            source_type=profile.source_type,
+            language=language,
+            support_language=support_language,
+        )
     except ValueError as exc:
         raise ExportAnkiPackageError(str(exc)) from exc
     model_id = {
@@ -175,6 +180,7 @@ def export_anki_package(
     deck_name: str,
     cards_per_level: int = 1000,
     expected_items: int | None = None,
+    support_language: SupportLanguage | None = None,
 ) -> ExportAnkiPackageResult:
     assert_anki_id_registry_clean(production_roots=True)
     source_types = {row.identity.source_type for row in rows}
@@ -185,7 +191,11 @@ def export_anki_package(
     if len(languages) > 1:
         raise ExportAnkiPackageError("cannot export mixed languages in one note model")
     language = next(iter(languages), None)
-    model = build_multilang_model(source_type=source_type, language=language)
+    model = build_multilang_model(
+        source_type=source_type,
+        language=language,
+        support_language=support_language,
+    )
     is_korean_frequency = _is_korean_frequency(language=language, source_type=source_type)
     if is_korean_frequency:
         gate_result = validate_korean_frequency_export_rows(

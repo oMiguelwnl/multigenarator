@@ -190,7 +190,8 @@ def test_card_exports_mandarin_columns_are_migrated(tmp_path: Path) -> None:
 
 def test_generation_lease_branch_has_a_single_native_merge_head() -> None:
     scripts = ScriptDirectory.from_config(_alembic_config("sqlite://"))
-    assert scripts.get_heads() == ["20260914_22"]
+    assert scripts.get_heads() == ["20261111_23"]
+    assert scripts.get_revision("20261111_23").down_revision == "20260914_22"
     assert set(scripts.get_revision("20260914_22").down_revision) == {
         "20260912_20", "20260913_21",
     }

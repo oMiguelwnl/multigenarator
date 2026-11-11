@@ -272,6 +272,27 @@ def test_generate_frequency_resume_accepts_max_items() -> None:
     assert captured[0].concurrency == 1
 
 
+def test_generate_accepts_support_language_and_passes_it_to_the_request() -> None:
+    captured: list[GenerationRequest] = []
+    app = create_app(generate_executor=lambda request: captured.append(request))
+
+    result = runner.invoke(
+        app,
+        [
+            "generate",
+            "--language",
+            "de",
+            "--source",
+            "frequency",
+            "--support-language",
+            "es",
+        ],
+    )
+
+    assert result.exit_code == 0
+    assert captured[0].support_language.value == "es"
+
+
 def test_generate_rejects_parallel_workers_before_executor_construction() -> None:
     captured: list[GenerationRequest] = []
     app = create_app(generate_executor=lambda request: captured.append(request))

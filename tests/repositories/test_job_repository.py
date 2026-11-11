@@ -23,6 +23,7 @@ from multilang.domain.jobs import (
     JobStage,
     JobStatus,
     SupportedLanguage,
+    SupportLanguage,
 )
 from multilang.domain.korean import KoreanFrequencyJobAuthority, raw_bytes_sha256
 from multilang.domain.personal_sources import PersonalSourceRow
@@ -126,6 +127,27 @@ def test_completed_items_are_reused_on_rerun() -> None:
     assert repository.list_completed_item_keys("en-frequency-level-1") == {"hola"}
     assert rerun.completed_items == 1
     assert rerun.skipped_duplicates == 1
+
+
+def test_job_persists_explicit_support_language() -> None:
+    repository, session = build_repository()
+    request = GenerationRequest(
+        language=SupportedLanguage.DE,
+        source_type="frequency",
+        support_language=SupportLanguage.ES,
+    )
+
+    job = repository.create_job(
+        request=request,
+        run_key="de-frequency-support-es",
+        source_fingerprint="level-1",
+        total_items=1,
+    )
+    session.expire_all()
+    persisted = repository.get_job(job.id)
+
+    assert persisted is not None
+    assert persisted.support_language == "es"
 
 
 def test_corrupted_resume_state_returns_diagnostic() -> None:

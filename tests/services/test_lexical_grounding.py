@@ -8,7 +8,7 @@ from hashlib import sha256
 import pytest
 
 from multilang.domain.highlights import HighlightCandidate
-from multilang.domain.jobs import SupportedLanguage
+from multilang.domain.jobs import SupportedLanguage, SupportLanguage
 from multilang.domain.korean import (
     KoreanAnalysisAlternative,
     KoreanAnalyzerFingerprint,
@@ -212,6 +212,42 @@ def test_grounding_prefers_study_form_and_manual_language_policy() -> None:
     assert candidate.provenance.definition is not None
     assert candidate.provenance.definition.source == "manual"
     assert candidate.provenance.definition.fallback_reason == "ambiguous_source_meanings"
+
+
+def test_word_list_grounding_uses_selected_support_language_and_keeps_study_lemma() -> None:
+    generator = StubDefinitionGenerator()
+    service = LexicalGroundingService(
+        lookup=StubLookup(
+            {
+                "haus": LexicalRecord(
+                    term="Haus",
+                    display_form="Haus",
+                    lemma="Haus",
+                    definitions=["a building where people live"],
+                    definition_language="en",
+                    part_of_speech="noun",
+                    ipa="/haʊs/",
+                )
+            }
+        ),
+        definition_generator=generator,
+        definition_reviewer=AdvisoryDefinitionReviewer(),
+    )
+
+    candidate = service.ground_word_list_item(
+        language=SupportedLanguage.DE,
+        item=ParsedWordListItem(
+            line_number=1,
+            submitted_form="Haus",
+            display_form="Haus",
+            item_key="haus",
+        ),
+        support_language=SupportLanguage.PT,
+    )
+
+    assert candidate.lemma == "Haus"
+    assert candidate.translation_target_language == "pt"
+    assert generator.calls[0].target_language == "pt"
 
 
 def test_grounding_rate_limits_definition_and_pronunciation_provider_calls() -> None:

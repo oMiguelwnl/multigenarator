@@ -58,6 +58,7 @@ class GenerationJob(Base):
     id: Mapped[str] = mapped_column(String(36), primary_key=True)
     run_key: Mapped[str] = mapped_column(String(255), nullable=False, unique=True, index=True)
     language: Mapped[str] = mapped_column(String(8), nullable=False)
+    support_language: Mapped[str | None] = mapped_column(String(8), nullable=True)
     source_type: Mapped[str] = mapped_column(String(32), nullable=False)
     source_fingerprint: Mapped[str] = mapped_column(String(255), nullable=False)
     status: Mapped[str] = mapped_column(String(32), nullable=False)

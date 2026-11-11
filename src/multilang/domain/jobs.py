@@ -37,6 +37,12 @@ class SupportedLanguage(str, Enum):
     KO = "ko"
 
 
+class SupportLanguage(str, Enum):
+    EN = "en"
+    PT = "pt"
+    ES = "es"
+
+
 class JobStage(str, Enum):
     INGEST = "ingest"
     ENRICH = "enrich"
@@ -297,6 +303,7 @@ class RetryPolicy(BaseModel):
 class GenerationRequest(BaseModel):
     language: SupportedLanguage
     source_type: SourceType
+    support_language: SupportLanguage | None = None
     level: int | None = Field(default=None, ge=1, le=3)
     cards_per_level: int | None = Field(default=None, ge=1)
     input_file: Path | None = None
@@ -324,6 +331,15 @@ class GenerationRequest(BaseModel):
     def grammar_requires_korean(self):
         if self.source_type == "korean-grammar" and self.language is not SupportedLanguage.KO:
             raise ValueError("Korean grammar requires language ko")
+        return self
+
+    @model_validator(mode="after")
+    def korean_support_language_is_supported(self):
+        if (
+            self.language is SupportedLanguage.KO
+            and self.support_language not in {None, SupportLanguage.PT}
+        ):
+            raise ValueError("Korean generation currently supports only pt")
         return self
 
     def resolved_cards_per_level(self) -> int:
@@ -368,5 +384,6 @@ __all__ = [
     "JobStatus",
     "ResumeDiagnostic",
     "RetryPolicy",
+    "SupportLanguage",
     "SupportedLanguage",
 ]

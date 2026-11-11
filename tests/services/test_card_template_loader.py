@@ -250,6 +250,17 @@ def test_project_normal_template_groups_example_sentence_and_audio_in_one_row() 
     assert '{{FrontSide}}' in template.back
 
 
+def test_template_labels_follow_selected_support_language() -> None:
+    template = load_card_template(
+        source_type="frequency",
+        language=SupportedLanguage.DE,
+        support_language="pt",
+    )
+
+    assert "Definição:" in template.front
+    assert "Exemplo:" in template.front
+
+
 def test_frequency_hero_dark_keeps_serif_and_full_width_translation() -> None:
     template = load_card_template(source_type="frequency")
     assert "--max-width-card: 620px;" in template.css

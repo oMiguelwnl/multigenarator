@@ -13,7 +13,7 @@ from multilang.domain.exporting import (
     MANDARIN_EXPORT_CARD_FIELD_NAMES,
     export_field_names_for_language_and_source,
 )
-from multilang.domain.jobs import SupportedLanguage
+from multilang.domain.jobs import SupportedLanguage, SupportLanguage
 from multilang.domain.source_profiles import get_source_profile
 
 TEMPLATE_ROOT: Traversable = files("multilang").joinpath("templates")
@@ -45,7 +45,12 @@ class CardTemplate:
     source_template_name: str
 
 
-def load_card_template(source_type: str, *, language: SupportedLanguage | None = None) -> CardTemplate:
+def load_card_template(
+    source_type: str,
+    *,
+    language: SupportedLanguage | None = None,
+    support_language: SupportLanguage | None = None,
+) -> CardTemplate:
     """Load and validate the card template selected by a source profile."""
 
     if source_type == "korean-grammar" and language != SupportedLanguage.KO:
@@ -89,6 +94,8 @@ def load_card_template(source_type: str, *, language: SupportedLanguage | None =
             css=f"{base_template.css}\n\n{mandarin_template.css}{frequency_css}",
             source_template_name="mandarin_card",
         )
+        if support_language is not None:
+            template = _localize_support_language(template, support_language)
         validate_template_references(template, field_names=MANDARIN_EXPORT_CARD_FIELD_NAMES)
         return template
     if is_ja:
@@ -115,6 +122,8 @@ def load_card_template(source_type: str, *, language: SupportedLanguage | None =
                 back=template.back.replace("{{Sentence Translation}}", ""),
                 css=template.css, source_template_name="japanese_highlight_card",
             )
+        if support_language is not None:
+            template = _localize_support_language(template, support_language)
         validate_template_references(template, field_names=(
             JAPANESE_HIGHLIGHT_EXPORT_CARD_FIELD_NAMES if source_type == "kindle-highlights"
             else JAPANESE_EXPORT_CARD_FIELD_NAMES))
@@ -145,6 +154,8 @@ def load_card_template(source_type: str, *, language: SupportedLanguage | None =
             '  word-break: keep-all;\n  overflow-wrap: anywhere;\n}\n',
             source_template_name=template.source_template_name,
         )
+    if support_language is not None:
+        template = _localize_support_language(template, support_language)
     field_names = export_field_names_for_language_and_source(
         language=SupportedLanguage.LA if is_la else language or SupportedLanguage.EN,
         source_type=profile.source_type,
@@ -201,6 +212,42 @@ def _localize_english_frequency_labels(template: CardTemplate) -> CardTemplate:
             '<div class="translationLabel">Translation</div>',
             '<div class="translationLabel">Tradução</div>',
         ),
+        back=template.back,
+        css=template.css,
+        source_template_name=template.source_template_name,
+    )
+
+
+def _localize_support_language(
+    template: CardTemplate,
+    support_language: SupportLanguage,
+) -> CardTemplate:
+    labels = {
+        SupportLanguage.EN: ("Definition:", "Example:", "Translation"),
+        SupportLanguage.PT: ("Definição:", "Exemplo:", "Tradução"),
+        SupportLanguage.ES: ("Definición:", "Ejemplo:", "Traducción"),
+    }
+    definition, example, translation = labels[support_language]
+    replacements = {
+        '<div class="header">Definition:</div>': f'<div class="header">{definition}</div>',
+        '<div class="header">Definição:</div>': f'<div class="header">{definition}</div>',
+        '<div class="header">Definición:</div>': f'<div class="header">{definition}</div>',
+        '<div class="header">example:</div>': f'<div class="header">{example}</div>',
+        '<div class="header">Example:</div>': f'<div class="header">{example}</div>',
+        '<div class="header">Exemplo:</div>': f'<div class="header">{example}</div>',
+        '<div class="header">Ejemplo:</div>': f'<div class="header">{example}</div>',
+        '<div class="translationLabel">Translation</div>':
+            f'<div class="translationLabel">{translation}</div>',
+        '<div class="translationLabel">Tradução</div>':
+            f'<div class="translationLabel">{translation}</div>',
+        '<div class="translationLabel">Traducción</div>':
+            f'<div class="translationLabel">{translation}</div>',
+    }
+    front = template.front
+    for source, target in replacements.items():
+        front = front.replace(source, target)
+    return CardTemplate(
+        front=front,
         back=template.back,
         css=template.css,
         source_template_name=template.source_template_name,

@@ -69,6 +69,25 @@ def test_english_definition_language_is_separate_from_portuguese_translation() -
     assert french_policy.translation_target_language == "en"
 
 
+def test_explicit_support_language_overrides_legacy_policy_for_deck() -> None:
+    german_default = policy_for_language(SupportedLanguage.DE)
+    german_portuguese = policy_for_language(
+        SupportedLanguage.DE,
+        support_language=SupportedLanguage.PT,
+    )
+    german_spanish = policy_for_language(
+        SupportedLanguage.DE,
+        support_language=SupportedLanguage.ES,
+    )
+
+    assert german_default.definition_language == "en"
+    assert german_default.translation_target_language == "en"
+    assert german_portuguese.definition_language == "pt"
+    assert german_portuguese.translation_target_language == "pt"
+    assert german_spanish.definition_language == "es"
+    assert german_spanish.translation_target_language == "es"
+
+
 def test_candidate_models_pending_state_without_fabricated_ipa() -> None:
     candidate = LexicalCardCandidate(
         submitted_form="onde quer que",

@@ -15,7 +15,7 @@ from multilang.cli_commands.common import TEST_MODE_CARDS_PER_LEVEL
 from multilang.domain.deck_audit import audit_deck_package
 from multilang.domain.exporting import ExportArtifactFormat
 from multilang.domain.highlights import HighlightInputMode
-from multilang.domain.jobs import GenerationRequest, SupportedLanguage
+from multilang.domain.jobs import GenerationRequest, SupportedLanguage, SupportLanguage
 from multilang.domain.webdav import WebDAVError
 from multilang.services.deck_audit_reader import read_apkg_cards
 from multilang.services.deck_audit_reports import write_deck_audit_reports
@@ -158,6 +158,13 @@ def register_commands(cli: typer.Typer, dependencies: Dependencies) -> None:
             str,
             typer.Option("--source", help="Input mode: frequency, word-list, or highlights."),
         ],
+        support_language: Annotated[
+            SupportLanguage | None,
+            typer.Option(
+                "--support-language",
+                help="Language for definitions, sentence translations, and card labels.",
+            ),
+        ] = None,
         level: Annotated[
             int | None,
             typer.Option("--level", min=1, max=3, help="Frequency level 1-3."),
@@ -283,6 +290,7 @@ def register_commands(cli: typer.Typer, dependencies: Dependencies) -> None:
         request = GenerationRequest(
             language=language,
             source_type=internal_source,
+            support_language=support_language,
             level=level,
             cards_per_level=resolved_cards_per_level,
             input_file=input_file,
