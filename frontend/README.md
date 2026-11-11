@@ -4,6 +4,9 @@ Interface local em português, React + TypeScript + Vite. O escopo desta entrega
 o painel administrativo: produções, configuração e resultado/revisão. Loja e
 gerador público permanecem em planejamento.
 
+A direção visual escolhida é grafite + azul. Paleta, hierarquia, comportamento
+responsivo e referências estão em [DESIGN.md](DESIGN.md).
+
 ## Executar
 
 Com Node.js 22.20+ e npm, a partir de `frontend/`:

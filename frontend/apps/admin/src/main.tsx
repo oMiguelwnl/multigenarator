@@ -61,29 +61,30 @@ function App() {
   const saveDraft = () => { if (!draft.name.trim()) { setToast('Dê um nome à produção antes de salvar.'); return; } setDrafts([...drafts, { ...draft, name: draft.name.trim() }]); setToast('Rascunho salvo nesta sessão. Recarregar a página limpa os dados demonstrativos.'); go('productions'); };
 
   return <div className="shell">
+    <a className="skip-link" href="#conteudo" onClick={event => { event.preventDefault(); document.getElementById('conteudo')?.focus(); }}>Ir para o conteúdo</a>
     <aside className="sidebar">
       <a className="brand" href="#producoes" onClick={() => go('productions')}><span className="brand-mark">m<span>·</span></span>multilang<span className="brand-period">.</span></a>
       <div className="workspace"><span className="workspace-icon"><Icon name="layers"/></span><div>Estúdio de produção<small>Seu espaço de trabalho</small></div></div>
       <p className="nav-label">OPERAÇÃO</p>
       <nav aria-label="Navegação principal">
-        <a className={screen === 'productions' ? 'active' : ''} href="#producoes"><Icon name="grid"/>Produções<span className="nav-count">{1 + drafts.length}</span></a>
-        <a className={screen === 'new' ? 'active' : ''} href="#nova"><Icon name="plus"/>Nova produção</a>
-        <a className={screen === 'result' ? 'active' : ''} href="#resultado"><Icon name="book"/>Resultado e revisão</a>
+        <a className={screen === 'productions' ? 'active' : ''} aria-current={screen === 'productions' ? 'page' : undefined} href="#producoes"><Icon name="grid"/>Produções<span className="nav-count">{1 + drafts.length}</span></a>
+        <a className={screen === 'new' ? 'active' : ''} aria-current={screen === 'new' ? 'page' : undefined} href="#nova"><Icon name="plus"/>Nova produção</a>
+        <a className={screen === 'result' ? 'active' : ''} aria-current={screen === 'result' ? 'page' : undefined} href="#resultado"><Icon name="book"/>Resultado e revisão</a>
       </nav>
-      <div className="sidebar-note"><span className="tiny-label">UM PASSO DE CADA VEZ</span><p>Do vocabulário ao<br/>próximo aprendizado.</p><div className="mini-lines"><i/><i/><i/></div></div>
+      <div className="sidebar-note"><span className="tiny-label">FLUXO DE TRABALHO</span><p>Configure a produção.<br/>Confira o resultado ao final.</p></div>
       <div className="profile"><span className="avatar">MR</span><div>Meu estúdio<small>Administrador · demonstração</small></div></div>
     </aside>
 
-    <main>
+    <main id="conteudo" tabIndex={-1}>
       <header className="topbar"><span>Estúdio <span className="crumb">/</span> {screen === 'new' ? 'Nova produção' : screen === 'result' ? 'Resultado e revisão' : 'Produções'}</span><span className="prototype"><span className="dot"/>Protótipo navegável</span></header>
       <div className="demo-banner">Dados demonstrativos · Alterações duram apenas nesta sessão. Nenhuma geração real é executada.</div>
       <div className="page">
       {screen === 'productions' && <>
-        <div className="page-heading"><div><p className="eyebrow">SEU ESTÚDIO, EM MOVIMENTO</p><h1>Produções</h1><p className="muted">Acompanhe cada etapa. Encontre o que merece sua atenção.</p></div><button className="button primary" onClick={() => go('new')}><Icon name="plus"/>Nova produção</button></div>
+        <div className="page-heading"><div><p className="eyebrow">PAINEL DE PRODUÇÃO</p><h1>Produções</h1><p className="muted">Acompanhe cada etapa e confira os resultados.</p></div><button className="button primary" onClick={() => go('new')}><Icon name="plus"/>Nova produção</button></div>
         <div className="stats"><Stat icon="layers" label="Produções nesta sessão" value={String(1 + drafts.length)} caption="Inclui rascunhos e demonstrações"/><Stat icon="check" label="Cartões concluídos" value={String(cards.length - pending).padStart(2, '0')} caption="Estado ilustrativo de validação"/><Stat icon="clock" label="Itens para conferir" value={String(pending).padStart(2, '0')} caption="Revisões e resultados incompletos" accent/></div>
         <section className="attention"><span className="attention-icon"><Icon name="book" size={26}/></span><div><span className="tiny-label">PRÓXIMA AÇÃO</span><h2>Uma produção está pronta para você conferir.</h2><p>Explore os cartões de exemplo e veja como tratar as pendências.</p></div><button className="text-button" onClick={() => go('result')}>Revisar resultado <Icon name="arrow" size={16}/></button></section>
         <section className="panel production-panel"><div className="panel-heading"><div><h2>Suas produções</h2><p className="muted">Do primeiro rascunho à edição final.</p></div><Search value={productionQuery} onChange={setProductionQuery} placeholder="Buscar produção"/></div>
-          <div className="table-wrap"><table><thead><tr><th>PRODUÇÃO</th><th>MODALIDADE</th><th>SITUAÇÃO</th><th>ITENS</th><th><span className="sr-only">Abrir</span></th></tr></thead><tbody>
+          <div className="table-wrap" role="region" aria-label="Lista de produções; role horizontalmente para ver todas as colunas" tabIndex={0}><table><thead><tr><th>PRODUÇÃO</th><th>MODALIDADE</th><th>SITUAÇÃO</th><th>ITENS</th><th><span className="sr-only">Abrir</span></th></tr></thead><tbody>
           {matchingDemo && <tr><td><div className="production-name"><span className="language-tile">EN</span><div><strong>Vocabulário essencial · Inglês</strong><small>Demonstração · edição de exemplo</small></div></div></td><td>Frequência</td><td><Badge status="review"/></td><td>6 cartões</td><td><button className="text-button" onClick={() => go('result')} aria-label="Abrir resultado de Inglês">Abrir <Icon name="arrow" size={15}/></button></td></tr>}
           {drafts.filter(d => d.name.toLocaleLowerCase().includes(productionQuery.toLocaleLowerCase().trim())).map((d, i) => <tr key={i}><td><div className="production-name"><span className="language-tile neutral"><Icon name="layers"/></span><div><strong>{d.name}</strong><small>{d.language} · salvo nesta sessão</small></div></div></td><td>{d.kind}</td><td><span className="badge draft">Rascunho</span></td><td>—</td><td><button className="text-button" onClick={() => { setDraft(d); go('new'); }}>Editar <Icon name="arrow" size={15}/></button></td></tr>)}
           </tbody></table></div>
@@ -128,7 +129,7 @@ function App() {
         </div> : <div className="review-detail empty"><Icon name="search" size={32}/><h2>Nenhum resultado</h2><p>Altere a busca ou volte para todos os cartões.</p><button className="button secondary" onClick={() => { setFilter('all'); setQuery(''); }}>Limpar filtros</button></div>}
         </div></section>
       </>}
-      <footer className="page-footer"><span>multilang<span className="brand-period">.</span> <span className="footer-caption">Feito para construir conhecimento.</span></span><span>Estúdio · Protótipo 01</span></footer>
+      <footer className="page-footer"><span>multilang<span className="brand-period">.</span> <span className="footer-caption">Estúdio de produção</span></span><span>Protótipo 02 · Grafite + azul</span></footer>
       </div>
     </main>
     {toast && <div className="toast" role="status">{toast}<button aria-label="Fechar mensagem" onClick={() => setToast('')}>×</button></div>}

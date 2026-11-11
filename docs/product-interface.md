@@ -24,9 +24,11 @@ discutir o fluxo. Fixtures em memória; sem chamadas de rede da aplicação.
 São seis registros fictícios de interface em inglês, com cenários de conclusão,
 revisão e falha. Indicadores e tempos não representam execução real.
 
-Direção visual proposta, ainda sujeita a avaliação: fundo claro, navegação verde,
-tipografia legível, informações operacionais compactas e prévia de cartão central.
-No celular, a revisão apresenta lista horizontal e detalhe abaixo.
+Direção visual escolhida pelo usuário: tema escuro sóbrio, grafite e azul.
+Superfícies neutras com níveis distintos, azul reservado a ações/seleção, cores
+semânticas para estados e tipografia auxiliar maior. Indicadores compõem um resumo
+único. No celular, navegação compacta, formulários empilhados, revisão com lista
+horizontal e detalhe abaixo. Tokens e critérios estão em `frontend/DESIGN.md`.
 
 ## Organização proposta
 
