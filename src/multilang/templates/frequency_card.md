@@ -169,18 +169,19 @@ body.nightMode {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 24px;
-  height: 24px;
+  width: auto;
+  height: auto;
   margin: 0;
   padding: 0;
-  border-radius: 50%;
-  background: #12213a;
-  border: 1px solid #24405f;
+  border-radius: 0;
+  background: transparent;
+  border: 0;
   color: var(--color-audio-button);
   text-decoration: none;
+  line-height: 0;
   vertical-align: middle;
 }
-.replay-button svg { width: 18px; height: 18px; }
+.replay-button svg { width: 20px; height: 20px; }
 .replay-button svg path { fill: var(--color-audio-button); }
 .replay-button svg circle { fill: none; stroke: none; }
 .replay-button:focus-visible,

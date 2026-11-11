@@ -264,6 +264,21 @@ def test_frequency_hero_dark_keeps_serif_and_full_width_translation() -> None:
     assert "overflow-wrap: anywhere;" in template.css
 
 
+def test_frequency_audio_icons_match_the_standard_replay_button() -> None:
+    frequency = load_card_template(source_type="frequency")
+    standard = load_card_template(source_type="korean-grammar", language=SupportedLanguage.KO)
+
+    for property_name in ("background", "border", "border-radius", "width", "height"):
+        assert _last_css_value(frequency.css, property_name, selector=".replay-button") == (
+            _last_css_value(standard.css, property_name, selector=".replay-button")
+        )
+    assert _last_css_value(frequency.css, "width", selector=".replay-button svg") == (
+        _last_css_value(standard.css, "width", selector=".replay-button svg")
+    )
+    assert "{{word_audio}}" in frequency.front
+    assert "{{sentence_audio}}" in frequency.front
+
+
 def test_korean_grammar_preserves_legacy_dark_layout_contract() -> None:
     template = load_card_template(source_type="korean-grammar", language=SupportedLanguage.KO)
     references = re.findall(r"{{[#/]?([^{}]+)}}", template.front + template.back)
