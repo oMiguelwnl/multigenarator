@@ -192,6 +192,9 @@ input:not([type=search]), select, textarea { display: block; width: 100%; margin
 textarea { resize: vertical; min-height: 90px; line-height: 1.6; }
 .two-fields { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
 .field-note { margin: 10px 0 0; font-size: 12px; font-weight: 400; line-height: 1.7; color: var(--text-muted); }
+.support-language-help { margin: -8px 0 20px; }
+.language-constraint { margin: -8px 0 20px; color: var(--warning); }
+select:disabled { color: var(--text-secondary); cursor: not-allowed; opacity: 1; }
 .source-box { display: flex; align-items: flex-start; gap: 13px; margin-bottom: 20px; padding: 16px; border: 1px solid var(--border); border-radius: 7px; background: var(--canvas); }
 .source-box > svg { color: var(--text-muted); }
 .source-box > div { min-width: 0; overflow-wrap: anywhere; }

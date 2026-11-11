@@ -4,6 +4,9 @@
 
 - Público: pessoas que estudam idiomas por conta própria com Anki.
 - Idioma inicial da interface: português; suporte a computador e celular.
+- Idioma de apoio por deck, separado do idioma estudado e da interface:
+  Português (`pt`), Inglês (`en`) ou Espanhol (`es`), conforme contrato `bdb0548`
+  da arquitetura. Para Coreano, apenas Português está disponível atualmente.
 - Três experiências: operação administrativa, loja de decks e gerador pessoal.
 - Loja e gerador compartilham conta e biblioteca; administração tem acesso restrito.
 - Frequência é o produto central; fundamentos, fonética e gramática complementam
@@ -23,6 +26,11 @@ Busca, filtros, edição, frente/verso, rascunhos e processamento simulado permi
 discutir o fluxo. Fixtures em memória; sem chamadas de rede da aplicação.
 São seis registros fictícios de interface em inglês, com cenários de conclusão,
 revisão e falha. Indicadores e tempos não representam execução real.
+Os registros usam Português como idioma de apoio. O seletor permite salvar
+rascunhos com outras opções válidas; a simulação fica disponível apenas para
+Inglês + Frequência + apoio em Português. O idioma de apoio aparece na lista,
+no resumo da configuração e no resultado. Alterar um rascunho não relabela os
+cartões demonstrativos de outra produção.
 
 Direção visual escolhida pelo usuário: tema escuro sóbrio, grafite e azul.
 Superfícies neutras com níveis distintos, azul reservado a ações/seleção, cores
@@ -48,9 +56,18 @@ ou restringe acesso a dados. Não colocar credenciais de provedores no frontend.
 - Entrega autorizada de áudio e downloads; prévia baseada nos templates reais.
 - Edições aprovadas e preservação de GUIDs na exportação e atualização.
 - Persistência de rascunhos e histórico; permissões por proprietário.
+- `supportLanguage` do protótipo corresponde a `support_language` (`pt`, `en`,
+  `es`) do backend. Novas produções devem enviar a escolha explícita, com Português
+  como padrão da interface, sem depender da política legada de valor ausente.
+- Na retomada, usar o idioma de apoio persistido no job, em modo somente leitura;
+  não sobrescrever jobs antigos que tenham valor ausente com o padrão de novas
+  produções. O backend continua responsável por rejeitar mudanças e combinações
+  inválidas. Ainda não há fluxo de retomada no protótipo.
 
 A branch visual deriva de `75af417` da arquitetura. Alterações posteriores não
 chegam automaticamente: combinar contratos e incorporar mudanças explicitamente.
+O contrato de idioma de apoio foi espelhado a partir de `bdb0548`, sem incorporar
+esse commit do backend à branch visual.
 Não substituir a fila existente nem executar comandos construídos do formulário.
 
 ## Etapas posteriores propostas

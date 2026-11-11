@@ -1,4 +1,18 @@
-import type { Card } from './model';
+import type { Card, Draft } from './model';
+
+// Keep result metadata tied to the fixture, independently of editable drafts.
+export const demoProduction = {
+  name: 'Vocabulário essencial · Inglês',
+  language: 'Inglês',
+  supportLanguage: 'pt',
+  kind: 'Frequência',
+} as const;
+
+export function canSimulateDraft(draft: Draft): boolean {
+  return draft.language === demoProduction.language
+    && draft.supportLanguage === demoProduction.supportLanguage
+    && draft.kind === demoProduction.kind;
+}
 
 // Illustrative interface fixtures, not reviewed vocabulary or production assets.
 export const demoCards: Card[] = [

@@ -30,7 +30,7 @@ Mantenha a validação TLS habilitada.
 ## Explorar
 
 1. Abra a produção demonstrativa ou clique em Nova produção.
-2. Mantenha Inglês + Frequência e clique em Simular produção.
+2. Mantenha Inglês + Frequência + apoio em Português e clique em Simular produção.
 3. Confira as etapas ilustrativas e o resultado com seis registros.
 4. Busque uma palavra, filtre pendências, vire o cartão e edite o conteúdo.
 5. Alterar uma frase invalida o áudio ilustrativo e exige nova revisão.
@@ -39,6 +39,14 @@ Outras configurações podem ser salvas como rascunhos nesta sessão. Os seletor
 representam o planejamento; não afirmam suporte qualificado para cada combinação.
 Editar e salvar um rascunho atualiza a mesma produção; Nova produção começa outro
 rascunho. As situações dos cartões aparecem por escrito na lista de revisão.
+O idioma de apoio é salvo por rascunho: Português (`pt`), Inglês (`en`) ou
+Espanhol (`es`). Coreano aceita apenas Português; selecionar Coreano ajusta o
+apoio para Português e avisa sobre a mudança. A escolha aparece no resumo e na
+lista de produções. O aplicativo continua em português.
+
+A simulação só usa a combinação dos fixtures: Inglês + Frequência + apoio em
+Português. Outras combinações válidas podem ser salvas, sem simulação. O resultado
+mostra o idioma dos seus próprios dados, independentemente do rascunho aberto.
 Todos os dados são em memória: recarregar descarta rascunhos e edições. As rotas
 de demonstração usam `#producoes`, `#nova` e `#resultado`.
 
@@ -46,6 +54,12 @@ Não há chamadas à API, provedores, banco, geração real, áudio real, export
 publicação comercial. Os textos são fixtures da interface, não inventários ou
 cartões aprovados. A prévia não é o template final do Anki. Nenhum resultado da
 curadoria da arquitetura é copiado ou certificado pelo protótipo.
+
+O contrato de idioma de apoio acompanha o commit `bdb0548` da arquitetura.
+O commit não foi incorporado por merge/cherry-pick: a adaptação é somente do
+protótipo. A futura integração deverá enviar `support_language` explicitamente e
+preservar o valor persistido ao retomar um job. Retomada de jobs ainda não existe
+nesta interface.
 
 ## Estrutura
 

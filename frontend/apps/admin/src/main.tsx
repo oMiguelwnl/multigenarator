@@ -1,12 +1,12 @@
 import React, { useEffect, useState } from 'react';
 import { createRoot } from 'react-dom/client';
-import { demoCards } from './demo';
-import { editCard, selectCards, canExport, saveProductionDraft } from './model';
+import { demoCards, demoProduction, canSimulateDraft } from './demo';
+import { editCard, selectCards, canExport, saveProductionDraft, availableSupportLanguages, isSupportLanguageAllowed, changeStudyLanguage, supportLanguageLabels } from './model';
 import type { Card, Draft } from './model';
 import './styles.css';
 
 type Screen = 'productions' | 'new' | 'result';
-const createDraft = (): Draft => ({ id: crypto.randomUUID(), name: 'Vocabulário essencial · Inglês', language: 'Inglês', kind: 'Frequência' });
+const createDraft = (): Draft => ({ id: crypto.randomUUID(), ...demoProduction });
 const stages = ['Vocabulário', 'Texto e tradução', 'Áudio', 'Validações', 'Resultado'];
 const labels = { ready: 'Concluído', review: 'Revisar', failed: 'Incompleto' };
 
@@ -58,11 +58,17 @@ function App() {
   const visible = selectCards(cards, query, filter);
   const current = visible.find(c => c.id === selected) || visible[0];
   const pending = cards.filter(c => c.status !== 'ready').length;
-  const sampleEnabled = draft.language === 'Inglês' && draft.kind === 'Frequência';
+  const sampleEnabled = canSimulateDraft(draft);
   const matchingDemo = 'vocabulário essencial inglês'.includes(productionQuery.toLocaleLowerCase().trim());
   const isEditingDraft = drafts.some(item => item.id === draft.id);
   const startNew = () => { setDraft(createDraft()); go('new'); };
-  const saveDraft = () => { if (!draft.name.trim()) { setToast('Dê um nome à produção antes de salvar.'); return; } setDrafts(previous => saveProductionDraft(previous, draft)); setToast(isEditingDraft ? 'Rascunho atualizado nesta sessão.' : 'Rascunho salvo nesta sessão. Recarregar a página limpa os dados demonstrativos.'); setDraft(createDraft()); go('productions'); };
+  const saveDraft = () => {
+    if (!draft.name.trim()) { setToast('Dê um nome à produção antes de salvar.'); return; }
+    if (!isSupportLanguageAllowed(draft.language, draft.supportLanguage)) { setToast('Selecione um idioma de apoio disponível para este idioma estudado.'); return; }
+    setDrafts(previous => saveProductionDraft(previous, draft));
+    setToast(isEditingDraft ? 'Rascunho atualizado nesta sessão.' : 'Rascunho salvo nesta sessão. Recarregar a página limpa os dados demonstrativos.');
+    setDraft(createDraft()); go('productions');
+  };
 
   return <div className="shell">
     <a className="skip-link" href="#conteudo" onClick={event => { event.preventDefault(); document.getElementById('conteudo')?.focus(); }}>Ir para o conteúdo</a>
@@ -89,8 +95,8 @@ function App() {
         <section className="attention"><span className="attention-icon"><Icon name="book" size={26}/></span><div><h2>Uma produção está pronta para você conferir.</h2><p>Explore os cartões de exemplo e veja como tratar as pendências.</p></div><button className="text-button" onClick={() => go('result')}>Revisar resultado <Icon name="arrow" size={16}/></button></section>
         <section className="panel production-panel"><div className="panel-heading"><div><h2>Suas produções</h2><p className="muted">Do primeiro rascunho à edição final.</p></div><Search value={productionQuery} onChange={setProductionQuery} placeholder="Buscar produção"/></div>
           <div className="table-wrap" role="region" aria-label="Lista de produções; role horizontalmente para ver todas as colunas" tabIndex={0}><table><thead><tr><th>PRODUÇÃO</th><th>MODALIDADE</th><th>SITUAÇÃO</th><th>ITENS</th><th><span className="sr-only">Abrir</span></th></tr></thead><tbody>
-          {matchingDemo && <tr><td><div className="production-name"><span className="language-tile">EN</span><div><strong>Vocabulário essencial · Inglês</strong><small>Demonstração · edição de exemplo</small></div></div></td><td>Frequência</td><td><Badge status="review"/></td><td>6 cartões</td><td><button className="text-button" onClick={() => go('result')} aria-label="Abrir resultado de Inglês">Abrir <Icon name="arrow" size={15}/></button></td></tr>}
-          {drafts.filter(d => d.name.toLocaleLowerCase().includes(productionQuery.toLocaleLowerCase().trim())).map(d => <tr key={d.id}><td><div className="production-name"><span className="language-tile neutral"><Icon name="layers"/></span><div><strong>{d.name}</strong><small>{d.language} · salvo nesta sessão</small></div></div></td><td>{d.kind}</td><td><span className="badge draft">Rascunho</span></td><td>—</td><td><button className="text-button" onClick={() => { setDraft(d); go('new'); }} aria-label={`Editar produção ${d.name}`}>Editar <Icon name="arrow" size={15}/></button></td></tr>)}
+          {matchingDemo && <tr><td><div className="production-name"><span className="language-tile">EN</span><div><strong>{demoProduction.name}</strong><small>Estudo: {demoProduction.language} · Apoio: {supportLanguageLabels[demoProduction.supportLanguage]}</small><small>Demonstração · edição de exemplo</small></div></div></td><td>{demoProduction.kind}</td><td><Badge status="review"/></td><td>6 cartões</td><td><button className="text-button" onClick={() => go('result')} aria-label="Abrir resultado de Inglês">Abrir <Icon name="arrow" size={15}/></button></td></tr>}
+          {drafts.filter(d => d.name.toLocaleLowerCase().includes(productionQuery.toLocaleLowerCase().trim())).map(d => <tr key={d.id}><td><div className="production-name"><span className="language-tile neutral"><Icon name="layers"/></span><div><strong>{d.name}</strong><small>Estudo: {d.language} · Apoio: {supportLanguageLabels[d.supportLanguage]}</small><small>Salvo nesta sessão</small></div></div></td><td>{d.kind}</td><td><span className="badge draft">Rascunho</span></td><td>—</td><td><button className="text-button" onClick={() => { setDraft(d); go('new'); }} aria-label={`Editar produção ${d.name}`}>Editar <Icon name="arrow" size={15}/></button></td></tr>)}
           </tbody></table></div>
           {!matchingDemo && !drafts.some(d => d.name.toLocaleLowerCase().includes(productionQuery.toLocaleLowerCase().trim())) && <div className="empty"><h3>Nenhuma produção encontrada</h3><p>Experimente outro nome ou veja todas as produções.</p><button className="button secondary" onClick={() => setProductionQuery('')}>Limpar busca</button></div>}
           <div className="panel-footer"><span>A lista usa somente dados deste protótipo.</span><span>Atualizado nesta sessão</span></div>
@@ -104,25 +110,37 @@ function App() {
         <div className="form-layout"><form className="panel configuration" onSubmit={e => { e.preventDefault(); if (sampleEnabled && step < 0) setStep(0); }}>
           <fieldset disabled={step >= 0}><legend><span className="number">01</span> O que vamos preparar?</legend>
             <label>Nome da produção<input required maxLength={100} value={draft.name} onChange={e => setDraft({ ...draft, name: e.target.value })}/></label>
-            <div className="two-fields"><label>Idioma estudado<select value={draft.language} onChange={e => setDraft({ ...draft, language: e.target.value })}>{['Inglês', 'Coreano', 'Japonês', 'Latim', 'Espanhol', 'Francês', 'Alemão', 'Italiano', 'Português', 'Polonês', 'Turco', 'Romeno', 'Russo', 'Holandês', 'Mandarim', 'Tcheco', 'Dinamarquês', 'Finlandês', 'Grego', 'Croata', 'Húngaro', 'Norueguês', 'Sueco'].map(l => <option key={l}>{l}</option>)}</select></label><label>Explicações e traduções<select defaultValue="Português"><option>Português</option></select></label></div>
+            <div className="two-fields">
+              <label>Idioma estudado<select value={draft.language} onChange={event => {
+                const next = changeStudyLanguage(draft, event.target.value);
+                setDraft(next);
+                if (next.supportLanguage !== draft.supportLanguage) setToast('Para coreano, o idioma de apoio foi ajustado para português.');
+              }}>{['Inglês', 'Coreano', 'Japonês', 'Latim', 'Espanhol', 'Francês', 'Alemão', 'Italiano', 'Português', 'Polonês', 'Turco', 'Romeno', 'Russo', 'Holandês', 'Mandarim', 'Tcheco', 'Dinamarquês', 'Finlandês', 'Grego', 'Croata', 'Húngaro', 'Norueguês', 'Sueco'].map(l => <option key={l}>{l}</option>)}</select></label>
+              <label>Idioma de apoio<select value={draft.supportLanguage} disabled={draft.language === 'Coreano'} aria-describedby={draft.language === 'Coreano' ? 'support-language-help korean-support-constraint' : 'support-language-help'} onChange={event => {
+                const value = event.target.value;
+                if (isSupportLanguageAllowed(draft.language, value)) setDraft({ ...draft, supportLanguage: value });
+              }}>{availableSupportLanguages(draft.language).map(code => <option key={code} value={code}>{supportLanguageLabels[code]}</option>)}</select></label>
+            </div>
+            <p className="field-note support-language-help" id="support-language-help">Idioma das definições, traduções das frases e rótulos dos cartões deste deck. O aplicativo continua em português.</p>
+            {draft.language === 'Coreano' && <p className="field-note language-constraint" id="korean-support-constraint">Para coreano, apenas português está disponível como idioma de apoio.</p>}
             <label>Tipo de material<select value={draft.kind} onChange={e => setDraft({ ...draft, kind: e.target.value })}>{['Frequência', 'Lista personalizada', 'Destaques de leitura', 'Escrita e fundamentos', 'Pronúncia e fonética', 'Gramática', 'Latim clássico'].map(k => <option key={k}>{k}</option>)}</select></label>
-            <p className="field-note">O catálogo definitivo dependerá das modalidades qualificadas para cada idioma. A simulação usa Inglês + Frequência.</p>
+            <p className="field-note">O catálogo definitivo dependerá das modalidades qualificadas para cada idioma. A simulação usa Inglês + Frequência, com apoio em português.</p>
           </fieldset>
           <fieldset disabled={step >= 0}><legend><span className="number">02</span> Conteúdo e apresentação</legend>
-            <div className="source-box"><Icon name="book"/><div><strong>Inventário demonstrativo</strong><p>6 identidades · 6 cartões de interface</p><small>Não representa a curadoria da branch de arquitetura.</small></div><span className="badge draft">Exemplo</span></div>
+            <div className="source-box"><Icon name="book"/><div><strong>{sampleEnabled ? 'Inventário demonstrativo' : 'Prévia indisponível para esta combinação'}</strong><p>{sampleEnabled ? '6 identidades · 6 cartões · apoio em português' : 'Esta configuração pode ser salva como rascunho.'}</p><small>{sampleEnabled ? 'Não representa a curadoria da branch de arquitetura.' : 'O exemplo disponível usa Inglês + Frequência, com apoio em português.'}</small></div><span className="badge draft">{sampleEnabled ? 'Exemplo' : 'Rascunho'}</span></div>
             <label>Apresentação<select defaultValue="Vocabulário · modelo de interface"><option>Vocabulário · modelo de interface</option></select></label><p className="field-note">A prévia é ilustrativa. A integração deverá usar os templates reais do Anki.</p>
           </fieldset>
           <fieldset><legend><span className="number">03</span> Áudio e execução</legend><div className="source-box"><Icon name="sound"/><div><strong>Palavra e frase, em faixas separadas</strong><p>Azure é a direção prevista para produção.</p><small>Seleção de voz e áudios reais aguardam integração.</small></div></div><p className="field-note">O sistema seguirá suas validações e apresentará o resultado completo, incluindo pendências.</p></fieldset>
           <div className="form-actions"><button type="button" className="button secondary" disabled={step >= 0} onClick={saveDraft}>{isEditingDraft ? 'Salvar alterações' : 'Salvar rascunho'}</button><button className="button primary" disabled={!sampleEnabled || step >= 0}>{step >= 0 ? 'Simulando…' : 'Simular produção'}<Icon name="arrow" size={16}/></button></div>
-          {!sampleEnabled && <p className="field-note">Você pode salvar este rascunho. Para explorar o resultado de exemplo, selecione Inglês e Frequência.</p>}
+          {!sampleEnabled && <p className="field-note" role="status">Você pode salvar este rascunho. Para explorar o resultado de exemplo, selecione Inglês, Frequência e apoio em Português.</p>}
         </form>
-        <aside className="summary panel"><h2>Sua produção</h2><dl><dt>Idioma</dt><dd>{draft.language}</dd><dt>Material</dt><dd>{draft.kind}</dd><dt>Conteúdo</dt><dd>6 itens de exemplo</dd><dt>Execução</dt><dd>Até o resultado final</dd><dt>Custo real</dt><dd>Nenhuma chamada paga</dd></dl><hr/><h3>Etapas do processamento</h3><ol className="stage-list" aria-live="polite">{stages.map((s, i) => <li key={s} className={step >= i ? 'stage-active' : ''}><span>{step > i ? <><Icon name="check" size={14}/><span className="sr-only">Concluído:</span></> : i + 1}</span>{s}{step === i && <small>Simulando</small>}</li>)}</ol><p className="field-note">O tempo e os estados apresentados nesta simulação são fictícios.</p></aside>
+        <aside className="summary panel"><h2>Sua produção</h2><dl><dt>Idioma estudado</dt><dd>{draft.language}</dd><dt>Idioma de apoio</dt><dd>{supportLanguageLabels[draft.supportLanguage]}</dd><dt>Material</dt><dd>{draft.kind}</dd><dt>Conteúdo</dt><dd>{sampleEnabled ? '6 itens de exemplo' : 'Sem prévia disponível'}</dd><dt>Execução</dt><dd>{sampleEnabled ? 'Até o resultado final' : 'Somente rascunho'}</dd><dt>Custo real</dt><dd>Nenhuma chamada paga</dd></dl><hr/><h3>Etapas do processamento</h3><ol className="stage-list" aria-live="polite">{stages.map((s, i) => <li key={s} className={step >= i ? 'stage-active' : ''}><span>{step > i ? <><Icon name="check" size={14}/><span className="sr-only">Concluído:</span></> : i + 1}</span>{s}{step === i && <small>Simulando</small>}</li>)}</ol><p className="field-note">O tempo e os estados apresentados nesta simulação são fictícios.</p></aside>
         </div>
       </>}
 
       {screen === 'result' && <>
         <button className="back-link" onClick={() => go('productions')}><Icon name="back" size={17}/>Produções</button>
-        <div className="page-heading"><div><h1>Vocabulário essencial <span className="title-language">Inglês</span></h1><p className="muted">Confira o conteúdo e concentre sua atenção nas pendências.</p></div><button className="button secondary" disabled={!canExport(cards, true)} title="A exportação exige integração com o backend">Exportar para Anki</button></div>
+        <div className="page-heading"><div><h1>Vocabulário essencial <span className="title-language">{demoProduction.language}</span></h1><p className="muted">Idioma de apoio: <strong>{supportLanguageLabels[demoProduction.supportLanguage]}</strong>. Confira o conteúdo e suas pendências.</p></div><button className="button secondary" disabled={!canExport(cards, true)} title="A exportação exige integração com o backend">Exportar para Anki</button></div>
         <div className="result-summary"><span><strong>{cards.length}</strong> cartões de exemplo</span><span><i className="dot green"/><strong>{cards.length - pending}</strong> concluídos</span><span><i className="dot amber"/><strong>{pending}</strong> para conferir</span><span className="result-hint">Exportação e áudio real indisponíveis no protótipo</span></div>
         <section className="panel review-panel"><div className="review-toolbar"><div className="tabs" role="group" aria-label="Filtrar cartões"><button aria-pressed={filter === 'all'} className={filter === 'all' ? 'selected' : ''} onClick={() => { setFilter('all'); setEditing(false); }}>Todos <span>{cards.length}</span></button><button aria-pressed={filter === 'pending'} className={filter === 'pending' ? 'selected' : ''} onClick={() => { setFilter('pending'); setEditing(false); }}>Pendências <span>{pending}</span></button></div><Search value={query} onChange={q => { setQuery(q); setEditing(false); }} placeholder="Buscar palavra"/></div>
         <div className="review-layout"><div className="card-list" role="group" aria-label="Cartões da produção">{visible.map(c => <button key={c.id} className={`card-list-item ${current?.id === c.id ? 'chosen' : ''}`} aria-pressed={current?.id === c.id} onClick={() => { setSelected(c.id); setBack(false); setEditing(false); }}><span className="item-number">{c.id}</span><span className="card-list-copy"><strong>{c.word}</strong><small>{c.definition || 'Conteúdo não concluído'}</small><span className={`card-state ${c.status}`}><span className="dot"/>{labels[c.status]}</span></span>{current?.id === c.id && <Icon name="arrow" size={15}/>}</button>)}{visible.length === 0 && <p className="empty">Nenhum cartão com esses filtros.</p>}</div>
@@ -133,7 +151,7 @@ function App() {
         </div> : <div className="review-detail empty"><Icon name="search" size={32}/><h2>Nenhum resultado</h2><p>Altere a busca ou volte para todos os cartões.</p><button className="button secondary" onClick={() => { setFilter('all'); setQuery(''); }}>Limpar filtros</button></div>}
         </div></section>
       </>}
-      <footer className="page-footer"><span>multilang<span className="brand-period">.</span> <span className="footer-caption">Estúdio de produção</span></span><span>Protótipo 03 · Grafite + azul</span></footer>
+      <footer className="page-footer"><span>multilang<span className="brand-period">.</span> <span className="footer-caption">Estúdio de produção</span></span><span>Protótipo 04 · Idioma de apoio</span></footer>
       </div>
     </main>
     {toast && <div className="toast" role="status">{toast}<button aria-label="Fechar mensagem" onClick={() => setToast('')}><Icon name="close" size={18}/></button></div>}

@@ -1,9 +1,26 @@
 export type Card = { id: string; word: string; definition: string; sentence: string; translation: string; status: 'ready' | 'review' | 'failed'; audio: 'available' | 'missing' | 'outdated' };
-export type Draft = { id: string; name: string; language: string; kind: string };
+const supportLanguages = ['pt', 'en', 'es'] as const;
+export type SupportLanguage = typeof supportLanguages[number];
+export const supportLanguageLabels: Record<SupportLanguage, string> = { pt: 'Português', en: 'Inglês', es: 'Espanhol' };
+export type Draft = { id: string; name: string; language: string; supportLanguage: SupportLanguage; kind: string };
+
+// Mirrors the support-language contract in architecture commit bdb0548.
+export function availableSupportLanguages(language: string): readonly SupportLanguage[] {
+  return language === 'Coreano' ? ['pt'] : supportLanguages;
+}
+
+export function isSupportLanguageAllowed(language: string, supportLanguage: string): supportLanguage is SupportLanguage {
+  return availableSupportLanguages(language).some(option => option === supportLanguage);
+}
+
+export function changeStudyLanguage(draft: Draft, language: string): Draft {
+  return { ...draft, language, supportLanguage: isSupportLanguageAllowed(language, draft.supportLanguage) ? draft.supportLanguage : 'pt' };
+}
 
 export function saveProductionDraft(drafts: Draft[], draft: Draft): Draft[] {
   const saved = { ...draft, name: draft.name.trim() };
   if (!saved.name) throw new Error('A production name is required.');
+  if (!isSupportLanguageAllowed(saved.language, saved.supportLanguage)) throw new Error('Unsupported support language for this deck.');
   return drafts.some(item => item.id === saved.id)
     ? drafts.map(item => item.id === saved.id ? saved : item)
     : [...drafts, saved];
