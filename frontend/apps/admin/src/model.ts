@@ -1,4 +1,14 @@
 export type Card = { id: string; word: string; definition: string; sentence: string; translation: string; status: 'ready' | 'review' | 'failed'; audio: 'available' | 'missing' | 'outdated' };
+export type Draft = { id: string; name: string; language: string; kind: string };
+
+export function saveProductionDraft(drafts: Draft[], draft: Draft): Draft[] {
+  const saved = { ...draft, name: draft.name.trim() };
+  if (!saved.name) throw new Error('A production name is required.');
+  return drafts.some(item => item.id === saved.id)
+    ? drafts.map(item => item.id === saved.id ? saved : item)
+    : [...drafts, saved];
+}
+
 export function editCard(card: Card, patch: Partial<Pick<Card, 'definition' | 'sentence' | 'translation'>>): Card {
   const next = { ...card, ...patch };
   const changed = next.definition !== card.definition || next.sentence !== card.sentence || next.translation !== card.translation;

@@ -37,6 +37,8 @@ Mantenha a validação TLS habilitada.
 
 Outras configurações podem ser salvas como rascunhos nesta sessão. Os seletores
 representam o planejamento; não afirmam suporte qualificado para cada combinação.
+Editar e salvar um rascunho atualiza a mesma produção; Nova produção começa outro
+rascunho. As situações dos cartões aparecem por escrito na lista de revisão.
 Todos os dados são em memória: recarregar descarta rascunhos e edições. As rotas
 de demonstração usam `#producoes`, `#nova` e `#resultado`.
 

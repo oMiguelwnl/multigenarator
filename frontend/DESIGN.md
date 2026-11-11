@@ -46,15 +46,21 @@ readable labels and explain missing capabilities nearby.
 - Spacing follows a 4 px base, with 16/24/32 px groups.
 - Summary metrics use dividers, not three independently elevated cards.
 - Preview cards have their own surface and a clear front/back indicator.
+- Card-list states have visible text labels. Selection also uses an arrow or
+  underline; color alone does not carry it.
+- Page headings stand on their own, without uppercase introductory labels.
+- Back and notification-close controls have at least 44 px touch targets.
 - Breakpoints at 1200, 1000 and 680 px preserve reading size. Mobile tables and
   the review item strip can scroll inside their own region.
 - Keyboard focus, a skip link and reduced-motion preferences are supported.
 
 ## Reference tools
 
-- [Impeccable](https://impeccable.style/docs/impeccable/) is the recommended
-  optional design skill for critique and refinement. It is not installed by
-  this change; this iteration does not claim an Impeccable audit.
+- [Impeccable](https://impeccable.style/docs/impeccable/) 4.8.2 is installed
+  in the user's Codex skills directory. This pass uses its polish playbook and
+  craft floor for a source review and refinement, with its local detector.
+  It is a development aid, not an application dependency or a completed browser
+  accessibility audit.
 - [Shoogle](https://shoogle.dev/mcp/shoogle-skills) finds shadcn registry
   components; its skill requires its MCP tools. No new component stack added.
 - [Lazyweb](https://design.lazyweb.com/mcp) supplies product research through
