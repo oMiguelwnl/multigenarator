@@ -103,3 +103,40 @@ test('simulation only accepts the language pair and material present in the fixt
   assert.equal(demo.canSimulateDraft({ ...draft, language: 'Coreano' }), false);
   assert.equal(demo.canSimulateDraft({ ...draft, kind: 'Lista personalizada' }), false);
 });
+
+test('attachments survive saving and editing but changing material clears the previous source', () => {
+  assert.equal(typeof model.changeMaterial, 'function');
+  const attachment = { file: new File(['hello'], 'words.txt'), preview: 'hello', previewTruncated: false };
+  const draft = { id: 'first', name: 'Minha lista', language: 'Inglês', supportLanguage: 'pt' as const, kind: 'Lista personalizada', attachment };
+  const saved = model.saveProductionDraft([], draft);
+  const edited = model.saveProductionDraft(saved, { ...saved[0], name: 'Minha lista revisada' });
+  assert.equal(edited[0].attachment, attachment);
+  assert.equal(model.changeMaterial(draft, 'Lista personalizada').attachment, attachment);
+  assert.equal(model.changeMaterial(draft, 'Frequência').attachment, undefined);
+  assert.equal(model.changeMaterial(draft, 'Destaques de leitura').attachment, undefined);
+  assert.equal(draft.attachment, attachment);
+});
+
+test('Korean highlights use text mode and reject the vocabulary mode', () => {
+  const draft = { id: 'first', name: 'Destaques', language: 'Inglês', supportLanguage: 'pt' as const, kind: 'Destaques de leitura', highlightInput: 'vocabulary' as const };
+  const korean = model.changeStudyLanguage(draft, 'Coreano');
+  assert.equal(korean.highlightInput, 'text');
+  assert.throws(() => model.saveProductionDraft([], { ...draft, language: 'Coreano' }), /highlight/i);
+});
+
+test('generation progress is a bounded percentage and stays indeterminate without work', () => {
+  assert.equal(model.progressPercentage(2, 5), 40);
+  assert.equal(model.progressPercentage(0, 0), 0);
+  assert.equal(model.progressPercentage(-1, 5), 0);
+  assert.equal(model.progressPercentage(7, 5), 100);
+});
+
+test('completed decks are listed newest first and a repeated completion replaces the old record', () => {
+  const first = { id: 'first', name: 'Inglês', language: 'Inglês', kind: 'Frequência', completedAt: '2026-11-15T00:00:00Z', cards: [card] };
+  const second = { ...first, id: 'second', name: 'Francês' };
+  const revisedFirst = { ...first, name: 'Inglês revisado' };
+
+  assert.deepEqual(model.recordCompletedDeck([], first), [first]);
+  assert.deepEqual(model.recordCompletedDeck([first], second), [second, first]);
+  assert.deepEqual(model.recordCompletedDeck([first, second], revisedFirst), [revisedFirst, second]);
+});
