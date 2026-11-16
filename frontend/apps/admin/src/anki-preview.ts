@@ -12,6 +12,7 @@ export type AnkiTemplateManifest = {
 };
 
 export type PreviewCard = {
+  image?: string;
   word: string;
   definition: string;
   sentence: string;
@@ -136,7 +137,9 @@ export function getAnkiTemplate(
 export function buildPreviewFields(fields: string[], card?: PreviewCard): Record<string, string> {
   const values: Record<string, string> = {};
   for (const field of fields) {
-    if (OPTIONAL_FIELDS.has(field)) {
+    if (['Image', 'Picture'].includes(field) && card?.image) {
+      values[field] = card.image;
+    } else if (OPTIONAL_FIELDS.has(field)) {
       values[field] = '';
     } else if (AUDIO_FIELDS.has(field)) {
       values[field] = '[sound:preview-audio.mp3]';
@@ -223,6 +226,7 @@ function renderNodes(nodes: TemplateNode[], fields: Record<string, string>): str
       return populated !== node.inverted ? renderNodes(node.children, fields) : '';
     }
     if (node.name === 'FrontSide') return value;
+    if (['Image', 'Picture'].includes(node.name) && /^data:image\/png;base64,[A-Za-z0-9+/=]+$/.test(value)) return `<img src="${value}" alt="Imagem do cartão" style="max-width:100%;max-height:320px;object-fit:contain">`;
     if (/^\[sound:[A-Za-z0-9._-]+\]$/.test(value)) return AUDIO_BUTTON;
     return escapeHtml(value);
   }).join('');

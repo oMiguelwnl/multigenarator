@@ -6,6 +6,7 @@ import type { Card, CompletedDeck, Draft } from './model';
 import { sourceKindFor } from './source-files';
 import { SourceFileInput } from './SourceFileInput';
 import { AnkiTemplatePreview } from './AnkiTemplatePreview';
+import { CardEditor } from './CardEditor';
 import './styles.css';
 
 type Screen = 'productions' | 'history' | 'new' | 'result';
@@ -119,7 +120,7 @@ function App() {
   return <div className="shell">
     <a className="skip-link" href="#conteudo" onClick={event => { event.preventDefault(); document.getElementById('conteudo')?.focus(); }}>Ir para o conteúdo</a>
     <aside className="sidebar">
-      <a className="brand" href="#producoes" onClick={() => go('productions')}><span className="brand-mark">m<span>·</span></span>multilang<span className="brand-period">.</span></a>
+      <a className="brand" href="#producoes" onClick={() => go('productions')}><svg className="brand-symbol" viewBox="0 0 40 40" aria-hidden="true"><path d="M5 32V9l15 9L35 9v23"/><path d="M5 9v23l15-9 15 9M20 18v5"/></svg><span className="brand-wordmark">multilang</span></a>
       <div className="workspace"><span className="workspace-icon"><Icon name="layers"/></span><div>Estúdio de produção<small>Seu espaço de trabalho</small></div></div>
       <p className="nav-label">OPERAÇÃO</p>
       <nav aria-label="Navegação principal">
@@ -223,7 +224,7 @@ function App() {
         {current ? <div className="review-detail"><div className="detail-heading"><span className="tiny-label">RESULTADO DEMONSTRATIVO</span><Badge status={current.status}/></div>
           <AnkiTemplatePreview key={`${activeDeck?.id ?? 'demo'}:${current.id}`} deckType={activeDeck?.kind ?? demoProduction.kind} language={activeDeck?.language ?? demoProduction.language} card={current}/>
           <div className={`finding ${current.status === 'ready' ? 'finding-neutral' : ''}`}><strong>{current.status === 'failed' ? 'Conteúdo incompleto' : current.audio === 'outdated' ? 'O texto foi alterado' : current.audio === 'missing' ? 'Áudio pendente' : current.status === 'review' ? 'Conteúdo para conferir' : 'Nenhuma pendência no cenário demonstrativo'}</strong><p>{current.audio === 'outdated' ? 'Tradução, áudio e validações precisam ser conferidos novamente.' : current.status === 'failed' ? 'A produção real deverá permitir recuperar a etapa que falhou.' : current.status !== 'ready' ? 'Este registro ilustra uma pendência. A revisão real virá das evidências do sistema.' : 'Os estados são fictícios e não certificam a qualidade deste conteúdo.'}</p></div>
-          {editing ? <form className="edit-form" key={current.id} onSubmit={e => { e.preventDefault(); const data = new FormData(e.currentTarget); setCards(cards.map(c => c.id === current.id ? editCard(c, { definition: String(data.get('definition')), sentence: String(data.get('sentence')), translation: String(data.get('translation')) }) : c)); setEditing(false); setToast('Alteração aplicada nesta sessão. Conteúdo alterado fica pendente de revisão.'); }}><label>Definição<textarea name="definition" required maxLength={2000} defaultValue={current.definition}/></label><label>Frase<textarea name="sentence" required maxLength={2000} defaultValue={current.sentence}/></label><label>Tradução<textarea name="translation" required maxLength={2000} defaultValue={current.translation}/></label><div className="form-actions"><button type="button" className="button secondary" onClick={() => setEditing(false)}>Cancelar</button><button className="button primary">Salvar alteração</button></div></form> : <div className="detail-actions"><button className="button secondary" onClick={() => setEditing(true)}>Editar conteúdo</button><span className="field-note">Alterações ficam apenas nesta sessão.</span></div>}
+          {editing ? <CardEditor key={current.id} card={current} onCancel={() => setEditing(false)} onSave={patch => { setCards(cards.map(c => c.id === current.id ? editCard(c, patch) : c)); setEditing(false); setToast('Alteração aplicada nesta sessão. Conteúdo alterado fica pendente de revisão.'); }}/> : <div className="detail-actions"><button className="button secondary" onClick={() => setEditing(true)}>Editar conteúdo</button><span className="field-note">Alterações ficam apenas nesta sessão.</span></div>}
         </div> : <div className="review-detail empty"><Icon name="search" size={32}/><h2>Nenhum resultado</h2><p>Altere a busca ou volte para todos os cartões.</p><button className="button secondary" onClick={() => { setFilter('all'); setQuery(''); }}>Limpar filtros</button></div>}
         </div></section>
       </>}

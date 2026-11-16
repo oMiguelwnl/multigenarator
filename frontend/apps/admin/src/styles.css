@@ -74,21 +74,14 @@ small { display: block; }
   border-right: 1px solid var(--border);
   overflow-y: auto;
 }
-.brand { display: flex; align-items: center; gap: 10px; font-size: 28px; font-weight: 600; letter-spacing: -1px; }
-.brand-mark {
-  display: inline-grid;
-  place-items: center;
-  position: relative;
-  width: 34px;
-  height: 36px;
-  background: var(--accent);
-  color: var(--on-accent);
-  border-radius: 9px;
-  font-size: 27px;
-  line-height: 1;
-  letter-spacing: -.04em;
-}
-.brand-mark span { position: absolute; right: 3px; top: 0; font-size: 22px; }
+.brand { display: flex; align-items: center; gap: 11px; font-size: 27px; font-weight: 600; letter-spacing: -.035em; }
+.brand-symbol { width: 38px; height: 38px; flex: 0 0 auto; fill: none; stroke: var(--accent-text); stroke-width: 2.5; stroke-linejoin: round; stroke-linecap: round; }
+.brand-wordmark { color: var(--text); }
+.card-image-field { margin-top: 24px; }
+.card-image-field input { width: 100%; min-width: 0; }
+.card-image-preview { display: block; width: 100%; max-height: 240px; object-fit: contain; margin: 12px 0; background: var(--canvas); border-radius: 12px; }
+.image-empty { padding: 20px; border: 1px dashed var(--border); border-radius: 12px; color: var(--text-muted); font-size: 14px; }
+.card-image-field .text-button { margin-top: 10px; }
 .brand-period { color: var(--accent-text); margin-left: -8px; }
 .workspace { display: flex; align-items: center; gap: 11px; padding: 14px 0; margin: 28px 0 24px; border-bottom: 1px solid var(--border); font-size: 13px; font-weight: 500; }
 .workspace small { margin-top: 5px; font-size: 12px; font-weight: 400; color: var(--text-muted); }
@@ -354,7 +347,7 @@ select:disabled { color: var(--text-secondary); cursor: not-allowed; opacity: 1;
   .shell { display: block; }
   .sidebar { position: static; width: auto; padding: 20px 18px 0; border-right: 0; border-bottom: 1px solid var(--border); overflow: visible; }
   .brand { font-size: 25px; }
-  .brand-mark { width: 31px; height: 33px; font-size: 25px; }
+  .brand-symbol { width: 33px; height: 33px; }
   .workspace, .nav-label, .sidebar-note, .profile { display: none; }
   .sidebar nav { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 5px; margin-top: 20px; padding-bottom: 12px; }
   .sidebar nav a { flex-direction: column; justify-content: center; min-width: 0; gap: 7px; padding: 10px 3px; font-size: 12px; text-align: center; }

@@ -1,6 +1,6 @@
 import type { SourceAttachment } from './source-files';
 
-export type Card = { id: string; word: string; definition: string; sentence: string; translation: string; status: 'ready' | 'review' | 'failed'; audio: 'available' | 'missing' | 'outdated' };
+export type Card = { id: string; image?: string; word: string; definition: string; sentence: string; translation: string; status: 'ready' | 'review' | 'failed'; audio: 'available' | 'missing' | 'outdated' };
 const supportLanguages = ['pt', 'en', 'es'] as const;
 export type SupportLanguage = typeof supportLanguages[number];
 export const supportLanguageLabels: Record<SupportLanguage, string> = { pt: 'Português', en: 'Inglês', es: 'Espanhol' };
@@ -56,9 +56,9 @@ export function saveProductionDraft(drafts: Draft[], draft: Draft): Draft[] {
     : [...drafts, saved];
 }
 
-export function editCard(card: Card, patch: Partial<Pick<Card, 'definition' | 'sentence' | 'translation'>>): Card {
+export function editCard(card: Card, patch: Partial<Pick<Card, 'definition' | 'sentence' | 'translation' | 'image'>>): Card {
   const next = { ...card, ...patch };
-  const changed = next.definition !== card.definition || next.sentence !== card.sentence || next.translation !== card.translation;
+  const changed = next.image !== card.image || next.definition !== card.definition || next.sentence !== card.sentence || next.translation !== card.translation;
   return { ...next, status: changed ? 'review' : card.status, audio: next.sentence !== card.sentence ? 'outdated' : card.audio };
 }
 export function selectCards(cards: Card[], query: string, filter: string): Card[] {
