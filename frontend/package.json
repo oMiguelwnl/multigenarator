@@ -6,7 +6,7 @@
   "scripts": {
     "dev": "vite --host 127.0.0.1 --port 5174 --strictPort",
     "build": "tsc --noEmit && vite build",
-    "test": "node --experimental-strip-types --test apps/admin/src/model.test.ts apps/admin/src/source-files.test.ts",
+    "test": "node --experimental-strip-types --test apps/admin/src/model.test.ts apps/admin/src/source-files.test.ts apps/admin/src/anki-preview.test.ts",
     "preview:artifact": "node scripts/export-preview.mjs"
   },
   "devDependencies": {

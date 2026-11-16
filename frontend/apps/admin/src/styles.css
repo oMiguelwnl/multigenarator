@@ -276,16 +276,14 @@ select:disabled { color: var(--text-secondary); cursor: not-allowed; opacity: 1;
 .review-detail { min-width: 0; padding: 28px 32px; }
 .detail-heading { display: flex; justify-content: space-between; align-items: center; gap: 12px; margin-bottom: 22px; }
 .detail-heading .tiny-label { color: var(--text-muted); font-size: 11px; letter-spacing: .6px; }
-.anki-preview { min-height: 285px; padding: 30px; border: 1px solid var(--border); border-radius: var(--radius); background: var(--surface-raised); overflow-wrap: anywhere; }
-.card-brand { display: flex; justify-content: space-between; gap: 12px; color: var(--text-muted); font-size: 10px; letter-spacing: 1.5px; }
-.card-brand > span { font-size: 10px; letter-spacing: .5px; }
-.anki-preview h2 { margin: 38px 0 20px; color: var(--text); font-size: 46px; font-weight: 500; letter-spacing: -1.5px; overflow-wrap: anywhere; }
-.card-instruction { margin: 0 0 32px; color: var(--text-secondary); font-size: 14px; }
-.card-answer > p { color: var(--text-secondary); font-size: 15px; }
-.card-answer blockquote { margin: 24px 0 30px; padding-left: 18px; border-left: 1px solid var(--accent-text); font-size: 15px; line-height: 1.7; }
-.card-answer small { margin-top: 7px; font-size: 13px; color: var(--text-muted); }
-.preview-actions { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px; margin-top: 30px; padding-top: 16px; border-top: 1px solid var(--border); }
-.audio-button { display: flex; align-items: center; gap: 8px; min-height: 40px; padding: 5px 0; background: transparent; border: 0; text-align: left; font-size: 12px; }
+.anki-template-preview { min-width: 0; margin: 18px 0; padding: 16px; border: 1px solid var(--border); border-radius: var(--radius); background: var(--canvas); }
+.preview-heading { display: flex; justify-content: space-between; align-items: center; gap: 12px; margin-bottom: 14px; }
+.preview-heading h3 { margin-top: 5px; font-size: 14px; font-weight: 500; overflow-wrap: anywhere; }
+.preview-side-controls { display: flex; flex-shrink: 0; gap: 4px; padding: 3px; border: 1px solid var(--border); border-radius: 6px; background: var(--surface); }
+.preview-side-controls button { min-height: 36px; padding: 6px 10px; border: 0; border-radius: 4px; background: transparent; color: var(--text-muted); font-size: 12px; }
+.preview-side-controls button[aria-pressed="true"] { background: var(--accent-soft); color: var(--accent-text); font-weight: 500; }
+.anki-template-frame { display: block; width: 100%; height: 390px; border: 1px solid var(--border); border-radius: 6px; background: #0a1220; }
+.anki-template-preview > .field-note { margin-top: 12px; }
 .finding { margin-top: 22px; padding: 17px 18px; border-left: 1px solid var(--warning); border-radius: 0 6px 6px 0; background: var(--warning-soft); }
 .finding strong { font-size: 13px; font-weight: 500; color: var(--warning); }
 .finding p { margin: 7px 0 0; font-size: 12px; color: var(--text-secondary); }
@@ -401,11 +399,9 @@ select:disabled { color: var(--text-secondary); cursor: not-allowed; opacity: 1;
   .review-toolbar { padding: 12px; }
   .review-detail { padding: 22px 14px; }
   .detail-heading { flex-wrap: wrap; }
-  .anki-preview { padding: 24px 18px; }
-  .anki-preview h2 { font-size: 41px; }
-  .card-brand { flex-wrap: wrap; font-size: 10px; }
-  .preview-actions { gap: 6px; }
-  .preview-actions > .text-button { margin-left: auto; }
+  .preview-heading { align-items: flex-start; flex-wrap: wrap; }
+  .anki-template-preview { padding: 12px; }
+  .anki-template-frame { height: 360px; }
   .detail-actions { gap: 12px; }
   .toast { right: 14px; bottom: 14px; left: 14px; max-width: none; }
   .back-link { margin-bottom: 16px; }
