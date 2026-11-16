@@ -32,7 +32,7 @@ Mantenha a validação TLS habilitada.
 1. Abra a produção demonstrativa ou clique em Nova produção.
 2. Mantenha Inglês + Frequência + apoio em Português e clique em Simular produção.
 3. Confira as etapas ilustrativas e o resultado com seis registros.
-4. Busque uma palavra, filtre pendências, vire o cartão e edite o conteúdo.
+4. Busque uma palavra, filtre pendências, veja frente/verso no template Anki e edite o conteúdo.
 5. Alterar uma frase invalida o áudio ilustrativo e exige nova revisão.
 
 Outras configurações podem ser salvas como rascunhos nesta sessão. Os seletores
@@ -51,9 +51,18 @@ Todos os dados são em memória: recarregar descarta rascunhos e edições. As r
 de demonstração usam `#producoes`, `#nova` e `#resultado`.
 
 Não há chamadas à API, provedores, banco, geração real, áudio real, exportação ou
-publicação comercial. Os textos são fixtures da interface, não inventários ou
-cartões aprovados. A prévia não é o template final do Anki. Nenhum resultado da
-curadoria da arquitetura é copiado ou certificado pelo protótipo.
+publicação comercial. A prévia de frente e verso usa o HTML e CSS dos modelos
+Anki reais construídos pelos exportadores existentes. Os valores exibidos são
+fixtures visuais, não inventários nem cartões aprovados; combinações sem
+exportador/template disponível são marcadas como indisponíveis, sem substituição
+por um mockup.
+
+O catálogo usado pela interface fica em
+`apps/admin/src/anki-template-manifest.json`. Depois de alterar qualquer modelo
+Anki, regenere-o na raiz do repositório com
+`uv run --project . python scripts/generate_anki_template_manifest.py`.
+`tests/services/test_anki_template_preview.py` verifica que o catálogo não deriva
+dos templates atuais.
 
 O contrato de idioma de apoio acompanha o commit `bdb0548` da arquitetura.
 O commit não foi incorporado por merge/cherry-pick: a adaptação é somente do
