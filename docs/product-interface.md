@@ -32,6 +32,18 @@ Inglês + Frequência + apoio em Português. O idioma de apoio aparece na lista,
 no resumo da configuração e no resultado. Alterar um rascunho não relabela os
 cartões demonstrativos de outra produção.
 
+Lista personalizada e Destaques de leitura incluem anexos locais por rascunho.
+Listas usam TXT em UTF-8; destaques aceitam exportações Kindle TXT, HTML ou HTM.
+O limite do protótipo é 5 MB por arquivo. É possível substituir, remover e
+conferir o início de arquivos TXT; o conteúdo de HTML não é renderizado.
+Nome e tamanho ficam visíveis, e o arquivo original é mantido em memória ao
+salvar e reabrir o rascunho. Não há envio ao servidor nem geração a partir dele.
+
+Nos destaques, o operador escolhe extrair palavras de trechos (`text`) ou tratar
+cada destaque como palavra/expressão (`vocabulary`). Coreano aceita apenas
+`text`. Um TXT de destaques usa blocos separados por `==========`; uma lista
+simples com uma palavra por linha pertence à modalidade Lista personalizada.
+
 Direção visual escolhida pelo usuário: tema escuro sóbrio, grafite e azul.
 Superfícies neutras com níveis distintos, azul reservado a ações/seleção, cores
 semânticas para estados e tipografia auxiliar maior. Indicadores compõem um resumo
@@ -56,6 +68,13 @@ ou restringe acesso a dados. Não colocar credenciais de provedores no frontend.
 - Entrega autorizada de áudio e downloads; prévia baseada nos templates reais.
 - Edições aprovadas e preservação de GUIDs na exportação e atualização.
 - Persistência de rascunhos e histórico; permissões por proprietário.
+- Upload autorizado de arquivos com validação no servidor, limites de tamanho e
+  retenção definida. O nome enviado pelo navegador não deve virar um caminho de
+  arquivo no servidor. A referência de upload deve alimentar o fluxo de entrada
+  existente; o frontend não deve montar comandos de terminal.
+- `highlightInput` corresponde a `highlight_input`. A validação local do anexo
+  não substitui os parsers de listas/destaques, a análise linguística ou a
+  conferência da quantidade final de cartões no backend.
 - `supportLanguage` do protótipo corresponde a `support_language` (`pt`, `en`,
   `es`) do backend. Novas produções devem enviar a escolha explícita, com Português
   como padrão da interface, sem depender da política legada de valor ausente.

@@ -50,6 +50,33 @@ mostra o idioma dos seus próprios dados, independentemente do rascunho aberto.
 Todos os dados são em memória: recarregar descarta rascunhos e edições. As rotas
 de demonstração usam `#producoes`, `#nova` e `#resultado`.
 
+## Anexar arquivos
+
+Em Nova produção, escolha uma das modalidades abaixo. A seção Conteúdo e
+apresentação mostra o seletor de arquivo:
+
+- Lista personalizada: `.txt` em UTF-8; prefira uma palavra ou expressão por linha.
+- Destaques de leitura: exportação do Kindle `.txt`, `.html` ou `.htm`. No TXT,
+  os destaques são separados por `==========`. Escolha entre extrair palavras de
+  trechos ou usar cada destaque como palavra/expressão. Coreano aceita apenas o
+  modo de trechos de leitura.
+
+O limite local é de 5 MB por arquivo. O protótipo verifica extensão, tamanho e
+leitura UTF-8; não reproduz os parsers lexicais ou certifica a estrutura Kindle.
+Arquivos vazios, binários ou com codificação inválida apresentam erro próximo ao
+seletor. Se uma substituição falhar, o anexo anterior é mantido.
+
+É possível conferir até 2.000 caracteres de TXT, substituir e remover o anexo.
+HTML é mantido como arquivo, sem renderizar seu conteúdo ou carregar recursos
+externos. O arquivo original fica no rascunho em memória, inclusive ao reabri-lo;
+nada é enviado ao servidor. Mudar a modalidade remove o anexo anterior com aviso.
+Recarregar a página descarta os anexos. Rascunhos incompletos podem ser salvos.
+
+O nome do arquivo aparece no resumo e na lista de produções. Anexar um arquivo
+não habilita geração, simulação ou exportação dessas modalidades.
+
+## Integração e limites
+
 Não há chamadas à API, provedores, banco, geração real, áudio real, exportação ou
 publicação comercial. A prévia de frente e verso usa o HTML e CSS dos modelos
 Anki reais construídos pelos exportadores existentes. Os valores exibidos são
