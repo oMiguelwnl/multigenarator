@@ -7,9 +7,10 @@ import { sourceKindFor } from './source-files';
 import { SourceFileInput } from './SourceFileInput';
 import { AnkiTemplatePreview } from './AnkiTemplatePreview';
 import { CardEditor } from './CardEditor';
+import { Connections } from './Connections';
 import './styles.css';
 
-type Screen = 'productions' | 'history' | 'new' | 'result';
+type Screen = 'connections' | 'productions' | 'history' | 'new' | 'result';
 const createDraft = (): Draft => ({ id: crypto.randomUUID(), ...demoProduction });
 const stages = ['Vocabulário', 'Texto e tradução', 'Áudio', 'Validações', 'Resultado'];
 const labels = { ready: 'Concluído', review: 'Revisar', failed: 'Incompleto' };
@@ -27,6 +28,7 @@ function Icon({ name, size = 20 }: { name: string; size?: number }) {
     clock: <><circle cx="12" cy="12" r="9"/><path d="M12 6v6l4 2"/></>,
     back: <path d="m10 5-7 7 7 7M3 12h18"/>,
     flip: <><path d="M4 7h16m-4-4 4 4-4 4M20 17H4m4-4-4 4 4 4"/></>,
+    connections: <><path d="M8 4v5M16 4v5M6 9h12v3a6 6 0 0 1-12 0ZM12 18v4"/></>,
     close: <path d="m6 6 12 12M6 18 18 6"/>,
   };
   return <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">{paths[name] || paths.layers}</svg>;
@@ -35,7 +37,7 @@ function Icon({ name, size = 20 }: { name: string; size?: number }) {
 function Badge({ status }: { status: Card['status'] }) { return <span className={`badge ${status}`}><span className="dot"/>{labels[status]}</span>; }
 
 function App() {
-  const initialScreen = (): Screen => location.hash === '#nova' ? 'new' : location.hash === '#resultado' ? 'result' : location.hash === '#historico' ? 'history' : 'productions';
+  const initialScreen = (): Screen => location.hash.startsWith('#conexoes') ? 'connections' : location.hash === '#nova' ? 'new' : location.hash === '#resultado' ? 'result' : location.hash === '#historico' ? 'history' : 'productions';
   const [screen, setScreen] = useState<Screen>(initialScreen);
   const [cards, setCards] = useState<Card[]>(demoCards);
   const [selected, setSelected] = useState('01');
@@ -81,7 +83,7 @@ function App() {
     return () => window.clearTimeout(timer);
   }, [step, isPaused]);
   useEffect(() => { if (!toast) return; const timer = setTimeout(() => setToast(''), 6500); return () => clearTimeout(timer); }, [toast]);
-  const go = (next: Screen) => { setScreen(next); location.hash = next === 'new' ? 'nova' : next === 'result' ? 'resultado' : next === 'history' ? 'historico' : 'producoes'; setEditing(false); window.scrollTo(0, 0); };
+  const go = (next: Screen) => { setScreen(next); location.hash = next === 'connections' ? 'conexoes' : next === 'new' ? 'nova' : next === 'result' ? 'resultado' : next === 'history' ? 'historico' : 'producoes'; setEditing(false); window.scrollTo(0, 0); };
   const visible = selectCards(cards, query, filter);
   const current = visible.find(c => c.id === selected) || visible[0];
   const pending = cards.filter(c => c.status !== 'ready').length;
@@ -128,14 +130,15 @@ function App() {
         <a className={screen === 'new' ? 'active' : ''} aria-current={screen === 'new' ? 'page' : undefined} href="#nova" onClick={event => { event.preventDefault(); startNew(); }}><Icon name="plus"/>Nova produção</a>
         <a className={screen === 'history' ? 'active' : ''} aria-current={screen === 'history' ? 'page' : undefined} href="#historico" onClick={event => { event.preventDefault(); go('history'); }}><Icon name="clock"/>Histórico<span className="nav-count">{history.length}</span></a>
         <a className={screen === 'result' ? 'active' : ''} aria-current={screen === 'result' ? 'page' : undefined} href="#resultado"><Icon name="book"/>Resultado e revisão</a>
+        <a className={screen === 'connections' ? 'active' : ''} aria-current={screen === 'connections' ? 'page' : undefined} href="#conexoes"><Icon name="connections"/>Provedores e conexões</a>
       </nav>
       <div className="sidebar-note"><span className="tiny-label">FLUXO DE TRABALHO</span><p>Configure a produção.<br/>Confira o resultado ao final.</p></div>
       <div className="profile"><span className="avatar">MR</span><div>Meu estúdio<small>Administrador · demonstração</small></div></div>
     </aside>
 
     <main id="conteudo" tabIndex={-1}>
-      <header className="topbar"><span>Estúdio <span className="crumb">/</span> {screen === 'new' ? (isEditingDraft ? 'Editar produção' : 'Nova produção') : screen === 'result' ? 'Resultado e revisão' : screen === 'history' ? 'Histórico' : 'Produções'}</span><span className="prototype"><span className="dot"/>Protótipo navegável</span></header>
-      <div className="demo-banner">Dados demonstrativos · Alterações duram apenas nesta sessão. Nenhuma geração real é executada.</div>
+      <header className="topbar"><span>Estúdio <span className="crumb">/</span> {screen === 'connections' ? 'Provedores e conex\u00f5es' : screen === 'new' ? (isEditingDraft ? 'Editar produção' : 'Nova produção') : screen === 'result' ? 'Resultado e revisão' : screen === 'history' ? 'Histórico' : 'Produções'}</span><span className="prototype"><span className="dot"/>{screen === 'connections' ? 'Conexão local' : 'Protótipo navegável'}</span></header>
+      {screen !== 'connections' && <div className="demo-banner">Dados demonstrativos · Alterações duram apenas nesta sessão. Nenhuma geração real é executada.</div>}
       {step >= 0 && <section className={`generation-banner ${isPaused ? 'paused' : ''}`} aria-label="Progresso da geração demonstrativa">
         <div className="generation-banner-heading"><strong>{isPaused ? 'Geração pausada' : 'Geração em andamento'}</strong><span>{progress}%</span></div>
         <progress aria-label={`Progresso da geração demonstrativa: ${progress}%`} max={100} value={progress}/>
@@ -143,6 +146,7 @@ function App() {
         <p>Simulação local. Na versão real, o progresso virá do job no backend; pausa/retomada usará checkpoints, e o histórico e os arquivos virão da API de exports.</p>
       </section>}
       <div className="page">
+      {screen === 'connections' && <Connections/>}
       {screen === 'productions' && <>
         <div className="page-heading"><div><h1>Produções</h1><p className="muted">Acompanhe cada etapa e confira os resultados.</p></div><button className="button primary" onClick={startNew}><Icon name="plus"/>Nova produção</button></div>
         <div className="stats"><Stat icon="layers" label="Produções nesta sessão" value={String(1 + drafts.length)} caption="Inclui rascunhos e demonstrações"/><Stat icon="check" label="Cartões concluídos" value={String(cards.length - pending).padStart(2, '0')} caption="Estado ilustrativo de validação"/><Stat icon="clock" label="Itens para conferir" value={String(pending).padStart(2, '0')} caption="Revisões e resultados incompletos" accent/></div>

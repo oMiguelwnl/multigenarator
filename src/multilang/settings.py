@@ -118,6 +118,11 @@ class Settings(BaseSettings):
     korean_provider_max_attempts: int = Field(default=1, ge=1, le=5)
     lexicon_data_dir: Path = Path(".multilang/lexicon")
     text_generation_provider: TextGenerationProvider = "litellm"
+    text_generation_transport: Literal["api", "codex"] = "api"
+    studio_connections_enabled: bool = False
+    studio_api_max_output_tokens: int = Field(default=2048, ge=256, le=8192)
+    studio_connections_path: Path = Path(".multilang/studio/connections.dpapi")
+    studio_codex_home: Path = Path(".multilang/studio/codex")
     text_generation_model: str = "openai/gpt-4o-mini"
     translation_provider: TranslationProvider = "deepl"
     litellm_api_key: str | None = Field(
@@ -212,3 +217,7 @@ class Settings(BaseSettings):
         ):
             values.setdefault("_env_file", None)
         super().__init__(**values)
+        if self.studio_connections_enabled:
+            from multilang.studio.connections import apply_connections
+
+            self.__dict__.update(apply_connections(self).__dict__)

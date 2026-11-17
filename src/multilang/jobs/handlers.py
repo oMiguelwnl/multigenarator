@@ -14,7 +14,9 @@ def build_handlers(settings, *, facade_factory=None):
 
     def bind(operation):
         def run(payload, actor, session):
-            return operation(facade_factory(session, settings), payload, actor)
+            from multilang.studio.connections import apply_connections
+
+            return operation(facade_factory(session, apply_connections(settings)), payload, actor)
 
         return run
 

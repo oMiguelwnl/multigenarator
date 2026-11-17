@@ -274,15 +274,15 @@ class NativeProviderContentAdapter:
     ) -> None:
         from multilang.services.provider_text_adapters import (
             _litellm_api_key,
-            _litellm_completion,
             _litellm_model,
+            configured_completion,
         )
 
         if not 1 <= max_output_tokens <= 8000:
             raise ValueError("provider output token limit must be 1..8000")
         self.model = _litellm_model(settings)
         self.api_key = _litellm_api_key(settings)
-        self.completion = completion or _litellm_completion
+        self.completion = completion or configured_completion(settings)
         self.max_output_tokens = max_output_tokens
         self.translation_adapter = translation_adapter
         if definition_checker is None:

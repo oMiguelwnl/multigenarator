@@ -286,6 +286,19 @@ select:disabled { color: var(--text-secondary); cursor: not-allowed; opacity: 1;
 .detail-actions { display: flex; align-items: center; flex-wrap: wrap; gap: 16px; margin-top: 24px; }
 .detail-actions .field-note { margin: 0; }
 .edit-form { margin-top: 26px; }
+.connections-form { max-width: 860px; }
+.connection-section { margin: 24px 0; padding: 24px; min-width: 0; }
+.connection-section legend { font-size: 20px; font-weight: 600; padding: 0 8px; }
+.connection-section p { max-width: 68ch; line-height: 1.6; }
+.connection-section input, .connection-section select { width: 100%; min-width: 0; }
+.connection-actions { display: flex; align-items: center; flex-wrap: wrap; gap: 12px; margin: 16px 0; }
+.connection-model { display: flex; align-items: end; flex-wrap: wrap; gap: 12px; margin-top: 24px; }
+.connection-model label { flex: 1; min-width: 180px; margin: 0; }
+.connection-status { padding: 16px 20px; border: 1px solid var(--border); border-radius: 12px; line-height: 1.6; max-width: 860px; }
+.connection-save { display: flex; align-items: center; flex-wrap: wrap; gap: 20px; margin-bottom: 24px; }
+.connection-save p { flex: 1; min-width: 200px; }
+.connection-save button { flex-shrink: 0; }
+.login-link { margin: 12px 0; }
 .empty { padding: 40px 24px; text-align: center; color: var(--text-muted); font-size: 13px; }
 .empty h2 { margin-top: 18px; color: var(--text); }
 .toast { position: fixed; z-index: 5; right: 24px; bottom: 24px; display: flex; align-items: center; gap: 20px; max-width: 480px; padding: 18px 20px; border: 1px solid var(--accent-border); border-radius: 9px; background: var(--surface-raised); color: var(--text); font-size: 13px; line-height: 1.6; box-shadow: 0 8px 28px #00000040; }

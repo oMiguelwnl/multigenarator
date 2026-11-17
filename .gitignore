@@ -21,6 +21,8 @@ pip-wheel-metadata/
 
 # Local virtualenv and secrets
 .venv/
+.venv-studio/
+.venv-studio-win/
 .env
 .env.*
 !.env.example

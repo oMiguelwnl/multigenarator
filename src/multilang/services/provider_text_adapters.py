@@ -130,11 +130,11 @@ class LiteLLMSentenceAdapter:
         self._settings = settings
         self._model = _litellm_model(settings)
         self._api_key = _litellm_api_key(settings)
-        self._completion = completion_func or _litellm_completion
+        self._completion = completion_func or configured_completion(settings)
 
     @property
     def provider(self) -> str:
-        return "litellm"
+        return "codex" if self._settings.text_generation_transport == "codex" else "litellm"
 
     @property
     def model(self) -> str:
@@ -180,7 +180,7 @@ class LiteLLMSentenceAdapter:
             uncertainty_notes=uncertainty_notes,
             provenance={
                 "source": "provider-text-generator",
-                "provider": "litellm",
+                "provider": self.provider,
                 "model": self._model,
                 **_usage_metadata(response),
                 **({"source_type": request.source_type} if request.source_type else {}),
@@ -274,7 +274,7 @@ class LiteLLMSentenceAdapter:
             definitions_html=definitions_html,
             provenance={
                 "source": "provider-definition-generator",
-                "provider": "litellm",
+                "provider": self.provider,
                 "model": self._model,
                 **_usage_metadata(response),
             },
@@ -501,7 +501,9 @@ class FallbackTranslationAdapter:
 
 
 def can_use_litellm(settings: Settings) -> bool:
-    return settings.text_generation_provider == "litellm" and bool(_litellm_api_key(settings))
+    return settings.text_generation_provider == "litellm" and (
+        settings.text_generation_transport == "codex" or bool(_litellm_api_key(settings))
+    )
 
 
 def can_use_deepl(settings: Settings) -> bool:
@@ -765,12 +767,16 @@ def _clean_definition(value: str | None) -> str:
 
 def _litellm_model(settings: Settings) -> str:
     model = settings.text_generation_model.strip()
+    if settings.text_generation_transport == "codex":
+        return model.removeprefix("openai/")
     if settings.openrouter_api_key and not settings.openai_api_key and not model.startswith("openrouter/"):
         return f"openrouter/{model}"
     return model
 
 
 def _litellm_api_key(settings: Settings) -> str | None:
+    if settings.text_generation_transport == "codex":
+        return None
     if settings.litellm_api_key:
         return settings.litellm_api_key
 
@@ -786,6 +792,31 @@ def _litellm_completion(**kwargs: Any) -> Any:
     from litellm import completion
 
     return completion(**kwargs)
+
+
+def configured_completion(settings: Settings) -> CompletionFunc:
+    if settings.text_generation_transport == "codex":
+        from multilang.studio.codex import completion_for
+
+        return completion_for(settings)
+
+    def completion(**kwargs):
+        from multilang.studio.codex import network_allowed
+
+        network_allowed()
+        requested = kwargs.pop("max_tokens", settings.studio_api_max_output_tokens)
+        limit = (
+            min(requested, settings.studio_api_max_output_tokens)
+            if settings.studio_connections_enabled else requested
+        )
+        if str(kwargs.get("model", "")).startswith(("openai/gpt-6", "gpt-6")):
+            kwargs.pop("temperature", None)
+            kwargs["max_completion_tokens"] = limit
+        else:
+            kwargs["max_tokens"] = limit
+        return _litellm_completion(**kwargs)
+
+    return completion
 
 
 def _deepl_translator(api_key: str) -> Any:

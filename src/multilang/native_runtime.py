@@ -521,7 +521,10 @@ class NativeFacade:
                     translation_adapter=_build_translation_adapter(self.settings),
                 ),
                 matcher=matcher,
-                provider=self.settings.text_generation_provider,
+                provider=(
+                    "codex" if self.settings.text_generation_transport == "codex"
+                    else self.settings.text_generation_provider
+                ),
                 model_version=self.settings.text_generation_model,
             )
         return service
