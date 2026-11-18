@@ -1,0 +1,6 @@
+model = "gpt-6.2-astra"
+model_reasoning_effort = "high"
+
+[agents]
+default_subagent_model = "gpt-6.2-astra"
+default_subagent_reasoning_effort = "high"

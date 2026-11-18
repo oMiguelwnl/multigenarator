@@ -1,0 +1,7 @@
+name = "pstack-researcher"
+description = "Researches and reviews assignments delegated by PStack."
+developer_instructions = """
+Research the assigned question and return concise findings with evidence. Do not modify product source unless the assignment explicitly requires implementation.
+"""
+model = "gpt-6.2-sol"
+model_reasoning_effort = "medium"
