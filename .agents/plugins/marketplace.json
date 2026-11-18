@@ -1,0 +1,20 @@
+{
+  "name": "multilang-local",
+  "plugins": [
+    {
+      "name": "pstack-openai",
+      "source": {
+        "source": "local",
+        "path": "./pstack-openai"
+      },
+      "policy": {
+        "installation": "AVAILABLE",
+        "authentication": "ON_INSTALL"
+      },
+      "category": "Developer Tools",
+      "interface": {
+        "displayName": "PStack OpenAI"
+      }
+    }
+  ]
+}
