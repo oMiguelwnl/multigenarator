@@ -1,0 +1,3 @@
+[submodule ".agents/plugins/pstack-openai"]
+	path = .agents/plugins/pstack-openai
+	url = https://github.com/yabasha/pstack-openai.git
