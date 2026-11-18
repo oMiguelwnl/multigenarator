@@ -9,6 +9,7 @@ import { AnkiTemplatePreview } from './AnkiTemplatePreview';
 import { CardEditor } from './CardEditor';
 import { Connections } from './Connections';
 import './styles.css';
+import { loadDrafts, persistDraft } from './draft-store';
 
 type Screen = 'connections' | 'productions' | 'history' | 'new' | 'result';
 const createDraft = (): Draft => ({ id: crypto.randomUUID(), ...demoProduction });
@@ -47,6 +48,15 @@ function App() {
   const [filter, setFilter] = useState('all');
   const [editing, setEditing] = useState(false);
   const [drafts, setDrafts] = useState<Draft[]>([]);
+  const [loadingDrafts, setLoadingDrafts] = useState(true);
+  const [savingDraft, setSavingDraft] = useState(false);
+  useEffect(() => {
+    let active = true;
+    loadDrafts().then(items => { if (active) setDrafts(items); })
+      .catch(() => { if (active) setToast('Não foi possível abrir os rascunhos deste navegador.'); })
+      .finally(() => { if (active) setLoadingDrafts(false); });
+    return () => { active = false; };
+  }, []);
   const [draft, setDraft] = useState<Draft>(createDraft);
   const [step, setStep] = useState(-1);
   const [isPaused, setIsPaused] = useState(false);
@@ -156,13 +166,20 @@ function App() {
     setFilter('all');
     go('result');
   };
-  const saveDraft = () => {
-    if (readingFile) return;
+  const saveDraft = async () => {
+    if (readingFile || savingDraft || loadingDrafts) return;
     if (!draft.name.trim()) { setToast('Dê um nome à produção antes de salvar.'); return; }
     if (!isSupportLanguageAllowed(draft.language, draft.supportLanguage)) { setToast('Selecione um idioma de apoio disponível para este idioma estudado.'); return; }
-    setDrafts(previous => saveProductionDraft(previous, draft));
-    setToast(isEditingDraft ? 'Rascunho atualizado nesta sessão.' : 'Rascunho salvo nesta sessão. Recarregar a página limpa os dados demonstrativos.');
-    setDraft(createDraft()); go('productions');
+    setSavingDraft(true);
+    try {
+      const [saved] = saveProductionDraft([], draft);
+      await persistDraft(saved);
+      setDrafts(previous => [saved, ...previous.filter(item => item.id !== saved.id)]);
+      setToast('Rascunho salvo neste navegador.');
+      setDraft(createDraft()); go('productions');
+    } catch {
+      setToast('Falha ao salvar o rascunho. Confira o espaço disponível e tente novamente.');
+    } finally { setSavingDraft(false); }
   };
 
   return <div className="shell">
@@ -185,7 +202,7 @@ function App() {
 
     <main id="conteudo" tabIndex={-1}>
       <header className="topbar"><span>Estúdio <span className="crumb">/</span> {screen === 'connections' ? 'Provedores e conex\u00f5es' : screen === 'new' ? (isEditingDraft ? 'Editar produção' : 'Nova produção') : screen === 'result' ? 'Resultado e revisão' : screen === 'history' ? 'Histórico' : 'Produções'}</span><span className="prototype"><span className="dot"/>{screen === 'connections' ? 'Conexão local' : 'Protótipo navegável'}</span></header>
-      {screen !== 'connections' && <div className="demo-banner">Dados demonstrativos · Alterações duram apenas nesta sessão. Nenhuma geração real é executada.</div>}
+      {screen !== 'connections' && <div className="demo-banner">Rascunhos ficam salvos neste navegador. Geração e revisão usam dados demonstrativos.</div>}
       {step >= 0 && <section className={`generation-banner ${isPaused ? 'paused' : ''}`} aria-label="Progresso da geração demonstrativa">
         <div className="generation-banner-heading"><strong>{isPaused ? 'Geração pausada' : 'Geração em andamento'}</strong><span>{progress}%</span></div>
         <progress aria-label={`Progresso da geração demonstrativa: ${progress}%`} max={100} value={progress}/>
@@ -197,16 +214,26 @@ function App() {
       {screen === 'productions' && <>
         <div className="page-heading"><div><h1>Produções</h1><p className="muted">Acompanhe cada etapa e confira os resultados.</p></div><button className="button primary" onClick={startNew}><Icon name="plus"/>Nova produção</button></div>
         <div className="production-overview">
-          <div className="stats" aria-label="Resumo ilustrativo das produções"><Stat icon="layers" label="Produções nesta sessão" value={String(1 + drafts.length)} caption="Inclui rascunhos e demonstrações"/><Stat icon="check" label="Cartões concluídos" value={String(cards.length - pending).padStart(2, '0')} caption="Estado ilustrativo de validação"/><Stat icon="clock" label="Itens para conferir" value={String(pending).padStart(2, '0')} caption="Revisões e resultados incompletos" accent/></div>
-          <section className="attention"><span className="attention-icon"><Icon name="book" size={22}/></span><div><h2>Uma produção aguarda revisão</h2><p>{pending > 0 ? `${pending} cartões precisam de atenção no exemplo.` : 'O cenário demonstrativo não tem pendências.'}</p><button className="text-button" onClick={() => go('result')}>Revisar resultado <Icon name="arrow" size={16}/></button></div></section>
+          <div className="stats" aria-label="Resumo ilustrativo das produções"><Stat icon="layers" label="Produções no estúdio" value={String(1 + drafts.length)} caption="Inclui rascunhos e demonstrações"/><Stat icon="check" label="Cartões concluídos" value={String(cards.length - pending).padStart(2, '0')} caption="Estado ilustrativo de validação"/><Stat icon="clock" label="Itens para conferir" value={String(pending).padStart(2, '0')} caption="Revisões e resultados incompletos" accent/></div>
+          {drafts.length > 0 ? (
+            <section className="attention"><span className="attention-icon"><Icon name="layers" size={22}/></span><div>
+              <h2>Retomar rascunho</h2><p>{drafts[0].name}</p>
+              <button className="text-button" onClick={() => { setDraft(drafts[0]); go('new'); }}>Continuar produção <Icon name="arrow" size={16}/></button>
+            </div></section>
+          ) : pending > 0 && (
+            <section className="attention"><span className="attention-icon"><Icon name="book" size={22}/></span><div>
+              <h2>Revisar produção de exemplo</h2><p>{pending} cartões precisam de atenção no exemplo.</p>
+              <button className="text-button" onClick={() => go('result')}>Revisar resultado <Icon name="arrow" size={16}/></button>
+            </div></section>
+          )}
         </div>
         <section className="panel production-panel"><div className="panel-heading"><div><h2>Suas produções</h2><p className="muted">Do primeiro rascunho à edição final.</p></div><Search value={productionQuery} onChange={setProductionQuery} placeholder="Buscar produção"/></div>
           <div className="table-wrap" role="region" aria-label="Lista de produções" tabIndex={0}><table className="productions-table" role="table"><thead role="rowgroup"><tr role="row"><th scope="col" role="columnheader">PRODUÇÃO</th><th scope="col" role="columnheader">MODALIDADE</th><th scope="col" role="columnheader">SITUAÇÃO</th><th scope="col" role="columnheader">ITENS</th><th scope="col" role="columnheader"><span className="sr-only">Abrir</span></th></tr></thead><tbody role="rowgroup">
           {matchingDemo && <tr role="row"><td role="cell"><div className="production-name"><span className="language-tile">EN</span><div><strong>{demoProduction.name}</strong><small>Estudo: {demoProduction.language} · Apoio: {supportLanguageLabels[demoProduction.supportLanguage]}</small><small>Demonstração · edição de exemplo</small></div></div></td><td role="cell" data-label="Modalidade">{demoProduction.kind}</td><td role="cell" data-label="Situação"><Badge status="review"/></td><td role="cell" data-label="Itens">6 cartões</td><td role="cell"><button className="text-button" onClick={() => go('result')} aria-label="Abrir resultado de Inglês">Abrir <Icon name="arrow" size={15}/></button></td></tr>}
-          {drafts.filter(d => d.name.toLocaleLowerCase().includes(productionQuery.toLocaleLowerCase().trim())).map(d => <tr role="row" key={d.id}><td role="cell"><div className="production-name"><span className="language-tile neutral"><Icon name="layers"/></span><div><strong>{d.name}</strong><small>Estudo: {d.language} · Apoio: {supportLanguageLabels[d.supportLanguage]}</small><small>{sourceKindFor(d.kind) ? (d.attachment ? `Arquivo: ${d.attachment.file.name}` : 'Arquivo pendente') : 'Salvo nesta sessão'}</small></div></div></td><td role="cell" data-label="Modalidade">{d.kind}</td><td role="cell" data-label="Situação"><span className="badge draft">Rascunho</span></td><td role="cell" data-label="Itens">—</td><td role="cell"><button className="text-button" onClick={() => { setDraft(d); go('new'); }} aria-label={`Editar produção ${d.name}`}>Editar <Icon name="arrow" size={15}/></button></td></tr>)}
+          {drafts.filter(d => d.name.toLocaleLowerCase().includes(productionQuery.toLocaleLowerCase().trim())).map(d => <tr role="row" key={d.id}><td role="cell"><div className="production-name"><span className="language-tile neutral"><Icon name="layers"/></span><div><strong>{d.name}</strong><small>Estudo: {d.language} · Apoio: {supportLanguageLabels[d.supportLanguage]}</small><small>{sourceKindFor(d.kind) ? (d.attachment ? `Arquivo: ${d.attachment.file.name}` : 'Arquivo pendente') : 'Salvo neste navegador'}</small></div></div></td><td role="cell" data-label="Modalidade">{d.kind}</td><td role="cell" data-label="Situação"><span className="badge draft">Rascunho</span></td><td role="cell" data-label="Itens">—</td><td role="cell"><button className="text-button" onClick={() => { setDraft(d); go('new'); }} aria-label={`Editar produção ${d.name}`}>Editar <Icon name="arrow" size={15}/></button></td></tr>)}
           </tbody></table></div>
           {!matchingDemo && !drafts.some(d => d.name.toLocaleLowerCase().includes(productionQuery.toLocaleLowerCase().trim())) && <div className="empty"><h3>Nenhuma produção encontrada</h3><p>Experimente outro nome ou veja todas as produções.</p><button className="button secondary" onClick={() => setProductionQuery('')}>Limpar busca</button></div>}
-          <div className="panel-footer"><span>A lista usa somente dados deste protótipo.</span><span>Atualizado nesta sessão</span></div>
+          <div className="panel-footer"><span>Rascunhos salvos neste navegador.</span><span>Atualizado nesta sessão</span></div>
         </section>
         <div className="bottom-note"><Icon name="book" size={17}/><p>Um inventário revisado é o ponto de partida. A qualidade acompanha toda a produção.</p></div>
       </>}
@@ -261,7 +288,7 @@ function App() {
             <AnkiTemplatePreview key={`${draft.kind}:${draft.language}`} deckType={draft.kind} language={draft.language}/>
           </fieldset>
           <fieldset><legend><span className="number">03</span> Áudio e execução</legend><div className="source-box"><Icon name="sound"/><div><strong>Palavra e frase, em faixas separadas</strong><p>Azure é a direção prevista para produção.</p><small>Seleção de voz e áudios reais aguardam integração.</small></div></div><p className="field-note">O sistema seguirá suas validações e apresentará o resultado completo, incluindo pendências.</p></fieldset>
-          <div className="form-actions"><button type="button" className="button secondary" disabled={step >= 0 || readingFile} onClick={saveDraft}>{readingFile ? 'Lendo arquivo…' : isEditingDraft ? 'Salvar alterações' : 'Salvar rascunho'}</button><button className="button primary" disabled={!sampleEnabled || step >= 0}>{step >= 0 ? (isPaused ? 'Pausada' : 'Simulando…') : 'Simular produção'}<Icon name="arrow" size={16}/></button></div>
+          <div className="form-actions"><button type="button" className="button secondary" disabled={step >= 0 || readingFile || savingDraft || loadingDrafts} onClick={saveDraft}>{savingDraft ? 'Salvando…' : readingFile ? 'Lendo arquivo…' : isEditingDraft ? 'Salvar alterações' : 'Salvar rascunho'}</button><button className="button primary" disabled={!sampleEnabled || step >= 0}>{step >= 0 ? (isPaused ? 'Pausada' : 'Simulando…') : 'Simular produção'}<Icon name="arrow" size={16}/></button></div>
           {!sampleEnabled && <p className="field-note" role="status">{sourceKind ? 'Salve o rascunho com seu arquivo. A geração a partir de arquivos será habilitada após a integração com o sistema.' : 'Você pode salvar este rascunho. Para explorar o resultado de exemplo, selecione Inglês, Frequência e apoio em Português.'}</p>}
         </form>
         <aside className="summary panel"><h2>Sua produção</h2><dl><dt>Idioma estudado</dt><dd>{draft.language}</dd><dt>Idioma de apoio</dt><dd>{supportLanguageLabels[draft.supportLanguage]}</dd><dt>Material</dt><dd>{draft.kind}</dd><dt>{sourceKind ? 'Arquivo' : 'Conteúdo'}</dt><dd>{sourceKind ? (draft.attachment?.file.name ?? 'Ainda não anexado') : sampleEnabled ? '6 itens de exemplo' : 'Sem inventário de exemplo'}</dd>{sourceKind === 'highlights' && <><dt>Interpretar como</dt><dd>{draft.highlightInput === 'vocabulary' ? 'Palavras ou expressões' : 'Trechos de leitura'}</dd></>}<dt>Execução</dt><dd>{sampleEnabled ? 'Até o resultado final' : 'Somente rascunho'}</dd><dt>Custo real</dt><dd>Nenhuma chamada paga</dd></dl><hr/><h3>Etapas do processamento</h3><ol className="stage-list" aria-live="polite">{stages.map((s, i) => <li key={s} className={step >= i ? 'stage-active' : ''}><span>{step > i ? <><Icon name="check" size={14}/><span className="sr-only">Concluído:</span></> : i + 1}</span>{s}{step === i && <small>Simulando</small>}</li>)}</ol><p className="field-note">O tempo e os estados apresentados nesta simulação são fictícios.</p></aside>
@@ -281,7 +308,7 @@ function App() {
         </div> : <div className="review-detail empty"><Icon name="search" size={32}/><h2>Nenhum resultado</h2><p>Altere a busca ou volte para todos os cartões.</p><button className="button secondary" onClick={() => { setFilter('all'); setQuery(''); }}>Limpar filtros</button></div>}
         </div></section>
       </>}
-      <footer className="page-footer"><span className="page-footer-brand"><BrandMark/><span className="footer-caption">Estúdio de produção</span></span><span>Dados locais · apenas nesta sessão</span></footer>
+      <footer className="page-footer"><span className="page-footer-brand"><BrandMark/><span className="footer-caption">Estúdio de produção</span></span><span>Estúdio local</span></footer>
       </div>
     </main>
     {toast && <div className="toast" role="status">{toast}<button aria-label="Fechar mensagem" onClick={() => setToast('')}><Icon name="close" size={18}/></button></div>}

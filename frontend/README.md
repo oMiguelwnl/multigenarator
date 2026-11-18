@@ -98,7 +98,7 @@ Referências: [Codex App Server](https://learn.chatgpt.com/docs/app-server),
 4. Busque uma palavra, filtre pendências, veja frente/verso no template Anki e edite o conteúdo.
 5. Alterar uma frase invalida o áudio ilustrativo e exige nova revisão.
 
-Outras configurações podem ser salvas como rascunhos nesta sessão. Os seletores
+Outras configurações podem ser salvas como rascunhos neste navegador. Os seletores
 representam o planejamento; não afirmam suporte qualificado para cada combinação.
 Editar e salvar um rascunho atualiza a mesma produção; Nova produção começa outro
 rascunho. As situações dos cartões aparecem por escrito na lista de revisão.
@@ -110,7 +110,7 @@ lista de produções. O aplicativo continua em português.
 A simulação só usa a combinação dos fixtures: Inglês + Frequência + apoio em
 Português. Outras combinações válidas podem ser salvas, sem simulação. O resultado
 mostra o idioma dos seus próprios dados, independentemente do rascunho aberto.
-Todos os dados são em memória: recarregar descarta rascunhos e edições. As rotas
+Rascunhos e anexos são salvos em IndexedDB, por navegador e origem. Histórico e edições de cartões continuam em memória. As rotas
 de demonstração usam `#producoes`, `#nova` e `#resultado`.
 
 ## Anexar arquivos
@@ -131,9 +131,9 @@ seletor. Se uma substituição falhar, o anexo anterior é mantido.
 
 É possível conferir até 2.000 caracteres de TXT, substituir e remover o anexo.
 HTML é mantido como arquivo, sem renderizar seu conteúdo ou carregar recursos
-externos. O arquivo original fica no rascunho em memória, inclusive ao reabri-lo;
+externos. O arquivo original fica armazenado junto com o rascunho após salvar;
 nada é enviado ao servidor. Mudar a modalidade remove o anexo anterior com aviso.
-Recarregar a página descarta os anexos. Rascunhos incompletos podem ser salvos.
+Limpar os dados do site remove rascunhos e anexos. Rascunhos incompletos podem ser salvos.
 
 O nome do arquivo aparece no resumo e na lista de produções. Anexar um arquivo
 não habilita geração, simulação ou exportação dessas modalidades.
