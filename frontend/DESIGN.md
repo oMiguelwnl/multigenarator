@@ -1,77 +1,60 @@
 # Multilang — Graphite + Blue
 
-## Direction
+## Direção
 
-The user chose a restrained dark interface with graphite and blue (2026-11-11).
-The studio prioritizes production, review and recovery. The store will use the
-same brand but needs its own presentation and purchasing flows.
+O estúdio usa uma linguagem de software operacional: superfícies grafite,
+tipografia de interface e azul reservado para ações, foco e seleção. A
+interface prioriza a leitura de produções, a configuração de rascunhos e a
+revisão dos cartões.
 
-Use neutral surfaces, readable supporting text and a single prominent action per
-section. Avoid decorative dashboards, invented statistics, heavy gradients and
-large promotional blocks in the operational interface.
+Não há imagens de banco, gráficos decorativos, gradientes ou dados promocionais.
+As telas de produção, progresso, histórico e cartões continuam explicitamente
+demonstrativas. A tela de conexões permanece ligada ao serviço local, sem
+expor credenciais na interface.
 
-## Palette
+## Paleta
 
-CSS custom properties in `apps/admin/src/styles.css` are the source of truth.
+Os tokens em `apps/admin/src/styles.css` são a fonte de verdade.
 
-| Role | Token | Color |
+| Papel | Token | Cor |
 | --- | --- | --- |
-| Page | `--canvas` | `#101318` |
-| Navigation | `--sidebar` | `#0C0F14` |
-| Panel | `--surface` | `#171C24` |
-| Raised surface | `--surface-raised` | `#1D2430` |
-| Primary text | `--text` | `#EEF2F8` |
-| Supporting text | `--text-muted` | `#9DAABD` |
-| Primary action | `--accent` | `#3568E8` |
-| Link/focus/selection text | `--accent-text` | `#98B9FF` |
-| Selected surface | `--accent-soft` | `#1B2B48` |
-| Completed | `--success` | `#7DD3B0` |
-| Needs attention | `--warning` | `#E8BF79` |
-| Failed | `--danger` | `#F1A5AC` |
+| Fundo | `--canvas` | `#101318` |
+| Navegação | `--sidebar` | `#0C0F14` |
+| Superfície | `--surface` | `#171C24` |
+| Superfície elevada | `--surface-raised` | `#1D2430` |
+| Texto principal | `--text` | `#EEF2F8` |
+| Texto de apoio | `--text-muted` | `#9DAABD` |
+| Ação principal | `--accent` | `#3568E8` |
+| Foco, links e seleção | `--accent-text` | `#98B9FF` |
+| Seleção de fundo | `--accent-soft` | `#1B2B48` |
+| Concluído | `--success` | `#7DD3B0` |
+| Revisão necessária | `--warning` | `#E8BF79` |
+| Incompleto | `--danger` | `#F1A5AC` |
 
-Pair primary blue buttons with white text. Bright accent text is for dark
-surfaces. Never reuse button blue for small text on dark surfaces. Status labels
-accompany color; color alone must not communicate a required decision. Inputs
-have a stronger border than decorative separators. Disabled actions retain
-readable labels and explain missing capabilities nearby.
+O azul identifica ações e seleção; neutros preservam a hierarquia das telas
+operacionais. Rótulos de estado acompanham as cores, sem depender delas.
+Controles têm bordas mais fortes que separadores. A fonte do sistema evita
+requisições externas.
 
-## Typography and layout
+## Composição e acessibilidade
 
-- System font stack: Segoe UI Variable, Segoe UI, system-ui, sans-serif. No
-  external font requests. A brand font can be evaluated separately.
-- Normal interface text: 13–15 px; supporting text: predominantly 12 px.
-- Compact metadata: 10–11 px only for short, secondary labels.
-- Page titles: 29–34 px; card target word: 41–46 px.
-- Buttons have a minimum 44 px height; mobile input text is 16 px.
-- Spacing follows a 4 px base, with 16/24/32 px groups.
-- Summary metrics use dividers, not three independently elevated cards.
-- Preview cards have their own surface and a clear front/back indicator.
-- Card-list states have visible text labels. Selection also uses an arrow or
-  underline; color alone does not carry it.
-- Page headings stand on their own, without uppercase introductory labels.
-- Back and notification-close controls have at least 44 px touch targets.
-- Breakpoints at 1200, 1000 and 680 px preserve reading size. Mobile tables and
-  the review item strip can scroll inside their own region.
-- Keyboard focus, a skip link and reduced-motion preferences are supported.
+- Navegação lateral em telas largas; em telas menores, marca e botão Menu
+  abrem uma folha de tela inteira com links em alvos de 56 px.
+- A visão geral agrupa contagens numa faixa e aproxima o próximo item de
+  revisão da lista de produções.
+- Formulários, resumo do rascunho, estados vazios e revisão preservam a ordem e
+  o conteúdo existentes.
+- Tabelas e a faixa de cartões podem rolar dentro das próprias regiões; a página
+  não precisa rolar horizontalmente.
+- Menu móvel expõe seu estado, fecha por seleção ou Escape, mantém o foco no
+  menu e o devolve ao botão ao fechar. Alvos têm pelo menos 44 px, foco visível,
+  nomes acessíveis e campos legíveis em telefone. Animações respeitam
+  `prefers-reduced-motion`.
+- Hashes, estados demonstrativos, regras do formulário e fluxos locais de
+  credenciais não dependem da composição visual.
 
-## Reference tools
+## Verificação
 
-- [Impeccable](https://impeccable.style/docs/impeccable/) 4.8.2 is installed
-  in the user's Codex skills directory. This pass uses its polish playbook and
-  craft floor for a source review and refinement, with its local detector.
-  It is a development aid, not an application dependency or a completed browser
-  accessibility audit.
-- [Shoogle](https://shoogle.dev/mcp/shoogle-skills) finds shadcn registry
-  components; its skill requires its MCP tools. No new component stack added.
-- [Lazyweb](https://design.lazyweb.com/mcp) supplies product research through
-  its service. No external account or MCP configured.
-- [Dribbble](https://dribbble.com/search/language-dashboard) and
-  [Dark Design](https://www.dark.design/) are discovery references, not a
-  component library or evidence of accessibility/usability.
-
-## Verification boundary
-
-Build and color-pair checks support this iteration. They do not certify the
-whole interface against WCAG or replace browser/phone review. Preview text,
-production outcomes and audio availability remain demonstrative. Existing
-Anki templates, provider behavior and lexical inventories are unchanged.
+`npm test` cobre regras do protótipo, arquivos de origem e prévia Anki;
+`npm run build` verifica tipos e empacota a interface. Esses comandos não
+substituem uma revisão visual e de acessibilidade em navegadores.

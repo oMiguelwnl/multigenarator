@@ -59,7 +59,7 @@ export function Connections() {
   const locked = busy || !ready;
 
   return <>
-    <div className="page-heading"><div><h1>Provedores e conexões</h1><p className="muted">Escolha como gerar textos, traduzir frases e produzir áudio.</p></div><span className="badge draft">Uso pessoal · local</span></div>
+    <div className="page-heading"><div><h1>Provedores e conexões</h1><p className="muted">Configure integrações para uso futuro. Esta tela não gera cartões nem áudio.</p></div><span className="badge draft">Uso pessoal · local</span></div>
     <div className="connection-status" role="status">{message}</div>
     {!ready && !busy && <div className="panel connection-section"><h2>Abra o estúdio local</h2><p>A prévia HTML mostra esta tela, mas não recebe chaves. Use o arquivo <strong>Abrir Estúdio.cmd</strong> da pasta frontend para abrir a versão conectada.</p><p className="field-note">O acesso fica restrito a este computador. Nunca cole suas chaves no chat.</p></div>}
     <form className="connections-form" onSubmit={event => { event.preventDefault(); void action(async () => {
