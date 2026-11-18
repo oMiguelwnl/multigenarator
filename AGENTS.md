@@ -219,6 +219,10 @@ Architecture not yet mapped. Follow existing patterns found in the codebase.
 No project skills found. Add skills to any of: `.claude/skills/`, `.agents/skills/`, `.cursor/skills/`, `.github/skills/`, or `.codex/skills/` with a `SKILL.md` index file.
 <!-- GSD:skills-end -->
 
+## PStack model routing
+
+The trusted project Codex configuration uses GPT-6.2-Astra with high reasoning for the parent orchestrator and default implementation workers. PStack implementation roles (`feature, refactoring`, `bug-fix`, `perf-issue`, `hillclimb`, `swarm workers`, and `architect runners`) use `pstack-implementor`. Research and review roles (`how explorer`, `how explainer`, `why investigators`, `reflect tooling`, `arena runners`, and `interrogate reviewers`) use `pstack-researcher` with GPT-6.2-Sol and medium reasoning. Judgment and synthesis stay with the parent orchestrator. Do not configure an Arena cross-family judge unless the host verifies a different model family.
+
 <!-- GSD:workflow-start source:GSD defaults -->
 ## GSD Workflow Enforcement
 
