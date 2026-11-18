@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { createRoot } from 'react-dom/client';
 import { demoCards, demoProduction, canSimulateDraft } from './demo';
 import { editCard, selectCards, canExport, saveProductionDraft, availableSupportLanguages, isSupportLanguageAllowed, changeStudyLanguage, changeMaterial, progressPercentage, recordCompletedDeck, supportLanguageLabels } from './model';
@@ -18,6 +18,7 @@ const labels = { ready: 'Concluído', review: 'Revisar', failed: 'Incompleto' };
 function Icon({ name, size = 20 }: { name: string; size?: number }) {
   const paths: Record<string, React.ReactNode> = {
     grid: <><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/></>,
+    menu: <path d="M4 6h16M4 12h16M4 18h16"/>,
     plus: <path d="M12 5v14M5 12h14"/>,
     arrow: <path d="m9 5 7 7-7 7"/>,
     book: <><path d="M12 5v15M12 5C8 2 4 3 2 4v15c3-1 7-1 10 1 3-2 7-2 10-1V4c-3-1-7-2-10 1Z"/></>,
@@ -39,6 +40,7 @@ function Badge({ status }: { status: Card['status'] }) { return <span className=
 function App() {
   const initialScreen = (): Screen => location.hash.startsWith('#conexoes') ? 'connections' : location.hash === '#nova' ? 'new' : location.hash === '#resultado' ? 'result' : location.hash === '#historico' ? 'history' : 'productions';
   const [screen, setScreen] = useState<Screen>(initialScreen);
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [cards, setCards] = useState<Card[]>(demoCards);
   const [selected, setSelected] = useState('01');
   const [query, setQuery] = useState('');
@@ -53,7 +55,50 @@ function App() {
   const [toast, setToast] = useState('');
   const [productionQuery, setProductionQuery] = useState('');
   const [readingFile, setReadingFile] = useState(false);
+  const mobileMenuToggleRef = useRef<HTMLButtonElement>(null);
+  const mobileMenuCloseRef = useRef<HTMLButtonElement>(null);
+  const mobileMenuRef = useRef<HTMLElement>(null);
   useEffect(() => { const onHash = () => { setScreen(initialScreen()); setEditing(false); }; window.addEventListener('hashchange', onHash); return () => window.removeEventListener('hashchange', onHash); }, []);
+  useEffect(() => {
+    if (!mobileMenuOpen) return;
+    const previousOverflow = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+    const closeOnEscape = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') setMobileMenuOpen(false);
+    };
+    const keepFocusInMenu = (event: KeyboardEvent) => {
+      if (event.key !== 'Tab') return;
+      const items = mobileMenuRef.current?.querySelectorAll<HTMLElement>('a[href], button:not([disabled])');
+      if (!items?.length) return;
+      const first = items[0];
+      const last = items[items.length - 1];
+      if (!mobileMenuRef.current?.contains(document.activeElement)) {
+        event.preventDefault();
+        (event.shiftKey ? last : first).focus();
+      } else if (event.shiftKey && document.activeElement === first) {
+        event.preventDefault();
+        last.focus();
+      } else if (!event.shiftKey && document.activeElement === last) {
+        event.preventDefault();
+        first.focus();
+      }
+    };
+    const closeOnDesktop = () => {
+      if (window.innerWidth > 900) setMobileMenuOpen(false);
+    };
+    const focusTimer = window.setTimeout(() => mobileMenuCloseRef.current?.focus(), 50);
+    window.addEventListener('keydown', closeOnEscape);
+    window.addEventListener('keydown', keepFocusInMenu);
+    window.addEventListener('resize', closeOnDesktop);
+    return () => {
+      document.body.style.overflow = previousOverflow;
+      window.clearTimeout(focusTimer);
+      window.removeEventListener('keydown', closeOnEscape);
+      window.removeEventListener('keydown', keepFocusInMenu);
+      window.removeEventListener('resize', closeOnDesktop);
+      mobileMenuToggleRef.current?.focus();
+    };
+  }, [mobileMenuOpen]);
   useEffect(() => {
     if (step < 0 || isPaused) return;
     const timer = window.setTimeout(() => {
@@ -92,6 +137,7 @@ function App() {
   const sourceKind = sourceKindFor(draft.kind);
   const matchingDemo = 'vocabulário essencial inglês'.includes(productionQuery.toLocaleLowerCase().trim());
   const isEditingDraft = drafts.some(item => item.id === draft.id);
+  const closeMobileMenu = () => setMobileMenuOpen(false);
   const startNew = () => {
     if (step >= 0) {
       setToast('Conclua ou retome a simulação em andamento antes de iniciar outra.');
@@ -122,17 +168,18 @@ function App() {
   return <div className="shell">
     <a className="skip-link" href="#conteudo" onClick={event => { event.preventDefault(); document.getElementById('conteudo')?.focus(); }}>Ir para o conteúdo</a>
     <aside className="sidebar">
-      <a className="brand" href="#producoes" onClick={() => go('productions')}><svg className="brand-symbol" viewBox="0 0 40 40" aria-hidden="true"><path d="M5 32V9l15 9L35 9v23"/><path d="M5 9v23l15-9 15 9M20 18v5"/></svg><span className="brand-wordmark">multilang</span></a>
+      <a className="brand" href="#producoes" onClick={() => go('productions')}><BrandMark/></a>
       <div className="workspace"><span className="workspace-icon"><Icon name="layers"/></span><div>Estúdio de produção<small>Seu espaço de trabalho</small></div></div>
-      <p className="nav-label">OPERAÇÃO</p>
-      <nav aria-label="Navegação principal">
-        <a className={screen === 'productions' ? 'active' : ''} aria-current={screen === 'productions' ? 'page' : undefined} href="#producoes"><Icon name="grid"/>Produções<span className="nav-count">{1 + drafts.length}</span></a>
-        <a className={screen === 'new' ? 'active' : ''} aria-current={screen === 'new' ? 'page' : undefined} href="#nova" onClick={event => { event.preventDefault(); startNew(); }}><Icon name="plus"/>Nova produção</a>
-        <a className={screen === 'history' ? 'active' : ''} aria-current={screen === 'history' ? 'page' : undefined} href="#historico" onClick={event => { event.preventDefault(); go('history'); }}><Icon name="clock"/>Histórico<span className="nav-count">{history.length}</span></a>
-        <a className={screen === 'result' ? 'active' : ''} aria-current={screen === 'result' ? 'page' : undefined} href="#resultado"><Icon name="book"/>Resultado e revisão</a>
-        <a className={screen === 'connections' ? 'active' : ''} aria-current={screen === 'connections' ? 'page' : undefined} href="#conexoes"><Icon name="connections"/>Provedores e conexões</a>
+      <p className="nav-label">Operação</p>
+      <button ref={mobileMenuToggleRef} className="mobile-nav-toggle" type="button" aria-expanded={mobileMenuOpen} aria-controls="primary-navigation" onClick={() => setMobileMenuOpen(true)}><Icon name="menu" size={18}/><span>Menu</span></button>
+      <nav ref={mobileMenuRef} id="primary-navigation" className={mobileMenuOpen ? 'mobile-nav-open' : ''} aria-label="Navegação principal" onClick={event => { if (event.target === event.currentTarget) closeMobileMenu(); }}>
+        <div className="mobile-nav-heading"><span>Navegação</span><button ref={mobileMenuCloseRef} className="mobile-nav-close" type="button" aria-label="Fechar menu" onClick={closeMobileMenu}><Icon name="close"/></button></div>
+        <a className={screen === 'productions' ? 'active' : ''} aria-current={screen === 'productions' ? 'page' : undefined} href="#producoes" onClick={closeMobileMenu}><Icon name="grid"/>Produções<span className="nav-count">{1 + drafts.length}</span></a>
+        <a className={screen === 'new' ? 'active' : ''} aria-current={screen === 'new' ? 'page' : undefined} href="#nova" onClick={event => { event.preventDefault(); startNew(); closeMobileMenu(); }}><Icon name="plus"/>Nova produção</a>
+        <a className={screen === 'history' ? 'active' : ''} aria-current={screen === 'history' ? 'page' : undefined} href="#historico" onClick={event => { event.preventDefault(); go('history'); closeMobileMenu(); }}><Icon name="clock"/>Histórico<span className="nav-count">{history.length}</span></a>
+        <a className={screen === 'result' ? 'active' : ''} aria-current={screen === 'result' ? 'page' : undefined} href="#resultado" onClick={closeMobileMenu}><Icon name="book"/>Resultado e revisão</a>
+        <a className={screen === 'connections' ? 'active' : ''} aria-current={screen === 'connections' ? 'page' : undefined} href="#conexoes" onClick={closeMobileMenu}><Icon name="connections"/>Provedores e conexões</a>
       </nav>
-      <div className="sidebar-note"><span className="tiny-label">FLUXO DE TRABALHO</span><p>Configure a produção.<br/>Confira o resultado ao final.</p></div>
       <div className="profile"><span className="avatar">MR</span><div>Meu estúdio<small>Administrador · demonstração</small></div></div>
     </aside>
 
@@ -154,7 +201,7 @@ function App() {
           <section className="attention"><span className="attention-icon"><Icon name="book" size={22}/></span><div><h2>Uma produção aguarda revisão</h2><p>{pending > 0 ? `${pending} cartões precisam de atenção no exemplo.` : 'O cenário demonstrativo não tem pendências.'}</p><button className="text-button" onClick={() => go('result')}>Revisar resultado <Icon name="arrow" size={16}/></button></div></section>
         </div>
         <section className="panel production-panel"><div className="panel-heading"><div><h2>Suas produções</h2><p className="muted">Do primeiro rascunho à edição final.</p></div><Search value={productionQuery} onChange={setProductionQuery} placeholder="Buscar produção"/></div>
-          <div className="table-wrap" role="region" aria-label="Lista de produções; role horizontalmente para ver todas as colunas" tabIndex={0}><table><thead><tr><th>PRODUÇÃO</th><th>MODALIDADE</th><th>SITUAÇÃO</th><th>ITENS</th><th><span className="sr-only">Abrir</span></th></tr></thead><tbody>
+          <div className="table-wrap" role="region" aria-label="Lista de produções; role horizontalmente para ver todas as colunas" tabIndex={0}><table><thead><tr><th>Produção</th><th>Modalidade</th><th>Situação</th><th>Itens</th><th><span className="sr-only">Abrir</span></th></tr></thead><tbody>
           {matchingDemo && <tr><td><div className="production-name"><span className="language-tile">EN</span><div><strong>{demoProduction.name}</strong><small>Estudo: {demoProduction.language} · Apoio: {supportLanguageLabels[demoProduction.supportLanguage]}</small><small>Demonstração · edição de exemplo</small></div></div></td><td>{demoProduction.kind}</td><td><Badge status="review"/></td><td>6 cartões</td><td><button className="text-button" onClick={() => go('result')} aria-label="Abrir resultado de Inglês">Abrir <Icon name="arrow" size={15}/></button></td></tr>}
           {drafts.filter(d => d.name.toLocaleLowerCase().includes(productionQuery.toLocaleLowerCase().trim())).map(d => <tr key={d.id}><td><div className="production-name"><span className="language-tile neutral"><Icon name="layers"/></span><div><strong>{d.name}</strong><small>Estudo: {d.language} · Apoio: {supportLanguageLabels[d.supportLanguage]}</small><small>{sourceKindFor(d.kind) ? (d.attachment ? `Arquivo: ${d.attachment.file.name}` : 'Arquivo pendente') : 'Salvo nesta sessão'}</small></div></div></td><td>{d.kind}</td><td><span className="badge draft">Rascunho</span></td><td>—</td><td><button className="text-button" onClick={() => { setDraft(d); go('new'); }} aria-label={`Editar produção ${d.name}`}>Editar <Icon name="arrow" size={15}/></button></td></tr>)}
           </tbody></table></div>
@@ -169,7 +216,7 @@ function App() {
         <div className="page-heading"><div><h1>Histórico de decks</h1><p className="muted">Gerações concluídas e seus cartões completos.</p></div><span className="badge draft">Demonstração</span></div>
         <section className="panel production-panel">
           <div className="panel-heading"><div><h2>Decks concluídos</h2><p className="muted">Os registros deste protótipo duram apenas nesta sessão.</p></div></div>
-          {history.length > 0 ? <div className="table-wrap" role="region" aria-label="Histórico de decks concluídos" tabIndex={0}><table><thead><tr><th>DECK</th><th>IDIOMA</th><th>MODALIDADE</th><th>CARTÕES</th><th>CONCLUÍDO EM</th><th><span className="sr-only">Abrir</span></th></tr></thead><tbody>
+          {history.length > 0 ? <div className="table-wrap" role="region" aria-label="Histórico de decks concluídos" tabIndex={0}><table><thead><tr><th>Deck</th><th>Idioma</th><th>Modalidade</th><th>Cartões</th><th>Concluído em</th><th><span className="sr-only">Abrir</span></th></tr></thead><tbody>
             {history.map(deck => <tr key={deck.id}><td><div className="production-name"><span className="language-tile neutral"><Icon name="layers"/></span><div><strong>{deck.name}</strong><small>Concluído · demonstração</small></div></div></td><td>{deck.language}</td><td>{deck.kind}</td><td>{deck.cards.length}</td><td>{new Date(deck.completedAt).toLocaleString('pt-BR')}</td><td><button className="text-button" onClick={() => openDeck(deck)} aria-label={`Abrir deck ${deck.name}`}>Ver deck <Icon name="arrow" size={15}/></button></td></tr>)}
           </tbody></table></div> : <div className="empty"><Icon name="clock" size={32}/><h3>Nenhum deck concluído nesta sessão</h3><p>Execute a simulação de Inglês + Frequência para ver um deck completo aqui.</p><button className="button primary" onClick={startNew}><Icon name="plus"/>Nova produção</button></div>}
           <div className="panel-footer"><span>Protótipo: histórico mantido somente em memória.</span><span>Na versão real, consultar jobs e exports persistidos pela API.</span></div>
@@ -234,11 +281,15 @@ function App() {
         </div> : <div className="review-detail empty"><Icon name="search" size={32}/><h2>Nenhum resultado</h2><p>Altere a busca ou volte para todos os cartões.</p><button className="button secondary" onClick={() => { setFilter('all'); setQuery(''); }}>Limpar filtros</button></div>}
         </div></section>
       </>}
-      <footer className="page-footer"><span>multilang<span className="brand-period">.</span> <span className="footer-caption">Estúdio de produção</span></span><span>Protótipo 06 · Progresso e histórico</span></footer>
+      <footer className="page-footer"><span className="page-footer-brand"><BrandMark/><span className="footer-caption">Estúdio de produção</span></span><span>Dados locais · apenas nesta sessão</span></footer>
       </div>
     </main>
     {toast && <div className="toast" role="status">{toast}<button aria-label="Fechar mensagem" onClick={() => setToast('')}><Icon name="close" size={18}/></button></div>}
   </div>;
+}
+
+function BrandMark() {
+  return <><svg className="brand-symbol" viewBox="0 0 40 40" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinejoin="round" strokeLinecap="round" aria-hidden="true"><path d="M5 32V9l15 9L35 9v23"/><path d="M5 9v23l15-9 15 9M20 18v5"/></svg><span className="brand-wordmark">multilang</span></>;
 }
 
 function Search({ value, onChange, placeholder }: { value: string; onChange: (value: string) => void; placeholder: string }) { return <label className="search"><Icon name="search" size={17}/><span className="sr-only">{placeholder}</span><input type="search" value={value} placeholder={placeholder} onChange={e => onChange(e.target.value)}/></label>; }
