@@ -269,9 +269,10 @@ main { flex: 1; min-width: 0; margin-left: var(--sidebar-width); }
 .panel-heading > div { min-width: 0; }
 .panel-heading p { margin: 0; font-size: 14px; }
 .panel-heading .muted { font-size: 13px; }
-.search { display: grid; grid-template-columns: 17px minmax(0, 1fr); align-items: center; column-gap: 10px; width: 320px; max-width: 100%; min-width: 0; min-height: 46px; padding: 0 12px; margin: 0; border: 1px solid var(--control-border); border-radius: 4px; background: var(--canvas); color: var(--text-muted); }
+.search { position: relative; display: flex; align-items: center; gap: 10px; width: 320px; max-width: 100%; min-width: 0; height: 46px; padding: 0 12px; margin: 0; border: 1px solid var(--control-border); border-radius: 4px; background: var(--canvas); color: var(--text-muted); }
+.search > svg { display: block; flex: 0 0 17px; width: 17px; height: 17px; }
 .panel-heading .search { flex: 0 1 320px; }
-.search input { display: block; width: 100%; height: 44px; min-width: 0; padding: 0; margin: 0; border: 0; border-radius: 0; outline: 0; appearance: none; -webkit-appearance: none; background: transparent; color: var(--text); font-size: 14px; line-height: 1.4; }
+.search input { display: block; flex: 1 1 0%; width: 0; height: 44px; min-width: 0; padding: 0; margin: 0; border: 0; border-radius: 0; outline: 0; appearance: none; -webkit-appearance: none; background: transparent; color: var(--text); font-size: 14px; line-height: 1.4; }
 .search input:focus-visible { outline: 0; }
 .search:focus-within { outline: 2px solid var(--focus); outline-offset: 3px; }
 input::placeholder, textarea::placeholder { color: var(--text-muted); opacity: 1; }
@@ -472,7 +473,7 @@ select:disabled { color: var(--text-secondary); cursor: not-allowed; opacity: 1;
   .topbar { min-height: 58px; }
   .page { max-width: 840px; }
   .panel-heading { align-items: stretch; flex-direction: column; gap: 14px; padding: 18px; }
-  .panel-heading .search { width: 100%; flex: 1 1 auto; }
+  .panel-heading .search { width: 100%; flex: 0 0 auto; }
   .form-layout { grid-template-columns: minmax(0, 1fr); }
   .summary { position: static; }
   .summary dl { grid-template-columns: 1fr 1fr; }
