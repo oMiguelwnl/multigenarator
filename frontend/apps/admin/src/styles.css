@@ -324,14 +324,16 @@ input:disabled, select:disabled, textarea:disabled { border-color: var(--border)
 .highlight-input-help { margin: -7px 0 20px; }
 select:disabled { color: var(--text-secondary); cursor: not-allowed; opacity: 1; }
 .configuration select:not(:disabled):hover { border-color: var(--accent-text); }
-.configuration option { background: var(--surface); color: var(--text); }
-.configuration option:is(:hover, :focus-visible, :checked) { background: var(--accent-soft); color: var(--text); }
 @supports (appearance: base-select) {
   .configuration select, .configuration select::picker(select) { appearance: base-select; }
   .configuration select { display: flex; align-items: center; justify-content: space-between; }
   .configuration select::picker(select) { padding: 4px; border: 1px solid var(--control-border); border-radius: 4px; background: var(--surface); color: var(--text); }
-  .configuration option { padding: 8px 12px; border-radius: 3px; }
-  .configuration option:checked { font-weight: 600; }
+  .configuration option { padding: 0; border-radius: 3px; background: var(--surface); color: var(--text); }
+  .configuration option span { flex: 1; padding: 8px 12px; border-radius: inherit; background: inherit; color: inherit; }
+  .configuration option:checked { background: var(--accent-soft); color: var(--accent-text); font-weight: 600; }
+  .configuration option:is(:hover, :focus-visible),
+  .configuration option:is(:hover, :focus-visible) span { background: var(--surface-hover); color: var(--text); }
+  .configuration option:focus-visible { outline: 2px solid var(--focus); outline-offset: -2px; }
 }
 .source-upload { min-width: 0; margin-bottom: 24px; }
 .source-upload > label { margin-bottom: 10px; }

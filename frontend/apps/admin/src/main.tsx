@@ -262,11 +262,11 @@ function App() {
                 setDraft(next);
                 if (next.highlightInput !== draft.highlightInput) setToast('Para coreano, o apoio é português e os destaques usam o modo de trechos de leitura.');
                 else if (next.supportLanguage !== draft.supportLanguage) setToast('Para coreano, o idioma de apoio foi ajustado para português.');
-              }}>{['Inglês', 'Coreano', 'Japonês', 'Latim', 'Espanhol', 'Francês', 'Alemão', 'Italiano', 'Português', 'Polonês', 'Turco', 'Romeno', 'Russo', 'Holandês', 'Mandarim', 'Tcheco', 'Dinamarquês', 'Finlandês', 'Grego', 'Croata', 'Húngaro', 'Norueguês', 'Sueco'].map(l => <option key={l}>{l}</option>)}</select></label>
+              }}>{['Inglês', 'Coreano', 'Japonês', 'Latim', 'Espanhol', 'Francês', 'Alemão', 'Italiano', 'Português', 'Polonês', 'Turco', 'Romeno', 'Russo', 'Holandês', 'Mandarim', 'Tcheco', 'Dinamarquês', 'Finlandês', 'Grego', 'Croata', 'Húngaro', 'Norueguês', 'Sueco'].map(l => <option key={l} value={l}><span>{l}</span></option>)}</select></label>
               <label>Idioma de apoio<select value={draft.supportLanguage} disabled={draft.language === 'Coreano'} aria-describedby={draft.language === 'Coreano' ? 'support-language-help korean-support-constraint' : 'support-language-help'} onChange={event => {
                 const value = event.target.value;
                 if (isSupportLanguageAllowed(draft.language, value)) setDraft({ ...draft, supportLanguage: value });
-              }}>{availableSupportLanguages(draft.language).map(code => <option key={code} value={code}>{supportLanguageLabels[code]}</option>)}</select></label>
+              }}>{availableSupportLanguages(draft.language).map(code => <option key={code} value={code}><span>{supportLanguageLabels[code]}</span></option>)}</select></label>
             </div>
             <p className="field-note support-language-help" id="support-language-help">Idioma das definições, traduções das frases e rótulos dos cartões deste deck. O aplicativo continua em português.</p>
             {draft.language === 'Coreano' && <p className="field-note language-constraint" id="korean-support-constraint">Para coreano, apenas português está disponível como idioma de apoio.</p>}
@@ -274,7 +274,7 @@ function App() {
               const next = changeMaterial(draft, event.target.value);
               setDraft(next);
               if (draft.attachment && !next.attachment) setToast('O tipo de material mudou. Selecione o arquivo adequado para esta modalidade.');
-            }}>{['Frequência', 'Lista personalizada', 'Destaques de leitura', 'Escrita e fundamentos', 'Pronúncia e fonética', 'Gramática', 'Latim clássico'].map(k => <option key={k}>{k}</option>)}</select></label>
+            }}>{['Frequência', 'Lista personalizada', 'Destaques de leitura', 'Escrita e fundamentos', 'Pronúncia e fonética', 'Gramática', 'Latim clássico'].map(k => <option key={k} value={k}><span>{k}</span></option>)}</select></label>
             <p className="field-note">O catálogo definitivo dependerá das modalidades qualificadas para cada idioma. A simulação usa Inglês + Frequência, com apoio em português.</p>
           </fieldset>
           <fieldset disabled={step >= 0}><legend><span className="number">02</span> Conteúdo e apresentação</legend>
@@ -282,7 +282,7 @@ function App() {
               {sourceKind === 'highlights' && <><label>O que os destaques contêm?<select value={draft.highlightInput ?? 'text'} disabled={draft.language === 'Coreano'} aria-describedby="highlight-input-help" onChange={event => {
                 const mode = event.target.value;
                 if (mode === 'text' || (mode === 'vocabulary' && draft.language !== 'Coreano')) setDraft({ ...draft, highlightInput: mode });
-              }}><option value="text">Trechos de leitura — extrair palavras</option><option value="vocabulary">Palavras ou expressões — um item por destaque</option></select></label><p className="field-note highlight-input-help" id="highlight-input-help">{draft.language === 'Coreano' ? 'Coreano usa apenas trechos de leitura para análise linguística.' : draft.highlightInput === 'vocabulary' ? 'Cada destaque será tratado como uma palavra ou expressão. Para uma lista simples com um item por linha, use Lista personalizada.' : 'O sistema identificará palavras nos trechos destacados quando a integração estiver disponível.'}</p></>}
+              }}><option value="text"><span>Trechos de leitura — extrair palavras</span></option><option value="vocabulary"><span>Palavras ou expressões — um item por destaque</span></option></select></label><p className="field-note highlight-input-help" id="highlight-input-help">{draft.language === 'Coreano' ? 'Coreano usa apenas trechos de leitura para análise linguística.' : draft.highlightInput === 'vocabulary' ? 'Cada destaque será tratado como uma palavra ou expressão. Para uma lista simples com um item por linha, use Lista personalizada.' : 'O sistema identificará palavras nos trechos destacados quando a integração estiver disponível.'}</p></>}
               <SourceFileInput key={`${draft.id}:${draft.kind}`} kind={sourceKind} attachment={draft.attachment} disabled={step >= 0} onBusyChange={setReadingFile} onChange={attachment => setDraft(previous => previous.id === draft.id && previous.kind === draft.kind ? { ...previous, attachment } : previous)}/>
             </> : <div className="source-box"><Icon name="book"/><div><strong>{sampleEnabled ? 'Inventário demonstrativo' : 'Inventário de demonstração indisponível'}</strong><p>{sampleEnabled ? '6 identidades · 6 cartões · apoio em português' : 'Esta configuração pode ser salva como rascunho.'}</p><small>{sampleEnabled ? 'Não representa a curadoria da branch de arquitetura.' : 'A simulação completa continua limitada ao exemplo de Inglês + Frequência.'}</small></div><span className="badge draft">{sampleEnabled ? 'Exemplo' : 'Rascunho'}</span></div>}
             <AnkiTemplatePreview key={`${draft.kind}:${draft.language}`} deckType={draft.kind} language={draft.language}/>
