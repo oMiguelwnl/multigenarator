@@ -5,7 +5,7 @@
       "name": "pstack-openai",
       "source": {
         "source": "local",
-        "path": "./pstack-openai"
+        "path": "./.agents/plugins/pstack-openai"
       },
       "policy": {
         "installation": "AVAILABLE",
