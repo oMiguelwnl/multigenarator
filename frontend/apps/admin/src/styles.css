@@ -118,7 +118,7 @@ main { flex: 1; min-width: 0; margin-left: var(--sidebar-width); }
 .generation-banner-footer > span { color: var(--text-secondary); font-size: 12px; }
 .generation-banner > p { margin: 0; color: var(--text-muted); font-size: 11px; line-height: 1.5; }
 .page { max-width: 1520px; padding: 40px 40px 0; margin: auto; }
-.page-connections { max-width: 940px; }
+.page-connections { width: 100%; }
 .page-heading { display: flex; align-items: center; justify-content: space-between; gap: 24px; margin-bottom: 32px; }
 .page-heading > div { min-width: 0; }
 .page-heading .muted { margin-bottom: 0; font-size: 14px; }
@@ -287,8 +287,8 @@ select:disabled { color: var(--text-secondary); cursor: not-allowed; opacity: 1;
 .detail-actions { display: flex; align-items: center; flex-wrap: wrap; gap: 16px; margin-top: 24px; }
 .detail-actions .field-note { margin: 0; }
 .edit-form { margin-top: 26px; }
-.connections-form { max-width: 860px; }
-.page-connections .connections-form, .page-connections .connection-status { width: 100%; margin-inline: auto; }
+.connections-form { width: 100%; min-width: 0; }
+.page-connections .connections-form, .page-connections .connection-status { width: 100%; max-width: none; margin-inline: 0; }
 .connection-section { margin: 24px 0; padding: 24px; min-width: 0; }
 .connection-section legend { font-size: 20px; font-weight: 600; padding: 0 8px; }
 .connection-section p { max-width: 68ch; line-height: 1.6; }
