@@ -326,9 +326,13 @@ input:disabled, select:disabled, textarea:disabled { border-color: var(--border)
 select:disabled { color: var(--text-secondary); cursor: not-allowed; opacity: 1; }
 .configuration select:not(:disabled):hover { border-color: var(--accent-text); }
 @supports (appearance: base-select) {
-  .configuration select, .configuration select::picker(select) { appearance: base-select; }
-  .configuration select { display: flex; align-items: center; justify-content: space-between; }
-  .configuration select::picker(select) { padding: 4px; border: 1px solid var(--control-border); border-radius: 4px; background: var(--surface); color: var(--text); }
+  select, select::picker(select) { appearance: base-select; }
+  select { display: flex; align-items: center; justify-content: space-between; }
+  select::picker(select) { padding: 4px; border: 1px solid var(--control-border); border-radius: 4px; background: var(--surface); color: var(--text); }
+  select option { padding: 8px 12px; border-radius: 3px; background: var(--surface); color: var(--text); }
+  select option:checked { background: var(--accent-soft); color: var(--accent-text); font-weight: 600; }
+  select option:is(:hover, :focus-visible) { background: var(--surface-hover); color: var(--text); }
+  select option:focus-visible { outline: 2px solid var(--focus); outline-offset: -2px; }
   .configuration option { padding: 0; border-radius: 3px; background: var(--surface); color: var(--text); }
   .configuration option span { flex: 1; padding: 8px 12px; border-radius: inherit; background: inherit; color: inherit; }
   .configuration option:checked { background: var(--accent-soft); color: var(--accent-text); font-weight: 600; }
