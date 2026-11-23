@@ -7,14 +7,14 @@ from typing import Any, Literal, Self
 
 from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator
 
-from multilang.domain.jobs import SupportedLanguage
-from multilang.domain.sentence_curriculum import SentenceCurriculum
+from multilang.domain.jobs import SupportedLanguage, SupportLanguage
 from multilang.domain.korean import (
     KOREAN_FREQUENCY_EXPECTED_ENTRY_COUNT,
     KOREAN_FREQUENCY_EXPECTED_SOURCE_COUNT,
     KoreanAnalyzerFingerprint,
     KoreanLexicalIdentity,
 )
+from multilang.domain.sentence_curriculum import SentenceCurriculum
 
 DEFAULT_DEFINITION_LANGUAGE = "en"
 
@@ -108,6 +108,7 @@ class DeckLanguagePolicy(BaseModel):
     deck_language: SupportedLanguage
     definition_language: str = DEFAULT_DEFINITION_LANGUAGE
     translation_target_language: str
+    support_language: SupportLanguage | None = None
 
 
 class WordListLineResult(BaseModel):
@@ -162,7 +163,25 @@ class LexicalCardCandidate(BaseModel):
         return self
 
 
-def policy_for_language(language: SupportedLanguage) -> DeckLanguagePolicy:
+def policy_for_language(
+    language: SupportedLanguage,
+    *,
+    support_language: SupportLanguage | SupportedLanguage | None = None,
+) -> DeckLanguagePolicy:
+    if support_language is not None:
+        try:
+            selected = SupportLanguage(support_language.value)
+        except ValueError as exc:
+            raise ValueError(
+                f"unsupported support language: {support_language.value}"
+            ) from exc
+        return DeckLanguagePolicy(
+            deck_language=language,
+            definition_language=selected.value,
+            translation_target_language=selected.value,
+            support_language=selected,
+        )
+
     translation_language = (
         "pt"
         if language in {SupportedLanguage.EN, SupportedLanguage.KO, SupportedLanguage.ZH}

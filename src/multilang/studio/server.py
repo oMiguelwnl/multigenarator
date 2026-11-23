@@ -2,8 +2,10 @@
 
 from __future__ import annotations
 
+import asyncio
 import hmac
 import os
+import re
 import secrets
 from contextlib import asynccontextmanager
 from pathlib import Path
@@ -18,6 +20,10 @@ from pydantic import BaseModel, ConfigDict, Field, SecretStr
 
 from multilang.studio.codex import CodexBridge, network_allowed
 from multilang.studio.connections import SECRET_FIELDS, ConnectionConfig, ConnectionStore
+from multilang.studio.productions import ProductionService, production_router
+from multilang.studio.results import create_results_router
+from multilang.studio.sources import MAX_SOURCE_BYTES
+from multilang.studio.sources import router as sources_router
 
 
 class SessionRequest(BaseModel):
@@ -30,13 +36,22 @@ def create_studio_app(*, root: Path, token: str, port: int = 8765) -> FastAPI:
     bridge = CodexBridge(root / ".multilang/studio/codex")
     origin = f"http://127.0.0.1:{port}"
     session = secrets.token_urlsafe(32)
+    productions = ProductionService(root)
 
     @asynccontextmanager
     async def lifespan(app):
-        yield
-        await bridge.close()
+        try:
+            yield
+        finally:
+            await asyncio.to_thread(productions.close)
+            await bridge.close()
 
     app = FastAPI(docs_url=None, redoc_url=None, openapi_url=None, lifespan=lifespan)
+    app.include_router(sources_router)
+    app.include_router(production_router(productions))
+    app.include_router(create_results_router(
+        productions.resolve_package, review_root=root / ".multilang/studio/reviews"
+    ))
 
     @app.middleware("http")
     async def boundary(request: Request, call_next):
@@ -51,11 +66,22 @@ def create_studio_app(*, root: Path, token: str, port: int = 8765) -> FastAPI:
                 return JSONResponse(
                     {"detail": "Abra o estúdio pelo atalho local para autenticar."}, 401
                 )
+            path = request.url.path
+            limit = 32768
+            if request.method == "POST" and path == "/studio-api/sources/preview":
+                limit = MAX_SOURCE_BYTES
+            elif request.method == "POST" and path == "/studio-api/productions":
+                # Escaping a UTF-8 source in a JSON string can require six bytes per character.
+                limit += 6 * MAX_SOURCE_BYTES
+            elif request.method == "PUT" and re.fullmatch(
+                r"/studio-api/productions/[0-9a-fA-F-]{36}/result/[0-9]+/image", path
+            ):
+                limit = MAX_SOURCE_BYTES
             size = 0
             chunks = []
             async for chunk in request.stream():
                 size += len(chunk)
-                if size > 32768:
+                if size > limit:
                     return JSONResponse({"detail": "Request too large"}, 413)
                 chunks.append(chunk)
             request._body = b"".join(chunks)

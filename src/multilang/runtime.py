@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import re
 from collections.abc import Callable, Iterable
 from dataclasses import dataclass
 from hashlib import sha256
@@ -21,7 +22,7 @@ from multilang.domain.exporting import (
     evaluate_export_quality_gate,
     export_field_names_for_language_and_source,
 )
-from multilang.domain.jobs import JobStage, JobStatus, SupportedLanguage
+from multilang.domain.jobs import JobStage, JobStatus, SupportedLanguage, SupportLanguage
 from multilang.domain.korean import KoreanFrequencyEntry, KoreanFrequencyJobAuthority
 from multilang.domain.korean_provider import KoreanProviderPolicy
 from multilang.domain.lexicon import GroundingStatus, LexicalCardCandidate
@@ -316,6 +317,7 @@ class RuntimeGenerateService(IngestLexicalItemsService):
         language: SupportedLanguage,
         level: int,
         required_count_per_level: int = 1000,
+        support_language: SupportLanguage | None = None,
         initially_rejected_lemmas: set[str] | None = None,
         rate_limiter: RateLimiter | None = None,
     ) -> tuple[list[LexicalCardCandidate], int]:
@@ -324,6 +326,7 @@ class RuntimeGenerateService(IngestLexicalItemsService):
                 language=language,
                 level=level,
                 required_count_per_level=required_count_per_level,
+                support_language=support_language,
                 initially_rejected_lemmas=initially_rejected_lemmas,
                 rate_limiter=rate_limiter,
             )
@@ -344,6 +347,7 @@ class RuntimeGenerateService(IngestLexicalItemsService):
             korean_final_entries=self._korean_final_frequency_entries,
             source_review_receipt_sha256=self._korean_source_review_receipt_sha256,
             source_review_aggregate_sha256=self._korean_source_review_aggregate_sha256,
+            support_language=support_language,
         )
         grounded_candidates: list[LexicalCardCandidate] = []
         for candidate in candidates:
@@ -490,6 +494,14 @@ class RuntimeGenerateService(IngestLexicalItemsService):
             else []
         )
         missing_audio_count, non_synthesized_audio_count, fallback_audio_count = _audio_gate_counts(rows, audio_assets)
+        selected_level = None
+        if job.source_type == "frequency" and job.language != "ko":
+            selection = re.fullmatch(
+                r"level:([123]):cards:[1-9][0-9]*(?::support:(?:pt|en|es))?",
+                job.source_fingerprint,
+            )
+            if selection:
+                selected_level = int(selection[1])
         gate_result = evaluate_export_quality_gate(
             source_type=job.source_type,
             rows=rows,
@@ -499,6 +511,7 @@ class RuntimeGenerateService(IngestLexicalItemsService):
             non_synthesized_audio_count=non_synthesized_audio_count,
             fallback_audio_count=fallback_audio_count,
             allow_partial=allow_partial,
+            requested_level=selected_level,
         )
         if not gate_result.passed:
             self.job_service.repository.update_job_status(
@@ -518,6 +531,11 @@ class RuntimeGenerateService(IngestLexicalItemsService):
                 media_index=media_index,
                 output_path=output_path,
                 deck_name=resolved_deck_name,
+                support_language=(
+                    SupportLanguage(job.support_language)
+                    if job.support_language is not None
+                    else None
+                ),
             )
             card_count = package_result.card_count
         else:
@@ -659,6 +677,11 @@ class RuntimeGenerateService(IngestLexicalItemsService):
                 deck_name=resolved_deck_name,
                 cards_per_level=cards_per_level,
                 expected_items=expected_items,
+                support_language=(
+                    SupportLanguage(job.support_language)
+                    if job.support_language is not None
+                    else None
+                ),
             )
             apkg_sha256 = _sha256_file(staged_apkg)
             evidence = build_korean_frequency_export_evidence(

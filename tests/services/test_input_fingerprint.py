@@ -6,7 +6,7 @@ import unicodedata
 from hashlib import sha256
 from pathlib import Path
 
-from multilang.domain.jobs import GenerationRequest, SupportedLanguage
+from multilang.domain.jobs import GenerationRequest, SupportedLanguage, SupportLanguage
 from multilang.domain.personal_sources import PersonalSourceRow
 from multilang.services.input_fingerprint import (
     build_input_fingerprint,
@@ -65,6 +65,33 @@ def test_frequency_fingerprint_remains_independent_of_requested_item_keys() -> N
 
     assert build_input_fingerprint(request, requested_item_keys=["학교"]) == "level:2:cards:25"
     assert build_run_key(request, requested_item_keys=["학교"]) == "ko:frequency:level:2:cards:25"
+
+
+def test_explicit_support_language_separates_frequency_jobs_without_changing_legacy_key() -> None:
+    legacy = GenerationRequest(
+        language=SupportedLanguage.DE,
+        source_type="frequency",
+        level=1,
+        cards_per_level=10,
+    )
+    portuguese = GenerationRequest(
+        language=SupportedLanguage.DE,
+        source_type="frequency",
+        support_language=SupportLanguage.PT,
+        level=1,
+        cards_per_level=10,
+    )
+    spanish = GenerationRequest(
+        language=SupportedLanguage.DE,
+        source_type="frequency",
+        support_language=SupportLanguage.ES,
+        level=1,
+        cards_per_level=10,
+    )
+
+    assert build_run_key(legacy) == "de:frequency:level:1:cards:10"
+    assert build_run_key(portuguese) != build_run_key(legacy)
+    assert build_run_key(spanish) != build_run_key(portuguese)
 
 
 def test_korean_ordered_source_fingerprint_changes_on_reorder() -> None:

@@ -19,6 +19,7 @@ from multilang.domain.jobs import (
     JobStatus,
     ResumeDiagnostic,
     SupportedLanguage,
+    SupportLanguage,
 )
 from multilang.domain.latin import LatinGenerationRequest, LatinVariant
 
@@ -80,6 +81,31 @@ def test_generation_request_accepts_norwegian_bokmal() -> None:
     request = GenerationRequest(language="nb", source_type="frequency", level=1)
 
     assert request.language is SupportedLanguage.NB
+
+
+def test_generation_request_accepts_support_language_independently_of_deck_language() -> None:
+    request = GenerationRequest(
+        language="de",
+        source_type="frequency",
+        level=1,
+        support_language="es",
+    )
+
+    assert request.language is SupportedLanguage.DE
+    assert request.support_language is SupportLanguage.ES
+
+
+@pytest.mark.parametrize("support_language", [SupportLanguage.EN, SupportLanguage.ES])
+def test_korean_generation_rejects_unsupported_support_language(
+    support_language: SupportLanguage,
+) -> None:
+    with pytest.raises(ValidationError, match="Korean generation currently supports only pt"):
+        GenerationRequest(
+            language="ko",
+            source_type="frequency",
+            level=1,
+            support_language=support_language,
+        )
 
 
 def test_generation_request_accepts_danish() -> None:

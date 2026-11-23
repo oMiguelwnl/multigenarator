@@ -401,6 +401,10 @@ select:disabled { color: var(--text-secondary); cursor: not-allowed; opacity: 1;
 .card-state.review { color: var(--warning); }
 .card-state.failed { color: var(--danger); }
 .review-detail { min-width: 0; padding: 25px 28px; }
+.review-field { margin-block: 16px; overflow-wrap: anywhere; }
+.review-field p { white-space: pre-wrap; }
+.review-field img, .review-field audio { display: block; max-width: 100%; margin-block: 8px; }
+.review-field img { max-height: 320px; object-fit: contain; }
 .detail-heading { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 20px; }
 .detail-heading .tiny-label { color: var(--text-secondary); }
 .anki-template-preview { min-width: 0; padding: 15px; margin: 17px 0; border: 1px solid var(--border); border-radius: 6px; background: var(--canvas); }

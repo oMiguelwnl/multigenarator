@@ -11,7 +11,7 @@ from typing import Literal, Protocol, Self
 from pydantic import BaseModel, ConfigDict, Field, model_validator
 
 from multilang.domain.highlights import HighlightCandidate
-from multilang.domain.jobs import SupportedLanguage
+from multilang.domain.jobs import SupportedLanguage, SupportLanguage
 from multilang.domain.korean import (
     KoreanAnalyzerFingerprint,
     KoreanLexicalIdentity,
@@ -678,6 +678,7 @@ class LexicalGroundingService:
         *,
         language: SupportedLanguage,
         item: ParsedWordListItem,
+        support_language: SupportLanguage | None = None,
         rate_limiter: RateLimiter | None = None,
     ) -> LexicalCardCandidate:
         if language is SupportedLanguage.KO:
@@ -697,11 +698,15 @@ class LexicalGroundingService:
             )
         record = self._lookup_record(language=language, term=item.item_key)
         if record is None:
-            return self._pending_candidate(language=language, item=item)
-        policy = policy_for_language(language)
+            return self._pending_candidate(
+                language=language,
+                item=item,
+                support_language=support_language,
+            )
+        policy = policy_for_language(language, support_language=support_language)
         word_list_output_language = (
             policy.definition_language
-            if language is SupportedLanguage.ZH
+            if support_language is not None or language is SupportedLanguage.ZH
             else language.value
         )
         candidate = self._grounded_candidate(
@@ -710,13 +715,14 @@ class LexicalGroundingService:
             display_form=item.display_form,
             record=record,
             definition_language=word_list_output_language,
+            support_language=support_language,
             rate_limiter=rate_limiter,
         )
         return candidate.model_copy(
             update={
                 "translation_target_language": (
                     policy.translation_target_language
-                    if language is SupportedLanguage.ZH
+                    if support_language is not None or language is SupportedLanguage.ZH
                     else language.value
                 ),
             }
@@ -727,6 +733,7 @@ class LexicalGroundingService:
         *,
         language: SupportedLanguage,
         candidate: LexicalCardCandidate,
+        support_language: SupportLanguage | None = None,
         rate_limiter: RateLimiter | None = None,
     ) -> LexicalCardCandidate:
         if language is SupportedLanguage.KO:
@@ -741,7 +748,7 @@ class LexicalGroundingService:
                 submitted_form=candidate.submitted_form,
             )
             if binding.identity is None:
-                policy = policy_for_language(language)
+                policy = policy_for_language(language, support_language=support_language)
                 return candidate.model_copy(
                     update={
                         "definition_language": policy.definition_language,
@@ -780,6 +787,7 @@ class LexicalGroundingService:
             submitted_form=candidate.submitted_form,
             display_form=candidate.display_form,
             record=record,
+            support_language=support_language,
             rate_limiter=rate_limiter,
         )
         return grounded.model_copy(
@@ -799,6 +807,7 @@ class LexicalGroundingService:
         *,
         language: SupportedLanguage,
         candidate: HighlightCandidate,
+        support_language: SupportLanguage | None = None,
         rate_limiter: RateLimiter | None = None,
     ) -> LexicalCardCandidate:
         if language is SupportedLanguage.KO:
@@ -812,7 +821,7 @@ class LexicalGroundingService:
                     surface_form=candidate.display_form,
                 )
             if binding.identity is None:
-                policy = policy_for_language(language)
+                policy = policy_for_language(language, support_language=support_language)
                 safe_key = candidate.item_key
                 return LexicalCardCandidate(
                     submitted_form=safe_key,
@@ -849,7 +858,7 @@ class LexicalGroundingService:
         else:
             record = self._lookup_record(language=language, term=candidate.lemma_key)
         if record is None:
-            policy = policy_for_language(language)
+            policy = policy_for_language(language, support_language=support_language)
             return LexicalCardCandidate(
                 submitted_form=candidate.display_form,
                 display_form=candidate.display_form,
@@ -867,7 +876,8 @@ class LexicalGroundingService:
             submitted_form=candidate.display_form,
             display_form=candidate.display_form,
             record=record,
-            definition_language=language.value,
+            definition_language=language.value if support_language is None else None,
+            support_language=support_language,
             rate_limiter=rate_limiter,
         )
         if evidence is not None:
@@ -1012,11 +1022,16 @@ class LexicalGroundingService:
         display_form: str,
         record: LexicalRecord,
         definition_language: str | None = None,
+        support_language: SupportLanguage | None = None,
         rate_limiter: RateLimiter | None = None,
     ) -> LexicalCardCandidate:
         record = _apply_language_lexical_overrides(language=language, record=record)
-        policy = policy_for_language(language)
-        resolved_definition_language = definition_language or policy.definition_language
+        policy = policy_for_language(language, support_language=support_language)
+        resolved_definition_language = (
+            support_language.value
+            if support_language is not None
+            else definition_language or policy.definition_language
+        )
         learner_display_form = self._select_display_form(default=display_form, record=record)
         resolved_part_of_speech = resolve_part_of_speech_label(
             part_of_speech=record.part_of_speech,
@@ -1109,7 +1124,11 @@ class LexicalGroundingService:
             definition_language=definition.actual_language or "und",
             ipa=ipa,
             spoken_form=spoken_form,
-            translation_target_language=policy.translation_target_language,
+            translation_target_language=(
+                support_language.value
+                if support_language is not None
+                else policy.translation_target_language
+            ),
             grounding_status=GroundingStatus.PENDING if warning_code else GroundingStatus.GROUNDED,
             warning_code=warning_code,
             warning_detail=warning_detail,
@@ -1198,11 +1217,12 @@ class LexicalGroundingService:
         *,
         language: SupportedLanguage,
         item: ParsedWordListItem,
+        support_language: SupportLanguage | None = None,
     ) -> LexicalCardCandidate:
-        policy = policy_for_language(language)
+        policy = policy_for_language(language, support_language=support_language)
         output_language = (
             policy.definition_language
-            if language is SupportedLanguage.ZH
+            if support_language is not None or language is SupportedLanguage.ZH
             else language.value
         )
         return LexicalCardCandidate(
@@ -1213,7 +1233,7 @@ class LexicalGroundingService:
             definition_language=output_language,
             translation_target_language=(
                 policy.translation_target_language
-                if language is SupportedLanguage.ZH
+                if support_language is not None or language is SupportedLanguage.ZH
                 else language.value
             ),
             grounding_status=GroundingStatus.PENDING,

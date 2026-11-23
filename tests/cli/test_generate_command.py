@@ -135,7 +135,7 @@ def build_ingest_service(*, lookup_terms: list[str], definition_language: str = 
                 lemma=term,
                 definitions=[f"um item sintético identificado como {term}" if definition_language == "pt" else f"a synthetic test item identified as {term}"],
                 definition_language=definition_language,
-                ipa=f"/{term}/",
+                ipa="/wɜːd/" if term.startswith("word-") else f"/{term}/",
             )
             for term in lookup_terms
         }
@@ -270,6 +270,27 @@ def test_generate_frequency_resume_accepts_max_items() -> None:
     assert captured[0].max_items == 25
     assert captured[0].rate_limit_per_minute == 30
     assert captured[0].concurrency == 1
+
+
+def test_generate_accepts_support_language_and_passes_it_to_the_request() -> None:
+    captured: list[GenerationRequest] = []
+    app = create_app(generate_executor=lambda request: captured.append(request))
+
+    result = runner.invoke(
+        app,
+        [
+            "generate",
+            "--language",
+            "de",
+            "--source",
+            "frequency",
+            "--support-language",
+            "es",
+        ],
+    )
+
+    assert result.exit_code == 0
+    assert captured[0].support_language.value == "es"
 
 
 def test_generate_rejects_parallel_workers_before_executor_construction() -> None:
@@ -574,7 +595,7 @@ def test_generate_frequency_command_reports_grounded_candidate_counts(monkeypatc
         ),
     )
 
-    result = runner.invoke(app, ["generate", "--language", "en", "--source", "frequency"])
+    result = runner.invoke(app, ["generate", "--language", "en", "--source", "frequency", "--support-language", "pt"])
 
     session.close()
 
@@ -604,7 +625,7 @@ def test_generate_frequency_command_supports_test_mode(monkeypatch) -> None:
 
     result = runner.invoke(
         app,
-        ["generate", "--language", "en", "--source", "frequency", "--test-mode"],
+        ["generate", "--language", "en", "--source", "frequency", "--test-mode", "--support-language", "pt"],
     )
 
     session.close()
@@ -643,6 +664,8 @@ def test_generate_frequency_command_supports_cards_per_level_override(monkeypatc
             "2",
             "--cards-per-level",
             "3",
+            "--support-language",
+            "pt",
         ],
     )
 

@@ -6,7 +6,7 @@ from dataclasses import dataclass
 from hashlib import sha256
 
 from multilang.domain.highlights import HighlightImportManifest, HighlightInputMode
-from multilang.domain.jobs import GenerationRequest, JobStage, SupportedLanguage
+from multilang.domain.jobs import GenerationRequest, JobStage, SupportedLanguage, SupportLanguage
 from multilang.domain.lexicon import GroundingStatus, LexicalCardCandidate
 from multilang.repositories.highlight_import_repository import HighlightImportRepository
 from multilang.repositories.lexical_repository import LexicalRepository
@@ -72,6 +72,7 @@ class IngestLexicalItemsService:
     ) -> IngestLexicalItemsResult:
         """Execute lexical ingestion for the shipped runtime path."""
 
+        request = self._resolve_resumed_support_language(request)
         if request.source_type == "frequency":
             return self._ingest_frequency_deck(request, rate_limiter=rate_limiter)
         if request.source_type == "word-list":
@@ -165,6 +166,7 @@ class IngestLexicalItemsService:
             grounded = self.grounding_service.ground_highlight_candidate(
                 language=request.language,
                 candidate=highlight_candidate,
+                support_language=request.support_language,
                 rate_limiter=rate_limiter,
             )
             if grounded.grounding_status is not GroundingStatus.GROUNDED:
@@ -259,6 +261,7 @@ class IngestLexicalItemsService:
                 language=language,
                 level=level,
                 required_count_per_level=cards_per_level,
+                support_language=request.support_language,
                 initially_rejected_lemmas=selected_frequency_lemmas,
                 rate_limiter=rate_limiter,
             )
@@ -327,6 +330,7 @@ class IngestLexicalItemsService:
             candidate = self.grounding_service.ground_word_list_item(
                 language=request.language,
                 item=item,
+                support_language=request.support_language,
                 rate_limiter=rate_limiter,
             )
             self.lexical_repo.upsert_candidate(
@@ -348,6 +352,26 @@ class IngestLexicalItemsService:
         result.rejected_rows = len(parsed.warnings)
         self.repository.advance_job_to_stage(orchestration.job_id, JobStage.GENERATE_TEXT)
         return result
+
+    def _resolve_resumed_support_language(
+        self,
+        request: GenerationRequest,
+    ) -> GenerationRequest:
+        if request.resume_job_id is None:
+            return request
+        job = self.repository.get_job(request.resume_job_id)
+        if job is None:
+            return request
+        persisted = (
+            SupportLanguage(job.support_language)
+            if job.support_language is not None
+            else None
+        )
+        if request.support_language is not None and request.support_language != persisted:
+            raise ValueError("support language cannot be changed when resuming a generation job")
+        if persisted is None:
+            return request
+        return request.model_copy(update={"support_language": persisted})
 
     def _result_from_persisted_candidates(
         self,
@@ -385,6 +409,7 @@ class IngestLexicalItemsService:
         language: SupportedLanguage,
         level: int,
         required_count_per_level: int = 1000,
+        support_language: SupportLanguage | None = None,
         initially_rejected_lemmas: set[str] | None = None,
         rate_limiter: RateLimiter | None = None,
     ) -> tuple[list[LexicalCardCandidate], int]:
@@ -398,6 +423,7 @@ class IngestLexicalItemsService:
                 required_count_per_level=required_count_per_level,
                 rejected_lemmas=rejected_lemmas,
                 allow_frequency_seed_fallback=required_count_per_level != 1000 or bool(rejected_lemmas),
+                support_language=support_language,
             )
             grounded_candidates: list[LexicalCardCandidate] = []
             backfill_required: set[str] = set()
@@ -405,6 +431,7 @@ class IngestLexicalItemsService:
                 grounded_candidate = self.grounding_service.ground_frequency_candidate(
                     language=language,
                     candidate=candidate,
+                    support_language=support_language,
                     rate_limiter=rate_limiter,
                 )
                 if grounded_candidate.grounding_status is GroundingStatus.GROUNDED:

@@ -1,3 +1,4 @@
+import { studioApi as api } from './studio-api';
 import { useEffect, useState } from 'react';
 
 type KeyName = 'openai_api_key' | 'deepl_api_key' | 'azure_speech_key';
@@ -7,17 +8,6 @@ type Configuration = {
 };
 const defaults: Configuration = { transport: 'api', model: 'gpt-6-luna', azure_region: 'brazilsouth', api_max_output_tokens: 2048, configured: { openai_api_key: false, deepl_api_key: false, azure_speech_key: false } };
 const emptyKeys = { openai_api_key: '', deepl_api_key: '', azure_speech_key: '' };
-let sessionBootstrap: Promise<unknown> | undefined;
-
-async function api(path: string, method = 'GET', payload?: unknown) {
-  if (!['http:', 'https:'].includes(location.protocol)) throw new Error('Esta prévia não armazena credenciais. Abra o estúdio pelo iniciador local.');
-  const response = await fetch(`/studio-api/${path}`, { method, credentials: 'same-origin', cache: 'no-store', signal: AbortSignal.timeout(45000), headers: payload === undefined ? {} : { 'Content-Type': 'application/json' }, body: payload === undefined ? undefined : JSON.stringify(payload) });
-  if (!response.headers.get('content-type')?.includes('application/json')) throw new Error('O serviço local não está disponível. Abra o estúdio pelo iniciador local.');
-  const result = await response.json();
-  if (!response.ok) throw new Error(result.detail || 'Não foi possível concluir a operação.');
-  return result;
-}
-
 export function Connections() {
   const [config, setConfig] = useState<Configuration>(defaults);
   const [keys, setKeys] = useState(emptyKeys);
@@ -33,12 +23,6 @@ export function Connections() {
     let active = true;
     async function load() {
       try {
-        const token = new URLSearchParams(location.hash.split('?')[1] || '').get('session');
-        if (token) {
-          history.replaceState(null, '', '#conexoes');
-          sessionBootstrap = api('session', 'POST', { token });
-        }
-        await sessionBootstrap;
         const result = await api('connections');
         if (active) { setConfig(result); setReady(true); setMessage('Configurações carregadas. Nenhuma chamada de geração foi executada.'); }
       } catch (error) { if (active) setMessage(error instanceof Error ? error.message : 'Serviço local indisponível.'); }
@@ -59,14 +43,14 @@ export function Connections() {
   const locked = busy || !ready;
 
   return <>
-    <div className="page-heading"><div><h1>Provedores e conexões</h1><p className="muted">Configure integrações para uso futuro. Esta tela não gera cartões nem áudio.</p></div><span className="badge draft">Uso pessoal · local</span></div>
+    <div className="page-heading"><div><h1>Provedores e conexões</h1><p className="muted">Configure os serviços que suas produções usam para gerar texto, tradução e áudio.</p></div><span className="badge draft">Uso pessoal · local</span></div>
     <div className="connection-status" role="status">{message}</div>
     {!ready && !busy && <div className="panel connection-section"><h2>Abra o estúdio local</h2><p>A prévia HTML mostra esta tela, mas não recebe chaves. Use o arquivo <strong>Abrir Estúdio.cmd</strong> da pasta frontend para abrir a versão conectada.</p><p className="field-note">O acesso fica restrito a este computador. Nunca cole suas chaves no chat.</p></div>}
     <form className="connections-form" onSubmit={event => { event.preventDefault(); void action(async () => {
       const { configured: _, ...preferences } = config;
       const result = await api('connections', 'PUT', { ...preferences, ...keys });
       setConfig(result); setKeys(emptyKeys); setDirty(false);
-      setMessage('Configurações salvas no cofre do Windows. A próxima tarefa usará estes valores quando a integração estiver habilitada.');
+      setMessage('Configurações salvas no cofre do Windows. A próxima produção usará estas configurações.');
     }); }}>
       <fieldset disabled={locked} className="connection-section panel">
         <legend>Geração dos cartões</legend>

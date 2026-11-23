@@ -53,6 +53,16 @@ def make_row(**overrides: object) -> ExportCardRow:
     return ExportCardRow(**payload)
 
 
+def test_single_frequency_level_must_be_complete_and_match_the_requested_level() -> None:
+    gate = dict(source_type="frequency", cards_per_level=2, requested_level=2)
+    rows = [make_row(frequency_level=2), make_row(frequency_level=2)]
+    assert evaluate_export_quality_gate(rows=rows, **gate).passed
+    assert not evaluate_export_quality_gate(rows=rows[:1], **gate).passed
+    assert not evaluate_export_quality_gate(rows=[rows[0], make_row(frequency_level=1)], **gate).passed
+    assert not evaluate_export_quality_gate(rows=rows, fallback_audio_count=1, **gate).passed
+    assert not evaluate_export_quality_gate(rows=rows, source_type="frequency", cards_per_level=2).passed
+
+
 def test_export_contract_uses_exact_field_order() -> None:
     row = make_row()
 

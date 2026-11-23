@@ -114,6 +114,11 @@ class JobRepository:
             id=str(uuid4()),
             run_key=run_key,
             language=request.language.value,
+            support_language=(
+                request.support_language.value
+                if request.support_language is not None
+                else None
+            ),
             source_type=request.source_type,
             source_fingerprint=source_fingerprint,
             status=status.value,

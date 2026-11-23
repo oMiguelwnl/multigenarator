@@ -1,16 +1,20 @@
 import { useEffect, useId, useRef, useState } from 'react';
 import { acceptedSourceFiles, readSourceFile } from './source-files';
 import type { SourceAttachment, SourceKind } from './source-files';
+import { ImportPreview } from './ImportPreview';
 
 type Props = {
   kind: SourceKind;
+  languageCode: string;
+  highlightMode: 'text' | 'vocabulary';
+  onPreviewReady?: (ready: boolean) => void;
   attachment?: SourceAttachment;
   disabled: boolean;
   onChange: (attachment: SourceAttachment | undefined) => void;
   onBusyChange: (busy: boolean) => void;
 };
 
-export function SourceFileInput({ kind, attachment, disabled, onChange, onBusyChange }: Props) {
+export function SourceFileInput({ kind, languageCode, highlightMode, onPreviewReady, attachment, disabled, onChange, onBusyChange }: Props) {
   const id = useId();
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
@@ -45,10 +49,9 @@ export function SourceFileInput({ kind, attachment, disabled, onChange, onBusyCh
     {error && <p className="file-error" role="alert" id={`${id}-error`}>{error}{attachment && ' O arquivo anterior foi mantido.'}</p>}
     {attachment && <div className="attached-file">
       <div className="attachment-heading"><div><strong>{attachment.file.name}</strong><small>{new Intl.NumberFormat('pt-BR', { maximumFractionDigits: 1 }).format(attachment.file.size / 1000)} KB · anexado</small></div><button className="text-button" type="button" disabled={disabled || busy} onClick={() => { version.current++; onChange(undefined); setError(''); }}>Remover arquivo</button></div>
-      {attachment.preview !== undefined
-        ? <details><summary>Conferir início do arquivo</summary><pre className="file-preview">{attachment.preview}</pre>{attachment.previewTruncated && <p className="field-note">Prévia limitada aos primeiros 2.000 caracteres. O arquivo anexado permanece completo.</p>}</details>
-        : <p className="field-note">Arquivo HTML anexado. A leitura dos destaques será feita na integração com o sistema.</p>}
-      <p className="field-note">Anexo conferido quanto a formato, tamanho e leitura do texto. As palavras e os destaques ainda não foram processados.</p>
+      <ImportPreview file={attachment.file} kind={kind} language={languageCode} mode={highlightMode} onReady={onPreviewReady}/>
+      {attachment.preview !== undefined && !(kind === 'highlights' && languageCode === 'ko') &&
+        <details><summary>Conferir início do arquivo</summary><pre className="file-preview">{attachment.preview}</pre>{attachment.previewTruncated && <p className="field-note">Prévia limitada aos primeiros 2.000 caracteres.</p>}</details>}
     </div>}
   </div>;
 }

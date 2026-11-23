@@ -4,7 +4,7 @@ export type Card = { id: string; image?: string; word: string; definition: strin
 const supportLanguages = ['pt', 'en', 'es'] as const;
 export type SupportLanguage = typeof supportLanguages[number];
 export const supportLanguageLabels: Record<SupportLanguage, string> = { pt: 'Português', en: 'Inglês', es: 'Espanhol' };
-export type Draft = { id: string; name: string; language: string; supportLanguage: SupportLanguage; kind: string; attachment?: SourceAttachment; highlightInput?: 'text' | 'vocabulary' };
+export type Draft = { id: string; name: string; language: string; supportLanguage: SupportLanguage; kind: string; level?: number; attachment?: SourceAttachment; highlightInput?: 'text' | 'vocabulary' };
 
 // Prototype projection; production progress and history must come from persisted backend jobs/exports.
 export type CompletedDeck = {

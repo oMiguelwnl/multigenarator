@@ -1,4 +1,4 @@
-# Multilang — protótipo do estúdio
+# Estúdio local do Multilang
 
 Interface local em português, React + TypeScript + Vite. O escopo desta entrega é
 o painel administrativo: produções, configuração e resultado/revisão. Loja e
@@ -35,15 +35,15 @@ Abra `frontend/Abrir Estúdio.cmd` e acesse o link local mostrado na janela.
 Mantenha essa janela aberta durante o uso. O iniciador usa o build em `frontend/dist`
 e o ambiente isolado `.venv-studio-win` desta worktree. Não há instalação automática nem geração ao iniciar.
 Se necessário, prepare o build com `npm --prefix frontend run build`; as dependências
-do serviço são FastAPI, Uvicorn, HTTPX e Pydantic Settings, já declaradas no projeto.
-Para preparar o ambiente em outra máquina Windows, use uma instalação oficial de Python
-compatível com o projeto (3.12+): `python -m venv .venv-studio-win`, seguido de
-`uv pip install --python .venv-studio-win/Scripts/python.exe fastapi uvicorn httpx pydantic-settings`.
-Nesta máquina foi validado o Python oficial 3.13.7. As distribuições standalone do uv
-presentes apresentaram falha nativa OpenSSL ao configurar `SSLKEYLOGFILE`; nenhuma
-configuração de registro TLS ou validação de certificado foi removida para contornar isso.
-Esse ambiente mínimo atende às conexões; executar o pipeline completo exige as
-dependências do projeto em seu ambiente correspondente. O baseline do projeto permanece 3.12.
+do serviço e do executor estão declaradas no projeto. Para preparar uma nova
+instalação Windows, na raiz da worktree e com Python 3.12+ compatível, execute:
+
+```powershell
+python -m venv .venv-studio-win
+uv pip install --python .venv-studio-win/Scripts/python.exe -e .
+```
+
+A produção usa esse mesmo Python e o banco configurado para esta worktree.
 
 Na seção **Provedores e conexões**:
 
@@ -81,84 +81,27 @@ a autorização de chamadas nem a aprovação dos inventários. O transporte Cod
 os adaptadores e validadores de conteúdo; OpenAI usa LiteLLM, com parâmetros compatíveis
 com GPT-6 e teto de saída por chamada. O teto não é um orçamento monetário.
 
-**Limites atuais:** a tela de conexões é real, mas produções, progresso e resultados do
-frontend continuam demonstrativos. Esta entrega não conecta o botão de simulação à
-fila real. Geração, tradução, áudio e exportação reais permanecem para uma etapa
-explicitamente autorizada. Estimativa de custo não é apresentada sem dados de uso e
-preços validados. A prévia HTML independente permite ver a tela, mas desabilita os
-campos de credenciais por não possuir backend.
+## Produções e revisão
 
-Referências: [Codex App Server](https://learn.chatgpt.com/docs/app-server),
-[GPT-6](https://developers.openai.com/api/docs/guides/latest-model),
-[Windows DPAPI](https://learn.microsoft.com/en-us/windows/win32/api/dpapi/nf-dpapi-cryptprotectdata).
+Abra **Nova produção**, escolha o idioma, o idioma de apoio e uma modalidade
+disponível no catálogo do servidor. Em frequência, selecione o nível. Listas
+personalizadas aceitam TXT UTF-8. Destaques Kindle aceitam TXT, HTML e HTM,
+até 5 MB por arquivo. A prévia usa os leitores do backend e informa quantos
+itens foram reconhecidos. Para destaques em coreano, exibe somente contagens.
 
-1. Abra a produção demonstrativa ou clique em Nova produção.
-2. Mantenha Inglês + Frequência + apoio em Português e clique em Simular produção.
-3. Confira as etapas ilustrativas e o resultado com seis registros.
-4. Busque uma palavra, filtre pendências, veja frente/verso no template Anki e edite o conteúdo.
-5. Alterar uma frase invalida o áudio ilustrativo e exige nova revisão.
+**Salvar rascunho** guarda a configuração e o anexo no IndexedDB deste navegador.
+**Gerar produção** inicia a execução local e pode consumir os provedores
+configurados. O Estúdio registra o andamento em `.multilang/studio/productions`.
+Abra a produção para acompanhar as etapas ou corrigir um trabalho elegível.
 
-Outras configurações podem ser salvas como rascunhos neste navegador. Os seletores
-representam o planejamento; não afirmam suporte qualificado para cada combinação.
-Editar e salvar um rascunho atualiza a mesma produção; Nova produção começa outro
-rascunho. As situações dos cartões aparecem por escrito na lista de revisão.
-O idioma de apoio é salvo por rascunho: Português (`pt`), Inglês (`en`) ou
-Espanhol (`es`). Coreano aceita apenas Português; selecionar Coreano ajusta o
-apoio para Português e avisa sobre a mudança. A escolha aparece no resumo e na
-lista de produções. O aplicativo continua em português.
+Em uma produção concluída, abra **Resultado e revisão** para buscar notas, ouvir
+áudios disponíveis e alterar campos editáveis. A revisão mantém uma cópia em
+`.multilang/studio/reviews`. O download inclui as edições salvas e preserva o
+pacote original na pasta de decks configurada para a worktree.
 
-A simulação só usa a combinação dos fixtures: Inglês + Frequência + apoio em
-Português. Outras combinações válidas podem ser salvas, sem simulação. O resultado
-mostra o idioma dos seus próprios dados, independentemente do rascunho aberto.
-Rascunhos e anexos são salvos em IndexedDB, por navegador e origem. Histórico e edições de cartões continuam em memória. As rotas
-de demonstração usam `#producoes`, `#nova` e `#resultado`.
-
-## Anexar arquivos
-
-Em Nova produção, escolha uma das modalidades abaixo. A seção Conteúdo e
-apresentação mostra o seletor de arquivo:
-
-- Lista personalizada: `.txt` em UTF-8; prefira uma palavra ou expressão por linha.
-- Destaques de leitura: exportação do Kindle `.txt`, `.html` ou `.htm`. No TXT,
-  os destaques são separados por `==========`. Escolha entre extrair palavras de
-  trechos ou usar cada destaque como palavra/expressão. Coreano aceita apenas o
-  modo de trechos de leitura.
-
-O limite local é de 5 MB por arquivo. O protótipo verifica extensão, tamanho e
-leitura UTF-8; não reproduz os parsers lexicais ou certifica a estrutura Kindle.
-Arquivos vazios, binários ou com codificação inválida apresentam erro próximo ao
-seletor. Se uma substituição falhar, o anexo anterior é mantido.
-
-É possível conferir até 2.000 caracteres de TXT, substituir e remover o anexo.
-HTML é mantido como arquivo, sem renderizar seu conteúdo ou carregar recursos
-externos. O arquivo original fica armazenado junto com o rascunho após salvar;
-nada é enviado ao servidor. Mudar a modalidade remove o anexo anterior com aviso.
-Limpar os dados do site remove rascunhos e anexos. Rascunhos incompletos podem ser salvos.
-
-O nome do arquivo aparece no resumo e na lista de produções. Anexar um arquivo
-não habilita geração, simulação ou exportação dessas modalidades.
-
-## Integração e limites
-
-Não há chamadas à API, provedores, banco, geração real, áudio real, exportação ou
-publicação comercial. A prévia de frente e verso usa o HTML e CSS dos modelos
-Anki reais construídos pelos exportadores existentes. Os valores exibidos são
-fixtures visuais, não inventários nem cartões aprovados; combinações sem
-exportador/template disponível são marcadas como indisponíveis, sem substituição
-por um mockup.
-
-O catálogo usado pela interface fica em
-`apps/admin/src/anki-template-manifest.json`. Depois de alterar qualquer modelo
-Anki, regenere-o na raiz do repositório com
-`uv run --project . python scripts/generate_anki_template_manifest.py`.
-`tests/services/test_anki_template_preview.py` verifica que o catálogo não deriva
-dos templates atuais.
-
-O contrato de idioma de apoio acompanha o commit `bdb0548` da arquitetura.
-O commit não foi incorporado por merge/cherry-pick: a adaptação é somente do
-protótipo. A futura integração deverá enviar `support_language` explicitamente e
-preservar o valor persistido ao retomar um job. Retomada de jobs ainda não existe
-nesta interface.
+A prévia de template do formulário usa exemplos de apresentação. O catálogo de
+templates está em `apps/admin/src/anki-template-manifest.json`. Atualize-o após
+alterar modelos Anki com `uv run --project . python scripts/generate_anki_template_manifest.py`.
 
 ## Estrutura
 

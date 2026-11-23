@@ -24,7 +24,7 @@ type TemplateNode =
   | { kind: 'field'; name: string }
   | { kind: 'section'; name: string; inverted: boolean; children: TemplateNode[] };
 
-const LANGUAGE_CODES: Readonly<Record<string, string>> = {
+export const LANGUAGE_CODES: Readonly<Record<string, string>> = {
   Português: 'pt',
   Espanhol: 'es',
   Inglês: 'en',

@@ -13,7 +13,7 @@ from pathlib import Path
 from opencc import OpenCC
 from wordfreq import iter_wordlist
 
-from multilang.domain.jobs import SupportedLanguage
+from multilang.domain.jobs import SupportedLanguage, SupportLanguage
 from multilang.domain.korean import KoreanFrequencyEntry
 from multilang.domain.lexicon import (
     GroundingStatus,
@@ -326,8 +326,9 @@ def _build_seed_candidate(
     token: str,
     frequency_rank: int,
     frequency_level: int,
+    support_language: SupportLanguage | None = None,
 ) -> LexicalCardCandidate:
-    policy = policy_for_language(language)
+    policy = policy_for_language(language, support_language=support_language)
     return LexicalCardCandidate(
         submitted_form=token,
         display_form=token,
@@ -342,8 +343,13 @@ def _build_seed_candidate(
     )
 
 
-def _build_asset_candidate(language: SupportedLanguage, entry: CuratedFrequencyEntry) -> LexicalCardCandidate:
-    policy = policy_for_language(language)
+def _build_asset_candidate(
+    language: SupportedLanguage,
+    entry: CuratedFrequencyEntry,
+    *,
+    support_language: SupportLanguage | None = None,
+) -> LexicalCardCandidate:
+    policy = policy_for_language(language, support_language=support_language)
     return LexicalCardCandidate(
         submitted_form=entry.display_form,
         display_form=entry.display_form,
@@ -389,6 +395,7 @@ def build_frequency_level(
     korean_final_entries: Iterable[KoreanFrequencyEntry] | None = None,
     source_review_receipt_sha256: str | None = None,
     source_review_aggregate_sha256: str | None = None,
+    support_language: SupportLanguage | None = None,
 ) -> list[LexicalCardCandidate]:
     """Build one frequency level using explicit windows plus bounded backfill."""
 
@@ -406,7 +413,11 @@ def build_frequency_level(
         entries = load_curated_frequency_entries(language, version=version, assets_dir=assets_dir)
         seen_lemmas = {lemma.casefold() for lemma in (rejected_lemmas or set())}
         candidates = [
-            _build_asset_candidate(language, entry)
+            _build_asset_candidate(
+                language,
+                entry,
+                support_language=support_language,
+            )
             for entry in entries
             if entry.level == level and entry.lemma_key.casefold() not in seen_lemmas
         ]
@@ -433,6 +444,7 @@ def build_frequency_level(
                     token=token,
                     frequency_rank=rank,
                     frequency_level=level,
+                    support_language=support_language,
                 )
             )
             seen_lemmas.add(lemma_key)
@@ -455,6 +467,7 @@ def build_frequency_level(
                 token=token,
                 frequency_rank=rank,
                 frequency_level=level,
+                support_language=support_language,
             )
         )
 
@@ -479,6 +492,7 @@ def build_frequency_deck(
     korean_final_entries: Iterable[KoreanFrequencyEntry] | None = None,
     source_review_receipt_sha256: str | None = None,
     source_review_aggregate_sha256: str | None = None,
+    support_language: SupportLanguage | None = None,
 ) -> dict[int, list[LexicalCardCandidate]]:
     """Build the deterministic three-level frequency deck."""
 
@@ -499,6 +513,7 @@ def build_frequency_deck(
             korean_final_entries=korean_final_entries,
             source_review_receipt_sha256=source_review_receipt_sha256,
             source_review_aggregate_sha256=source_review_aggregate_sha256,
+            support_language=support_language,
         )
         deck[level] = candidates
         selected_lemmas.update(candidate.lemma_key.casefold() for candidate in candidates)
