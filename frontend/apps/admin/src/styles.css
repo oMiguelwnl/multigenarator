@@ -315,6 +315,7 @@ tbody tr:hover { background: var(--surface-raised); }
 .number { display: inline-grid; place-items: center; width: 30px; height: 30px; margin-right: 10px; border: 1px solid var(--border); border-radius: 50%; color: var(--accent-text); font-family: Georgia, "Times New Roman", serif; font-size: 14px; font-variant-numeric: tabular-nums; }
 label:not(.search) { display: block; margin-bottom: 19px; color: var(--text-secondary); font-size: 14px; font-weight: 600; }
 input:not([type=search]), select, textarea { display: block; width: 100%; min-height: 48px; padding: 11px 12px; margin-top: 8px; border: 1px solid var(--control-border); border-radius: 4px; background: var(--canvas); color: var(--text); font-size: 15px; }
+select option { background-color: var(--surface); color: var(--text); }
 textarea { min-height: 96px; resize: vertical; line-height: 1.6; }
 input:disabled, select:disabled, textarea:disabled { border-color: var(--border); background: var(--surface-raised); color: var(--text-secondary); cursor: not-allowed; opacity: 1; }
 .two-fields { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
