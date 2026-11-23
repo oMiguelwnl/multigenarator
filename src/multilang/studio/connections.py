@@ -12,14 +12,15 @@ from uuid import uuid4
 
 from pydantic import BaseModel, ConfigDict, Field, SecretStr
 
-SECRET_FIELDS = ("openai_api_key", "deepl_api_key", "azure_speech_key")
+SECRET_FIELDS = ("openai_api_key", "openrouter_api_key", "deepl_api_key", "azure_speech_key")
 
 
 class ConnectionConfig(BaseModel):
     model_config = ConfigDict(extra="forbid", hide_input_in_errors=True)
-    transport: Literal["api", "codex"] = "api"
-    model: str = Field(default="gpt-6-luna", pattern=r"^[a-zA-Z0-9._:-]{1,120}$")
+    transport: Literal["api", "openrouter", "codex"] = "api"
+    model: str = Field(default="gpt-6-luna", pattern=r"^[a-zA-Z0-9._:/-]{1,240}$")
     openai_api_key: SecretStr = Field(default=SecretStr(""), max_length=4096)
+    openrouter_api_key: SecretStr = Field(default=SecretStr(""), max_length=4096)
     deepl_api_key: SecretStr = Field(default=SecretStr(""), max_length=4096)
     azure_speech_key: SecretStr = Field(default=SecretStr(""), max_length=4096)
     azure_region: str = Field(default="brazilsouth", pattern=r"^[a-z][a-z0-9]{1,39}$")
@@ -117,15 +118,27 @@ def apply_connections(settings):
     if not store.path.exists():
         return settings
     config = store.load()
+    uses_codex = config.transport == "codex"
+    uses_openrouter = config.transport == "openrouter"
+    model = config.model
+    if uses_openrouter and not model.startswith("openrouter/"):
+        model = f"openrouter/{model}"
+    elif not uses_codex and not uses_openrouter:
+        model = f"openai/{model}"
     return settings.model_copy(
         update={
             "text_generation_provider": "litellm",
-            "text_generation_transport": config.transport,
-            "text_generation_model": ("openai/" if config.transport == "api" else "")
-            + config.model,
-            "openai_api_key": config.openai_api_key.get_secret_value() or None,
+            "text_generation_transport": "codex" if uses_codex else "api",
+            "text_generation_model": model,
+            "openai_api_key": (
+                config.openai_api_key.get_secret_value() or None
+                if config.transport == "api"
+                else None
+            ),
             "litellm_api_key": None,
-            "openrouter_api_key": None,
+            "openrouter_api_key": (
+                config.openrouter_api_key.get_secret_value() or None if uses_openrouter else None
+            ),
             "deepl_api_key": config.deepl_api_key.get_secret_value() or None,
             "translation_provider": "deepl",
             "audio_provider": "azure",

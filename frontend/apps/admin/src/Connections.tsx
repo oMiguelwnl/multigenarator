@@ -1,13 +1,13 @@
 import { studioApi as api } from './studio-api';
 import { useEffect, useState } from 'react';
 
-type KeyName = 'openai_api_key' | 'deepl_api_key' | 'azure_speech_key';
+type KeyName = 'openai_api_key' | 'openrouter_api_key' | 'deepl_api_key' | 'azure_speech_key';
 type Configuration = {
-  transport: 'api' | 'codex'; model: string; azure_region: string; api_max_output_tokens: number;
+  transport: 'api' | 'openrouter' | 'codex'; model: string; azure_region: string; api_max_output_tokens: number;
   configured: Record<KeyName, boolean>;
 };
-const defaults: Configuration = { transport: 'api', model: 'gpt-6-luna', azure_region: 'brazilsouth', api_max_output_tokens: 2048, configured: { openai_api_key: false, deepl_api_key: false, azure_speech_key: false } };
-const emptyKeys = { openai_api_key: '', deepl_api_key: '', azure_speech_key: '' };
+const defaults: Configuration = { transport: 'api', model: 'gpt-6-luna', azure_region: 'brazilsouth', api_max_output_tokens: 2048, configured: { openai_api_key: false, openrouter_api_key: false, deepl_api_key: false, azure_speech_key: false } };
+const emptyKeys: Record<KeyName, string> = { openai_api_key: '', openrouter_api_key: '', deepl_api_key: '', azure_speech_key: '' };
 export function Connections() {
   const [config, setConfig] = useState<Configuration>(defaults);
   const [keys, setKeys] = useState(emptyKeys);
@@ -40,6 +40,11 @@ export function Connections() {
   }
 
   function update(patch: Partial<Configuration>) { setConfig(previous => ({ ...previous, ...patch })); setDirty(true); setModels([]); }
+  function updateTransport(value: string) {
+    if (value === 'api' || value === 'openrouter' || value === 'codex') update({ transport: value });
+  }
+  const apiProvider = config.transport === 'openrouter' ? 'openrouter' : 'openai';
+  const apiKeyName: KeyName = config.transport === 'openrouter' ? 'openrouter_api_key' : 'openai_api_key';
   const locked = busy || !ready;
 
   return <>
@@ -54,11 +59,11 @@ export function Connections() {
     }); }}>
       <fieldset disabled={locked} className="connection-section panel">
         <legend>Geração dos cartões</legend>
-        <label>Conexão<select value={config.transport} onChange={event => update({ transport: event.target.value as Configuration['transport'] })}><option value="api">OpenAI · chave de API</option><option value="codex">ChatGPT · login pelo Codex local</option></select></label>
-        {config.transport === 'api' ? <>
-          <label>Chave da OpenAI<input type="password" autoComplete="off" maxLength={4096} value={keys.openai_api_key} placeholder={config.configured.openai_api_key ? 'Chave salva · preencha para substituir' : 'Cole sua chave de API'} onChange={event => { setKeys({ ...keys, openai_api_key: event.target.value }); setDirty(true); }}/></label>
-          <p className="field-note">A cobrança e os limites seguem sua conta de API.</p>
-          <KeyActions name="openai_api_key" provider="openai" configured={config.configured.openai_api_key} dirty={dirty} action={action} setConfig={setConfig} setMessage={setMessage}/>
+        <label>Conexão<select value={config.transport} onChange={event => updateTransport(event.target.value)}><option value="api">OpenAI · chave de API</option><option value="openrouter">OpenRouter · chave de API</option><option value="codex">ChatGPT · login pelo Codex local</option></select></label>
+        {config.transport !== 'codex' ? <>
+          <label>Chave {apiProvider === 'openrouter' ? 'do OpenRouter' : 'da OpenAI'}<input type="password" autoComplete="off" maxLength={4096} value={keys[apiKeyName]} placeholder={config.configured[apiKeyName] ? 'Chave salva · preencha para substituir' : 'Cole sua chave de API'} onChange={event => { setKeys(previous => ({ ...previous, [apiKeyName]: event.target.value })); setDirty(true); }}/></label>
+          <p className="field-note">{apiProvider === 'openrouter' ? 'A cobrança e os limites seguem sua conta OpenRouter. Consulte os modelos depois de salvar a chave.' : 'A cobrança e os limites seguem sua conta de API.'}</p>
+          <KeyActions name={apiKeyName} provider={apiProvider} configured={config.configured[apiKeyName]} dirty={dirty} action={action} setConfig={setConfig} setMessage={setMessage}/>
         </> : <>
           <p>Entre na página oficial da OpenAI. Sua senha e os tokens de login não passam pelo formulário do Multilang.</p>
           <p className="field-note">Integração para uso pessoal local. Para venda ou hospedagem, use API ou a integração comercial oficial. O login fica separado da sua sessão principal do Codex.</p>
@@ -70,8 +75,8 @@ export function Connections() {
           {loginUrl && <a className="button primary login-link" href={loginUrl} target="_blank" rel="noopener noreferrer">Abrir login oficial da OpenAI</a>}
           <p className="field-note">{connected === null ? 'Login ainda não verificado.' : connected ? 'Conta conectada.' : 'Conta desconectada.'}</p>
         </>}
-        <div className="connection-model"><label>Modelo<input value={config.model} maxLength={120} pattern="[a-zA-Z0-9._:\-]+" list="available-models" required onChange={event => { setConfig({ ...config, model: event.target.value }); setDirty(true); }}/><datalist id="available-models">{models.map(model => <option key={model.id} value={model.id}>{model.name}</option>)}</datalist></label><button type="button" className="button secondary" disabled={dirty} onClick={() => void action(async () => { const result = await api('models', 'POST'); setModels(result); setMessage(`${result.length} modelos encontrados. Escolha um modelo de texto disponível e salve.`); })}>Consultar modelos</button></div>
-        <p className="field-note">Salve a conexão antes de consultar. Luna só poderá ser usado se estiver disponível na sua conta. A qualidade dos cartões ainda precisa de avaliação por idioma.</p>
+        <div className="connection-model"><label>Modelo<input value={config.model} maxLength={240} pattern="[-a-zA-Z0-9._:/]+" list="available-models" required onChange={event => { setConfig({ ...config, model: event.target.value }); setDirty(true); }}/><datalist id="available-models">{models.map(model => <option key={model.id} value={model.id}>{model.name}</option>)}</datalist></label><button type="button" className="button secondary" disabled={dirty} onClick={() => void action(async () => { const result = await api('models', 'POST'); setModels(result); setMessage(`${result.length} modelos encontrados. Escolha um modelo de texto disponível e salve.`); })}>Consultar modelos</button></div>
+        <p className="field-note">Salve a conexão antes de consultar os modelos. IDs do OpenRouter incluem o provedor, como autor/modelo. A qualidade dos cartões ainda precisa de avaliação por idioma.</p>
       </fieldset>
       <fieldset disabled={locked} className="connection-section panel"><legend>Tradução · DeepL</legend>
         <label>Chave do DeepL<input type="password" autoComplete="off" maxLength={4096} value={keys.deepl_api_key} placeholder={config.configured.deepl_api_key ? 'Chave salva · preencha para substituir' : 'Cole sua chave de API'} onChange={event => { setKeys({ ...keys, deepl_api_key: event.target.value }); setDirty(true); }}/></label>
@@ -83,7 +88,7 @@ export function Connections() {
         <p className="field-note">Use a região exibida no seu recurso Azure, por exemplo brazilsouth ou eastus.</p>
         <KeyActions name="azure_speech_key" provider="azure" configured={config.configured.azure_speech_key} dirty={dirty} action={action} setConfig={setConfig} setMessage={setMessage}/>
       </fieldset>
-      <fieldset disabled={locked} className="connection-section panel"><legend>Controle de uso</legend>{config.transport === 'api' ? <label>Limite de tokens de saída por chamada de API<input type="number" min={256} max={8192} required value={config.api_max_output_tokens} onChange={event => { setConfig({ ...config, api_max_output_tokens: Number(event.target.value) }); setDirty(true); }}/></label> : <p>As chamadas pelo Codex têm tempo máximo de 120 segundos. Os limites de uso seguem sua conta ChatGPT.</p>}<p className="field-note">Não é um limite financeiro: uma palavra pode exigir várias chamadas. Estimativa de custo ainda indisponível; acompanhe o consumo no provedor.</p></fieldset>
+      <fieldset disabled={locked} className="connection-section panel"><legend>Controle de uso</legend>{config.transport !== 'codex' ? <label>Limite de tokens de saída por chamada de API<input type="number" min={256} max={8192} required value={config.api_max_output_tokens} onChange={event => { setConfig({ ...config, api_max_output_tokens: Number(event.target.value) }); setDirty(true); }}/></label> : <p>As chamadas pelo Codex têm tempo máximo de 120 segundos. Os limites de uso seguem sua conta ChatGPT.</p>}<p className="field-note">Não é um limite financeiro: uma palavra pode exigir várias chamadas. Estimativa de custo ainda indisponível; acompanhe o consumo no provedor.</p></fieldset>
       <div className="connection-save"><p className="field-note">Chaves criptografadas para seu usuário do Windows. Campos vazios preservam as chaves salvas. A verificação consulta apenas metadados, sem gerar cartões ou áudio.</p><button className="button primary" disabled={locked || !dirty}>{busy ? 'Aguarde…' : 'Salvar configurações'}</button></div>
     </form>
   </>;

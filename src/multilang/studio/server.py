@@ -142,6 +142,10 @@ def create_studio_app(*, root: Path, token: str, port: int = 8765) -> FastAPI:
             key = config.openai_api_key.get_secret_value()
             url = "https://api.openai.com/v1/models"
             headers = {"Authorization": f"Bearer {key}"}
+        elif provider == "openrouter":
+            key = config.openrouter_api_key.get_secret_value()
+            url = "https://openrouter.ai/api/v1/models?output_modalities=text"
+            headers = {"Authorization": f"Bearer {key}"}
         elif provider == "deepl":
             key = config.deepl_api_key.get_secret_value()
             host = "api-free.deepl.com" if key.endswith(":fx") else "api.deepl.com"
@@ -177,16 +181,28 @@ def create_studio_app(*, root: Path, token: str, port: int = 8765) -> FastAPI:
 
     @app.post("/studio-api/models")
     async def models():
-        if store.load().transport == "codex":
+        config = store.load()
+        if config.transport == "codex":
             if not (await bridge.status())["connected"]:
                 raise HTTPException(409, "Conclua o login ChatGPT antes de consultar os modelos.")
             return await bridge.models()
-        data = await probe("openai")
-        return [
-            {"id": row["id"], "name": row["id"]}
-            for row in data["data"]
-            if row["id"].startswith("gpt-")
-        ]
+        provider = "openrouter" if config.transport == "openrouter" else "openai"
+        data = await probe(provider)
+        rows = data.get("data") if isinstance(data, dict) else None
+        if not isinstance(rows, list):
+            raise HTTPException(502, "O provedor retornou uma lista de modelos inválida.")
+        result = []
+        for row in rows:
+            if not isinstance(row, dict):
+                continue
+            model_id = row.get("id")
+            if not isinstance(model_id, str):
+                continue
+            if provider == "openai" and not model_id.startswith("gpt-"):
+                continue
+            name = row.get("name")
+            result.append({"id": model_id, "name": name if isinstance(name, str) else model_id})
+        return result
 
     @app.post("/studio-api/codex/login")
     async def login():
