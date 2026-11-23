@@ -81,6 +81,20 @@ def test_settings_opt_in_and_secret_removal(tmp_path):
         Settings(_env_file=None, studio_connections_path=path).text_generation_model
         != "openai/gpt-6-luna"
     )
+    store.save(
+        ConnectionConfig(
+            transport="openrouter",
+            model="anthropic/claude-sonnet-4",
+            openrouter_api_key="test-openrouter",
+        )
+    )
+    routed = Settings(
+        _env_file=None, studio_connections_enabled=True, studio_connections_path=path
+    )
+    assert routed.text_generation_transport == "api"
+    assert routed.text_generation_model == "openrouter/anthropic/claude-sonnet-4"
+    assert routed.openrouter_api_key == "test-openrouter"
+    assert routed.openai_api_key is None
 
 
 @pytest.mark.skipif(os.name != "nt", reason="Windows credential protection")
@@ -94,6 +108,15 @@ def test_key_routes_do_not_leak_and_require_explicit_delete(tmp_path):
         assert response.status_code == 200
         assert "private-key" not in response.text
         assert response.json()["configured"]["openai_api_key"]
+        response = client.put(
+            "/studio-api/connections", json={"openrouter_api_key": "private-openrouter-key"}
+        )
+        assert response.status_code == 200
+        assert "private-openrouter-key" not in response.text
+        assert response.json()["configured"]["openrouter_api_key"]
+        assert client.put("/studio-api/connections", json={"openrouter_api_key": ""}).json()[
+            "configured"
+        ]["openrouter_api_key"]
         assert client.put("/studio-api/connections", json={"openai_api_key": ""}).json()[
             "configured"
         ]["openai_api_key"]
