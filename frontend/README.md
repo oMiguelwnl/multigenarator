@@ -23,7 +23,8 @@ python frontend/scripts/check-storefront-ui.py --screenshots
 ```
 
 A verificação percorre Loja → Comprar → página do deck → Loja em seis larguras,
-inclui teclado, demo e perguntas frequentes, e não chama provedores nem pagamentos.
+confere a ordem visual das seções e a oferta na abertura, inclui teclado, demo e
+perguntas frequentes, e não chama provedores nem pagamentos.
 As capturas ficam em `output/previews/loja-publica/` e os resultados em
 `output/reports/deck-product-page/`. O parâmetro `--screenshots` é opcional.
 

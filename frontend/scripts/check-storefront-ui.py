@@ -55,6 +55,23 @@ def main():
                 check_links(page)
                 for section in ("sobre", "missao", "caracteristicas", "demo", "avaliacoes", "duvidas", "adquirir"):
                     expect(page.locator(f"#{section}")).to_be_visible()
+                section_order = page.locator("main > section[id]").evaluate_all(
+                    "sections => sections.map(section => section.id)"
+                )
+                assert section_order == [
+                    "sobre", "demo", "caracteristicas", "avaliacoes", "adquirir", "entrega", "duvidas"
+                ], section_order
+                positions = [page.locator(f"#{section}").bounding_box()["y"] for section in section_order]
+                assert positions == sorted(positions), (width, positions)
+                expect(page.locator(".product-hero #incluido")).to_be_visible()
+                expect(page.locator(".product-hero .hero-offer button")).to_be_disabled()
+                expect(page.locator("#sobre #missao")).to_be_visible()
+                if width > 760:
+                    offer = page.locator(".hero-offer button").bounding_box()
+                    assert offer["y"] + offer["height"] <= page.viewport_size["height"], width
+                    pitch = page.locator(".product-hero .pitch").bounding_box()
+                    sidebar = page.locator(".product-offer").bounding_box()
+                    assert sidebar["x"] >= pitch["x"] + pitch["width"], width
                 page.keyboard.press("Tab")
                 expect(page.locator(".skip")).to_be_focused()
                 page.keyboard.press("Enter")

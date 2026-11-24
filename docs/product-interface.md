@@ -142,16 +142,24 @@ usa `frontend/apps/web/decks/ingles-frequencia/index.html`, ligada à entrada de
 demonstração no catálogo. Essa entrada é identificada como prévia e não constitui
 uma edição publicada ou disponível para venda.
 
-A página apresenta:
+A página segue esta disposição, conferida na referência Refold:
 
-1. O idioma e o objetivo do deck, com uma apresentação visual da edição.
-2. O que é, para que serve, a quem se destina e os pré-requisitos.
-3. A missão da Multilang, com foco em vocabulário confiável e apoio em português.
-4. Conteúdo e características: vocabulário, definições, exemplos, traduções,
+1. Abertura em duas colunas no computador: nome, descrição e resumo do conteúdo
+   à esquerda; apresentação visual e compra à direita, já na primeira tela.
+2. Explicação sobre o deck, finalidade, público e pré-requisitos. A missão da
+   Multilang aparece ao lado dessa explicação, sem uma seção separada entre ela
+   e a demonstração.
+3. Demonstração na própria página, com frente e verso interativos.
+4. Características em colunas: vocabulário, definições, exemplos, traduções,
    áudio separado de palavra e frase, campo de imagem vazio e pacote .apkg.
-5. Demonstração na própria página, com frente e verso interativos.
-6. Avaliações da edição e perguntas frequentes sobre estudo e compra.
-7. Disponibilidade, preço final em BRL, entrega, atualizações e ação de compra.
+5. Avaliações da edição.
+6. Oferta de compra avulsa, com disponibilidade, preço final em BRL e ação de compra.
+7. Informações de entrega e atualizações, sem assumir a garantia comercial de terceiros.
+8. Perguntas frequentes no final da página.
+
+No celular, as colunas se empilham preservando essa sequência. A verificação
+`frontend/scripts/check-storefront-ui.py` confere a ordem visual das seções,
+a compra ao lado da apresentação no computador e a demonstração antes das características.
 
 A direção grafite e azul é preservada. Capa tipográfica, texto, missão e
 composição pertencem à Multilang; a referência Refold orienta a função comercial,
@@ -160,7 +168,7 @@ sem fornecer arte, textos, depoimentos ou promessas para a página.
 A demonstração de inglês reaproveita o cartão `gather` do Estúdio; não gera
 conteúdo novo nem áudio. Está identificada como amostra de interface, com áudio
 indisponível. As avaliações estão vazias, sem nota, estrelas ou relatos inventados.
-Preço está em definição e o botão final permanece desabilitado. Na publicação de
+Preço está em definição e os botões de compra permanecem desabilitados. Na publicação de
 uma edição real, substituir a demo por cartões e mídia daquela versão, confirmar
 contagens e requisitos, e implementar a oferta e o checkout. Separar identidades
 lexicais e cartões; não usar faixas de frequência como certificados.
