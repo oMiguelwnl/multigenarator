@@ -3,15 +3,18 @@ import { useEffect, useRef, useState } from 'react';
 import { SecretField } from './SecretField';
 import { SelectMenu } from './SelectMenu';
 import { ConnectionDialog } from './ConnectionDialog';
+import { ProviderKeys } from './ProviderKeys';
 
 type KeyName = 'openai_api_key' | 'openrouter_api_key' | 'deepl_api_key' | 'azure_speech_key' | 'database_url';
+export type ApiKeyName = Exclude<KeyName, 'database_url'>;
 type Model = { id: string; name: string };
 type Verification = { outcome: 'success' | 'error'; message: string };
-type Configuration = {
+export type Configuration = {
   transport: 'api' | 'openrouter' | 'codex'; model: string; azure_region: string; api_max_output_tokens: number;
   configured: Record<KeyName, boolean>;
+  extra_keys: { id: string; provider: ApiKeyName; label: string; active: boolean }[];
 };
-const defaults: Configuration = { transport: 'api', model: 'gpt-6-luna', azure_region: 'brazilsouth', api_max_output_tokens: 2048, configured: { openai_api_key: false, openrouter_api_key: false, deepl_api_key: false, azure_speech_key: false, database_url: false } };
+const defaults: Configuration = { transport: 'api', model: 'gpt-6-luna', azure_region: 'brazilsouth', api_max_output_tokens: 2048, configured: { openai_api_key: false, openrouter_api_key: false, deepl_api_key: false, azure_speech_key: false, database_url: false }, extra_keys: [] };
 const emptyKeys: Record<KeyName, string> = { openai_api_key: '', openrouter_api_key: '', deepl_api_key: '', azure_speech_key: '', database_url: '' };
 const providerNames: Record<string, string> = { openai: 'OpenAI', openrouter: 'OpenRouter', deepl: 'DeepL', azure: 'Azure Speech', database: 'PostgreSQL' };
 export function Connections() {
@@ -56,7 +59,7 @@ export function Connections() {
       return saveConfiguration();
     }
     if (!dirty) return;
-    const { configured: _, ...preferences } = config;
+    const { configured: _, extra_keys: __, ...preferences } = config;
     const pending = (async () => {
       const result = await api('connections', 'PUT', { ...preferences, ...keys });
       setConfig(result); setKeys(emptyKeys); setDirty(false);
@@ -104,7 +107,7 @@ export function Connections() {
     } finally { setModelLoading(false); }
   }
   const apiProvider = config.transport === 'openrouter' ? 'openrouter' : 'openai';
-  const apiKeyName: KeyName = config.transport === 'openrouter' ? 'openrouter_api_key' : 'openai_api_key';
+  const apiKeyName: ApiKeyName = config.transport === 'openrouter' ? 'openrouter_api_key' : 'openai_api_key';
   const locked = busy || !ready;
 
   return <>
@@ -118,7 +121,8 @@ export function Connections() {
         {config.transport !== 'codex' ? <>
           <SecretField name={apiKeyName} label={`Chave ${apiProvider === 'openrouter' ? 'do OpenRouter' : 'da OpenAI'}`} configured={config.configured[apiKeyName]} pending={keys[apiKeyName]} placeholder="Cole sua chave de API" onChange={value => { setKeys(previous => ({ ...previous, [apiKeyName]: value })); setDirty(true); }} onBlur={saveKeyOnBlur}/>
           <p className="field-note">{apiProvider === 'openrouter' ? 'A cobrança e os limites seguem sua conta OpenRouter. Consulte os modelos depois de salvar a chave.' : 'A cobrança e os limites seguem sua conta de API.'}</p>
-          <KeyActions name={apiKeyName} provider={apiProvider} configured={config.configured[apiKeyName]} hasPendingKey={Boolean(keys[apiKeyName].trim())} dirty={dirty} action={action} verifyConnection={verifyConnection} setConfig={setConfig} setMessage={setMessage}/>
+          <KeyActions name={apiKeyName} provider={apiProvider} configured={config.configured[apiKeyName]} hasPendingKey={Boolean(keys[apiKeyName].trim())} hasAdditional={config.extra_keys.some(entry => entry.provider === apiKeyName)} dirty={dirty} action={action} verifyConnection={verifyConnection} setConfig={setConfig} setMessage={setMessage}/>
+          <ProviderKeys key={apiKeyName} provider={apiKeyName} config={config} beforeChange={saveConfiguration} onUpdate={setConfig} onMessage={setMessage}/>
         </> : <>
           <p>Entre na página oficial da OpenAI. Sua senha e os tokens de login não passam pelo formulário do Multilang.</p>
           <p className="field-note">Integração para uso pessoal local. Para venda ou hospedagem, use API ou a integração comercial oficial. O login fica separado da sua sessão principal do Codex.</p>
@@ -135,18 +139,20 @@ export function Connections() {
       </fieldset>
       <fieldset disabled={locked} className="connection-section panel"><legend>Tradução · DeepL</legend>
         <SecretField name="deepl_api_key" label="Chave do DeepL" configured={config.configured.deepl_api_key} pending={keys.deepl_api_key} placeholder="Cole sua chave de API" onChange={value => { setKeys(previous => ({ ...previous, deepl_api_key: value })); setDirty(true); }} onBlur={saveKeyOnBlur}/>
-        <KeyActions name="deepl_api_key" provider="deepl" configured={config.configured.deepl_api_key} hasPendingKey={Boolean(keys.deepl_api_key.trim())} dirty={dirty} action={action} verifyConnection={verifyConnection} setConfig={setConfig} setMessage={setMessage}/>
+        <KeyActions name="deepl_api_key" provider="deepl" configured={config.configured.deepl_api_key} hasPendingKey={Boolean(keys.deepl_api_key.trim())} hasAdditional={config.extra_keys.some(entry => entry.provider === 'deepl_api_key')} dirty={dirty} action={action} verifyConnection={verifyConnection} setConfig={setConfig} setMessage={setMessage}/>
+        <ProviderKeys provider="deepl_api_key" config={config} beforeChange={saveConfiguration} onUpdate={setConfig} onMessage={setMessage}/>
       </fieldset>
       <fieldset disabled={locked} className="connection-section panel"><legend>Áudio · Azure Speech</legend>
         <SecretField name="azure_speech_key" label="Chave do Azure Speech" configured={config.configured.azure_speech_key} pending={keys.azure_speech_key} placeholder="Cole a chave do recurso Speech" onChange={value => { setKeys(previous => ({ ...previous, azure_speech_key: value })); setDirty(true); }} onBlur={saveKeyOnBlur}/>
         <label>Região do recurso<input value={config.azure_region} required maxLength={40} pattern="[a-z][a-z0-9]+" onChange={event => update({ azure_region: event.target.value })}/></label>
         <p className="field-note">Use a região exibida no seu recurso Azure, por exemplo brazilsouth ou eastus.</p>
-        <KeyActions name="azure_speech_key" provider="azure" configured={config.configured.azure_speech_key} hasPendingKey={Boolean(keys.azure_speech_key.trim())} dirty={dirty} action={action} verifyConnection={verifyConnection} setConfig={setConfig} setMessage={setMessage}/>
+        <KeyActions name="azure_speech_key" provider="azure" configured={config.configured.azure_speech_key} hasPendingKey={Boolean(keys.azure_speech_key.trim())} hasAdditional={config.extra_keys.some(entry => entry.provider === 'azure_speech_key')} dirty={dirty} action={action} verifyConnection={verifyConnection} setConfig={setConfig} setMessage={setMessage}/>
+        <ProviderKeys provider="azure_speech_key" config={config} beforeChange={saveConfiguration} onUpdate={setConfig} onMessage={setMessage}/>
       </fieldset>
       <fieldset disabled={locked} className="connection-section panel"><legend>Banco de dados · PostgreSQL</legend>
         <SecretField name="database_url" label="URL de conexão" configured={config.configured.database_url} pending={keys.database_url} placeholder="postgresql+psycopg://usuário:senha@localhost:5432/multilang" onChange={value => { setKeys(previous => ({ ...previous, database_url: value })); setDirty(true); }} onBlur={saveKeyOnBlur}/>
         <p className="field-note">Use a URL do seu PostgreSQL. A senha fica criptografada no cofre local do Windows.</p>
-        <KeyActions name="database_url" provider="database" configured={config.configured.database_url} hasPendingKey={Boolean(keys.database_url.trim())} dirty={dirty} action={action} verifyConnection={verifyConnection} setConfig={setConfig} setMessage={setMessage}/>
+        <KeyActions name="database_url" provider="database" configured={config.configured.database_url} hasPendingKey={Boolean(keys.database_url.trim())} hasAdditional={false} dirty={dirty} action={action} verifyConnection={verifyConnection} setConfig={setConfig} setMessage={setMessage}/>
       </fieldset>
       <fieldset disabled={locked} className="connection-section panel"><legend>Controle de uso</legend>{config.transport !== 'codex' ? <label>Limite de tokens de saída por chamada de API<input type="number" min={256} max={8192} required value={config.api_max_output_tokens} onChange={event => { setConfig({ ...config, api_max_output_tokens: Number(event.target.value) }); setDirty(true); }}/></label> : <p>As chamadas pelo Codex têm tempo máximo de 120 segundos. Os limites de uso seguem sua conta ChatGPT.</p>}<p className="field-note">Não é um limite financeiro: uma palavra pode exigir várias chamadas. Estimativa de custo ainda indisponível; acompanhe o consumo no provedor.</p></fieldset>
       <div className="connection-save"><p className="field-note">Chaves criptografadas para seu usuário do Windows. Campos vazios preservam as chaves salvas. A verificação consulta apenas metadados, sem gerar cartões ou áudio.</p><button className="button primary" disabled={locked || !dirty}>{busy ? 'Aguarde…' : 'Salvar configurações'}</button></div>
@@ -159,8 +165,8 @@ export function Connections() {
   </>;
 }
 
-function KeyActions({ name, provider, configured, hasPendingKey, dirty, action, verifyConnection, setConfig, setMessage }: { name: KeyName; provider: string; configured: boolean; hasPendingKey: boolean; dirty: boolean; action: (operation: () => Promise<void>) => Promise<void>; verifyConnection: (provider: string) => Promise<void>; setConfig: (config: Configuration) => void; setMessage: (message: string) => void }) {
-  return <div className="connection-actions"><button type="button" className="button secondary" disabled={!configured && !hasPendingKey} onClick={() => void verifyConnection(provider)}>Verificar conexão</button><button type="button" className="text-button" disabled={!configured || dirty} onClick={() => void action(async () => { setConfig(await api(`keys/${name}`, 'DELETE')); setMessage('Credencial removida do cofre local.'); })}>Remover credencial</button></div>;
+function KeyActions({ name, provider, configured, hasPendingKey, hasAdditional, dirty, action, verifyConnection, setConfig, setMessage }: { name: KeyName; provider: string; configured: boolean; hasPendingKey: boolean; hasAdditional: boolean; dirty: boolean; action: (operation: () => Promise<void>) => Promise<void>; verifyConnection: (provider: string) => Promise<void>; setConfig: (config: Configuration) => void; setMessage: (message: string) => void }) {
+  return <div className="connection-actions"><button type="button" className="button secondary" disabled={!configured && !hasPendingKey && !hasAdditional} onClick={() => void verifyConnection(provider)}>Verificar conexão</button><button type="button" className="text-button" disabled={!configured || dirty} onClick={() => void action(async () => { setConfig(await api(`keys/${name}`, 'DELETE')); setMessage('Credencial removida do cofre local.'); })}>Remover credencial</button></div>;
 }
 
 function ModelPicker({ models, loading, error, selected, onRetry, onClose, onSelect }: { models: Model[]; loading: boolean; error: string; selected: string; onRetry: () => void; onClose: () => void; onSelect: (model: Model) => void }) {

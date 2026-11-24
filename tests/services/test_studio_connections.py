@@ -241,6 +241,98 @@ def test_model_list_includes_every_model_returned_by_provider(tmp_path, monkeypa
         ]
 
 
+@pytest.mark.skipif(os.name != "nt", reason="Windows credential protection")
+def test_additional_provider_keys_preserve_primary_and_switch_active_key(tmp_path, monkeypatch):
+    from multilang.settings import Settings
+    from multilang.studio import server
+
+    observed = {}
+
+    class Response:
+        status_code = 200
+
+        async def __aenter__(self):
+            return self
+
+        async def __aexit__(self, *_):
+            pass
+
+        async def aiter_bytes(self):
+            yield b"{}"
+
+    class Client:
+        async def __aenter__(self):
+            return self
+
+        async def __aexit__(self, *_):
+            pass
+
+        def stream(self, _method, _url, *, headers):
+            observed["authorization"] = headers["Authorization"]
+            return Response()
+
+    monkeypatch.setattr(server.httpx, "AsyncClient", lambda **_kwargs: Client())
+
+    app = create_studio_app(root=tmp_path, token="token", port=8765)
+    vault = tmp_path / ".multilang/studio/connections.dpapi"
+    with TestClient(app, base_url="http://127.0.0.1:8765", headers={"Origin": "http://127.0.0.1:8765"}) as client:
+        client.post("/studio-api/session", json={"token": "token"})
+        client.put("/studio-api/connections", json={"openai_api_key": "primary-fixture"})
+        added = client.post("/studio-api/keys/openai_api_key", json={"label": "Reserva", "value": "backup-fixture"})
+        assert added.status_code == 200
+        assert "backup-fixture" not in added.text
+        extra = added.json()["extra_keys"]
+        assert len(extra) == 1
+        assert extra[0]["label"] == "Reserva"
+        key_id = extra[0]["id"]
+        assert not extra[0]["active"]
+        assert b"backup-fixture" not in vault.read_bytes()
+        assert "backup-fixture" not in client.get("/studio-api/connections").text
+        settings = Settings(_env_file=None, studio_connections_enabled=True, studio_connections_path=vault)
+        assert settings.openai_api_key == "primary-fixture"
+        activated = client.post(f"/studio-api/keys/openai_api_key/{key_id}/activate")
+        assert activated.status_code == 200
+        assert activated.json()["extra_keys"][0]["active"]
+        settings = Settings(_env_file=None, studio_connections_enabled=True, studio_connections_path=vault)
+        assert settings.openai_api_key == "backup-fixture"
+        assert client.post("/studio-api/check/openai").status_code == 200
+        assert observed["authorization"] == "Bearer backup-fixture"
+        assert client.post(f"/studio-api/keys/openai_api_key/{key_id}/reveal").json() == {"value": "backup-fixture"}
+        assert client.post(f"/studio-api/keys/deepl_api_key/{key_id}/reveal").status_code == 404
+        assert client.post(f"/studio-api/keys/openai_api_key/{key_id}/reveal", headers={"Origin": "https://evil.example"}).status_code == 403
+
+        assert client.put("/studio-api/connections", json={"model": "gpt-test"}).json()["extra_keys"][0]["id"] == key_id
+
+        removed = client.delete(f"/studio-api/keys/openai_api_key/{key_id}")
+        assert removed.status_code == 200
+        assert not removed.json()["extra_keys"]
+        settings = Settings(_env_file=None, studio_connections_enabled=True, studio_connections_path=vault)
+        assert settings.openai_api_key == "primary-fixture"
+
+
+@pytest.mark.skipif(os.name != "nt", reason="Windows credential protection")
+@pytest.mark.parametrize(
+    "provider,transport,setting",
+    [
+        ("openai_api_key", "api", "openai_api_key"),
+        ("openrouter_api_key", "openrouter", "openrouter_api_key"),
+        ("deepl_api_key", "api", "deepl_api_key"),
+        ("azure_speech_key", "api", "azure_speech_key"),
+    ],
+)
+def test_each_service_uses_its_selected_additional_key(tmp_path, provider, transport, setting):
+    from multilang.settings import Settings
+
+    path = tmp_path / "credentials.dpapi"
+    store = ConnectionStore(path)
+    store.save(ConnectionConfig(transport=transport))
+    added = store.add_key(provider, "Reserva", "provider-fixture")
+    key_id = added["extra_keys"][0]["id"]
+    store.activate_key(provider, key_id)
+    settings = Settings(_env_file=None, studio_connections_enabled=True, studio_connections_path=path)
+    assert getattr(settings, setting) == "provider-fixture"
+
+
 def test_codex_transport_uses_existing_validation_adapter_without_api_key():
     from multilang.services.provider_text_adapters import (
         _litellm_api_key,

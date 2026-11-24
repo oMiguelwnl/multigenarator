@@ -20,7 +20,13 @@ from pydantic import BaseModel, ConfigDict, Field, SecretStr
 from sqlalchemy import create_engine, text
 
 from multilang.studio.codex import CodexBridge, network_allowed
-from multilang.studio.connections import SECRET_FIELDS, ConnectionConfig, ConnectionStore
+from multilang.studio.connections import (
+    API_KEY_FIELDS,
+    SECRET_FIELDS,
+    ConnectionConfig,
+    ConnectionStore,
+    active_key,
+)
 from multilang.studio.productions import ProductionService, production_router
 from multilang.studio.results import create_results_router
 from multilang.studio.sources import MAX_SOURCE_BYTES
@@ -30,6 +36,12 @@ from multilang.studio.sources import router as sources_router
 class SessionRequest(BaseModel):
     model_config = ConfigDict(extra="forbid", hide_input_in_errors=True)
     token: SecretStr = Field(max_length=256)
+
+
+class AdditionalKeyRequest(BaseModel):
+    model_config = ConfigDict(extra="forbid", hide_input_in_errors=True)
+    label: str = Field(min_length=1, max_length=80)
+    value: SecretStr = Field(min_length=1, max_length=4096)
 
 
 def create_studio_app(*, root: Path, token: str, port: int = 8765) -> FastAPI:
@@ -120,7 +132,7 @@ def create_studio_app(*, root: Path, token: str, port: int = 8765) -> FastAPI:
 
     @app.put("/studio-api/connections")
     def update(payload: ConnectionConfig):
-        patch = payload.model_dump(exclude_unset=True)
+        patch = payload.model_dump(exclude_unset=True, exclude={"additional_keys", "active_key_ids"})
         for name in SECRET_FIELDS:
             if name in patch:
                 patch[name] = getattr(payload, name).get_secret_value().strip()
@@ -133,8 +145,49 @@ def create_studio_app(*, root: Path, token: str, port: int = 8765) -> FastAPI:
         with store.lock:
             config = store.load()
             setattr(config, name, SecretStr(""))
+            if name in API_KEY_FIELDS and name not in config.active_key_ids:
+                replacement = next((entry for entry in config.additional_keys if entry.provider == name), None)
+                if replacement:
+                    config.active_key_ids[name] = replacement.id
             store.save(config)
         return store.public()
+
+    @app.post("/studio-api/keys/{name}")
+    def add_key(name: str, payload: AdditionalKeyRequest):
+        if name not in API_KEY_FIELDS:
+            raise HTTPException(404)
+        try:
+            return store.add_key(name, payload.label, payload.value.get_secret_value())
+        except ValueError:
+            raise HTTPException(400, "Confira o nome e o limite de chaves deste serviço.") from None
+
+    @app.post("/studio-api/keys/{name}/{key_id}/activate")
+    def activate_key(name: str, key_id: str):
+        if name not in API_KEY_FIELDS:
+            raise HTTPException(404)
+        try:
+            return store.activate_key(name, key_id)
+        except KeyError:
+            raise HTTPException(404) from None
+
+    @app.delete("/studio-api/keys/{name}/{key_id}")
+    def remove_extra_key(name: str, key_id: str):
+        if name not in API_KEY_FIELDS:
+            raise HTTPException(404)
+        try:
+            return store.remove_key(name, key_id)
+        except KeyError:
+            raise HTTPException(404) from None
+
+    @app.post("/studio-api/keys/{name}/{key_id}/reveal")
+    def reveal_extra_key(name: str, key_id: str):
+        if name not in API_KEY_FIELDS:
+            raise HTTPException(404)
+        config = store.load()
+        entry = next((entry for entry in config.additional_keys if entry.provider == name and entry.id == key_id), None)
+        if entry is None:
+            raise HTTPException(404)
+        return {"value": entry.value.get_secret_value()}
 
     @app.post("/studio-api/keys/{name}/reveal")
     def reveal(name: str):
@@ -165,20 +218,20 @@ def create_studio_app(*, root: Path, token: str, port: int = 8765) -> FastAPI:
         network_allowed()
         config = store.load()
         if provider == "openai":
-            key = config.openai_api_key.get_secret_value()
+            key = active_key(config, "openai_api_key")
             url = "https://api.openai.com/v1/models"
             headers = {"Authorization": f"Bearer {key}"}
         elif provider == "openrouter":
-            key = config.openrouter_api_key.get_secret_value()
+            key = active_key(config, "openrouter_api_key")
             url = "https://openrouter.ai/api/v1/models?output_modalities=text"
             headers = {"Authorization": f"Bearer {key}"}
         elif provider == "deepl":
-            key = config.deepl_api_key.get_secret_value()
+            key = active_key(config, "deepl_api_key")
             host = "api-free.deepl.com" if key.endswith(":fx") else "api.deepl.com"
             url = f"https://{host}/v2/usage"
             headers = {"Authorization": f"DeepL-Auth-Key {key}"}
         elif provider == "azure":
-            key = config.azure_speech_key.get_secret_value()
+            key = active_key(config, "azure_speech_key")
             url = f"https://{config.azure_region}.tts.speech.microsoft.com/cognitiveservices/voices/list"
             headers = {"Ocp-Apim-Subscription-Key": key}
         else:
