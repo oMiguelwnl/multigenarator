@@ -12,6 +12,9 @@ export function ProviderKeys({ provider, config, beforeChange, onUpdate, onMessa
   const [revealed, setRevealed] = useState<Record<string, string>>({});
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [editLabel, setEditLabel] = useState('');
+  const [editValue, setEditValue] = useState('');
   const keys = config.extra_keys.filter(entry => entry.provider === provider);
   const extraActive = keys.some(entry => entry.active);
 
@@ -51,16 +54,34 @@ export function ProviderKeys({ provider, config, beforeChange, onUpdate, onMessa
     } catch { setError('Não foi possível mostrar a chave.'); }
   }
 
+  async function saveEdit() {
+    if (!editingId || !editLabel.trim()) return;
+    setBusy(true); setError('');
+    try {
+      await beforeChange();
+      onUpdate(await api(`keys/${provider}/${editingId}`, 'PATCH', {
+        label: editLabel.trim(), value: editValue.trim(),
+      }));
+      setRevealed(previous => { const next = { ...previous }; delete next[editingId]; return next; });
+      setEditingId(null); setEditValue('');
+      onMessage('Chave adicional atualizada no cofre local.');
+    } catch (cause) { setError(cause instanceof Error ? cause.message : 'Não foi possível editar a chave.'); }
+    finally { setBusy(false); }
+  }
+
   return <div className="provider-keys">
     <div className="provider-keys-heading"><h3>Chaves adicionais</h3><button type="button" className="text-button" onClick={() => { setAdding(previous => !previous); setLabel(''); setValue(''); setError(''); }}>{adding ? 'Cancelar' : 'Adicionar outra chave'}</button></div>
     {config.configured[provider] && !extraActive && <p className="field-note">Chave principal em uso.</p>}
     {config.configured[provider] && extraActive && <button type="button" className="text-button" disabled={busy} onClick={() => void change(`keys/${provider}/primary/activate`, 'POST', 'Chave principal ativada.')}>Usar chave principal</button>}
     {keys.map(entry => <div className="provider-key-row" key={entry.id}>
+      {editingId === entry.id ? <div className="provider-key-add"><label>Nome da chave<input maxLength={80} value={editLabel} onChange={event => setEditLabel(event.target.value)}/></label><label>Nova chave (opcional)<input type="password" autoComplete="off" maxLength={4096} value={editValue} placeholder="Deixe vazio para manter a chave atual" onChange={event => setEditValue(event.target.value)}/></label><button type="button" className="button secondary" disabled={busy || !editLabel.trim()} onClick={() => void saveEdit()}>Salvar alterações</button><button type="button" className="text-button" disabled={busy} onClick={() => { setEditingId(null); setEditValue(''); }}>Cancelar</button></div> : <>
       <div className="provider-key-info"><strong>{entry.label}</strong><code>{revealed[entry.id] ?? '••••••••••••'}</code></div>
       {entry.active && <span className="provider-key-active">Em uso</span>}
       <button type="button" className="provider-key-eye" aria-label={`${revealed[entry.id] ? 'Ocultar' : 'Mostrar'} ${entry.label}`} disabled={busy} onClick={() => void toggle(entry.id)}><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" strokeWidth="1.8" aria-hidden="true"><path d="M2 12s3.5-6 10-6 10 6 10 6-3.5 6-10 6-10-6-10-6Z"/><circle cx="12" cy="12" r="3"/>{!revealed[entry.id] && <path d="M4 20 20 4"/>}</svg></button>
       {!entry.active && <button type="button" className="text-button" disabled={busy} onClick={() => void change(`keys/${provider}/${entry.id}/activate`, 'POST', `${entry.label} ativada.`)}>Usar esta</button>}
+      <button type="button" className="text-button" disabled={busy} onClick={() => { setEditingId(entry.id); setEditLabel(entry.label); setEditValue(''); setError(''); }}>Editar</button>
       <button type="button" className="text-button" disabled={busy} onClick={() => void change(`keys/${provider}/${entry.id}`, 'DELETE', 'Chave adicional removida.', entry.id)}>Remover</button>
+      </>}
     </div>)}
     {adding && <div className="provider-key-add"><label>Nome da chave<input maxLength={80} value={label} placeholder="Ex.: Reserva" onChange={event => setLabel(event.target.value)} onKeyDown={event => { if (event.key === 'Enter') { event.preventDefault(); void add(); } }}/></label><label>Nova chave<input type="password" autoComplete="off" maxLength={4096} value={value} placeholder="Cole a chave de API" onChange={event => setValue(event.target.value)} onKeyDown={event => { if (event.key === 'Enter') { event.preventDefault(); void add(); } }}/></label><button type="button" className="button secondary" disabled={busy || !label.trim() || !value.trim()} onClick={() => void add()}>Salvar chave</button></div>}
     {error && <p role="alert" className="field-note">{error}</p>}

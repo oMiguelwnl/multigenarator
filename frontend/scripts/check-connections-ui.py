@@ -35,6 +35,11 @@ def main():
         if path == "/studio-api/keys/openrouter_api_key/fixture-id/activate":
             config["extra_keys"][0]["active"] = True
             return route.fulfill(json=config)
+        if path == "/studio-api/keys/openrouter_api_key/fixture-id" and route.request.method == "PATCH":
+            payload = route.request.post_data_json
+            assert payload == {"label": "Reserva editada", "value": ""}
+            config["extra_keys"][0]["label"] = payload["label"]
+            return route.fulfill(json=config)
         if path == "/studio-api/keys/openrouter_api_key/primary/activate":
             config["extra_keys"][0]["active"] = False
             return route.fulfill(json=config)
@@ -83,9 +88,13 @@ def main():
         generation.get_by_label("Nova chave").fill("backup-fixture")
         generation.get_by_role("button", name="Salvar chave").click()
         expect(generation.get_by_text("Reserva", exact=True)).to_be_visible()
+        generation.get_by_role("button", name="Editar").click()
+        generation.get_by_label("Nome da chave").fill("Reserva editada")
+        generation.get_by_role("button", name="Salvar alterações").click()
+        expect(generation.get_by_text("Reserva editada", exact=True)).to_be_visible()
         generation.get_by_role("button", name="Usar esta").click()
         expect(generation.get_by_text("Em uso")).to_be_visible()
-        generation.get_by_role("button", name="Mostrar Reserva").click()
+        generation.get_by_role("button", name="Mostrar Reserva editada").click()
         expect(generation.get_by_text("backup-fixture")).to_be_visible()
         generation.get_by_role("button", name="Usar chave principal").click()
         expect(generation.get_by_text("Chave principal em uso.")).to_be_visible()

@@ -16,6 +16,53 @@ def test_vault_encrypts_and_never_projects_secrets(tmp_path):
     assert "private-test-key" not in str(store.public())
 
 
+@pytest.mark.skipif(os.name != "nt", reason="Windows credential protection")
+def test_additional_key_can_be_edited_and_survives_restart(tmp_path):
+    path = tmp_path / "connections.dpapi"
+    store = ConnectionStore(path)
+    saved = store.add_key("openai_api_key", "Original", "first-secret")
+    key_id = saved["extra_keys"][0]["id"]
+
+    edited = store.update_key("openai_api_key", key_id, label="Renamed", value="")
+    assert edited["extra_keys"][0]["label"] == "Renamed"
+    assert "first-secret" not in str(edited)
+    assert ConnectionStore(path).load().additional_keys[0].value.get_secret_value() == "first-secret"
+
+    store.update_key("openai_api_key", key_id, label="Renamed", value="second-secret")
+    restarted = ConnectionStore(path)
+    assert restarted.load().additional_keys[0].value.get_secret_value() == "second-secret"
+    assert b"second-secret" not in path.read_bytes()
+    with pytest.raises(KeyError):
+        store.update_key("deepl_api_key", key_id, label="Wrong provider", value="")
+
+
+@pytest.mark.skipif(os.name != "nt", reason="Windows credential protection")
+def test_additional_key_edit_route_preserves_secret_and_identity(tmp_path):
+    origin = "http://127.0.0.1:8765"
+    app = create_studio_app(root=tmp_path, token="token", port=8765)
+    with TestClient(app, base_url=origin, headers={"Origin": origin}) as client:
+        client.post("/studio-api/session", json={"token": "token"})
+        created = client.post(
+            "/studio-api/keys/deepl_api_key", json={"label": "Old", "value": "private-key"}
+        )
+        key_id = created.json()["extra_keys"][0]["id"]
+        path = f"/studio-api/keys/deepl_api_key/{key_id}"
+        edited = client.patch(path, json={"label": "New", "value": ""})
+        assert edited.status_code == 200
+        assert edited.json()["extra_keys"][0]["id"] == key_id
+        assert edited.json()["extra_keys"][0]["active"]
+        assert "private-key" not in edited.text
+        assert client.post(path + "/reveal").json() == {"value": "private-key"}
+        assert client.patch(path, json={"label": "  ", "value": ""}).status_code == 400
+        assert client.patch(path, json={"label": "New", "value": "replacement"}).status_code == 200
+
+    restarted = create_studio_app(root=tmp_path, token="new-token", port=8765)
+    with TestClient(restarted, base_url=origin, headers={"Origin": origin}) as client:
+        client.post("/studio-api/session", json={"token": "new-token"})
+        assert client.get("/studio-api/connections").json()["extra_keys"][0]["label"] == "New"
+        assert client.post(path + "/reveal").json() == {"value": "replacement"}
+
+
 def test_local_api_requires_session_and_same_origin(tmp_path):
     app = create_studio_app(root=tmp_path, token="test-session", port=8765)
     with TestClient(app, base_url="http://127.0.0.1:8765") as client:

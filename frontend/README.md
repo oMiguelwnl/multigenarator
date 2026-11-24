@@ -63,6 +63,9 @@ a sessão usa cookie HttpOnly/SameSite. Não compartilhe o link de acesso.
 As chaves são criptografadas com DPAPI, vinculadas ao usuário Windows, em
 `.multilang/studio/connections.dpapi`, ignorado pelo Git. Elas não ficam em
 localStorage, nos arquivos do frontend nem nas respostas da API.
+Use **Substituir** para trocar uma chave principal. Em **Chaves adicionais**, use
+**Editar** para mudar o nome ou a chave; deixe o campo da chave vazio para manter
+o valor salvo. As alterações persistem após fechar e reabrir o Estúdio nesta worktree.
 
 O login Codex requer o CLI oficial instalado. Foi conferido o handshake com a versão
 0.167.0. Usa `CODEX_HOME` próprio em `.multilang/studio/codex` e o cofre do sistema

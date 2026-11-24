@@ -44,6 +44,12 @@ class AdditionalKeyRequest(BaseModel):
     value: SecretStr = Field(min_length=1, max_length=4096)
 
 
+class EditAdditionalKeyRequest(BaseModel):
+    model_config = ConfigDict(extra="forbid", hide_input_in_errors=True)
+    label: str = Field(min_length=1, max_length=80)
+    value: SecretStr = Field(default=SecretStr(""), max_length=4096)
+
+
 def create_studio_app(*, root: Path, token: str, port: int = 8765) -> FastAPI:
     store = ConnectionStore(root / ".multilang/studio/connections.dpapi")
     bridge = CodexBridge(root / ".multilang/studio/codex")
@@ -169,6 +175,20 @@ def create_studio_app(*, root: Path, token: str, port: int = 8765) -> FastAPI:
             return store.activate_key(name, key_id)
         except KeyError:
             raise HTTPException(404) from None
+
+    @app.patch("/studio-api/keys/{name}/{key_id}")
+    def edit_extra_key(name: str, key_id: str, payload: EditAdditionalKeyRequest):
+        if name not in API_KEY_FIELDS:
+            raise HTTPException(404)
+        try:
+            return store.update_key(
+                name, key_id, label=payload.label,
+                value=payload.value.get_secret_value(),
+            )
+        except KeyError:
+            raise HTTPException(404) from None
+        except ValueError:
+            raise HTTPException(400, "Confira o nome da chave.") from None
 
     @app.delete("/studio-api/keys/{name}/{key_id}")
     def remove_extra_key(name: str, key_id: str):

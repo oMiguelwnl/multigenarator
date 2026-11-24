@@ -169,6 +169,21 @@ class ConnectionStore:
             self.save(config)
             return self.public()
 
+    def update_key(self, provider: str, key_id: str, *, label: str, value: str) -> dict:
+        with self.lock:
+            config = self.load()
+            for index, entry in enumerate(config.additional_keys):
+                if entry.id == key_id and entry.provider == provider:
+                    config.additional_keys[index] = AdditionalKey(
+                        id=entry.id,
+                        provider=entry.provider,
+                        label=label.strip(),
+                        value=value.strip() or entry.value,
+                    )
+                    self.save(config)
+                    return self.public()
+            raise KeyError(key_id)
+
     def activate_key(self, provider: str, key_id: str) -> dict:
         with self.lock:
             config = self.load()
