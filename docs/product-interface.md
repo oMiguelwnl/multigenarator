@@ -122,11 +122,32 @@ Não substituir a fila existente nem executar comandos construídos do formulár
 
 ## Oferta e copy de lançamento
 
-O benefício central é construir vocabulário para compreender outro idioma, com
-contexto e apoio em português, economizando o preparo manual dos cartões. A chamada
-da Loja é "Destrave seu próximo idioma." O botão principal "Encontrar meu deck" leva
-ao catálogo; "Ver um cartão" oferece uma demonstração sem cadastro. O catálogo vazio
+O benefício central é construir vocabulário para acompanhar séries, livros e conversas
+no idioma estudado, com contexto e apoio em português. A chamada aprovada para a Loja
+é "Aprenda o vocabulário para acompanhar séries, livros e conversas."
+O texto de apoio é "Construa sua base no idioma com decks para Anki, palavras
+frequentes, exemplos e explicações em português."
+O botão principal "Escolher meu idioma" leva ao catálogo; "Experimentar um cartão"
+oferece uma demonstração sem cadastro. O catálogo vazio
 informa que ainda não há decks à venda, sem simular estoque ou compra.
+
+A página apresenta o catálogo, explica o papel do vocabulário na compreensão,
+detalha os componentes dos decks e responde às dúvidas de compra. Economia de
+preparo é um benefício secundário, não a promessa principal. A demonstração atual
+continua identificada como amostra de interface; não representa uma edição à venda.
+
+Cada página de produto deverá seguir esta sequência quando houver uma edição aprovada:
+
+1. Nome específico do idioma e objetivo, por exemplo "Vocabulário essencial de inglês".
+2. Público, pré-requisitos, seleção do vocabulário e conteúdo incluído. Separar
+   identidades lexicais e cartões; não usar faixas de frequência como certificados.
+3. Amostra real daquela versão, com frente, verso e os áudios efetivamente incluídos.
+4. Preço final em BRL, compra avulsa, entrega e condições de atualização junto à compra.
+5. Dúvidas sobre importação, escolha da edição, estudo e atendimento.
+
+Catálogo com busca e filtros por idioma e tipo deve refletir as edições publicadas.
+Não oferecer idiomas sem edição aprovada nem adicionar produtos fictícios para
+preencher a vitrine. Depoimentos entram após existirem relatos próprios autorizados.
 
 A página de cada edição publicada deverá mostrar exemplos reais daquela
 versão, áudio quando incluído, conteúdo, preço total e uma ação de compra. Depoimentos
