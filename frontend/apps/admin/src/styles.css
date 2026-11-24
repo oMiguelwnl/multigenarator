@@ -309,7 +309,7 @@ tbody tr:hover { background: var(--surface-raised); }
 
 /* Form fields and the draft summary stay in one readable column. */
 .form-layout { display: grid; grid-template-columns: minmax(0, 1fr) 286px; align-items: start; gap: 22px; }
-.configuration { padding: 27px; }
+.configuration { padding: 27px; overflow: visible; }
 .configuration fieldset { min-width: 0; padding: 0; margin: 0 0 30px; border: 0; }
 .configuration legend { margin-bottom: 22px; font-size: 17px; font-weight: 650; }
 .number { display: inline-grid; place-items: center; width: 30px; height: 30px; margin-right: 10px; border: 1px solid var(--border); border-radius: 50%; color: var(--accent-text); font-family: Georgia, "Times New Roman", serif; font-size: 14px; font-variant-numeric: tabular-nums; }
@@ -325,21 +325,17 @@ input:disabled, select:disabled, textarea:disabled { border-color: var(--border)
 .highlight-input-help { margin: -7px 0 20px; }
 select:disabled { color: var(--text-secondary); cursor: not-allowed; opacity: 1; }
 .configuration select:not(:disabled):hover { border-color: var(--accent-text); }
-@supports (appearance: base-select) {
-  select, select::picker(select) { appearance: base-select; }
-  select { display: flex; align-items: center; justify-content: space-between; }
-  select::picker(select) { padding: 4px; border: 1px solid var(--control-border); border-radius: 4px; background: var(--surface); color: var(--text); }
-  select option { padding: 8px 12px; border-radius: 3px; background: var(--surface); color: var(--text); }
-  select option:checked { background: var(--accent-soft); color: var(--accent-text); font-weight: 600; }
-  select option:is(:hover, :focus-visible) { background: var(--surface-hover); color: var(--text); }
-  select option:focus-visible { outline: 2px solid var(--focus); outline-offset: -2px; }
-  .configuration option { padding: 0; border-radius: 3px; background: var(--surface); color: var(--text); }
-  .configuration option span { flex: 1; padding: 8px 12px; border-radius: inherit; background: inherit; color: inherit; }
-  .configuration option:checked { background: var(--accent-soft); color: var(--accent-text); font-weight: 600; }
-  .configuration option:is(:hover, :focus-visible),
-  .configuration option:is(:hover, :focus-visible) span { background: var(--surface-hover); color: var(--text); }
-  .configuration option:focus-visible { outline: 2px solid var(--focus); outline-offset: -2px; }
-}
+.select-menu { position: relative; width: 100%; margin-top: 8px; }
+.select-menu:focus-within { z-index: 20; }
+.select-trigger { display: flex; align-items: center; justify-content: space-between; width: 100%; min-height: 48px; padding: 11px 12px; border: 1px solid var(--control-border); border-radius: 4px; background: var(--canvas); color: var(--text); font: inherit; font-size: 15px; text-align: left; }
+.select-trigger:hover:not(:disabled), .select-trigger[aria-expanded=true] { border-color: var(--accent-text); }
+.select-trigger:disabled { background: var(--surface-raised); color: var(--text-secondary); cursor: not-allowed; }
+.select-trigger span { margin-left: 16px; }
+.select-options { position: absolute; top: calc(100% + 2px); left: 0; right: 0; z-index: 30; max-height: 260px; padding: 4px; overflow-y: auto; border: 1px solid var(--control-border); border-radius: 4px; background: var(--surface-raised); box-shadow: 0 12px 24px #0008; }
+.select-option { display: block; width: 100%; min-height: 38px; padding: 8px 10px; border: 0; border-radius: 3px; background: transparent; color: var(--text); font: inherit; font-size: 14px; text-align: left; }
+.select-option:hover, .select-option:focus-visible { background: var(--surface-hover); color: var(--text); }
+.select-option[aria-selected=true] { background: var(--accent-soft); color: var(--accent-text); font-weight: 650; }
+.select-option[aria-selected=true]:hover, .select-option[aria-selected=true]:focus-visible { background: var(--surface-hover); color: var(--text); }
 .source-upload { min-width: 0; margin-bottom: 24px; }
 .source-upload > label { margin-bottom: 10px; }
 .source-upload input[type=file] { min-width: 0; min-height: 48px; padding: 6px; font-size: 14px; }
@@ -433,11 +429,19 @@ select:disabled { color: var(--text-secondary); cursor: not-allowed; opacity: 1;
 /* Provider keys stay masked; status and destructive actions are explicit. */
 .connections-form { max-width: 890px; }
 .connection-status { max-width: 890px; padding: 14px 17px; border: 1px solid var(--accent-border); border-left: 4px solid var(--accent); border-radius: 4px; background: var(--accent-soft); line-height: 1.6; }
-.connection-section { min-width: 0; padding: 23px 24px; margin: 22px 0; }
+.connection-section { min-width: 0; padding: 23px 24px; margin: 22px 0; overflow: visible; }
+.connection-section:focus-within { position: relative; z-index: 3; }
 .connection-section legend { padding: 0 8px; font-family: Georgia, "Times New Roman", serif; font-size: 22px; font-weight: 400; }
 .page-connections .connections-form, .page-connections .connection-status { width: 100%; max-width: none; margin-inline: 0; }
 .connection-section p { max-width: 68ch; line-height: 1.6; }
 .connection-section input, .connection-section select { width: 100%; min-width: 0; }
+.secret-field { position: relative; margin-bottom: 12px; }
+.secret-field label { margin-bottom: 0; }
+.secret-control { display: flex; position: relative; }
+.secret-control input { padding-right: 52px; }
+.secret-eye { position: absolute; right: 3px; top: 11px; display: grid; place-items: center; width: 42px; height: 42px; border: 0; border-radius: 4px; background: transparent; color: var(--text-secondary); }
+.secret-eye:hover { color: var(--text); background: var(--surface-hover); }
+.secret-replace { margin-top: 5px; }
 .connection-actions { display: flex; align-items: center; flex-wrap: wrap; gap: 10px; margin: 15px 0; }
 .connection-model { display: flex; align-items: end; flex-wrap: wrap; gap: 12px; margin-top: 22px; }
 .connection-model label { min-width: 180px; flex: 1; margin: 0; }

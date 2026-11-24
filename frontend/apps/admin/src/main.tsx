@@ -10,6 +10,7 @@ import { sourceKindFor } from './source-files';
 import { SourceFileInput } from './SourceFileInput';
 import { AnkiTemplatePreview } from './AnkiTemplatePreview';
 import { Connections } from './Connections';
+import { SelectMenu } from './SelectMenu';
 import './styles.css';
 import { loadDrafts, persistDraft } from './draft-store';
 
@@ -203,34 +204,32 @@ function App() {
           <fieldset disabled={busy}><legend><span className="number">01</span> O que vamos preparar?</legend>
             <label>Nome da produção<input required maxLength={100} value={draft.name} onChange={e => setDraft({ ...draft, name: e.target.value })}/></label>
             <div className="two-fields">
-              <label>Idioma estudado<select value={draft.language} onChange={event => {
-                const next = changeStudyLanguage(draft, event.target.value);
+              <label>Idioma estudado<SelectMenu value={draft.language} onChange={value => {
+                const next = changeStudyLanguage(draft, value);
                 setDraft(next);
                 if (next.highlightInput !== draft.highlightInput) setToast('Para coreano, o apoio é português e os destaques usam o modo de trechos de leitura.');
                 else if (next.supportLanguage !== draft.supportLanguage) setToast('Para coreano, o idioma de apoio foi ajustado para português.');
-              }}>{['Inglês', 'Coreano', 'Japonês', 'Latim', 'Espanhol', 'Francês', 'Alemão', 'Italiano', 'Português', 'Polonês', 'Turco', 'Romeno', 'Russo', 'Holandês', 'Mandarim', 'Tcheco', 'Dinamarquês', 'Finlandês', 'Grego', 'Croata', 'Húngaro', 'Norueguês', 'Sueco'].map(l => <option key={l} value={l}><span>{l}</span></option>)}</select></label>
-              <label>Idioma de apoio<select value={draft.supportLanguage} disabled={draft.language === 'Coreano'} aria-describedby={draft.language === 'Coreano' ? 'support-language-help korean-support-constraint' : 'support-language-help'} onChange={event => {
-                const value = event.target.value;
+              }} options={['Inglês', 'Coreano', 'Japonês', 'Latim', 'Espanhol', 'Francês', 'Alemão', 'Italiano', 'Português', 'Polonês', 'Turco', 'Romeno', 'Russo', 'Holandês', 'Mandarim', 'Tcheco', 'Dinamarquês', 'Finlandês', 'Grego', 'Croata', 'Húngaro', 'Norueguês', 'Sueco'].map(l => ({ value: l, label: l }))}/></label>
+              <label>Idioma de apoio<SelectMenu value={draft.supportLanguage} disabled={draft.language === 'Coreano'} describedBy={draft.language === 'Coreano' ? 'support-language-help korean-support-constraint' : 'support-language-help'} onChange={value => {
                 if (isSupportLanguageAllowed(draft.language, value)) setDraft({ ...draft, supportLanguage: value });
-              }}>{availableSupportLanguages(draft.language).map(code => <option key={code} value={code}><span>{supportLanguageLabels[code]}</span></option>)}</select></label>
+              }} options={availableSupportLanguages(draft.language).map(code => ({ value: code, label: supportLanguageLabels[code] }))}/></label>
             </div>
             <p className="field-note support-language-help" id="support-language-help">Idioma das definições, traduções das frases e rótulos dos cartões deste deck. O aplicativo continua em português.</p>
             {draft.language === 'Coreano' && <p className="field-note language-constraint" id="korean-support-constraint">Para coreano, apenas português está disponível como idioma de apoio.</p>}
-            <label>Tipo de material<select value={draft.kind} onChange={event => {
-              const next = changeMaterial(draft, event.target.value);
+            <label>Tipo de material<SelectMenu value={draft.kind} onChange={value => {
+              const next = changeMaterial(draft, value);
               setDraft(next);
               if (draft.attachment && !next.attachment) setToast('O tipo de material mudou. Selecione o arquivo adequado para esta modalidade.');
-            }}>{['Frequência', 'Lista personalizada', 'Destaques de leitura', 'Escrita e fundamentos', 'Pronúncia e fonética', 'Gramática', 'Latim clássico'].map(k => <option key={k} value={k}><span>{k}</span></option>)}</select></label>
+            }} options={['Frequência', 'Lista personalizada', 'Destaques de leitura', 'Escrita e fundamentos', 'Pronúncia e fonética', 'Gramática', 'Latim clássico'].map(k => ({ value: k, label: k }))}/></label>
             <p className="field-note">As modalidades disponíveis dependem do idioma e dos recursos do backend.</p>
           </fieldset>
           <fieldset disabled={busy}><legend><span className="number">02</span> Conteúdo e apresentação</legend>
             {sourceKind ? <>
-              {sourceKind === 'highlights' && <><label>O que os destaques contêm?<select value={draft.highlightInput ?? 'text'} disabled={draft.language === 'Coreano'} aria-describedby="highlight-input-help" onChange={event => {
-                const mode = event.target.value;
+              {sourceKind === 'highlights' && <><label>O que os destaques contêm?<SelectMenu value={draft.highlightInput ?? 'text'} disabled={draft.language === 'Coreano'} describedBy="highlight-input-help" onChange={mode => {
                 if (mode === 'text' || (mode === 'vocabulary' && draft.language !== 'Coreano')) setDraft({ ...draft, highlightInput: mode });
-              }}><option value="text"><span>Trechos de leitura — extrair palavras</span></option><option value="vocabulary"><span>Palavras ou expressões — um item por destaque</span></option></select></label><p className="field-note highlight-input-help" id="highlight-input-help">{draft.language === 'Coreano' ? 'Coreano usa apenas trechos de leitura para análise linguística.' : draft.highlightInput === 'vocabulary' ? 'Cada destaque será tratado como uma palavra ou expressão. Para uma lista simples com um item por linha, use Lista personalizada.' : 'Confira na prévia as palavras reconhecidas nos trechos.'}</p></>}
+              }} options={[{ value: 'text', label: 'Trechos de leitura — extrair palavras' }, { value: 'vocabulary', label: 'Palavras ou expressões — um item por destaque' }]}/></label><p className="field-note highlight-input-help" id="highlight-input-help">{draft.language === 'Coreano' ? 'Coreano usa apenas trechos de leitura para análise linguística.' : draft.highlightInput === 'vocabulary' ? 'Cada destaque será tratado como uma palavra ou expressão. Para uma lista simples com um item por linha, use Lista personalizada.' : 'Confira na prévia as palavras reconhecidas nos trechos.'}</p></>}
               <SourceFileInput key={`${draft.id}:${draft.kind}`} kind={sourceKind} languageCode={languageCode} highlightMode={draft.highlightInput ?? 'text'} onPreviewReady={setPreviewReady} attachment={draft.attachment} disabled={busy} onBusyChange={setReadingFile} onChange={attachment => setDraft(previous => previous.id === draft.id && previous.kind === draft.kind ? { ...previous, attachment } : previous)}/>
-            </> : draft.kind === 'Frequência' ? <label>Nível de frequência<select value={draft.level ?? 1} onChange={e => setDraft({ ...draft, level: Number(e.target.value) })}>{[1, 2, 3].map(level => <option key={level} value={level}>Nível {level}</option>)}</select></label> : null}
+            </> : draft.kind === 'Frequência' ? <label>Nível de frequência<SelectMenu value={String(draft.level ?? 1)} onChange={value => setDraft({ ...draft, level: Number(value) })} options={[1, 2, 3].map(level => ({ value: String(level), label: `Nível ${level}` }))}/></label> : null}
             <AnkiTemplatePreview key={`${draft.kind}:${draft.language}`} deckType={draft.kind} language={draft.language}/>
           </fieldset>
           <fieldset><legend><span className="number">03</span> Execução</legend><p>Ao gerar, o Estúdio executa o fluxo da modalidade selecionada. Os serviços de texto, tradução e áudio configurados podem ter custo.</p></fieldset>

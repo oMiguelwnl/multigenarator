@@ -17,6 +17,7 @@ from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel, ConfigDict, Field, SecretStr
+from sqlalchemy import create_engine, text
 
 from multilang.studio.codex import CodexBridge, network_allowed
 from multilang.studio.connections import SECRET_FIELDS, ConnectionConfig, ConnectionStore
@@ -134,6 +135,31 @@ def create_studio_app(*, root: Path, token: str, port: int = 8765) -> FastAPI:
             setattr(config, name, SecretStr(""))
             store.save(config)
         return store.public()
+
+    @app.post("/studio-api/keys/{name}/reveal")
+    def reveal(name: str):
+        if name not in SECRET_FIELDS:
+            raise HTTPException(404)
+        value = getattr(store.load(), name).get_secret_value()
+        if not value:
+            raise HTTPException(404)
+        return {"value": value}
+
+    @app.post("/studio-api/check/database")
+    def check_database():
+        url = store.load().database_url.get_secret_value()
+        if not url:
+            raise HTTPException(409, "Salve a conexão PostgreSQL antes de verificar.")
+        try:
+            engine = create_engine(url, connect_args={"connect_timeout": 5}, pool_pre_ping=True)
+            try:
+                with engine.connect() as connection:
+                    connection.execute(text("SELECT 1"))
+            finally:
+                engine.dispose()
+        except Exception:
+            raise HTTPException(400, "Não foi possível conectar ao PostgreSQL. Confira endereço e credenciais.") from None
+        return {"message": "PostgreSQL conectado, sem alterar dados."}
 
     async def probe(provider: str):
         network_allowed()

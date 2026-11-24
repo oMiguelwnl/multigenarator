@@ -55,6 +55,10 @@ def test_config_bounds_and_no_arbitrary_endpoints():
         ConnectionConfig(endpoint="https://evil.example")
     with pytest.raises(ValueError):
         ConnectionConfig(api_max_output_tokens=0)
+    with pytest.raises(ValueError):
+        ConnectionConfig(database_url="sqlite:///data.db")
+    with pytest.raises(ValueError):
+        ConnectionConfig(database_url="postgresql+psycopg://missing-host")
 
 
 @pytest.mark.skipif(os.name != "nt", reason="Windows credential protection")
@@ -131,6 +135,68 @@ def test_key_routes_do_not_leak_and_require_explicit_delete(tmp_path):
         assert client.post("/studio-api/session", content="x" * 40000).status_code == 413
 
 
+@pytest.mark.skipif(os.name != "nt", reason="Windows credential protection")
+def test_database_credential_is_encrypted_and_revealed_only_on_request(tmp_path):
+    from multilang.settings import Settings
+
+    url = "postgresql+psycopg://student:private-password@127.0.0.1:5432/multilang"
+    app = create_studio_app(root=tmp_path, token="token", port=8765)
+    vault = tmp_path / ".multilang/studio/connections.dpapi"
+    with TestClient(
+        app, base_url="http://127.0.0.1:8765", headers={"Origin": "http://127.0.0.1:8765"}
+    ) as client:
+        assert client.post("/studio-api/keys/database_url/reveal").status_code == 401
+        client.post("/studio-api/session", json={"token": "token"})
+        saved = client.put("/studio-api/connections", json={"database_url": url})
+        assert saved.status_code == 200
+        assert saved.json()["configured"]["database_url"]
+        assert url not in saved.text
+        assert url not in client.get("/studio-api/connections").text
+        assert url.encode() not in vault.read_bytes()
+        assert client.post("/studio-api/keys/database_url/reveal").json() == {"value": url}
+        assert client.post("/studio-api/keys/database_url/reveal").headers["cache-control"] == "no-store"
+        assert client.post("/studio-api/keys/unknown/reveal").status_code == 404
+        assert client.post("/studio-api/keys/database_url/reveal", headers={"Origin": "https://evil.example"}).status_code == 403
+        settings = Settings(_env_file=None, studio_connections_enabled=True, studio_connections_path=vault)
+        assert settings.database_url == url
+
+
+@pytest.mark.skipif(os.name != "nt", reason="Windows credential protection")
+def test_database_probe_runs_read_only_query_with_short_timeout(tmp_path, monkeypatch):
+    from contextlib import contextmanager
+
+    from multilang.studio import server
+
+    observed = {}
+
+    class Engine:
+        @contextmanager
+        def connect(self):
+            class Connection:
+                def execute(self, statement):
+                    observed["query"] = str(statement)
+
+            yield Connection()
+
+        def dispose(self):
+            observed["disposed"] = True
+
+    def fake_engine(url, **kwargs):
+        observed["url"] = url
+        observed["options"] = kwargs
+        return Engine()
+
+    monkeypatch.setattr(server, "create_engine", fake_engine)
+    app = create_studio_app(root=tmp_path, token="token", port=8765)
+    with TestClient(app, base_url="http://127.0.0.1:8765", headers={"Origin": "http://127.0.0.1:8765"}) as client:
+        client.post("/studio-api/session", json={"token": "token"})
+        assert client.post("/studio-api/check/database").status_code == 409
+        url = "postgresql+psycopg://student:secret@127.0.0.1:5432/multilang"
+        client.put("/studio-api/connections", json={"database_url": url})
+        assert client.post("/studio-api/check/database").status_code == 200
+    assert observed == {"url": url, "options": {"connect_args": {"connect_timeout": 5}, "pool_pre_ping": True}, "query": "SELECT 1", "disposed": True}
+
+
 def test_codex_transport_uses_existing_validation_adapter_without_api_key():
     from multilang.services.provider_text_adapters import (
         _litellm_api_key,
@@ -160,14 +226,15 @@ def test_codex_offline_guard_prevents_process_start(monkeypatch, tmp_path):
         asyncio.run(CodexBridge(tmp_path).start())
 
 
-def test_luna_api_parameters_and_output_cap(monkeypatch):
+def test_luna_api_parameters_and_output_cap(monkeypatch, tmp_path):
     from multilang.services import provider_text_adapters as adapters
     from multilang.settings import Settings
 
     captured = {}
     monkeypatch.setattr(adapters, "_litellm_completion", lambda **kwargs: captured.update(kwargs))
     settings = Settings(
-        _env_file=None, studio_api_max_output_tokens=512, studio_connections_enabled=True
+        _env_file=None, studio_api_max_output_tokens=512, studio_connections_enabled=True,
+        studio_connections_path=tmp_path / "no-vault.dpapi",
     )
     adapters.configured_completion(settings)(
         model="openai/gpt-6-luna", temperature=0.2, max_tokens=1500

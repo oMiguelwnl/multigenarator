@@ -10,9 +10,10 @@ from threading import RLock
 from typing import Literal
 from uuid import uuid4
 
-from pydantic import BaseModel, ConfigDict, Field, SecretStr
+from pydantic import BaseModel, ConfigDict, Field, SecretStr, field_validator
+from sqlalchemy.engine import make_url
 
-SECRET_FIELDS = ("openai_api_key", "openrouter_api_key", "deepl_api_key", "azure_speech_key")
+SECRET_FIELDS = ("openai_api_key", "openrouter_api_key", "deepl_api_key", "azure_speech_key", "database_url")
 
 
 class ConnectionConfig(BaseModel):
@@ -23,8 +24,22 @@ class ConnectionConfig(BaseModel):
     openrouter_api_key: SecretStr = Field(default=SecretStr(""), max_length=4096)
     deepl_api_key: SecretStr = Field(default=SecretStr(""), max_length=4096)
     azure_speech_key: SecretStr = Field(default=SecretStr(""), max_length=4096)
+    database_url: SecretStr = Field(default=SecretStr(""), max_length=4096)
     azure_region: str = Field(default="brazilsouth", pattern=r"^[a-z][a-z0-9]{1,39}$")
     api_max_output_tokens: int = Field(default=2048, ge=256, le=8192)
+
+    @field_validator("database_url")
+    @classmethod
+    def valid_database_url(cls, value: SecretStr) -> SecretStr:
+        raw = value.get_secret_value()
+        if raw:
+            try:
+                url = make_url(raw)
+                if url.drivername != "postgresql+psycopg" or not url.host or not url.database:
+                    raise ValueError("Invalid database URL")
+            except Exception:
+                raise ValueError("Invalid PostgreSQL connection URL") from None
+        return value
 
 
 def protect(data: bytes, *, decrypt: bool = False) -> bytes:
@@ -145,5 +160,6 @@ def apply_connections(settings):
             "azure_speech_key": config.azure_speech_key.get_secret_value() or None,
             "azure_speech_region": config.azure_region,
             "studio_api_max_output_tokens": config.api_max_output_tokens,
+            "database_url": config.database_url.get_secret_value() or settings.database_url,
         }
     )
