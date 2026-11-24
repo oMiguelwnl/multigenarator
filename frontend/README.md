@@ -1,9 +1,17 @@
 # Estúdio local do Multilang
 
-O Estúdio usa React + TypeScript + Vite. A primeira vitrine pública pode ser aberta
-diretamente em [apps/web/index.html](apps/web/index.html), com a folha de estilo
-ao lado do arquivo. Ela inclui uma demonstração de cartão do Estúdio e apresenta o
-catálogo em preparação. Compra, conta, biblioteca e geração pública estão planejadas.
+O Estúdio usa React + TypeScript + Vite. Loja e Gerador pessoal são sites separados,
+cada um com entrada, navegação e folha de estilo próprias. Ambos abrem diretamente
+no navegador, sem build ou servidor:
+
+- [Loja](apps/web/index.html): demonstração de cartão do Estúdio, catálogo em
+  preparação e ajuda sobre baralhos prontos.
+- [Gerador pessoal](apps/generator/index.html): instruções de formato para listas
+  próprias e destaques do Kindle, sem upload ou geração nesta prévia.
+
+Compra, conta e bibliotecas estão planejadas. A conta compartilhada é uma integração
+futura; os sites não dependem um do outro para abrir. Hospedagem e domínios ficam
+para uma etapa posterior.
 
 A direção visual é grafite e azul. A hierarquia, a paleta e o comportamento
 responsivo estão em [DESIGN.md](DESIGN.md).

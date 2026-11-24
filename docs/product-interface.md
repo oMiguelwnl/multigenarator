@@ -11,7 +11,10 @@
   Português (`pt`), Inglês (`en`) ou Espanhol (`es`), conforme contrato `bdb0548`
   da arquitetura. Para Coreano, apenas Português está disponível atualmente.
 - Três experiências: operação administrativa, loja de decks e gerador pessoal.
-- Loja e gerador compartilham conta e biblioteca; administração tem acesso restrito.
+- Loja e Gerador pessoal são sites separados, com entradas e navegação próprias.
+  A Loja apresenta e vende edições prontas; o Gerador atende listas e destaques pessoais.
+- A conta compartilhada permanece como plano para os dois sites, com compras na
+  biblioteca da Loja e produções privadas no Gerador. A administração tem acesso restrito.
 - Frequência é o produto central; fundamentos, fonética e gramática complementam
   necessidades específicas de cada idioma. Não há teto de 3.000 cartões.
 - Refold é referência conceitual para oferta organizada de materiais, não uma
@@ -55,10 +58,22 @@ horizontal e detalhe abaixo. Tokens e critérios estão em `frontend/DESIGN.md`.
 
 ## Organização proposta
 
-O Estúdio usa TypeScript/React. A vitrine em `frontend/apps/web/index.html` abre
-localmente, inclusive sem hospedagem. A primeira demonstração reaproveita uma
-amostra de interface do Estúdio. A integração futura de catálogo, conta e
-biblioteca usará o backend Python/FastAPI existente.
+O Estúdio usa TypeScript/React. Os dois sites públicos têm diretórios próprios
+e abrem localmente, inclusive sem hospedagem:
+
+- Loja: `frontend/apps/web/index.html`, com catálogo, demonstração e ajuda para
+  baralhos prontos. O Gerador não faz parte de sua navegação nem de suas seções.
+- Gerador pessoal: `frontend/apps/generator/index.html`, com entrada própria e
+  instruções para listas e destaques. Upload, revisão, orçamento e geração ainda
+  não estão implementados nessa prévia.
+
+Os sites mantêm a marca Multilang e a direção grafite e azul. A primeira
+demonstração da Loja reaproveita uma amostra de interface do Estúdio. A integração
+futura de catálogo, conta e bibliotecas usará o backend Python/FastAPI existente.
+Separar os sites não exige duplicar o motor de geração ou o cadastro do aluno.
+Domínios, hospedagem e implantação independente serão definidos posteriormente.
+Login e compartilhamento de acesso entre os sites ainda não estão implementados;
+as sessões deverão ser restritas a cada site, com permissões impostas pelo backend.
 O backend precisa impor permissões; ocultar controles no navegador não autoriza
 ou restringe acesso a dados. Não colocar credenciais de provedores no frontend.
 
