@@ -19,6 +19,9 @@
   necessidades específicas de cada idioma. Não há teto de 3.000 cartões.
 - Refold é referência conceitual para oferta organizada de materiais, não uma
   identidade visual a copiar nem evidência de resultados do Multilang.
+- A Loja segue a lógica comercial das páginas de decks da Refold: benefício de
+  aprendizado, conteúdo incluído, amostra e oferta por edição. Seu escopo é vender
+  decks; cursos, ferramentas de estudo online e Gerador ficam fora desse site.
 - Painel deve acomodar todos os tipos existentes, conforme capacidades qualificadas.
 - Operador configura, inicia e confere o resultado final; validações automáticas
   permanecem durante a execução. Revisão humana intermediária não é o padrão.
@@ -119,13 +122,23 @@ Não substituir a fila existente nem executar comandos construídos do formulár
 
 ## Oferta e copy de lançamento
 
-O benefício central é começar a estudar vocabulário em contexto com apoio em português
-e usar no Anki um baralho já preparado. A vitrine convida o visitante a virar um cartão
-antes do cadastro. A página de cada edição publicada deverá mostrar exemplos reais daquela
-versão, áudio quando incluído, conteúdo, preço total e uma ação de compra. Enquanto
-o catálogo estiver vazio, a ação principal leva à demonstração local. Depoimentos
+O benefício central é construir vocabulário para compreender outro idioma, com
+contexto e apoio em português, economizando o preparo manual dos cartões. A chamada
+da Loja é "Destrave seu próximo idioma." O botão principal "Encontrar meu deck" leva
+ao catálogo; "Ver um cartão" oferece uma demonstração sem cadastro. O catálogo vazio
+informa que ainda não há decks à venda, sem simular estoque ou compra.
+
+A página de cada edição publicada deverá mostrar exemplos reais daquela
+versão, áudio quando incluído, conteúdo, preço total e uma ação de compra. Depoimentos
 exigem autorização e origem verificável. Alegações de cobertura dependem da medição
 da edição em material independente, com resultados distintos para fala e escrita.
+Promessas de aprender mais rápido que outros métodos, superioridade comprovada e
+prazos para fluência exigem evidência própria antes de entrar na copy.
+
+Referências consultadas para a estrutura comercial: [catálogo da Refold](https://refold.la/decks)
+e [página do deck de espanhol](https://refold.la/decks/buy/fundamental-vocabulary-to-learn-spanish).
+O Multilang adapta a apresentação ao seu produto, sem reproduzir resultados,
+depoimentos, áudios nativos ou garantias comerciais de terceiros.
 
 Proposta para avaliação pelo criador, em compra avulsa e sem assinatura:
 
