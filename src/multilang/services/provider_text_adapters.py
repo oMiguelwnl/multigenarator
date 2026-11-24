@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import json
+import os
 import re
 from collections.abc import Callable
 from hashlib import sha256
@@ -20,11 +21,11 @@ from multilang.domain.translation_quality import (
     TranslationFidelityVerdict,
 )
 from multilang.security.redaction import redact_exception, redact_sensitive_text
-from multilang.services.sentence_curriculum import curriculum_prompt_lines
 from multilang.services.content.definition_policy import (
     definition_prompt_rules,
     validate_definition,
 )
+from multilang.services.sentence_curriculum import curriculum_prompt_lines
 from multilang.services.text_generation import (
     DefinitionConsistencyResult,
     DefinitionGenerationRequest,
@@ -822,7 +823,8 @@ def configured_completion(settings: Settings) -> CompletionFunc:
 def _deepl_translator(api_key: str) -> Any:
     from deepl import Translator
 
-    return Translator(api_key)
+    ca_bundle = os.environ.get("REQUESTS_CA_BUNDLE")
+    return Translator(api_key, **({"verify_ssl": ca_bundle} if ca_bundle else {}))
 
 
 def _google_translator(**kwargs: Any) -> Any:
