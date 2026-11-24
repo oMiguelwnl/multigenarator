@@ -191,7 +191,7 @@ def test_card_exports_mandarin_columns_are_migrated(tmp_path: Path) -> None:
 def test_generation_lease_branch_has_a_single_native_merge_head() -> None:
     scripts = ScriptDirectory.from_config(_alembic_config("sqlite://"))
     assert scripts.get_heads() == ["20261111_23"]
-    assert scripts.get_revision("20261111_23").down_revision == "20260914_22"
+    assert set(scripts.get_revision("20261111_23").down_revision) == {"20260914_22", "20261111_21a"}
     assert set(scripts.get_revision("20260914_22").down_revision) == {
         "20260912_20", "20260913_21",
     }
@@ -223,10 +223,12 @@ def test_legacy_provisioning_migrates_leases_without_authorizing_native_schema(t
         tables = set(inspect(engine).get_table_names())
         assert "generation_leases" in tables
         assert "lexical_identities" not in tables
+        assert "support_language" in {c["name"] for c in inspect(engine).get_columns("generation_jobs")}
+        run_migrations(database_url)
         metadata = MetaData()
         version = Table("alembic_version", metadata, autoload_with=engine)
         with engine.connect() as connection:
-            assert list(connection.scalars(select(version.c.version_num))) == ["20260913_21"]
+            assert list(connection.scalars(select(version.c.version_num))) == ["20261111_21a"]
         config = _alembic_config(database_url)
         config.attributes["explicit_database_url"] = True
         with pytest.raises(ValueError, match="authorization|preview"):

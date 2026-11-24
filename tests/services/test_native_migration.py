@@ -34,9 +34,11 @@ def test_native_migration_requires_explicit_backup_and_authorization(tmp_path):
         engine.dispose()
 
 
-def test_snapshot_restore_rehearsal_roundtrip_preserves_legacy_rows(tmp_path):
+@pytest.mark.parametrize("revision", ["20260913_21", "20261111_21a"])
+def test_snapshot_restore_rehearsal_roundtrip_preserves_legacy_rows(tmp_path, revision):
     engine = database(tmp_path / "source.db")
     try:
+        command.upgrade(native_alembic_config(engine), revision)
         with engine.begin() as connection:
             connection.execute(text(
                 "INSERT INTO generation_leases "
@@ -55,7 +57,7 @@ def test_snapshot_restore_rehearsal_roundtrip_preserves_legacy_rows(tmp_path):
         try:
             assert "lexical_identities" not in inspect(clone).get_table_names()
             with clone.connect() as connection:
-                assert list(connection.scalars(text("SELECT version_num FROM alembic_version"))) == ["20260913_21"]
+                assert list(connection.scalars(text("SELECT version_num FROM alembic_version"))) == [revision]
                 assert connection.scalar(text("SELECT inflight_item_sha256 FROM generation_leases")) == "a" * 64
         finally:
             clone.dispose()

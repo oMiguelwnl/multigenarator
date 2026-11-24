@@ -949,8 +949,7 @@ class MigrationService:
                 columns <= {column["name"] for column in inspector.get_columns(name)}
                 for name, columns in expected.items()
             )
-            and connection.scalar(text("SELECT version_num FROM alembic_version"))
-            == NATIVE_REVISION
+            and NATIVE_REVISION in connection.scalars(text("SELECT version_num FROM alembic_version"))
         )
 
     def rollback_preview(self, backup: BackupManifest, migration_id: str) -> RollbackPreview:

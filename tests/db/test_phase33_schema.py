@@ -581,7 +581,7 @@ def test_phase33_schema_upgrades_to_one_head_and_round_trips(tmp_path: Path) -> 
 
 def test_phase33_revision_is_preserved_below_the_native_and_lease_branches() -> None:
     scripts = ScriptDirectory.from_config(_alembic_config("sqlite://"))
-    assert scripts.get_heads() == ["20260914_22"]
+    assert scripts.get_heads() == ["20261111_23"]
     assert set(scripts.get_revision("20260914_22").down_revision) == {
         "20260912_20", "20260913_21",
     }
