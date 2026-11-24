@@ -1,8 +1,9 @@
 # Estúdio local do Multilang
 
-Interface local em português, React + TypeScript + Vite. O escopo desta entrega é
-o painel administrativo: produções, configuração e resultado/revisão. Loja e
-gerador público permanecem em planejamento.
+O Estúdio usa React + TypeScript + Vite. A primeira vitrine pública pode ser aberta
+diretamente em [apps/web/index.html](apps/web/index.html), com a folha de estilo
+ao lado do arquivo. Ela inclui uma demonstração de cartão do Estúdio e apresenta o
+catálogo em preparação. Compra, conta, biblioteca e geração pública estão planejadas.
 
 A direção visual é grafite e azul. A hierarquia, a paleta e o comportamento
 responsivo estão em [DESIGN.md](DESIGN.md).
@@ -108,8 +109,8 @@ alterar modelos Anki com `uv run --project . python scripts/generate_anki_templa
 
 ## Estrutura
 
-`apps/admin/src/` contém a interface administrativa. A separação futura proposta
-é `apps/web/` para loja/gerador/biblioteca e `packages/` para componentes
-compartilhados; essas pastas serão criadas quando houver consumidores reais.
+`apps/admin/src/` contém a interface administrativa. `apps/web/` contém a vitrine
+pública. A extração de componentes para `packages/` fica para quando houver
+consumidores compartilhados.
 
 Decisões e dependências: `docs/product-interface.md`, na raiz do repositório.

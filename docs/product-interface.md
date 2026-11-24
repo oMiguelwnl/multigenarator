@@ -4,6 +4,8 @@
 
 - Público: pessoas que estudam idiomas por conta própria com Anki.
 - A loja e o gerador pessoal serão lançados no Brasil, com preços e cobranças em real brasileiro (BRL, R$).
+- A marca é Multilang. O catálogo público acompanha as edições que o criador produzir e aprovar.
+  No lançamento, todas as edições públicas terão explicações e traduções em português do Brasil.
 - Idioma inicial da interface: português; suporte a computador e celular.
 - Idioma de apoio por deck, separado do idioma estudado e da interface:
   Português (`pt`), Inglês (`en`) ou Espanhol (`es`), conforme contrato `bdb0548`
@@ -53,9 +55,10 @@ horizontal e detalhe abaixo. Tokens e critérios estão em `frontend/DESIGN.md`.
 
 ## Organização proposta
 
-Frontend TypeScript/React; backend Python/FastAPI existente. Dois aplicativos
-futuros em `frontend/apps/admin` e `frontend/apps/web`; componentes extraídos para
-`frontend/packages` quando compartilhados. Esta entrega inicia apenas admin.
+O Estúdio usa TypeScript/React. A vitrine em `frontend/apps/web/index.html` abre
+localmente, inclusive sem hospedagem. A primeira demonstração reaproveita uma
+amostra de interface do Estúdio. A integração futura de catálogo, conta e
+biblioteca usará o backend Python/FastAPI existente.
 O backend precisa impor permissões; ocultar controles no navegador não autoriza
 ou restringe acesso a dados. Não colocar credenciais de provedores no frontend.
 
@@ -99,11 +102,47 @@ Não substituir a fila existente nem executar comandos construídos do formulár
 4. Construir gerador pessoal: lista/contexto, conferência de sentidos, configuração,
    consumo previsto, acompanhamento, revisão e download privado.
 
-## Decisões ainda abertas
+## Oferta e copy de lançamento
 
-Nome/identidade comercial, idiomas e edições de lançamento, preço/cobrança,
-pagamentos, limites e créditos, atualização de produtos, suporte, hospedagem,
-autenticação, backups, privacidade, permissões de distribuição e qualificação
-final de cada produto. Compra avulsa e gerador por créditos são propostas,
-não decisões fechadas. Cobertura lexical e compreensão não podem ser inferidas
-do número de cartões nem de alegações de outros produtos.
+O benefício central é começar a estudar vocabulário em contexto com apoio em português
+e usar no Anki um baralho já preparado. A vitrine convida o visitante a virar um cartão
+antes do cadastro. A página de cada edição publicada deverá mostrar exemplos reais daquela
+versão, áudio quando incluído, conteúdo, preço total e uma ação de compra. Enquanto
+o catálogo estiver vazio, a ação principal leva à demonstração local. Depoimentos
+exigem autorização e origem verificável. Alegações de cobertura dependem da medição
+da edição em material independente, com resultados distintos para fala e escrita.
+
+Proposta para avaliação pelo criador, em compra avulsa e sem assinatura:
+
+| Oferta | Preço sugerido | Condição |
+| --- | --- | --- |
+| Uma edição de frequência, um nível | R$ 39,90 | Testar como primeira oferta. Incluir correções dessa edição. |
+| Três níveis de frequência do mesmo idioma | R$ 99,90 | Ofertar quando os três estiverem publicados. Economiza R$ 19,80 frente às três compras avulsas propostas. |
+| Gerador pessoal | Piloto a R$ 14,90 por até 100 cartões entregues | Validar margem por idioma antes de aceitar pedidos. Mostrar quantidade e total antes da confirmação, reconciliar falhas e oferecer reprocessamento ou restituição proporcional. |
+
+São hipóteses de preço. Uma referência brasileira anuncia por R$ 119 um baralho
+de inglês voltado a concursos, para outro público. Antes de aprovar os valores,
+descontar do preço taxas, tributos, estornos e suporte; no Gerador, também
+texto, tradução, áudio e reprocessamento. Depois de abrir vendas, acompanhar
+visita à edição, interação com a amostra, início de pagamento, compra confirmada
+e reembolso, com contagens agregadas e sem registrar vocabulário pessoal.
+Comparar conversão e margem por edição após mudanças de preço ou copy.
+[Referência brasileira](https://voceservidor.com.br/materias/ingles)
+
+## Decisões operacionais para implementar antes da venda
+
+| Área | Direção escolhida | Verificação para abrir ao público |
+| --- | --- | --- |
+| Autenticação | Catálogo e amostra livres. Uma conta para compras e gerações, acesso por link de e-mail de uso único e curta validade, sessões revogáveis em cookies seguros. MFA obrigatório para operação administrativa. | Testar expiração, segundo uso do link, recuperação de acesso e isolamento de pedidos, anexos e downloads entre duas contas. |
+| Backups | PostgreSQL com recuperação pontual e janela de 30 dias. Versões dos pacotes aprovados e manifestos em armazenamento privado. Cópias criptografadas e acesso de restauração separado do usuário de produção. | Metas iniciais de perda máxima de 1 hora e recuperação em até 8 horas. Testar restauração do banco, concessões de acesso e download dos pacotes antes da venda e trimestralmente. Reaplicar exclusões pendentes após restauração. |
+| Privacidade | Coletar e-mail, referência do pedido e dados fiscais necessários. Checkout hospedado. Restringir anexos ao titular e ao processamento autorizado. Excluir originais ao concluir ou cancelar, com expiração máxima de 7 dias para abandonados ou falhos. A biblioteca mantém resultados privados até a exclusão ou encerramento aplicável. | Publicar finalidades, bases legais, operadores, transferências, prazos, exceções fiscais e canal de direitos. Verificar exclusão inclusive nos provedores contratados e expiração das cópias. Excluir texto de leitura dos logs, métricas, catálogo e treinamento. |
+| Direitos | Licença de uso pessoal nos termos da edição, respeitando as licenças de terceiros. Registrar por edição origem, atribuição e permissão de distribuição comercial de inventário, texto, áudio, imagens e modelos. | Arquivar a evidência e incluir créditos exigidos no pacote e na ficha. Com direito desconhecido, a edição fica em rascunho. Anexos pessoais do Gerador ficam fora do catálogo. |
+| Qualificação | O criador aprova uma versão imutável. Validar identidade lexical, sentidos, explicações em português, tradução, alvo na frase, mídia, esquema, GUIDs e contagens. Fazer revisão linguística por amostragem e ampliar a revisão se surgirem erros recorrentes. | Antes de publicar, registrar relatório e responsável, conferir que a amostra corresponde à versão e testar importação e atualização no Anki, inclusive com progresso e imagem pessoal. Retirar a versão da venda se aparecer defeito grave. |
+| Suporte | Central curta de importação, áudio, atualização e cobrança; formulário ou e-mail com protocolo, confirmação imediata e acesso ao pedido de cancelamento no site. Meta inicial de primeira resposta humana em até dois dias úteis. | Testar recebimento e acompanhamento no endereço real, definir responsável e publicar identificação do fornecedor, termos, entrega e política de arrependimento. |
+
+Referências para a implementação brasileira: [LGPD](https://www.planalto.gov.br/ccivil_03/_ato2015-2018/2018/lei/l13709.htm)
+e [Decreto do comércio eletrônico](https://www.planalto.gov.br/ccivil_03/_ato2011-2014/2013/decreto/d7962.htm).
+
+Hospedagem será escolhida depois da criação do site. Permanecem para aprovação
+os preços e a política comercial. O provedor de pagamentos, a primeira edição
+qualificada e os fornecedores de infraestrutura serão definidos antes das vendas.
