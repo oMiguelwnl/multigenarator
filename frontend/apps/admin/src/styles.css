@@ -450,6 +450,23 @@ select:disabled { color: var(--text-secondary); cursor: not-allowed; opacity: 1;
 .connection-save p { min-width: 200px; flex: 1; }
 .connection-save button { flex-shrink: 0; }
 .login-link { margin: 11px 0; overflow-wrap: anywhere; white-space: normal; }
+.connection-dialog { width: min(640px, calc(100vw - 32px)); max-height: min(78vh, 760px); padding: 24px; overflow: auto; border: 1px solid var(--control-border); border-radius: 8px; background: var(--surface); color: var(--text); box-shadow: 0 24px 80px #000a; }
+.connection-dialog::backdrop { background: #05080dcc; }
+.connection-dialog-heading { display: flex; align-items: center; justify-content: space-between; gap: 16px; margin-bottom: 12px; }
+.connection-dialog-heading h2 { margin: 0; font-family: Georgia, "Times New Roman", serif; font-size: 25px; font-weight: 400; }
+.dialog-close { flex: 0 0 auto; width: 40px; height: 40px; border: 1px solid var(--border); border-radius: 4px; background: var(--surface-raised); color: var(--text); font-size: 26px; line-height: 1; }
+.dialog-close:hover { background: var(--surface-hover); }
+.connection-dialog > p { margin: 10px 0 4px; color: var(--text-secondary); line-height: 1.6; }
+.connection-dialog.error .connection-dialog-heading h2 { color: var(--danger); }
+.connection-dialog.success .connection-dialog-heading h2 { color: var(--success); }
+.model-picker-toolbar { display: flex; gap: 10px; margin: 20px 0 12px; }
+.model-picker-toolbar input[type=search] { flex: 1; min-width: 0; min-height: 44px; padding: 10px 12px; border: 1px solid var(--control-border); border-radius: 4px; background: var(--canvas); color: var(--text); font: inherit; }
+.model-picker-list { display: grid; gap: 5px; max-height: 45vh; overflow-y: auto; }
+.model-picker-item { display: grid; gap: 4px; width: 100%; padding: 12px 14px; border: 1px solid var(--border); border-radius: 4px; background: var(--canvas); color: var(--text); text-align: left; }
+.model-picker-item:hover, .model-picker-item:focus-visible { border-color: var(--accent-border); background: var(--accent-soft); }
+.model-picker-item[aria-current=true] { border-color: var(--accent-border); }
+.model-picker-item strong { font-size: 14px; }
+.model-picker-item small { color: var(--text-muted); font-size: 12px; overflow-wrap: anywhere; }
 .empty { padding: 38px 24px; color: var(--text-muted); font-size: 14px; text-align: center; }
 .empty h2 { margin-top: 16px; color: var(--text); }
 .empty h3 { color: var(--text); font-size: 18px; }

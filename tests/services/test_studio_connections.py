@@ -197,6 +197,50 @@ def test_database_probe_runs_read_only_query_with_short_timeout(tmp_path, monkey
     assert observed == {"url": url, "options": {"connect_args": {"connect_timeout": 5}, "pool_pre_ping": True}, "query": "SELECT 1", "disposed": True}
 
 
+@pytest.mark.skipif(os.name != "nt", reason="Windows credential protection")
+def test_model_list_includes_every_model_returned_by_provider(tmp_path, monkeypatch):
+    import json
+
+    from multilang.studio import server
+
+    class Response:
+        status_code = 200
+
+        async def __aenter__(self):
+            return self
+
+        async def __aexit__(self, *_):
+            pass
+
+        async def aiter_bytes(self):
+            yield json.dumps({"data": [
+                {"id": "gpt-test", "name": "GPT Test"},
+                {"id": "o-test", "name": "Reasoning Test"},
+            ]}).encode()
+
+    class Client:
+        async def __aenter__(self):
+            return self
+
+        async def __aexit__(self, *_):
+            pass
+
+        def stream(self, *_args, **_kwargs):
+            return Response()
+
+    monkeypatch.setattr(server.httpx, "AsyncClient", lambda **_kwargs: Client())
+    app = create_studio_app(root=tmp_path, token="token", port=8765)
+    with TestClient(app, base_url="http://127.0.0.1:8765", headers={"Origin": "http://127.0.0.1:8765"}) as client:
+        client.post("/studio-api/session", json={"token": "token"})
+        client.put("/studio-api/connections", json={"openai_api_key": "fixture-key"})
+        response = client.post("/studio-api/models")
+        assert response.status_code == 200
+        assert response.json() == [
+            {"id": "gpt-test", "name": "GPT Test"},
+            {"id": "o-test", "name": "Reasoning Test"},
+        ]
+
+
 def test_codex_transport_uses_existing_validation_adapter_without_api_key():
     from multilang.services.provider_text_adapters import (
         _litellm_api_key,

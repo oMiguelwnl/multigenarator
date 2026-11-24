@@ -15,7 +15,7 @@ def main():
     config = {
         "transport": "openrouter", "model": "test/model", "azure_region": "brazilsouth",
         "api_max_output_tokens": 2048,
-        "configured": {name: name == "openrouter_api_key" for name in (
+        "configured": {name: name in ("openrouter_api_key", "database_url") for name in (
             "openai_api_key", "openrouter_api_key", "deepl_api_key", "azure_speech_key", "database_url"
         )},
     }
@@ -26,6 +26,15 @@ def main():
             return route.fulfill(json=config)
         if path == "/studio-api/keys/openrouter_api_key/reveal":
             return route.fulfill(json={"value": "fixture-secret"})
+        if path == "/studio-api/check/openrouter":
+            return route.fulfill(json={"message": "Conexão verificada, sem gerar conteúdo."})
+        if path == "/studio-api/check/database":
+            return route.fulfill(status=400, json={"detail": "Não foi possível conectar ao PostgreSQL."})
+        if path == "/studio-api/models":
+            return route.fulfill(json=[
+                {"id": "budget/model", "name": "Budget Model"},
+                {"id": "quality/model", "name": "Quality Model"},
+            ])
         if path == "/studio-api/productions/catalog":
             return route.fulfill(json={"en": ["frequency"]})
         if path == "/studio-api/productions":
@@ -53,6 +62,20 @@ def main():
         expect(page.get_by_label("Chave do OpenRouter visível")).to_have_value("fixture-secret")
         page.get_by_role("button", name="Ocultar Chave do OpenRouter").click()
         expect(key).to_have_value("••••••••••••")
+        page.locator("fieldset", has=page.locator("legend", has_text="Geração dos cartões")).get_by_role("button", name="Verificar conexão").click()
+        expect(page.get_by_role("dialog", name="Conexão verificada")).to_contain_text("OpenRouter")
+        page.get_by_role("dialog").get_by_role("button", name="Fechar").click()
+        page.locator("fieldset", has=page.locator("legend", has_text="Banco de dados")).get_by_role("button", name="Verificar conexão").click()
+        expect(page.get_by_role("dialog", name="Falha na conexão")).to_contain_text("PostgreSQL")
+        page.get_by_role("dialog").get_by_role("button", name="Fechar").click()
+        page.get_by_role("button", name="Escolher modelo").click()
+        picker = page.get_by_role("dialog", name="Modelos disponíveis")
+        expect(picker.get_by_text("Budget Model")).to_be_visible()
+        expect(picker.get_by_text("Quality Model")).to_be_visible()
+        picker.get_by_placeholder("Buscar modelo").fill("quality")
+        expect(picker.get_by_text("Budget Model")).to_have_count(0)
+        picker.get_by_role("button", name="Quality Model (quality/model)").click()
+        expect(page.get_by_label("Modelo", exact=True)).to_have_value("quality/model")
         page.locator(".select-trigger").first.click()
         chosen = page.locator(".select-option", has_text="OpenRouter")
         expect(chosen).to_be_visible()
@@ -69,7 +92,7 @@ def main():
         assert not errors, errors
         browser.close()
         server.shutdown()
-    print("Passed offline Chromium: database field, masked reveal, provider and material menus.")
+    print("Passed offline Chromium: connection dialogs, model picker, masked reveal, and menus.")
 
 
 if __name__ == "__main__":

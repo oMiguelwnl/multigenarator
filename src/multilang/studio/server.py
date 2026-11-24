@@ -224,8 +224,6 @@ def create_studio_app(*, root: Path, token: str, port: int = 8765) -> FastAPI:
             model_id = row.get("id")
             if not isinstance(model_id, str):
                 continue
-            if provider == "openai" and not model_id.startswith("gpt-"):
-                continue
             name = row.get("name")
             result.append({"id": model_id, "name": name if isinstance(name, str) else model_id})
         return result
