@@ -47,6 +47,8 @@ def test_ambiguous_evidence_is_never_resolved_by_list_order():
     "text",
     [
         "noun: bank",
+        "noun: bicicleta: ve?culo de duas rodas",
+        "noun: um ve\ufffdculo de duas rodas",
         "noun: BANK.",
         "noun: \nriver edge",
         "noun: <b>river edge</b>",
@@ -70,10 +72,10 @@ def test_invalid_definition_cannot_satisfy_common_contract(text):
         validate_definition(text, lemma="bank", display_form="bank", part_of_speech="NOUN")
 
 
-def test_definition_contract_accepts_single_sense_without_rewriting_source():
+@pytest.mark.parametrize("value", ["noun: the land beside a river", "noun: a mark used to ask 'why?'"])
+def test_definition_contract_accepts_single_sense_without_rewriting_source(value):
     from multilang.services.content.definition_policy import validate_definition
 
-    value = "noun: the land beside a river"
     assert (
         validate_definition(value, lemma="bank", display_form="bank", part_of_speech="NOUN")
         == value

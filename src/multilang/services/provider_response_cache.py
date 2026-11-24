@@ -31,6 +31,8 @@ class ProviderCacheKey:
         item_key: str | None = None,
     ) -> "ProviderCacheKey":
         prompt_hash = hashlib.sha256(_stable_json(prompt).encode("utf-8")).hexdigest()
+        if len(prompt_version) > 64:
+            prompt_version = "sha256:" + hashlib.sha256(prompt_version.encode("utf-8")).hexdigest()[:57]
         return cls(
             provider=provider,
             model=model,

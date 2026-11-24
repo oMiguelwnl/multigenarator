@@ -320,6 +320,7 @@ def register_commands(cli: typer.Typer, dependencies: Dependencies) -> None:
             if dependencies.service is None:
                 dependencies._prepare_lexical_data(request, settings=resolved_service.settings)
             lexical_result = resolved_service.execute(request, rate_limiter=rate_limiter)
+            typer.echo(f"job_id={lexical_result.report.job_id}")
             if lexical_result.report.orchestration.diagnostic is not None:
                 dependencies._print_resume_diagnostic(lexical_result.report)
                 raise typer.Exit(code=1)

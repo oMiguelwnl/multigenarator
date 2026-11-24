@@ -25,7 +25,7 @@ from sqlalchemy.engine import Engine
 from multilang.db import models as _models  # noqa: F401
 from multilang.db.base import Base
 
-LEGACY_SCHEMA_REVISION = "20260913_21"
+LEGACY_SCHEMA_REVISION = "20261111_21a"
 
 
 class SchemaProvisioningError(RuntimeError):

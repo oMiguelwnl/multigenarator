@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-import fcntl
 import hashlib
 import json
 import os
@@ -35,6 +34,8 @@ def read_json(path: Path, sha256: str | None = None):
 
 @contextmanager
 def _locked(output: Path):
+    import fcntl
+
     output = _plain_path(output)
     output.parent.mkdir(parents=True, exist_ok=True)
     lock = _plain_path(output.parent / ("." + output.name + ".lock"))

@@ -401,6 +401,7 @@ def evaluate_export_quality_gate(
     allow_partial: bool = False,
     cards_per_level: int = FREQUENCY_CARDS_PER_LEVEL,
     expected_items: int | None = None,
+    requested_level: int | None = None,
 ) -> ExportQualityGateResult:
     """Fail-closed export gate for final frequency decks."""
 
@@ -420,14 +421,17 @@ def evaluate_export_quality_gate(
     effective_allow_partial = allow_partial and not _is_korean_frequency_rows(rows=rows, source_type=source_type)
 
     if source_type == "frequency":
-        target_total = expected_items or cards_per_level * len(FREQUENCY_LEVELS)
+        if requested_level is not None and requested_level not in FREQUENCY_LEVELS:
+            raise ValueError("unknown frequency level")
+        levels = (requested_level,) if requested_level is not None else FREQUENCY_LEVELS
+        target_total = expected_items or cards_per_level * len(levels)
         total_missing = max(0, target_total - len(rows))
         count_messages: list[str] = []
         if len(rows) != target_total:
             count_messages.append(f"frequency deck has {len(rows)}/{target_total} cards")
             if total_missing:
                 count_messages.append(f"total missing {total_missing} cards")
-        for level in FREQUENCY_LEVELS:
+        for level in levels:
             count = level_counts.get(level, 0)
             if count != cards_per_level:
                 missing = max(0, cards_per_level - count)
@@ -462,7 +466,9 @@ def evaluate_export_quality_gate(
                 message=f"non-synthesized audio assets: {non_synthesized_audio_count}",
             )
         )
-    if fallback_audio_count and source_type == "frequency" and len(rows) == FREQUENCY_TOTAL_CARDS:
+    if fallback_audio_count and source_type == "frequency" and (
+        len(rows) == FREQUENCY_TOTAL_CARDS or requested_level is not None
+    ):
         issue = ExportQualityIssue(
             code="fallback_audio",
             message=f"audio assets generated with fallback voices/providers: {fallback_audio_count}",

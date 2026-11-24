@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import re
 from collections.abc import Callable, Iterable
 from dataclasses import dataclass
 from hashlib import sha256
@@ -493,6 +494,14 @@ class RuntimeGenerateService(IngestLexicalItemsService):
             else []
         )
         missing_audio_count, non_synthesized_audio_count, fallback_audio_count = _audio_gate_counts(rows, audio_assets)
+        selected_level = None
+        if job.source_type == "frequency" and job.language != "ko":
+            selection = re.fullmatch(
+                r"level:([123]):cards:[1-9][0-9]*(?::support:(?:pt|en|es))?",
+                job.source_fingerprint,
+            )
+            if selection:
+                selected_level = int(selection[1])
         gate_result = evaluate_export_quality_gate(
             source_type=job.source_type,
             rows=rows,
@@ -502,6 +511,7 @@ class RuntimeGenerateService(IngestLexicalItemsService):
             non_synthesized_audio_count=non_synthesized_audio_count,
             fallback_audio_count=fallback_audio_count,
             allow_partial=allow_partial,
+            requested_level=selected_level,
         )
         if not gate_result.passed:
             self.job_service.repository.update_job_status(

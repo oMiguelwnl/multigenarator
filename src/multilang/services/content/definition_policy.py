@@ -116,6 +116,8 @@ def validate_definition(
     if match is None:
         raise ValueError("definition must use '[part of speech]: [meaning]'")
     label, meaning = match.groups()
+    if "\ufffd" in meaning or re.search(r"[A-Za-z]\?+[A-Za-z]", meaning):
+        raise ValueError("definition contains a damaged character")
     if not any(char.isalnum() for char in meaning):
         raise ValueError("definition must contain a substantive meaning")
     canonical = canonical_part_of_speech_label(label)

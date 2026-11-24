@@ -734,6 +734,20 @@ def test_deepl_translation_adapter_maps_target_language() -> None:
     assert translator.calls == [{"sentence": "Я живу в Москве.", "target_lang": "EN-US"}]
 
 
+def test_deepl_uses_requests_ca_bundle_when_configured(monkeypatch) -> None:
+    import deepl
+
+    from multilang.services.provider_text_adapters import _deepl_translator
+
+    calls = []
+    monkeypatch.setenv("REQUESTS_CA_BUNDLE", "trusted-roots.pem")
+    monkeypatch.setattr(deepl, "Translator", lambda *args, **kwargs: calls.append(kwargs))
+
+    _deepl_translator("test-key")
+
+    assert calls == [{"verify_ssl": "trusted-roots.pem"}]
+
+
 def test_deepl_korean_PT_BR_policy_keeps_canonical_pt_cache_identity() -> None:
     from multilang.services.provider_text_adapters import KOREAN_PT_BR_EDITORIAL_POLICY_ID
 

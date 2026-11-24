@@ -135,7 +135,7 @@ def build_ingest_service(*, lookup_terms: list[str], definition_language: str = 
                 lemma=term,
                 definitions=[f"um item sintético identificado como {term}" if definition_language == "pt" else f"a synthetic test item identified as {term}"],
                 definition_language=definition_language,
-                ipa=f"/{term}/",
+                ipa="/wɜːd/" if term.startswith("word-") else f"/{term}/",
             )
             for term in lookup_terms
         }
@@ -595,7 +595,7 @@ def test_generate_frequency_command_reports_grounded_candidate_counts(monkeypatc
         ),
     )
 
-    result = runner.invoke(app, ["generate", "--language", "en", "--source", "frequency"])
+    result = runner.invoke(app, ["generate", "--language", "en", "--source", "frequency", "--support-language", "pt"])
 
     session.close()
 
@@ -625,7 +625,7 @@ def test_generate_frequency_command_supports_test_mode(monkeypatch) -> None:
 
     result = runner.invoke(
         app,
-        ["generate", "--language", "en", "--source", "frequency", "--test-mode"],
+        ["generate", "--language", "en", "--source", "frequency", "--test-mode", "--support-language", "pt"],
     )
 
     session.close()
@@ -664,6 +664,8 @@ def test_generate_frequency_command_supports_cards_per_level_override(monkeypatc
             "2",
             "--cards-per-level",
             "3",
+            "--support-language",
+            "pt",
         ],
     )
 

@@ -6,6 +6,7 @@ import json
 import re
 import sqlite3
 import zipfile
+from contextlib import closing
 from dataclasses import dataclass
 from pathlib import Path
 from tempfile import TemporaryDirectory
@@ -397,7 +398,7 @@ def _inspect_staged_package(
     with TemporaryDirectory() as directory:
         collection_path = Path(directory) / "collection.anki2"
         collection_path.write_bytes(collection_bytes)
-        with sqlite3.connect(collection_path) as connection:
+        with closing(sqlite3.connect(collection_path)) as connection:
             row = connection.execute("select models, decks from col").fetchone()
             if row is None:
                 raise ExportAnkiPackageError("staged package collection is missing metadata")
