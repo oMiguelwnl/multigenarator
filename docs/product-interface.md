@@ -3,6 +3,7 @@
 ## Decisões confirmadas na discussão
 
 - Público: pessoas que estudam idiomas por conta própria com Anki.
+- A loja e o gerador pessoal serão lançados no Brasil, com preços e cobranças em real brasileiro (BRL, R$).
 - Idioma inicial da interface: português; suporte a computador e celular.
 - Idioma de apoio por deck, separado do idioma estudado e da interface:
   Português (`pt`), Inglês (`en`) ou Espanhol (`es`), conforme contrato `bdb0548`
