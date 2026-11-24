@@ -136,18 +136,38 @@ detalha os componentes dos decks e responde às dúvidas de compra. Economia de
 preparo é um benefício secundário, não a promessa principal. A demonstração atual
 continua identificada como amostra de interface; não representa uma edição à venda.
 
-Cada página de produto deverá seguir esta sequência quando houver uma edição aprovada:
+O botão **Comprar** de um deck abre uma página própria de apresentação antes do
+checkout, na mesma aba. Não inicia pagamento nem dispara geração. A prévia local
+usa `frontend/apps/web/decks/ingles-frequencia/index.html`, ligada à entrada de
+demonstração no catálogo. Essa entrada é identificada como prévia e não constitui
+uma edição publicada ou disponível para venda.
 
-1. Nome específico do idioma e objetivo, por exemplo "Vocabulário essencial de inglês".
-2. Público, pré-requisitos, seleção do vocabulário e conteúdo incluído. Separar
-   identidades lexicais e cartões; não usar faixas de frequência como certificados.
-3. Amostra real daquela versão, com frente, verso e os áudios efetivamente incluídos.
-4. Preço final em BRL, compra avulsa, entrega e condições de atualização junto à compra.
-5. Dúvidas sobre importação, escolha da edição, estudo e atendimento.
+A página apresenta:
+
+1. O idioma e o objetivo do deck, com uma apresentação visual da edição.
+2. O que é, para que serve, a quem se destina e os pré-requisitos.
+3. A missão da Multilang, com foco em vocabulário confiável e apoio em português.
+4. Conteúdo e características: vocabulário, definições, exemplos, traduções,
+   áudio separado de palavra e frase, campo de imagem vazio e pacote .apkg.
+5. Demonstração na própria página, com frente e verso interativos.
+6. Avaliações da edição e perguntas frequentes sobre estudo e compra.
+7. Disponibilidade, preço final em BRL, entrega, atualizações e ação de compra.
+
+A direção grafite e azul é preservada. Capa tipográfica, texto, missão e
+composição pertencem à Multilang; a referência Refold orienta a função comercial,
+sem fornecer arte, textos, depoimentos ou promessas para a página.
+
+A demonstração de inglês reaproveita o cartão `gather` do Estúdio; não gera
+conteúdo novo nem áudio. Está identificada como amostra de interface, com áudio
+indisponível. As avaliações estão vazias, sem nota, estrelas ou relatos inventados.
+Preço está em definição e o botão final permanece desabilitado. Na publicação de
+uma edição real, substituir a demo por cartões e mídia daquela versão, confirmar
+contagens e requisitos, e implementar a oferta e o checkout. Separar identidades
+lexicais e cartões; não usar faixas de frequência como certificados.
 
 Catálogo com busca e filtros por idioma e tipo deve refletir as edições publicadas.
-Não oferecer idiomas sem edição aprovada nem adicionar produtos fictícios para
-preencher a vitrine. Depoimentos entram após existirem relatos próprios autorizados.
+Não oferecer idiomas sem edição aprovada nem apresentar prévias como produtos à
+venda. Depoimentos entram após existirem relatos próprios autorizados.
 
 A página de cada edição publicada deverá mostrar exemplos reais daquela
 versão, áudio quando incluído, conteúdo, preço total e uma ação de compra. Depoimentos

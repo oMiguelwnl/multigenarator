@@ -5,13 +5,27 @@ cada um com entrada, navegação e folha de estilo próprias. Ambos abrem direta
 no navegador, sem build ou servidor:
 
 - [Loja](apps/web/index.html): demonstração de cartão do Estúdio, catálogo em
-  preparação e ajuda sobre baralhos prontos.
+  preparação e ajuda sobre baralhos prontos. O botão **Comprar** da entrada de
+  prévia abre a [página do deck de inglês](apps/web/decks/ingles-frequencia/index.html).
+  Ela apresenta objetivo, missão, características, cartão interativo, avaliações
+  ainda vazias e dúvidas. A edição não está à venda; preço e checkout estão pendentes.
 - [Gerador pessoal](apps/generator/index.html): instruções de formato para listas
   próprias e destaques do Kindle, sem upload ou geração nesta prévia.
 
 Compra, conta e bibliotecas estão planejadas. A conta compartilhada é uma integração
 futura; os sites não dependem um do outro para abrir. Hospedagem e domínios ficam
 para uma etapa posterior.
+
+Com Python Playwright e Google Chrome já instalados, execute na raiz do repositório:
+
+```powershell
+python frontend/scripts/check-storefront-ui.py --screenshots
+```
+
+A verificação percorre Loja → Comprar → página do deck → Loja em seis larguras,
+inclui teclado, demo e perguntas frequentes, e não chama provedores nem pagamentos.
+As capturas ficam em `output/previews/loja-publica/` e os resultados em
+`output/reports/deck-product-page/`. O parâmetro `--screenshots` é opcional.
 
 A direção visual é grafite e azul. A hierarquia, a paleta e o comportamento
 responsivo estão em [DESIGN.md](DESIGN.md).

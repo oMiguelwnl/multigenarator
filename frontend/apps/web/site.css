@@ -59,6 +59,8 @@ h2 { font-size: clamp(2.5rem, 4vw, 4.1rem); line-height: 1.05; letter-spacing: -
 h3 { font-size: 1.4rem; letter-spacing: -.03em; }
 .availability { border-top: 1px solid var(--line); padding-block: 1.5rem; }
 .availability h3 { margin-bottom: .7rem; }
+.catalog-preview { border-top: 1px solid var(--line); margin-top: 1.5rem; padding-top: 1.5rem; }
+.catalog-preview .action { margin-top: .5rem; }
 .textlink { color: var(--blue); font-weight: 650; text-decoration: underline; text-underline-offset: .3em; }
 .textlink:hover { color: #c7d8ff; text-decoration-thickness: 2px; }
 .benefits { margin: 0; }
