@@ -18,6 +18,8 @@ export function RealProductionResult({ productionId }: { productionId: string })
   const locked = saving || dirty;
   const note = page?.notes.find(item => item.id === selected) ?? page?.notes[0];
 
+  const approved = page?.approval.latest;
+
   useEffect(() => {
     const controller = new AbortController();
     setPage(undefined);
@@ -80,13 +82,19 @@ export function RealProductionResult({ productionId }: { productionId: string })
         approved: 'Revisão aprovada',
         needs_approval: 'A edição atual requer nova aprovação',
       }[page.approval.state]}</strong></p>
-      {page.approval.latest && <details>
-        <summary>Última aprovação · <time dateTime={page.approval.latest.approvedAt}>
-          {new Date(page.approval.latest.approvedAt).toLocaleString('pt-BR')}
-        </time> · <code>{page.approval.latest.snapshotSha256.slice(0, 12)}</code></summary>
-        <p>Operador: {page.approval.latest.operator}</p>
-        <p>Versão aprovada (SHA-256): <code style={{ overflowWrap: 'anywhere' }}>{page.approval.latest.snapshotSha256}</code></p>
-      </details>}
+      {approved && <>
+        <details>
+          <summary>Última aprovação · <time dateTime={approved.approvedAt}>
+            {new Date(approved.approvedAt).toLocaleString('pt-BR')}
+          </time> · <code>{approved.snapshotSha256.slice(0, 12)}</code></summary>
+          <p>Operador: {approved.operator}</p>
+          <p>Versão aprovada (SHA-256): <code style={{ overflowWrap: 'anywhere' }}>{approved.snapshotSha256}</code></p>
+        </details>
+        <div className="review-toolbar">
+          <a className="button secondary" href={api.approvedExportUrl(approved.snapshotSha256, 'csv')} download>CSV da versão aprovada</a>
+          <a className="button secondary" href={api.approvedExportUrl(approved.snapshotSha256, 'tsv')} download>TSV da versão aprovada</a>
+        </div>
+      </>}
       {page.approval.state !== 'approved' && <button className="button primary"
         disabled={locked || !note || !!approvalError} onClick={() => void approve()}>Aprovar revisão</button>}
       {approvalError && <p role="alert">{approvalError} <button className="text-button" onClick={reload}>Recarregar revisão</button></p>}

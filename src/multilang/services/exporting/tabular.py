@@ -6,6 +6,7 @@ import csv
 from dataclasses import dataclass
 from io import StringIO
 from pathlib import Path
+from typing import TextIO
 
 from multilang.domain.exporting import (
     ExportArtifactFormat,
@@ -21,6 +22,11 @@ from multilang.services.exporting.presentation import rendered_field_mapping
 class ExportTabularBundleResult:
     output_path: Path
     card_count: int
+
+
+def tabular_writer(stream: TextIO, export_format: ExportArtifactFormat, *, lineterminator: str = "\r\n"):
+    delimiters = {ExportArtifactFormat.CSV: ",", ExportArtifactFormat.TSV: "\t"}
+    return csv.writer(stream, delimiter=delimiters[export_format], lineterminator=lineterminator)
 
 
 def write_export_tabular_bundle(
@@ -47,19 +53,18 @@ def write_export_tabular_bundle(
     output_dir.mkdir(parents=True, exist_ok=True)
     sorted_rows = sorted(rows, key=lambda row: (row.sort_index or 0, row.identity.item_key))
     field_names = export_field_names_for_rows(sorted_rows)
-    delimiter = "\t" if export_format is ExportArtifactFormat.TSV else ","
     separator_name = "Tab" if export_format is ExportArtifactFormat.TSV else "Comma"
     suffix = ".tsv" if export_format is ExportArtifactFormat.TSV else ".csv"
     output_path = output_dir / f"multilang-export{suffix}"
 
     buffer = StringIO()
-    writer = csv.writer(buffer, delimiter=delimiter, lineterminator="\n", quoting=csv.QUOTE_MINIMAL)
+    writer = tabular_writer(buffer, export_format, lineterminator="\n")
 
     buffer.write(f"#separator:{separator_name}\n")
     buffer.write("#html:true\n")
     buffer.write(f"#notetype:{note_type_name}\n")
     buffer.write(f"#deck:{deck_name}\n")
-    buffer.write(f"#columns:{delimiter.join(field_names)}\n")
+    buffer.write(f"#columns:{writer.dialect.delimiter.join(field_names)}\n")
 
     for row in sorted_rows:
         mapping = rendered_field_mapping(row, field_names=field_names)
@@ -84,4 +89,4 @@ def _is_korean_frequency_export(rows: list[ExportCardRow]) -> bool:
     )
 
 
-__all__ = ["ExportTabularBundleResult", "write_export_tabular_bundle"]
+__all__ = ["ExportTabularBundleResult", "tabular_writer", "write_export_tabular_bundle"]

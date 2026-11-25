@@ -17,13 +17,18 @@ from functools import lru_cache
 from hashlib import file_digest, sha1, sha256
 from pathlib import Path
 from tempfile import NamedTemporaryFile, TemporaryDirectory
+from typing import Annotated, BinaryIO, Literal
 from uuid import UUID
-from zipfile import ZipFile
+from zipfile import BadZipFile, ZipFile
 
-from fastapi import APIRouter, Body, HTTPException, Query
+from fastapi import APIRouter, Body, Depends, HTTPException, Query
+from fastapi import Path as PathParam
 from fastapi.responses import FileResponse, Response
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import AwareDatetime, BaseModel, ConfigDict, Field
 from starlette.background import BackgroundTask
+
+from multilang.domain.exporting import ExportArtifactFormat
+from multilang.studio.approved_exports import write_approved_tables
 
 SOUND = re.compile(r"\[sound:([^\]]+)\]", re.IGNORECASE)
 IMAGE = re.compile(r'<img\b[^>]*\bsrc\s*=\s*["\x27]([^"\x27]+)["\x27][^>]*>', re.I)
@@ -44,6 +49,13 @@ MEDIA_TYPES = {
 class ApprovalRequest(BaseModel):
     model_config = ConfigDict(extra="forbid")
     revision: str = Field(pattern=r"^[0-9a-f]{64}$")
+
+
+class ApprovalReceipt(ApprovalRequest):
+    productionId: UUID
+    operator: str = Field(min_length=1)
+    approvedAt: AwareDatetime
+    snapshotSha256: str = Field(pattern=r"^[0-9a-f]{64}$")
 
 
 class NoteEdit(BaseModel):
@@ -140,7 +152,7 @@ def reviewed_png(data: bytes) -> bytes:
     raise invalid
 
 
-def working_collection(package: Path, directory: Path) -> Path:
+def working_collection(package: Path | BinaryIO, directory: Path) -> Path:
     directory.mkdir(parents=True, exist_ok=True)
     target = directory / "collection.anki2"
     if target.is_file():
@@ -408,6 +420,31 @@ def create_results_router(resolve_package: Callable[[UUID], Path], *, review_roo
         if not receipts:
             resolve_package(production_id)
         return [json.loads(path.read_text(encoding="utf-8")) for path in receipts]
+
+    def export_directory():
+        with TemporaryDirectory() as temporary:
+            yield Path(temporary)
+
+    @router.get("/approvals/{digest}/export/{fmt}")
+    def approved_export(production_id: UUID, digest: Annotated[str, PathParam(pattern=r"^[0-9a-f]{64}$")],
+                        fmt: Literal["csv", "tsv"], directory: Annotated[Path, Depends(export_directory)]):
+        for receipt_path in approval_receipts(review_root / str(production_id)):
+            try:
+                receipt = ApprovalReceipt.model_validate_json(receipt_path.read_bytes())
+                if receipt.productionId != production_id or receipt.snapshotSha256 != digest:
+                    continue
+                with receipt_path.with_name("snapshot.apkg").open("rb") as snapshot:
+                    if file_digest(snapshot, "sha256").hexdigest() != digest:
+                        raise ValueError("Snapshot digest mismatch")
+                    snapshot.seek(0)
+                    collection = working_collection(snapshot, directory)
+                target = write_approved_tables(collection, ExportArtifactFormat(fmt), production_id, digest)
+            except (FileNotFoundError, BadZipFile, sqlite3.DatabaseError, KeyError,
+                    IndexError, TypeError, ValueError) as exc:
+                raise HTTPException(409, "O snapshot aprovado está ausente ou danificado.") from exc
+            media_types = {".csv": "text/csv", ".tsv": "text/tab-separated-values", ".zip": "application/zip"}
+            return FileResponse(target, filename=target.name, media_type=media_types[target.suffix])
+        raise HTTPException(404, "Aprovação não encontrada para esta produção.")
 
     @router.post("/approvals")
     def approve(production_id: UUID, payload: ApprovalRequest):

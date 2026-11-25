@@ -29,6 +29,8 @@ export function productionResult(id: string) {
     },
     audioUrl: (number: string) => '/studio-api/' + base + '/media/' + encodeURIComponent(number),
     imageUrl: (note: ReviewNote, field: string) => '/studio-api/' + imagePath(note, field),
+    approvedExportUrl: (digest: string, format: 'csv' | 'tsv') =>
+      '/studio-api/' + base + '/approvals/' + encodeURIComponent(digest) + '/export/' + format,
     exportUrl: '/studio-api/' + base + '/export',
   };
 }

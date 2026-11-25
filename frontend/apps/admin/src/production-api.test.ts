@@ -63,3 +63,11 @@ test('approval submits the collection revision displayed by the Studio', async t
   assert.equal(calls[0].method, 'POST');
   assert.deepEqual(await calls[0].json(), { revision: 'viewed-version' });
 });
+
+test('tabular download URLs identify the production, approval and format', () => {
+  const api = productionResult('job');
+  for (const format of ['csv', 'tsv'] as const) {
+    assert.equal(api.approvedExportUrl('a'.repeat(64), format),
+      '/studio-api/productions/job/approvals/' + 'a'.repeat(64) + '/export/' + format);
+  }
+});
