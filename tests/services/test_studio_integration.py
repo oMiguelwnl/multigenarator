@@ -1,5 +1,6 @@
 import io
 from pathlib import Path
+from threading import Event
 from uuid import uuid4
 from zipfile import ZipFile
 
@@ -16,6 +17,7 @@ def test_studio_import_review_and_download_across_restart(tmp_path, monkeypatch)
     origin = "http://127.0.0.1:8765"
     base = f"/studio-api/productions/{production}"
     commands = []
+    finish = Event()
 
     def offline_cli(self, args, observe):
         commands.append(args[0])
@@ -23,6 +25,7 @@ def test_studio_import_review_and_download_across_restart(tmp_path, monkeypatch)
             observe(f"job_id={job}")
             return
         assert args[0] == "export"
+        assert finish.wait(10)
         folder = Path(args[args.index("--output-dir") + 1])
         model = genanki.Model(1234567890, "Review", fields=[
             {"name": "Word"}, {"name": "Definition"},
@@ -49,6 +52,7 @@ def test_studio_import_review_and_download_across_restart(tmp_path, monkeypatch)
     with client() as browser:
         assert browser.get("/").text == "studio"
         assert browser.get(base + "/result").status_code == 401
+        assert browser.post(base + "/approvals", json={"revision": "0" * 64}).status_code == 401
         authenticate(browser)
         assert "word-list" in browser.get("/studio-api/productions/catalog").json()["en"]
         preview = browser.post("/studio-api/sources/preview", content=source.encode(),
@@ -59,7 +63,11 @@ def test_studio_import_review_and_download_across_restart(tmp_path, monkeypatch)
             "id": str(production), "name": "Fixture", "language": "en", "kind": "word-list",
             "supportLanguage": "pt", "sourceText": source, "sourceExtension": "txt",
         })
-        assert response.status_code == 202
+        try:
+            assert response.status_code == 202
+            assert browser.post(base + "/approvals", json={"revision": "0" * 64}).status_code == 409
+        finally:
+            finish.set()
 
     with client() as browser:
         authenticate(browser)
@@ -69,5 +77,16 @@ def test_studio_import_review_and_download_across_restart(tmp_path, monkeypatch)
         edit = {"revision": note["revision"], "fields": {"Definition": "updated"}}
         assert browser.patch(base + "/result/" + note["id"], json=edit).status_code == 200
         assert browser.get(base + "/result", params={"q": "updated"}).json()["total"] == 1
+        revision = browser.get(base + "/result").json()["approval"]["revision"]
+        assert browser.post(base + "/approvals", json={"revision": revision, "operator": "other"}).status_code == 422
+        approved = browser.post(base + "/approvals", json={"revision": revision})
+        assert approved.json()["state"] == "approved"
         with ZipFile(io.BytesIO(browser.get(base + "/export").content)) as package:
             assert "collection.anki2" in package.namelist()
+
+    with client() as browser:
+        authenticate(browser)
+        assert browser.get(base + "/result").json()["approval"] == approved.json()
+        exported, = (tmp_path / "output" / "decks").rglob("*.apkg")
+        exported.unlink()
+        assert browser.get(base + "/approvals").json() == [approved.json()["latest"]]

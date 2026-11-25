@@ -55,3 +55,11 @@ test('review requests retain search terms, note revisions and raw PNG bytes', as
   assert.equal(new URL(calls[2].url).searchParams.get('field'), 'Picture');
   assert.deepEqual(await calls[3].json(), { revision: 'rev', fields: { Picture: '' } });
 });
+
+test('approval submits the collection revision displayed by the Studio', async t => {
+  const calls = recordRequests(t);
+  await productionResult('job').approve('viewed-version');
+  assert.equal(new URL(calls[0].url).pathname, '/studio-api/productions/job/approvals');
+  assert.equal(calls[0].method, 'POST');
+  assert.deepEqual(await calls[0].json(), { revision: 'viewed-version' });
+});

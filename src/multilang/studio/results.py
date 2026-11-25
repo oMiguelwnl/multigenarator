@@ -1,5 +1,6 @@
 """Review the operator's local copy of a completed genanki export."""
 
+import getpass
 import html
 import json
 import os
@@ -11,7 +12,9 @@ import time
 import zlib
 from collections.abc import Callable
 from contextlib import closing
-from hashlib import sha1, sha256
+from datetime import UTC, datetime
+from functools import lru_cache
+from hashlib import file_digest, sha1, sha256
 from pathlib import Path
 from tempfile import NamedTemporaryFile, TemporaryDirectory
 from uuid import UUID
@@ -36,6 +39,11 @@ MEDIA_TYPES = {
     ".mp3": "audio/mpeg", ".wav": "audio/wav", ".ogg": "audio/ogg", ".m4a": "audio/mp4",
     ".png": "image/png", ".jpg": "image/jpeg", ".jpeg": "image/jpeg", ".webp": "image/webp", ".gif": "image/gif",
 }
+
+
+class ApprovalRequest(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+    revision: str = Field(pattern=r"^[0-9a-f]{64}$")
 
 
 class NoteEdit(BaseModel):
@@ -159,6 +167,23 @@ def manifest(archive: ZipFile) -> dict[str, str]:
     return json.loads(archive.read(info))
 
 
+@lru_cache(maxsize=64)
+def _file_hash(path: Path, signature: tuple[int, ...]) -> str:
+    # Completed packages and published snapshots are immutable in Studio.
+    # Cache their digest across page reads, keyed by filesystem identity and version.
+    with path.open("rb") as stream:
+        return file_digest(stream, "sha256").hexdigest()
+
+
+def file_hash(path: Path) -> str:
+    stat = path.stat()
+    return _file_hash(path, (stat.st_dev, stat.st_ino, stat.st_size, stat.st_mtime_ns, stat.st_ctime_ns))
+
+
+def approval_receipts(directory: Path) -> list[Path]:
+    return sorted((directory / "approvals").glob("[0-9]*/receipt.json"), reverse=True)
+
+
 class Review:
     def __init__(self, source: Path, directory: Path):
         self.source = source
@@ -195,9 +220,18 @@ class Review:
                           "revision": note_revision(nid, modified, raw)})
         return notes
 
+    @staticmethod
+    def reserve_edit(db: sqlite3.Connection) -> None:
+        try:
+            db.execute("begin immediate")
+        except sqlite3.OperationalError as exc:
+            if exc.sqlite_errorcode == sqlite3.SQLITE_BUSY:
+                raise HTTPException(409, "Outra sessão está gravando a revisão. Tente novamente.") from exc
+            raise
+
     def edit(self, nid: int, revision: str, replacements: dict[str, str], image: bytes | None = None):
         with closing(self.connect()) as db, db:
-            db.execute("begin immediate")
+            self.reserve_edit(db)
             row = db.execute("select mid, flds, mod from notes where id=?", (nid,)).fetchone()
             if not row:
                 raise HTTPException(404, "Nota não encontrada.")
@@ -245,6 +279,108 @@ class Review:
                            (updated, plain(sort_field), checksum, modified, nid))
             return self.describe(db, [(nid, mid, updated, modified)])[0]
 
+    def write_package(self, target: Path, *, for_approval: bool = False) -> None:
+        with TemporaryDirectory() as temporary, ZipFile(self.source) as original:
+            snapshot = Path(temporary) / "collection.anki2"
+            with closing(self.connect()) as source, closing(sqlite3.connect(snapshot)) as db:
+                source.backup(db)
+                images = set()
+                required_media = set()
+                query = "select flds from notes" if for_approval else "select flds from notes where flds like '%studio-%'"
+                for (fields,) in db.execute(query):
+                    names = {html.unescape(name) for name in IMAGE.findall(fields)}
+                    images.update(name for name in names if NEW_IMAGE.fullmatch(name))
+                    if for_approval:
+                        required_media.update(names)
+                        required_media.update(SOUND.findall(fields))
+            with ZipFile(target, "w") as archive:
+                members = manifest(original)
+                if for_approval and (
+                    set(members).difference(original.namelist())
+                    or required_media.difference(members.values(), images)
+                ):
+                    raise HTTPException(409, "Há mídias ausentes nesta revisão.")
+                if for_approval:
+                    for key, filename in members.items():
+                        if filename in images:
+                            with original.open(key) as stream:
+                                digest = file_digest(stream, "sha256").hexdigest()
+                            if filename != f"studio-{digest}.png":
+                                raise HTTPException(409, "O pacote contém uma imagem diferente da revisada.")
+                for entry in original.infolist():
+                    if entry.filename not in {"collection.anki2", "media"}:
+                        with original.open(entry) as src, archive.open(entry, "w") as dst:
+                            shutil.copyfileobj(src, dst)
+                archive.write(snapshot, "collection.anki2")
+                next_key = max(map(int, members), default=-1) + 1
+                for filename in sorted(images.difference(members.values())):
+                    key = str(next_key)
+                    path = self.directory / filename
+                    if not path.is_file():
+                        raise HTTPException(409, "Há imagens ausentes nesta revisão.")
+                    image = path.read_bytes()
+                    if filename != f"studio-{sha256(image).hexdigest()}.png":
+                        raise HTTPException(409, "A imagem revisada perdeu a integridade.")
+                    archive.writestr(key, image)
+                    members[key] = filename
+                    next_key += 1
+                archive.writestr("media", json.dumps(members))
+
+    def revision(self, db: sqlite3.Connection) -> str:
+        # Read the complete SQLite image through its own connection: this also
+        # includes committed WAL pages and the models, tags and scheduling data.
+        collection_hash = sha256(db.serialize()).hexdigest()
+        version = f"{self.directory.name}:{collection_hash}:{file_hash(self.source)}"
+        return sha256(version.encode()).hexdigest()
+
+    def approval_status(self, db: sqlite3.Connection) -> dict:
+        revision = self.revision(db)
+        receipts = approval_receipts(self.directory)
+        latest = None
+        state = "pending"
+        if receipts:
+            latest = json.loads(receipts[0].read_text(encoding="utf-8"))
+            snapshot = receipts[0].with_name("snapshot.apkg")
+            if not snapshot.is_file() or file_hash(snapshot) != latest["snapshotSha256"]:
+                raise HTTPException(409, "O snapshot aprovado está ausente ou danificado.")
+            state = "approved" if revision == latest["revision"] else "needs_approval"
+        return {"revision": revision, "state": state, "latest": latest}
+
+    def approve(self, expected: str) -> dict:
+        with closing(self.connect()) as guard, guard:
+            # All Studio editors acquire this same SQLite writer reservation.
+            # A separate read connection can back up the committed collection
+            # while the reservation prevents another edit or approval.
+            self.reserve_edit(guard)
+            source_hash = file_hash(self.source)
+            status = self.approval_status(guard)
+            if status["revision"] != expected:
+                raise HTTPException(409, "A produção mudou. Recarregue as notas antes de aprovar.")
+            if status["state"] == "approved":
+                return status
+            if not guard.execute("select 1 from notes limit 1").fetchone():
+                raise HTTPException(409, "A produção não contém notas para aprovar.")
+            approvals = self.directory / "approvals"
+            approvals.mkdir(exist_ok=True)
+            sequence = len(approval_receipts(self.directory)) + 1
+            with TemporaryDirectory(dir=approvals, prefix=".pending-") as tmp:
+                staging = Path(tmp)
+                snapshot = staging / "snapshot.apkg"
+                self.write_package(snapshot, for_approval=True)
+                if file_hash(self.source) != source_hash:
+                    raise HTTPException(409, "O pacote de origem mudou durante a aprovação.")
+                receipt = {
+                    "productionId": self.directory.name,
+                    "revision": expected,
+                    "operator": getpass.getuser(),
+                    "approvedAt": datetime.now(UTC).isoformat(),
+                    "snapshotSha256": file_hash(snapshot),
+                }
+                (staging / "receipt.json").write_text(json.dumps(receipt), encoding="utf-8")
+                # Readers see either the entire decision and its bytes or neither.
+                staging.rename(approvals / f"{sequence:012d}")
+            return {"revision": expected, "state": "approved", "latest": receipt}
+
 
 def create_results_router(resolve_package: Callable[[UUID], Path], *, review_root: Path):
     router = APIRouter(prefix="/studio-api/productions/{production_id}")
@@ -257,12 +393,25 @@ def create_results_router(resolve_package: Callable[[UUID], Path], *, review_roo
                limit: int = Query(25, ge=1, le=100), q: str = Query("", max_length=200)):
         document = review(production_id)
         with closing(document.connect()) as db:
+            db.execute("begin")
             db.create_function("contains_text", 1, lambda raw: q.casefold() in plain(raw).casefold())
             where = " where contains_text(flds)" if q.strip() else ""
             total = db.execute("select count(*) from notes" + where).fetchone()[0]
             rows = db.execute("select id,mid,flds,mod from notes" + where + " order by id limit ? offset ?",
                               (limit, offset))
-            return {"total": total, "notes": document.describe(db, rows)}
+            return {"total": total, "notes": document.describe(db, rows),
+                    "approval": document.approval_status(db)}
+
+    @router.get("/approvals")
+    def approvals(production_id: UUID):
+        receipts = approval_receipts(review_root / str(production_id))
+        if not receipts:
+            resolve_package(production_id)
+        return [json.loads(path.read_text(encoding="utf-8")) for path in receipts]
+
+    @router.post("/approvals")
+    def approve(production_id: UUID, payload: ApprovalRequest):
+        return review(production_id).approve(payload.revision)
 
     @router.patch("/result/{nid}")
     def edit(production_id: UUID, nid: int, payload: NoteEdit):
@@ -314,27 +463,7 @@ def create_results_router(resolve_package: Callable[[UUID], Path], *, review_roo
         with NamedTemporaryFile(suffix=".apkg", delete=False) as file:
             target = Path(file.name)
         try:
-            with TemporaryDirectory() as temporary, ZipFile(document.source) as original:
-                snapshot = Path(temporary) / "collection.anki2"
-                with closing(document.connect()) as source, closing(sqlite3.connect(snapshot)) as db:
-                    source.backup(db)
-                    images = set()
-                    for (fields,) in db.execute("select flds from notes where flds like '%studio-%'"):
-                        images.update(name for name in IMAGE.findall(fields) if NEW_IMAGE.fullmatch(name))
-                with ZipFile(target, "w") as archive:
-                    members = manifest(original)
-                    for entry in original.infolist():
-                        if entry.filename not in {"collection.anki2", "media"}:
-                            with original.open(entry) as src, archive.open(entry, "w") as dst:
-                                shutil.copyfileobj(src, dst)
-                    archive.write(snapshot, "collection.anki2")
-                    next_key = max(map(int, members), default=-1) + 1
-                    for filename in sorted(images.difference(members.values())):
-                        key = str(next_key)
-                        archive.write(document.directory / filename, key)
-                        members[key] = filename
-                        next_key += 1
-                    archive.writestr("media", json.dumps(members))
+            document.write_package(target)
             return FileResponse(target, media_type="application/octet-stream",
                                 filename=document.source.name, background=BackgroundTask(target.unlink, missing_ok=True))
         except BaseException:

@@ -19,6 +19,7 @@ from multilang.studio.results import create_results_router
 
 JOB = UUID("02dc94a6-6242-4710-b3d2-cbff8914ec35")
 BASE = f"/studio-api/productions/{JOB}"
+SAMPLE_PNG = base64.b64decode("iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+ip1sAAAAASUVORK5CYII=")
 
 
 @pytest.fixture
@@ -124,7 +125,7 @@ def test_only_changed_sentence_loses_its_clip_in_export(review):
 def test_png_roundtrip_removal_and_stale_revision(review):
     client, original = review
     initial = original.read_bytes()
-    png = base64.b64decode("iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+ip1sAAAAASUVORK5CYII=")
+    png = SAMPLE_PNG
     note = client.get(f"{BASE}/result").json()["notes"][0]
     route = f"{BASE}/result/{note['id']}"
     params = {"field": "Image", "revision": note["revision"]}
@@ -148,3 +149,159 @@ def test_png_roundtrip_removal_and_stale_revision(review):
         assert list(json.loads(archive.read("media")).values()) == ["sample.mp3"]
     assert original.read_bytes() == initial
 
+
+def test_approve_edited_snapshot_reopen_retry_and_supersede(review, tmp_path):
+    from datetime import datetime
+    from getpass import getuser
+    from hashlib import sha256
+
+    client, original = review
+    page = client.get(f"{BASE}/result").json()
+    assert "approval" in page
+    assert page["approval"]["state"] == "pending"
+    note = page["notes"][0]
+    edit = f"{BASE}/result/{note['id']}"
+    change = client.patch(edit, json={"revision": note["revision"], "fields": {"Definition": "edited"}})
+    assert change.is_success
+    png = SAMPLE_PNG
+    assert client.put(edit + "/image", params={"revision": change.json()["revision"], "field": "Image"},
+                      content=png, headers={"Content-Type": "image/png"}).is_success
+    assert client.post(f"{BASE}/approvals", json={"revision": page["approval"]["revision"]}).status_code == 409
+    edited = client.get(f"{BASE}/result").json()
+    body = {"revision": edited["approval"]["revision"]}
+    result = client.post(f"{BASE}/approvals", json=body)
+    assert result.is_success
+    approved = result.json()
+    receipt = approved["latest"]
+    assert approved["state"] == "approved" and receipt["revision"] == body["revision"]
+    assert receipt["productionId"] == str(JOB) and receipt["operator"] == getuser()
+    assert datetime.fromisoformat(receipt["approvedAt"]).utcoffset().total_seconds() == 0
+
+    app = FastAPI()
+    app.include_router(create_results_router(lambda job: original, review_root=tmp_path / "reviews"))
+    with TestClient(app) as reopened:
+        assert reopened.get(f"{BASE}/result").json()["approval"] == approved
+        assert reopened.post(f"{BASE}/approvals", json=body).json() == approved
+        assert reopened.get(f"{BASE}/approvals").json() == [receipt]
+        assert reopened.patch(edit, json={"revision": edited["notes"][0]["revision"],
+                                          "fields": {"Definition": "changed again", "Image": ""}}).is_success
+        pending = reopened.get(f"{BASE}/result").json()["approval"]
+        assert pending["state"] == "needs_approval" and pending["latest"] == receipt
+        assert reopened.post(f"{BASE}/approvals", json=body).status_code == 409
+        assert reopened.post(f"{BASE}/approvals", json={"revision": pending["revision"]}).is_success
+        assert reopened.get(f"{BASE}/approvals").json()[1] == receipt
+
+    snapshot, = [p for p in (tmp_path / "reviews").rglob("*.apkg")
+                 if sha256(p.read_bytes()).hexdigest() == receipt["snapshotSha256"]]
+    with ZipFile(snapshot) as archive:
+        assert archive.read("0") == b"ID3\x04sample" and archive.read("1") == png
+        with sqlite3.connect(":memory:") as db:
+            db.deserialize(archive.read("collection.anki2"))
+            guid, raw = db.execute("select guid,flds from notes").fetchone()
+            assert guid == "stableguid" and raw.split("\x1f")[1] == "edited"
+            assert json.loads(archive.read("media"))["1"] in raw
+
+
+def test_concurrent_editors_and_approvers(review):
+    from concurrent.futures import ThreadPoolExecutor
+    from threading import Barrier
+
+    client, _ = review
+    page = client.get(f"{BASE}/result").json()
+    assert "approval" in page
+    note = page["notes"][0]
+    barrier = Barrier(2)
+
+    def edit(value):
+        barrier.wait()
+        return client.patch(f"{BASE}/result/{note['id']}", json={
+            "revision": note["revision"], "fields": {"Definition": value}
+        }).status_code
+
+    with ThreadPoolExecutor(2) as pool:
+        assert sorted(pool.map(edit, ["first edit", "second edit"])) == [200, 409]
+        revision = client.get(f"{BASE}/result").json()["approval"]["revision"]
+
+        def approve(_):
+            barrier.wait()
+            return client.post(f"{BASE}/approvals", json={"revision": revision})
+
+        a, b = pool.map(approve, range(2))
+    assert a.is_success and b.is_success and a.json() == b.json()
+    assert len(client.get(f"{BASE}/approvals").json()) == 1
+
+
+def test_approval_checks_card_metadata_and_missing_media(review, tmp_path):
+    client, _ = review
+    token = client.get(f"{BASE}/result").json()["approval"]["revision"]
+    with sqlite3.connect(tmp_path / "reviews" / str(JOB) / "collection.anki2") as db:
+        db.execute("update cards set due=due+1")
+    assert client.post(f"{BASE}/approvals", json={"revision": token}).status_code == 409
+    with sqlite3.connect(tmp_path / "reviews" / str(JOB) / "collection.anki2") as db:
+        db.execute("update notes set flds=replace(flds,'sample.mp3','missing.mp3')")
+    current = client.get(f"{BASE}/result").json()["approval"]["revision"]
+    assert client.post(f"{BASE}/approvals", json={"revision": current}).status_code == 409
+    assert client.get(f"{BASE}/approvals").json() == []
+
+
+def test_edit_during_approval_keeps_snapshot_consistent(review, monkeypatch):
+    from concurrent.futures import ThreadPoolExecutor
+    from threading import Event
+
+    from multilang.studio.results import Review
+
+    client, _ = review
+    page = client.get(f"{BASE}/result").json()
+    note = page["notes"][0]
+    copying, editing, resume = Event(), Event(), Event()
+    write_package = Review.write_package
+    reserve_edit = Review.reserve_edit
+
+    def observed_reservation(db):
+        if copying.is_set():
+            editing.set()
+        reserve_edit(db)
+
+    def paused(self, *args, **kwargs):
+        copying.set()
+        assert resume.wait(5)
+        return write_package(self, *args, **kwargs)
+
+    monkeypatch.setattr(Review, "reserve_edit", staticmethod(observed_reservation))
+    monkeypatch.setattr(Review, "write_package", paused)
+    with ThreadPoolExecutor(2) as pool:
+        approve = pool.submit(client.post, f"{BASE}/approvals", json={"revision": page["approval"]["revision"]})
+        assert copying.wait(5)
+        edit = pool.submit(client.patch, f"{BASE}/result/{note['id']}", json={
+            "revision": note["revision"], "fields": {"Definition": "after snapshot"},
+        })
+        try:
+            assert editing.wait(5)
+            assert not edit.done()
+        finally:
+            resume.set()
+        assert approve.result().is_success and edit.result().is_success
+    latest = client.get(f"{BASE}/result").json()["approval"]
+    assert latest["state"] == "needs_approval" and latest["latest"] == approve.result().json()["latest"]
+
+
+def test_approval_rejects_conflicting_original_image(review, tmp_path):
+    from hashlib import sha256
+
+    client, package = review
+    png = SAMPLE_PNG
+    filename = f"studio-{sha256(png).hexdigest()}.png"
+    replacement = tmp_path / "changed.apkg"
+    with ZipFile(package) as source, ZipFile(replacement, "w") as archive:
+        for key in source.namelist():
+            if key != "media":
+                archive.writestr(key, source.read(key))
+        archive.writestr("media", json.dumps({"0": "sample.mp3", "1": filename}))
+        archive.writestr("1", b"different bytes with the same name")
+    replacement.replace(package)
+    note = client.get(f"{BASE}/result").json()["notes"][0]
+    assert client.put(f"{BASE}/result/{note['id']}/image", params={"revision": note["revision"], "field": "Image"},
+                      content=png, headers={"Content-Type": "image/png"}).is_success
+    version = client.get(f"{BASE}/result").json()["approval"]["revision"]
+    assert client.post(f"{BASE}/approvals", json={"revision": version}).status_code == 409
+    assert client.get(f"{BASE}/approvals").json() == []

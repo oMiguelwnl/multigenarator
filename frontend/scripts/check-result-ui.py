@@ -28,7 +28,15 @@ def main():
         stream.setparams((1, 1, 8000, 0, "NONE", ""))
         stream.writeframes(bytes([128]) * 800)
 
+    latest = None
+
+    def approval():
+        revision = note["revision"]
+        state = "pending" if latest is None else ("approved" if latest["revision"] == revision else "needs_approval")
+        return {"state": state, "revision": revision, "latest": latest}
+
     def handle(route):
+        nonlocal latest
         url = urlsplit(route.request.url)
         path, query = url.path, parse_qs(url.query)
         if url.hostname != "127.0.0.1":
@@ -37,10 +45,16 @@ def main():
             return route.fulfill(json={"en": ["frequency"]})
         if path == "/studio-api/productions":
             return route.fulfill(json=[job])
+        if path == BASE + "/approvals":
+            assert route.request.method == "POST"
+            assert route.request.post_data_json == {"revision": note["revision"]}
+            latest = {"revision": note["revision"], "operator": "offline-operator",
+                      "approvedAt": "2026-11-25T12:00:00Z", "snapshotSha256": "f" * 64, "productionId": job["id"]}
+            return route.fulfill(json=approval())
         if path == BASE + "/result":
             rows = [row for row in notes if query.get("q", [""])[0] in row["title"]]
             offset = int(query["offset"][0])
-            return route.fulfill(json={"notes": rows[offset:offset + 25], "total": len(rows)})
+            return route.fulfill(json={"notes": rows[offset:offset + 25], "total": len(rows), "approval": approval()})
         if path == BASE + "/result/26":
             payload = route.request.post_data_json
             if payload["fields"].get("Definition") == "unsaved":
@@ -95,16 +109,24 @@ def main():
         page.get_by_role("button", name="Buscar", exact=True).click()
         expect(page.get_by_text("1 a 1 de 1")).to_be_visible()
         editor = page.get_by_label("Definition", exact=True)
+        expect(page.get_by_text("Revisão pendente", exact=True)).to_be_visible()
         editor.fill("updated")
+        expect(page.get_by_role("button", name="Aprovar revisão")).to_be_disabled()
         page.get_by_role("button", name="Salvar texto").click()
         expect(editor).to_have_value("updated")
         assert note["fields"][0]["text"] == "updated"
+        page.get_by_role("button", name="Aprovar revisão").click()
+        expect(page.get_by_text("Revisão aprovada", exact=True)).to_be_visible()
+        page.get_by_text("Última aprovação", exact=False).click()
+        expect(page.get_by_text("f" * 64, exact=True)).to_be_visible()
+        expect(page.get_by_text("Operador: offline-operator")).to_be_visible()
         editor.fill("unsaved")
         page.get_by_role("button", name="Salvar texto").click()
         expect(page.get_by_role("alert")).to_have_text("Outra edição foi salva.")
         expect(editor).to_have_value("unsaved")
         page.get_by_role("button", name="Descartar alterações e recarregar nota").click()
         expect(editor).to_have_value("updated")
+        expect(page.get_by_text("A edição atual requer nova aprovação")).to_be_visible()
         page.locator("audio").evaluate("audio => audio.play()")
         page.get_by_label("Selecionar PNG").set_input_files({"name": "test.png", "mimeType": "image/png", "buffer": PNG})
         image = page.get_by_role("img", name="Imagem de Word 26")
@@ -120,7 +142,7 @@ def main():
         assert not errors, errors
         browser.close()
         server.shutdown()
-    print("Passed offline result UI: paging, search, edit, conflict, audio, PNG upload/removal and download.")
+    print("Passed offline result UI: paging, search, edit, explicit approval, changed revision, conflict, audio, PNG upload/removal and download.")
 
 
 if __name__ == "__main__":

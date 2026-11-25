@@ -12,6 +12,7 @@ export function RealProductionResult({ productionId }: { productionId: string })
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
   const [readError, setReadError] = useState('');
+  const [approvalError, setApprovalError] = useState('');
   const [notice, setNotice] = useState('');
   const dirty = Object.keys(changes).length > 0;
   const locked = saving || dirty;
@@ -21,6 +22,7 @@ export function RealProductionResult({ productionId }: { productionId: string })
     const controller = new AbortController();
     setPage(undefined);
     setReadError('');
+    setApprovalError('');
     setError('');
     api.page(query.q, query.offset, controller.signal).then(result => {
       if (controller.signal.aborted) return;
@@ -53,10 +55,42 @@ export function RealProductionResult({ productionId }: { productionId: string })
     }
   }
 
+  async function approve() {
+    if (locked || !page) return;
+    setSaving(true);
+    setApprovalError('');
+    setNotice('');
+    try {
+      const approval = await api.approve(page.approval.revision);
+      setPage({ ...page, approval });
+    } catch (reason) {
+      setApprovalError(reason instanceof Error ? reason.message : 'Falha ao aprovar a revisão.');
+    } finally {
+      setSaving(false);
+    }
+  }
+
   return <section className="panel" aria-label="Revisão das notas">
     <div className="panel-heading"><h2>Revisão das notas</h2>
-      {!locked && <a className="button secondary" href={api.exportUrl} download>Baixar deck (.apkg)</a>}
+      {!locked && <a className="button secondary" href={api.exportUrl} download>Baixar deck atual (.apkg)</a>}
     </div>
+    {page && <div aria-label="Aprovação da produção">
+      <p role="status"><strong>{{
+        pending: 'Revisão pendente',
+        approved: 'Revisão aprovada',
+        needs_approval: 'A edição atual requer nova aprovação',
+      }[page.approval.state]}</strong></p>
+      {page.approval.latest && <details>
+        <summary>Última aprovação · <time dateTime={page.approval.latest.approvedAt}>
+          {new Date(page.approval.latest.approvedAt).toLocaleString('pt-BR')}
+        </time> · <code>{page.approval.latest.snapshotSha256.slice(0, 12)}</code></summary>
+        <p>Operador: {page.approval.latest.operator}</p>
+        <p>Versão aprovada (SHA-256): <code style={{ overflowWrap: 'anywhere' }}>{page.approval.latest.snapshotSha256}</code></p>
+      </details>}
+      {page.approval.state !== 'approved' && <button className="button primary"
+        disabled={locked || !note || !!approvalError} onClick={() => void approve()}>Aprovar revisão</button>}
+      {approvalError && <p role="alert">{approvalError} <button className="text-button" onClick={reload}>Recarregar revisão</button></p>}
+    </div>}
     <form className="review-toolbar" onSubmit={event => {
       event.preventDefault();
       if (!locked) { setNotice(''); setQuery({ q: search.trim(), offset: 0 }); }
