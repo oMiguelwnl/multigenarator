@@ -1,0 +1,3 @@
+interface:
+  display_name: "Architecture Review"
+  short_description: "Review software architecture with code-backed findings"
